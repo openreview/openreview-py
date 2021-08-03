@@ -44,12 +44,12 @@ class TestEdges:
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = [conference.id],
             writers = [conference.id],
-            signatures = ['~Test_User1'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com'],
-                'authors': ['Test User'],
+                'authors': ['SomeFirstName User'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )

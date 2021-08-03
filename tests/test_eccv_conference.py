@@ -388,7 +388,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
+        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'ReviewerFirstName', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
@@ -437,15 +437,15 @@ Please contact info@openreview.net with any questions or concerns about this int
                     'emergency_review_count': '0'
                 },
                 signatures = [
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ],
                 readers = [
                     conference.get_id(),
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ],
                 writers = [
                     conference.get_id(),
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ]
             ))
         assert registration_note
@@ -470,7 +470,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
-        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'Testareachair', 'Eccv')
+        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'AreachairFirstName', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
         request_page(selenium, reviewer_tasks_url, ac_client.token)
 
@@ -481,14 +481,14 @@ Please contact info@openreview.net with any questions or concerns about this int
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = conference.get_submission_id(),
-                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-                signatures = ['~Test_User1'],
+                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
+                writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~SomeFirstName_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'],
                     'author_agreement': 'All authors agree with the author guidelines of ECCV 2020.',
                     'TPMS_agreement': 'All authors agree that the manuscript can be processed by TPMS for paper matching.'
                 }
@@ -599,7 +599,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material',
             readers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
             writers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
-            signatures = ['~Test_User1'],
+            signatures = ['~SomeFirstName_User1'],
             referent = note.original,
             forum = note.original,
             content = {}

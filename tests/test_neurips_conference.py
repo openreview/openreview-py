@@ -566,19 +566,19 @@ class TestNeurIPSConference():
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = 'NeurIPS.cc/2021/Conference/-/Submission',
-                readers = ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-                signatures = ['~Test_User1'],
+                readers = ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
+                writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~SomeFirstName_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
                 }
             )
             if i == 1:
-                note.readers = note.readers[:-1] + ['~SeniorArea_GoogleChair1', '~Test_User1']
-                note.writers = note.writers[:-1] + ['~SeniorArea_GoogleChair1', '~Test_User1']
+                note.readers = note.readers[:-1] + ['~SeniorArea_GoogleChair1', '~SomeFirstName_User1']
+                note.writers = note.writers[:-1] + ['~SeniorArea_GoogleChair1', '~SomeFirstName_User1']
                 note.content['authors'].append('SeniorArea GoogleChair')
                 note.content['authorids'].append('~SeniorArea_GoogleChair1')
                 print(note)
@@ -656,15 +656,15 @@ class TestNeurIPSConference():
                 'title': 'Paper title 5' ,
                 'abstract': 'This is an abstract 5 Rev',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
-                'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
             }
         )
         note = test_client.post_note(note)
 
         updated_note=test_client.get_note(submissions[0].id)
         assert updated_note
-        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~Test_User1']
-        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~Test_User1']
+        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~SomeFirstName_User1']
+        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~SomeFirstName_User1']
 
         helpers.await_queue()
 
