@@ -316,14 +316,14 @@ class TestDoubleBlindConference():
         assert 10 == invitation.reply['content']['archival_status']['order']
 
         note = openreview.Note(invitation = invitation.id,
-            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
                 'subject_areas': [
                     'Databases',
@@ -775,7 +775,7 @@ class TestDoubleBlindConference():
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
         assert 'New paper title' == notes[0].content['title']
-        assert '~Test_User1' in notes[0].writers
+        assert '~SomeFirstName_User1' in notes[0].writers
         assert 'peter@mail.com' in notes[0].writers
         assert 'andrew@mail.com' in notes[0].writers
 
@@ -829,14 +829,14 @@ class TestDoubleBlindConference():
         assert invitation
 
         note = openreview.Note(invitation = invitation.id,
-            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Test Paper title',
                 'abstract': 'This is a test abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
                 'subject_areas': [
                     'Databases',
@@ -858,14 +858,14 @@ class TestDoubleBlindConference():
         assert blind_submissions_2[1].id == blind_submissions[0].id
 
         note = openreview.Note(invitation = invitation.id,
-            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Test Paper title 2',
                 'abstract': 'This is a test abstract 2',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
                 'subject_areas': [
                     'Information Integration'
@@ -1250,7 +1250,7 @@ class TestDoubleBlindConference():
     def test_open_meta_reviews_additional_options(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        ac_client = helpers.create_user('meta_additional@mail.com', 'TestMetaAdditional', 'User')
+        ac_client = helpers.create_user('meta_additional@mail.com', 'MetaAdditionalFirstName', 'User')
         assert ac_client is not None, "Client is none"
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1525,7 +1525,7 @@ class TestDoubleBlindConference():
                 'title': 'Paper title Revision 2',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
                 'subject_areas': ['Databases'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
@@ -1586,7 +1586,7 @@ class TestDoubleBlindConference():
 
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].content.get('_bibtex')
-        assert withdrawn_notes[0].content.get('_bibtex') == '@misc{\nuser2019paper,\ntitle={Paper title Revision 2},\nauthor={Test User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + withdrawn_notes[0].id + '}\n}'
+        assert withdrawn_notes[0].content.get('_bibtex') == '@misc{\nuser2019paper,\ntitle={Paper title Revision 2},\nauthor={SomeFirstName User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + withdrawn_notes[0].id + '}\n}'
 
         messages = client.get_messages(subject = '^AKBC 2019: Paper .* withdrawn by paper authors$')
         assert len(messages) == 7
@@ -1655,7 +1655,7 @@ class TestDoubleBlindConference():
 
         assert len(desk_rejected_notes) == 1
         assert desk_rejected_notes[0].content.get('_bibtex')
-        assert desk_rejected_notes[0].content.get('_bibtex') == '@misc{\nuser2019test,\ntitle={Test Paper title},\nauthor={Test User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + desk_rejected_notes[0].id + '}\n}'
+        assert desk_rejected_notes[0].content.get('_bibtex') == '@misc{\nuser2019test,\ntitle={Test Paper title},\nauthor={SomeFirstName User and Peter User and Andrew Mc},\nyear={2019},\nurl={https://openreview.net/forum?id=' + desk_rejected_notes[0].id + '}\n}'
 
         messages = client.get_messages(subject = '^AKBC 2019: Paper .* marked desk rejected by program chairs$')
         assert len(messages) == 7
@@ -1724,7 +1724,7 @@ class TestDoubleBlindConference():
                 'title': 'Paper title REVISED',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
                 'subject_areas': ['Databases'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
@@ -1855,7 +1855,7 @@ class TestDoubleBlindConference():
         valid_bibtex = r'''@inproceedings{
 user2019paper,
 title={Paper title {REVISED}},
-author={Test User and Peter User and Andrew Mc},
+author={SomeFirstName User and Peter User and Andrew Mc},
 booktitle={Automated Knowledge Base Construction Conference},
 year={2019},
 url={'''
@@ -1927,7 +1927,7 @@ url={'''
                 'title': 'Paper title REVISED AGAIN',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc'],
                 'archival_status': 'Archival',
                 'subject_areas': ['Databases'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
@@ -1953,7 +1953,7 @@ url={'''
         valid_bibtex = r'''@inproceedings{
 user2019paper,
 title={Paper title {REVISED} {AGAIN}},
-author={Test User and Peter User and Andrew Mc},
+author={SomeFirstName User and Peter User and Andrew Mc},
 booktitle={Automated Knowledge Base Construction Conference},
 year={2019},
 url={'''
