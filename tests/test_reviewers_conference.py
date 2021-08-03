@@ -92,14 +92,14 @@ class TestReviewersConference():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
-            writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = [conference.id, '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
+            writers = [conference.id, '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
-                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Melisa Bok', 'Andrew Mc'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
