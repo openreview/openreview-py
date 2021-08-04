@@ -65,14 +65,14 @@ class TestSingleBlindPrivateConference():
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = 'MICCAI.org/2021/Challenges/-/Submission',
-                readers = ['MICCAI.org/2021/Challenges', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-                signatures = ['~Test_User1'],
+                readers = ['MICCAI.org/2021/Challenges', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
+                writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~SomeFirstName_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'],
                     'pdf': pdf_url
                 }
             )

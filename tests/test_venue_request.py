@@ -25,10 +25,10 @@ class TestVenueRequest():
         # Post the request form note
         request_form_note = openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             readers=[
                 support_group_id,
-                '~Test_User1',
+                '~SomeFirstName_User1',
                 'test@mail.com',
                 'tom@mail.com'
             ],
@@ -115,7 +115,7 @@ class TestVenueRequest():
         helpers.await_queue()
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
 
-        helpers.create_user('new_test_user@mail.com', 'Newtest', 'User')
+        helpers.create_user('new_test_user@mail.com', 'NewFirstName', 'User')
 
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
@@ -130,10 +130,10 @@ class TestVenueRequest():
 
         request_form_note = client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
-            signatures=['~Newtest_User1'],
+            signatures=['~NewFirstName_User1'],
             readers=[
                 support_group_id,
-                '~Newtest_User1',
+                '~NewFirstName_User1',
                 'new_test_user@mail.com',
                 'tom@mail.com'
             ],
@@ -249,7 +249,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert venue_revision_note
@@ -295,7 +295,7 @@ class TestVenueRequest():
             replyto=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert recruitment_note
@@ -338,7 +338,7 @@ class TestVenueRequest():
             replyto=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert remind_recruitment_note
@@ -386,7 +386,7 @@ class TestVenueRequest():
             referent=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert bid_stage_note
@@ -457,7 +457,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert review_stage_note
@@ -582,7 +582,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert meta_review_stage_note
@@ -641,7 +641,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert comment_stage_note
@@ -715,7 +715,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert decision_stage_note
@@ -801,7 +801,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert revision_stage_note
@@ -898,7 +898,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert post_decision_stage_note
@@ -940,7 +940,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert revision_stage_note
@@ -989,7 +989,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert comment_stage_note
@@ -1029,7 +1029,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert review_stage_note
@@ -1071,7 +1071,7 @@ class TestVenueRequest():
             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
             referent=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
-            signatures=['~Test_User1'],
+            signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
         assert revision_stage_note

@@ -37,14 +37,14 @@ class TestCommentNotification():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = [conference.get_id(), '~Test_User1', 'author@mail.com', 'author2@mail.com'],
-            writers = [conference.get_id(), '~Test_User1', 'author@mail.com', 'author2@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = [conference.get_id(), '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
+            writers = [conference.get_id(), '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
-                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Melisa Bok', 'Andrew Mc'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
@@ -355,14 +355,14 @@ class TestCommentNotification():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
-            writers = [conference.id, '~Test_User1', 'author@mail.com', 'author2@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = [conference.id, '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
+            writers = [conference.id, '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@mail.com', 'author2@mail.com'],
-                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Melisa Bok', 'Andrew Mc'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf',
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
@@ -634,14 +634,14 @@ class TestCommentNotification():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = [conference.get_id(), '~Test_User1', 'author@colt.io', 'author2@colt.io'],
-            writers = [conference.get_id(), '~Test_User1', 'author@colt.io', 'author2@colt.io'],
-            signatures = ['~Test_User1'],
+            readers = [conference.get_id(), '~SomeFirstName_User1', 'author@colt.io', 'author2@colt.io'],
+            writers = [conference.get_id(), '~SomeFirstName_User1', 'author@colt.io', 'author2@colt.io'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@colt.io', 'author2@colt.io'],
-                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Melisa Bok', 'Andrew Mc'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
@@ -941,14 +941,14 @@ class TestCommentNotification():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = [conference.id, '~Test_User1', 'author@colt17.io', 'author2@colt17.io'],
-            writers = [conference.id, '~Test_User1', 'author@colt17.io', 'author2@colt17.io'],
-            signatures = ['~Test_User1'],
+            readers = [conference.id, '~SomeFirstName_User1', 'author@colt17.io', 'author2@colt17.io'],
+            writers = [conference.id, '~SomeFirstName_User1', 'author@colt17.io', 'author2@colt17.io'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'author@colt17.io', 'author2@colt17.io'],
-                'authors': ['Test User', 'Melisa Bok', 'Andrew Mc'],
+                'authors': ['SomeFirstName User', 'Melisa Bok', 'Andrew Mc'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )

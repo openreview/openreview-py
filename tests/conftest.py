@@ -87,12 +87,12 @@ def client():
 
 @pytest.fixture(scope="session")
 def test_client():
-    client = Helpers.create_user('test@mail.com', 'Test', 'User')
+    client = Helpers.create_user('test@mail.com', 'SomeFirstName', 'User')
     yield client
 
 @pytest.fixture(scope="session")
 def peter_client():
-    client = Helpers.create_user('peter@mail.com', 'Peter', 'Test')
+    client = Helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName')
     yield client
 
 @pytest.fixture

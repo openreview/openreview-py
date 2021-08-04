@@ -21,7 +21,7 @@ class TestMatchingWithAnonIds():
 
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
-        pc_client = helpers.create_user('pc1@uai.com', 'TestPC', 'UAI')
+        pc_client = helpers.create_user('pc1@uai.com', 'PCFirstName', 'UAI')
         builder = openreview.conference.ConferenceBuilder(client)
         builder.set_conference_id('auai.org/UAI/2021/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
@@ -85,14 +85,14 @@ class TestMatchingWithAnonIds():
 
         ## Paper 1
         note_1 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a1@cmu.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a1@cmu.edu'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 1',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a1@cmu.edu'],
-                'authors': ['Test User', 'Author 1'],
+                'authors': ['SomeFirstName User', 'Author 1'],
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Belief Propagation'
@@ -105,14 +105,14 @@ class TestMatchingWithAnonIds():
 
         ## Paper 2
         note_2 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a2@mit.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a2@mit.edu'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a2@mit.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a2@mit.edu'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 2',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a2@mit.edu'],
-                'authors': ['Test User', 'Author 2'],
+                'authors': ['SomeFirstName User', 'Author 2'],
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Exact Inference'
@@ -125,14 +125,14 @@ class TestMatchingWithAnonIds():
 
         ## Paper 3
         note_3 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a3@umass.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 3',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
-                'authors': ['Test User', 'Author 3', 'PC author'],
+                'authors': ['SomeFirstName User', 'Author 3', 'PC author'],
                 'subject_areas': [
                     'Algorithms: Distributed and Parallel',
                     'Algorithms: Exact Inference'
