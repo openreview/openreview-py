@@ -1812,6 +1812,101 @@ class TestDoubleBlindConference():
         assert len(decisions) == 1
         assert decisions[0].readers == ['everyone']
 
+    def test_submission_revision_stage(self, client, test_client, helpers):
+
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True, subject_areas = ['Machine Learning',
+            'Natural Language Processing',
+            'Information Extraction',
+            'Question Answering',
+            'Reasoning',
+            'Databases',
+            'Information Integration',
+            'Knowledge Representation',
+            'Semantic Web',
+            'Search',
+            'Applications: Science',
+            'Applications: Biomedicine',
+            'Applications: Other',
+            'Relational AI',
+            'Fairness',
+            'Human computation',
+            'Crowd-sourcing',
+            'Other'], additional_fields = {
+                'archival_status': {
+                    'description': 'Authors can change the archival/non-archival status up until the decision deadline',
+                    'value-radio': [
+                        'Archival',
+                        'Non-Archival'
+                    ],
+                    'required': True
+                }
+            })
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_name('Automated Knowledge Base Construction Conference')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_decision_stage(public=True)
+        conference = builder.get_result()
+
+        conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(only_accepted=True))
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Revision',
+            forum = notes[0].original,
+            referent = notes[0].original,
+            readers = ['AKBC.ws/2019/Conference', 'AKBC.ws/2019/Conference/Paper1/Authors'],
+            writers = [conference.id, 'AKBC.ws/2019/Conference/Paper1/Authors'],
+            signatures = ['AKBC.ws/2019/Conference/Paper1/Authors'],
+            content = {
+                'title': 'Paper title REVISED PART 2',
+                'abstract': 'This is an abstract',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc'],
+                'archival_status': 'Archival',
+                'subject_areas': ['Databases'],
+                'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
+            }
+        )
+
+        posted_note = test_client.post_note(note)
+        assert posted_note
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = posted_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        assert note.content['title'] == 'Paper title REVISED PART 2'
+        assert note.content['authors'] == ['Anonymous']
+        assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
+
+        valid_bibtex = r'''@inproceedings{
+anonymous2019paper,
+title={Paper title {REVISED} {PART} 2},
+author={Anonymous},
+booktitle={Automated Knowledge Base Construction Conference},
+year={2019},
+url={'''
+        valid_bibtex = valid_bibtex+'https://openreview.net/forum?id='+note.forum+'''}
+}'''
+        assert note.content['_bibtex'] == valid_bibtex
+        assert 'venue' in note.content and not note.content['venue']
+        assert 'venueid' in note.content and not note.content['venueid']
+
     def test_release_accepted_notes(self, client, request_page, selenium):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1854,7 +1949,7 @@ class TestDoubleBlindConference():
 
         valid_bibtex = r'''@inproceedings{
 user2019paper,
-title={Paper title {REVISED}},
+title={Paper title {REVISED} {PART} 2},
 author={SomeFirstName User and Peter User and Andrew Mc},
 booktitle={Automated Knowledge Base Construction Conference},
 year={2019},

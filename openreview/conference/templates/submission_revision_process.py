@@ -38,14 +38,14 @@ To view your submission, click here: https://openreview.net/forum?id={}'''.forma
         notes=client.get_notes(original=forum.id)
         if notes:
             bibtex_note=notes[0]
-            released_note = bibtex_note.content.get('authors') != ['Anonymous']
+            anonymous_note = bibtex_note.content.get('authors') == ['Anonymous']
             bibtex_note.content = {
                 'venue': bibtex_note.content.get('venue'),
                 'venueid': bibtex_note.content.get('venueid')
             }
-            if not released_note:
+            if anonymous_note:
                 bibtex_note.content['authors'] = ['Anonymous']
-                bibtex_note.content['authorids'] = CONFERENCE_ID + '/Paper' + str(bibtex_note.number) + '/' + AUTHORS_NAME
+                bibtex_note.content['authorids'] = [CONFERENCE_ID + '/Paper' + str(bibtex_note.number) + '/' + AUTHORS_NAME]
 
         bibtex_note.content['_bibtex'] = openreview.tools.get_bibtex(
             note,
@@ -56,4 +56,3 @@ To view your submission, click here: https://openreview.net/forum?id={}'''.forma
             anonymous=bibtex_note.content.get('authors', []) == ['Anonymous']
         )
         client.post_note(bibtex_note)
-
