@@ -51,43 +51,35 @@ function main() {
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
 
-  var submittedNotesP = Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
+  var submittedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': SUBMITTED_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var underReviewNotesP = Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
+  var underReviewNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': UNDER_REVIEW_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var rejectedNotesP = Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
+  var rejectedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': DESK_REJECTED_ID + ',' + REJECTED_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var acceptedNotesP = Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
+  var acceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': CONFERENCE_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var activityNotesP = $.Deferred().resolve([]);
-  if (user && !_.startsWith(user.id, 'guest_')) {
-    activityNotesP = Webfield2.api.getSubmissionsV2(WILDCARD_INVITATION, {
-      pageSize: PAGE_SIZE,
-      details: 'forumContent,writable'
-    });
-  }
-
-  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, rejectedNotesP, activityNotesP);
+  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, rejectedNotesP);
 }
 
 // Render functions
@@ -98,19 +90,16 @@ function renderConferenceHeader() {
 }
 
 function renderSubmissionButton() {
-  Webfield2.api.getSubmissionInvitationV2(SUBMISSION_ID)
-    .then(function(invitation) {
-      Webfield.ui.submissionButton(invitation, user, {
-        onNoteCreated: function() {
-          // Callback funtion to be run when a paper has successfully been submitted (required)
-          promptMessage('Your submission is complete. Check your inbox for a confirmation email. ');
+  Webfield2.ui.renderInvitationButton('#invitation', SUBMISSION_ID, {
+    onNoteCreated: function() {
+      // Callback funtion to be run when a paper has successfully been submitted (required)
+      promptMessage('Your submission is complete. Check your inbox for a confirmation email. ');
 
-          load().then(renderContent).then(function() {
-            $('.tabs-container a[href="#your-consoles"]').click();
-          });
-        }
+      load().then(renderContent).then(function() {
+        $('.tabs-container a[href="#your-consoles"]').click();
       });
-    });
+    }
+  });
 }
 
 function renderConferenceTabs() {
@@ -131,10 +120,6 @@ function renderConferenceTabs() {
   {
     heading: 'Rejected Submissions',
     id: 'rejected-submissions',
-  },
-  {
-    heading: 'Recent Activity',
-    id: 'recent-activity',
   }];
 
   Webfield.ui.tabPanel(sections, {
@@ -143,7 +128,7 @@ function renderConferenceTabs() {
   });
 }
 
-function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse, activityNotes) {
+function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse) {
 
   var acceptedPapers = acceptedResponse.notes || [];
   var acceptedPapersCount = acceptedResponse.count || 0;
@@ -156,7 +141,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       autoLoad: false
     });
 
-    Webfield2.ui.submissionListV2(acceptedPapers, {
+    Webfield2.ui.submissionList(acceptedPapers, {
       heading: null,
       container: '#accepted-papers',
       search: {
@@ -164,10 +149,10 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
         localSearch: false,
         invitation: SUBMISSION_ID,
         onResults: function(searchResults) {
-          Webfield.ui.searchResults(searchResults, searchResultsListOptions);
+          Webfield2.ui.searchResults(searchResults, searchResultsListOptions);
         },
         onReset: function() {
-          Webfield.ui.searchResults(notes, searchResultsListOptions);
+          Webfield2.ui.searchResults(notes, searchResultsListOptions);
           $('#accepted-papers').append(view.paginationLinks(acceptedPapersCount, PAGE_SIZE, 1));
         }
       },
@@ -176,7 +161,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       noteCount: acceptedPapersCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
+        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
           'content.venueid': CONFERENCE_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
@@ -200,7 +185,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       autoLoad: false
     });
 
-    Webfield2.ui.submissionListV2(underReviewSubmissions, {
+    Webfield2.ui.submissionList(underReviewSubmissions, {
       heading: null,
       container: '#under-review-submissions',
       search: {
@@ -208,10 +193,10 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
         localSearch: false,
         invitation: SUBMISSION_ID,
         onResults: function(searchResults) {
-          Webfield.ui.searchResults(searchResults, searchResultsListOptions);
+          Webfield2.ui.searchResults(searchResults, searchResultsListOptions);
         },
         onReset: function() {
-          Webfield.ui.searchResults(notes, searchResultsListOptions);
+          Webfield2.ui.searchResults(notes, searchResultsListOptions);
           $('#under-review-submissions').append(view.paginationLinks(underReviewCount, PAGE_SIZE, 1));
         }
       },
@@ -220,7 +205,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       noteCount: underReviewCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
+        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
           'content.venueid': UNDER_REVIEW_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
@@ -238,7 +223,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     $('#submissions').empty();
 
     var notes = submittedResponse.notes || [];
-    Webfield2.ui.submissionListV2(notes, {
+    Webfield2.ui.submissionList(notes, {
       heading: null,
       container: '#submissions',
       search: {
@@ -249,7 +234,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       noteCount: submissionNotesCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
+        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
           'content.venueid': SUBMITTED_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
@@ -267,7 +252,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     $('#rejected-submissions').empty();
 
     var rejectedNotesArray = rejectedResponse.notes || [];
-    Webfield2.ui.submissionListV2(rejectedNotesArray, {
+    Webfield2.ui.submissionList(rejectedNotesArray, {
       heading: null,
       container: '#rejected-submissions',
       search: {
@@ -278,7 +263,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       noteCount: rejectedNotesCount,
       pageSize: PAGE_SIZE,
       onPageClick: function(offset) {
-        return Webfield2.api.getSubmissionsV2(SUBMISSION_ID, {
+        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
           'content.venueid': REJECTED_ID,
           details: 'replyCount',
           pageSize: PAGE_SIZE,
@@ -289,23 +274,6 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     });
   } else {
     $('.tabs-container a[href="#rejected-submissions"]').parent().hide();
-  }
-
-  // Activity Tab
-  if (activityNotes.length) {
-    var displayOptions = {
-      container: '#recent-activity',
-      user: user && user.profile,
-      showActionButtons: true
-    };
-
-    $(displayOptions.container).empty();
-
-    Webfield2.ui.activityListV2(activityNotes, displayOptions);
-
-    $('.tabs-container a[href="#recent-activity"]').parent().show();
-  } else {
-    $('.tabs-container a[href="#recent-activity"]').parent().hide();
   }
 
   $('#notes .spinner-container').remove();
