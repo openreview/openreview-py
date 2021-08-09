@@ -35,9 +35,9 @@ var main = function() {
 var loadData = function() {
 
   return $.when(
-    Webfield2.utils.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
-    Webfield2.utils.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
-    Webfield2.utils.getSubmissions(SUBMISSION_ID)
+    Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
+    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+    Webfield2.api.getAllSubmissions(SUBMISSION_ID)
   );
 
 }

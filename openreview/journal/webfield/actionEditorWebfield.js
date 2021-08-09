@@ -33,13 +33,13 @@ var main = function() {
 
 var loadData = function() {
 
-  return Webfield2.utils.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
+  return Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
   .then(function(assignedGroups) {
     return $.when(
       assignedGroups,
-      Webfield2.utils.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
-      Webfield2.utils.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
-      Webfield2.utils.getSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)})
+      Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+      Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
+      Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)})
     );
   })
 

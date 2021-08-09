@@ -9,7 +9,7 @@
 // ------------------------------------
 
 // Constants
-var CONFERENCE_ID = '';
+var VENUE_ID = '';
 var SUBMISSION_ID = '';
 var SUBMITTED_ID = '';
 var UNDER_REVIEW_ID = '';
@@ -17,7 +17,7 @@ var DESK_REJECTED_ID = '';
 var REJECTED_ID = '';
 var HEADER = {};
 
-var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
+var WILDCARD_INVITATION = VENUE_ID + '/.*';
 var PAGE_SIZE = 50;
 
 var paperDisplayOptions = {
@@ -25,7 +25,7 @@ var paperDisplayOptions = {
   replyCount: true,
   showContents: true,
   showTags: false,
-  referrer: encodeURIComponent('[' + HEADER.short + '](/group?id=' + CONFERENCE_ID + ')')
+  referrer: encodeURIComponent('[' + HEADER.short + '](/group?id=' + VENUE_ID + ')')
 };
 var commentDisplayOptions = {
   pdfLink: false,
@@ -36,15 +36,26 @@ var commentDisplayOptions = {
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
-  Webfield.ui.setup('#group-container', CONFERENCE_ID);  // required
 
-  renderConferenceHeader();
+  Webfield2.ui.setup('#group-container', VENUE_ID, {
+    title: HEADER.title,
+    instructions: HEADER.instructions,
+    tabs: ['Accepted Papers', 'Under Review', 'Submissions', 'Rejected Submissions'],
+    referrer: args && args.referrer
+  })
 
-  renderSubmissionButton();
+  Webfield2.ui.renderInvitationButton('#invitation', SUBMISSION_ID, {
+    onNoteCreated: function() {
+      // Callback funtion to be run when a paper has successfully been submitted (required)
+      promptMessage('Your submission is complete. Check your inbox for a confirmation email. ');
 
-  renderConferenceTabs();
+      load().then(renderContent).then(function() {
+        $('.tabs-container a[href="#your-consoles"]').click();
+      });
+    }
+  });
 
-  load().then(renderContent).then(Webfield.ui.done);
+  load().then(renderContent).then(Webfield2.ui.done);
 }
 
 // Load makes all the API calls needed to get the data to render the page
@@ -73,7 +84,7 @@ function load() {
   });
 
   var acceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': CONFERENCE_ID,
+    'content.venueid': VENUE_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
@@ -83,51 +94,6 @@ function load() {
 }
 
 // Render functions
-function renderConferenceHeader() {
-  Webfield.ui.venueHeader(HEADER);
-
-  Webfield.ui.spinner('#notes', { inline: true });
-}
-
-function renderSubmissionButton() {
-  Webfield2.ui.renderInvitationButton('#invitation', SUBMISSION_ID, {
-    onNoteCreated: function() {
-      // Callback funtion to be run when a paper has successfully been submitted (required)
-      promptMessage('Your submission is complete. Check your inbox for a confirmation email. ');
-
-      load().then(renderContent).then(function() {
-        $('.tabs-container a[href="#your-consoles"]').click();
-      });
-    }
-  });
-}
-
-function renderConferenceTabs() {
-
-  var sections = [
-  {
-      heading: 'Accepted Papers',
-      id: 'accepted-papers',
-  },
-  {
-    heading: 'Under Review',
-    id: 'under-review-submissions',
-  },
-  {
-    heading: 'Submissions',
-    id: 'submissions',
-  },
-  {
-    heading: 'Rejected Submissions',
-    id: 'rejected-submissions',
-  }];
-
-  Webfield.ui.tabPanel(sections, {
-    container: '#notes',
-    hidden: true
-  });
-}
-
 function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse) {
 
   var acceptedPapers = acceptedResponse.notes || [];
@@ -177,17 +143,17 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
   var underReviewSubmissions = underReviewResponse.notes || [];
   var underReviewCount = underReviewResponse.count || 0;
 
-  $('#under-review-submissions').empty();
+  $('#under-review').empty();
 
   if (underReviewCount) {
     var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
-      container: '#under-review-submissions',
+      container: '#under-review',
       autoLoad: false
     });
 
     Webfield2.ui.submissionList(underReviewSubmissions, {
       heading: null,
-      container: '#under-review-submissions',
+      container: '#under-review',
       search: {
         enabled: true,
         localSearch: false,
@@ -215,7 +181,7 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
       fadeIn: false
     });
   } else {
-    $('.tabs-container a[href="#under-review-submissions"]').parent().hide();
+    $('.tabs-container a[href="#under-review"]').parent().hide();
   }
 
   var submissionNotesCount = submittedResponse.count || 0;
