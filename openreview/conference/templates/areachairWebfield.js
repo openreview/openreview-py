@@ -485,6 +485,9 @@ var renderStatusTable = function(conferenceStatusData, container) {
   });
 
   var filteredRows = null;
+  var toNumber = function(value) {
+    return value === 'N/A' ? 0 : value;
+  }
 
   // Sort form handler
   var order = 'desc';
@@ -495,12 +498,14 @@ var renderStatusTable = function(conferenceStatusData, container) {
     Number_of_Forum_Replies: function(row) { return row.reviewProgressData.forumReplyCount; },
     Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
     Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
-    Average_Rating: function(row) { return row.reviewProgressData.averageRating === 'N/A' ? 0 : row.reviewProgressData.averageRating; },
-    Max_Rating: function(row) { return row.reviewProgressData.maxRating === 'N/A' ? 0 : row.reviewProgressData.maxRating; },
-    Min_Rating: function(row) { return row.reviewProgressData.minRating === 'N/A' ? 0 : row.reviewProgressData.minRating; },
-    Average_Confidence: function(row) { return row.reviewProgressData.averageConfidence === 'N/A' ? 0 : row.reviewProgressData.averageConfidence; },
-    Max_Confidence: function(row) { return row.reviewProgressData.maxConfidence === 'N/A' ? 0 : row.reviewProgressData.maxConfidence; },
-    Min_Confidence: function(row) { return row.reviewProgressData.minConfidence === 'N/A' ? 0 : row.reviewProgressData.minConfidence; },
+    Average_Rating: function(row) { return toNumber(row.reviewProgressData.averageRating); },
+    Max_Rating: function(row) { return toNumber(row.reviewProgressData.maxRating); },
+    Min_Rating: function(row) { return toNumber(row.reviewProgressData.minRating); },
+    Rating_range: function(row) { return toNumber(row.reviewProgressData.maxRating) - toNumber(row.reviewProgressData.minRating); },
+    Average_Confidence: function(row) { return toNumber(row.reviewProgressData.averageConfidence); },
+    Max_Confidence: function(row) { return toNumber(row.reviewProgressData.maxConfidence); },
+    Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
+    Confidence_range: function(row) { return toNumber(row.reviewProgressData.maxConfidence) - toNumber(row.reviewProgressData.minConfidence); },
     Meta_Review_Recommendation: function(row) { return row.metaReviewData.recommendation; }
   };
 
