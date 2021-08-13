@@ -501,11 +501,11 @@ var renderStatusTable = function(conferenceStatusData, container) {
     Average_Rating: function(row) { return toNumber(row.reviewProgressData.averageRating); },
     Max_Rating: function(row) { return toNumber(row.reviewProgressData.maxRating); },
     Min_Rating: function(row) { return toNumber(row.reviewProgressData.minRating); },
-    Rating_range: function(row) { return toNumber(row.reviewProgressData.maxRating) - toNumber(row.reviewProgressData.minRating); },
+    Rating_Range: function(row) { return toNumber(row.reviewProgressData.maxRating) - toNumber(row.reviewProgressData.minRating); },
     Average_Confidence: function(row) { return toNumber(row.reviewProgressData.averageConfidence); },
     Max_Confidence: function(row) { return toNumber(row.reviewProgressData.maxConfidence); },
     Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
-    Confidence_range: function(row) { return toNumber(row.reviewProgressData.maxConfidence) - toNumber(row.reviewProgressData.minConfidence); },
+    Confidence_Range: function(row) { return toNumber(row.reviewProgressData.maxConfidence) - toNumber(row.reviewProgressData.minConfidence); },
     Meta_Review_Recommendation: function(row) { return row.metaReviewData.recommendation; }
   };
 
