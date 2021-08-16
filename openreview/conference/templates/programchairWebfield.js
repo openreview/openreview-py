@@ -1651,7 +1651,7 @@ var renderPaginatedTable = function($container, tableData, pageNumber) {
 
   var paginationHtml = null;
   if (tableData.rows.length > PAGE_SIZE) {
-    paginationHtml = view.paginationLinks(tableData.rows.length, PAGE_SIZE, pageNumber);
+    paginationHtml = view.paginationLinks(tableData.rows.length, PAGE_SIZE, pageNumber, null, { totalCount: true });
   }
 
   $container.append(tableHtml, paginationHtml);
