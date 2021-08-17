@@ -794,7 +794,8 @@ class Matching(object):
                             'Complete',
                             'Deploying',
                             'Deployed',
-                            'Deployment Error'
+                            'Deployment Error',
+                            'Queued'
                         ],
                         'order': 18
                     },
