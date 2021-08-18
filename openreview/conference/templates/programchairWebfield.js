@@ -1194,8 +1194,8 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
 var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery) {
   var searchType = container.substring(1).split('-')[0] + 's';
-  var placeHolder = enableQuery ? 'Enter search term or type + to start a query and press enter' : 'Search all ' + searchType + '...'
-  var searchBarWidth = enableQuery ? '440px' : '300px'
+  var placeHolder = enableQuery ? 'Enter search term or type + to start query search' : 'Search all ' + searchType + '...'
+  var searchBarWidth = enableQuery ? '350px' : '300px'
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
     '<input type="text" class="form-search form-control" class="form-control" placeholder="' + placeHolder + '" ' +
@@ -1353,9 +1353,11 @@ var displayPaperStatusTable = function() {
     Average_Rating: function(row) { return toNumber(row.reviewProgressData.averageRating); },
     Max_Rating: function(row) { return toNumber(row.reviewProgressData.maxRating); },
     Min_Rating: function(row) { return toNumber(row.reviewProgressData.minRating); },
+    Rating_Range: function(row) { return toNumber(row.reviewProgressData.maxRating) - toNumber(row.reviewProgressData.minRating); },
     Average_Confidence: function(row) { return toNumber(row.reviewProgressData.averageConfidence); },
     Max_Confidence: function(row) { return toNumber(row.reviewProgressData.maxConfidence); },
     Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
+    Confidence_Range: function(row) { return toNumber(row.reviewProgressData.maxConfidence) - toNumber(row.reviewProgressData.minConfidence); },
     Reviewers_Assigned: function(row) { return row.reviewProgressData.numReviewers; },
     Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
     Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
@@ -1419,6 +1421,7 @@ var displayPaperStatusTable = function() {
       conferenceStatusData.filteredRows = filteredRows
     }
     renderTable(container, filteredRows);
+    $(container + ' .btn-export-data').text(`Export ${filteredRows.length} records`)
   };
 
   // Message modal handler
@@ -1624,7 +1627,7 @@ var displayPaperStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviewers">Reviewers of selected papers with unsubmitted reviews</a></li>' +
       '</ul>' +
     '</div>' +
-    '<div class="btn-group"><button class="btn btn-export-data" type="button">Export</button></div>');
+    '<div class="btn-group"><button class="btn btn-export-data" type="button">Export ' + rowData.length + ' records</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been submitted. ' +
