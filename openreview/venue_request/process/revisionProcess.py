@@ -53,11 +53,15 @@ def process(client, note, invitation):
                     'No, I don\'t want to reveal any author identities.'],
                 'required': True
             }
-
+        decision_options = forum_note.content.get('decision_options')
+        if decision_options:
+            decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
+        else:
+            decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         content['home_page_tab_names'] = {
             'description': 'Change the name of the tab that you would like to use to list the papers by decision, please note the key must match with the decision options',
             'value-dict': {},
-            'default': { o:o for o in note.content.get('decision_options', ['Accept (Oral)', 'Accept (Poster)', 'Reject'])},
+            'default': { o:o for o in decision_options},
             'required': False
         }
 
