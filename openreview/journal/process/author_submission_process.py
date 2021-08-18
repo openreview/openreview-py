@@ -93,7 +93,7 @@ def process(client, edit, invitation):
                 readers=[venue_id, f'{paper_group_id}/Action_Editors'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                multiReply=False,
+                maxReplies=1,
                 edit={
                     'signatures': { 'values': [f'{paper_group_id}/Action_Editors'] },
                     'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
@@ -173,6 +173,7 @@ def process(client, edit, invitation):
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
+            maxReplies=1,
             edit={
                 'signatures': { 'values-regex': f'{paper_group.id}/Reviewer_.*|{paper_group.id}/Action_Editors' },
                 'readers': { 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}'] },
@@ -485,7 +486,7 @@ def process(client, edit, invitation):
                     'writers': {
                         'values': [venue_id, f'{paper_group.id}/Action_Editors']
                     },
-                    'signatures': { 'values-regex': '~.*' },
+                    'signatures': { 'values-regex': '~.*', 'optional': True },
                     'content': {
                         'title': {
                             'order': 1,

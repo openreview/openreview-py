@@ -294,7 +294,7 @@ class InvitationBuilder(object):
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                multiReply=False,
+                maxReplies=1,
                 edit={
                     'signatures': { 'values-regex': f'{action_editors_regex}|{venue_id}$' },
                     'readers': { 'values': [ 'everyone']},
@@ -334,7 +334,7 @@ class InvitationBuilder(object):
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                multiReply=False,
+                maxReplies=1,
                 edit={
                     'signatures': { 'values-regex': f'{action_editors_regex}|{venue_id}$' },
                     'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
@@ -368,7 +368,7 @@ class InvitationBuilder(object):
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                multiReply=False,
+                maxReplies=1,
                 edit={
                     'signatures': { 'values': [editor_in_chief_id] },
                     'readers': { 'values': [ 'everyone']},
@@ -428,7 +428,7 @@ class InvitationBuilder(object):
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                multiReply=False,
+                maxReplies=1,
                 edit={
                     'signatures': { 'values': [editor_in_chief_id] },
                     'readers': { 'values': [ venue_id, action_editors_value, authors_value]},

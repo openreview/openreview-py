@@ -1660,8 +1660,8 @@ class Invitation(object):
         ddate = None,
         tcdate = None,
         tmdate = None,
-        multiReply = None,
-        taskCompletionCount = None,
+        minReplies = None,
+        maxReplies = None,
         transform = None,
         bulk = None,
         reply_forum_views = [],
@@ -1678,8 +1678,8 @@ class Invitation(object):
         self.invitees = invitees
         self.noninvitees = noninvitees
         self.signatures = signatures
-        self.multiReply = multiReply
-        self.taskCompletionCount = taskCompletionCount
+        self.minReplies = minReplies
+        self.maxReplies = maxReplies
         self.edit = edit
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -1733,13 +1733,14 @@ class Invitation(object):
             'invitees': self.invitees,
             'noninvitees': self.noninvitees,
             'signatures': self.signatures,
-            'multiReply': self.multiReply,
             'transform': self.transform,
             'replyForumViews': self.reply_forum_views
         }
 
-        if  self.taskCompletionCount:
-            body['taskCompletionCount']=self.taskCompletionCount
+        if  self.minReplies:
+            body['minReplies']=self.minReplies
+        if  self.maxReplies:
+            body['maxReplies']=self.maxReplies
         if self.web:
             body['web']=self.web
         if  self.process:
@@ -1776,8 +1777,8 @@ class Invitation(object):
             invitees = i.get('invitees'),
             noninvitees = i.get('noninvitees'),
             signatures = i.get('signatures'),
-            multiReply = i.get('multiReply'),
-            taskCompletionCount = i.get('taskCompletionCount'),
+            minReplies = i.get('minReplies'),
+            maxReplies = i.get('maxReplies'),
             edit = i.get('edit'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),

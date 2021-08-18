@@ -371,7 +371,6 @@ class TestJournal():
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             note=Note(
                 id=comment_note_id,
-                signatures=['~Peter_Snow1'],
                 content={
                     'title': { 'value': 'Moderated comment' },
                     'comment': { 'value': 'Moderated content' }
@@ -413,6 +412,24 @@ class TestJournal():
         process_logs = openreview_client.get_process_logs(id = review_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+
+        ## Poster another review with the same signature and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number 1 of replies for this Invitation'):
+            review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+                signatures=[javier_anon_groups[0].id],
+                note=Note(
+                    content={
+                        'title': { 'value': 'another Review title 2' },
+                        'review': { 'value': 'This is another review 2' },
+                        'suggested_changes': { 'value': 'No changes' },
+                        'recommendation': { 'value': 'Accept' },
+                        'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
+                        'certification_recommendation': { 'value': 'Outstanding article' },
+                        'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                    }
+                )
+            )
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 2
