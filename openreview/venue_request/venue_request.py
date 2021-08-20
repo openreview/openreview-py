@@ -20,7 +20,7 @@ class VenueStages():
         revision_content['Additional Submission Options'] = {
             'order': 18,
             'value-dict': {},
-            'description': 'Configure additional options in the submission form. Valid JSON expected.'
+            'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
         revision_content['remove_submission_options'] = {
             'order': 19,
