@@ -66,7 +66,8 @@ class TestJournal():
         # text = messages[0]['content']['text']
         # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         # request_page(selenium, accept_url, alert=True)
-        openreview_client.add_members_to_group('.TMLR/Action_Editors', '~Joelle_Pineau1')
+        #openreview_client.add_members_to_group('.TMLR/Action_Editors', '~Joelle_Pineau1')
+        journal.set_action_editors(editors=['~Joelle_Pineau1'], custom_papers=[8])
 
         helpers.await_queue(openreview_client)
 

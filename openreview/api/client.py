@@ -1647,6 +1647,7 @@ class Invitation(object):
         invitees = None,
         signatures = None,
         edit = None,
+        type = 'Note',
         noninvitees = None,
         nonreaders = None,
         web = None,
@@ -1681,6 +1682,7 @@ class Invitation(object):
         self.minReplies = minReplies
         self.maxReplies = maxReplies
         self.edit = edit
+        self.type = type
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.bulk = bulk
@@ -1746,7 +1748,10 @@ class Invitation(object):
         if  self.process:
             body['process']=self.process
         if self.edit is not None:
-            body['edit']=self.edit
+            if self.type == 'Note':
+                body['edit']=self.edit
+            if self.type == 'Edge':
+                body['edge']=self.edit
         if self.bulk is not None:
             body['bulk']=self.bulk
         if hasattr(self,'preprocess'):
@@ -1793,5 +1798,86 @@ class Invitation(object):
         if 'preprocess' in i:
             invitation.preprocess = i['preprocess']
         return invitation
+
+class Edge(object):
+    def __init__(self, head, tail, invitation, readers, writers, signatures, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
+        self.id = id
+        self.invitation = invitation
+        self.head = head
+        self.tail = tail
+        self.weight = weight
+        self.label = label
+        self.cdate = cdate
+        self.ddate = ddate
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.writers = writers
+        self.signatures = signatures
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.tddate = tddate
+        self.tauthor = tauthor
+
+    def to_json(self):
+        '''
+        Returns serialized json string for a given object
+        '''
+        body = {
+            'invitation': self.invitation,
+            'readers': self.readers,
+            'writers': self.writers,
+            'signatures': self.signatures,
+            'head': self.head,
+            'tail': self.tail,
+        }
+        if self.id:
+            body['id'] = self.id
+        if self.cdate:
+            body['cdate'] = self.cdate
+        if self.ddate:
+            body['ddate'] = self.ddate
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+        if self.weight:
+            body['weight'] = self.weight
+        if self.label:
+            body['label'] = self.label
+
+        return body
+
+    @classmethod
+    def from_json(Edge, e):
+        '''
+        Returns a deserialized object from a json string
+
+        :arg t: The json string consisting of a serialized object of type "Edge"
+        '''
+        edge = Edge(
+            id = e.get('id'),
+            cdate = e.get('cdate'),
+            tcdate = e.get('tcdate'),
+            tmdate = e.get('tmdate'),
+            ddate = e.get('ddate'),
+            tddate = e.get('tddate'),
+            invitation = e.get('invitation'),
+            readers = e.get('readers'),
+            nonreaders = e.get('nonreaders'),
+            writers = e.get('writers'),
+            signatures = e.get('signatures'),
+            head = e.get('head'),
+            tail = e.get('tail'),
+            weight = e.get('weight'),
+            label = e.get('label'),
+            tauthor=e.get('tauthor')
+        )
+        return edge
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Edge(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
 
 

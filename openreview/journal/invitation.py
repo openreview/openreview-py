@@ -459,41 +459,40 @@ class InvitationBuilder(object):
         action_editors_id=journal.get_action_editors_id()
 
         custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
-        invitation = self.client.post_invitation(openreview.Invitation(
-            id=custom_papers_ae_invitation_id,
-            invitees=[editor_in_chief_id],
-            readers=[venue_id, editor_in_chief_id],
+        invitation = self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            reply={
-                'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, '{tail}']
-                },
-                'writers': {
-                    'values-copied': [venue_id, '{tail}']
-                },
-                'signatures': {
-                    'values': [venue_id]
-                },
-                'content': {
+            invitation=Invitation(
+                id=custom_papers_ae_invitation_id,
+                invitees=[venue_id, editor_in_chief_id],
+                readers=[venue_id, editor_in_chief_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                type='Edge',
+                edit={
+                    'readers': {
+                        'values': [venue_id, '${tail}']
+                    },
+                    'writers': {
+                        'values': [venue_id, '${tail}']
+                    },
+                    'signatures': {
+                        'values': [venue_id]
+                    },
                     'head': {
-                        'type': 'Group',
-                        'query': {
-                        'id': action_editors_id
-                        }
+                        'type': 'group',
+                        'value': action_editors_id
                     },
                     'tail': {
-                        'type': 'Profile',
-                        'query': {
-                            'group': action_editors_id
-                        }
+                        'type': 'profile',
+                        'member-of': action_editors_id
                     },
                     'weight': {
                         'value-regex': '[-+]?[0-9]*\\.?[0-9]*'
                     }
                 }
-            }))
+            )
+        )
 
     def set_ae_assignment_invitation(self, journal, note):
         number=note.number

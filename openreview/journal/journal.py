@@ -1,6 +1,7 @@
 from .. import openreview
 from .. import tools
 from . import invitation
+from openreview.api import Edge
 import os
 import re
 import json
@@ -54,24 +55,22 @@ class Journal(object):
     def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)
         self.invitation_builder.set_submission_invitation(self)
-        ## TODO: use API 1
-        ##self.invitation_builder.set_ae_custom_papers_invitation(self)
+        self.invitation_builder.set_ae_custom_papers_invitation(self)
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
         aes=self.get_action_editors_id()
         self.client.add_members_to_group(aes, editors)
-        ## TODO: use API 1
-        # for index,ae in enumerate(editors):
-        #     edge = openreview.Edge(invitation = f'{aes}/-/Custom_Max_Papers',
-        #         readers = [venue_id, ae],
-        #         writers = [venue_id],
-        #         signatures = [venue_id],
-        #         head = aes,
-        #         tail = ae,
-        #         weight=custom_papers[index]
-        #     )
-        #     self.client.post_edge(edge)
+        for index,ae in enumerate(editors):
+            edge = Edge(invitation = f'{aes}/-/Custom_Max_Papers',
+                readers = [venue_id, ae],
+                writers = [venue_id, ae],
+                signatures = [venue_id],
+                head = aes,
+                tail = ae,
+                weight=custom_papers[index]
+            )
+            self.client.post_edge(edge)
 
     def set_reviewers(self, reviewers):
         self.client.add_members_to_group(self.get_reviewers_id(), reviewers)
