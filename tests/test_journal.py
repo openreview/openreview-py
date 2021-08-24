@@ -248,9 +248,6 @@ class TestJournal():
         assert openreview_client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper3/Action_Editors")
 
-        # TODO: enable this when the API V2 is backward compatible
-        #journal.setup_ae_assignment(number=1)
-        #journal.setup_reviewer_assignment(number=1)
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
 
@@ -288,6 +285,10 @@ class TestJournal():
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Under_Review'
+
+        # TODO: enable this when the API V2 is backward compatible
+        journal.setup_ae_assignment(number=1)
+        #journal.setup_reviewer_assignment(number=1)
 
         ## Assign Action editor to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')

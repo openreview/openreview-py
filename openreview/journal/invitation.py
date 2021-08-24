@@ -494,110 +494,109 @@ class InvitationBuilder(object):
             )
         )
 
-    def set_ae_assignment_invitation(self, journal, note):
-        number=note.number
+    def set_ae_assignment_invitation(self, journal):
         venue_id=journal.venue_id
         editor_in_chief_id=journal.get_editors_in_chief_id()
         action_editors_id=journal.get_action_editors_id()
-        paper_action_editors_id=journal.get_action_editors_id(number=number)
-        paper_authors_id=journal.get_authors_id(number=number)
+        authors_id = journal.get_authors_id()
+        paper_action_editors_id=journal.get_action_editors_id(number='${{head}.number}')
+        paper_authors_id=journal.get_authors_id(number='${{head}.number}')
 
-        conflict_ae_invitation_id=f'{paper_action_editors_id}/-/Conflict'
+        conflict_ae_invitation_id=f'{action_editors_id}/-/Conflict'
         custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
 
-        note_id=note.id
         now = datetime.datetime.utcnow()
-        self.client.post_invitation(openreview.Invitation(
-            id=conflict_ae_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id, paper_authors_id],
+        self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            reply={
-                'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, paper_authors_id, '{tail}']
-                },
-                'writers': {
-                    'values': [venue_id]
-                },
-                'signatures': {
-                    'values': [venue_id]
-                },
-                'content': {
+            invitation=Invitation(
+                id=conflict_ae_invitation_id,
+                invitees=[venue_id],
+                readers=[venue_id, authors_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                type='Edge',
+                edit={
+                    'readers': {
+                        'values': [venue_id, paper_authors_id, '${tail}']
+                    },
+                    'writers': {
+                        'values': [venue_id]
+                    },
+                    'signatures': {
+                        'values': [venue_id]
+                    },
                     'head': {
-                        'type': 'Note',
-                        'query' : {
-                            'id': note_id
-                        }
+                        'type': 'note',
+                        'value-invitation': f'{venue_id}/-/Under_Review'
                     },
                     'tail': {
-                        'type': 'Profile',
-                        'query' : {
-                            'group' : action_editors_id
-                        }
+                        'type': 'profile',
+                        'member-of' : action_editors_id
                     },
                     'weight': {
                         'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
                     },
                     'label': {
-                        'value-regex': '.*'
+                        'value-regex': '.*',
+                        'optional': True
                     }
                 }
-            }))
+            )
+        )
 
-        affinity_score_ae_invitation_id=f'{paper_action_editors_id}/-/Affinity_Score'
-        self.client.post_invitation(openreview.Invitation(
-            id=affinity_score_ae_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id, paper_authors_id],
+        affinity_score_ae_invitation_id=f'{action_editors_id}/-/Affinity_Score'
+        self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            reply={
-                'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, paper_authors_id, '{tail}']
-                },
-                'writers': {
-                    'values': [venue_id]
-                },
-                'signatures': {
-                    'values': [venue_id]
-                },
-                'content': {
+            invitation=Invitation(
+                id=affinity_score_ae_invitation_id,
+                invitees=[venue_id],
+                readers=[venue_id, authors_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                type='Edge',
+                edit={
+                    'readers': {
+                        'values': [venue_id, paper_authors_id, '${tail}']
+                    },
+                    'writers': {
+                        'values': [venue_id]
+                    },
+                    'signatures': {
+                        'values': [venue_id]
+                    },
                     'head': {
-                        'type': 'Note',
-                        'query' : {
-                            'id': note_id
-                        }
+                        'type': 'note',
+                        'value-invitation': f'{venue_id}/-/Under_Review'
                     },
                     'tail': {
-                        'type': 'Profile',
-                        'query' : {
-                            'group' : action_editors_id
-                        }
+                        'type': 'profile',
+                        'member-of' : action_editors_id
                     },
                     'weight': {
                         'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
                     },
                     'label': {
-                        'value-regex': '.*'
+                        'value-regex': '.*',
+                        'optional': True
                     }
                 }
-            }))
+            )
+        )
 
-        suggest_ae_invitation_id=f'{paper_action_editors_id}/-/Recommendation'
-        invitation = self.client.post_invitation(openreview.Invitation(
+        suggest_ae_invitation_id=f'{action_editors_id}/-/Recommendation'
+        invitation = Invitation(
             id=suggest_ae_invitation_id,
             duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
-            invitees=[paper_authors_id],
-            readers=[venue_id, paper_authors_id],
+            invitees=[authors_id],
+            readers=[venue_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
-            taskCompletionCount=1,
-            reply={
+            minReplies=1,
+            type='Edge',
+            edit={
                 'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
                     'values': [venue_id, paper_authors_id]
                 },
                 'writers': {
@@ -606,24 +605,19 @@ class InvitationBuilder(object):
                 'signatures': {
                     'values': [paper_authors_id]
                 },
-                'content': {
-                    'head': {
-                        'type': 'Note',
-                        'query': {
-                            'id': note_id
-                        }
-                    },
-                    'tail': {
-                        'type': 'Profile',
-                        'query': {
-                            'group': action_editors_id
-                        }
-                    },
-                    'weight': {
-                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                    }
+                'head': {
+                    'type': 'note',
+                    'value-invitation': f'{venue_id}/-/Under_Review'
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : action_editors_id
+                },
+                'weight': {
+                    'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
                 }
-            }))
+            }
+        )
 
         header = {
             'title': 'TMLR Action Editor Suggestion',
@@ -641,8 +635,8 @@ class InvitationBuilder(object):
 
         conflict_id = conflict_ae_invitation_id
         score_ids = [affinity_score_ae_invitation_id]
-        start_param = invitation.id
-        edit_param = invitation.id
+        start_param = suggest_ae_invitation_id
+        edit_param = suggest_ae_invitation_id
         browse_param = ';'.join(score_ids)
         params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
         with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
@@ -651,20 +645,26 @@ class InvitationBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
             invitation.web = content
-            self.client.post_invitation(invitation)
+            self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=invitation
+            )
 
-        assign_ae_invitation_id=f'{paper_action_editors_id}/-/Paper_Assignment'
-        invitation = self.client.post_invitation(Invitation(
+
+
+        assign_ae_invitation_id=f'{action_editors_id}/-/Assignment'
+        invitation = Invitation(
             id=assign_ae_invitation_id,
             duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 20)),
             invitees=[editor_in_chief_id],
             readers=[venue_id, editor_in_chief_id],
             writers=[venue_id],
             signatures=[venue_id],
-            taskCompletionCount=1,
-            reply={
+            minReplies=1,
+            type='Edge',
+            edit={
                 'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
                     'values': [venue_id, editor_in_chief_id]
                 },
                 'writers': {
@@ -673,29 +673,28 @@ class InvitationBuilder(object):
                 'signatures': {
                     'values': [editor_in_chief_id]
                 },
-                'content': {
-                    'head': {
-                        'type': 'Note',
-                        'query': {
-                            'id': note_id
-                        }
-                    },
-                    'tail': {
-                        'type': 'Profile',
-                        'query': {
-                            'group': action_editors_id
-                        }
-                    },
-                    'weight': {
-                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*'
-                    }
+                'head': {
+                    'type': 'note',
+                    'value-invitation': f'{venue_id}/-/Under_Review'
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : action_editors_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                },
+                'label': {
+                    'value-regex': '.*',
+                    'optional': True
                 }
-            }))
+            }
+        )
+
         with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.js')) as f:
             content = f.read()
             content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + paper_action_editors_id + "';")
             invitation.process = content
-            self.client.post_invitation(invitation)
 
         header = {
             'title': 'TMLR Action Editor Assignment',
@@ -707,8 +706,8 @@ class InvitationBuilder(object):
                 <br>'
         }
 
-        start_param = invitation.id
-        edit_param = invitation.id
+        start_param = assign_ae_invitation_id
+        edit_param = assign_ae_invitation_id
         score_ids = [suggest_ae_invitation_id, affinity_score_ae_invitation_id, custom_papers_ae_invitation_id + ',head:ignore', conflict_ae_invitation_id]
         browse_param = ';'.join(score_ids)
         params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&referrer=[Return Instructions](/invitation?id={edit_param})'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param)
@@ -718,7 +717,11 @@ class InvitationBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
             invitation.web = content
-            self.client.post_invitation(invitation)
+            self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=invitation
+            )
 
     def set_reviewer_assignment_invitation(self, journal, note):
         venue_id=journal.venue_id

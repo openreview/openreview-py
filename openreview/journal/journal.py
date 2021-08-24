@@ -56,6 +56,7 @@ class Journal(object):
         self.setup_groups(support_role, editors)
         self.invitation_builder.set_submission_invitation(self)
         self.invitation_builder.set_ae_custom_papers_invitation(self)
+        self.invitation_builder.set_ae_assignment_invitation(self)
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
@@ -220,15 +221,14 @@ class Journal(object):
 
     def setup_ae_assignment(self, number):
         venue_id=self.venue_id
-        action_editors_id=self.get_action_editors_id(number=number)
+        action_editors_id=self.get_action_editors_id()
         authors_id=self.get_authors_id(number=number)
 
         note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=number)[0]
-        self.invitation_builder.set_ae_assignment_invitation(self, note)
 
         ## Create conflict and affinity score edges
         for ae in self.get_action_editors():
-            edge = openreview.Edge(invitation = f'{action_editors_id}/-/Affinity_Score',
+            edge = Edge(invitation = f'{action_editors_id}/-/Affinity_Score',
                 readers = [venue_id, authors_id, ae],
                 writers = [venue_id],
                 signatures = [venue_id],
@@ -240,7 +240,7 @@ class Journal(object):
 
             random_number=round(random.random(), 2)
             if random_number <= 0.3:
-                edge = openreview.Edge(invitation = f'{action_editors_id}/-/Conflict',
+                edge = Edge(invitation = f'{action_editors_id}/-/Conflict',
                     readers = [venue_id, authors_id, ae],
                     writers = [venue_id],
                     signatures = [venue_id],

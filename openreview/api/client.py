@@ -1783,8 +1783,8 @@ class Invitation(object):
             noninvitees = i.get('noninvitees'),
             signatures = i.get('signatures'),
             minReplies = i.get('minReplies'),
-            maxReplies = i.get('maxReplies'),
             edit = i.get('edit'),
+            maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
             bulk = i.get('bulk')
@@ -1797,6 +1797,9 @@ class Invitation(object):
             invitation.transform = i['transform']
         if 'preprocess' in i:
             invitation.preprocess = i['preprocess']
+        if 'edge' in i:
+            invitation.edit = i['edge']
+            invitation.type = 'Edge'
         return invitation
 
 class Edge(object):
