@@ -1142,7 +1142,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   // Partition into dated and not dated information
   pushToDatedArrays(invitationMap, SUBMISSION_ID, 'Paper Submissions');
-  pushToDatedArrays(invitationMap, REVIEWERS_ID, 'Reviewers Bidding');
+  pushToDatedArrays(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding');
 
   if (SENIOR_AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding');
