@@ -470,6 +470,11 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 type='Edge',
                 edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
                     'readers': {
                         'values': [venue_id, '${tail}']
                     },
@@ -517,6 +522,11 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 type='Edge',
                 edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
                     'readers': {
                         'values': [venue_id, paper_authors_id, '${tail}']
                     },
@@ -557,6 +567,11 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 type='Edge',
                 edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
                     'readers': {
                         'values': [venue_id, paper_authors_id, '${tail}']
                     },
@@ -596,6 +611,11 @@ class InvitationBuilder(object):
             minReplies=1,
             type='Edge',
             edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
                 'readers': {
                     'values': [venue_id, paper_authors_id]
                 },
@@ -664,8 +684,18 @@ class InvitationBuilder(object):
             minReplies=1,
             type='Edge',
             edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
                 'readers': {
                     'values': [venue_id, editor_in_chief_id]
+                },
+                'nonreaders': {
+                    'values': [],
+                    'optional': True,
+                    'nullable': True # make it compatible with the UI
                 },
                 'writers': {
                     'values': [venue_id, editor_in_chief_id]
