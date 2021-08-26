@@ -538,7 +538,7 @@ class InvitationBuilder(object):
                     },
                     'head': {
                         'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Under_Review'
+                        'value-invitation': f'{venue_id}/-/Author_Submission'
                     },
                     'tail': {
                         'type': 'profile',
@@ -583,7 +583,7 @@ class InvitationBuilder(object):
                     },
                     'head': {
                         'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Under_Review'
+                        'value-invitation': f'{venue_id}/-/Author_Submission'
                     },
                     'tail': {
                         'type': 'profile',
@@ -627,7 +627,7 @@ class InvitationBuilder(object):
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': f'{venue_id}/-/Under_Review'
+                    'value-invitation': f'{venue_id}/-/Author_Submission'
                 },
                 'tail': {
                     'type': 'profile',
@@ -705,7 +705,7 @@ class InvitationBuilder(object):
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': f'{venue_id}/-/Under_Review'
+                    'value-invitation': f'{venue_id}/-/Author_Submission'
                 },
                 'tail': {
                     'type': 'profile',
@@ -721,9 +721,13 @@ class InvitationBuilder(object):
             }
         )
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.py')) as f:
             content = f.read()
-            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + paper_action_editors_id + "';")
+            content = content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue_id + "'")
+            content = content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + venue_id+ "'")
+            content = content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + journal.get_action_editors_id(number='{number}') + "'")
+            content = content.replace("GROUP_NAME = ''", "GROUP_NAME = 'action editor'")
+            content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + journal.get_action_editors_id() + "'")
             invitation.process = content
 
         header = {
@@ -753,142 +757,159 @@ class InvitationBuilder(object):
                 invitation=invitation
             )
 
-    def set_reviewer_assignment_invitation(self, journal, note):
-        venue_id=journal.venue_id
-        note_id=note.id
-        number=note.number
+    def set_reviewer_assignment_invitation(self, journal):
+        venue_id = journal.venue_id
         now = datetime.datetime.utcnow()
-        reviewers_id=journal.get_reviewers_id()
-        paper_reviewers_id=journal.get_reviewers_id(number=number)
-        paper_action_editors_id=journal.get_action_editors_id(number=number)
+        reviewers_id = journal.get_reviewers_id()
+        action_editors = journal.get_action_editors_id()
+        paper_authors_id = journal.get_authors_id(number='${{head}.number}')
+        paper_reviewers_id = journal.get_reviewers_id(number='${{head}.number}')
+        paper_action_editors_id = journal.get_action_editors_id(number='${{head}.number}')
         editor_in_chief_id = journal.get_editors_in_chief_id()
 
-        conflict_reviewers_invitation_id=f'{paper_reviewers_id}/-/Conflict'
+        conflict_reviewers_invitation_id=f'{reviewers_id}/-/Conflict'
 
-        self.client.post_invitation(Invitation(
-            id=conflict_reviewers_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id, paper_action_editors_id],
+        self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            reply={
-                'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, paper_action_editors_id, '{tail}']
-                },
-                'writers': {
-                    'values': [venue_id]
-                },
-                'signatures': {
-                    'values': [venue_id]
-                },
-                'content': {
+            invitation=Invitation(
+                id=conflict_reviewers_invitation_id,
+                invitees=[venue_id],
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                type='Edge',
+                edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'readers': {
+                        'values': [venue_id, paper_action_editors_id, '${tail}']
+                    },
+                    'writers': {
+                        'values': [venue_id]
+                    },
+                    'signatures': {
+                        'values': [venue_id]
+                    },
                     'head': {
-                        'type': 'Note',
-                        'query' : {
-                            'id': note_id
-                        }
+                        'type': 'note',
+                        'value-invitation': f'{venue_id}/-/Under_Review'
                     },
                     'tail': {
-                        'type': 'Profile',
-                        'query' : {
-                            'group' : reviewers_id
-                        }
+                        'type': 'profile',
+                        'member-of' : reviewers_id
                     },
                     'weight': {
                         'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
                     },
                     'label': {
-                        'value-regex': '.*'
+                        'value-regex': '.*',
+                        'optional': True
                     }
                 }
-            }))
+            )
+        )
 
-        affinity_score_reviewers_invitation_id=f'{paper_reviewers_id}/-/Affinity_Score'
-        self.client.post_invitation(Invitation(
-            id=affinity_score_reviewers_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id, paper_action_editors_id],
+        affinity_score_reviewers_invitation_id=f'{reviewers_id}/-/Affinity_Score'
+        self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            reply={
-                'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values-copied': [venue_id, paper_action_editors_id, '{tail}']
-                },
-                'writers': {
-                    'values': [venue_id]
-                },
-                'signatures': {
-                    'values': [venue_id]
-                },
-                'content': {
+            invitation=Invitation(
+                id=affinity_score_reviewers_invitation_id,
+                invitees=[venue_id],
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                type='Edge',
+                edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'readers': {
+                        'values': [venue_id, paper_action_editors_id, '${tail}']
+                    },
+                    'writers': {
+                        'values': [venue_id]
+                    },
+                    'signatures': {
+                        'values': [venue_id]
+                    },
                     'head': {
-                        'type': 'Note',
-                        'query' : {
-                            'id': note_id
-                        }
+                        'type': 'note',
+                        'value-invitation': f'{venue_id}/-/Under_Review'
                     },
                     'tail': {
-                        'type': 'Profile',
-                        'query' : {
-                            'group' : reviewers_id
-                        }
+                        'type': 'profile',
+                        'member-of' : reviewers_id
                     },
                     'weight': {
                         'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
                     },
                     'label': {
-                        'value-regex': '.*'
+                        'value-regex': '.*',
+                        'optional': True
                     }
                 }
-            }))
+            )
+        )
 
-        ## Assign Reviewers, use API v1
-        assign_reviewers_invitation_id=f'{paper_reviewers_id}/-/Paper_Assignment'
-        invitation = self.client.post_invitation(Invitation(
+        assign_reviewers_invitation_id=f'{reviewers_id}/-/Assignment'
+        invitation = Invitation(
             id=assign_reviewers_invitation_id,
-            duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
-            invitees=[paper_action_editors_id],
-            readers=[venue_id, paper_action_editors_id],
+            invitees=[venue_id, action_editors],
+            readers=[venue_id, action_editors],
             writers=[venue_id],
             signatures=[venue_id],
-            taskCompletionCount=3,
-            reply={
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
                 'readers': {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values': [venue_id, paper_action_editors_id]
+                    'values': [venue_id, paper_action_editors_id, '${tail}']
+                },
+                'nonreaders': {
+                    'values': [paper_authors_id]
                 },
                 'writers': {
                     'values': [venue_id, paper_action_editors_id]
                 },
                 'signatures': {
-                    'values': [paper_action_editors_id]
+                    'values-regex': f'{venue_id}|{editor_in_chief_id}|{paper_action_editors_id}'
                 },
-                'content': {
-                    'head': {
-                        'type': 'Note',
-                        'query': {
-                            'id': note_id
-                        }
-                    },
-                    'tail': {
-                        'type': 'Profile',
-                        'query': {
-                            'group': reviewers_id
-                        }
-                    },
-                    'weight': {
-                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*'
-                    }
+                'head': {
+                    'type': 'note',
+                    'value-invitation': f'{venue_id}/-/Under_Review'
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : reviewers_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                },
+                'label': {
+                    'value-regex': '.*',
+                    'optional': True
                 }
-            }))
+            }
+        )
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.py')) as f:
             content = f.read()
-            content = content.replace("const REVIEWERS_ID = '';", "var REVIEWERS_ID = '" + paper_reviewers_id + "';")
+            content = content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue_id + "'")
+            content = content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + venue_id+ "'")
+            content = content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + journal.get_reviewers_id(number='{number}') + "'")
+            content = content.replace("GROUP_NAME = ''", "GROUP_NAME = 'reviewer'")
+            content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + journal.get_reviewers_id() + "'")
             invitation.process = content
-            self.client.post_invitation(invitation)
 
         header = {
             'title': 'TMLR Reviewer Assignment',
@@ -911,4 +932,8 @@ class InvitationBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
             invitation.web = content
-            self.client.post_invitation(invitation)
+            self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=invitation
+            )

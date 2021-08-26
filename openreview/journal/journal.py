@@ -57,6 +57,7 @@ class Journal(object):
         self.invitation_builder.set_submission_invitation(self)
         self.invitation_builder.set_ae_custom_papers_invitation(self)
         self.invitation_builder.set_ae_assignment_invitation(self)
+        self.invitation_builder.set_reviewer_assignment_invitation(self)
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
@@ -191,7 +192,6 @@ class Journal(object):
                         signatories=[],
                         members=[]))
 
-
         ## reviewers group
         reviewers_id = self.get_reviewers_id()
         self.client.post_group(openreview.Group(id=reviewers_id,
@@ -253,10 +253,9 @@ class Journal(object):
 
     def setup_reviewer_assignment(self, number):
         venue_id=self.venue_id
-        reviewers_id=self.get_reviewers_id(number=number)
+        reviewers_id=self.get_reviewers_id()
         action_editors_id=self.get_action_editors_id(number=number)
         note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=number)[0]
-        self.invitation_builder.set_reviewer_assignment_invitation(self, note)
 
         ## Create conflict and affinity score edges
         for r in self.get_reviewers():

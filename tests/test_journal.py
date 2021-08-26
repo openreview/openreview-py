@@ -251,23 +251,23 @@ class TestJournal():
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
 
-        ## Assign Action Editor
-        # paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Action_Editors/-/Paper_Assignment',
-        #     readers=[venue_id, editor_in_chief_group_id],
-        #     writers=[venue_id, editor_in_chief_group_id],
-        #     signatures=[editor_in_chief_group_id],
-        #     head=note_id_1,
-        #     tail='~Joelle_Pineau1',
-        #     weight=1
-        # ))
+        journal.setup_ae_assignment(number=1)
 
-        # helpers.await_queue(openreview_client)
-        # process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
-        # assert len(process_logs) == 1
-        # assert process_logs[0]['status'] == 'ok'
+        # Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_1,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
 
-        # TEMPORAL
-        raia_client.add_members_to_group(f'{venue_id}/Paper1/Action_Editors', '~Joelle_Pineau1')
+        helpers.await_queue(openreview_client)
+        process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
         ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
         assert ae_group.members == ['~Joelle_Pineau1']
 
@@ -285,10 +285,6 @@ class TestJournal():
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Under_Review'
-
-        # TODO: enable this when the API V2 is backward compatible
-        journal.setup_ae_assignment(number=1)
-        #journal.setup_reviewer_assignment(number=1)
 
         ## Assign Action editor to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
@@ -322,8 +318,57 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
 
-        ## Assign the reviewer
-        joelle_client.add_members_to_group(f"{venue_id}/Paper1/Reviewers", ['~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1'])
+        ## Assign the reviewers
+        journal.setup_reviewer_assignment(number=1)
+
+        ## David Belanger
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+        process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## Carlos Mondragon
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Carlos_Mondragon1'],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~Carlos_Mondragon1',
+            weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+        process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## Javier Burroni
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Javier_Burroni1'],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~Javier_Burroni1',
+            weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+        process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        reviewerrs_group = raia_client.get_group(f'{venue_id}/Paper1/Reviewers')
+        assert reviewerrs_group.members == ['~David_Belanger1', '~Carlos_Mondragon1', '~Javier_Burroni1']
+
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
