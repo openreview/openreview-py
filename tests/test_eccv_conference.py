@@ -354,7 +354,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to='mohit+1@mail.com', subject='[ECCV 2020] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for ECCV 2020.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
+        text = messages[0]['content']['text']
+        assert 'You have declined the invitation to become a Reviewer for ECCV 2020.' in text
+        assert 'If you would like to change your decision, please click the Accept link in the previous invitation email.' in text
+        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:' in text
 
         ## Reduce the load of Mohit
         notes = client.get_notes(invitation='thecvf.com/ECCV/2020/Conference/-/Recruit_Reviewers', content={'user': 'mohit+1@mail.com'})
@@ -531,11 +534,22 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         tauthor_message = [msg for msg in messages if msg['content']['to'] == note.tauthor][0]
         assert tauthor_message
-        assert tauthor_message['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3030/forum?id=' + note.id
+        text = tauthor_message['content']['text']
+        assert 'Your submission to ECCV 2020 has been updated.' in text
+        assert 'Submission Number: ' + str(note.number) in text
+        assert 'Title: ' + note.content['title'] in text
+        assert 'Abstract: ' + note.content['abstract'] in text
+        assert 'To view your submission, click here:' in text
 
         other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
         assert len(other_author_messages) == 2
-        assert other_author_messages[0]['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3030/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
+        text = other_author_messages[0]['content']['text']
+        assert 'Your submission to ECCV 2020 has been updated.' in text
+        assert 'Submission Number: ' + str(note.number) in text
+        assert 'Title: ' + note.content['title'] in text
+        assert 'Abstract: ' + note.content['abstract'] in text
+        assert 'To view your submission, click here:' in text
+        assert 'If you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor in text
 
     def test_revise_additional_files(self, conference, client, test_client):
 

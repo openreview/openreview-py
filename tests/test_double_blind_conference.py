@@ -533,7 +533,9 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
+        text = messages[0]['content']['text']
+        assert 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.<br>The AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.' in text
+        assert 'If you would like to change your decision, please click the Decline link in the previous invitation email.' in text
 
         # Reject invitation
         reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
@@ -559,7 +561,9 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for AKBC 2019.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\n'
+        text = messages[0]['content']['text']
+        assert 'You have declined the invitation to become a Reviewer for AKBC 2019.' in text
+        assert 'If you would like to change your decision, please click the Accept link in the previous invitation email.' in text
 
         # Accept invitation using encoded user email
         messages = client.get_messages(to = 'mbok@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
@@ -590,7 +594,9 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
         assert messages
         assert len(messages) == 2
-        assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
+        text = messages[0]['content']['text']
+        assert 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.<br>The AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.' in text
+        assert 'If you would like to change your decision, please click the Decline link in the previous invitation email.' in text
 
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
