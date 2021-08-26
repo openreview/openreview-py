@@ -2993,13 +2993,13 @@ var buildCSV = function(){
     var areachairProfileOne = {}
     var areachairProfileTwo = {'id':'-', 'name':'-', 'email':'-'}
 
-    if (areachairId) {
+    if (areachairId.length) {
       areachairProfileOne = findProfile(areachairId[0]);
       if (areachairId.length>1) {
         areachairProfileTwo = findProfile(areachairId[1]);
       }
     } else {
-      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chairs');
       areachairProfileOne.name = '-';
       areachairProfileOne.email = '-';
     }
