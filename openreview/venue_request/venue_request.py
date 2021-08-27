@@ -20,7 +20,7 @@ class VenueStages():
         revision_content['Additional Submission Options'] = {
             'order': 18,
             'value-dict': {},
-            'description': 'Configure additional options in the submission form. Valid JSON expected.'
+            'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
         revision_content['remove_submission_options'] = {
             'order': 19,
@@ -160,7 +160,7 @@ class VenueStages():
                 'order' : 28,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the review form. Valid JSON expected.'
+                'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'remove_review_form_options': {
                 'order': 29,
@@ -292,7 +292,7 @@ class VenueStages():
                 'order' : 30,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the meta review form. Valid JSON expected.'
+                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'remove_meta_review_form_options': {
                 'order': 31,
@@ -360,7 +360,7 @@ class VenueStages():
             'submission_revision_additional_options': {
                 'order': 39,
                 'value-dict': {},
-                'description': 'Configure additional options in the revision. Valid JSON expected.'
+                'description': 'Configure additional options in the revision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'submission_revision_remove_options': {
                 'order': 40,

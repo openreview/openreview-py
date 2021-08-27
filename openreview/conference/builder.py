@@ -1226,35 +1226,35 @@ class Conference(object):
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reduced_load_id'])
 
         role = 'reviewer' if reviewers_name == 'Reviewers' else 'area chair'
-        recruit_message = '''Dear {name},
+        recruit_message = f'''Dear {{name}},
 
-        You have been nominated by the program chair committee of '''+ self.get_short_name() + ''' to serve as '''+ role +'''. As a respected researcher in the area, we hope you will accept and help us make ''' + self.short_name + ''' a success.
+You have been nominated by the program chair committee of {self.get_short_name()} to serve as {role}. As a respected researcher in the area, we hope you will accept and help us make {self.get_short_name()} a success.
 
-        You are also welcome to submit papers, so please also consider submitting to '''+ self.get_short_name() + '''.
+You are also welcome to submit papers, so please also consider submitting to {self.get_short_name()}.
 
-        We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
 
-        To ACCEPT the invitation, please click on the following link:
+To ACCEPT the invitation, please click on the following link:
 
-        {accept_url}
+{{accept_url}}
 
-        To DECLINE the invitation, please click on the following link:
+To DECLINE the invitation, please click on the following link:
 
-        {decline_url}
+{{decline_url}}
 
-        Please answer within 10 days.
+Please answer within 10 days.
 
-        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-        If you have any questions, please contact {contact_info}.
+If you have any questions, please contact {{contact_info}}.
 
-        Cheers!
+Cheers!
 
-        Program Chairs
+Program Chairs
 
         '''
 
-        recruit_message_subj = '[' + self.get_short_name() + ']: Invitation to serve as ' + role.title()
+        recruit_message_subj = f'[{self.get_short_name()}]: Invitation to serve as {role.title()}'
 
         if title:
             recruit_message_subj = title

@@ -24,11 +24,13 @@ var REVIEWERS_ID = '';
 var AREA_CHAIRS_ID = '';
 var SENIOR_AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
+var SAC_ASSIGNMENT_LABEL = null;
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
+var SAC_ASSIGNMENT_INVITATION = SENIOR_AREA_CHAIRS_ID + '/-/Proposed_Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
 var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
 var SENIOR_AREA_CHAIRS_INVITED_ID = SENIOR_AREA_CHAIRS_ID ? SENIOR_AREA_CHAIRS_ID + '/Invited' : '';
@@ -94,7 +96,8 @@ var main = function() {
     getGroupMembersCount(SENIOR_AREA_CHAIRS_INVITED_ID),
     getRequestForm(),
     getRegistrationForms(),
-    getInvitationMap()
+    getInvitationMap(),
+    getSACEdges()
   ).then(function(
     reviewers,
     areaChairs,
@@ -113,7 +116,8 @@ var main = function() {
     seniorAreaChairsInvitedCount,
     requestForm,
     registrationForms,
-    invitationMap
+    invitationMap,
+    sacEdges
   ) {
     var noteNumbers = blindedNotes.map(function(note) { return note.number; });
     var acRankingByPaper = {};
@@ -126,6 +130,19 @@ var main = function() {
     var seniorAreaChairGroupMaps = buildSeniorAreaChairGroupMaps(noteNumbers, groups.seniorAreaChairGroups);
     var areaChairGroupMaps = buildAreaChairGroupMaps(noteNumbers, groups.areaChairGroups, groups.anonAreaChairGroups);
     var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, groups.reviewerGroups, groups.anonReviewerGroups);
+    var sacByAc = {};
+    var acsBySac = {};
+
+    sacEdges.forEach(function(edge) {
+      var ac = edge.head;
+      var sac = edge.tail;
+      sacByAc[ac] = sac;
+      if (!acsBySac[sac]) {
+        acsBySac[sac] = [];
+      }
+      acsBySac[sac].push(ac);
+    })
+
 
     blindedNotes.forEach(function(submission) {
       selectedNotesById[submission.id] = false;
@@ -161,6 +178,8 @@ var main = function() {
       reviewers: reviewers,
       areaChairs: areaChairs,
       seniorAreaChairs: seniorAreaChairs,
+      sacByAc: sacByAc,
+      acsBySac: acsBySac,
       blindedNotes: blindedNotes,
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
@@ -247,6 +266,15 @@ var main = function() {
   });
 };
 
+var getSACEdges = function() {
+  if (SENIOR_AREA_CHAIRS_ID) {
+    return Webfield.getAll('/edges', {
+      invitation: SAC_ASSIGNMENT_INVITATION,
+      label: SAC_ASSIGNMENT_LABEL
+    });
+  }
+  return $.Deferred().resolve([]);
+}
 
 // Ajax functions
 var getRequestForm = function() {
@@ -616,10 +644,10 @@ var findProfile = function(id) {
   }
 };
 
-var buildNoteMap = function(noteNumbers) {
+var buildNoteMap = function(noteNumbers, defaultArray) {
   var noteMap = Object.create(null);
   for (var i = 0; i < noteNumbers.length; i++) {
-    noteMap[noteNumbers[i]] = Object.create(null);
+    noteMap[noteNumbers[i]] = defaultArray ? [] : Object.create(null);
   }
   return noteMap;
 };
@@ -653,18 +681,20 @@ var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaCha
 };
 
 var buildSeniorAreaChairGroupMaps = function(noteNumbers, seniorAreaChairGroups) {
-  var noteMap = buildNoteMap(noteNumbers);
+  var noteMap = buildNoteMap(noteNumbers, true);
   var seniorAreaChairMap = {};
 
   seniorAreaChairGroups.forEach(function(g) {
     var num = getNumberfromGroup(g.id, 'Paper');
     if (num in noteMap) {
       g.members.forEach(function(member, index) {
-        noteMap[num] = member;
-        if (!(member in seniorAreaChairMap)) {
-          seniorAreaChairMap[member] = [];
+        if (member.startsWith('~')) {
+          noteMap[num].push(member);
+          if (!(member in seniorAreaChairMap)) {
+            seniorAreaChairMap[member] = [];
+          }
+          seniorAreaChairMap[member].push(num);
         }
-        seniorAreaChairMap[member].push(num);
       })
     }
   });
@@ -851,6 +881,15 @@ var renderHeader = function() {
     tabs.push({
       heading: 'Area Chair Status',
       id: 'areachair-status',
+      content: loadingMessage,
+      extraClasses: 'horizontal-scroll'
+    });
+  }
+
+  if (SENIOR_AREA_CHAIRS_ID) {
+    tabs.push({
+      heading: 'Senior Area Chair Status',
+      id: 'seniorareachair-status',
       content: loadingMessage,
       extraClasses: 'horizontal-scroll'
     });
@@ -1100,10 +1139,10 @@ var displayStatsAndConfiguration = function(conferenceStats) {
       notDatedElements.push(currContent);
     }
   }
-  
+
   // Partition into dated and not dated information
   pushToDatedArrays(invitationMap, SUBMISSION_ID, 'Paper Submissions');
-  pushToDatedArrays(invitationMap, REVIEWERS_ID, 'Reviewers Bidding');
+  pushToDatedArrays(invitationMap, REVIEWERS_ID + '/-/' + BID_NAME, 'Reviewers Bidding');
 
   if (SENIOR_AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding');
@@ -1653,7 +1692,7 @@ var renderPaginatedTable = function($container, tableData, pageNumber) {
 
   var paginationHtml = null;
   if (tableData.rows.length > PAGE_SIZE) {
-    paginationHtml = view.paginationLinks(tableData.rows.length, PAGE_SIZE, pageNumber, null, { totalCount: true });
+    paginationHtml = view.paginationLinks(tableData.rows.length, PAGE_SIZE, pageNumber, null, { showCount: true });
   }
 
   $container.append(tableHtml, paginationHtml);
@@ -1710,8 +1749,8 @@ var displayAreaChairsStatusTable = function() {
     });
 
     var seniorAreaChairProfile;
-    if (SENIOR_AREA_CHAIRS_ID && numbers && numbers.length) {
-      var seniorAreaChair = seniorAreaChairsByNoteNumber[numbers[0]];
+    if (SENIOR_AREA_CHAIRS_ID) {
+      var seniorAreaChair = conferenceStatusData.sacByAc[areaChair];
       seniorAreaChairProfile = findProfile(seniorAreaChair);
     }
 
@@ -1895,23 +1934,13 @@ var displaySeniorAreaChairsStatusTable = function() {
 
   var rowData = [];
   _.forEach(conferenceStatusData.seniorAreaChairs, function(seniorAreaChair, index) {
-    var numbers = noteNumbersBySeniorAc[seniorAreaChair];
+    var areaChairs = conferenceStatusData.acsBySac[seniorAreaChair];
     var areaChairData = [];
-    var seenAreaChairs = {};
-    _.forEach(numbers, function(number) {
-      var areaChair = areaChairByNoteNumber[number];
-      if (!areaChair) {
-        return;
-      }
-
-      _.forEach(areaChair, function(areaChairTildeId, areaChairHash) {
-        if (seenAreaChairs[areaChairTildeId]) return;
-        seenAreaChairs[areaChairTildeId] = true;
-        areaChairData.push({
-          id: areaChairTildeId,
-          hash: areaChairHash,
-          profile: findProfile(areaChairTildeId)
-        });
+    _.forEach(areaChairs, function(areaChairTildeId) {
+      areaChairData.push({
+        id: areaChairTildeId,
+        hash: '',
+        profile: findProfile(areaChairTildeId)
       });
     });
 
@@ -2248,14 +2277,20 @@ var paperTableReferrerUrl = encodeURIComponent('[Program Chair Console](/group?i
 var buildPaperTableRow = function(note) {
   var reviewerIds = note.details.reviewers;
   var areachairIds = note.details.areachairs;
+  var seniorAreaChairIds = note.details.seniorAreaChairs;
   var completedReviews = note.details.reviews;
   var metaReview = note.details.metaReview;
   var decision = note.details.decision;
   var areachairProfile = [];
+  var seniorAreaChairProfile = [];
 
-  for (var areaChairNum in areachairIds) {
-    areachairProfile.push(findProfile(areachairIds[areaChairNum]));
+  for(var areaChairNum in areachairIds) {
+    areachairProfile.push(findProfile(areachairIds[areaChairNum]))
   }
+
+  seniorAreaChairIds.forEach(function(seniorAreaChairId) {
+    seniorAreaChairProfile.push(findProfile(seniorAreaChairId))
+  })
 
   // Checkbox for selecting each row
   var cellCheck = { selected: false, noteId: note.id };
@@ -2362,6 +2397,13 @@ var buildPaperTableRow = function(note) {
     metaReview: metaReview,
     referrer: paperTableReferrerUrl
   };
+  if (seniorAreaChairProfile.length) {
+    var seniorAreaChair = {
+      name: seniorAreaChairProfile.map(function(p) { return p.name; }).join(', '),
+      email: seniorAreaChairProfile.map(function(p) { return p.email; }).join(', ')
+    }
+    areachairProgressData.seniorAreaChair = seniorAreaChair;
+  }
 
   return {
     cellCheck: cellCheck,
@@ -2951,13 +2993,13 @@ var buildCSV = function(){
     var areachairProfileOne = {}
     var areachairProfileTwo = {'id':'-', 'name':'-', 'email':'-'}
 
-    if (areachairId) {
+    if (areachairId.length) {
       areachairProfileOne = findProfile(areachairId[0]);
       if (areachairId.length>1) {
         areachairProfileTwo = findProfile(areachairId[1]);
       }
     } else {
-      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + note.number + '/Area_Chairs');
+      areachairProfileOne.id = view.prettyId(CONFERENCE_ID + '/Paper' + noteNumber + '/Area_Chairs');
       areachairProfileOne.name = '-';
       areachairProfileOne.email = '-';
     }

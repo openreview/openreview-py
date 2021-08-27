@@ -705,6 +705,7 @@ class TestVenueRequest():
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
@@ -740,7 +741,7 @@ class TestVenueRequest():
             signatures=[program_chairs],
             content={
                 'title': 'Paper Decision',
-                'decision': 'Accept (Oral)',
+                'decision': 'Accept',
                 'comment':  'Good paper. I like!'
             },
             forum=submission.forum,
@@ -883,6 +884,15 @@ class TestVenueRequest():
             '{}/Area_Chairs'.format(venue['venue_id']),
             '{}/Reviewers'.format(venue['venue_id']),
             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+
+        invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+
+        assert 'Accept' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Accept'] == 'Accept'
+        assert 'Revision Needed' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Revision Needed'] == 'Revision Needed'
+        assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
 
         #Post a post decision note
         now = datetime.datetime.utcnow()
