@@ -532,7 +532,7 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == '<p>Thank you for accepting the invitation to be a Reviewer for AKBC 2019.<br>The AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n'
+        assert messages[0]['content']['text'] == '<p>Thank you for accepting the invitation to be a Reviewer for AKBC 2019.<br>\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n'
 
         # Reject invitation
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -591,8 +591,7 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
         assert messages
         assert len(messages) == 2
-        assert messages[0]['content']['text'] == '<p>Thank you for accepting the invitation to be a Reviewer for AKBC 2019.<br>The AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n'
-
+        assert messages[0]['content']['text'] == '<p>Thank you for accepting the invitation to be a Reviewer for AKBC 2019.<br>\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n'
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
         assert result

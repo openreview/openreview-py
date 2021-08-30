@@ -546,7 +546,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
         assert len(other_author_messages) == 2
         text = other_author_messages[0]['content']['text']
-        assert text == f'<p>Your submission to ECCV 2020 has been updated.</p>\n<p>Submission Number: 5 </p>\n<p>Title: I have been updated </p>\n<p>Abstract: This is an abstract 5 </p>\n<p>To view your submission, click here: <a href=\"http://localhost:3030/forum?id={note.id}\">http://localhost:3030/forum?id={note.id}</a></p>\n<p>If you are not an author of this submission and would like to be removed, please contact the author who added you at <a href=\"mailto:test@mail.com\">test@mail.com</a></p>\n'
+        assert text == f'<p>Your submission to ECCV 2020 has been updated.</p>\n<p>Submission Number: 5</p>\n<p>Title: I have been updated</p>\n<p>Abstract: This is an abstract 5</p>\n<p>To view your submission, click here: <a href=\"http://localhost:3030/forum?id={note.id}\">http://localhost:3030/forum?id={note.id}</a></p>\n<p>If you are not an author of this submission and would like to be removed, please contact the author who added you at <a href=\"mailto:test@mail.com\">test@mail.com</a></p>\n'
 
     def test_revise_additional_files(self, conference, client, test_client):
 
