@@ -201,7 +201,7 @@ class Journal(object):
                         signatories=[venue_id],
                         members=[]
                         )
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersConsole.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
             reviewer_group.web = content
@@ -232,7 +232,7 @@ class Journal(object):
                         signatories=[venue_id],
                         members=[])
 
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsConsole.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
             authors_group.web = content

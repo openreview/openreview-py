@@ -255,7 +255,7 @@ class TestJournal():
 
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
-            readers=[venue_id, editor_in_chief_group_id],
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
             head=note_id_1,
