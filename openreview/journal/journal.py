@@ -194,14 +194,18 @@ class Journal(object):
 
         ## reviewers group
         reviewers_id = self.get_reviewers_id()
-        self.client.post_group(openreview.Group(id=reviewers_id,
-                        readers=[venue_id, action_editors_id],
+        reviewer_group = openreview.Group(id=reviewers_id,
+                        readers=[venue_id, action_editors_id, reviewers_id],
                         writers=[venue_id],
                         signatures=[venue_id],
                         signatories=[venue_id],
                         members=[]
-                        ))
-        ## TODO: add webfield console
+                        )
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersConsole.js')) as f:
+            content = f.read()
+            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
+            reviewer_group.web = content
+            self.client.post_group(reviewer_group)
 
         ## reviewers invited group
         self.client.post_group(openreview.Group(id=f'{reviewers_id}/Invited',
@@ -221,12 +225,18 @@ class Journal(object):
 
         ## authors group
         authors_id = self.get_authors_id()
-        self.client.post_group(openreview.Group(id=authors_id,
-                        readers=[venue_id],
+        authors_group = openreview.Group(id=authors_id,
+                        readers=[venue_id, authors_id],
                         writers=[venue_id],
                         signatures=[venue_id],
                         signatories=[venue_id],
-                        members=[]))
+                        members=[])
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsConsole.js')) as f:
+            content = f.read()
+            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
+            authors_group.web = content
+            self.client.post_group(authors_group)
 
     def setup_ae_assignment(self, number):
         venue_id=self.venue_id

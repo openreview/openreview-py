@@ -678,7 +678,7 @@ class InvitationBuilder(object):
             id=assign_ae_invitation_id,
             duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 20)),
             invitees=[editor_in_chief_id],
-            readers=[venue_id, editor_in_chief_id],
+            readers=[venue_id, editor_in_chief_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
@@ -690,7 +690,7 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, editor_in_chief_id]
+                    'values': [venue_id, editor_in_chief_id, '${tail}']
                 },
                 'nonreaders': {
                     'values': [],

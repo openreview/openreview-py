@@ -40,7 +40,7 @@ function main() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Accepted Papers', 'Under Review', 'Submissions', 'Rejected Submissions'],
+    tabs: ['Your Consoles', 'Accepted Papers', 'Under Review', 'Submissions', 'Rejected Submissions'],
     referrer: args && args.referrer
   })
 
@@ -90,11 +90,55 @@ function load() {
     includeCount: true
   });
 
-  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, rejectedNotesP);
+  var userGroupsP = $.Deferred().resolve([]);
+  if (user && !_.startsWith(user.id, 'guest_')) {
+    userGroupsP = Webfield2.getAll('/groups', { regex: VENUE_ID + '/.*', member: user.id, web: true });
+  }
+
+  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, rejectedNotesP, userGroupsP);
+}
+
+function createConsoleLinks(allGroups) {
+  var uniqueGroups = _.sortBy(_.uniq(allGroups));
+  var links = [];
+  uniqueGroups.forEach(function(group) {
+    var groupName = group.split('/').pop();
+    if (groupName.slice(-1) === 's') {
+      groupName = groupName.slice(0, -1);
+    }
+    links.push(
+      [
+        '<li class="note invitation-link">',
+        '<a href="/group?id=' + group + '">' + groupName.replace(/_/g, ' ') + ' Console</a>',
+        '</li>'
+      ].join('')
+    );
+  });
+
+  $('#your-consoles .submissions-list').append(links);
 }
 
 // Render functions
-function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse) {
+function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse, userGroups) {
+
+  // Your Consoles tab
+  if (userGroups.length) {
+
+    var $container = $('#your-consoles').empty();
+    $container.append('<ul class="list-unstyled submissions-list">');
+
+    var allConsoles = [];
+    userGroups.forEach(function(group) {
+      allConsoles.push(group.id);
+    });
+
+    // Render all console links for the user
+    createConsoleLinks(allConsoles);
+
+    $('.tabs-container a[href="#your-consoles"]').parent().show();
+  } else {
+    $('.tabs-container a[href="#your-consoles"]').parent().hide();
+  }
 
   var acceptedPapers = acceptedResponse.notes || [];
   var acceptedPapersCount = acceptedResponse.count || 0;
