@@ -219,6 +219,15 @@ class Journal(object):
                         signatories=[],
                         members=[]))
 
+        ## authors group
+        authors_id = self.get_authors_id()
+        self.client.post_group(openreview.Group(id=authors_id,
+                        readers=[venue_id],
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        signatories=[venue_id],
+                        members=[]))
+
     def setup_ae_assignment(self, number):
         venue_id=self.venue_id
         action_editors_id=self.get_action_editors_id()

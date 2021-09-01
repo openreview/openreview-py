@@ -20,6 +20,7 @@ def process(client, edit, invitation):
         signatories=[venue_id, authors_group_id],
         members=note.content['authorids']['value'] ## always update authors
     ))
+    client.add_members_to_group(f'{venue_id}/Authors', authors_group_id)
 
     action_editors_group_id=f'{paper_group.id}/Action_Editors'
     action_editors_group=openreview.tools.get_group(client, action_editors_group_id)

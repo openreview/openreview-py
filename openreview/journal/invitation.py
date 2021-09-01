@@ -775,7 +775,7 @@ class InvitationBuilder(object):
             invitation=Invitation(
                 id=conflict_reviewers_invitation_id,
                 invitees=[venue_id],
-                readers=[venue_id],
+                readers=[venue_id, action_editors],
                 writers=[venue_id],
                 signatures=[venue_id],
                 type='Edge',
@@ -820,7 +820,7 @@ class InvitationBuilder(object):
             invitation=Invitation(
                 id=affinity_score_reviewers_invitation_id,
                 invitees=[venue_id],
-                readers=[venue_id],
+                readers=[venue_id, action_editors],
                 writers=[venue_id],
                 signatures=[venue_id],
                 type='Edge',
