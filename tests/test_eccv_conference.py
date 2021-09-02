@@ -1703,4 +1703,4 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         for date_idx in range(1, len(retrieved_dates)):
             curr_date = retrieved_dates[date_idx]
             prev_date = retrieved_dates[date_idx - 1]
-            assert curr_date > prev_date
+            assert curr_date >= prev_date
