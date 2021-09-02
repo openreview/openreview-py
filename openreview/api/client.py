@@ -1841,7 +1841,7 @@ class Edge(object):
             body['ddate'] = self.ddate
         if self.nonreaders:
             body['nonreaders'] = self.nonreaders
-        if self.weight:
+        if self.weight is not None:
             body['weight'] = self.weight
         if self.label:
             body['label'] = self.label
