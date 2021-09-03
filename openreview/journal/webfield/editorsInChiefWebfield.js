@@ -25,7 +25,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Paper Status', 'test table'],
+    tabs: ['Paper Status', 'Reviewer Status', 'test table'],
     referrer: args && args.referrer
   })
 
@@ -42,18 +42,44 @@ var loadData = function() {
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
-    Webfield2.api.getAllSubmissions(SUBMISSION_ID)
+    Webfield2.api.getAllSubmissions(SUBMISSION_ID),
+    Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
+    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true})
   );
 
 }
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions) {
+var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   var submissionsByNumber = _.keyBy(submissions, 'number');
 
   //build the rows
-  var rows = [];
+  var paperStatusRows = [];
+  var reviewerStatusById = {};
+  reviewers.members.forEach(function(reviewer, index) {
+    reviewerStatusById[reviewer.id] = {
+      index: { number: index + 1 },
+      summary: {
+        id: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
+      },
+      reviewerProgressData: {
+        numCompletedMetaReviews: 0,
+        numCompletedReviews: 0,
+        numPapers: 0,
+        papers: [],
+        referrer: referrerUrl
+      },
+      reviewerStatusData: {
+        numCompletedReviews: 0,
+        numPapers: 0,
+        papers: [],
+        referrer: referrerUrl
+      }
+    };
+  });
 
   submissions.forEach(function(submission) {
     if (submission) {
@@ -67,8 +93,10 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions) {
       });
       var reviewers = reviewersByNumber[number];
       var actionEditors = aeByNumber[number];
-      var reviewerStatus = {};
-      var confidences = []
+      var paperReviewerStatus = {};
+      var confidences = [];
+      var completedReviews = reviews.length == reviewers.length;
+      var formattedSubmission = { id: submission.id, number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}};
 
       reviewers.forEach(function(reviewer) {
         var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
@@ -83,7 +111,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions) {
             'Review length': completedReview.content.review.value.length
           }
         }
-        reviewerStatus[reviewer.anonId] = {
+        paperReviewerStatus[reviewer.anonId] = {
           id: reviewer.id,
           name: view.prettyId(reviewer.id),
           email: reviewer.id,
@@ -96,6 +124,27 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions) {
             noteId: submission.id,
             invitationId: VENUE_ID + '/Paper' + number + '/-/Review'
           })
+        }
+        var reviewerStatus = reviewerStatusById[reviewer.id];
+        if (reviewerStatus) {
+          reviewerStatus.reviewerProgressData.numPapers += 1;
+          reviewerStatus.reviewerStatusData.numPapers += 1;
+          reviewerStatus.reviewerProgressData.papers.push({ note: formattedSubmission, review: completedReview});
+          reviewerStatus.reviewerStatusData.papers.push({
+              note: formattedSubmission,
+              numOfReviews: reviews.length,
+              numOfReviewers: reviewers.length,
+              metaReview: decision
+          });
+          if (decision) {
+            reviewerStatus.reviewerProgressData.numCompletedMetaReviews += 1;
+          }
+          if (completedReview){
+            reviewerStatus.reviewerProgressData.numCompletedReviews += 1;
+          }
+          if (completedReviews) {
+            reviewerStatus.reviewerStatusData.numCompletedReviews += 1;
+          }
         }
       })
 
@@ -112,16 +161,16 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions) {
         metaReview = { id: decision.id, forum: submission.id, content: { recommendation: decision.content.recommendation.value }};
       }
 
-      rows.push({
+      paperStatusRows.push({
         checkbox: { selected: false, noteId: submission.id },
         submissionNumber: { number: number},
-        submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
+        submission: formattedSubmission,
         reviewProgressData: {
           noteId: submission.id,
           paperNumber: number,
           numSubmittedReviews: reviews.length,
           numReviewers: reviewers.length,
-          reviewers: reviewerStatus,
+          reviewers: paperReviewerStatus,
           stats: stats,
           sendReminder: true,
         },
@@ -137,16 +186,16 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions) {
     }
   })
 
-
   return venueStatusData = {
-    rows: rows
+    paperStatusRows: paperStatusRows,
+    reviewerStatusRows: Object.values(reviewerStatusById)
   };
 }
 
 // Render functions
 var renderData = function(venueStatusData) {
 
-  Webfield2.ui.renderTable('#paper-status', venueStatusData.rows, {
+  Webfield2.ui.renderTable('#paper-status', venueStatusData.paperStatusRows, {
       headings: ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
       'Review Progress', 'Action Editor Recommendation', 'Decision'],
       renders: [
@@ -208,6 +257,28 @@ var renderData = function(venueStatusData) {
         $('.console-table th').eq(5).css('width', '12%');
       }
   })
+
+  Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
+    headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
+    renders: [
+      function(data) {
+        return '<strong class="note-number">' + data.number + '</strong>';
+      },
+      Handlebars.templates.committeeSummary,
+      Handlebars.templates.notesReviewerProgress,
+      Handlebars.templates.notesReviewerStatus
+    ],
+    sortOptions: {
+      Reviewer_Name: function(row) { return row.summary.name.toLowerCase(); },
+      Bids_Completed: function(row) { return row.summary.completedBids },
+      Papers_Assigned: function(row) { return row.reviewerProgressData.numPapers; },
+      Papers_with_Reviews_Missing: function(row) { return row.reviewerProgressData.numPapers - row.reviewerProgressData.numCompletedReviews; },
+      Papers_with_Reviews_Submitted: function(row) { return row.reviewerProgressData.numCompletedReviews; },
+      Papers_with_Completed_Reviews_Missing: function(row) { return row.reviewerStatusData.numPapers - row.reviewerStatusData.numCompletedReviews; },
+      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; }
+    },
+    extraClasses: 'console-table'
+})
 
   var options = {
     sortOptions: {
