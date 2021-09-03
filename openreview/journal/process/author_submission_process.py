@@ -326,6 +326,9 @@ def process(client, edit, invitation):
                             'order': 3,
                             'presentation': {
                                 'hidden': True,
+                            },
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Authors']
                             }
                         },
                         'authorids': {
@@ -334,7 +337,10 @@ def process(client, edit, invitation):
                                 'optional': True
                             },
                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                            'order': 4
+                            'order': 4,
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Authors']
+                            }
                         },
                         'pdf': {
                             'value': {
@@ -359,7 +365,10 @@ def process(client, edit, invitation):
                                 "optional": True
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 6
+                            "order": 6,
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers', f'{paper_group.id}/Authors']
+                            }
                         }
                     }
                 }

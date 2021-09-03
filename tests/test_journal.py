@@ -194,7 +194,7 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
-        assert note.content['authorids']['readers'] == ['.TMLR', '~SomeFirstName_User1', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
+        assert note.content['authorids']['readers'] == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
