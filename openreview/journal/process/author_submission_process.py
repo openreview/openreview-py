@@ -23,10 +23,12 @@ def process(client, edit, invitation):
     client.add_members_to_group(f'{venue_id}/Authors', authors_group_id)
 
     action_editors_group_id=f'{paper_group.id}/Action_Editors'
+    reviewers_group_id=f'{paper_group.id}/Reviewers'
+
     action_editors_group=openreview.tools.get_group(client, action_editors_group_id)
     if not action_editors_group:
         action_editors_group=client.post_group(openreview.Group(id=action_editors_group_id,
-            readers=[venue_id, action_editors_group_id],
+            readers=[venue_id, action_editors_group_id, reviewers_group_id],
             nonreaders=[authors_group_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -34,11 +36,11 @@ def process(client, edit, invitation):
             members=[]
         ))
 
-    reviewers_group_id=f'{paper_group.id}/Reviewers'
     reviewers_group=openreview.tools.get_group(client, reviewers_group_id)
     if not reviewers_group:
         reviewers_group=client.post_group(openreview.Group(id=reviewers_group_id,
-            readers=[venue_id, action_editors_group_id],
+            readers=[venue_id, action_editors_group_id, reviewers_group_id],
+            deanonymizers=[venue_id, action_editors_group_id],
             nonreaders=[authors_group_id],
             writers=[venue_id, action_editors_group_id],
             signatures=[venue_id],

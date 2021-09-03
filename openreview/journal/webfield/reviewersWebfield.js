@@ -73,7 +73,7 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
 
       rows.push({
         submissionNumber: { number: number},
-        submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}, referrer: referrerUrl},
+        submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: ['Anonymous']}, referrer: referrerUrl},
         reviewStatus: {
           invitationUrl: reviewInvitation && '/forum?id=' + submission.forum + '&noteId=' + submission.forum + '&invitationId=' + reviewInvitation.id + '&referrer=' + referrerUrl,
           review: review,
