@@ -66,7 +66,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         email: reviewer.email,
       },
       reviewerProgressData: {
-        numCompletedMetaReviews: 0,
         numCompletedReviews: 0,
         numPapers: 0,
         papers: [],
@@ -129,16 +128,13 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         if (reviewerStatus) {
           reviewerStatus.reviewerProgressData.numPapers += 1;
           reviewerStatus.reviewerStatusData.numPapers += 1;
-          reviewerStatus.reviewerProgressData.papers.push({ note: formattedSubmission, review: completedReview});
+          reviewerStatus.reviewerProgressData.papers.push({ note: formattedSubmission, review: { forum: completedReview.forum, status: status }});
           reviewerStatus.reviewerStatusData.papers.push({
               note: formattedSubmission,
               numOfReviews: reviews.length,
               numOfReviewers: reviewers.length,
               metaReview: decision
           });
-          if (decision) {
-            reviewerStatus.reviewerProgressData.numCompletedMetaReviews += 1;
-          }
           if (completedReview){
             reviewerStatus.reviewerProgressData.numCompletedReviews += 1;
           }
