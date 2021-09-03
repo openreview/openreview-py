@@ -25,7 +25,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Paper Status', 'Reviewer Status', 'test table'],
+    tabs: ['Paper Status', 'Action Editor Status', 'Reviewer Status', 'test table'],
     referrer: args && args.referrer
   })
 
@@ -79,6 +79,27 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
     };
   });
+  var actionEditorStatusById = {};
+  actionEditors.members.forEach(function(actionEditor, index) {
+    actionEditorStatusById[actionEditor.id] = {
+      index: { number: index + 1 },
+      summary: {
+        id: actionEditor.id,
+        name: actionEditor.name,
+        email: actionEditor.email,
+      },
+      reviewProgressData: {
+        numCompletedReviews: 0,
+        numPapers: 0,
+        papers: [],
+        referrer: referrerUrl
+      },
+      decisionProgressData: {
+        numCompletedMetaReviews: 0,
+        papers: []
+      }
+    };
+  });
 
   submissions.forEach(function(submission) {
     if (submission) {
@@ -87,17 +108,17 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var reviews = submission.details.directReplies.filter(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Review') >= 0;
       });
-      var decision = submission.details.directReplies.find(function(reply) {
+      var decisions = submission.details.directReplies.filter(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Decision') >= 0;
       });
-      var reviewers = reviewersByNumber[number];
-      var actionEditors = aeByNumber[number];
+      var paperReviewers = reviewersByNumber[number];
+      var paperActionEditors = aeByNumber[number];
       var paperReviewerStatus = {};
       var confidences = [];
-      var completedReviews = reviews.length == reviewers.length;
+      var completedReviews = reviews.length == paperReviewers.length;
       var formattedSubmission = { id: submission.id, number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}};
 
-      reviewers.forEach(function(reviewer) {
+      paperReviewers.forEach(function(reviewer) {
         var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
         var status = {};
         if (completedReview) {
@@ -132,8 +153,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           reviewerStatus.reviewerStatusData.papers.push({
               note: formattedSubmission,
               numOfReviews: reviews.length,
-              numOfReviewers: reviewers.length,
-              metaReview: decision
+              numOfReviewers: paperReviewers.length
           });
           if (completedReview){
             reviewerStatus.reviewerProgressData.numCompletedReviews += 1;
@@ -141,6 +161,29 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           if (completedReviews) {
             reviewerStatus.reviewerStatusData.numCompletedReviews += 1;
           }
+        }
+      })
+
+      paperActionEditors.forEach(function(actionEditor) {
+        var completedDecision = decisions.find(function(decision) { return decision.signatures[0].endsWith('/Action_Editor_' + actionEditor.anonId); });
+        var actionEditorStatus = actionEditorStatusById[actionEditor.id];
+        if (actionEditorStatus) {
+          actionEditorStatus.reviewProgressData.numPapers += 1;
+          if (completedDecision){
+            actionEditorStatus.decisionProgressData.numCompletedMetaReviews += 1;
+          }
+          if (completedReviews) {
+            actionEditorStatus.reviewProgressData.numCompletedReviews += 1;
+          }
+          actionEditorStatus.reviewProgressData.papers.push({
+              note: formattedSubmission,
+              numOfReviews: reviews.length,
+              numOfReviewers: paperReviewers.length
+          });
+          actionEditorStatus.decisionProgressData.papers.push({
+            note: formattedSubmission,
+            metaReview: completedDecision && { id: completedDecision.id, forum: submission.id, content: { recommendation: completedDecision.content.recommendation.value }}
+        });
         }
       })
 
@@ -153,6 +196,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       };
 
       var metaReview = null;
+      var decision = decisions.length && decisions[0];
       if (decision) {
         metaReview = { id: decision.id, forum: submission.id, content: { recommendation: decision.content.recommendation.value }};
       }
@@ -173,7 +217,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         areachairProgressData: {
           recommendation: metaReview && metaReview.content.recommendation,
           numMetaReview: metaReview ? 'One' : 'No',
-          areachair: { name: actionEditors.map(function(ae) { return view.prettyId(ae.id); }), email: actionEditors.map(function(ae) { return ae.id; }) },
+          areachair: { name: paperActionEditors.map(function(ae) { return view.prettyId(ae.id); }), email: paperActionEditors.map(function(ae) { return ae.id; }) },
           metaReview: metaReview,
           referrer: referrerUrl
         },
@@ -184,7 +228,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 
   return venueStatusData = {
     paperStatusRows: paperStatusRows,
-    reviewerStatusRows: Object.values(reviewerStatusById)
+    reviewerStatusRows: Object.values(reviewerStatusById),
+    actionEditorStatusRows: Object.values(actionEditorStatusById)
   };
 }
 
@@ -266,7 +311,6 @@ var renderData = function(venueStatusData) {
     ],
     sortOptions: {
       Reviewer_Name: function(row) { return row.summary.name.toLowerCase(); },
-      Bids_Completed: function(row) { return row.summary.completedBids },
       Papers_Assigned: function(row) { return row.reviewerProgressData.numPapers; },
       Papers_with_Reviews_Missing: function(row) { return row.reviewerProgressData.numPapers - row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Reviews_Submitted: function(row) { return row.reviewerProgressData.numCompletedReviews; },
@@ -274,7 +318,28 @@ var renderData = function(venueStatusData) {
       Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; }
     },
     extraClasses: 'console-table'
-})
+  })
+
+  Webfield2.ui.renderTable('#action-editor-status', venueStatusData.actionEditorStatusRows, {
+    headings: ['#', 'Action Editor', 'Review Progress', 'Status'],
+    renders: [
+      function(data) {
+        return '<strong class="note-number">' + data.number + '</strong>';
+      },
+      Handlebars.templates.committeeSummary,
+      Handlebars.templates.notesAreaChairProgress,
+      Handlebars.templates.notesAreaChairStatus
+    ],
+    sortOptions: {
+      Action_Editor_Name: function(row) { return row.summary.name.toLowerCase(); },
+      Papers_Assigned: function(row) { return row.reviewProgressData.numPapers; },
+      Papers_with_Completed_Review_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedReviews; },
+      Papers_with_Completed_Review: function(row) { return row.reviewProgressData.numCompletedReviews; },
+      Papers_with_Completed_MetaReview_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedMetaReviews; },
+      Papers_with_Completed_MetaReview: function(row) { return row.reviewProgressData.numCompletedMetaReviews; }
+    },
+    extraClasses: 'console-table'
+  })
 
   var options = {
     sortOptions: {
