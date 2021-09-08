@@ -41,7 +41,8 @@ function main() {
     title: HEADER.title,
     instructions: HEADER.instructions,
     tabs: ['Your Consoles', 'Accepted Papers', 'Under Review', 'Submissions', 'Rejected Submissions'],
-    referrer: args && args.referrer
+    referrer: args && args.referrer,
+    showBanner: false
   })
 
   Webfield2.ui.renderInvitationButton('#invitation', SUBMISSION_ID, {
