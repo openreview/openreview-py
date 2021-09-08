@@ -279,7 +279,8 @@ var renderData = function(venueStatusData) {
         confidenceMax: ['reviewProgressData.stats.Confidence.max'],
         confidenceMin: ['reviewProgressData.stats.Confidence.min'],
         recommendation: ['areachairProgressData.recommendation'],
-        decision: ['decision']
+        decision: ['decision'],
+        default: ['submissionNumber.number', 'submission.content.title']
       },
       reminderOptions: {
         container: 'a.send-reminder-link',
@@ -317,6 +318,11 @@ var renderData = function(venueStatusData) {
       Papers_with_Completed_Reviews_Missing: function(row) { return row.reviewerStatusData.numPapers - row.reviewerStatusData.numCompletedReviews; },
       Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; }
     },
+    searchProperties: {
+      name: ['summary.name'],
+      papersAssigned: ['reviewerProgressData.numPapers'],
+      default: ['summary.name']
+    },
     extraClasses: 'console-table'
   })
 
@@ -337,6 +343,11 @@ var renderData = function(venueStatusData) {
       Papers_with_Completed_Review: function(row) { return row.reviewProgressData.numCompletedReviews; },
       Papers_with_Completed_MetaReview_Missing: function(row) { return row.reviewProgressData.numPapers - row.reviewProgressData.numCompletedMetaReviews; },
       Papers_with_Completed_MetaReview: function(row) { return row.reviewProgressData.numCompletedMetaReviews; }
+    },
+    searchProperties: {
+      name: ['summary.name'],
+      papersAssigned: ['reviewProgressData.numPapers'],
+      default: ['summary.name']
     },
     extraClasses: 'console-table'
   })
