@@ -96,7 +96,7 @@ var renderData = function(venueStatusData) {
         var reviewList = reviews.map(function(review) {
           return '<li style="margin-bottom: .25rem;"><strong>' + view.prettyId(_.last(review.signatures[0].split('/'))) + ':</strong> Recommendation: ' + review.content.recommendation.value +
             ' / Confidence: ' + review.content.confidence.value +
-            '<br><a href="/forum?id=' + review.forum + '&noteId=' + review.id + '&referrer=' + data.referrer + '">Read Review</a>' +
+            '<br><a href="/forum?id=' + review.forum + '&noteId=' + review.id + '&referrer=' + data.referrer + '" target="_blank">Read Review</a>' +
             '</li>';
         });
         return '<div class="reviewer-progress">' +
