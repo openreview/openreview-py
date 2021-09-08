@@ -833,8 +833,7 @@ class OpenReviewClient(object):
         """
         response = requests.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
-        n = response.json()['edits'][0]
-        return Edit.from_json(n)
+        return Edit.from_json(response.json())
 
     def get_note_edits(self, noteId = None):
         """
@@ -1438,7 +1437,7 @@ class Edit(object):
         writers = None,
         signatures = None,
         note = None,
-        invitations = None,
+        invitation = None,
         nonreaders = None,
         cdate = None,
         ddate = None):
@@ -1459,8 +1458,8 @@ class Edit(object):
             self.signatures = signatures
         if (note):
             self.note = note
-        if (invitations):
-            self.invitations = invitations
+        if (invitation):
+            self.invitation = invitation
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1469,10 +1468,6 @@ class Edit(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
-
-    @property
-    def invitation(self):
-        return self.invitations[0] if self.invitations else None
 
     def to_json(self):
         """
@@ -1495,8 +1490,8 @@ class Edit(object):
             body['signatures'] = self.signatures
         if (self.note):
             body['note'] = self.note
-        if (self.invitations):
-            body['invitations'] = self.invitations
+        if (self.invitation):
+            body['invitation'] = self.invitation
 
         return body
 
@@ -1519,7 +1514,7 @@ class Edit(object):
             writers = e.get('writers'),
             signatures = e.get('signatures'),
             note = Note.from_json(e['note']) if 'note' in e else None,
-            invitations = e.get('invitations'),
+            invitation = e.get('invitation'),
             )
         return edit
 
