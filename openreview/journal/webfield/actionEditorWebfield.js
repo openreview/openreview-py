@@ -109,7 +109,6 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
       };
 
       rows.push({
-        checkbox: { selected: false, noteId: submission.id },
         submissionNumber: { number: number},
         submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
         reviewProgressData: {
@@ -142,14 +141,9 @@ var renderData = function(venueStatusData) {
   Webfield2.ui.renderTasks('#action-editor-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#action-editor-tasks)')});
 
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
-      headings: ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
+      headings: ['#', 'Paper Summary',
       'Review Progress', 'Decision Status'],
       renders: [
-        function(data) {
-          var checked = data.selected ? 'checked="checked"' : '';
-          return '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
-            data.noteId + '" ' + checked + '></label>';
-        },
         function(data) {
           return '<strong class="note-number">' + data.number + '</strong>';
         },
