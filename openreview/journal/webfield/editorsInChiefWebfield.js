@@ -111,8 +111,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var decisions = submission.details.directReplies.filter(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Decision') >= 0;
       });
-      var paperReviewers = reviewersByNumber[number];
-      var paperActionEditors = aeByNumber[number];
+      var paperReviewers = reviewersByNumber[number] || [];
+      var paperActionEditors = aeByNumber[number] || [];
       var paperReviewerStatus = {};
       var confidences = [];
       var completedReviews = reviews.length == paperReviewers.length;
@@ -149,7 +149,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         if (reviewerStatus) {
           reviewerStatus.reviewerProgressData.numPapers += 1;
           reviewerStatus.reviewerStatusData.numPapers += 1;
-          reviewerStatus.reviewerProgressData.papers.push({ note: formattedSubmission, review: { forum: completedReview.forum, status: status }});
+          reviewerStatus.reviewerProgressData.papers.push({ note: formattedSubmission, review: completedReview ? { forum: completedReview.forum, status: status } : null});
           reviewerStatus.reviewerStatusData.papers.push({
               note: formattedSubmission,
               numOfReviews: reviews.length,
@@ -202,14 +202,13 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
 
       paperStatusRows.push({
-        checkbox: { selected: false, noteId: submission.id },
         submissionNumber: { number: number},
         submission: formattedSubmission,
         reviewProgressData: {
           noteId: submission.id,
           paperNumber: number,
           numSubmittedReviews: reviews.length,
-          numReviewers: reviewers.length,
+          numReviewers: paperReviewers.length,
           reviewers: paperReviewerStatus,
           stats: stats,
           sendReminder: true,
@@ -237,14 +236,9 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 var renderData = function(venueStatusData) {
 
   Webfield2.ui.renderTable('#paper-status', venueStatusData.paperStatusRows, {
-      headings: ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary',
+      headings: ['#', 'Paper Summary',
       'Review Progress', 'Action Editor Recommendation', 'Decision'],
       renders: [
-        function(data) {
-          var checked = data.selected ? 'checked="checked"' : '';
-          return '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
-            data.noteId + '" ' + checked + '></label>';
-        },
         function(data) {
           return '<strong class="note-number">' + data.number + '</strong>';
         },
@@ -291,12 +285,11 @@ var renderData = function(venueStatusData) {
       },
       extraClasses: 'console-table paper-table',
       postRenderTable: function() {
-        $('.console-table th').eq(0).css('width', '3%');
-        $('.console-table th').eq(1).css('width', '5%');
-        $('.console-table th').eq(2).css('width', '22%');
-        $('.console-table th').eq(3).css('width', '30%');
-        $('.console-table th').eq(4).css('width', '28%');
-        $('.console-table th').eq(5).css('width', '12%');
+        $('.console-table th').eq(0).css('width', '5%');
+        $('.console-table th').eq(1).css('width', '25%');
+        $('.console-table th').eq(2).css('width', '30%');
+        $('.console-table th').eq(3).css('width', '28%');
+        $('.console-table th').eq(4).css('width', '12%');
       }
   })
 

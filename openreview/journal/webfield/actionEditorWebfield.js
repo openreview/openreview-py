@@ -67,7 +67,7 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
       var decision = submission.details.directReplies.find(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Decision') >= 0;
       });
-      var reviewers = reviewersByNumber[number];
+      var reviewers = reviewersByNumber[number] || [];
       var reviewerStatus = {};
       var confidences = []
 
