@@ -833,7 +833,8 @@ class OpenReviewClient(object):
         """
         response = requests.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
-        return Edit.from_json(response.json())
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
 
     def get_note_edits(self, noteId = None):
         """
