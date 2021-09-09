@@ -1064,7 +1064,7 @@ class PaperReviewRatingInvitation(openreview.Invitation):
             'replyto': review.id,
             'readers': {
                 'description': 'Select all user groups that should be able to read this comment.',
-                'values': readers
+                'values-copied': readers
             },
             'writers': {
                 'values-copied': [conference.get_id(), '{signatures}'],
