@@ -281,7 +281,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed to retrieve conflict invitation')
 
         edges = []
-        
+
         # Redo submission-author-user loop from _build_note_conflicts
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
             # Get author profiles
@@ -336,7 +336,7 @@ class Matching(object):
         if intended_edges_posted < edges_posted:
             raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Conflicts found: {0}, Edges posted: {1}'.format(intended_edges_posted, edges_posted))
         return invitation
-        
+
 
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
         '''
@@ -1164,6 +1164,38 @@ class Matching(object):
         print('POsting assignments edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=self.client, edges=assignment_edges)
 
+    def invite_proposed_assignments(self, assignment_title):
+
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select=None)}
+        invite_assignment_edges = []
+        invite_assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, invite=True)
+
+        for paper in tqdm(papers, total=len(papers)):
+
+            if paper.id in proposed_assignment_edges:
+                proposed_edges=proposed_assignment_edges[paper.id]
+                for proposed_edge in proposed_edges:
+                    invite_edge=openreview.Edge(
+                        invitation=invite_assignment_invitation_id,
+                        head=proposed_edge['head'],
+                        tail=proposed_edge['tail'],
+                        label='Invitation Sent',
+                        readers=proposed_edge['readers'],
+                        nonreaders=proposed_edge['nonreaders'],
+                        writers=[self.conference.id],
+                        signatures=proposed_edge['signatures']
+                    )
+                    posted_edge=self.client.post_edge(invite_edge)
+                    invite_assignment_edges.append(posted_edge)
+
+            else:
+                print('assignment not found', paper.id)
+
+        print('Posted invite assignment edges', len(invite_assignment_edges))
+        return invite_assignment_edges
+
     def deploy_sac_assignments(self, assignment_title, overwrite):
 
         print('deploy_sac_assignments', assignment_title)
@@ -1230,3 +1262,18 @@ class Matching(object):
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
+
+    def deploy_invite(self, assignment_title, email_template=None):
+
+        ## Add sync process function
+        self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id)
+        self.conference.invitation_builder.set_assignment_invitation(self.conference, self.match_group.id)
+
+        ## Create invite assignment invitation
+        hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+        self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=self.match_group.id.split('/')[-1], email_template=email_template)
+
+        ## Create invite assignment edges
+        return self.invite_proposed_assignments(assignment_title)
+
+
