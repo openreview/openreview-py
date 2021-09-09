@@ -61,13 +61,11 @@ class TestJournal():
         assert len(messages) == 9
 
         # Disable this until note editor is working
-        # messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor', to='joelle@mail.com')
-        # assert len(messages) == 1
-        # text = messages[0]['content']['text']
-        # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        # request_page(selenium, accept_url, alert=True)
-        #openreview_client.add_members_to_group('.TMLR/Action_Editors', '~Joelle_Pineau1')
-        journal.set_action_editors(editors=['~Joelle_Pineau1'], custom_papers=[8])
+        messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor', to='joelle@mail.com')
+        assert len(messages) == 1
+        text = messages[0]['content']['text']
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue(openreview_client)
 
@@ -84,12 +82,10 @@ class TestJournal():
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer')
         assert len(messages) == 6
 
-        # Disable this until note editor is working
-        # for message in messages:
-        #     text = message['content']['text']
-        #     accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        #     request_page(selenium, accept_url, alert=True)
-        openreview_client.add_members_to_group('.TMLR/Reviewers', ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+        for message in messages:
+            text = message['content']['text']
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+            request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue(openreview_client)
 
