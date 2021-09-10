@@ -419,3 +419,50 @@ To check all of your assigned papers, go to https://openreview.net/group?id=aclw
 Thank you,
 
 ACL ARR 2021 September Program Chairs'''
+
+        ## Reviewer reviewer_arr2@mit.edu declines the invitation
+        invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Reviewer_ARR_MIT1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        messages = client.get_messages(to='reviewer_arr2@mit.edu', subject='[ARR 2021 - September] Invitation to review paper titled Paper title 5')
+        assert messages and len(messages) == 1
+        invitation_message=messages[0]['content']['text']
+
+        decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, decline_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from ACL Rolling Review - September 2021.' == messages[0].text
+
+        helpers.await_queue()
+
+        invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Reviewer_ARR_MIT1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Declined'
+
+        assert client.get_groups('aclweb.org/ACL/ARR/2021/September/Reviewers', member='~Reviewer_ARR_MIT1')
+        assert not client.get_groups('aclweb.org/ACL/ARR/2021/September/Paper5/Reviewers', member='~Reviewer_ARR_MIT1')
+
+        # Confirmation email to the reviewer
+        messages = client.get_messages(to='reviewer_arr2@mit.edu', subject='[ARR 2021 - September] Reviewer Invitation declined for paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Reviewer ARR MIT,
+You have declined the invitation to review the paper number: 5, title: Paper title 5.
+
+If you would like to change your decision, please click the Accept link in the previous invitation email.
+
+OpenReview Team'''
+
+        # Confirmation email to the area chair
+        messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Reviewer ARR MIT declined to review paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Area CMUChair,
+The Reviewer Reviewer ARR MIT(reviewer_arr2@mit.edu) that was invited to review paper 5 has declined the invitation.
+
+Please go to the Area Chair console: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs to invite another reviewer.
+
+OpenReview Team'''
+
