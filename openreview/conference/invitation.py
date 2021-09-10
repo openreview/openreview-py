@@ -1281,7 +1281,7 @@ class PaperGroupInvitation(openreview.Invitation):
 
 class PaperRecruitmentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, invited_label, accepted_label, declined_label):
+    def __init__(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, process_file, invited_label, accepted_label, declined_label):
 
         content=invitations.recruitment
         content['submission_id'] = {
@@ -1298,12 +1298,12 @@ class PaperRecruitmentInvitation(openreview.Invitation):
         }
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_process.py')) as post:
+            with open(os.path.join(os.path.dirname(__file__), process_file)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
                 post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
-                post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
+                post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + conference.get_committee_name(committee_id, pretty=True) + "'")
                 post_content = post_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
                 post_content = post_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
                 pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
@@ -1935,10 +1935,13 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(PaperGroupInvitation(conference, committee_id, with_process_function))
 
-    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined'):
+    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
 
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
-        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None, invited_label, accepted_label, declined_label))
+        ## Use a simpler process function when the recruitment comes from proposed assignments: no conflict check, no profile check, etc.
+        process_file='templates/simple_paper_recruitment_process.py' if proposed else 'templates/paper_recruitment_process.py'
+        web=current_invitation.web if current_invitation else None
+        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, process_file, invited_label, accepted_label, declined_label))
 
     def set_assignment_invitation(self, conference, committee_id):
 

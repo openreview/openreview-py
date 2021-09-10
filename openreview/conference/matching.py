@@ -930,7 +930,7 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
-    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None):
+    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None, proposed=False):
 
         invite_label=invitation_labels.get('Invite', 'Invitation Sent')
         invited_label=invitation_labels.get('Invited', 'Invitation Sent')
@@ -980,7 +980,8 @@ class Matching(object):
             due_date,
             invited_label=invited_label,
             accepted_label=accepted_label,
-            declined_label=declined_label
+            declined_label=declined_label,
+            proposed=proposed
         )
         invitation = self.conference.webfield_builder.set_paper_recruitment_page(self.conference, invitation)
 
@@ -1263,7 +1264,7 @@ class Matching(object):
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
 
-    def deploy_invite(self, assignment_title, email_template=None):
+    def deploy_invite(self, assignment_title, enable_reviewer_reassignment, email_template=None):
 
         ## Add sync process function
         self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id)
@@ -1271,9 +1272,21 @@ class Matching(object):
 
         ## Create invite assignment invitation
         hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
-        self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=self.match_group.id.split('/')[-1], email_template=email_template)
+        self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=self.match_group.id.split('/')[-1], email_template=email_template, proposed=True)
 
         ## Create invite assignment edges
-        return self.invite_proposed_assignments(assignment_title)
+        invite_assignments_edges = self.invite_proposed_assignments(assignment_title)
+
+        if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
+            ## Change the AC console to show the edge browser link
+            ## self.conference.enable_reviewer_reassignment()
+            a = 1
+
+        if self.match_group.id == self.conference.get_area_chairs_id() and enable_reviewer_reassignment:
+            ## Change the AC console to show the edge browser link
+            ## self.conference.enable_reviewer_reassignment(assignment_title=reviewer_assignment_title)
+            b = 1
+
+        return invite_assignments_edges
 
 

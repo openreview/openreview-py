@@ -213,7 +213,7 @@ class TestNeurIPSConference():
         ))
 
 
-        invite_assignment_edges=venue.invite_assignments(assignment_title='ac-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
+        invite_assignment_edges=venue.set_invite_assignments(assignment_title='ac-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
         assert len(invite_assignment_edges) == 5
 
         helpers.await_queue()
@@ -227,6 +227,7 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
+        ## AC 1 accepts the invitation
         accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
@@ -245,17 +246,30 @@ class TestNeurIPSConference():
         assert client.get_groups('aclweb.org/ACL/ARR/2021/September/Area_Chairs', member='~Area_CMUChair1')
         assert client.get_groups('aclweb.org/ACL/ARR/2021/September/Paper5/Area_Chairs', member='~Area_CMUChair1')
 
-        # Confirmation email to the reviewer
-        messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Invitation accepted for paper 5')
+        # Confirmation email to the area chair
+        messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Area Chair Invitation accepted for paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
+Thank you for accepting the invitation to serve as area chair for the paper number: 5, title: Paper title 5.
 
-Please go to the ARR 2021 - September Reviewers Console and check your pending tasks: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs
+Please go to the ARR 2021 - September Area Chair Console and check your pending tasks: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs.
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
 OpenReview Team'''
 
+
+        # Assignment email to the area chair
+        messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] You have been assigned as a Area Chair for paper number 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Area Chair for paper number 5 for ARR 2021 - September.
+
+To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submissions[0].id}.
+
+To check all of your assigned papers, go to https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs.
+
+Thank you,
+
+ACL ARR 2021 September Program Chairs'''
 
 
