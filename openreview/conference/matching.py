@@ -986,7 +986,7 @@ class Matching(object):
         invitation = self.conference.webfield_builder.set_paper_recruitment_page(self.conference, invitation)
 
         ## Only for reviewers, allow ACs and SACs to review the proposed assignments
-        if self.match_group.id == self.conference.get_reviewers_id():
+        if self.match_group.id == self.conference.get_reviewers_id() and not proposed:
             self.conference.set_external_reviewer_recruitment_groups(name=invited_committee_name, create_paper_groups=True if assignment_title else False)
             if assignment_title:
                 invitation=self.client.get_invitation(self.conference.get_paper_assignment_id(self.match_group.id))

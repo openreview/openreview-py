@@ -99,7 +99,7 @@ class TestNeurIPSConference():
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
-        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cmu.edu', 'google.com', 'mit.edu']
+        domains = ['gmail.com', 'facebook.com', 'yahoo.com', 'ucla.edu', 'mdu.edu', 'cornell.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = 'aclweb.org/ACL/ARR/2021/September/-/Submission',
                 readers = ['aclweb.org/ACL/ARR/2021/September', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
@@ -212,22 +212,67 @@ class TestNeurIPSConference():
             weight = 0.94
         ))
 
+        ## Reviewer assignments
+        ## Paper 5
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[0], '~Reviewer_ARR_Facebook1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[0], '~Reviewer_ARR_MIT1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[0], '~Reviewer_ARR_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[0], '~Reviewer_ARR_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[0], '~Reviewer_ARR_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[0], '~Reviewer_ARR_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[0], '~Reviewer_ARR_Google1', label='reviewer-matching', weight=0.98)
+
+        ## Paper 4
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[1], '~Reviewer_ARR_Facebook1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[1], '~Reviewer_ARR_IBM1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[1], '~Reviewer_ARR_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[1], '~Reviewer_ARR_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[1], '~Reviewer_ARR_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[1], '~Reviewer_ARR_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[1], '~Reviewer_ARR_Google1', label='reviewer-matching', weight=0.98)
+
+        ## Paper 3
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[2], '~Reviewer_ARR_Google1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[2], '~Reviewer_ARR_IBM1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[2], '~Reviewer_ARR_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[2], '~Reviewer_ARR_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[2], '~Reviewer_ARR_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[2], '~Reviewer_ARR_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[2], '~Reviewer_ARR_Google1', label='reviewer-matching', weight=0.98)
+
+        ## Paper 2
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[3], '~Reviewer_ARR_Google1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[3], '~Reviewer_ARR_MIT1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[3], '~Reviewer_ARR_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[3], '~Reviewer_ARR_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[3], '~Reviewer_ARR_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[3], '~Reviewer_ARR_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[3], '~Reviewer_ARR_Google1', label='reviewer-matching', weight=0.98)
+
+        ## Paper 1
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[4], '~Reviewer_ARR_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Proposed_Assignment', submissions[4], '~Reviewer_ARR_IBM1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[4], '~Reviewer_ARR_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[4], '~Reviewer_ARR_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[4], '~Reviewer_ARR_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[4], '~Reviewer_ARR_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[4], '~Reviewer_ARR_Google1', label='reviewer-matching', weight=0.98)
 
         invite_assignment_edges=venue.set_invite_assignments(assignment_title='ac-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
         assert len(invite_assignment_edges) == 5
 
         helpers.await_queue()
 
+        ## AC 1 accepts the invitation
         invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Invite_Assignment', head=submissions[0].id)
         assert len(invite_edges) == 1
         assert invite_edges[0].tail == '~Area_CMUChair1'
         assert invite_edges[0].label == 'Invitation Sent'
 
-        messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Invitation to review paper titled Paper title 5')
+        messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Invitation to serve as area chair for paper titled Paper title 5')
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        ## AC 1 accepts the invitation
         accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
@@ -273,3 +318,104 @@ Thank you,
 ACL ARR 2021 September Program Chairs'''
 
 
+        ## AC 2 declines the invitation
+        invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Invite_Assignment', head=submissions[1].id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~Area_MITChair1'
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        messages = client.get_messages(to='ac2@gmail.com', subject='[ARR 2021 - September] Invitation to serve as area chair for paper titled Paper title 4')
+        assert messages and len(messages) == 1
+        invitation_message=messages[0]['content']['text']
+
+        decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, decline_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from ACL Rolling Review - September 2021.' == messages[0].text
+
+        helpers.await_queue()
+
+        invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Invite_Assignment', head=submissions[1].id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~Area_MITChair1'
+        assert invite_edges[0].label == 'Declined'
+
+        assert client.get_groups('aclweb.org/ACL/ARR/2021/September/Area_Chairs', member='~Area_MITChair1')
+        assert not client.get_groups('aclweb.org/ACL/ARR/2021/September/Paper4/Area_Chairs', member='~Area_MITChair1')
+
+        # Confirmation email to the area chair
+        messages = client.get_messages(to='ac2@gmail.com', subject='[ARR 2021 - September] Area Chair Invitation declined for paper 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Area MITChair,
+You have declined the invitation to serve as area chair for the paper number: 4, title: Paper title 4.
+
+If you would like to change your decision, please click the Accept link in the previous invitation email.
+
+OpenReview Team'''
+
+
+        ## Invite assignments for reviewers
+        invite_assignment_edges=venue.set_invite_assignments(assignment_title='reviewer-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Reviewers')
+        assert len(invite_assignment_edges) == 10
+
+        ## Reviewer reviewer_arr4@fb.com accepts the invitation
+        invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Reviewer_ARR_Facebook1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        messages = client.get_messages(to='reviewer_arr4@fb.com', subject='[ARR 2021 - September] Invitation to review paper titled Paper title 5')
+        assert messages and len(messages) == 1
+        invitation_message=messages[0]['content']['text']
+
+        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from ACL Rolling Review - September 2021.' == messages[0].text
+
+        helpers.await_queue()
+
+        invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Reviewer_ARR_Facebook1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        assert client.get_groups('aclweb.org/ACL/ARR/2021/September/Reviewers', member='~Reviewer_ARR_Facebook1')
+        assert client.get_groups('aclweb.org/ACL/ARR/2021/September/Paper5/Reviewers', member='~Reviewer_ARR_Facebook1')
+
+        # Confirmation email to the reviewer
+        messages = client.get_messages(to='reviewer_arr4@fb.com', subject='[ARR 2021 - September] Reviewer Invitation accepted for paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Reviewer ARR Facebook,
+Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
+
+Please go to the ARR 2021 - September Reviewer Console and check your pending tasks: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers.
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
+        # Confirmation email to the area chair
+        messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Reviewer ARR Facebook accepted to review paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Area CMUChair,
+The Reviewer Reviewer ARR Facebook(reviewer_arr4@fb.com) that was invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.
+
+OpenReview Team'''
+
+        # Assignment email to the reviewer
+        messages = client.get_messages(to='reviewer_arr4@fb.com', subject='[ARR 2021 - September] You have been assigned as a Reviewer for paper number 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 5 for ARR 2021 - September.
+
+To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submissions[0].id}.
+
+To check all of your assigned papers, go to https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers.
+
+Thank you,
+
+ACL ARR 2021 September Program Chairs'''

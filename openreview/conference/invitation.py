@@ -1255,11 +1255,11 @@ class PaperGroupInvitation(openreview.Invitation):
             edge_writers = []
 
             if committee_id.endswith(conference.reviewers_name):
-                if conference.has_senior_area_chairs :
+                if conference.use_senior_area_chairs :
                     edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
                     edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
-                if conference.has_area_chairs :
+                if conference.use_area_chairs :
                     edge_readers.append(conference.get_area_chairs_id(number='{number}'))
                     edge_writers.append(conference.get_area_chairs_id(number='{number}'))
 
@@ -1331,12 +1331,13 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                         #edge_writers.append(conference.get_senior_area_chairs_id())
 
                 if committee_id.endswith(conference.reviewers_name):
-                    if conference.has_senior_area_chairs :
+                    if conference.use_senior_area_chairs :
                         edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
                         edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
-                    edge_readers.append(conference.get_area_chairs_id(number='{number}'))
-                    edge_writers.append(conference.get_area_chairs_id(number='{number}'))
+                    if conference.use_area_chairs:
+                        edge_readers.append(conference.get_area_chairs_id(number='{number}'))
+                        edge_writers.append(conference.get_area_chairs_id(number='{number}'))
 
                 post_content = post_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
                 post_content = post_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
@@ -1912,7 +1913,7 @@ class InvitationBuilder(object):
 
         invitations = []
         stage=conference.registration_stage
-        if conference.has_area_chairs:
+        if conference.use_area_chairs:
             invitations.append(self.__set_registration_invitation(conference=conference,
             start_date=stage.start_date,
             due_date=stage.due_date,
