@@ -1283,19 +1283,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
 
     def __init__(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, process_file, invited_label, accepted_label, declined_label):
 
-        content=invitations.recruitment
-        content['submission_id'] = {
-            'description': 'submission id',
-            'order': 6,
-            'value-regex': '.*',
-            'required':True
-        }
-        content['inviter'] = {
-            'description': 'inviter id',
-            'order': 7,
-            'value-regex': '.*',
-            'required':True
-        }
+        content=invitations.paper_recruitment
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), process_file)) as post:
