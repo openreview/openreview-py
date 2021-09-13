@@ -258,7 +258,7 @@ class TestNeurIPSConference():
         helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[4], '~Reviewer_ARR_Facebook1', label='reviewer-matching', weight=0.89)
         helpers.create_reviewer_edge(client, venue, 'Aggregate_Score', submissions[4], '~Reviewer_ARR_Google1', label='reviewer-matching', weight=0.98)
 
-        invite_assignment_edges=venue.set_invite_assignments(assignment_title='ac-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
+        invite_assignment_edges=venue.set_invite_assignments(assignment_title='ac-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Area_Chairs', enable_reviewer_reassignment='reviewer-matching')
         assert len(invite_assignment_edges) == 5
 
         helpers.await_queue()
@@ -356,9 +356,17 @@ If you would like to change your decision, please click the Accept link in the p
 
 OpenReview Team'''
 
+        ## Check the AC console edge browser url
+        ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token)
+        header = selenium.find_element_by_id("header")
+        assert header
+        url = header.find_element_by_id("edge_browser_url")
+        assert url
+        assert 'Reviewers/-/Proposed_Assignment,label:reviewer-matching' in url.get_attribute('href')
 
         ## Invite assignments for reviewers
-        invite_assignment_edges=venue.set_invite_assignments(assignment_title='reviewer-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Reviewers')
+        invite_assignment_edges=venue.set_invite_assignments(assignment_title='reviewer-matching', committee_id='aclweb.org/ACL/ARR/2021/September/Reviewers', enable_reviewer_reassignment=True)
         assert len(invite_assignment_edges) == 10
 
         ## Reviewer reviewer_arr4@fb.com accepts the invitation
@@ -465,4 +473,13 @@ The Reviewer Reviewer ARR MIT(reviewer_arr2@mit.edu) that was invited to review 
 Please go to the Area Chair console: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs to invite another reviewer.
 
 OpenReview Team'''
+
+        ## Check the AC console edge browser url
+        ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token)
+        header = selenium.find_element_by_id("header")
+        assert header
+        url = header.find_element_by_id("edge_browser_url")
+        assert url
+        assert 'Reviewers/-/Assignment' in url.get_attribute('href')
 

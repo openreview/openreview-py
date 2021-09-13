@@ -237,6 +237,7 @@ class Conference(object):
             notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted, details='original')
             return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
 
+    ## Deprecated, use this only for manual assignments
     def set_reviewer_reassignment(self, enabled = True):
         self.enable_reviewer_reassignment = enabled
 
@@ -247,6 +248,18 @@ class Conference(object):
         if self.use_area_chairs:
             ac_group = self.client.get_group(self.get_area_chairs_id())
             self.webfield_builder.edit_web_value(ac_group, 'ENABLE_REVIEWER_REASSIGNMENT', str(enabled).lower())
+
+    ## Use for proposed/deployed assignments
+    def set_reviewer_edit_assignments(self, assignment_title=None):
+        print('set_reviewer_edit_assignments', assignment_title)
+        if self.use_area_chairs:
+            ac_group = self.client.get_group(self.get_area_chairs_id())
+            ac_group=self.webfield_builder.edit_web_value(ac_group, 'ENABLE_EDIT_REVIEWER_ASSIGNMENTS', 'true')
+            if assignment_title:
+                self.webfield_builder.edit_web_string_value(ac_group, 'REVIEWER_ASSIGNMENT_TITLE', assignment_title)
+            else:
+                self.webfield_builder.edit_web_string_value(ac_group, 'REVIEWER_ASSIGNMENT_TITLE', '')
+
 
     def set_id(self, id):
         self.id = id

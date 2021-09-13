@@ -1279,13 +1279,11 @@ class Matching(object):
 
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             ## Change the AC console to show the edge browser link
-            ## self.conference.enable_reviewer_reassignment()
-            a = 1
+            self.conference.set_reviewer_edit_assignments()
 
         if self.match_group.id == self.conference.get_area_chairs_id() and enable_reviewer_reassignment:
             ## Change the AC console to show the edge browser link
-            ## self.conference.enable_reviewer_reassignment(assignment_title=reviewer_assignment_title)
-            b = 1
+            self.conference.set_reviewer_edit_assignments(assignment_title=enable_reviewer_reassignment)
 
         return invite_assignments_edges
 
