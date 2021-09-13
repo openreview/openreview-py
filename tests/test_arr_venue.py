@@ -13,7 +13,7 @@ class TestNeurIPSConference():
 
     @pytest.fixture(scope="class")
     def venue(self, client):
-        pc_client=openreview.Client(username='pc@aclweb.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
@@ -27,7 +27,7 @@ class TestNeurIPSConference():
         first_date = now + datetime.timedelta(days=1)
 
         # Post the request form note
-        pc_client=helpers.create_user('pc@aclweb.org', 'Program', 'ARRChair')
+        pc_client=helpers.create_user('pc@aclrollingreview.org', 'Program', 'ARRChair')
 
         helpers.create_user('ac1@gmail.com', 'Area', 'CMUChair', institution='cmu.edu')
         helpers.create_user('ac3@gmail.com', 'Area', 'MITChair', institution='mit.edu')
@@ -51,8 +51,8 @@ class TestNeurIPSConference():
                 'Official Venue Name': 'ACL Rolling Review - September 2021',
                 'Abbreviated Venue Name': 'ARR 2021 - September',
                 'Official Website URL': 'http://aclrollingreview.org',
-                'program_chair_emails': ['pc@aclweb.org'],
-                'contact_email': 'pc@aclweb.org',
+                'program_chair_emails': ['pc@aclrollingreview.org'],
+                'contact_email': 'pc@aclrollingreview.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': '2021/12/01',
@@ -124,7 +124,7 @@ class TestNeurIPSConference():
 
         now = datetime.datetime.utcnow()
 
-        pc_client=openreview.Client(username='pc@aclweb.org', password='1234')
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
 
         venue.set_area_chairs(['~Area_CMUChair1', '~Area_MITChair1', '~Area_AmazonChair1'])
 
