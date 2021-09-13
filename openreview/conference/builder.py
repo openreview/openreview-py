@@ -1865,7 +1865,7 @@ class ReviewRatingStage(object):
         readers = [ conference.get_program_chairs_id()]
 
         if conference.use_area_chairs:
-            readers.append(conference.get_area_chairs_id(number = number))
+            readers.append('{signatures}')
 
         if self.release_to_reviewers is not ReviewRatingStage.Readers.NO_REVIEWERS:
             readers.append(self._get_reviewer_readers(conference, number, review_signature))

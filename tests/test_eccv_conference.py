@@ -1609,7 +1609,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             replyto=reviews[1].id,
             invitation=reviews[1].signatures[0] + '/-/Review_Rating',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs'],
+            signatory],
             writers=[signatory],
             signatures=[signatory],
             content={
@@ -1680,7 +1680,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             due_date_list[2] = due_date_list[2][:-1]
             due_date_list.pop()
             date_obj = datetime.datetime(year=int(due_date_list[2]),
-                                         month=mnt_to_idx[due_date_list[1]],
+                                         month=mnt_to_idx[due_date_list[1].replace('sept','sep')],
                                          day=int(due_date_list[0]),
                                          hour=int(due_date_list[3].split(':')[0]),
                                          minute=int(due_date_list[3].split(':')[1]))

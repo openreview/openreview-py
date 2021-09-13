@@ -2464,7 +2464,7 @@ var buildSPCTableRow = function(areaChair, seniorAreaChair, papers) {
       }
     }
 
-    if (paper.metaReview) {
+    if (paper.details.metaReview) {
       numCompletedMetaReviews++;
     }
 
