@@ -30,7 +30,7 @@ class TestNeurIPSConference():
         pc_client=helpers.create_user('pc@aclweb.org', 'Program', 'ARRChair')
 
         helpers.create_user('ac1@gmail.com', 'Area', 'CMUChair', institution='cmu.edu')
-        helpers.create_user('ac2@gmail.com', 'Area', 'MITChair', institution='mit.edu')
+        helpers.create_user('ac3@gmail.com', 'Area', 'MITChair', institution='mit.edu')
         helpers.create_user('ac3@amazon.com', 'Area', 'AmazonChair', institution='umass.edu')
         helpers.create_user('reviewer_arr1@umass.edu', 'Reviewer ARR', 'UMass', institution='umass.edu')
         helpers.create_user('reviewer_arr2@mit.edu', 'Reviewer ARR', 'MIT', institution='mit.edu')
@@ -324,7 +324,7 @@ ACL ARR 2021 September Program Chairs'''
         assert invite_edges[0].tail == '~Area_MITChair1'
         assert invite_edges[0].label == 'Invitation Sent'
 
-        messages = client.get_messages(to='ac2@gmail.com', subject='[ARR 2021 - September] Invitation to serve as area chair for paper titled Paper title 4')
+        messages = client.get_messages(to='ac3@gmail.com', subject='[ARR 2021 - September] Invitation to serve as area chair for paper titled Paper title 4')
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
@@ -347,7 +347,7 @@ ACL ARR 2021 September Program Chairs'''
         assert not client.get_groups('aclweb.org/ACL/ARR/2021/September/Paper4/Area_Chairs', member='~Area_MITChair1')
 
         # Confirmation email to the area chair
-        messages = client.get_messages(to='ac2@gmail.com', subject='[ARR 2021 - September] Area Chair Invitation declined for paper 4')
+        messages = client.get_messages(to='ac3@gmail.com', subject='[ARR 2021 - September] Area Chair Invitation declined for paper 4')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area MITChair,
 You have declined the invitation to serve as area chair for the paper number: 4, title: Paper title 4.
