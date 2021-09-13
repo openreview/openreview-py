@@ -1285,6 +1285,13 @@ class Matching(object):
             ## Change the AC console to show the edge browser link
             self.conference.set_reviewer_edit_assignments(assignment_title=enable_reviewer_reassignment)
 
+        ## Mark the configuration note as deployed in case this is being called through a script
+        config_notes = self.client.get_notes(invitation=self.conference.get_invitation_id('Assignment_Configuration', prefix=self.match_group.id), content={ 'title': assignment_title })
+        if config_notes:
+            note = config_notes[0]
+            note.content['status'] = 'Deployed'
+            self.client.post_note(note)
+
         return invite_assignments_edges
 
 
