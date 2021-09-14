@@ -1751,7 +1751,11 @@ var displayAreaChairsStatusTable = function() {
     var seniorAreaChairProfile;
     if (SENIOR_AREA_CHAIRS_ID) {
       var seniorAreaChair = conferenceStatusData.sacByAc[areaChair];
-      seniorAreaChairProfile = findProfile(seniorAreaChair);
+      if (seniorAreaChair) {
+        seniorAreaChairProfile = findProfile(seniorAreaChair);
+      } else {
+        console.log('NO SAC found for:', areaChair);
+      }
     }
 
     var areaChairProfile = findProfile(areaChair);
