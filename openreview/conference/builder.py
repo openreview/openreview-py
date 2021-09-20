@@ -1114,10 +1114,12 @@ class Conference(object):
 
         return self.webfield_builder.set_impersonate_page(self, impersonate_group)
 
-    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
+    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
-        conference_matching = matching.Matching(self, self.client.get_group(committee_id))
+        if self.use_senior_area_chairs and committee_id is self.get_senior_area_chairs_id() and not alternate_matching_group:
+            alternate_matching_group = self.get_area_chairs_id()
+        conference_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
 

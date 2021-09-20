@@ -88,10 +88,11 @@ class Matching(object):
         `match_group`: an openreview.Group object
 
     '''
-    def __init__(self, conference, match_group):
+    def __init__(self, conference, match_group, alternate_matching_group=None):
         self.conference = conference
         self.client = conference.client
         self.match_group = match_group
+        self.alternate_matching_group = alternate_matching_group
         self.is_reviewer = conference.get_reviewers_id() == match_group.id
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
         self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
@@ -187,10 +188,10 @@ class Matching(object):
                 'required': True
             }
             edge_label=None
-        if self.is_senior_area_chair:
+        if self.alternate_matching_group:
             edge_head_type = 'Profile'
             edge_head_query = {
-                'group' : self.conference.get_area_chairs_id()
+                'group' : self.alternate_matching_group
             }
             readers = {
                 'values-copied': edge_readers + ['{tail}', '{head}']
@@ -248,10 +249,10 @@ class Matching(object):
         return invitation
 
     def _build_conflicts(self, submissions, user_profiles, get_profile_info):
-        if self.is_senior_area_chair:
-            ac_group = self.client.get_group(self.conference.get_area_chairs_id())
-            ac_profiles = _get_profiles(self.client, ac_group.members)
-            return self._build_profile_conflicts(ac_profiles, user_profiles)
+        if self.alternate_matching_group:
+            other_matching_group = self.client.get_group(self.alternate_matching_group)
+            other_matching_profiles = _get_profiles(self.client, other_matching_group.members)
+            return self._build_profile_conflicts(other_matching_profiles, user_profiles)
         return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
 
     def append_note_conflicts(self, profile_id, build_conflicts=None):
@@ -281,7 +282,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed to retrieve conflict invitation')
 
         edges = []
-        
+
         # Redo submission-author-user loop from _build_note_conflicts
         for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
             # Get author profiles
@@ -336,7 +337,7 @@ class Matching(object):
         if intended_edges_posted < edges_posted:
             raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Conflicts found: {0}, Edges posted: {1}'.format(intended_edges_posted, edges_posted))
         return invitation
-        
+
 
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
         '''
@@ -491,7 +492,7 @@ class Matching(object):
         return invitation
 
     def _build_scores(self, score_invitation_id, score_file, submissions):
-        if self.is_senior_area_chair:
+        if self.alternate_matching_group:
             return self._build_profile_scores(score_invitation_id, score_file)
         return self._build_note_scores(score_invitation_id, score_file, submissions)
 
@@ -703,8 +704,8 @@ class Matching(object):
                         'order': 5
                     },
                     'paper_invitation': {
-                        'value-regex': self.conference.get_area_chairs_id() if self.is_senior_area_chair else self.conference.get_blind_submission_id() + '.*',
-                        'default': self.conference.get_area_chairs_id() if self.is_senior_area_chair else self.conference.get_blind_submission_id(),
+                        'value-regex': self.alternate_matching_group if self.alternate_matching_group else self.conference.get_blind_submission_id() + '.*',
+                        'default': self.alternate_matching_group if self.alternate_matching_group else self.conference.get_blind_submission_id(),
                         'required': True,
                         'description': 'Invitation to get the paper metadata or Group id to get the users to be matched',
                         'order': 6
