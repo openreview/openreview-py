@@ -12,6 +12,7 @@ import requests
 import pprint
 import os
 import re
+import jwt
 
 
 class OpenReviewException(Exception):
@@ -58,6 +59,7 @@ class Client(object):
 
         self.token = token
         self.profile = None
+        self.user_id = None
         self.headers = {
             'User-Agent': self.user_agent,
             'Accept': 'application/json'
@@ -69,6 +71,7 @@ class Client(object):
                 self.profile = self.get_profile()
             except:
                 self.profile = None
+            self.user_id = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
         else:
             if not username:
                 username = os.environ.get('OPENREVIEW_USERNAME')
@@ -78,6 +81,7 @@ class Client(object):
 
             if username or password:
                 self.login_user(username, password)
+                self.user_id = username
 
 
 
