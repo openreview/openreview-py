@@ -71,7 +71,6 @@ class Client(object):
                 self.profile = self.get_profile()
             except:
                 self.profile = None
-            self.user_id = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
         else:
             if not username:
                 username = os.environ.get('OPENREVIEW_USERNAME')
@@ -81,7 +80,6 @@ class Client(object):
 
             if username or password:
                 self.login_user(username, password)
-                self.user_id = username
 
 
 
@@ -91,6 +89,7 @@ class Client(object):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
+        self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
         return response
 
     def __handle_response(self,response):
