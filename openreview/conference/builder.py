@@ -1925,10 +1925,10 @@ class CommentStage(object):
 
 class MetaReviewStage(object):
 
-    def __init__(self, start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields=[], process = None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields=[], process = None):
         self.start_date = start_date
         self.due_date = due_date
-        self.name = 'Meta_Review'
+        self.name = name
         self.public = public
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
