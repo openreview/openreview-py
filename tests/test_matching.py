@@ -6,6 +6,8 @@ import datetime
 import time
 import os
 import re
+import csv
+import random
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -1213,3 +1215,35 @@ class TestMatching():
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee').members == []
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chair1')
+
+
+    def test_setup_matching_with_mentors(self, conference, pc_client, helpers):
+
+        mentors=pc_client.post_group(openreview.Group(id=conference.id + '/Reviewers_Mentors',
+            readers = [conference.id],
+            writers = [conference.id],
+            signatures = [conference.id],
+            signatories = [conference.id],
+            members = ['ac1@cmu.edu', 'ac2@umass.edu']
+        ))
+
+        mentees=pc_client.post_group(openreview.Group(id=conference.id + '/Reviewers_Mentees',
+            readers = [conference.id],
+            writers = [conference.id],
+            signatures = [conference.id],
+            signatories = [conference.id],
+            members = ['~Reviewer_One1', 'r2@google.com', 'r3@fb.com']
+        ))
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/mentors_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for mentor in mentors.members:
+                for mentee in mentees.members:
+                    writer.writerow([mentee, mentor, round(random.random(), 2)])
+
+        conference.setup_matching(committee_id=conference.id + '/Reviewers_Mentors',
+        affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/mentors_affinity_scores.csv'),
+        alternate_matching_group=conference.id + '/Reviewers_Mentees')
+
+        affinity_scores = pc_client.get_edges(invitation=conference.id + '/Reviewers_Mentors/-/Affinity_Score')
+        assert len(affinity_scores) == 6
