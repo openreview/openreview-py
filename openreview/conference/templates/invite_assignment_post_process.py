@@ -56,6 +56,7 @@ def process(client, edge, invitation):
         if EMAIL_TEMPLATE:
             message=EMAIL_TEMPLATE.format(
                 title=submission.content['title'],
+                number=submission.number,
                 abstract=submission.content['abstract'],
                 accept_url=accept_url,
                 decline_url=decline_url,
