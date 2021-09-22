@@ -1953,10 +1953,10 @@ class CommentStage(object):
 
 class MetaReviewStage(object):
 
-    def __init__(self, start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields=[], process = None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields=[], process = None):
         self.start_date = start_date
         self.due_date = due_date
-        self.name = 'Meta_Review'
+        self.name = name
         self.public = public
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
@@ -2215,8 +2215,8 @@ class ConferenceBuilder(object):
     def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False):
         self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
 
-    def set_meta_review_stage(self, start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields = [], process = None):
-        self.meta_review_stage = MetaReviewStage(start_date, due_date, public, additional_fields, remove_fields, process)
+    def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields = [], process = None):
+        self.meta_review_stage = MetaReviewStage(name=name, start_date=start_date, due_date=due_date, public=public, additional_fields=additional_fields, remove_fields=remove_fields, process=process)
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, email_authors)
