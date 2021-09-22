@@ -1369,6 +1369,31 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
+
+    def request_expertise(self, name, group_id, paper_invitation, model=None, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'model': model}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_expertise_status(self, job_id, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = requests.get(base_url + '/expertise/status', params = {'id': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_expertise_results(self, job_id, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()['results']
+
 class Group(object):
     """
     When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
