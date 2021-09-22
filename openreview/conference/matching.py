@@ -780,7 +780,7 @@ class Matching(object):
                         'hidden': True
                     },
                     'solver': {
-                        'value-radio': ['MinMax', 'FairFlow', 'Randomized'],
+                        'value-radio': ['MinMax', 'FairFlow', 'Randomized', 'GRRR'],
                         'default': 'MinMax',
                         'required': True,
                         'order': 17
