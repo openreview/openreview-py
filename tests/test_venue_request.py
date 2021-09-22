@@ -568,6 +568,8 @@ class TestVenueRequest():
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
                 'recommendation_options': 'Accept, Reject',
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'additional_meta_review_form_options': {
                     'suggestions' : {
                         'value-regex': '[\\S\\s]{1,5000}',
@@ -613,6 +615,7 @@ class TestVenueRequest():
         assert 'confidence' not in meta_review_invitations[0].reply['content']
         assert 'suggestions' in meta_review_invitations[0].reply['content']
         assert 'Accept' in meta_review_invitations[0].reply['content']['recommendation']['value-dropdown']
+        assert len(meta_review_invitations[0].reply['readers']['values']) == 3
 
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
