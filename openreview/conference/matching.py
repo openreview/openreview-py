@@ -931,7 +931,7 @@ class Matching(object):
 
         self._build_config_invitation(score_spec)
 
-    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None):
+    def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None, proposed=False):
 
         invite_label=invitation_labels.get('Invite', 'Invitation Sent')
         invited_label=invitation_labels.get('Invited', 'Invitation Sent')
@@ -981,12 +981,13 @@ class Matching(object):
             due_date,
             invited_label=invited_label,
             accepted_label=accepted_label,
-            declined_label=declined_label
+            declined_label=declined_label,
+            proposed=proposed
         )
         invitation = self.conference.webfield_builder.set_paper_recruitment_page(self.conference, invitation)
 
         ## Only for reviewers, allow ACs and SACs to review the proposed assignments
-        if self.match_group.id == self.conference.get_reviewers_id():
+        if self.match_group.id == self.conference.get_reviewers_id() and not proposed:
             self.conference.set_external_reviewer_recruitment_groups(name=invited_committee_name, create_paper_groups=True if assignment_title else False)
             if assignment_title:
                 invitation=self.client.get_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
@@ -1165,6 +1166,38 @@ class Matching(object):
         print('POsting assignments edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=self.client, edges=assignment_edges)
 
+    def invite_proposed_assignments(self, assignment_title):
+
+        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select=None)}
+        invite_assignment_edges = []
+        invite_assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, invite=True)
+
+        for paper in tqdm(papers, total=len(papers)):
+
+            if paper.id in proposed_assignment_edges:
+                proposed_edges=proposed_assignment_edges[paper.id]
+                for proposed_edge in proposed_edges:
+                    invite_edge=openreview.Edge(
+                        invitation=invite_assignment_invitation_id,
+                        head=proposed_edge['head'],
+                        tail=proposed_edge['tail'],
+                        label='Invitation Sent',
+                        readers=proposed_edge['readers'],
+                        nonreaders=proposed_edge['nonreaders'],
+                        writers=[self.conference.id],
+                        signatures=proposed_edge['signatures']
+                    )
+                    posted_edge=self.client.post_edge(invite_edge)
+                    invite_assignment_edges.append(posted_edge)
+
+            else:
+                print('assignment not found', paper.id)
+
+        print('Posted invite assignment edges', len(invite_assignment_edges))
+        return invite_assignment_edges
+
     def deploy_sac_assignments(self, assignment_title, overwrite):
 
         print('deploy_sac_assignments', assignment_title)
@@ -1231,3 +1264,35 @@ class Matching(object):
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
+
+    def deploy_invite(self, assignment_title, enable_reviewer_reassignment, email_template=None):
+
+        ## Add sync process function
+        self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id)
+        self.conference.invitation_builder.set_assignment_invitation(self.conference, self.match_group.id)
+
+        ## Create invite assignment invitation
+        hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+        self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=self.match_group.id.split('/')[-1], email_template=email_template, proposed=True)
+
+        ## Create invite assignment edges
+        invite_assignments_edges = self.invite_proposed_assignments(assignment_title)
+
+        if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
+            ## Change the AC console to show the edge browser link
+            self.conference.set_reviewer_edit_assignments()
+
+        if self.match_group.id == self.conference.get_area_chairs_id() and enable_reviewer_reassignment:
+            ## Change the AC console to show the edge browser link
+            self.conference.set_reviewer_edit_assignments(assignment_title=enable_reviewer_reassignment)
+
+        ## Mark the configuration note as deployed in case this is being called through a script
+        config_notes = self.client.get_notes(invitation=self.conference.get_invitation_id('Assignment_Configuration', prefix=self.match_group.id), content={ 'title': assignment_title })
+        if config_notes:
+            note = config_notes[0]
+            note.content['status'] = 'Deployed'
+            self.client.post_note(note)
+
+        return invite_assignments_edges
+
+

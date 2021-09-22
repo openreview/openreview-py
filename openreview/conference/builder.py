@@ -237,6 +237,7 @@ class Conference(object):
             notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted, details='original')
             return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
 
+    ## Deprecated, use this only for manual assignments
     def set_reviewer_reassignment(self, enabled = True):
         self.enable_reviewer_reassignment = enabled
 
@@ -247,6 +248,18 @@ class Conference(object):
         if self.use_area_chairs:
             ac_group = self.client.get_group(self.get_area_chairs_id())
             self.webfield_builder.edit_web_value(ac_group, 'ENABLE_REVIEWER_REASSIGNMENT', str(enabled).lower())
+
+    ## Use for proposed/deployed assignments
+    def set_reviewer_edit_assignments(self, assignment_title=None):
+        print('set_reviewer_edit_assignments', assignment_title)
+        if self.use_area_chairs:
+            ac_group = self.client.get_group(self.get_area_chairs_id())
+            ac_group=self.webfield_builder.edit_web_value(ac_group, 'ENABLE_EDIT_REVIEWER_ASSIGNMENTS', 'true')
+            if assignment_title:
+                self.webfield_builder.edit_web_string_value(ac_group, 'REVIEWER_ASSIGNMENT_TITLE', assignment_title)
+            else:
+                self.webfield_builder.edit_web_string_value(ac_group, 'REVIEWER_ASSIGNMENT_TITLE', '')
+
 
     def set_id(self, id):
         self.id = id
@@ -431,6 +444,15 @@ class Conference(object):
         else:
             committee_id = committee_id + name
         return committee_id
+
+    def get_committee_name(self, committee_id, pretty=False):
+        name = committee_id.split('/')[-1]
+
+        if pretty:
+            name = name.replace('_', ' ')
+            if name.endswith('s'):
+                return name[:-1]
+        return name
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
@@ -1183,6 +1205,12 @@ class Conference(object):
         conference_matching = matching.Matching(self, match_group)
         return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
 
+    def set_invite_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, email_template=None):
+
+        match_group = self.client.get_group(committee_id)
+        conference_matching = matching.Matching(self, match_group)
+        return conference_matching.deploy_invite(assignment_title, enable_reviewer_reassignment, email_template)
+
     def set_default_load(self, default_load, reviewers_name = 'Reviewers'):
         self.default_reviewer_load[reviewers_name] = default_load
 
@@ -1931,10 +1959,11 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None):
+
         self.start_date = start_date
         self.due_date = due_date
-        self.name = 'Meta_Review'
+        self.name = name
         self.public = public
         self.release_to_authors = release_to_authors
         self.release_to_reviewers = release_to_reviewers
@@ -2209,7 +2238,7 @@ class ConferenceBuilder(object):
     def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False):
         self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
 
-    def set_meta_review_stage(self, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = MetaReviewStage.Readers.NO_REVIEWERS, additional_fields = {}, remove_fields = [], process = None):
+    def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = MetaReviewStage.Readers.NO_REVIEWERS, additional_fields = {}, remove_fields = [], process = None):
         self.meta_review_stage = MetaReviewStage(start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields, remove_fields, process)
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
