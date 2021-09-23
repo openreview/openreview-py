@@ -200,14 +200,14 @@ def process(client, edit, invitation):
                             'order': 1,
                             'description': 'Brief summary of your review.',
                             'value': {
-                                'value-regex': '.{0,500}'
+                                'value-regex': '^.{0,500}$'
                             }
                         },
                         'review': {
                             'order': 2,
                             'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,200000}'
+                                'value-regex': '^[\\S\\s]{1,200000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -217,7 +217,7 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'List of suggested revisions to support acceptance (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,200000}'
+                                'value-regex': '^[\\S\\s]{1,200000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -452,14 +452,14 @@ def process(client, edit, invitation):
                             'order': 1,
                             'description': 'Brief summary of your comment.',
                             'value': {
-                                'value-regex': '.{1,500}'
+                                'value-regex': '^.{1,500}$'
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}'
+                                'value-regex': '^[\\S\\s]{1,5000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -501,14 +501,14 @@ def process(client, edit, invitation):
                             'order': 1,
                             'description': 'Brief summary of your comment.',
                             'value': {
-                                'value-regex': '.{1,500}'
+                                'value-regex': '^.{1,500}$'
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}'
+                                'value-regex': '^[\\S\\s]{1,5000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -546,7 +546,7 @@ def process(client, edit, invitation):
                             'order': 1,
                             'description': 'Brief summary of your comment.',
                             'value': {
-                                'value-regex': '.{1,500}'
+                                'value-regex': '^.{1,500}$'
                             },
                             'readers': {
                                 'values': [ venue_id, f'{paper_group.id}/Action_Editors', '${signatures}']
@@ -556,7 +556,7 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}'
+                                'value-regex': '^[\\S\\s]{1,5000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -614,7 +614,7 @@ def process(client, edit, invitation):
                             'order': 2,
                             'description': 'TODO (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,200000}'
+                                'value-regex': '^[\\S\\s]{1,200000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -655,7 +655,7 @@ def process(client, edit, invitation):
                             'order': 1,
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
                             'value': {
-                                'value-regex': '.{1,250}',
+                                'value-regex': '^.{1,250}$',
                                 'optional':True
                             }
                         },
@@ -663,7 +663,7 @@ def process(client, edit, invitation):
                             'order': 4,
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}',
+                                'value-regex': '^[\\S\\s]{1,5000}$',
                                 'optional':True
                             }
                         },
