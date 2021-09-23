@@ -226,3 +226,49 @@ recruitment = {
         'markdown': True
     }
 }
+
+paper_recruitment = {
+    'title': {
+        'description': '',
+        'order': 1,
+        'value': 'Recruit response',
+        'required':True
+    },
+    'user': {
+        'description': 'email address',
+        'order': 2,
+        'value-regex': '.*',
+        'required':True
+    },
+    'key': {
+        'description': 'Email key hash',
+        'order': 3,
+        'value-regex': '.{0,100}',
+        'required':True
+    },
+    'response': {
+        'description': 'Invitation response',
+        'order': 4,
+        'value-radio': ['Yes', 'No'],
+        'required':True
+    },
+    'comment': {
+        'order': 5,
+        'value-regex': '[\\S\\s]{1,5000}',
+        'description': 'Add your comment',
+        'required': False,
+        'markdown': True
+    },
+    'submission_id': {
+        'description': 'submission id',
+        'order': 6,
+        'value-regex': '.*',
+        'required':True
+    },
+    'inviter': {
+        'description': 'inviter id',
+        'order': 7,
+        'value-regex': '.*',
+        'required':True
+    }
+}
