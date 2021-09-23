@@ -13,7 +13,7 @@ var HEADER = {
   instructions: 'Put instructions here'
 };
 
-var url = '/edges/browse?start=.TMLR/Action_Editors/-/Assignment,tail:' + user.profile.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&maxColumns=2&referrer=[Action Editor Console](/group?id=.TMLR/Action_Editors)';
+var url = '/edges/browse?start=.TMLR/Action_Editors/-/Assignment,tail:' + user.profile.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[Action Editor Console](/group?id=.TMLR/Action_Editors)';
 
 HEADER.instructions = "<strong>Edge Browser:</strong><a href='" + url + "'> Modify Reviewer Assignments</a> </p>";
 

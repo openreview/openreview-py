@@ -658,7 +658,7 @@ class InvitationBuilder(object):
         start_param = suggest_ae_invitation_id
         edit_param = suggest_ae_invitation_id
         browse_param = ';'.join(score_ids)
-        params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
+        params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
         with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
