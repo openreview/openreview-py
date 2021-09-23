@@ -197,109 +197,113 @@ class InvitationBuilder(object):
                         'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
                         'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
                         'content': {
-                            'title': {
-                                'value': {
-                                    'value-regex': '.{1,250}'
-                                },
-                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 1
+                        'title': {
+                            'value': {
+                                'value-regex': '^.{1,250}$'
                             },
-                            'abstract': {
-                                'value': {
-                                    'value-regex': '[\\S\\s]{1,5000}'
-                                },
-                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 4,
+                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'order': 1
+                        },
+                        'abstract': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'authors': {
-                                'value': {
-                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
-                                },
-                                'description': 'Comma separated list of author names.',
-                                'order': 2,
-                                'presentation': {
-                                    'hidden': True,
-                                },
-                                'readers': {
-                                    'values': [ venue_id, action_editors_value, authors_value]
-                                }
+                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'order': 2,
+                            'presentation': {
+                                'markdown': True
+                            }
+                        },
+                        'authors': {
+                            'value': {
+                                'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
                             },
-                            'authorids': {
-                                'value': {
-                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
-                                },
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                'order': 3,
-                                'readers': {
-                                    'values': [ venue_id, action_editors_value, authors_value]
-                                }
+                            'description': 'Comma separated list of author names.',
+                            'order': 3,
+                            'presentation': {
+                                'hidden': True,
                             },
-                            'pdf': {
-                                'value': {
-                                    'value-file': {
-                                        'fileTypes': ['pdf'],
-                                        'size': 50
-                                    },
-                                    'optional': True
-                                },
-                                'description': 'Upload a PDF file that ends with .pdf',
-                                'order': 5,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, authors_value]
+                            }
+                        },
+                        'authorids': {
+                            'value': {
+                                'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                             },
-                            "supplementary_material": {
-                                'value': {
-                                    "value-file": {
-                                        "fileTypes": [
-                                            "zip",
-                                            "pdf"
-                                        ],
-                                        "size": 100
-                                    },
-                                    "optional": True
+                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                            'order': 4,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, authors_value]
+                            }
+                        },
+                        'pdf': {
+                            'value': {
+                                'value-file': {
+                                    'fileTypes': ['pdf'],
+                                    'size': 50
                                 },
-                                "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                                "order": 6,
-                                'readers': {
-                                    'values': [ venue_id, action_editors_value, reviewers_value, authors_value]
-                                }
+                                'optional': True
                             },
-                            'previously_submission_url': {
-                                'value': {
-                                    'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                    'optional': True
+                            'description': 'Upload a PDF file that ends with .pdf',
+                            'order': 5,
+                        },
+                        "supplementary_material": {
+                            'value': {
+                                "value-file": {
+                                    "fileTypes": [
+                                        "zip",
+                                        "pdf"
+                                    ],
+                                    "size": 100
                                 },
-                                'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from',
-                                'order': 7,
+                                "optional": True
                             },
-                            'changes_since_last_submission': {
-                                'value': {
-                                    'value-regex': '[\\S\\s]{1,5000}',
-                                    'optional': True
-                                },
-                                'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 8,
+                            "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                            "order": 6,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, reviewers_value, authors_value]
+                            }
+                        },
+                        'previously_submission_url': {
+                            'value': {
+                                'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                'optional': True
                             },
-                            'competing_interests': {
-                                'value': {
-                                    'value-regex': '[\\S\\s]{1,5000}',
-                                    'optional': True
-                                },
-                                'description': 'Supports providing "competing interests" information (which is only viewable by EICs and AEs, but made public if paper accepted). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 9,
-                                'readers': {
-                                    'values': [ venue_id, action_editors_value, authors_value]
-                                }
+                            'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from',
+                            'order': 7,
+                        },
+                        'changes_since_last_submission': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$',
+                                'optional': True
                             },
-                            'human_subject': {
-                                'value': {
-                                    'value-regex': '[\\S\\s]{1,5000}',
-                                    'optional': True
-                                },
-                                'description': 'Supports human subject reporting information (which is only viewable by EICs and AEs, but made public if paper accepted). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                'order': 10,
-                                'readers': {
-                                    'values': [ venue_id, action_editors_value, authors_value]
-                                }
+                            'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'order': 8,
+                            'presentation': {
+                                'markdown': True
+                            }
+                        },
+                        'competing_interests': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$'
                             },
+                            'description': 'Supports providing "competing interests" information (which is only viewable by EICs and AEs, but made public if paper accepted), authors can respond "None beyond the authors normal conflict of interests".',
+                            'order': 9,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, authors_value]
+                            }
+                        },
+                        'human_subject': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$'
+                            },
+                            'description': 'Supports human subject reporting information (which is only viewable by EICs and AEs, but made public if paper accepted), author can respond "Not applicable".',
+                            'order': 10,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, authors_value]
+                            }
+                        },
                             'venue': {
                                 'value': {
                                     'value': 'Submitted to TMLR',

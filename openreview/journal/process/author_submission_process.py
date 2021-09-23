@@ -305,7 +305,7 @@ def process(client, edit, invitation):
                     'content': {
                         'title': {
                             'value': {
-                                'value-regex': '.{1,250}',
+                                'value-regex': '^.{1,250}$',
                                 'optional': True
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
@@ -313,11 +313,14 @@ def process(client, edit, invitation):
                         },
                         'abstract': {
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}',
+                                'value-regex': '^[\\S\\s]{1,5000}$',
                                 'optional': True
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
                             'order': 2,
+                            'presentation': {
+                                'markdown': True
+                            }
                         },
                         'authors': {
                             'value': {
@@ -382,18 +385,20 @@ def process(client, edit, invitation):
                         },
                         'changes_since_last_submission': {
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}',
+                                'value-regex': '^[\\S\\s]{1,5000}$',
                                 'optional': True
                             },
                             'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
                             'order': 8,
+                            'presentation': {
+                                'markdown': True
+                            }
                         },
                         'competing_interests': {
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}',
-                                'optional': True
+                                'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'description': 'Supports providing "competing interests" information (which is only viewable by EICs and AEs, but made public if paper accepted). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'description': 'Supports providing "competing interests" information (which is only viewable by EICs and AEs, but made public if paper accepted), authors can respond "None beyond the authors normal conflict of interests".',
                             'order': 9,
                             'readers': {
                                 'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Authors']
@@ -401,10 +406,9 @@ def process(client, edit, invitation):
                         },
                         'human_subject': {
                             'value': {
-                                'value-regex': '[\\S\\s]{1,5000}',
-                                'optional': True
+                                'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'description': 'Supports human subject reporting information (which is only viewable by EICs and AEs, but made public if paper accepted). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'description': 'Supports human subject reporting information (which is only viewable by EICs and AEs, but made public if paper accepted), author can respond "Not applicable".',
                             'order': 10,
                             'readers': {
                                 'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Authors']

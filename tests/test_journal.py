@@ -127,7 +127,9 @@ class TestJournal():
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'}
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subject': { 'value': 'Not applicable'}
                 }
             ))
 
@@ -174,7 +176,9 @@ class TestJournal():
                     'title': { 'value': 'Paper title UPDATED' },
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
                     'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mail.com']},
-                    'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'}
+                    'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subject': { 'value': 'Not applicable'}
                 }
             ))
         helpers.await_queue(openreview_client)
@@ -204,7 +208,9 @@ class TestJournal():
                                             'title': { 'value': 'Paper title 2' },
                                             'abstract': { 'value': 'Paper abstract 2' },
                                             'authors': { 'value': ['Test User', 'Celeste Martinez']},
-                                            'authorids': { 'value': ['~SomeFirstName_User1', 'celeste@mail.com']}
+                                            'authorids': { 'value': ['~SomeFirstName_User1', 'celeste@mail.com']},
+                                            'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                                            'human_subject': { 'value': 'Not applicable'}
                                         }
                                     ))
 
@@ -228,7 +234,9 @@ class TestJournal():
                                             'title': { 'value': 'Paper title 3' },
                                             'abstract': { 'value': 'Paper abstract 3' },
                                             'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                                            'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mail.com']}
+                                            'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mail.com']},
+                                            'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                                            'human_subject': { 'value': 'Not applicable'}
                                         }
                                     ))
 
