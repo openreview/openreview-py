@@ -371,6 +371,44 @@ def process(client, edit, invitation):
                             'readers': {
                                 'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Reviewers', f'{paper_group.id}/Authors']
                             }
+                        },
+                        'previously_submission_url': {
+                            'value': {
+                                'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                'optional': True
+                            },
+                            'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from',
+                            'order': 7,
+                        },
+                        'changes_since_last_submission': {
+                            'value': {
+                                'value-regex': '[\\S\\s]{1,5000}',
+                                'optional': True
+                            },
+                            'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'order': 8,
+                        },
+                        'competing_interests': {
+                            'value': {
+                                'value-regex': '[\\S\\s]{1,5000}',
+                                'optional': True
+                            },
+                            'description': 'Supports providing "competing interests" information (which is only viewable by EICs and AEs, but made public if paper accepted). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'order': 9,
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Authors']
+                            }
+                        },
+                        'human_subject': {
+                            'value': {
+                                'value-regex': '[\\S\\s]{1,5000}',
+                                'optional': True
+                            },
+                            'description': 'Supports human subject reporting information (which is only viewable by EICs and AEs, but made public if paper accepted). Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'order': 10,
+                            'readers': {
+                                'values': [ venue_id, f'{paper_group.id}/Action_Editors', f'{paper_group.id}/Authors']
+                            }
                         }
                     }
                 }
