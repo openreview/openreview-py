@@ -180,8 +180,8 @@ class TestVenueRequest():
             subject='A request for service has been submitted'
         )
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'].startswith('A request for service has been submitted. Check it here')
-
+        #assert messages[0]['content']['text'].startswith('A request for service has been submitted. Check it here') 
+        assert messages[0]['content']['text'].startswith('A request for service has been submitted by TestVenue@OR2021. Check it here') # Changed by me
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2021/Conference'},
