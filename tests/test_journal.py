@@ -322,9 +322,6 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
 
-        ## Assign the reviewers
-        journal.setup_reviewer_assignment(number=1)
-
         ## David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],

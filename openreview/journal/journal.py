@@ -269,11 +269,11 @@ class Journal(object):
                 )
                 self.client.post_edge(edge)
 
-    def setup_reviewer_assignment(self, number):
+    def setup_reviewer_assignment(self, note):
         venue_id=self.venue_id
         reviewers_id=self.get_reviewers_id()
-        action_editors_id=self.get_action_editors_id(number=number)
-        note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=number)[0]
+        action_editors_id=self.get_action_editors_id(number=note.number)
+        note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=note.number)[0]
 
         ## Create conflict and affinity score edges
         for r in self.get_reviewers():
@@ -415,4 +415,5 @@ class Journal(object):
         self.invitation_builder.set_review_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.invitation_builder.set_decision_invitation(self, note)
+        self.setup_reviewer_assignment(note)
 
