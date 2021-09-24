@@ -162,7 +162,7 @@ submission = {
     'authorids': {
         'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
         'order': 3,
-        'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+        'values-regex': r'^~\S+$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
         'required':True
     },
     'keywords': {
@@ -224,5 +224,51 @@ recruitment = {
         'description': 'Add your comment',
         'required': False,
         'markdown': True
+    }
+}
+
+paper_recruitment = {
+    'title': {
+        'description': '',
+        'order': 1,
+        'value': 'Recruit response',
+        'required':True
+    },
+    'user': {
+        'description': 'email address',
+        'order': 2,
+        'value-regex': '.*',
+        'required':True
+    },
+    'key': {
+        'description': 'Email key hash',
+        'order': 3,
+        'value-regex': '.{0,100}',
+        'required':True
+    },
+    'response': {
+        'description': 'Invitation response',
+        'order': 4,
+        'value-radio': ['Yes', 'No'],
+        'required':True
+    },
+    'comment': {
+        'order': 5,
+        'value-regex': '[\\S\\s]{1,5000}',
+        'description': 'Add your comment',
+        'required': False,
+        'markdown': True
+    },
+    'submission_id': {
+        'description': 'submission id',
+        'order': 6,
+        'value-regex': '.*',
+        'required':True
+    },
+    'inviter': {
+        'description': 'inviter id',
+        'order': 7,
+        'value-regex': '.*',
+        'required':True
     }
 }

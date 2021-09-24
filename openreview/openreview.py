@@ -7,6 +7,7 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
+from . import tools
 import requests
 import pprint
 import os
@@ -107,7 +108,7 @@ class Client(object):
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
-        response = requests.get(self.baseurl + '/impersonate', params={ 'groupId': group_id }, headers=self.headers)
+        response = requests.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
@@ -872,7 +873,7 @@ class Client(object):
 
         return [Tag.from_json(t) for t in response.json()['tags']]
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -891,6 +892,7 @@ class Client(object):
         params['label'] = label
         params['limit'] = limit
         params['offset'] = offset
+        params['sort'] = sort
 
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -1047,7 +1049,7 @@ class Client(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1074,6 +1076,7 @@ class Client(object):
             delete_query['tail'] = tail
 
         delete_query['waitToFinish'] = wait_to_finish
+        delete_query['softDelete'] = soft_delete
 
         response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
@@ -1123,7 +1126,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1152,7 +1155,8 @@ class Client(object):
             'ignoreGroups': ignoreRecipients,
             'from': sender,
             'replyTo': replyTo,
-            'parentGroup': parentGroup
+            'parentGroup': parentGroup,
+            'useJob': useJob
             }, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1332,7 +1336,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['messages']
 
-    def get_process_logs(self, id = None, invitation = None):
+    def get_process_logs(self, id = None, invitation = None, status = None):
         """
         **Only for Super User**. Retrieves the logs of the process function executed by an Invitation
 
@@ -1345,7 +1349,7 @@ class Client(object):
         :rtype: dict
         """
 
-        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation }, headers = self.headers)
+        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
 
@@ -1394,9 +1398,10 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
         # post attributes
         self.id=id
+        self.invitation=invitation
         self.cdate = cdate
         self.ddate = ddate
         self.tcdate = tcdate
@@ -1408,6 +1413,7 @@ class Group(object):
         self.signatures = signatures
         self.signatories = signatories
         self.web=None
+        self.impersonators = impersonators
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1437,6 +1443,7 @@ class Group(object):
         """
         body = {
             'id': self.id,
+            'invitation': self.invitation,
             'cdate': self.cdate,
             'ddate': self.ddate,
             'signatures': self.signatures,
@@ -1445,6 +1452,7 @@ class Group(object):
             'readers': self.readers,
             'nonreaders': self.nonreaders,
             'signatories': self.signatories,
+            'impersonators': self.impersonators,
             'anonids': self.anonids,
             'deanonymizers': self.deanonymizers,
             'web': self.web,
@@ -1465,6 +1473,7 @@ class Group(object):
         :rtype: Group
         """
         group = Group(g['id'],
+            invitation=g.get('invitation'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             tcdate = g.get('tcdate'),
@@ -1477,6 +1486,7 @@ class Group(object):
             signatures = g.get('signatures'),
             anonids=g.get('anonids'),
             deanonymizers=g.get('deanonymizers'),
+            impersonators=g.get('impersonators'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']
@@ -1600,6 +1610,7 @@ class Invitation(object):
         web_string = None,
         process = None,
         process_string = None,
+        preprocess = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -1609,6 +1620,7 @@ class Invitation(object):
         multiReply = None,
         taskCompletionCount = None,
         transform = None,
+        reply_forum_views = [],
         details = None):
 
         self.id = id
@@ -1629,8 +1641,10 @@ class Invitation(object):
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.details = details
+        self.reply_forum_views = reply_forum_views
         self.web = None
         self.process = None
+        self.preprocess = None
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1645,6 +1659,8 @@ class Invitation(object):
             self.process = process_string
         if web_string:
             self.web = web_string
+        if preprocess is not None:
+            self.preprocess=preprocess
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1682,13 +1698,16 @@ class Invitation(object):
             'process': self.process,
             'web': self.web,
             'transform': self.transform,
-            'details': self.details
+            'details': self.details,
+            'replyForumViews': self.reply_forum_views
         }
 
         if hasattr(self,'web'):
             body['web']=self.web
         if hasattr(self,'process'):
             body['process']=self.process
+        if hasattr(self,'preprocess'):
+            body['preprocess']=self.preprocess
         return body
 
     @classmethod
@@ -1719,7 +1738,8 @@ class Invitation(object):
             multiReply = i.get('multiReply'),
             taskCompletionCount = i.get('taskCompletionCount'),
             reply = i.get('reply'),
-            details = i.get('details')
+            details = i.get('details'),
+            reply_forum_views = i.get('replyForumViews')
             )
         if 'web' in i:
             invitation.web = i['web']
@@ -1727,6 +1747,8 @@ class Invitation(object):
             invitation.process = i['process']
         if 'transform' in i:
             invitation.transform = i['transform']
+        if 'preprocess' in i:
+            invitation.preprocess = i['preprocess']
         return invitation
 
 class Note(object):
@@ -1778,6 +1800,7 @@ class Note(object):
         original=None,
         number=None,
         cdate=None,
+        mdate=None,
         tcdate=None,
         tmdate=None,
         ddate=None,
@@ -1792,6 +1815,7 @@ class Note(object):
         self.original = original
         self.number = number
         self.cdate = cdate
+        self.mdate = mdate
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.ddate = ddate
@@ -1828,6 +1852,7 @@ class Note(object):
             'id': self.id,
             'original': self.original,
             'cdate': self.cdate,
+            'mdate': self.mdate,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
             'ddate': self.ddate,
@@ -1863,6 +1888,7 @@ class Note(object):
         original = n.get('original'),
         number = n.get('number'),
         cdate = n.get('cdate'),
+        mdate = n.get('mdate'),
         tcdate = n.get('tcdate'),
         tmdate =n.get('tmdate'),
         ddate=n.get('ddate'),
@@ -2033,7 +2059,8 @@ class Edge(object):
             head = e.get('head'),
             tail = e.get('tail'),
             weight = e.get('weight'),
-            label = e.get('label')
+            label = e.get('label'),
+            tauthor=e.get('tauthor')
         )
         return edge
 
@@ -2104,6 +2131,30 @@ class Profile(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+
+    def get_preferred_name(self, pretty=False):
+        username=self.id
+        for name in self.content['names']:
+            if 'username' in name and name.get('preferred', False):
+                username=name['username']
+        if pretty:
+            return tools.pretty_id(username)
+        return username
+
+    def get_preferred_email(self):
+        preferred_email=self.content.get('preferredEmail')
+        if preferred_email:
+            return preferred_email
+
+        if self.content['emailsConfirmed']:
+            return self.content['emailsConfirmed'][0]
+
+        if self.content['emails']:
+            return self.content['emails'][0]
+
+        return None
+
 
     def to_json(self):
         """

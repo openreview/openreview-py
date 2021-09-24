@@ -21,7 +21,7 @@ class TestMatchingWithAnonIds():
 
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
-        pc_client = helpers.create_user('pc1@uai.com', 'TestPC', 'UAI')
+        pc_client = helpers.create_user('pc1@uai.com', 'PCFirstName', 'UAI')
         builder = openreview.conference.ConferenceBuilder(client)
         builder.set_conference_id('auai.org/UAI/2021/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
@@ -80,17 +80,19 @@ class TestMatchingWithAnonIds():
         ## Set committee
         conference.set_area_chairs(['ac2@cmu.edu', 'ac2@umass.edu'])
         conference.set_reviewers(['r3@mit.edu', 'r3@google.com', 'r3@fb.com'])
+        r1_client = helpers.create_user('r3@mit.edu', 'Reviewer', 'MITOne')
+        ac1_client = helpers.create_user('ac2@cmu.edu', 'AreaChair', 'CMUOne')
 
         ## Paper 1
         note_1 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a1@cmu.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a1@cmu.edu'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 1',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a1@cmu.edu'],
-                'authors': ['Test User', 'Author 1'],
+                'authors': ['SomeFirstName User', 'Author 1'],
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Belief Propagation'
@@ -103,14 +105,14 @@ class TestMatchingWithAnonIds():
 
         ## Paper 2
         note_2 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a2@mit.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a2@mit.edu'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a2@mit.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a2@mit.edu'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 2',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a2@mit.edu'],
-                'authors': ['Test User', 'Author 2'],
+                'authors': ['SomeFirstName User', 'Author 2'],
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Exact Inference'
@@ -123,14 +125,14 @@ class TestMatchingWithAnonIds():
 
         ## Paper 3
         note_3 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a3@umass.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 3',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
-                'authors': ['Test User', 'Author 3', 'PC author'],
+                'authors': ['SomeFirstName User', 'Author 3', 'PC author'],
                 'subject_areas': [
                     'Algorithms: Distributed and Parallel',
                     'Algorithms: Exact Inference'
@@ -145,7 +147,12 @@ class TestMatchingWithAnonIds():
         conference.setup_post_submission_stage(force=True)
         blinded_notes = conference.get_submissions()
 
-        ac1_client = helpers.create_user('ac2@cmu.edu', 'AreaChair', 'CMUOne')
+        # Set up reviewer matching
+        conference.setup_matching(build_conflicts=True)
+        # Set up AC matching
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
+
+
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
             readers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
             writers = ['auai.org/UAI/2021/Conference', '~AreaChair_CMUOne1'],
@@ -171,7 +178,6 @@ class TestMatchingWithAnonIds():
             label = 'Very Low'
         ))
 
-        r1_client = helpers.create_user('r3@mit.edu', 'Reviewer', 'MITOne')
         r1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_reviewers_id()),
             readers = ['auai.org/UAI/2021/Conference', '~Reviewer_MITOne1'],
             writers = ['auai.org/UAI/2021/Conference', '~Reviewer_MITOne1'],
@@ -197,10 +203,6 @@ class TestMatchingWithAnonIds():
             label = 'Low'
         ))
 
-        # Set up reviewer matching
-        conference.setup_matching(build_conflicts=True)
-
-
         invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment_Configuration')
         assert invitation
         assert 'scores_specification' in invitation.reply['content']
@@ -208,10 +210,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment')
-
-        # Set up AC matching
-        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment_Configuration')
         assert invitation
@@ -220,7 +219,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment')
 
         bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
@@ -271,7 +270,7 @@ class TestMatchingWithAnonIds():
     def test_setup_matching_with_tpms(self, conference, pc_client, helpers):
 
         # Set up reviewer matching
-        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'), build_conflicts=True)
+        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores_2.csv'), build_conflicts=True)
 
         print(conference.get_reviewers_id())
 
@@ -285,13 +284,13 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score')
 
         # Set up ac matching
         conference.setup_matching(
             committee_id=conference.get_area_chairs_id(),
-            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores_2.csv'),
             build_conflicts=True)
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment_Configuration')
@@ -303,7 +302,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Aggregate_Score')
-        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment')
+        assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
 
         bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
@@ -421,7 +420,7 @@ class TestMatchingWithAnonIds():
         ))
 
        # Set up reviewer matching
-        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores.csv'), build_conflicts=True)
+        conference.setup_matching(tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_tpms_scores_2.csv'), build_conflicts=True)
 
         print(conference.get_reviewers_id())
 
@@ -437,7 +436,7 @@ class TestMatchingWithAnonIds():
         # Set up ac matching
         conference.setup_matching(
             committee_id=conference.get_area_chairs_id(),
-            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores.csv'),
+            tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_tpms_scores_2.csv'),
             build_conflicts=True)
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment_Configuration')
@@ -702,25 +701,30 @@ class TestMatchingWithAnonIds():
         blinded_notes = list(conference.get_submissions())
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching'
         )
         assert 0 == len(edges)
 
+        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert len(edges) == 0
+
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r3@mit.edu'],
-            writers = [conference.id],
+            readers = [conference.id, '~Reviewer_MITOne1'],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'r3@mit.edu',
+            tail = '~Reviewer_MITOne1',
             label = 'rev-matching',
             weight = 0.98
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r3@google.com',
@@ -730,7 +734,8 @@ class TestMatchingWithAnonIds():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
             tail = 'r3@google.com',
@@ -740,7 +745,8 @@ class TestMatchingWithAnonIds():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
             tail = 'r3@fb.com',
@@ -750,7 +756,8 @@ class TestMatchingWithAnonIds():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
             tail = 'r3@fb.com',
@@ -759,26 +766,27 @@ class TestMatchingWithAnonIds():
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r3@mit.edu'],
-            writers = [conference.id],
+            readers = [conference.id, '~Reviewer_MITOne1'],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'r3@mit.edu',
+            tail = '~Reviewer_MITOne1',
             label = 'rev-matching',
             weight = 0.98
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching'
         )
         assert 6 == len(edges)
 
-        conference.set_assignments(assignment_title='rev-matching')
+        conference.set_assignments(assignment_title='rev-matching', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert 2 == len(revs_paper0.members)
-        assert 'r3@mit.edu' in revs_paper0.members
+        assert '~Reviewer_MITOne1' in revs_paper0.members
         assert 'r3@google.com' in revs_paper0.members
         assert revs_paper0.anonids
         assert revs_paper0.deanonymizers
@@ -786,13 +794,17 @@ class TestMatchingWithAnonIds():
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
         assert len(anon_groups) == 2
         anon_members = [ a.members[0] for a in anon_groups]
-        assert 'r3@mit.edu' in anon_members
+        assert '~Reviewer_MITOne1' in anon_members
         assert 'r3@google.com' in anon_members
 
         assert anon_groups[0].readers == [
             conference.get_id(),
             conference.get_id()+'/Paper{x}/Senior_Program_Committee'.format(x=blinded_notes[0].number),
             anon_groups[0].id
+        ]
+
+        assert anon_groups[0].nonreaders == [
+            conference.get_id()+'/Paper{x}/Authors'.format(x=blinded_notes[0].number)
         ]
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
@@ -808,12 +820,25 @@ class TestMatchingWithAnonIds():
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert 2 == len(revs_paper2.members)
         assert 'r3@fb.com' in revs_paper2.members
-        assert 'r3@mit.edu' in revs_paper2.members
+        assert '~Reviewer_MITOne1' in revs_paper2.members
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
         assert len(anon_groups) == 2
         anon_members = [ a.members[0] for a in anon_groups]
         assert 'r3@fb.com' in anon_members
-        assert 'r3@mit.edu' in anon_members
+        assert '~Reviewer_MITOne1' in anon_members
+
+        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert len(edges) == 6
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='~Reviewer_MITOne1')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@google.com')
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[1].id, tail='r3@fb.com')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[1].id, tail='r3@google.com')
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@fb.com')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='~Reviewer_MITOne1')
+
 
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
@@ -822,7 +847,8 @@ class TestMatchingWithAnonIds():
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r3@fb.com',
@@ -831,18 +857,20 @@ class TestMatchingWithAnonIds():
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r3@mit.edu'],
-            writers = [conference.id],
+            readers = [conference.id, '~Reviewer_MITOne1'],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'r3@mit.edu',
+            tail = '~Reviewer_MITOne1',
             label = 'rev-matching-new',
             weight = 0.98
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
             tail = 'r3@google.com',
@@ -851,12 +879,12 @@ class TestMatchingWithAnonIds():
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching-new'
         )
         assert 3 == len(edges)
 
-        conference.set_assignments(assignment_title='rev-matching-new', overwrite=True)
+        conference.set_assignments(assignment_title='rev-matching-new', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com'] == revs_paper0.members
@@ -864,16 +892,16 @@ class TestMatchingWithAnonIds():
         assert len(anon_groups) == 3
         anon_members = [ a.members[0] for a in anon_groups]
         assert 'r3@fb.com' in anon_members
-        assert 'r3@mit.edu' in anon_members
+        assert '~Reviewer_MITOne1' in anon_members
         assert 'r3@google.com' in anon_members
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r3@mit.edu'] == revs_paper1.members
+        assert ['~Reviewer_MITOne1'] == revs_paper1.members
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[1].number))
         assert len(anon_groups) == 3
         assert 'r3@fb.com' in anon_members
         assert 'r3@google.com' in anon_members
-        assert 'r3@mit.edu' in anon_members
+        assert '~Reviewer_MITOne1' in anon_members
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r3@google.com'] == revs_paper2.members
@@ -881,24 +909,35 @@ class TestMatchingWithAnonIds():
         assert len(anon_groups) == 3
         anon_members = [ a.members[0] for a in anon_groups]
         assert 'r3@fb.com' in anon_members
-        assert 'r3@mit.edu' in anon_members
+        assert '~Reviewer_MITOne1' in anon_members
         assert 'r3@google.com' in anon_members
 
+        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert len(edges) == 3
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@fb.com')
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[1].id, tail='~Reviewer_MITOne1')
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
+
         ## Emergency reviewers, append reviewers
-        conference.set_reviewers(['r3@mit.edu', 'r3@google.com', 'r3@fb.com', 'r2@mit.edu'])
+        conference.set_reviewers(['~Reviewer_MITOne1', 'r3@google.com', 'r3@fb.com', 'r2@mit.edu'])
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r3@mit.edu'],
-            writers = [conference.id],
+            readers = [conference.id, '~Reviewer_MITOne1'],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
-            tail = 'r3@mit.edu',
+            tail = '~Reviewer_MITOne1',
             label = 'rev-matching-emergency',
             weight = 0.98
         ))
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r2@mit.edu'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r2@mit.edu',
@@ -908,7 +947,8 @@ class TestMatchingWithAnonIds():
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
             tail = 'r3@google.com',
@@ -916,15 +956,15 @@ class TestMatchingWithAnonIds():
             weight = 0.98
         ))
 
-        conference.set_assignments(assignment_title='rev-matching-emergency')
+        conference.set_assignments(assignment_title='rev-matching-emergency', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
-        assert ['r3@fb.com', 'r3@mit.edu', 'r2@mit.edu'] == revs_paper0.members
+        assert ['r3@fb.com', '~Reviewer_MITOne1', 'r2@mit.edu'] == revs_paper0.members
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
         assert len(anon_groups) == 4
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r3@mit.edu', 'r3@google.com'] == revs_paper1.members
+        assert ['~Reviewer_MITOne1', 'r3@google.com'] == revs_paper1.members
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[1].number))
         assert len(anon_groups) == 3
 
@@ -933,11 +973,22 @@ class TestMatchingWithAnonIds():
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
         assert len(anon_groups) == 3
 
-        pc_client.remove_members_from_group('auai.org/UAI/2021/Conference/Paper3/Program_Committee', ['r3@mit.edu'])
+        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert len(edges) == 6
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@fb.com')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='~Reviewer_MITOne1')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r2@mit.edu')
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[1].id, tail='~Reviewer_MITOne1')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[1].id, tail='r3@google.com')
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r3@google.com',
@@ -945,15 +996,15 @@ class TestMatchingWithAnonIds():
             weight = 0.98
         ))
 
-        conference.set_assignments(assignment_title='rev-matching-emergency-2')
+        conference.set_assignments(assignment_title='rev-matching-emergency-2', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
-        assert ['r3@fb.com', 'r2@mit.edu', 'r3@google.com'] == revs_paper0.members
+        assert ['r3@fb.com', '~Reviewer_MITOne1', 'r2@mit.edu', 'r3@google.com'] == revs_paper0.members
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[0].number))
         assert len(anon_groups) == 4
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r3@mit.edu', 'r3@google.com'] == revs_paper1.members
+        assert ['~Reviewer_MITOne1', 'r3@google.com'] == revs_paper1.members
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[1].number))
         assert len(anon_groups) == 3
 
@@ -962,9 +1013,23 @@ class TestMatchingWithAnonIds():
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
         assert len(anon_groups) == 3
 
+        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert len(edges) == 7
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@fb.com')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='~Reviewer_MITOne1')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r2@mit.edu')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@google.com')
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[1].id, tail='~Reviewer_MITOne1')
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[1].id, tail='r3@google.com')
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
+
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@google.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
             tail = 'r3@google.com',
@@ -972,7 +1037,7 @@ class TestMatchingWithAnonIds():
             weight = 0.98
         ))
 
-        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True)
+        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert [] == revs_paper0.members
@@ -985,13 +1050,18 @@ class TestMatchingWithAnonIds():
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r3@google.com'] == revs_paper2.members
 
+        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert len(edges) == 1
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
+
         now = datetime.datetime.now()
         conference.set_review_stage(openreview.ReviewStage(start_date = now))
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/-/Official_Review')
         assert invitation
 
-        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True)
+        conference.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert [] == revs_paper0.members
@@ -1003,6 +1073,11 @@ class TestMatchingWithAnonIds():
         assert ['r3@google.com'] == revs_paper2.members
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number), signatory='r3@google.com')
         assert len(anon_groups) == 1
+
+        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert len(edges) == 1
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
         reviewer_client = helpers.create_user('r3@google.com', 'Reviewer', 'Two')
 
@@ -1035,17 +1110,23 @@ class TestMatchingWithAnonIds():
         assert process_logs[0]['status'] == 'ok'
 
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r3@mit.edu'],
-            writers = [conference.id],
+            readers = [conference.id, '~Reviewer_MITOne1'],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[2].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[2].id,
-            tail = 'r3@mit.edu',
+            tail = '~Reviewer_MITOne1',
             label = 'rev-matching-emergency-4',
             weight = 0.98
         ))
 
         with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assignments when there are reviews posted.'):
-            conference.set_assignments(assignment_title='rev-matching-emergency-4', overwrite=True)
+            conference.set_assignments(assignment_title='rev-matching-emergency-4', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
+
+        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert len(edges) == 1
+
+        assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 
@@ -1057,18 +1138,20 @@ class TestMatchingWithAnonIds():
         blinded_notes = list(conference.get_submissions())
 
         pc2_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
-            readers = [conference.id, 'r3@mit.edu'],
-            writers = [conference.id],
+            readers = [conference.id, '~Reviewer_MITOne1'],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[1].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[1].id,
-            tail = 'r3@mit.edu',
+            tail = '~Reviewer_MITOne1',
             label = 'rev-matching-emergency-6',
             weight = 0.98
         ))
 
         pc2_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, 'r3@fb.com'],
-            writers = [conference.id],
+            nonreaders = [f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Authors'],
+            writers = [conference.id, f'auai.org/UAI/2021/Conference/Paper{blinded_notes[0].number}/Senior_Program_Committee'],
             signatures = [conference.id],
             head = blinded_notes[0].id,
             tail = 'r3@fb.com',
@@ -1076,13 +1159,13 @@ class TestMatchingWithAnonIds():
             weight = 0.98
         ))
 
-        conference.set_assignments(assignment_title='rev-matching-emergency-6')
+        conference.set_assignments(assignment_title='rev-matching-emergency-6', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
         revs_paper0 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[0].number))
         assert ['r3@fb.com'] == revs_paper0.members
 
         revs_paper1 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[1].number))
-        assert ['r3@mit.edu'] == revs_paper1.members
+        assert ['~Reviewer_MITOne1'] == revs_paper1.members
 
         revs_paper2 = pc_client.get_group(conference.get_id()+'/Paper{x}/Program_Committee'.format(x=blinded_notes[2].number))
         assert ['r3@google.com'] == revs_paper2.members
@@ -1094,14 +1177,15 @@ class TestMatchingWithAnonIds():
         blinded_notes = list(conference.get_submissions())
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             label='ac-matching'
         )
         assert 0 == len(edges)
 
         #AC assignments
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@cmu.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
@@ -1110,8 +1194,9 @@ class TestMatchingWithAnonIds():
             weight = 0.98
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
@@ -1120,8 +1205,9 @@ class TestMatchingWithAnonIds():
             weight = 0.87
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
@@ -1131,12 +1217,12 @@ class TestMatchingWithAnonIds():
         ))
 
         edges = pc_client.get_edges(
-            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+            invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             label='ac-matching'
         )
         assert 3 == len(edges)
 
-        conference.set_assignments(assignment_title='ac-matching', is_area_chair=True)
+        conference.set_assignments(assignment_title='ac-matching', committee_id='auai.org/UAI/2021/Conference/Senior_Program_Committee')
 
         assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee_')
@@ -1148,8 +1234,9 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee_')
 
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@cmu.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
@@ -1158,8 +1245,9 @@ class TestMatchingWithAnonIds():
             weight = 0.98
         ))
 
-        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Paper_Assignment',
+        pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@umass.edu'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
@@ -1168,7 +1256,7 @@ class TestMatchingWithAnonIds():
             weight = 0.87
         ))
 
-        conference.set_assignments(assignment_title='ac-matching-2', is_area_chair=True, overwrite=True)
+        conference.set_assignments(assignment_title='ac-matching-2', committee_id='auai.org/UAI/2021/Conference/Senior_Program_Committee', overwrite=True)
 
         assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee').members == ['ac2@umass.edu']
 

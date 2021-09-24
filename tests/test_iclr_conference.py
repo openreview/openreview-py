@@ -170,6 +170,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                     "required": True
                 }
             })
+        builder.set_reviewer_identity_readers([openreview.Conference.IdentityReaders.PROGRAM_CHAIRS, openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED])
 
         conference = builder.get_result()
         conference.set_program_chairs(['pc@iclr.cc'])
@@ -486,23 +487,29 @@ Naila, Katja, Alice, and Ivan
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = 'ICLR.cc/2021/Conference/-/Submission',
-                readers = ['ICLR.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-                signatures = ['~Test_User1'],
+                readers = ['ICLR.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
+                writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~SomeFirstName_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'],
                     'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics'
                 }
             )
             note = test_client.post_note(note)
 
-        conference.setup_first_deadline_stage(force=True)
+        conference.setup_first_deadline_stage(force=True, submission_readers=['ICLR.cc/2021/Conference/Area_Chairs'])
 
         blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission')
         assert len(blinded_notes) == 5
+
+        assert blinded_notes[0].readers == [
+            'ICLR.cc/2021/Conference',
+            'ICLR.cc/2021/Conference/Area_Chairs',
+            'ICLR.cc/2021/Conference/Paper5/Authors'
+        ]
 
         invitations = test_client.get_invitations(replyForum=blinded_notes[0].id)
         assert len(invitations) == 1
@@ -514,8 +521,9 @@ Naila, Katja, Alice, and Ivan
 
         invitations = client.get_invitations(replyForum=blinded_notes[0].id)
         assert len(invitations) == 2
-        assert invitations[0].id == 'ICLR.cc/2021/Conference/Paper5/-/Desk_Reject'
-        assert invitations[1].id == 'ICLR.cc/2021/Conference/Paper5/-/Withdraw'
+        invitation_ids = [invitation.id for invitation in invitations]
+        assert 'ICLR.cc/2021/Conference/Paper5/-/Desk_Reject' in invitation_ids
+        assert 'ICLR.cc/2021/Conference/Paper5/-/Withdraw' in invitation_ids
 
         # Add a revision
         pdf_url = test_client.put_attachment(
@@ -540,7 +548,7 @@ Naila, Katja, Alice, and Ivan
                 'title': 'EDITED Paper title 5',
                 'abstract': 'This is an abstract 5',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'melisa@mail.com'],
-                'authors': ['Test User', 'Peter Test', 'Melisa Bok'],
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Melisa Bok'],
                 'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
                 'pdf': pdf_url,
                 'supplementary_material': supplementary_material_url
@@ -673,7 +681,7 @@ Naila, Katja, Alice, and Ivan
                 'title': 'EDITED V3 Paper title 5',
                 'abstract': 'This is an abstract 5',
                 'authorids': ['peter@mail.com', 'test@mail.com', 'melisa@mail.com'],
-                'authors': ['Peter Test', 'Test User', 'Melisa Bok'],
+                'authors': ['Peter SomeLastName', 'SomeFirstName User', 'Melisa Bok'],
                 'code_of_ethics': 'I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics',
                 'pdf': submissions[0].content['pdf'],
                 'supplementary_material': submissions[0].content['supplementary_material']

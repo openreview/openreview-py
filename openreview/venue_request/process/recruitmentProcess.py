@@ -5,9 +5,7 @@ def process(client, note, invitation):
     conference = openreview.helpers.get_conference(client, note.forum)
     print('Conference: ', conference.get_id())
 
-    reduced_load=note.content.get('invitee_reduced_load')
-    if reduced_load:
-        conference.reduced_load_on_decline=reduced_load
+    reduced_load=note.content.get('invitee_reduced_load', None)
 
     note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
     note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
@@ -34,13 +32,22 @@ def process(client, note, invitation):
         'area chair': 'Area_Chairs',
         'senior area chair': 'Senior_Area_Chairs'
     }
+
+    # Fetch contact info
+    contact_info = request_form.content.get('contact_email', None)
+
+    if not contact_info:
+        raise openreview.OpenReviewException(f'Unable to retrieve field contact_email from the request form')
+
     role_name=roles[note.content['invitee_role'].strip()]
     recruitment_status=conference.recruit_reviewers(
         invitees = invitee_emails,
         invitee_names = invitee_names,
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
-        message = note.content['invitation_email_content'].strip()
+        message = note.content['invitation_email_content'].strip(),
+        reduced_load_on_decline = reduced_load,
+        contact_info = contact_info
     )
 
     non_invited_status=f'''No recruitment invitation was sent to the following users because they have already been invited:
@@ -65,4 +72,11 @@ Please check the invitee group to see more details: https://openreview.net/group
             '''
         }
     )
+    if recruitment_status['errors']:
+        error_status=f'''{len(recruitment_status.get('errors'))} error(s) in the recruitment process:
+
+{recruitment_status.get('errors')}'''
+        comment_note.content['comment'] += f'''
+Error: {error_status}'''
+
     client.post_note(comment_note)

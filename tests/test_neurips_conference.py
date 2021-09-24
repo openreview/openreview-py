@@ -18,23 +18,10 @@ class TestNeurIPSConference():
 
     @pytest.fixture(scope="class")
     def conference(self, client):
-        #pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        conference=openreview.helpers.get_conference(client, request_form.id)
-        ## should we add this to the request form?
-        conference.senior_area_chair_identity_readers=[
-            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
-            openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
-            openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
-            openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
-        ]
-        conference.area_chair_identity_readers=[
-            openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
-            openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
-            openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
-            openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
-        ]
+        conference=openreview.helpers.get_conference(pc_client, request_form.id)
         return conference
 
 
@@ -54,6 +41,13 @@ class TestNeurIPSConference():
         helpers.create_user('ac3@umass.edu', 'Area', 'UMassChair', institution='umass.edu')
         helpers.create_user('reviewer1@umass.edu', 'Reviewer', 'UMass', institution='umass.edu')
         helpers.create_user('reviewer2@mit.edu', 'Reviewer', 'MIT', institution='mit.edu')
+        helpers.create_user('reviewer3@ibm.com', 'Reviewer', 'IBM', institution='ibm.com')
+        helpers.create_user('reviewer4@fb.com', 'Reviewer', 'Facebook', institution='fb.com')
+        helpers.create_user('reviewer5@google.com', 'Reviewer', 'Google', institution='google.com')
+        helpers.create_user('reviewer6@amazon.com', 'Reviewer', 'Amazon', institution='amazon.com')
+        helpers.create_user('external_reviewer1@amazon.com', 'External Reviewer', 'Amazon', institution='amazon.com')
+        helpers.create_user('external_reviewer2@mit.edu', 'External Reviewer', 'MIT', institution='mit.edu')
+        helpers.create_user('external_reviewer3@adobe.com', 'External Reviewer', 'Adobe', institution='adobe.com')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -81,6 +75,8 @@ class TestNeurIPSConference():
                     'OpenReview Affinity'],
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
@@ -103,6 +99,16 @@ class TestNeurIPSConference():
         helpers.await_queue()
 
         assert client.get_group('NeurIPS.cc/2021/Conference')
+        assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs')
+        acs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert acs
+        assert 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs' in acs.readers
+        reviewers=client.get_group('NeurIPS.cc/2021/Conference/Reviewers')
+        assert reviewers
+        assert 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs' in reviewers.readers
+        assert 'NeurIPS.cc/2021/Conference/Area_Chairs' in reviewers.readers
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Authors')
 
     def test_recruit_senior_area_chairs(self, client, selenium, request_page, helpers):
 
@@ -173,9 +179,78 @@ class TestNeurIPSConference():
     def test_recruit_area_chairs(self, client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        result = conference.recruit_reviewers(['ac1@mit.edu'], reviewers_name='Area_Chairs', reduced_load_on_decline=['2', '3', '4'])
+        assert result
+        assert len(result['invited']) == 1
+        assert len(result['reminded']) == 0
+        assert not result['already_invited']
+        assert 'ac1@mit.edu' in result['invited']
+
+        messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2021]: Invitation to serve as Area Chair')
+        text = messages[0]['content']['text']
+        assert 'Dear invitee,' in text
+        assert 'You have been nominated by the program chair committee of NeurIPS 2021 to serve as area chair' in text
+
+        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+
+        request_page(selenium, accept_url, alert=True)
+        accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(accepted_group.members) == 1
+        assert 'ac1@mit.edu' in accepted_group.members
+
+        openreview.tools.replace_members_with_ids(client, accepted_group)
+        accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(accepted_group.members) == 1
+        assert '~Area_IBMChair1' in accepted_group.members
+
+        rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
+        assert len(rejected_group.members) == 0
+
+        request_page(selenium, reject_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
+        rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
+        assert len(rejected_group.members) == 1
+        assert 'ac1@mit.edu' in rejected_group.members
+
+        accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(accepted_group.members) == 0
+
+        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Recruit_Area_Chairs', content={'user': 'ac1@mit.edu', 'response': 'No'})
+        assert notes
+        assert len(notes) == 1
+
+        client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Reduced_Load',
+            readers=['NeurIPS.cc/2021/Conference', 'ac1@mit.edu'],
+            writers=['NeurIPS.cc/2021/Conference'],
+            signatures=['(anonymous)'],
+            content={
+                'user': 'ac1@mit.edu',
+                'key': notes[0].content['key'],
+                'response': 'Yes',
+                'reviewer_load': '3'
+            }
+        ))
+
+        helpers.await_queue()
+
+        area_chairs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
+        assert len(area_chairs.members) == 1
+        assert 'ac1@mit.edu' in area_chairs.members
+
         pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1'])
 
-    def test_sac_bidding(self, conference, helpers):
+    def test_sac_bidding(self, conference, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -199,6 +274,120 @@ class TestNeurIPSConference():
         assert invitation.reply['content']['paper_invitation']['value-regex'] == 'NeurIPS.cc/2021/Conference/Area_Chairs'
         assert invitation.reply['content']['paper_invitation']['default'] == 'NeurIPS.cc/2021/Conference/Area_Chairs'
 
+        sac_client=openreview.Client(username='sac1@google.com', password='1234')
+        assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
+
+        tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs#senior-areachair-tasks'
+        request_page(selenium, tasks_url, sac_client.token)
+
+        assert selenium.find_element_by_link_text('Senior Area Chair Bid')
+
+
+        bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid'
+        request_page(selenium, bid_url, sac_client.token)
+
+        assert selenium.find_element_by_id('notes')
+
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'Very High'
+        ))
+
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'High'
+        ))
+
+        sac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_GoogleChair1'],
+            writers = ['~SeniorArea_GoogleChair1'],
+            signatures = ['~SeniorArea_GoogleChair1'],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'Very Low'
+        ))
+
+        sac2_client=openreview.Client(username='sac2@gmail.com', password='1234')
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very Low'
+        ))
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very High'
+        ))
+
+        sac2_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1'],
+            writers = ['~SeniorArea_NeurIPSChair1'],
+            signatures = ['~SeniorArea_NeurIPSChair1'],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'Very Low'
+        ))
+
+        ## SAC assignments
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, '~SeniorArea_GoogleChair1', '~Area_IBMChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_IBMChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, '~SeniorArea_NeurIPSChair1', '~Area_GoogleChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_GoogleChair1',
+            tail = '~SeniorArea_NeurIPSChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
+        pc_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, '~SeniorArea_GoogleChair1', '~Area_UMassChair1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = '~Area_UMassChair1',
+            tail = '~SeniorArea_GoogleChair1',
+            label = 'sac-matching',
+            weight = 0.94
+        ))
+
+        url='http://localhost:3030/edges/browse?traverse=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment,label:sac-matching&edit=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment,label:sac-matching&browse=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Aggregate_Score,label:sac-matching;NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score;NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Conflict'
+
+        print(url)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'No submissions to deploy SAC assignment'):
+            conference.set_assignments(assignment_title='sac-matching', committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', overwrite=True)
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
@@ -222,7 +411,7 @@ class TestNeurIPSConference():
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nIf you have any questions, please contact {contact_info}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -248,6 +437,7 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as reviewer'
         assert messages[0]['content']['text'].startswith('Dear Reviewer UMass,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+        assert 'pc@neurips.cc' in messages[0]['content']['text']
         reject_url = re.search('https://.*response=No', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
         request_page(selenium, reject_url, alert=True)
         notes = selenium.find_element_by_id("notes")
@@ -274,7 +464,7 @@ class TestNeurIPSConference():
         assert len(notes) == 1
 
         client.post_note(openreview.Note(
-            invitation='NeurIPS.cc/2021/Conference/-/Reduced_Load',
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Reduced_Load',
             readers=['NeurIPS.cc/2021/Conference', 'reviewer1@umass.edu'],
             writers=['NeurIPS.cc/2021/Conference'],
             signatures=['(anonymous)'],
@@ -330,21 +520,68 @@ class TestNeurIPSConference():
         assert len(messages)
         assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for NeurIPS 2021.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
 
-    def test_submit_papers(self, conference, helpers, test_client, client):
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
-        domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
+    def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
+
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        result = conference.recruit_reviewers(invitees = ['reviewer2@mit.edu'], title = 'Ethics Review invitation', message = '{accept_url}, {decline_url}', reviewers_name = 'Ethics_Reviewers')
+        assert result['invited'] == ['reviewer2@mit.edu']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
+        assert client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers/Declined')
+        group = client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers/Invited')
+        assert group
+        assert len(group.members) == 1
+        assert 'reviewer2@mit.edu' in group.members
+
+        messages = client.get_messages(to='reviewer2@mit.edu', subject='Ethics Review invitation')
+        assert messages and len(messages) == 1
+        accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue()
+
+        group = client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
+        assert group
+        assert len(group.members) == 1
+        assert 'reviewer2@mit.edu' in group.members
+
+        result = conference.recruit_reviewers(invitees = ['reviewer2@mit.edu'], title = 'Ethics Review invitation', message = '{accept_url}, {decline_url}', reviewers_name = 'Ethics_Reviewers')
+        assert result['invited'] == []
+        assert result['already_invited'] == {
+            'NeurIPS.cc/2021/Conference/Ethics_Reviewers/Invited': ['reviewer2@mit.edu']
+        }
+
+
+    def test_submit_papers(self, test_client, client, helpers):
+
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = 'NeurIPS.cc/2021/Conference/-/Submission',
-                readers = ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-                signatures = ['~Test_User1'],
+                readers = ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
+                writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~SomeFirstName_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
                 }
             )
+            if i == 1:
+                note.readers = note.readers[:-1] + ['~SeniorArea_GoogleChair1', '~SomeFirstName_User1']
+                note.writers = note.writers[:-1] + ['~SeniorArea_GoogleChair1', '~SomeFirstName_User1']
+                note.content['authors'].append('SeniorArea GoogleChair')
+                note.content['authorids'].append('~SeniorArea_GoogleChair1')
+                print(note)
             note = test_client.post_note(note)
 
         conference.setup_first_deadline_stage(force=True)
@@ -352,9 +589,112 @@ class TestNeurIPSConference():
         blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
         assert len(blinded_notes) == 5
 
-    def test_post_submission_stage(self, conference, helpers, test_client, client):
+        assert blinded_notes[0].readers == ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper5/Authors']
 
-        conference.setup_final_deadline_stage(force=True)
+        assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Withdraw')
+        assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Desk_Reject')
+        assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Revision')
+
+        ## Add supplementary material
+        submissions=conference.get_submissions(details='original')
+        for submission in submissions:
+            id = conference.get_invitation_id('Supplementary_Material', submission.number)
+            invitation = openreview.Invitation(
+                id = id,
+                expdate = openreview.tools.datetime_millis(datetime.datetime(2021, 6, 2, 20, 0)),
+                readers = [conference.id, conference.get_authors_id(number=submission.number)],
+                writers = [conference.id],
+                signatures = [conference.id],
+                invitees = [conference.get_authors_id(number=submission.number)],
+                multiReply = False,
+                reply = {
+                    'forum': submission.details['original']['id'],
+                    'referent': submission.details['original']['id'],
+                    'readers': {
+                        'values': [
+                            conference.id, conference.get_authors_id(number=submission.number)
+                        ]
+                    },
+                    'writers': {
+                        'values': [
+                            conference.id, conference.get_authors_id(number=submission.number)
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': '~.*'
+                    },
+                    'content': {
+                        'supplementary_material': {
+                            'order': 1,
+                            'required': True,
+                            'description': 'You can upload a single ZIP or a single PDF or a single MP4 file. Make sure that you do not use specialized codecs and the video runs on all computers. The maximum file size is 100MB.',
+                            'value-file': {
+                                'fileTypes': [
+                                    'pdf',
+                                    'zip',
+                                    'mp4'
+                                ],
+                                'size': 100
+                            }
+                        }
+                    }
+                }
+            )
+            client.post_invitation(invitation)
+
+        assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Supplementary_Material')
+
+        ## Post a revision, add an author and check the permissions
+        submissions=test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission', sort='number:desc')
+        note = openreview.Note(referent=submissions[0].id,
+            forum = submissions[0].id,
+            invitation = 'NeurIPS.cc/2021/Conference/Paper5/-/Revision',
+            readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            content = {
+                'title': 'Paper title 5' ,
+                'abstract': 'This is an abstract 5 Rev',
+                'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
+            }
+        )
+        note = test_client.post_note(note)
+
+        updated_note=test_client.get_note(submissions[0].id)
+        assert updated_note
+        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~SomeFirstName_User1']
+        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~SomeFirstName_User1']
+
+        helpers.await_queue()
+
+        author_group=test_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Authors')
+        assert author_group
+        assert author_group.members == ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu']
+
+
+    def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
+
+        #conference.setup_final_deadline_stage(force=True)
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= { 'force': 'Yes' },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_NeurIPSChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=post_submission_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
         submissions = conference.get_submissions()
         assert len(submissions) == 5
@@ -369,16 +709,901 @@ class TestNeurIPSConference():
             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
-
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').nonreaders == ['NeurIPS.cc/2021/Conference/Paper5/Authors']
 
         assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').readers == ['NeurIPS.cc/2021/Conference',
-            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs']
-
-        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
             'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
 
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').deanonymizers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').nonreaders == ['NeurIPS.cc/2021/Conference/Paper5/Authors']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').readers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').deanonymizers == ['NeurIPS.cc/2021/Conference',
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers']
+
+        assert client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').nonreaders == ['NeurIPS.cc/2021/Conference/Paper5/Authors']
+
+        ## Open Author paper ranking
+        now = datetime.datetime.utcnow()
+        conference.open_paper_ranking(committee_id=conference.get_authors_id(), due_date=now + datetime.timedelta(days=3))
+
+        authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Authors'
+        request_page(selenium, authors_url, test_client.token)
+
+        assert selenium.find_elements_by_class_name('tag-widget')
+
+        client.post_invitation(openreview.Invitation(id=f'{conference.get_authors_id()}/-/Perceived_Likelihood',
+            invitees=[conference.get_authors_id()],
+            readers=[conference.get_authors_id()],
+            signatures=[conference.id],
+            writers=[conference.id],
+            multiReply=False,
+            reply={
+                'invitation': f'{conference.id}/-/Blind_Submission',
+                'readers': {
+                    'values-copied': ['{signatures}']
+                },
+                'writers': {
+                    'values-copied': ['{signatures}']
+                },
+                'signatures': {
+                    'values-regex': '~.*'
+                },
+                'content': {
+                    'percent_chance': {
+                        'description': 'What is your best estimate of the percent chance that this submission will be accepted?  Please use a scale of 0 to 100, where 0 = “no chance” and 100 = “certain to be accepted',
+                        'value-regex': '^(0|[1-9][0-9]?|100)$',
+                        'required': True
+                    }
+                }
+
+            }))
+
+    def test_setup_matching(self, conference, client, helpers):
+
+        now = datetime.datetime.utcnow()
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        submissions=conference.get_submissions()
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                writer.writerow([submission.id, '~Area_IBMChair1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
+
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                writer.writerow([submission.id, '~Reviewer_UMass1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_MIT1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_IBM1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_Facebook1', round(random.random(), 2)])
+                writer.writerow([submission.id, '~Reviewer_Google1', round(random.random(), 2)])
+
+
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+
+        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True))
+        conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True))
+
+        assert len(client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers')) == 1
+        ac_quotas=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Custom_Max_Papers')
+        assert len(ac_quotas) == 1
+        assert ac_quotas[0].weight == 3
+        assert ac_quotas[0].head == 'NeurIPS.cc/2021/Conference/Area_Chairs'
+        assert ac_quotas[0].tail == '~Area_IBMChair1'
+
+
+        ## Reviewer quotas
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_MIT1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = 'NeurIPS.cc/2021/Conference/Reviewers',
+            tail = '~Reviewer_MIT1',
+            weight = 4
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_IBM1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = 'NeurIPS.cc/2021/Conference/Reviewers',
+            tail = '~Reviewer_IBM1',
+            weight = 1
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_Facebook1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = 'NeurIPS.cc/2021/Conference/Reviewers',
+            tail = '~Reviewer_Facebook1',
+            weight = 6
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Area_Chairs', '~Reviewer_Google1'],
+            writers = [conference.id],
+            signatures = [conference.id],
+            head = 'NeurIPS.cc/2021/Conference/Reviewers',
+            tail = '~Reviewer_Google1',
+            weight = 6
+        ))
+
+        ## AC assignments
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[0].number}/Senior_Area_Chairs', '~Area_IBMChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[0].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[0].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[0].id,
+            tail = '~Area_IBMChair1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[1].number}/Senior_Area_Chairs', '~Area_IBMChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[1].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[1].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[1].id,
+            tail = '~Area_IBMChair1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[2].number}/Senior_Area_Chairs', '~Area_UMassChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[2].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[2].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[2].id,
+            tail = '~Area_UMassChair1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[3].number}/Senior_Area_Chairs', '~Area_GoogleChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[3].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[3].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[3].id,
+            tail = '~Area_GoogleChair1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))
+        client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment',
+            readers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[4].number}/Senior_Area_Chairs', '~Area_GoogleChair1'],
+            writers = [conference.id, f'NeurIPS.cc/2021/Conference/Paper{submissions[4].number}/Senior_Area_Chairs'],
+            nonreaders = [f'NeurIPS.cc/2021/Conference/Paper{submissions[4].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[4].id,
+            tail = '~Area_GoogleChair1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))
+
+
+        ## Deploy assignments
+        with pytest.raises(openreview.OpenReviewException, match=r'AC assignments must be deployed first'):
+            conference.set_assignments(assignment_title='sac-matching', committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', overwrite=True)
+
+        conference.set_assignments(assignment_title='ac-matching', committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', overwrite=True)
+        conference.set_assignments(assignment_title='sac-matching', committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', overwrite=True)
+
+        helpers.await_queue()
+
+        assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
+        assert ['~Area_IBMChair1'] ==  pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs').members
+        assert ['~Area_UMassChair1'] ==  pc_client.get_group('NeurIPS.cc/2021/Conference/Paper3/Area_Chairs').members
+        assert ['~Area_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Area_Chairs').members
+        assert ['~Area_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Area_Chairs').members
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+
+        assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
+        assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs').members
+        assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper3/Senior_Area_Chairs').members
+        assert ['~SeniorArea_NeurIPSChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs').members
+        assert ['~SeniorArea_NeurIPSChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs').members
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 0
+
+        ## Reviewer assignments
+        # Paper 5
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[0], '~Reviewer_Google1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_UMass1', label='reviewer-matching', weight=0.98)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.45)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[0], '~Reviewer_Google1', label='reviewer-matching', weight=0.33)
+
+        # Paper 4
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[1], '~Reviewer_Facebook1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_UMass1', label='reviewer-matching', weight=0.98)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[1], '~Reviewer_Google1', label='reviewer-matching', weight=0.33)
+
+        # Paper 3
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[2], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[2], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
+
+        # Paper 4
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[3], '~Reviewer_Facebook1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[3], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
+
+        # Paper 1
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Proposed_Assignment', submissions[4], '~Reviewer_MIT1', label='reviewer-matching', weight=None)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_UMass1', label='reviewer-matching', weight=0.33)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_MIT1', label='reviewer-matching', weight=0.87)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_IBM1', label='reviewer-matching', weight=0.56)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_Facebook1', label='reviewer-matching', weight=0.89)
+        helpers.create_reviewer_edge(client, conference, 'Aggregate_Score', submissions[4], '~Reviewer_Google1', label='reviewer-matching', weight=0.98)
+
+        # start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Proposed_Assignment,label:ac-matching,tail:~Area_IBMChair1'
+        # traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching'
+        # browse='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score;NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
+        # hide='NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
+        # url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={traverse}&browse={browse}&maxColumns=2'
+
+        # print(url)
+        # assert False
+
+    def test_reassignment_stage(self, conference, helpers, client, selenium, request_page):
+
+        now = datetime.datetime.utcnow()
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        email_template='''
+As an Area Chair for NeurIPS 2021, I’d like to ask for your expert review of a submission, titled: {title}:
+
+{abstract}
+
+If you accept, you will not be added to the general list of NeurIPS reviewers and will not be assigned additional submissions unless you explicitly agree to review them.
+
+To accept this request, please follow this link: {accept_url}
+
+To decline, follow this link: {decline_url}
+
+If you accept, I would need the review by Friday, July 16.
+
+If you don’t have an OpenReview account, you will be asked to create one using the email address at which you received this message.  Once you sign up, you will receive a separate email with instructions for accessing the paper within a few days.
+
+I really hope you can help out with reviewing this paper!
+
+Thank you,
+{inviter_id}
+{inviter_name}({inviter_email})
+        '''
+
+        conference.setup_assignment_recruitment(conference.get_reviewers_id(), '12345678', now + datetime.timedelta(days=3), assignment_title='reviewer-matching', invitation_labels={ 'Invite': 'Invitation Sent', 'Invited': 'Invitation Sent' }, email_template=email_template)
+
+        start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
+        traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching'
+        edit='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment;NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers,head:ignore'
+        browse='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score;NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
+        hide='NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
+        url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={edit}&browse={browse}&maxColumns=2'
+
+        print(url)
+
+        ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+        submission=conference.get_submissions()[0]
+        signatory_group=ac_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0]
+
+        ## Invite external reviewer 1
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer1@amazon.com'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.id],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = 'external_reviewer1@amazon.com',
+            label = 'Invitation Sent'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## External reviewer is invited
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='~External_Reviewer_Amazon1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='~External_Reviewer_Amazon1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_Amazon1')
+
+        ## External reviewer accepts the invitation
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
+        assert messages and len(messages) == 1
+        invitation_message=messages[0]['content']['text']
+
+        invalid_accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('user=~External_Reviewer_Amazon1', 'user=~External_Reviewer_Amazon2')
+        request_page(selenium, invalid_accept_url, alert=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+
+        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## Externel reviewer is assigned to the paper 5
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
+        assert invite_edges[0].label == 'Accepted'
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='~External_Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='~External_Reviewer_Amazon1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_Amazon1')
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
+        assert len(assignment_edges) == 3
+        assert '~External_Reviewer_Amazon1' in [e.tail for e in assignment_edges]
+
+        # Confirmation email to the reviewer
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi External Reviewer Amazon,
+Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
+
+The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
+        # Confirmation email to the ac
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon accepted to review paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Area IBMChair,
+The Reviewer External Reviewer Amazon(external_reviewer1@amazon.com) that you invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.
+
+OpenReview Team'''
+
+
+        ## External reviewer declines the invitation, assignment rollback
+        decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, decline_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
+        assert len(process_logs) == 2
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[1]['status'] == 'ok'
+
+        ## Externel reviewer is not assigned to the paper 5
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
+        assert invite_edges[0].label == 'Declined'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
+        assert len(assignment_edges) == 2
+        assert '~External_Reviewer_Amazon1' not in [e.tail for e in assignment_edges]
+
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi External Reviewer Amazon,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'''
+
+        response_note=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment', content={ 'submission_id': submission.id, 'user': '~External_Reviewer_Amazon1', 'response': 'No'})[0]
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon declined to review paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Area IBMChair,
+The Reviewer External Reviewer Amazon(external_reviewer1@amazon.com) that you invited to review paper 5 has declined the invitation.
+
+To read their response, please click here: https://openreview.net/forum?id={response_note.id}
+
+OpenReview Team'''
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='~External_Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='~External_Reviewer_Amazon1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_Amazon1')
+
+
+        ## External reviewer accepts the invitation again
+        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
+        assert len(process_logs) == 3
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[1]['status'] == 'ok'
+        assert process_logs[2]['status'] == 'ok'
+
+        ## Externel reviewer is assigned to the paper 5
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_Amazon1'
+        assert invite_edges[0].label == 'Accepted'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
+        assert len(assignment_edges) == 3
+        assert '~External_Reviewer_Amazon1' in [e.tail for e in assignment_edges]
+
+        messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5')
+        assert messages and len(messages) == 2
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='~External_Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='~External_Reviewer_Amazon1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_Amazon1')
+
+        ## Invite external reviewer 2
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for External Reviewer MIT'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer2@mit.edu'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = 'external_reviewer2@mit.edu',
+                label = 'Invitation Sent'
+            ))
+
+        ## Invite external reviewer 3
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer3@adobe.com'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.id],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = 'external_reviewer3@adobe.com',
+            label = 'Invitation Sent'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## External reviewer is invited
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~External_Reviewer_Adobe1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_Adobe1'
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Adobe1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Adobe1')
+
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='~External_Reviewer_Adobe1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='~External_Reviewer_Adobe1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_Adobe1')
+
+        ## External reviewer declines the invitation
+        messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
+        assert messages and len(messages) == 1
+        accept_url = re.search('https://.*response=No', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment')
+        assert len(process_logs) == 4
+        assert process_logs[0]['status'] == 'ok'
+
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~External_Reviewer_Adobe1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Declined'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
+        assert len(assignment_edges) == 3
+
+        messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi External Reviewer Adobe,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Adobe1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Adobe1')
+
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='~External_Reviewer_Adobe1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='~External_Reviewer_Adobe1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_Adobe1')
+
+        ## Invite external reviewer 4 with no profile
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer4@gmail.com'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.id],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = 'external_reviewer4@gmail.com',
+            label = 'Invitation Sent'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## External reviewer is invited
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer4@gmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == 'external_reviewer4@gmail.com'
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='external_reviewer4@gmail.com')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='external_reviewer4@gmail.com')
+
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='external_reviewer4@gmail.com')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='external_reviewer4@gmail.com')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='external_reviewer4@gmail.com')
+
+        ## External reviewer accepts the invitation
+        messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
+        assert messages and len(messages) == 1
+        accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        decline_url = re.search('https://.*response=No', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        ## Externel reviewer is set pending profile creation
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer4@gmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Pending Sign Up'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
+        assert len(assignment_edges) == 3
+
+        messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5, assignment pending')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi external_reviewer4@gmail.com,\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.\n\nPlease signup in OpenReview using the email address external_reviewer4@gmail.com and complete your profile.\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.\n\nOpenReview Team'
+
+        messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer external_reviewer4@gmail.com accepted to review paper 5, assignment pending')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Area IBMChair,
+The Reviewer external_reviewer4@gmail.com that you invited to review paper 5 has accepted the invitation.
+
+Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
+
+OpenReview Team'''
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='external_reviewer4@gmail.com')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='external_reviewer4@gmail.com')
+
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers', member='external_reviewer4@gmail.com')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers', member='external_reviewer4@gmail.com')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='external_reviewer4@gmail.com')
+
+        ## External reviewer creates a profile and accepts the invitation again
+        external_reviewer=helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
+
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer4@gmail.com')
+        assert len(invite_edges) == 0
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~Reviewer_External1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        request_page(selenium, decline_url, alert=True)
+
+        helpers.await_queue()
+
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer4@gmail.com')
+        assert len(invite_edges) == 0
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~Reviewer_External1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Declined'
+
+        ## Invite external reviewer 5 with no profile
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'external_reviewer5@gmail.com'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.id],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = 'external_reviewer5@gmail.com',
+            label = 'Invitation Sent'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## External reviewer is invited
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer5@gmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == 'external_reviewer5@gmail.com'
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        ## External reviewer declines the invitation
+        messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
+        assert messages and len(messages) == 1
+        accept_url = re.search('https://.*response=No', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        ## Externel reviewer is set pending profile creation
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='external_reviewer5@gmail.com')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Declined'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment', label='reviewer-matching', head=submission.id)
+        assert len(assignment_edges) == 3
+
+        messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == 'Hi external_reviewer5@gmail.com,\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nOpenReview Team'
+
+
+        ## Invite external reviewer with wrong tilde id
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~External_Melisa1'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~External_Melisa1',
+                label = 'Invitation Sent'
+            ))
+        assert openReviewError.value.args[0].get('name') == 'Not Found'
+        assert openReviewError.value.args[0].get('message') == '~External_Melisa1 was not found'
+
+        ## Invite an official reviewer and get an error
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'reviewer4@fb.com'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = 'reviewer4@fb.com',
+                label = 'Invitation Sent'
+            ))
+        assert openReviewError.value.args[0].get('name') == 'Error'
+        assert openReviewError.value.args[0].get('message') == 'Reviewer Reviewer Facebook is an official reviewer, please use the "Assign" button to make the assignment.'
+
+        ## Invite an official conflicted reviewer and get a conflict error
+        with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for Reviewer MIT'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', 'reviewer2@mit.edu'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = 'reviewer2@mit.edu',
+                label = 'Invitation Sent'
+            ))
+
+        ## Propose a reviewer that reached the quota
+        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for Reviewer IBM'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Reviewer_IBM1'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+                writers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~Reviewer_IBM1',
+                label = 'reviewer-matching'
+            ))
+
+
+    def test_deployment_stage(self, conference, client, helpers):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        submissions=conference.get_submissions()
+
+        conference.set_assignments(assignment_title='reviewer-matching', committee_id='NeurIPS.cc/2021/Conference/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
+
+        helpers.await_queue()
+
+        paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers').members
+        assert len(paper_reviewers) == 3
+        assert '~Reviewer_UMass1' in paper_reviewers
+        assert '~Reviewer_Google1' in paper_reviewers
+        assert '~External_Reviewer_Amazon1' in paper_reviewers
+
+        paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers').members
+        assert len(paper_reviewers) == 2
+        assert '~Reviewer_UMass1' in paper_reviewers
+        assert '~Reviewer_Facebook1' in paper_reviewers
+
+        paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers').members
+        assert len(paper_reviewers) == 2
+        assert '~Reviewer_UMass1' in paper_reviewers
+        assert '~Reviewer_Google1' in paper_reviewers
+
+        paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers').members
+        assert len(paper_reviewers) == 2
+        assert '~Reviewer_Facebook1' in paper_reviewers
+        assert '~Reviewer_IBM1' in paper_reviewers
+
+        paper_reviewers=pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers').members
+        assert len(paper_reviewers) == 2
+        assert '~Reviewer_UMass1' in paper_reviewers
+        assert '~Reviewer_MIT1' in paper_reviewers
+
+        assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment')
+        assert len(assignments) == 11
+
+        assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', tail='~Reviewer_UMass1')
+        assert len(assignments) == 4
+
+        assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', tail='~Reviewer_UMass1', head=submissions[0].id)
+        assert len(assignments) == 1
+
+        assert assignments[0].readers == ["NeurIPS.cc/2021/Conference",
+            "NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs",
+            "NeurIPS.cc/2021/Conference/Paper5/Area_Chairs",
+            "~Reviewer_UMass1"]
+
+        assert assignments[0].writers == ["NeurIPS.cc/2021/Conference",
+            "NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs",
+            "NeurIPS.cc/2021/Conference/Paper5/Area_Chairs"]
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Amazon1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_Amazon1')
+
+
     def test_review_stage(self, conference, helpers, test_client, client):
+
+        ## make submissions visible to assigned commmittee
+        invitation = client.get_invitation('NeurIPS.cc/2021/Conference/-/Submission')
+        invitation.reply['readers'] = {
+            'values-regex': '.*'
+        }
+        client.post_invitation(invitation)
+
+        invitation2 = client.get_invitation('NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        invitation2.reply_forum_views = [
+            {
+                "id": "authors",
+                "label": "Author Discussion",
+                "filter": "readers:NeurIPS.cc/2021/Conference/Paper${note.number}/Authors"
+            },
+            {
+                "id": "committee",
+                "label": "Committee Discussion",
+                "filter": "-readers:NeurIPS.cc/2021/Conference/Paper${note.number}/Authors"
+            },
+            {
+                "id": "all",
+                "label": "All",
+                "filter": ""
+            }
+        ]
+        client.post_invitation(invitation2)
+
+        original_notes=client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
+        for note in original_notes:
+            note.readers = note.readers + [f'NeurIPS.cc/2021/Conference/Paper{note.number}/Senior_Area_Chairs']
+            client.post_note(note)
+
+        blind_notes=client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        for note in blind_notes:
+            note.content = {
+                'authors': ['Anonymous'],
+                'authorids': [f'NeurIPS.cc/2021/Conference/Paper{note.number}/Authors']
+            }
+            note.readers = [
+                'NeurIPS.cc/2021/Conference',
+                f'NeurIPS.cc/2021/Conference/Paper{note.number}/Senior_Area_Chairs',
+                f'NeurIPS.cc/2021/Conference/Paper{note.number}/Area_Chairs',
+                f'NeurIPS.cc/2021/Conference/Paper{note.number}/Reviewers',
+                f'NeurIPS.cc/2021/Conference/Paper{note.number}/Authors'
+            ]
+            client.post_note(note)
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -388,9 +1613,111 @@ class TestNeurIPSConference():
         stage_note=client.post_note(openreview.Note(
             content={
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
-                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+                'remove_review_form_options': 'title',
+                'additional_review_form_options': {
+                    "summary_and_contributions": {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Briefly summarize the paper and its contributions.",
+                        "required": True
+                    },
+                    "review": {
+                        "order": 2,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Please provide a thorough review of the submission, including its originality, quality, clarity, and significance. See https://neurips.cc/Conferences/2021/Review-Form for guidance on questions to address in your review, and https://openreview.net/faq for how to incorporate Markdown and LaTeX into your review.",
+                        "required": True,
+                        "markdown": True
+                    },
+                    "societal_impact": {
+                        "description": "Have the authors adequately addressed the limitations and potential negative societal impact of their work? (If not, please include constructive suggestions for improvement)",
+                        "order": 3,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "required": True
+                    },
+                    "needs_ethical_review": {
+                        "description": "Would the paper benefit from further ethical review?",
+                        "order": 4,
+                        "value-radio": [
+                            "Yes",
+                            "No"
+                        ],
+                        "required": True
+                    },
+                    "ethical_issues": {
+                        "description": "Please elaborate on the ethical issues raised by this paper and the extent to which the issues have been acknowledged or addressed.",
+                        "order": 5,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "required": False
+                    },
+                    "ethical_expertise": {
+                        "order": 6,
+                        "values-checkbox": [
+                            "Discrimination / Bias / Fairness Concerns",
+                            "Inadequate Data and Algorithm Evaluation",
+                            "Inappropriate Potential Applications & Impact  (e.g., human rights concerns)",
+                            "Privacy and Security (e.g., consent)",
+                            "Legal Compliance (e.g., GDPR, copyright, terms of use)",
+                            "Research Integrity Issues (e.g., plagiarism)",
+                            "Responsible Research Practice (e.g., IRB, documentation, research ethics)",
+                            "I don’t know"
+                        ],
+                        "description": "What kind of expertise do you think is required to review this paper for the ethical concerns raised?. Please click all that apply.",
+                        "required": False
+                    },
+                    "previously_reviewed": {
+                        "order": 7,
+                        "value-radio": [
+                            "Yes",
+                            "No"
+                        ],
+                        "required": True,
+                        "description": "Have you previously reviewed or area chaired (a version of) this work for another archival venue?",
+                    },
+                    "reviewing_time": {
+                        "order": 8,
+                        "value-regex": ".{1,500}",
+                        "required": True,
+                        "description": "How much time did you spend reviewing this paper (in_hours)?"
+                    },
+                    "rating": {
+                        "order": 9,
+                        "value-radio": [
+                            "10: Top 5% of accepted NeurIPS papers, seminal paper",
+                            "9: Top 15% of accepted NeurIPS papers, strong accept",
+                            "8: Top 50% of accepted NeurIPS papers, clear accept",
+                            "7: Good paper, accept",
+                            "6: Marginally above the acceptance threshold",
+                            "5: Marginally below the acceptance threshold",
+                            "4: An okay paper, but not good enough; rejection",
+                            "3: Clear rejection",
+                            "2: Strong rejection",
+                            "1: Trivial or wrong"
+                        ],
+                        "description": "Please provide an \"overall score\" for this submission.",
+                        "required": True
+                    },
+                    "confidence": {
+                        "order": 10,
+                        "value-radio": [
+                            "5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.",
+                            "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.",
+                            "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
+                            "2: You are willing to defend your assessment, but it is quite likely that you did not understand central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.",
+                            "1: Your assessment is an educated guess. The submission is not in your area or the submission was difficult to understand. Math/other details were not carefully checked."
+                        ],
+                        "description": "Please provide a \"confidence score\" for your assessment of this submission.",
+                        "required": True
+                    },
+                    "code_of_conduct": {
+                        "order": 11,
+                        "value-checkbox": "While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the NeurIPS code of conduct (https://neurips.cc/public/CodeOfConduct).",
+                        "required": True
+                    }
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
@@ -406,26 +1733,6 @@ class TestNeurIPSConference():
         process_logs = client.get_process_logs(id=stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs', '~SeniorArea_GoogleChair1')
-
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs', '~Area_IBMChair1')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Area_IBMChair1')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Area_Chairs', '~Area_IBMChair1')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Area_Chairs', '~Area_IBMChair1')
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', '~Area_IBMChair1')
-
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper5/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper3/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper2/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Paper1/Reviewers', ['~Reviewer_UMass1', '~Reviewer_MIT1'])
 
         ac_group=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0]
         assert ac_group.readers == ['NeurIPS.cc/2021/Conference',
@@ -447,7 +1754,7 @@ class TestNeurIPSConference():
         assert len(anon_groups) == 1
 
         anon_groups=client.get_groups('NeurIPS.cc/2021/Conference/Paper5/Reviewer_.*')
-        assert len(anon_groups) == 2
+        assert len(anon_groups) == 3
 
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
 
@@ -466,10 +1773,15 @@ class TestNeurIPSConference():
             writers=[signatory_groups[0].id],
             signatures=[signatory_groups[0].id],
             content={
-                'title': 'Review title',
-                'review': 'Paper is very good!',
-                'rating': '9: Top 15% of accepted papers, strong accept',
-                'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
+                'summary_and_contributions': 'TEst data',
+                'review': 'Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!Paper is very good!',
+                'societal_impact': 'TESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTTTESSSTTTTT',
+                'needs_ethical_review': 'No',
+                'previously_reviewed': 'No',
+                'reviewing_time': '3',
+                'rating': '10: Top 5% of accepted NeurIPS papers, seminal paper',
+                'confidence': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.',
+                'code_of_conduct': 'While performing my duties as a reviewer (including writing reviews and participating in discussions), I have and will continue to abide by the NeurIPS code of conduct (https://neurips.cc/public/CodeOfConduct).'
             }
         ))
 
@@ -487,11 +1799,217 @@ class TestNeurIPSConference():
 
         ## TODO: should we send emails to Senior Area Chairs?
 
+    def test_emergency_reviewer_stage(self, conference, helpers, client, request_page, selenium):
+
+        now = datetime.datetime.utcnow()
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+
+        start='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment,tail:~Area_IBMChair1'
+        traverse='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment'
+        edit='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment;NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment'
+        browse='NeurIPS.cc/2021/Conference/Reviewers/-/Aggregate_Score,label:reviewer-matching;NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score;NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
+        hide='NeurIPS.cc/2021/Conference/Reviewers/-/Conflict'
+        url=f'http://localhost:3030/edges/browse?start={start}&traverse={traverse}&edit={edit}&browse={browse}&maxColumns=2'
+
+        print(url)
+
+        ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
+        submission=conference.get_submissions()[1]
+        signatory_group=ac_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper4/Area_Chair_')[0]
+
+        ## Invite external reviewer 1
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', 'external_reviewer2@mit.edu'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+            writers = [conference.id],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = 'external_reviewer2@mit.edu',
+            label = 'Invitation Sent'
+        ))
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=posted_edge.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## External reviewer is invited
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_MIT1'
+        assert invite_edges[0].label == 'Invitation Sent' ## figure out how to enable this in the deployment
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers/Invited', member='~External_Reviewer_MIT1')
+
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers', member='~External_Reviewer_MIT1')
+        assert not client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_MIT1')
+
+
+        ## External reviewer accepts the invitation
+        messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')
+        assert messages and len(messages) == 1
+        accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment_Recruitment')
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        ## Externel reviewer is assigned to the paper 5
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id)
+        assert len(invite_edges) == 1
+        assert invite_edges[0].tail == '~External_Reviewer_MIT1'
+        assert invite_edges[0].label == 'Accepted'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', head=submission.id)
+        assert len(assignment_edges) == 3
+        assert '~External_Reviewer_MIT1' in [e.tail for e in assignment_edges]
+
+        assert '~External_Reviewer_MIT1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers').members
+
+        assert len(pc_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper4/Reviewer_', signatory='~External_Reviewer_MIT1')) == 1
+
+        messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi External Reviewer MIT,
+Thank you for accepting the invitation to review the paper number: 4, title: Paper title 4.
+
+Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
+        messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\nNeurIPS 2021 Conference Program Chairs'''
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers/Invited', member='~External_Reviewer_MIT1')
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers', member='~External_Reviewer_MIT1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~External_Reviewer_MIT1')
+
+
+
+        ## Invite the same reviewer again
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', 'external_reviewer2@mit.edu'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~External_Reviewer_MIT1',
+                label = 'Invitation Sent'
+            ))
+        assert openReviewError.value.args[0].get('name') == 'TooManyError'
+
+        ## Invite the same reviewer again
+        with pytest.raises(openreview.OpenReviewException, match=r'Already invited as ~External_Reviewer_MIT1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', 'external_reviewer2@mit.edu'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = 'external_reviewer2@mit.edu',
+                label = 'Invitation Sent'
+            ))
+
+        ## Invite reviewer already assigned
+        with pytest.raises(openreview.OpenReviewException, match=r'Already assigned as ~Reviewer_UMass1'):
+            posted_edge=ac_client.post_edge(openreview.Edge(
+                invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+                readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Reviewer_UMass1'],
+                nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+                writers = [conference.id],
+                signatures = [signatory_group.id],
+                head = submission.id,
+                tail = '~Reviewer_UMass1',
+                label = 'Invitation Sent'
+            ))
+
+        ## Official reviewer accepts the invitation
+        posted_edge=ac_client.post_edge(openreview.Edge(
+            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment',
+            readers = [conference.id, 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs', '~Reviewer_Amazon1'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper4/Authors'],
+            writers = [conference.id],
+            signatures = [signatory_group.id],
+            head = submission.id,
+            tail = '~Reviewer_Amazon1',
+            label = 'Invitation Sent'
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')
+        assert messages and len(messages) == 1
+        accept_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        request_page(selenium, accept_url, alert=True)
+        notes = selenium.find_element_by_id("notes")
+        assert notes
+        messages = notes.find_elements_by_tag_name("h3")
+        assert messages
+        assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
+
+        helpers.await_queue()
+
+        invite_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', head=submission.id, tail='~Reviewer_Amazon1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Accepted'
+
+        assignment_edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', head=submission.id)
+        assert len(assignment_edges) == 4
+        assert '~Reviewer_Amazon1' in [e.tail for e in assignment_edges]
+
+        assert '~Reviewer_Amazon1' in pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Reviewers').members
+
+        assert len(pc_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper4/Reviewer_', signatory='~Reviewer_Amazon1')) == 1
+
+        messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Reviewer Amazon,
+Thank you for accepting the invitation to review the paper number: 4, title: Paper title 4.
+
+Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers
+
+If you would like to change your decision, please click the Decline link in the previous invitation email.
+
+OpenReview Team'''
+
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers/Invited', member='~Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers', member='~Reviewer_Amazon1')
+        assert client.get_groups('NeurIPS.cc/2021/Conference/Reviewers', member='~Reviewer_Amazon1')
+
+        messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 4 for NeurIPS 2021.\n\nTo review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submission.id}.\n\nTo check all of your assigned papers, go to https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers.\n\nThank you,\n\nNeurIPS 2021 Conference Program Chairs'''
+
+        ## Delete assignment when there is a review should throw an error
+        submission=conference.get_submissions(number=5)[0]
+        assignment_edge=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', head=submission.id, tail='~Reviewer_UMass1')[0]
+        assignment_edge.ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove assignment, the user ~Reviewer_UMass1 already posted a review.'):
+            client.post_edge(assignment_edge)
+
+
     def test_comment_stage(self, conference, helpers, test_client, client):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=True))
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=True, check_mandatory_readers=True))
 
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
 
@@ -527,6 +2045,9 @@ class TestNeurIPSConference():
         messages = client.get_messages(to='ac1@mit.edu', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
 
+        messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2021\] Reviewer .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert not messages
+
         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
 
         signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
@@ -555,6 +2076,9 @@ class TestNeurIPSConference():
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
 
+        messages = client.get_messages(to='sac1@google.com', subject='\[NeurIPS 2021\] Area Chair .* commented on a paper in your area. Paper Number: 5, Paper Title: \"Paper title 5\"')
+        assert messages and len(messages) == 1
+
         sac_client=openreview.Client(username='sac1@google.com', password='1234')
 
         comment_note=sac_client.post_note(openreview.Note(
@@ -578,6 +2102,72 @@ class TestNeurIPSConference():
 
         messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Your comment was received on Paper Number: 5, Paper Title: \"Paper title 5\"')
         assert messages and len(messages) == 1
+
+    def test_rebuttal_stage(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        stage_note=client.post_note(openreview.Note(
+            content={
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        assert len(reviews) == 1
+        reviews[0].readers = [
+            'NeurIPS.cc/2021/Conference/Program_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+            'NeurIPS.cc/2021/Conference/Paper5/Reviewers/Submitted',
+            'NeurIPS.cc/2021/Conference/Paper5/Authors'
+        ]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=False, authors=True))
+
+        submissions=conference.get_submissions(number=5)
+        assert len(submissions) == 1
+
+        rebuttal_note=test_client.post_note(openreview.Note(
+            invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Comment',
+            forum=submissions[0].id,
+            replyto=reviews[0].id,
+            readers=[
+                'NeurIPS.cc/2021/Conference/Program_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Reviewers/Submitted',
+                'NeurIPS.cc/2021/Conference/Paper5/Authors'
+            ],
+            #nonreaders=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            signatures=['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            content={
+                'title': 'Thanks for your review',
+                'comment': 'Thanks for the detailed review!'
+            }
+        ))
+
+        helpers.await_queue()
+
 
     def test_meta_review_stage(self, conference, helpers, test_client, client):
 
@@ -617,7 +2207,7 @@ class TestNeurIPSConference():
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
 
-        status = selenium.find_element_by_id("1-metareview-status")
+        status = selenium.find_element_by_id("5-metareview-status")
         assert status
 
         assert not status.find_elements_by_class_name('tag-widget')
@@ -640,7 +2230,7 @@ class TestNeurIPSConference():
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
         request_page(selenium, ac_url, ac_client.token)
 
-        status = selenium.find_element_by_id("1-metareview-status")
+        status = selenium.find_element_by_id("5-metareview-status")
         assert status
 
         tag = status.find_element_by_class_name('tag-widget')
@@ -648,17 +2238,17 @@ class TestNeurIPSConference():
 
         options = tag.find_elements_by_tag_name("li")
         assert options
-        assert len(options) == 6
+        assert len(options) == 3
 
         options = tag.find_elements_by_tag_name("a")
         assert options
-        assert len(options) == 6
+        assert len(options) == 3
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='number:asc')
 
         ac_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Area_Chairs/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
-            tag = '1 of 5',
+            tag = '1 of 3',
             readers = ['NeurIPS.cc/2021/Conference', ac_anon_id],
             signatures = [ac_anon_id])
         )
@@ -671,11 +2261,11 @@ class TestNeurIPSConference():
 
         options = tags[0].find_elements_by_tag_name("li")
         assert options
-        assert len(options) == 6
+        assert len(options) == 5
 
         options = tags[0].find_elements_by_tag_name("a")
         assert options
-        assert len(options) == 6
+        assert len(options) == 5
 
         reviewer_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
@@ -685,12 +2275,12 @@ class TestNeurIPSConference():
         )
 
         reviewer2_client = openreview.Client(username='reviewer2@mit.edu', password='1234')
-        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Reviewer_', signatory='reviewer2@mit.edu')
+        signatory_groups=client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper1/Reviewer_', signatory='reviewer2@mit.edu')
         assert len(signatory_groups) == 1
         reviewer2_anon_id=signatory_groups[0].id
 
         reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
-            forum = blinded_notes[-1].id,
+            forum = blinded_notes[0].id,
             tag = '1 of 5',
             readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
             signatures = [reviewer2_anon_id])
@@ -698,7 +2288,7 @@ class TestNeurIPSConference():
 
         with pytest.raises(openreview.OpenReviewException) as openReviewError:
             reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
-                forum = blinded_notes[-1].id,
+                forum = blinded_notes[0].id,
                 tag = '1 of 5',
                 readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
                 signatures = [reviewer2_anon_id])
@@ -725,7 +2315,7 @@ class TestNeurIPSConference():
             replyto=reviews[0].id,
             invitation=reviews[0].signatures[0] + '/-/Review_Rating',
             readers=['NeurIPS.cc/2021/Conference/Program_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            ac_anon_id],
             writers=[ac_anon_id],
             signatures=[ac_anon_id],
             content={
@@ -734,54 +2324,73 @@ class TestNeurIPSConference():
         ))
         assert review_rating_note
 
-    def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
+    def test_add_impersonator(self, client, request_page, selenium):
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
 
-        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
-        assert len(submissions) == 5
-
-        withdrawn_note = test_client.post_note(openreview.Note(
-            forum=submissions[0].id,
-            replyto=submissions[0].id,
-            invitation=f'NeurIPS.cc/2021/Conference/Paper5/-/Withdraw',
-            readers = [
-                'NeurIPS.cc/2021/Conference',
-                'NeurIPS.cc/2021/Conference/Paper5/Authors',
-                'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
-                'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
-                'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
-                'NeurIPS.cc/2021/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
-            signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
-            content = {
-                'title': 'Submission Withdrawn by the Authors',
-                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-            }
-        ))
-        helpers.await_queue()
-
-        process_logs = client.get_process_logs(id=withdrawn_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        conference.set_impersonators(emails=['pc@neurips.cc'])
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token)
-        assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Impersonate", pc_client.token)
+        assert "NeurIPS 2021 Conference Impersonate | OpenReview" in selenium.title
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
-        tabs = notes_panel.find_element_by_class_name('tabs-container')
-        assert tabs
-        assert tabs.find_element_by_id('venue-configuration')
-        assert tabs.find_element_by_id('paper-status')
-        assert tabs.find_element_by_id('reviewer-status')
-        assert tabs.find_element_by_id('areachair-status')
 
-        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
-        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
-        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
-        assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
-        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
+    # def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
+    #     submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+    #     assert len(submissions) == 5
 
+    #     withdrawn_note = test_client.post_note(openreview.Note(
+    #         forum=submissions[0].id,
+    #         replyto=submissions[0].id,
+    #         invitation=f'NeurIPS.cc/2021/Conference/Paper5/-/Withdraw',
+    #         readers = [
+    #             'NeurIPS.cc/2021/Conference',
+    #             'NeurIPS.cc/2021/Conference/Paper5/Authors',
+    #             'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+    #             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+    #             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+    #             'NeurIPS.cc/2021/Conference/Program_Chairs'],
+    #         writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+    #         signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+    #         content = {
+    #             'title': 'Submission Withdrawn by the Authors',
+    #             'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+    #         }
+    #     ))
+    #     helpers.await_queue()
 
+    #     process_logs = client.get_process_logs(id=withdrawn_note.id)
+    #     assert len(process_logs) == 1
+    #     assert process_logs[0]['status'] == 'ok'
 
+    #     withdrawn_submission=client.get_note(submissions[0].id)
+    #     assert withdrawn_submission.invitation == 'NeurIPS.cc/2021/Conference/-/Withdrawn_Submission'
+    #     assert withdrawn_submission.readers == [
+    #             'NeurIPS.cc/2021/Conference/Paper5/Authors',
+    #             'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+    #             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+    #             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+    #             'NeurIPS.cc/2021/Conference/Program_Chairs']
+
+    #     pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+
+    #     request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token)
+    #     assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
+    #     notes_panel = selenium.find_element_by_id('notes')
+    #     assert notes_panel
+    #     tabs = notes_panel.find_element_by_class_name('tabs-container')
+    #     assert tabs
+    #     assert tabs.find_element_by_id('venue-configuration')
+    #     assert tabs.find_element_by_id('paper-status')
+    #     assert tabs.find_element_by_id('reviewer-status')
+    #     assert tabs.find_element_by_id('areachair-status')
+
+    #     assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+    #     assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+    #     assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+    #     assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
+    #     assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text

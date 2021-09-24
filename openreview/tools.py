@@ -14,7 +14,7 @@ from tqdm import tqdm
 import tld
 import urllib.parse as urlparse
 
-def get_profile(client, value):
+def get_profile(client, value, with_publications=False):
     """
     Get a single profile (a note) by id, if available
 
@@ -29,6 +29,8 @@ def get_profile(client, value):
     profile = None
     try:
         profile = client.get_profile(value)
+        if with_publications:
+            profile.content['publications'] = list(iterget_notes(client, content={'authorids': profile.id}))
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if 'Profile Not Found' not in e.args[0]:
@@ -1279,6 +1281,7 @@ def recruit_reviewer(client, user, first,
     recruit_message,
     recruit_message_subj,
     reviewers_invited_id,
+    contact_info='info@openreview.net',
     verbose=True):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
@@ -1298,6 +1301,8 @@ def recruit_reviewer(client, user, first,
     :type recruit_message_subj: str
     :param reviewers_invited_id: group ID for the "Reviewers Invited" group, often used to keep track of which reviewers have already been emailed. str
     :type reviewers_invited_id: str
+    :param contact_info: The information used to contact support for questions
+    :type contact_info: str
     :param verbose: Shows response of :meth:`openreview.Client.post_message` and shows the body of the message sent
     :type verbose: bool, optional
     :param baseurl: Use this baseUrl instead of client.baseurl to create recruitment links
@@ -1323,7 +1328,8 @@ def recruit_reviewer(client, user, first,
     personalized_message = recruit_message.format(
         name = first,
         accept_url = url + "Yes",
-        decline_url = url + "No"
+        decline_url = url + "No",
+        contact_info = contact_info
     )
 
     client.add_members_to_group(reviewers_invited_id, [user])
@@ -1492,7 +1498,7 @@ def fill_template(template, paper):
 
     return new_template
 
-def get_conflicts(author_profiles, user_profile):
+def get_conflicts(author_profiles, user_profile, policy='default'):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
 
@@ -1507,20 +1513,25 @@ def get_conflicts(author_profiles, user_profile):
     author_domains = set()
     author_emails = set()
     author_relations = set()
+    author_publications = set()
+    info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
 
     for profile in author_profiles:
-        author_info = get_profile_info(profile)
+        author_info = info_function(profile)
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
+        author_publications.update(author_info['publications'])
 
-    user_info = get_profile_info(user_profile)
+    user_info = info_function(user_profile)
 
     conflicts = set()
     conflicts.update(author_domains.intersection(user_info['domains']))
     conflicts.update(author_relations.intersection(user_info['emails']))
     conflicts.update(author_emails.intersection(user_info['relations']))
     conflicts.update(author_emails.intersection(user_info['emails']))
+    conflicts.update(author_emails.intersection(user_info['emails']))
+    conflicts.update(author_publications.intersection(user_info['publications']))
 
     return list(conflicts)
 
@@ -1537,7 +1548,9 @@ def get_profile_info(profile):
     domains = set()
     emails = set()
     relations = set()
-    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com']
+    publications = set()
+    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
+                      'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
 
     ## Emails section
     for email in profile.content['emails']:
@@ -1561,8 +1574,64 @@ def get_profile_info(profile):
         'id': profile.id,
         'domains': domains,
         'emails': emails,
-        'relations': relations
+        'relations': relations,
+        'publications': publications
     }
+
+def get_neurips_profile_info(profile):
+
+    domains = set()
+    emails=set()
+    relations = set()
+    publications = set()
+    common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
+                      'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+
+    ## Institution section, get history within the last three years
+    for h in profile.content.get('history', []):
+        if h.get('end') is None or int(h.get('end')) > 2017:
+            domain = h.get('institution', {}).get('domain', '')
+            domains.update(openreview.tools.subdomains(domain))
+
+    ## Relations section, get coauthor/coworker relations within the last three years + all the other relations
+    for r in profile.content.get('relations', []):
+        if r.get('relation', '') in ['Coauthor','Coworker']:
+            if r.get('end') is None or int(r.get('end')) > 2017:
+                relations.add(r['email'])
+        else:
+            relations.add(r['email'])
+
+    ## Emails section
+    for email in profile.content['emails']:
+        emails.add(email)
+    ## if institution section is empty, add email domains
+    if not domains:
+        for email in profile.content['emails']:
+            domains.update(openreview.tools.subdomains(email))
+
+    ## Publications section: get publications within last three years
+    for pub in profile.content.get('publications', []):
+        if pub.cdate:
+            year = int(datetime.datetime.fromtimestamp(pub.cdate/1000).year)
+        else:
+            year = int(datetime.datetime.fromtimestamp(pub.tcdate/1000).year)
+        if year > 2017:
+            publications.add(pub.id)
+
+    ## Filter common domains
+    for common_domain in common_domains:
+        if common_domain in domains:
+            domains.remove(common_domain)
+
+    return {
+        'id': profile.id,
+        'domains': domains,
+        'emails': emails,
+        'relations': relations,
+        'publications': publications
+    }
+
+
 
 def post_bulk_edges (client, edges, batch_size = 50000):
     num_edges = len(edges)
@@ -1597,3 +1666,36 @@ def overwrite_pdf(client, note_id, file_path):
                 updated_references.append(client.post_note(reference))
 
     return updated_references
+
+def pretty_id(group_id):
+
+    if not group_id:
+        return ''
+
+    if group_id.startswith('~') and len(group_id):
+        return re.sub('[0-9]+', '', group_id.replace('~', '').replace('_', ' '))
+
+    if group_id in ['everyone', '(anonymous)', '(guest)', '~']:
+        return group_id
+
+    tokens = group_id.split('/')
+
+    transformed_tokens = []
+
+    for token in tokens:
+        transformed_token=re.sub('\..+', '', token).replace('-', '').replace('_', ' ')
+        letters_only=re.sub('\d|\W', '', transformed_token)
+
+        if letters_only != transformed_token.lower():
+            transformed_tokens.append(transformed_token)
+
+
+    return ' '.join(transformed_tokens)
+
+def export_committee(client, committee_id, file_name):
+    members=client.get_group(committee_id).members
+    profiles=openreview.matching._get_profiles(client, members)
+    with open(file_name, 'w') as outfile:
+        csvwriter = csv.writer(outfile, delimiter=',')
+        for profile in tqdm(profiles):
+            s = csvwriter.writerow([profile.get_preferred_email(), profile.get_preferred_name(pretty=True)])

@@ -107,14 +107,14 @@ class TestESWCConference():
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2021/Conference/-/Submission',
-                readers = ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-                signatures = ['~Test_User1'],
+                readers = ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
+                writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~SomeFirstName_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'],
                     'lead_author_is_phD_student': 'Yes'
                 }
             )
@@ -122,20 +122,22 @@ class TestESWCConference():
 
         conference.setup_first_deadline_stage(force=True, submission_readers=['eswc-conferences.org/ESWC/2021/Conference/Reviewers'])
 
-        notes = test_client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Submission')
+        notes = test_client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Submission', sort='number:asc')
         assert len(notes) == 5
-        assert notes[0].readers == ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@umass.edu', '~Test_User1', 'eswc-conferences.org/ESWC/2021/Conference/Reviewers']
+        assert notes[0].readers == ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@umass.edu', '~SomeFirstName_User1', 'eswc-conferences.org/ESWC/2021/Conference/Reviewers']
 
         invitations = test_client.get_invitations(replyForum=notes[0].id)
         assert len(invitations) == 2
-        assert invitations[0].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw'
-        assert invitations[1].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision'
+        ids = [invitation.id for invitation in invitations]
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw' in ids
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision' in ids
 
         invitations = client.get_invitations(replyForum=notes[0].id)
         assert len(invitations) == 3
-        assert invitations[0].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Desk_Reject'
-        assert invitations[1].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw'
-        assert invitations[2].id == 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision'
+        ids = [invitation.id for invitation in invitations]
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Desk_Reject' in ids
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw' in ids
+        assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision' in ids
 
         ## Withdraw paper
         test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw',
@@ -168,7 +170,7 @@ class TestESWCConference():
         assert withdrawn_notes[0].content['_bibtex'] == '''@misc{
 user'''+str(year)+'''paper,
 title={Paper title 1},
-author={Test User and Peter Test and Andrew Mc},
+author={SomeFirstName User and Peter SomeLastName and Andrew Mc},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 }'''
@@ -191,7 +193,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
                 'title': 'EDITED Paper title 5',
                 'abstract': 'This is an abstract 5',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'melisa@mail.com'],
-                'authors': ['Test User', 'Peter Test', 'Melisa Bok'],
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Melisa Bok'],
                 'lead_author_is_phD_student': 'Yes',
                 'pdf': pdf_url
             }
@@ -267,7 +269,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         year = datetime.datetime.now().year
         conference.setup_final_deadline_stage(force=True)
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='number:desc')
         assert len(submissions) == 3
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
@@ -303,7 +305,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert withdrawn_notes[0].content['_bibtex'] == '''@misc{
 user'''+str(year)+'''paper,
 title={Paper title 5},
-author={Test User and Peter Test and Andrew Mc},
+author={SomeFirstName User and Peter SomeLastName and Andrew Mc},
 year={'''+str(year)+'''},
 url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 }'''

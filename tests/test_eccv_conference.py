@@ -3,6 +3,7 @@ import openreview
 import pytest
 import requests
 import datetime
+import calendar
 import time
 import os
 import re
@@ -25,8 +26,8 @@ class TestECCVConference():
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.set_conference_short_name('ECCV 2020')
+        builder.set_default_reviewers_load(7)
         builder.has_area_chairs(True)
-        builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
         builder.set_homepage_header({
             'title': '2020 European Conference on Computer Vision',
             'subtitle': 'ECCV 2020',
@@ -270,7 +271,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         <br>'''
         builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions)
         builder.set_bid_stage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions)
-        builder.use_legacy_anonids(True)
+        #builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])
         return conference
@@ -283,7 +284,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.has_area_chairs(True)
-        builder.use_legacy_anonids(True)
+        #builder.use_legacy_anonids(True)
         conference = builder.get_result()
         assert conference, 'conference is None'
         conference.set_program_chairs(['pc@eccv.org'])
@@ -300,7 +301,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
-        result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'])
+        result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'],
+                                              reduced_load_on_decline = ['4','5','6','7'],
+                                              default_load = 7)
         assert result
         assert len(result['invited']) == 2
         assert 'test_reviewer_eccv@mail.com' in result['invited']
@@ -356,10 +359,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         ## Reduce the load of Mohit
         notes = client.get_notes(invitation='thecvf.com/ECCV/2020/Conference/-/Recruit_Reviewers', content={'user': 'mohit+1@mail.com'})
         assert notes
-        assert len(notes) == 3
+        assert len(notes) == 1
 
         client.post_note(openreview.Note(
-            invitation='thecvf.com/ECCV/2020/Conference/-/Reduced_Load',
+            invitation='thecvf.com/ECCV/2020/Conference/Reviewers/-/Reduced_Load',
             readers=['thecvf.com/ECCV/2020/Conference', 'mohit+1@mail.com'],
             writers=['thecvf.com/ECCV/2020/Conference'],
             signatures=['(anonymous)'],
@@ -385,7 +388,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
+        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'ReviewerFirstName', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
@@ -434,15 +437,15 @@ Please contact info@openreview.net with any questions or concerns about this int
                     'emergency_review_count': '0'
                 },
                 signatures = [
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ],
                 readers = [
                     conference.get_id(),
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ],
                 writers = [
                     conference.get_id(),
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ]
             ))
         assert registration_note
@@ -467,7 +470,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
-        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'Testareachair', 'Eccv')
+        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'AreachairFirstName', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
         request_page(selenium, reviewer_tasks_url, ac_client.token)
 
@@ -478,14 +481,14 @@ Please contact info@openreview.net with any questions or concerns about this int
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = conference.get_submission_id(),
-                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-                signatures = ['~Test_User1'],
+                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
+                writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~SomeFirstName_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'],
                     'author_agreement': 'All authors agree with the author guidelines of ECCV 2020.',
                     'TPMS_agreement': 'All authors agree that the manuscript can be processed by TPMS for paper matching.'
                 }
@@ -509,7 +512,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         assert 'test@mail.com' in recipients
 
         note.content['title'] = 'I have been updated'
-        client.post_note(note)
+        test_client.post_note(note)
 
         helpers.await_queue()
         note = client.get_note(note.id)
@@ -596,7 +599,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material',
             readers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
             writers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
-            signatures = ['~Test_User1'],
+            signatures = ['~SomeFirstName_User1'],
             referent = note.original,
             forum = note.original,
             content = {}
@@ -647,7 +650,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ac1_client = helpers.create_user('ac1@eccv.org', 'AreaChair', 'ECCV One')
         ac2_client = helpers.create_user('ac2@eccv.org', 'AreaChair', 'ECCV Two')
 
-        conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1'])
+        conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
 
         blinded_notes = conference.get_submissions()
@@ -675,6 +678,14 @@ Please contact info@openreview.net with any questions or concerns about this int
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
         )
 
+        # Test adding reviewer after conflicts are built
+        r5_client = helpers.create_user('reviewer5@fb.com', 'Reviewer', 'ECCV Five')
+        conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1', '~Reviewer_ECCV_Five1'])
+        assert r5_client.get_edges_count() == 0
+        conference.set_matching_conflicts(r5_client.profile.id)
+        assert r5_client.get_edges_count() > 0
+        with pytest.raises(openreview.OpenReviewException):
+            conference.set_matching_conflicts('doesnotexist@mail.com')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -806,6 +817,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         pc_client = openreview.Client(username='pc@eccv.org', password='1234')
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[0].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[0].id,
@@ -815,6 +827,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[1].id,
@@ -824,6 +837,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_One1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[2].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[2].id,
@@ -833,6 +847,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[3].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[3].id,
@@ -842,6 +857,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         ))
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_area_chairs_id()),
             readers = [conference.id, '~AreaChair_ECCV_Two1'],
+            nonreaders = [conference.get_authors_id(number=blinded_notes[4].number)],
             writers = [conference.id],
             signatures = [conference.id],
             head = blinded_notes[4].id,
@@ -878,7 +894,7 @@ Please contact info@openreview.net with any questions or concerns about this int
             weight = 5))
 
         ## Go to edge browser to recommend reviewers
-        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
+        start = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Proposed_Assignment,label:ac-matching,tail:~AreaChair_ECCV_One1'
         edit = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Recommendation'
         browse = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/TPMS_Score;\
 thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score;\
@@ -1125,14 +1141,16 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 3
 
+        signatory = r1_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer1@fb.com')[0].id
+
         review_note = r1_client.post_note(openreview.Note(
             forum=blinded_notes[2].id,
             replyto=blinded_notes[2].id,
             invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review',
-            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', signatory],
             nonreaders=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
-            writers=['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
-            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
+            writers=['thecvf.com/ECCV/2020/Conference', signatory],
+            signatures=[signatory],
             content={
                 'summary_of_contributions': 'summary_of_contributions',
                 'strengths': 'strengths',
@@ -1165,14 +1183,16 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         ## Authors
         assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
 
+        signatory = r2_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer2@google.com')[0].id
+
         review_note = r2_client.post_note(openreview.Note(
             forum=blinded_notes[2].id,
             replyto=blinded_notes[2].id,
             invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review',
-            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', signatory],
             nonreaders=['thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
-            writers=['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
-            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            writers=['thecvf.com/ECCV/2020/Conference', signatory],
+            signatures=[signatory],
             content={
                 'summary_of_contributions': 'summary_of_contributions',
                 'strengths': 'strengths 2',
@@ -1215,13 +1235,15 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         blinded_notes = conference.get_submissions()
 
+        signatory = r2_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer2@google.com')[0].id
+
         comment_note = r2_client.post_note(openreview.Note(
             forum=blinded_notes[2].id,
             replyto=blinded_notes[2].id,
             invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Confidential_Comment',
-            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
-            writers=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
-            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', signatory],
+            writers=[signatory],
+            signatures=[signatory],
             content={
                 'title': 'problem with review',
                 'comment': 'This is a comment to the ACs'
@@ -1233,7 +1255,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '[ECCV 2020] AnonReviewer2 commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
+        messages = client.get_messages(subject = f'[ECCV 2020] Reviewer {signatory.split("_")[-1]} commented on a paper in your area. Paper Number: 1, Paper Title: "Paper title 1"')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'ac1@eccv.org' in recipients
@@ -1355,11 +1377,13 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         blinded_notes = conference.get_submissions()
 
+        signatory = ac_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair_.*', signatory='ac1@eccv.org')[0].id
+
         ac_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
             tag = '1 of 2',
-            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
-            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'])
+            readers = ['thecvf.com/ECCV/2020/Conference', signatory],
+            signatures = [signatory])
         )
 
         reviewer_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Reviewers'
@@ -1376,27 +1400,32 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert options
         assert len(options) == 3
 
+        signatory = reviewer_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer1@fb.com')[0].id
+
         reviewer_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
             tag = '2 of 2',
-            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'],
-            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer1'])
+            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', signatory],
+            signatures = [signatory])
         )
 
         reviewer2_client = openreview.Client(username='reviewer2@google.com', password='1234')
+
+        signatory = reviewer2_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer2@google.com')[0].id
+
         reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
             forum = blinded_notes[-1].id,
             tag = '1 of 2',
-            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
-            signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
+            readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', signatory],
+            signatures = [signatory])
         )
 
         with pytest.raises(openreview.OpenReviewException) as openReviewError:
             reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
                 forum = blinded_notes[-1].id,
                 tag = '1 of 2',
-                readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
-                signatures = ['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'])
+                readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', signatory],
+                signatures = [signatory])
             )
         assert  openReviewError.value.args[0].get('name') == 'TooManyError'
 
@@ -1417,13 +1446,14 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         button = notes[1].find_element_by_class_name('btn')
         assert button
 
-        reviews = test_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
-        assert len(reviews) == 2
+        signatory = client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer2@google.com')[0].id
+        reviews = test_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review', signature=signatory)
+        assert len(reviews) == 1
 
         rebuttal_note = test_client.post_note(openreview.Note(
             forum=blinded_notes[2].id,
-            replyto=reviews[1].id,
-            invitation=reviews[1].signatures[0] + '/-/Rebuttal',
+            replyto=reviews[0].id,
+            invitation=reviews[0].signatures[0] + '/-/Rebuttal',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted',
@@ -1495,19 +1525,22 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         buttons = notes[1].find_elements_by_class_name('btn')
         assert len(buttons) == 7
 
-        reviews = reviewer_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
-        assert len(reviews) == 2
+        signatory = reviewer_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer2@google.com')[0].id
+
+        reviews = reviewer_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper1/-/Official_Review', signature=signatory)
+        assert len(reviews) == 1
+
 
         review_revision_note = reviewer_client.post_note(openreview.Note(
             forum=blinded_notes[2].id,
-            referent=reviews[1].id,
-            invitation=reviews[1].signatures[0] + '/-/Review_Revision',
+            referent=reviews[0].id,
+            invitation=reviews[0].signatures[0] + '/-/Review_Revision',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Paper1/Reviewers/Submitted',
             'thecvf.com/ECCV/2020/Conference/Paper1/Authors'],
-            writers=['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
-            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/AnonReviewer2'],
+            writers=['thecvf.com/ECCV/2020/Conference', signatory],
+            signatures=[signatory],
             content={
                 'final_rating': '5: Weak accept',
                 'final_rating_justification': 'rebuttal was good'
@@ -1570,14 +1603,16 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         reviews = ac_client.get_notes(forum=blinded_notes[2].id, invitation='thecvf.com/ECCV/2020/Conference/Paper.*/-/Official_Review')
         assert len(reviews) == 2
 
+        signatory = ac_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair_.*', signatory='ac1@eccv.org')[0].id
+
         review_rating_note = ac_client.post_note(openreview.Note(
             forum=blinded_notes[2].id,
             replyto=reviews[1].id,
             invitation=reviews[1].signatures[0] + '/-/Review_Rating',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs'],
-            writers=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
-            signatures=['thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair1'],
+            signatory],
+            writers=[signatory],
+            signatures=[signatory],
             content={
                 'rating': '-1: useless',
                 'rating_justification': 'bad review'
@@ -1632,3 +1667,41 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         secondary_assignments_div = selenium.find_element_by_id('secondary-papers')
         for i in range(1,3):
             assert secondary_assignments_div.find_elements_by_id('note-summary-{}'.format(i))
+
+    def test_chronological_pc_timeline(self, conference, selenium, request_page):
+        # Assumptions: 1) Items are in list elements
+        #              2) Dates are stated in plain English
+        def convert_text_to_datetime(text):
+            mnt_to_idx = {month.lower(): index for index, month in enumerate(calendar.month_abbr) if month}
+            tokens = text.split(' ')
+            start_idx, end_idx = tokens.index('until'), tokens.index('and')
+            # Extracted format: DD Month YYYY, HH:MM Timezone
+            due_date_list = tokens[start_idx + 1: end_idx]
+            # Clean up text - strip comma + remove timezone
+            due_date_list[2] = due_date_list[2][:-1]
+            due_date_list.pop()
+            date_obj = datetime.datetime(year=int(due_date_list[2]),
+                                         month=mnt_to_idx[due_date_list[1].replace('sept','sep')],
+                                         day=int(due_date_list[0]),
+                                         hour=int(due_date_list[3].split(':')[0]),
+                                         minute=int(due_date_list[3].split(':')[1]))
+
+            return date_obj
+
+        ac_client = openreview.Client(username='openreview.net', password='1234')
+        ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Program_Chairs'
+        request_page(selenium, ac_url, ac_client.token)
+
+        # Get the timeline text - order of elements retrieved is order of elements on page top -> bottom
+        list_elements = selenium.find_elements_by_tag_name('li')
+        retrieved_dates = []
+        for element in list_elements:
+            element_text = element.text.lower()
+            if 'expires' in element_text:
+                retrieved_dates.append(convert_text_to_datetime(element_text))
+
+        # Assert correct order of dates
+        for date_idx in range(1, len(retrieved_dates)):
+            curr_date = retrieved_dates[date_idx]
+            prev_date = retrieved_dates[date_idx - 1]
+            assert curr_date >= prev_date

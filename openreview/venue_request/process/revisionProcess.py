@@ -53,11 +53,15 @@ def process(client, note, invitation):
                     'No, I don\'t want to reveal any author identities.'],
                 'required': True
             }
-
+        decision_options = forum_note.content.get('decision_options')
+        if decision_options:
+            decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
+        else:
+            decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         content['home_page_tab_names'] = {
             'description': 'Change the name of the tab that you would like to use to list the papers by decision, please note the key must match with the decision options',
             'value-dict': {},
-            'default': { o:o for o in note.content.get('decision_options', ['Accept (Oral)', 'Accept (Poster)', 'Reject'])},
+            'default': { o:o for o in decision_options},
             'required': False
         }
 
@@ -93,5 +97,12 @@ def process(client, note, invitation):
             release_all_notes=forum_note.content.get('release_submissions', '') == 'Release all submissions to the public'
             release_notes_accepted=forum_note.content.get('release_submissions', '') == 'Release only accepted submission to the public'
         conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted, decision_heading_map=forum_note.content.get('home_page_tab_names'))
+
+    submission_content = conference.submission_stage.get_content()
+    submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
+
+    remove_options = [key for key in submission_content]
+    submission_revision_invitation.reply['content']['submission_revision_remove_options']['values-dropdown'] = remove_options
+    client.post_invitation(submission_revision_invitation)
 
     print('Conference: ', conference.get_id())
