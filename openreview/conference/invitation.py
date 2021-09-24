@@ -1126,7 +1126,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
 
         if conference.use_area_chairs:
             paper_area_chair = conference.get_area_chairs_id(number = note.number)
-            invitees = [paper_area_chair]
+            invitees.append(paper_area_chair)
             writers.append(paper_area_chair)
 
         super(PaperMetaReviewInvitation, self).__init__(

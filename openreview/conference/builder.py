@@ -1953,14 +1953,32 @@ class CommentStage(object):
 
 class MetaReviewStage(object):
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields=[], process = None):
+    class Readers(Enum):
+        REVIEWERS = 0
+        REVIEWERS_ASSIGNED = 1
+        REVIEWERS_SUBMITTED = 2
+        NO_REVIEWERS = 3
+
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None):
+
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
         self.public = public
+        self.release_to_authors = release_to_authors
+        self.release_to_reviewers = release_to_reviewers
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.process = None
+
+    def _get_reviewer_readers(self, conference, number):
+        if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
+            return conference.get_reviewers_id()
+        if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS_ASSIGNED:
+            return conference.get_reviewers_id(number = number)
+        if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS_SUBMITTED:
+            return conference.get_reviewers_id(number = number) + '/Submitted'
+        raise openreview.OpenReviewException('Unrecognized readers option')
 
     def get_readers(self, conference, number):
 
@@ -1975,6 +1993,11 @@ class MetaReviewStage(object):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
+        if self.release_to_authors:
+            readers.append(conference.get_authors_id(number = number))
+
+        if self.release_to_reviewers is not MetaReviewStage.Readers.NO_REVIEWERS:
+            readers.append(self._get_reviewer_readers(conference, number))
         readers.append(conference.get_program_chairs_id())
 
         return readers
@@ -2215,8 +2238,8 @@ class ConferenceBuilder(object):
     def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False):
         self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
 
-    def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, additional_fields = {}, remove_fields = [], process = None):
-        self.meta_review_stage = MetaReviewStage(name=name, start_date=start_date, due_date=due_date, public=public, additional_fields=additional_fields, remove_fields=remove_fields, process=process)
+    def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = MetaReviewStage.Readers.NO_REVIEWERS, additional_fields = {}, remove_fields = [], process = None):
+        self.meta_review_stage = MetaReviewStage(name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields, remove_fields, process)
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, email_authors)
