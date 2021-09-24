@@ -2314,7 +2314,7 @@ OpenReview Team'''
             replyto=reviews[0].id,
             invitation=reviews[0].signatures[0] + '/-/Review_Rating',
             readers=['NeurIPS.cc/2021/Conference/Program_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            ac_anon_id],
             writers=[ac_anon_id],
             signatures=[ac_anon_id],
             content={

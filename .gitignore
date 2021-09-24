@@ -13,4 +13,5 @@ cov.xml
 tests/drivers/geckodriver
 tests/data/reviewer_affinity_scores.csv
 tests/data/ac_affinity_scores.csv
+tests/data/mentors_affinity_scores.csv
 tests/data/temp.csv
