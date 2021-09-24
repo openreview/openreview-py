@@ -169,6 +169,8 @@ class InvitationBuilder(object):
         venue_id=journal.venue_id
         editor_in_chief_id=journal.get_editors_in_chief_id()
         action_editors_id=journal.get_action_editors_id()
+        authors_id=journal.get_authors_id()
+        authors_regex=journal.get_authors_id(number='.*')
         action_editors_value=journal.get_action_editors_id(number='${note.number}')
         action_editors_regex=journal.get_action_editors_id(number='.*')
         reviewers_value=journal.get_reviewers_id(number='${note.number}')
@@ -391,6 +393,54 @@ class InvitationBuilder(object):
                             'venueid': {
                                 'value': {
                                     'value': '.TMLR/Desk_Rejection'
+                                }
+                            }
+                        }
+                    }
+                }
+                ))
+
+        ## Withdraw invitation
+        withdraw_invitation_id=f'{venue_id}/-/Withdraw'
+        invitation = self.client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=Invitation(id=withdraw_invitation_id,
+                invitees=[authors_id, venue_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values-regex': f'{authors_regex}|{venue_id}$' },
+                    'readers': { 'values': [ venue_id, action_editors_value, reviewers_value, authors_value]},
+                    'writers': { 'values': [ venue_id, authors_value]},
+                    'note': {
+                        'id': { 'value-invitation': submission_invitation_id },
+                        'content': {
+                            'withdrawal_confirmation': {
+                                'value': {
+                                    'value-radio': [
+                                        'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                                    ]
+                                },
+                                'description': 'Please confirm to withdraw.',
+                                'order': 1
+                            },
+                            'venue': {
+                                'value': {
+                                    'value': 'Withdrawn by Authors'
+                                },
+                                'presentation': {
+                                    'hidden': True,
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR/Withdrawn_Submission'
+                                },
+                                'presentation': {
+                                    'hidden': True,
                                 }
                             }
                         }

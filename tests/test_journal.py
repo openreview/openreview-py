@@ -156,10 +156,11 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 3
+        assert len(invitations) == 4
         assert f"{venue_id}/-/Author_Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
+        assert f"{venue_id}/-/Withdraw"  in [i.id for i in invitations]
         # assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         # assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         # assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
@@ -308,12 +309,33 @@ class TestJournal():
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Desk_Rejection'
 
+        ## Withdraw the submission 3
+        withdraw_note = test_client.post_note_edit(invitation='.TMLR/-/Withdraw',
+                                    signatures=[f'{venue_id}/Paper3/Authors'],
+                                    note=Note(id=note_id_3,
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
+
+        note = test_client.get_note(note_id_3)
+        assert note
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Withdraw']
+        assert note.readers == ['.TMLR', '.TMLR/Paper3/Action_Editors', '.TMLR/Paper3/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Paper3/Action_Editors', '.TMLR/Paper3/Authors']
+        assert note.signatures == ['.TMLR/Paper3/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
+        assert note.content['venue']['value'] == 'Withdrawn by Authors'
+        assert note.content['venueid']['value'] == '.TMLR/Withdrawn_Submission'
+        assert note.content['withdrawal_confirmation']['value'] == 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 8
+        assert len(invitations) == 9
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
+        assert f"{venue_id}/-/Withdraw"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]
         #assert reject_invitation_id in [i.id for i in invitations]
