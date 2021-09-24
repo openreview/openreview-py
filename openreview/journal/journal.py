@@ -2,6 +2,7 @@ from .. import openreview
 from .. import tools
 from . import invitation
 from openreview.api import Edge
+from openreview import Group
 import os
 import re
 import json
@@ -238,12 +239,10 @@ class Journal(object):
             authors_group.web = content
             self.client.post_group(authors_group)
 
-    def setup_ae_assignment(self, number):
+    def setup_ae_assignment(self, note):
         venue_id=self.venue_id
         action_editors_id=self.get_action_editors_id()
-        authors_id=self.get_authors_id(number=number)
-
-        note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=number)[0]
+        authors_id=self.get_authors_id(number=note.number)
 
         ## Create conflict and affinity score edges
         for ae in self.get_action_editors():
@@ -355,4 +354,65 @@ class Journal(object):
                     verbose = False)
 
         return self.client.get_group(id = reviewers_invited_id)
+
+    def setup_submission_groups(self, note):
+        venue_id = self.venue_id
+        paper_group_id=f'{venue_id}/Paper{note.number}'
+        paper_group=openreview.tools.get_group(self.client, paper_group_id)
+        if not paper_group:
+            paper_group=self.client.post_group(Group(id=paper_group_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[venue_id]
+            ))
+
+        authors_group_id=f'{paper_group.id}/Authors'
+        authors_group=self.client.post_group(Group(id=authors_group_id,
+            readers=[venue_id, authors_group_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            signatories=[venue_id, authors_group_id],
+            members=note.content['authorids']['value'] ## always update authors
+        ))
+        self.client.add_members_to_group(f'{venue_id}/Authors', authors_group_id)
+
+        action_editors_group_id=f'{paper_group.id}/Action_Editors'
+        reviewers_group_id=f'{paper_group.id}/Reviewers'
+
+        action_editors_group=openreview.tools.get_group(self.client, action_editors_group_id)
+        if not action_editors_group:
+            action_editors_group=self.client.post_group(Group(id=action_editors_group_id,
+                readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                nonreaders=[authors_group_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[venue_id, action_editors_group_id],
+                members=[]
+            ))
+
+        reviewers_group=openreview.tools.get_group(self.client, reviewers_group_id)
+        if not reviewers_group:
+            reviewers_group=self.client.post_group(Group(id=reviewers_group_id,
+                readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                deanonymizers=[venue_id, action_editors_group_id],
+                nonreaders=[authors_group_id],
+                writers=[venue_id, action_editors_group_id],
+                signatures=[venue_id],
+                signatories=[venue_id],
+                members=[],
+                anonids=True
+            ))
+
+    def setup_author_submission(self, note):
+
+        self.setup_submission_groups(note)
+        self.invitation_builder.set_revision_submission(self, note)
+        self.setup_ae_assignment(note)
+
+    def setup_under_review_submission(self, note):
+
+        self.invitation_builder.set_review_invitation(self, note)
+        self.invitation_builder.set_comment_invitation(self, note)
+        self.invitation_builder.set_decision_invitation(self, note)
 

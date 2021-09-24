@@ -4,4 +4,4 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal(client, venue_id, '1234')
 
-    journal.setup_author_submission(note)
+    journal.setup_under_review_submission(note)

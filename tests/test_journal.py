@@ -156,15 +156,15 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 8
+        assert len(invitations) == 3
         assert f"{venue_id}/-/Author_Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        # assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        # assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        # assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
+        # assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
+        # assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
 
         ## Update submission 1
@@ -255,8 +255,6 @@ class TestJournal():
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
 
-        journal.setup_ae_assignment(number=1)
-
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -279,6 +277,8 @@ class TestJournal():
         under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/-/Under_Review',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
                                     note=Note(id=note_id_1))
+
+        helpers.await_queue(openreview_client)
 
         note = joelle_client.get_note(note_id_1)
         assert note
@@ -311,7 +311,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        #assert len(invitations) == 8
+        assert len(invitations) == 8
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
         #TODO: fix tests
@@ -617,6 +617,8 @@ class TestJournal():
                     'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mail.com']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subject': { 'value': 'Not applicable'},
                     'video': { 'value': '/attachment/' + 's' * 40 +'.mp4'}
                 }
             )
