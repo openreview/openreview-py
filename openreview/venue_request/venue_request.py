@@ -281,6 +281,28 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'order': 26
+            },
+            'release_meta_reviews_to_authors': {
+                'description': 'Should the meta reviews be visible to paper\'s authors immediately upon posting? Default is "No, meta reviews should NOT be revealed when they are posted to the paper\'s authors".',
+                'value-radio': [
+                    'Yes, meta reviews should be revealed when they are posted to the paper\'s authors',
+                    'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors'
+                ],
+                'required': True,
+                'default': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'order': 27
+            },
+            'release_meta_reviews_to_reviewers': {
+                'description': 'Should the meta reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have submitted their review or no reviewers immediately upon posting?',
+                'value-radio': [
+                    'Meta reviews should be immediately revealed to all reviewers',
+                    'Meta reviews should be immediately revealed to the paper\'s reviewers',
+                    'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                    'Meta review should not be revealed to any reviewer'
+                ],
+                'required': True,
+                'default': 'Meta review should not be revealed to any reviewer',
                 'order': 28
             },
             'recommendation_options': {
