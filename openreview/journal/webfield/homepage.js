@@ -14,6 +14,7 @@ var SUBMISSION_ID = '';
 var SUBMITTED_ID = '';
 var UNDER_REVIEW_ID = '';
 var DESK_REJECTED_ID = '';
+var WITHDRAWN_ID = '';
 var REJECTED_ID = '';
 var HEADER = {};
 
@@ -40,7 +41,7 @@ function main() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Your Consoles', 'Accepted Papers', 'Under Review', 'Submissions', 'Rejected Submissions'],
+    tabs: ['Your Consoles', 'Accepted Papers', 'Under Review', 'Submissions', 'Rejected Submissions', 'Withdrawn Submissions'],
     referrer: args && args.referrer,
     showBanner: false
   })
@@ -84,6 +85,13 @@ function load() {
     includeCount: true
   });
 
+  var withdrawnNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
+    'content.venueid': WITHDRAWN_ID,
+    pageSize: PAGE_SIZE,
+    details: 'replyCount',
+    includeCount: true
+  });
+
   var acceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': VENUE_ID,
     pageSize: PAGE_SIZE,
@@ -96,7 +104,7 @@ function load() {
     userGroupsP = Webfield2.getAll('/groups', { regex: VENUE_ID + '/.*', member: user.id, web: true });
   }
 
-  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, rejectedNotesP, userGroupsP);
+  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, rejectedNotesP, withdrawnNotesP, userGroupsP);
 }
 
 function createConsoleLinks(allGroups) {
@@ -120,7 +128,7 @@ function createConsoleLinks(allGroups) {
 }
 
 // Render functions
-function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse, userGroups) {
+function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse, withdrawnResponse, userGroups) {
 
   // Your Consoles tab
   if (userGroups.length) {
@@ -285,6 +293,35 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     });
   } else {
     $('.tabs-container a[href="#rejected-submissions"]').parent().hide();
+  }
+
+  var withDrawnNotesCount = withdrawnResponse.count || 0;
+  if (withDrawnNotesCount) {
+    $('#withdrawn-submissions').empty();
+
+    var withdrawnNotesArray = withdrawnResponse.notes || [];
+    Webfield2.ui.submissionList(withdrawnNotesArray, {
+      heading: null,
+      container: '#withdrawn-submissions',
+      search: {
+        enabled: false
+      },
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: withDrawnNotesCount,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
+          'content.venueid': WITHDRAWN_ID,
+          details: 'replyCount',
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
+      fadeIn: false
+    });
+  } else {
+    $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
   }
 
   $('#notes .spinner-container').remove();
