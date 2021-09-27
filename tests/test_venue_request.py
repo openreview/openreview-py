@@ -298,11 +298,11 @@ class TestVenueRequest():
             writers=[]
         ))
         assert recruitment_note
-        
+
         invite = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
-       
+
         assert invite.reply['content']['invitee_details']['description'] == 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1'
-        
+
         helpers.await_queue()
         process_logs = client.get_process_logs(id=recruitment_note.id)
         assert len(process_logs) == 1
@@ -318,7 +318,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as reviewer'
         assert messages[0]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
-    
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -329,18 +329,18 @@ class TestVenueRequest():
         assert reply_row
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
-        helpers.create_user('reviewer_one_tilde@mail.com', 'Reviewer', 'OneTilde')  
-        helpers.create_user('reviewer_two_tilde@mail.com', 'Reviewer', 'TwoTilde') 
+        helpers.create_user('reviewer_one_tilde@mail.com', 'Reviewer', 'OneTilde')
+        helpers.create_user('reviewer_two_tilde@mail.com', 'Reviewer', 'TwoTilde')
         reviewer_details = '''~Reviewer_OneTilde1\n~Reviewer_TwoTilde1'''
-        
+
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
                 'invitee_role': 'reviewer',
-                'invitee_details': reviewer_details, 
+                'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
                 'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
-            }, 
+            },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -358,7 +358,7 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_one_tilde@mail.com')
         assert messages and len(messages) == 2
-        
+
         assert messages[1]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as reviewer'
         assert messages[1]['content']['text'].startswith('Dear Reviewer OneTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
 
@@ -763,6 +763,7 @@ class TestVenueRequest():
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
                 'notify_authors': 'No, I will send the emails to the authors'
             },
             forum=venue['request_form_note'].forum,
