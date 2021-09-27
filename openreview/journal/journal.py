@@ -414,6 +414,7 @@ class Journal(object):
     def setup_under_review_submission(self, note):
 
         self.invitation_builder.set_review_invitation(self, note)
+        self.invitation_builder.set_solicite_review_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.invitation_builder.set_decision_invitation(self, note)
         self.setup_reviewer_assignment(note)
