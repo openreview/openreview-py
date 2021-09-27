@@ -2013,7 +2013,7 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -2023,6 +2023,7 @@ class DecisionStage(object):
         self.public = public
         self.release_to_authors = release_to_authors
         self.release_to_reviewers = release_to_reviewers
+        self.release_to_area_chairs = release_to_area_chairs
         self.email_authors = email_authors
 
     def get_readers(self, conference, number):
@@ -2031,7 +2032,10 @@ class DecisionStage(object):
             return ['everyone']
 
         readers = [ conference.get_program_chairs_id()]
-        if conference.use_area_chairs:
+        if self.release_to_area_chairs and conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number = number))
+
+        if self.release_to_area_chairs and conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
         if self.release_to_reviewers:
