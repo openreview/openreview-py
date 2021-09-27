@@ -1397,7 +1397,7 @@ class TestDoubleBlindConference():
         assert decisions
         assert decisions[0].readers == ['everyone']
 
-        builder.set_decision_stage(release_to_authors=True)
+        builder.set_decision_stage(release_to_authors=True, release_to_area_chairs=True)
         conference = builder.get_result()
 
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
