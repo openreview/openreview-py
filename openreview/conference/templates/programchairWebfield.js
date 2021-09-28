@@ -1431,7 +1431,7 @@ var displayPaperStatusTable = function() {
       var search = [
         row.note.number,
         row.note.content.title,
-        row.note.content.keywords.join('\n'),
+        row.note.content.keywords?.join('\n'),
         row.note.content.authors.join('\n'),
         row.note.content.authorids.join('\n')
       ].join('\n').toLowerCase()
