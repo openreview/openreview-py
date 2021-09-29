@@ -57,7 +57,7 @@ var propertiesAllowed ={
     confidenceMax:['reviewProgressData.maxConfidence'],
     confidenceMin:['reviewProgressData.minConfidence'],
     replyCount:['reviewProgressData.forumReplyCount'],
-    decision: ['decision'],
+    decision: ['decision.content.decision'],
 }
 
 // Page State
@@ -155,7 +155,7 @@ var main = function() {
       });
       var paperOfficialReviews = _.filter(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, submission.number)]);
       var paperMetaReviews = _.find(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, submission.number)]);
-      var paperDecisions = _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]) ?? 'No Decision';
+      var paperDecisions = _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]) ?? { content: { decision: 'No Decision' } };
       officialReviews = officialReviews.concat(paperOfficialReviews);
       metaReviews = metaReviews.concat(paperMetaReviews);
       decisions = decisions.concat(decisions);
@@ -1406,7 +1406,7 @@ var displayPaperStatusTable = function() {
   if (AREA_CHAIRS_ID) {
     sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
   }
-  sortOptions['Decision'] = function (row) { return row.decision && row.decision !== 'No Decision' ? row.decision.content.decision : 'No Decision'; }
+  sortOptions['Decision'] = function (row) { return row.decision.content.decision ?? 'No Decision' }
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       var tags = pcTags[row.note.id];
@@ -1556,7 +1556,7 @@ var displayPaperStatusTable = function() {
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
-      var decisionHtml = '<h4>' + (d.decision && d.decision !== 'No Decision' ? d.decision.content.decision : 'No Decision') + '</h4>';
+      var decisionHtml = '<h4>' + (d.decision.content.decision ?? 'No Decision') + '</h4>';
 
       var rows = [checked, numberHtml, summaryHtml, reviewHtml];
       if (AREA_CHAIRS_ID) {
