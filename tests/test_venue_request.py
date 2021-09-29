@@ -763,7 +763,7 @@ class TestVenueRequest():
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-                'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
                 'notify_authors': 'No, I will send the emails to the authors'
             },
             forum=venue['request_form_note'].forum,
