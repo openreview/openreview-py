@@ -185,7 +185,7 @@ class Matching(object):
                 'id' : edge_id.split('/-/')[0]
             }
             edge_weight={
-                'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
+                'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
                 'required': True
             }
             edge_label=None
