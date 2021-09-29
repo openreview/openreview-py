@@ -93,19 +93,21 @@ class Journal(object):
                         writers=[venue_id],
                         signatures=['~Super_User1'],
                         signatories=[venue_id],
-                        members=[editor_in_chief_id, support_role]
+                        members=[support_role]
                         ))
 
         self.client.add_members_to_group('host', venue_id)
 
         ## editor in chief
-        editor_in_chief_group=self.client.post_group(openreview.Group(id=editor_in_chief_id,
-                        readers=['everyone'],
-                        writers=[editor_in_chief_id],
-                        signatures=[venue_id],
-                        signatories=[editor_in_chief_id, venue_id],
-                        members=editors
-                        ))
+        editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
+        if not editor_in_chief_group:
+            editor_in_chief_group=self.client.post_group(openreview.Group(id=editor_in_chief_id,
+                            readers=['everyone'],
+                            writers=[editor_in_chief_id],
+                            signatures=[venue_id],
+                            signatories=[editor_in_chief_id, venue_id],
+                            members=editors
+                            ))
         with open(os.path.join(os.path.dirname(__file__), 'webfield/editorsInChiefWebfield.js')) as f:
             content = f.read()
             editor_in_chief_group.web = content
@@ -165,44 +167,57 @@ class Journal(object):
             venue_group.web = content
             self.client.post_group(venue_group)
 
+        ## Add editors in chief to have all the permissions
+        self.client.add_members_to_group(venue_group, editor_in_chief_id)
+
         ## action editors group
         action_editors_id = self.get_action_editors_id()
-        action_editor_group=self.client.post_group(openreview.Group(id=action_editors_id,
-                        readers=['everyone'],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        signatories=[venue_id],
-                        members=[]))
+        action_editor_group = openreview.tools.get_group(self.client, action_editors_id)
+        if not action_editor_group:
+            action_editor_group=self.client.post_group(openreview.Group(id=action_editors_id,
+                            readers=['everyone'],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]))
         with open(os.path.join(os.path.dirname(__file__), 'webfield/actionEditorWebfield.js')) as f:
             content = f.read()
             action_editor_group.web = content
             self.client.post_group(action_editor_group)
 
         ## action editors invited group
-        self.client.post_group(openreview.Group(id=f'{action_editors_id}/Invited',
-                        readers=[venue_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        signatories=[],
-                        members=[]))
+        action_editors_invited_id = f'{action_editors_id}/Invited'
+        action_editors_invited_group = openreview.tools.get_group(self.client, action_editors_invited_id)
+        if not action_editors_invited_group:
+            self.client.post_group(openreview.Group(id=action_editors_invited_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))
 
         ## action editors declined group
-        self.client.post_group(openreview.Group(id=f'{action_editors_id}/Declined',
-                        readers=[venue_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        signatories=[],
-                        members=[]))
+        action_editors_declined_id = f'{action_editors_id}/Declined'
+        action_editors_declined_group = openreview.tools.get_group(self.client, action_editors_declined_id)
+        if not action_editors_declined_group:
+            self.client.post_group(openreview.Group(id=action_editors_declined_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))
 
         ## reviewers group
         reviewers_id = self.get_reviewers_id()
-        reviewer_group = openreview.Group(id=reviewers_id,
-                        readers=[venue_id, action_editors_id, reviewers_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        signatories=[venue_id],
-                        members=[]
-                        )
+        reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
+        if not reviewer_group:
+            reviewer_group = openreview.Group(id=reviewers_id,
+                            readers=[venue_id, action_editors_id, reviewers_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                            )
         with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
@@ -210,29 +225,37 @@ class Journal(object):
             self.client.post_group(reviewer_group)
 
         ## reviewers invited group
-        self.client.post_group(openreview.Group(id=f'{reviewers_id}/Invited',
-                        readers=[venue_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        signatories=[],
-                        members=[]))
+        reviewers_invited_id = f'{reviewers_id}/Invited'
+        reviewers_invited_group = openreview.tools.get_group(self.client, reviewers_invited_id)
+        if not reviewers_invited_group:
+            self.client.post_group(openreview.Group(id=reviewers_invited_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))
 
         ## reviewers declined group
-        self.client.post_group(openreview.Group(id=f'{reviewers_id}/Declined',
-                        readers=[venue_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        signatories=[],
-                        members=[]))
+        reviewers_declined_id = f'{reviewers_id}/Declined'
+        reviewers_declined_group = openreview.tools.get_group(self.client, reviewers_declined_id)
+        if not reviewers_declined_group:
+            self.client.post_group(openreview.Group(id=reviewers_declined_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))
 
         ## authors group
         authors_id = self.get_authors_id()
-        authors_group = openreview.Group(id=authors_id,
-                        readers=[venue_id, authors_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        signatories=[venue_id],
-                        members=[])
+        authors_group = openreview.tools.get_group(self.client, authors_id)
+        if not authors_group:
+            authors_group = openreview.Group(id=authors_id,
+                            readers=[venue_id, authors_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[])
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
             content = f.read()
