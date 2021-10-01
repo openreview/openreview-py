@@ -463,6 +463,16 @@ class VenueStages():
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'order': 33
             },
+            'release_decisions_to_area_chairs': {
+                'description': 'Should the decisions be immediately revealed to paper\'s area chairs? Default is "No, decisions should not be immediately revealed to the paper\'s area chairs"',
+                'value-radio': [
+                    'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                    'No, decisions should not be immediately revealed to the paper\'s area chairs'
+                ],
+                'required': True,
+                'default': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                'order': 34
+            },
             'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
                 'value-radio': [
@@ -471,7 +481,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, I will send the emails to the authors',
-                'order': 34
+                'order': 35
             }
         }
 
