@@ -848,7 +848,7 @@ var calcMetaReviewCount = function(blindedNotes) {
 var calcDecisions = function(blindedNotes) {
   var finalDecisions = [];
   blindedNotes.forEach(function(note) {
-    if (note.details.decision && note.details.decision.note.decision !== 'No Decision') {
+    if (note.details.decision && note.details.decision.content.decision !== 'No Decision') {
       finalDecisions.push(note.details.decision);
     }
   })
