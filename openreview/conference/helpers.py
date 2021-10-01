@@ -268,10 +268,23 @@ def get_meta_review_stage(client, request_forum):
 
     meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
 
+    readers_map = {
+        'Meta reviews should be immediately revealed to all reviewers': openreview.MetaReviewStage.Readers.REVIEWERS,
+        'Meta reviews should be immediately revealed to the paper\'s reviewers': openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED,
+        'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.MetaReviewStage.Readers.REVIEWERS_SUBMITTED,
+        'Meta review should not be revealed to any reviewer': openreview.MetaReviewStage.Readers.NO_REVIEWERS
+    }
+
+    reviewer_readers= request_forum.content.get('release_meta_reviews_to_reviewers', '')
+
+    release_to_reviewers = readers_map.get(reviewer_readers, openreview.MetaReviewStage.Readers.NO_REVIEWERS)
+
     return openreview.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
+        release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
+        release_to_reviewers = release_to_reviewers,
         additional_fields = meta_review_form_additional_options,
         remove_fields = meta_review_form_remove_options
     )
