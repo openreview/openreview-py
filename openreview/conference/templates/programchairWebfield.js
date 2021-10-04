@@ -56,7 +56,8 @@ var propertiesAllowed ={
     confidenceAvg:['reviewProgressData.averageConfidence'],
     confidenceMax:['reviewProgressData.maxConfidence'],
     confidenceMin:['reviewProgressData.minConfidence'],
-    replyCount:['reviewProgressData.forumReplyCount']
+    replyCount:['reviewProgressData.forumReplyCount'],
+    decision: ['decision.content.decision'],
 }
 
 // Page State
@@ -155,7 +156,7 @@ var main = function() {
       });
       var paperOfficialReviews = _.filter(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, submission.number)]);
       var paperMetaReviews = _.find(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, submission.number)]);
-      var paperDecisions =  _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]);
+      var paperDecisions = _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]) ?? { content: { decision: 'No Decision' } };
       officialReviews = officialReviews.concat(paperOfficialReviews);
       metaReviews = metaReviews.concat(paperMetaReviews);
       decisions = decisions.concat(decisions);
@@ -848,7 +849,7 @@ var calcMetaReviewCount = function(blindedNotes) {
 var calcDecisions = function(blindedNotes) {
   var finalDecisions = [];
   blindedNotes.forEach(function(note) {
-    if (note.details.decision) {
+    if (note.details.decision && note.details.decision.content.decision !== 'No Decision') {
       finalDecisions.push(note.details.decision);
     }
   })
@@ -1406,7 +1407,7 @@ var displayPaperStatusTable = function() {
   if (AREA_CHAIRS_ID) {
     sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
   }
-  sortOptions['Decision'] = function(row) { return row.decision ? row.decision.content.decision : 'No Decision'; }
+  sortOptions['Decision'] = function (row) { return row.decision.content.decision ?? 'No Decision' }
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       var tags = pcTags[row.note.id];
@@ -1431,7 +1432,7 @@ var displayPaperStatusTable = function() {
       var search = [
         row.note.number,
         row.note.content.title,
-        row.note.content.keywords.join('\n'),
+        row.note.content.keywords?.join('\n'),
         row.note.content.authors.join('\n'),
         row.note.content.authorids.join('\n')
       ].join('\n').toLowerCase()
@@ -1556,7 +1557,7 @@ var displayPaperStatusTable = function() {
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
-      var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
+      var decisionHtml = '<h4>' + (d.decision.content.decision ?? 'No Decision') + '</h4>';
 
       var rows = [checked, numberHtml, summaryHtml, reviewHtml];
       if (AREA_CHAIRS_ID) {
@@ -3055,7 +3056,7 @@ var buildCSV = function(){
     areachairProfileTwo.name,
     areachairProfileTwo.email,
     acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
-    paperTableRow.decision && paperTableRow.decision.content.decision
+    paperTableRow.decision && paperTableRow.decision?.content?.decision
     ].join(',') + '\n');
   });
 
