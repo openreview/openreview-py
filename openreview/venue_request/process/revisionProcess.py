@@ -14,7 +14,7 @@ def process(client, note, invitation):
 
     invitation_type = invitation.id.split('/')[-1]
     if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
-        conference.setup_post_submission_stage()
+        conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
     if invitation_type == 'Bid_Stage':
         ## TODO: run setup_matching inside of BidStage?
