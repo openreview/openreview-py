@@ -1351,7 +1351,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
-        builder.set_decision_stage()
+        builder.set_decision_stage(release_to_area_chairs=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         conference = builder.get_result()
@@ -1397,7 +1397,7 @@ class TestDoubleBlindConference():
         assert decisions
         assert decisions[0].readers == ['everyone']
 
-        builder.set_decision_stage(release_to_authors=True)
+        builder.set_decision_stage(release_to_authors=True, release_to_area_chairs=True)
         conference = builder.get_result()
 
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
