@@ -264,7 +264,7 @@ class InvitationBuilder(object):
                                 'values': [ venue_id, action_editors_value, reviewers_value, authors_value]
                             }
                         },
-                        'previously_submission_url': {
+                        'previous_submission_url': {
                             'value': {
                                 'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
@@ -287,17 +287,17 @@ class InvitationBuilder(object):
                             'value': {
                                 'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'description': 'Supports providing "competing interests" information (which is only viewable by EICs and AEs, but made public if paper accepted), authors can respond "None beyond the authors normal conflict of interests".',
+                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
                             'order': 9,
                             'readers': {
                                 'values': [ venue_id, action_editors_value, authors_value]
                             }
                         },
-                        'human_subject': {
+                        'human_subjects_reporting': {
                             'value': {
                                 'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'description': 'Supports human subject reporting information (which is only viewable by EICs and AEs, but made public if paper accepted), author can respond "Not applicable".',
+                            'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
                             'order': 10,
                             'readers': {
                                 'values': [ venue_id, action_editors_value, authors_value]
@@ -1304,7 +1304,7 @@ class InvitationBuilder(object):
                                         'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers', f'{paper_group_id}/Authors']
                                     }
                                 },
-                                'previously_submission_url': {
+                                'previous_submission_url': {
                                     'value': {
                                         'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                         'optional': True
@@ -1327,17 +1327,17 @@ class InvitationBuilder(object):
                                     'value': {
                                         'value-regex': '^[\\S\\s]{1,5000}$'
                                     },
-                                    'description': 'Supports providing "competing interests" information (which is only viewable by EICs and AEs, but made public if paper accepted), authors can respond "None beyond the authors normal conflict of interests".',
+                                    'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
                                     'order': 9,
                                     'readers': {
                                         'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
                                     }
                                 },
-                                'human_subject': {
+                                'human_subjects_reporting': {
                                     'value': {
                                         'value-regex': '^[\\S\\s]{1,5000}$'
                                     },
-                                    'description': 'Supports human subject reporting information (which is only viewable by EICs and AEs, but made public if paper accepted), author can respond "Not applicable".',
+                                    'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
                                     'order': 10,
                                     'readers': {
                                         'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
@@ -1713,7 +1713,7 @@ class InvitationBuilder(object):
                                     'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers', f'{paper_group_id}/Authors']
                                 }
                             },
-                            'previously_submission_url': {
+                            'previous_submission_url': {
                                 'value': {
                                     'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True
@@ -1736,17 +1736,17 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': 'Supports providing "competing interests" information (which is only viewable by EICs and AEs, but made public if paper accepted), authors can respond "None beyond the authors normal conflict of interests".',
+                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
                                 'order': 9,
                                 'readers': {
                                     'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
                                 }
                             },
-                            'human_subject': {
+                            'human_subjects_reporting': {
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': 'Supports human subject reporting information (which is only viewable by EICs and AEs, but made public if paper accepted), author can respond "Not applicable".',
+                                'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
                                 'order': 10,
                                 'readers': {
                                     'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']

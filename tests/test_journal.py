@@ -129,7 +129,7 @@ class TestJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subject': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
 
@@ -179,7 +179,7 @@ class TestJournal():
                     'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mail.com']},
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subject': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
                 }
             ))
         helpers.await_queue(openreview_client)
@@ -211,7 +211,7 @@ class TestJournal():
                                             'authors': { 'value': ['Test User', 'Celeste Martinez']},
                                             'authorids': { 'value': ['~SomeFirstName_User1', 'celeste@mail.com']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                                            'human_subject': { 'value': 'Not applicable'}
+                                            'human_subjects_reporting': { 'value': 'Not applicable'}
                                         }
                                     ))
 
@@ -237,7 +237,7 @@ class TestJournal():
                                             'authors': { 'value': ['Test User', 'Andrew McCallum']},
                                             'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mail.com']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                                            'human_subject': { 'value': 'Not applicable'}
+                                            'human_subjects_reporting': { 'value': 'Not applicable'}
                                         }
                                     ))
 
@@ -638,7 +638,7 @@ class TestJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subject': { 'value': 'Not applicable'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
                     'video': { 'value': '/attachment/' + 's' * 40 +'.mp4'}
                 }
             )
