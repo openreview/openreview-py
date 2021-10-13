@@ -283,7 +283,7 @@ def get_meta_review_stage(client, request_forum):
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
-        release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
+        release_to_authors = (request_forum.content.get('release_meta_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
         additional_fields = meta_review_form_additional_options,
         remove_fields = meta_review_form_remove_options

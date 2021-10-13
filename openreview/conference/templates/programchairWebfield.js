@@ -2130,7 +2130,7 @@ var displayReviewerStatusTable = function() {
         return row.summary.completedBids === 0;
       },
       'msg-unsubmitted-reviews': function(row) {
-        return row.reviewProgressData.numCompletedReviews < row.reviewProgressData.numPapers;
+        return row.reviewerProgressData.numCompletedReviews < row.reviewerProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
