@@ -119,13 +119,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'required': True,
                     'order': 2
                 },
-                'allow_role_overlap': {
-                    'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
-                    'value-radio': ['Yes', 'No'],
-                    'default': 'No',
-                    'required': False,
-                    'order': 3
-                },
                 'invitee_reduced_load': {
                     'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                     'values-regex': '[0-9]+',
@@ -214,6 +207,13 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
             recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
             remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
+        recruitment_invitation.reply['content']['allow_role_overlap'] = {
+            'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False,
+            'order': 3
+        }
 
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)
