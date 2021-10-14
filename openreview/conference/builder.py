@@ -1215,7 +1215,18 @@ class Conference(object):
     def set_default_load(self, default_load, reviewers_name = 'Reviewers'):
         self.default_reviewer_load[reviewers_name] = default_load
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, contact_info = 'info@openreview.net', reduced_load_on_decline=None, default_load=0):
+    def recruit_reviewers(self,
+        invitees = [],
+        title = None,
+        message = None,
+        reviewers_name = 'Reviewers',
+        remind = False,
+        invitee_names = [],
+        retry_declined=False,
+        contact_info = 'info@openreview.net',
+        reduced_load_on_decline=None,
+        default_load=0,
+        allow_overlap_official_committee=False):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -1231,7 +1242,7 @@ class Conference(object):
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
         official_committee_roles=self.get_committee_names()
-        committee_roles = official_committee_roles if reviewers_name in official_committee_roles else [reviewers_name]
+        committee_roles = official_committee_roles if (reviewers_name in official_committee_roles and not allow_overlap_official_committee) else [reviewers_name]
         recruitment_status = {
             'invited': [],
             'reminded': [],
@@ -1245,7 +1256,8 @@ class Conference(object):
             'reviewers_invited_id': reviewers_invited_id,
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed,
-            'reduced_load_id': None
+            'reduced_load_id': None,
+            'allow_overlap_official_committee': allow_overlap_official_committee
         }
         if reduced_load_on_decline:
             options['reduced_load_on_decline'] = reduced_load_on_decline
