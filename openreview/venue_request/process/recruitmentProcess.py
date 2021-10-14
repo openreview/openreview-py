@@ -48,7 +48,7 @@ def process(client, note, invitation):
         message = note.content['invitation_email_content'].strip(),
         reduced_load_on_decline = reduced_load,
         contact_info = contact_info,
-        allow_overlap_official_committee = 'Yes' in note.content.get('allow_overlap_role', 'No')
+        allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No')
     )
 
     non_invited_status=f'''No recruitment invitation was sent to the following users because they have already been invited:

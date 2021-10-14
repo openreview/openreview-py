@@ -119,8 +119,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'required': True,
                     'order': 2
                 },
-                'allow_overlap_role': {
-                    'description': 'Do you want to allow users to be invited to different roles?. Selecting "Yes" allows a user to be invited to perform the reviewer AND area chair role.',
+                'allow_role_overlap': {
+                    'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
                     'value-radio': ['Yes', 'No'],
                     'default': 'No',
                     'required': False,
