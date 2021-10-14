@@ -14,7 +14,7 @@ var SUBJECT_AREAS = '';
 var CONFLICT_SCORE_ID = '';
 var SCORE_IDS = [];
 var BID_OPTIONS = [];
-var MAX_NOTE_COUNT = Infinity;
+var MAX_SUBMISSION_COUNT = Infinity;
 
 // Bid status data
 var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
@@ -65,7 +65,7 @@ function getPapersSortedByAffinity(offset) {
       limit: 50
     })
     .then(function(result) {
-      noteCount = Math.min(result.count, MAX_NOTE_COUNT);
+      noteCount = Math.min(result.count, MAX_SUBMISSION_COUNT);
 
       if (noteCount > 0) {
         var edgesByHead = _.keyBy(result.edges, function(edge) {
@@ -105,7 +105,7 @@ function getPapersSortedByAffinity(offset) {
           limit: 50
         })
         .then(function(result) {
-          noteCount = Math.min(result.count, MAX_NOTE_COUNT);
+          noteCount = Math.min(result.count, MAX_SUBMISSION_COUNT);
           return result.notes.slice(0, noteCount);
         });
       }
@@ -118,7 +118,7 @@ function getPapersSortedByAffinity(offset) {
       limit: 50
     })
     .then(function(result) {
-      noteCount = Math.min(result.count, MAX_NOTE_COUNT);
+      noteCount = Math.min(result.count, MAX_SUBMISSION_COUNT);
       return result.notes.slice(0, noteCount);
     });
   }

@@ -1674,7 +1674,7 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False, max_note_count=None, allow_conflicts_bids=False):
+    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False, max_submission_count=None, allow_conflicts_bids=False):
         self.committee_id=committee_id
         self.start_date=start_date
         self.due_date=due_date
@@ -1682,7 +1682,7 @@ class BidStage(object):
         self.request_count=request_count
         self.score_ids=score_ids
         self.instructions=instructions
-        self.max_note_count = max_note_count
+        self.max_submission_count = max_submission_count
         self.allow_conflicts_bids=allow_conflicts_bids
 
     def get_invitation_readers(self, conference):
@@ -2229,8 +2229,8 @@ class ConferenceBuilder(object):
         ac_instructions = ac_instructions if ac_instructions else default_instructions
         self.registration_stage=RegistrationStage(name, start_date, due_date, additional_fields, ac_additional_fields, reviewer_instructions, ac_instructions)
 
-    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False, max_note_count=None):
-        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions, max_note_count))
+    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False, max_submission_count=None):
+        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions, max_submission_count))
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
