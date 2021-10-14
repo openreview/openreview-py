@@ -504,7 +504,6 @@ class Matching(object):
 
         submissions_per_id = {note.id: note.number for note in submissions}
 
-        print('CHANGE REGISTERED 2')
         edges = []
         deleted_papers = set()
         with open(score_file) as file_handle:
