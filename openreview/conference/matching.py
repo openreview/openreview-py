@@ -504,6 +504,7 @@ class Matching(object):
 
         submissions_per_id = {note.id: note.number for note in submissions}
 
+        print('CHANGE REGISTERED 2')
         edges = []
         deleted_papers = set()
         with open(score_file) as file_handle:
@@ -512,7 +513,7 @@ class Matching(object):
                 paper_number = submissions_per_id.get(paper_note_id)
                 if paper_number:
                     profile_id = row[1]
-                    score = row[2]
+                    score = str(max(round(float(row[2]), 4), 0))
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
                         head=paper_note_id,
