@@ -1009,30 +1009,37 @@ class VenueRequest():
                 'required': True,
                 'order': 2
             },
+            'allow_overlap_role': {
+                'description': 'Do you want to allow users to be invited to different roles?. Selecting "Yes" allows a user to be invited to perform the reviewer AND area chair role.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'required': False,
+                'order': 3
+            },
             'invitee_reduced_load': {
                 'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                 'values-regex': '[0-9]+',
                 'default': ['1', '2', '3'],
                 'required': False,
-                'order': 2
+                'order': 4
             },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
                 'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
                 'required': True,
-                'order': 3
+                'order': 5
             },
             'invitation_email_subject': {
                 'value-regex': '.*',
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 4,
+                'order': 6,
                 'required': True,
                 'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 5,
+                'order': 7,
                 'required': True,
                 'default': '''Dear {name},
 
