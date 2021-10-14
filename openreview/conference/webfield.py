@@ -223,6 +223,9 @@ class WebfieldBuilder(object):
             content = content.replace("var CONFLICT_SCORE_ID = '';", "var CONFLICT_SCORE_ID = '" + conference.get_conflict_score_id(stage.committee_id) + "';")
             content = content.replace("var BID_OPTIONS = [];", "var BID_OPTIONS = " + json.dumps(stage.get_bid_options()) + ";")
 
+            if stage.max_note_count is not None:
+                content = content.replace("var MAX_NOTE_COUNT = Infinity;", "var MAX_NOTE_COUNT = " + str(stage.max_note_count) + ";")
+
             if stage.score_ids:
                 content = content.replace("var SCORE_IDS = [];", "var SCORE_IDS = " + json.dumps(stage.score_ids) + ";")
 
