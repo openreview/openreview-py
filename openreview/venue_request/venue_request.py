@@ -833,6 +833,13 @@ class VenueRequest():
                 'order': 31,
                 'required': False,
                 'hidden': True
+            },
+            'submission_name':{
+                'value-regex': '.*',
+                'description': 'Enter what you would like to have displayed in the submission button for your venue.',
+                'default': ['Submission'],
+                'order':32,
+                'required': False
             }
         }
 
