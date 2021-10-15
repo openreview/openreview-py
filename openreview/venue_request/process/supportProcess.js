@@ -12,7 +12,7 @@ function(){
 
     var openreviewMailPayload = {
       groups: [SUPPORT_GROUP],
-      subject: 'A request for service has been submitted',
+      subject: 'A request for service has been submitted by ' + note.content['Abbreviated Venue Name'],
       message: adminMessage
     };
 
