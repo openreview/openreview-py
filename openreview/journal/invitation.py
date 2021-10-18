@@ -709,6 +709,10 @@ class InvitationBuilder(object):
                 'readers': {
                     'values': [venue_id, paper_authors_id]
                 },
+                'nonreaders': {
+                    'values': [],
+                    'optional': True
+                },
                 'writers': {
                     'values': [venue_id, paper_authors_id]
                 },
