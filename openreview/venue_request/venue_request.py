@@ -837,7 +837,7 @@ class VenueRequest():
             'submission_name':{
                 'value-regex': '.*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue.',
-                'default': ['Submission'],
+                'default': 'Submission',
                 'order':32,
                 'required': False
             }
@@ -858,7 +858,7 @@ class VenueRequest():
                     preprocess=pre_process_file_content,
                     reply={
                         'readers': {
-                            'values-copied': [
+                            'values-copied': [ 
                                 self.support_group.id,
                                 '{signatures}',
                                 '{content["program_chair_emails"]}'
