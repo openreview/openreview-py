@@ -1507,7 +1507,7 @@ class Edit(object):
         :return: Edit whose instance variables contain the values from the dictionary
         :rtype: Edit
         """
-        edit = Edit(e['id'],
+        edit = Edit(e.get('id'),
             cdate = e.get('cdate'),
             ddate = e.get('ddate'),
             readers = e.get('readers'),
