@@ -1064,7 +1064,7 @@ class PaperReviewRatingInvitation(openreview.Invitation):
             'replyto': review.id,
             'readers': {
                 'description': 'Select all user groups that should be able to read this comment.',
-                'values': readers
+                'values-copied': readers
             },
             'writers': {
                 'values-copied': [conference.get_id(), '{signatures}'],
@@ -1126,7 +1126,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
 
         if conference.use_area_chairs:
             paper_area_chair = conference.get_area_chairs_id(number = note.number)
-            invitees = [paper_area_chair]
+            invitees.append(paper_area_chair)
             writers.append(paper_area_chair)
 
         super(PaperMetaReviewInvitation, self).__init__(
@@ -1255,11 +1255,11 @@ class PaperGroupInvitation(openreview.Invitation):
             edge_writers = []
 
             if committee_id.endswith(conference.reviewers_name):
-                if conference.has_senior_area_chairs :
+                if conference.use_senior_area_chairs :
                     edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
                     edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
-                if conference.has_area_chairs :
+                if conference.use_area_chairs :
                     edge_readers.append(conference.get_area_chairs_id(number='{number}'))
                     edge_writers.append(conference.get_area_chairs_id(number='{number}'))
 
@@ -1281,29 +1281,17 @@ class PaperGroupInvitation(openreview.Invitation):
 
 class PaperRecruitmentInvitation(openreview.Invitation):
 
-    def __init__(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, invited_label, accepted_label, declined_label):
+    def __init__(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, process_file, invited_label, accepted_label, declined_label):
 
-        content=invitations.recruitment
-        content['submission_id'] = {
-            'description': 'submission id',
-            'order': 6,
-            'value-regex': '.*',
-            'required':True
-        }
-        content['inviter'] = {
-            'description': 'inviter id',
-            'order': 7,
-            'value-regex': '.*',
-            'required':True
-        }
+        content=invitations.paper_recruitment
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_process.py')) as post:
+            with open(os.path.join(os.path.dirname(__file__), process_file)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
                 post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
-                post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + 'Reviewer' + "'")
+                post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + conference.get_committee_name(committee_id, pretty=True) + "'")
                 post_content = post_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
                 post_content = post_content.replace("INVITE_ASSIGNMENT_INVITATION_ID = ''", "INVITE_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, invite=True) + "'")
                 pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + hash_seed + "'")
@@ -1331,12 +1319,13 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                         #edge_writers.append(conference.get_senior_area_chairs_id())
 
                 if committee_id.endswith(conference.reviewers_name):
-                    if conference.has_senior_area_chairs :
+                    if conference.use_senior_area_chairs :
                         edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
                         edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
-                    edge_readers.append(conference.get_area_chairs_id(number='{number}'))
-                    edge_writers.append(conference.get_area_chairs_id(number='{number}'))
+                    if conference.use_area_chairs:
+                        edge_readers.append(conference.get_area_chairs_id(number='{number}'))
+                        edge_writers.append(conference.get_area_chairs_id(number='{number}'))
 
                 post_content = post_content.replace("EDGE_READERS = []", "EDGE_READERS = " + json.dumps(edge_readers))
                 post_content = post_content.replace("EDGE_WRITERS = []", "EDGE_WRITERS = " + json.dumps(edge_writers))
@@ -1672,12 +1661,13 @@ class InvitationBuilder(object):
                 pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
                 post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
                 post_content = post_content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "'")
-                if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
-                    post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
-                    post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
-                elif options.get('reviewers_name') == 'Area_Chairs':
-                    post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
-                    post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
+                if not options.get('allow_overlap_official_committee'):
+                    if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
+                        post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
+                        post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
+                    elif options.get('reviewers_name') == 'Area_Chairs':
+                        post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
+                        post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
                 pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 if reduced_load:
@@ -1912,7 +1902,7 @@ class InvitationBuilder(object):
 
         invitations = []
         stage=conference.registration_stage
-        if conference.has_area_chairs:
+        if conference.use_area_chairs:
             invitations.append(self.__set_registration_invitation(conference=conference,
             start_date=stage.start_date,
             due_date=stage.due_date,
@@ -1935,10 +1925,13 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(PaperGroupInvitation(conference, committee_id, with_process_function))
 
-    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined'):
+    def set_paper_recruitment_invitation(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
 
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
-        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, current_invitation.web if current_invitation else None, invited_label, accepted_label, declined_label))
+        ## Use a simpler process function when the recruitment comes from proposed assignments: no conflict check, no profile check, etc.
+        process_file='templates/simple_paper_recruitment_process.py' if proposed else 'templates/paper_recruitment_process.py'
+        web=current_invitation.web if current_invitation else None
+        return self.client.post_invitation(PaperRecruitmentInvitation(conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, process_file, invited_label, accepted_label, declined_label))
 
     def set_assignment_invitation(self, conference, committee_id):
 

@@ -574,7 +574,8 @@ class TestNeurIPSConference():
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'],
+                    'keywords': ['machine learning', 'nlp']
                 }
             )
             if i == 1:
@@ -681,7 +682,7 @@ class TestNeurIPSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         post_submission_note=pc_client.post_note(openreview.Note(
-            content= { 'force': 'Yes' },
+            content= { 'force': 'Yes', 'hide_fields': ['keywords'] },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
             readers= ['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
@@ -699,6 +700,9 @@ class TestNeurIPSConference():
 
         submissions = conference.get_submissions()
         assert len(submissions) == 5
+
+        assert submissions[0].content['keywords'] == ''
+
         assert submissions[0].readers == ['NeurIPS.cc/2021/Conference',
             'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
             'NeurIPS.cc/2021/Conference/Area_Chairs',
@@ -2281,7 +2285,7 @@ Thank you,
             replyto=reviews[0].id,
             invitation=reviews[0].signatures[0] + '/-/Review_Rating',
             readers=['NeurIPS.cc/2021/Conference/Program_Chairs',
-            'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            ac_anon_id],
             writers=[ac_anon_id],
             signatures=[ac_anon_id],
             content={
