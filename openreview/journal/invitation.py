@@ -1069,16 +1069,9 @@ class InvitationBuilder(object):
                             'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
                             'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
                             'content': {
-                                'title': {
+                                'summary_of_contributions': {
                                     'order': 1,
-                                    'description': 'Brief summary of your review.',
-                                    'value': {
-                                        'value-regex': '^.{0,500}$'
-                                    }
-                                },
-                                'review': {
-                                    'order': 2,
-                                    'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                    'description': 'Brief description, in the reviewer’s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                                     'value': {
                                         'value-regex': '^[\\S\\s]{1,200000}$'
                                     },
@@ -1086,9 +1079,9 @@ class InvitationBuilder(object):
                                         'markdown': True
                                     }
                                 },
-                                'suggested_changes': {
+                                'strengths_and_weaknesses': {
                                     'order': 2,
-                                    'description': 'List of suggested revisions to support acceptance (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                    'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                                     'value': {
                                         'value-regex': '^[\\S\\s]{1,200000}$'
                                     },
@@ -1096,52 +1089,24 @@ class InvitationBuilder(object):
                                         'markdown': True
                                     }
                                 },
-                                'recommendation': {
+                                'requested_changes': {
                                     'order': 3,
+                                    'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                                     'value': {
-                                        'value-radio': [
-                                            'Accept',
-                                            'Reject'
-                                        ]
+                                        'value-regex': '^[\\S\\s]{1,200000}$'
+                                    },
+                                    'presentation': {
+                                        'markdown': True
                                     }
                                 },
-                                'confidence': {
+                                'broader_impact_concerns': {
                                     'order': 4,
+                                    'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                                     'value': {
-                                        'value-radio': [
-                                            '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature',
-                                            '4: The reviewer is confident but not absolutely certain that the evaluation is correct',
-                                            '3: The reviewer is fairly confident that the evaluation is correct',
-                                            '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper',
-                                            '1: The reviewer\'s evaluation is an educated guess'
-                                        ]
-                                    }
-                                },
-                                'certification_recommendation': {
-                                    'order': 5,
-                                    'value': {
-                                        'value-radio': [
-                                            'Featured article',
-                                            'Outstanding article'
-                                        ]
+                                        'value-regex': '^[\\S\\s]{1,200000}$'
                                     },
-                                    'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}']
-                                    }
-                                },
-                                'certification_confidence': {
-                                    'order': 6,
-                                    'value': {
-                                        'value-radio': [
-                                            '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature',
-                                            '4: The reviewer is confident but not absolutely certain that the evaluation is correct',
-                                            '3: The reviewer is fairly confident that the evaluation is correct',
-                                            '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper',
-                                            '1: The reviewer\'s evaluation is an educated guess'
-                                        ]
-                                    },
-                                    'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}']
+                                    'presentation': {
+                                        'markdown': True
                                     }
                                 }
                             }

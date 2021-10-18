@@ -401,13 +401,10 @@ class TestJournal():
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
-                    'title': { 'value': 'Review title' },
-                    'review': { 'value': 'This is the review' },
-                    'suggested_changes': { 'value': 'No changes' },
-                    'recommendation': { 'value': 'Accept' },
-                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
-                    'certification_recommendation': { 'value': 'Outstanding article' },
-                    'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -471,14 +468,10 @@ class TestJournal():
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
-                    'title': { 'value': 'another Review title' },
-                    'review': { 'value': 'This is another review' },
-                    'suggested_changes': { 'value': 'No changes' },
-                    'recommendation': { 'value': 'Accept' },
-                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
-                    'certification_recommendation': { 'value': 'Outstanding article' },
-                    'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
-                }
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
             )
         )
 
@@ -495,14 +488,10 @@ class TestJournal():
                 signatures=[javier_anon_groups[0].id],
                 note=Note(
                     content={
-                        'title': { 'value': 'another Review title 2' },
-                        'review': { 'value': 'This is another review 2' },
-                        'suggested_changes': { 'value': 'No changes' },
-                        'recommendation': { 'value': 'Accept' },
-                        'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
-                        'certification_recommendation': { 'value': 'Outstanding article' },
-                        'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
-                    }
+                        'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                        'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                        'requested_changes': { 'value': 'requested_changes' },
+                        'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                    }
                 )
             )
 
@@ -519,14 +508,10 @@ class TestJournal():
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
-                    'title': { 'value': 'another Review title' },
-                    'review': { 'value': 'This is another review' },
-                    'suggested_changes': { 'value': 'No changes' },
-                    'recommendation': { 'value': 'Accept' },
-                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' },
-                    'certification_recommendation': { 'value': 'Outstanding article' },
-                    'certification_confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
-                }
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
             )
         )
 
