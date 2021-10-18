@@ -124,25 +124,25 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values-regex': '[0-9]+',
                     'default': ['1', '2', '3'],
                     'required': False,
-                    'order': 3
+                    'order': 4
                 },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
                     'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
                     'required': True,
-                    'order': 4
+                    'order': 5
                 },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 5,
+                    'order': 6,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 6,
+                    'order': 7,
                     'required': True,
                     'default': recruitment_email_body
                 }
@@ -207,6 +207,13 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
             recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
             remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
+        recruitment_invitation.reply['content']['allow_role_overlap'] = {
+            'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False,
+            'order': 3
+        }
 
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)

@@ -513,7 +513,7 @@ class Matching(object):
                 paper_number = submissions_per_id.get(paper_note_id)
                 if paper_number:
                     profile_id = row[1]
-                    score = row[2]
+                    score = str(max(round(float(row[2]), 4), 0))
                     edges.append(Edge(
                         invitation=invitation.id,
                         head=paper_note_id,
