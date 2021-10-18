@@ -1158,62 +1158,65 @@ class InvitationBuilder(object):
         solicite_review_invitation=openreview.tools.get_invitation(self.client, solicite_review_invitation_id)
 
         if not solicite_review_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=Invitation(id=solicite_review_invitation_id,
-                    duedate=1613822400000,
-                    invitees=['~'],
-                    readers=['everyone'],
+            with open(os.path.join(os.path.dirname(__file__), 'process/solicite_review_pre_process.py')) as g:
+                pre_content = g.read()
+                invitation = self.client.post_invitation_edit(readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'signatures': { 'values-regex': f'~.*' },
-                        'readers': { 'values': [ venue_id, '${signatures}'] },
-                        'writers': { 'values': [ venue_id, '${signatures}'] },
-                        'note': {
-                            'id': {
-                                'value-invitation': solicite_review_invitation_id,
-                                'optional': True
-                            },
-                            'forum': { 'value': note.id },
-                            'replyto': { 'value': note.id },
-                            'ddate': {
-                                'int-range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
-                            },
-                            'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                            'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                            'content': {
-                                'solicite': {
-                                    'order': 1,
-                                    'description': '',
-                                    'value': {
-                                        'value-radio': [
-                                            'I solicite to review this paper.'
-                                        ]
-                                    }
+                    invitation=Invitation(id=solicite_review_invitation_id,
+                        duedate=1613822400000,
+                        invitees=['~'],
+                        noninvitees=[f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers', f'{paper_group_id}/Authors'],
+                        readers=['everyone'],
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        maxReplies=1,
+                        edit={
+                            'signatures': { 'values-regex': f'~.*' },
+                            'readers': { 'values': [ venue_id, '${signatures}'] },
+                            'writers': { 'values': [ venue_id, '${signatures}'] },
+                            'note': {
+                                'id': {
+                                    'value-invitation': solicite_review_invitation_id,
+                                    'optional': True
                                 },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'TODO (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
+                                'forum': { 'value': note.id },
+                                'replyto': { 'value': note.id },
+                                'ddate': {
+                                    'int-range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'nullable': True
+                                },
+                                'signatures': { 'values': ['${signatures}'] },
+                                'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                                'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                                'content': {
+                                    'solicite': {
+                                        'order': 1,
+                                        'description': '',
+                                        'value': {
+                                            'value-radio': [
+                                                'I solicite to review this paper.'
+                                            ]
+                                        }
                                     },
-                                    'presentation': {
-                                        'markdown': True
+                                    'comment': {
+                                        'order': 2,
+                                        'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
+                                        'value': {
+                                            'value-regex': '^[\\S\\s]{1,200000}$',
+                                            'optional': True
+                                        },
+                                        'presentation': {
+                                            'markdown': True
+                                        }
                                     }
                                 }
                             }
-                        }
-                    },
-                    process=os.path.join(os.path.dirname(__file__), 'process/solicite_review_process.py'),
-                    preprocess=os.path.join(os.path.dirname(__file__), 'process/solicite_review_pre_process.py')
-            ))
+                        },
+                        process=os.path.join(os.path.dirname(__file__), 'process/solicite_review_process.py'),
+                        preprocess=pre_content
+                ))
 
     def set_revision_submission(self, journal, note):
         venue_id = journal.venue_id
