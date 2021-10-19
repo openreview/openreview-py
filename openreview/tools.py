@@ -13,6 +13,25 @@ from multiprocessing import Pool
 from tqdm import tqdm
 import tld
 import urllib.parse as urlparse
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
+
+def concurrent_requests(request_func, params):
+    futures = []
+    gathering_responses = tqdm(total=len(params), desc='Gathering Responses')
+    results = []
+
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        for param in params:
+            futures.append(executor.submit(request_func, param))
+
+        for future in futures:
+            gathering_responses.update(1)
+            results.append(future.result())
+
+        gathering_responses.close()
+
+        return results
 
 def get_profile(client, value, with_publications=False):
     """
@@ -482,26 +501,38 @@ def replace_members_with_ids(client, group):
     ids = []
     emails = []
     invalid_ids = []
-    for member in group.members:
+
+    def classify_members(member):
         if '~' not in member:
             try:
                 profile = client.get_profile(member.lower())
-                ids.append(profile.id)
+                return ('ids', profile.id)
             except openreview.OpenReviewException as e:
                 if 'Profile not found' in e.args[0][0]:
-                    emails.append(member.lower())
+                    return ('emails', member.lower())
                 else:
                     raise e
         else:
             profile = get_profile(client, member)
             if profile:
-                ids.append(profile.id)
+                return ('ids', profile.id)
             else:
-                invalid_ids.append(member)
+                return ('invalid_ids', member)
+
+    results = concurrent_requests(classify_members, group.members)
+
+    for key, member in results:
+        if key == 'ids':
+            ids.append(member)
+        elif key == 'emails':
+            emails.append(member)
+        elif key == 'invalid_ids':
+            invalid_ids.append(member)
 
     if invalid_ids:
         print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
     group.members = ids + emails
+
     return client.post_group(group)
 
 class iterget:
