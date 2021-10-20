@@ -108,6 +108,13 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var reviews = submission.details.directReplies.filter(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Review') >= 0;
       });
+      var recommendations = submission.details.directReplies.filter(function(reply) {
+        return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Official_Recommendation') >= 0;
+      });
+      var recommendationByReviewer = {};
+      recommendations.forEach(function(recommendation) {
+        recommendationByReviewer[recommendation.signatures[0]] = recommendation;
+      });
       var decisions = submission.details.directReplies.filter(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Decision') >= 0;
       });
@@ -122,13 +129,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
         var status = {};
         if (completedReview) {
-          var confidenceString = completedReview.content.confidence.value;
-          var confidence = parseInt(confidenceString.substring(0, confidenceString.indexOf(':')));
-          confidences.push(confidence);
-          status = {
-            Recommendation: completedReview.content.recommendation.value,
-            Confidence: confidence,
-            'Review length': completedReview.content.review.value.length
+          var reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
+          status = {};
+          if (reviewerRecommendation) {
+            status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
+            status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
           }
         }
         paperReviewerStatus[reviewer.anonId] = {
@@ -187,14 +192,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         }
       })
 
-      var stats = {
-        Confidence: {
-          min: confidences.length ? _.min(confidences) : 'N/A',
-          max: confidences.length ? _.max(confidences) : 'N/A',
-          avg: confidences.length ? _.round(_.sum(confidences) / confidences.length, 2) : 'N/A'
-        }
-      };
-
       var metaReview = null;
       var decision = decisions.length && decisions[0];
       if (decision) {
@@ -210,7 +207,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           numSubmittedReviews: reviews.length,
           numReviewers: paperReviewers.length,
           reviewers: paperReviewerStatus,
-          stats: stats,
           sendReminder: true,
         },
         areachairProgressData: {
@@ -218,9 +214,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           numMetaReview: metaReview ? 'One' : 'No',
           areachair: { name: paperActionEditors.map(function(ae) { return view.prettyId(ae.id); }), email: paperActionEditors.map(function(ae) { return ae.id; }) },
           metaReview: metaReview,
-          referrer: referrerUrl
+          referrer: referrerUrl,
+          metaReviewName: 'Decision',
+          committeeName: 'Action Editor'
         },
-        decision: submission.content.venue.value
+        status: submission.content.venue.value
       })
     }
   })
@@ -237,7 +235,7 @@ var renderData = function(venueStatusData) {
 
   Webfield2.ui.renderTable('#paper-status', venueStatusData.paperStatusRows, {
       headings: ['#', 'Paper Summary',
-      'Review Progress', 'Action Editor Recommendation', 'Decision'],
+      'Review Progress', 'Action Editor Decision', 'Status'],
       renders: [
         function(data) {
           return '<strong class="note-number">' + data.number + '</strong>';
@@ -254,11 +252,8 @@ var renderData = function(venueStatusData) {
         Paper_Title: function(row) { return _.toLower(_.trim(row.submission.content.title)); },
         Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
         Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
-        Average_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.avg === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.avg; },
-        Max_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.max === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.max; },
-        Min_Confidence: function(row) { return row.reviewProgressData.stats.Confidence.min === 'N/A' ? 0 : row.reviewProgressData.stats.Confidence.min; },
-        Recommendation: function(row) { return row.areachairProgressData.recommendation; },
-        Decision: function(row) { return row.decision; }
+        Decision: function(row) { return row.areachairProgressData.recommendation; },
+        Status: function(row) { return row.status; }
       },
       searchProperties: {
         number: ['submissionNumber.number'],
@@ -269,11 +264,8 @@ var renderData = function(venueStatusData) {
         reviewer: ['reviewProgressData.reviewers'],
         numReviewersAssigned: ['reviewProgressData.numReviewers'],
         numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
-        confidenceAvg: ['reviewProgressData.stats.Confidence.avg'],
-        confidenceMax: ['reviewProgressData.stats.Confidence.max'],
-        confidenceMin: ['reviewProgressData.stats.Confidence.min'],
-        recommendation: ['areachairProgressData.recommendation'],
-        decision: ['decision'],
+        decision: ['areachairProgressData.recommendation'],
+        status: ['status'],
         default: ['submissionNumber.number', 'submission.content.title']
       },
       reminderOptions: {
