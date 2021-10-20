@@ -1215,7 +1215,18 @@ class Conference(object):
     def set_default_load(self, default_load, reviewers_name = 'Reviewers'):
         self.default_reviewer_load[reviewers_name] = default_load
 
-    def recruit_reviewers(self, invitees = [], title = None, message = None, reviewers_name = 'Reviewers', remind = False, invitee_names = [], retry_declined=False, contact_info = 'info@openreview.net', reduced_load_on_decline=None, default_load=0):
+    def recruit_reviewers(self,
+        invitees = [],
+        title = None,
+        message = None,
+        reviewers_name = 'Reviewers',
+        remind = False,
+        invitee_names = [],
+        retry_declined=False,
+        contact_info = 'info@openreview.net',
+        reduced_load_on_decline=None,
+        default_load=0,
+        allow_overlap_official_committee=False):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -1231,7 +1242,7 @@ class Conference(object):
         reviewers_invited_group = self.__create_group(reviewers_invited_id, pcs_id)
 
         official_committee_roles=self.get_committee_names()
-        committee_roles = official_committee_roles if reviewers_name in official_committee_roles else [reviewers_name]
+        committee_roles = official_committee_roles if (reviewers_name in official_committee_roles and not allow_overlap_official_committee) else [reviewers_name]
         recruitment_status = {
             'invited': [],
             'reminded': [],
@@ -1245,7 +1256,8 @@ class Conference(object):
             'reviewers_invited_id': reviewers_invited_id,
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed,
-            'reduced_load_id': None
+            'reduced_load_id': None,
+            'allow_overlap_official_committee': allow_overlap_official_committee
         }
         if reduced_load_on_decline:
             options['reduced_load_on_decline'] = reduced_load_on_decline
@@ -2014,7 +2026,7 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -2024,6 +2036,7 @@ class DecisionStage(object):
         self.public = public
         self.release_to_authors = release_to_authors
         self.release_to_reviewers = release_to_reviewers
+        self.release_to_area_chairs = release_to_area_chairs
         self.email_authors = email_authors
 
     def get_readers(self, conference, number):
@@ -2032,7 +2045,10 @@ class DecisionStage(object):
             return ['everyone']
 
         readers = [ conference.get_program_chairs_id()]
-        if conference.use_area_chairs:
+        if self.release_to_area_chairs and conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number = number))
+
+        if self.release_to_area_chairs and conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
         if self.release_to_reviewers:
@@ -2242,8 +2258,8 @@ class ConferenceBuilder(object):
     def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = MetaReviewStage.Readers.NO_REVIEWERS, additional_fields = {}, remove_fields = [], process = None):
         self.meta_review_stage = MetaReviewStage(name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields, remove_fields, process)
 
-    def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, email_authors = False):
-        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, email_authors)
+    def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs=False, email_authors = False):
+        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, release_to_area_chairs, email_authors)
 
     def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, allow_author_reorder=False):
         self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted, allow_author_reorder)

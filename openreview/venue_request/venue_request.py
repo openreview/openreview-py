@@ -463,6 +463,16 @@ class VenueStages():
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'order': 33
             },
+            'release_decisions_to_area_chairs': {
+                'description': 'Should the decisions be immediately revealed to paper\'s area chairs? Default is "No, decisions should not be immediately revealed to the paper\'s area chairs"',
+                'value-radio': [
+                    'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                    'No, decisions should not be immediately revealed to the paper\'s area chairs'
+                ],
+                'required': True,
+                'default': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                'order': 34
+            },
             'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
                 'value-radio': [
@@ -471,7 +481,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, I will send the emails to the authors',
-                'order': 34
+                'order': 35
             }
         }
 
@@ -999,30 +1009,37 @@ class VenueRequest():
                 'required': True,
                 'order': 2
             },
+            'allow_role_overlap': {
+                'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'required': False,
+                'order': 3
+            },
             'invitee_reduced_load': {
                 'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                 'values-regex': '[0-9]+',
                 'default': ['1', '2', '3'],
                 'required': False,
-                'order': 2
+                'order': 4
             },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
                 'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
                 'required': True,
-                'order': 3
+                'order': 5
             },
             'invitation_email_subject': {
                 'value-regex': '.*',
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 4,
+                'order': 6,
                 'required': True,
                 'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 5,
+                'order': 7,
                 'required': True,
                 'default': '''Dear {name},
 
