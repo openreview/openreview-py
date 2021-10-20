@@ -1115,6 +1115,76 @@ class InvitationBuilder(object):
                     process=os.path.join(os.path.dirname(__file__), 'process/solicited_review_process.py')
             ))
 
+    def set_official_recommendation_invitation(self, journal, note, duedate):
+        venue_id = journal.venue_id
+        paper_group_id=f'{venue_id}/Paper{note.number}'
+
+        official_recommendation_invitation_id=f'{paper_group_id}/-/Official_Recommendation'
+        official_recommendation_invitation=openreview.tools.get_invitation(self.client, official_recommendation_invitation_id)
+
+        if not official_recommendation_invitation:
+            print('post official recommendation invitation')
+            invitation = self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=Invitation(id=official_recommendation_invitation_id,
+                    duedate=duedate,
+                    invitees=[venue_id, f"{paper_group_id}/Reviewers"],
+                    readers=['everyone'],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    maxReplies=1,
+                    edit={
+                        'signatures': { 'values-regex': f'{paper_group_id}/Reviewer_.*|{paper_group_id}/Action_Editors' },
+                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                        'note': {
+                            'id': {
+                                'value-invitation': official_recommendation_invitation_id,
+                                'optional': True
+                            },
+                            'forum': { 'value': note.id },
+                            'replyto': { 'value': note.id },
+                            'ddate': {
+                                'int-range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'nullable': True
+                            },
+                            'signatures': { 'values': ['${signatures}'] },
+                            'readers': { 'values': [ 'everyone' ] },
+                            'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                            'content': {
+                                'decision_recommendation': {
+                                    'order': 1,
+                                    'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
+                                    'value': {
+                                        'value-radio': [
+                                            'Accept',
+                                            'Leaning Accept',
+                                            'Leaning Reject',
+                                            'Reject'
+                                        ]
+                                    }
+                                },
+                                'certification_recommendations': {
+                                    'order': 2,
+                                    'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                                    'value': {
+                                        'values-dropdown': [
+                                            'Cert 1',
+                                            'Cert 2',
+                                            'Cart 3'
+                                        ],
+                                        'optional': True
+                                    },
+                                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] }
+                                }
+                            }
+                        }
+                    },
+                    process=os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')
+            ))
+
     def set_solicite_review_invitation(self, journal, note):
         venue_id = journal.venue_id
         paper_group_id=f'{venue_id}/Paper{note.number}'

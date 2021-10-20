@@ -15,6 +15,7 @@ def process(client, edit, invitation):
 
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
     if len(reviews) == 3:
+        ## Release the reviews to everyone
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -34,3 +35,7 @@ def process(client, edit, invitation):
                     }
                 }
         ))
+        ## Enable official recommendation
+        submission = client.get_note(note.forum)
+        duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = journal.default_offset_days))
+        journal.invitation_builder.set_official_recommendation_invitation(journal, submission, duedate)

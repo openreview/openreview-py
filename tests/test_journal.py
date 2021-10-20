@@ -17,7 +17,7 @@ class TestJournal():
     def journal(self):
         venue_id = '.TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
-        journal=Journal(fabian_client, venue_id, '1234')
+        journal=Journal(fabian_client, venue_id, '1234', default_offset_days=0)
         return journal
 
     def test_setup(self, openreview_client, helpers):
@@ -530,6 +530,22 @@ class TestJournal():
         assert reviews[1].signatures == [javier_anon_groups[0].id]
         assert reviews[2].readers == ['everyone']
         assert reviews[2].signatures == [carlos_anon_groups[0].id]
+
+        ## Official Recommendation should be created
+        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Recommendation")
+
+        ## Post a review edit
+        official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'certification_recommendations': { 'value': ['Cert 1'] },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
 
         ## Check permissions of the review revisions
         review_revisions=openreview_client.get_note_edits(noteId=reviews[0].id)
