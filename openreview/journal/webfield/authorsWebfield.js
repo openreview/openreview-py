@@ -53,6 +53,13 @@ var formatData = function(notes, invitations) {
     var reviews = submission.details.directReplies.filter(function(reply) {
       return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Review') >= 0;
     });
+    var recommendations = submission.details.directReplies.filter(function(reply) {
+      return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Official_Recommendation') >= 0;
+    });
+    var recommendationByReviewer = {};
+    recommendations.forEach(function(recommendation) {
+      recommendationByReviewer[recommendation.signatures[0]] = recommendation;
+    });
     var decision = submission.details.directReplies.find(function(reply) {
       return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Decision') >= 0;
     });
@@ -64,6 +71,7 @@ var formatData = function(notes, invitations) {
         noteId: submission.id,
         paperNumber: submission.number,
         reviews: reviews,
+        recommendationByReviewer: recommendationByReviewer,
         referrer: referrerUrl
       },
       actionEditorData: {
@@ -94,17 +102,16 @@ var renderData = function(venueStatusData) {
       function(data) {
         var reviews = data.reviews || [];
         var reviewList = reviews.map(function(review) {
-          return '<li style="margin-bottom: .25rem;"><strong>' + view.prettyId(_.last(review.signatures[0].split('/'))) + ':</strong> Recommendation: ' + review.content.recommendation.value +
-            ' / Confidence: ' + review.content.confidence.value +
-            '<br><a href="/forum?id=' + review.forum + '&noteId=' + review.id + '&referrer=' + data.referrer + '" target="_blank">Read Review</a>' +
+          var reviewerRecommendation = data.recommendationByReviewer[review.signatures[0]];
+          var recommendationString = reviewerRecommendation ? (' / Recommendation: <a href="/forum?id=' + reviewerRecommendation.forum + '&noteId=' + reviewerRecommendation.id + '&referrer=' + data.referrer + '" target="_blank">' + reviewerRecommendation.content.decision_recommendation.value + '</a>'): '';
+          return '<li style="margin-bottom: .25rem;"><strong>' + view.prettyId(_.last(review.signatures[0].split('/'))) + ':</strong> ' +
+            '<a href="/forum?id=' + review.forum + '&noteId=' + review.id + '&referrer=' + data.referrer + '" target="_blank">Review</a>' +
+            recommendationString +
             '</li>';
         });
         return '<div class="reviewer-progress">' +
-          '<h4>' + reviews.length + ' Reviews Submitted</h4>' +
+          '<h4>' + reviews.length + ' Reviews Submitted / ' + Object.keys(data.recommendationByReviewer).length + ' Recommendations</h4>' +
           '<ul class="list-unstyled" style="font-size: .75rem">' + reviewList.join('\n') + '</ul>' +
-          '<div>' +
-          (data.averageConfidence ? '<br><strong>Average Confidence:</strong> ' + data.averageConfidence + ' (Min: ' + data.minConfidence + ', Max: ' + data.maxConfidence + ')' : '') +
-          '</div>' +
           '</div>';
       },
       Handlebars.templates.noteMetaReviewStatus
