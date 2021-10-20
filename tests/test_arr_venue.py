@@ -185,8 +185,10 @@ class TestNeurIPSConference():
         ## Accept to be a reviewer
         messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as reviewer')
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        decline_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        # decline_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        decline_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
         request_page(selenium, accept_url, alert=True)
         helpers.await_queue()
@@ -198,7 +200,8 @@ class TestNeurIPSConference():
         ## Accept to be an AC
         messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as area chair')
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
         request_page(selenium, accept_url, alert=True)
         helpers.await_queue()
@@ -403,7 +406,8 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -424,14 +428,16 @@ class TestNeurIPSConference():
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Area Chair Invitation accepted for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-Thank you for accepting the invitation to serve as area chair for the paper number: 5, title: Paper title 5.
+        print('MESSAGE', messages[0]['content']['text'])
+        assert messages[0]['content']['text'] == '''<p>Hi Area CMUChair,<br>
 
-Please go to the ARR 2021 - September Area Chair Console and check your pending tasks: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs.
+Thank you for accepting the invitation to serve as area chair for the paper number: 5, title: Paper title 5.</p>
 
-If you would like to change your decision, please click the Decline link in the previous invitation email.
+<p>Please go to the ARR 2021 - September Area Chair Console and check your pending tasks: <a href="https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs</a>.</p>
 
-OpenReview Team'''
+<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>
+
+<p>OpenReview Team</p>'''
 
 
         # Assignment email to the area chair
@@ -458,7 +464,8 @@ ACL ARR 2021 September Program Chairs'''
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, decline_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -508,7 +515,8 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -567,7 +575,8 @@ ACL ARR 2021 September Program Chairs'''
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, decline_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
