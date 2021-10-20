@@ -195,7 +195,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var metaReview = null;
       var decision = decisions.length && decisions[0];
       if (decision) {
-        metaReview = { id: decision.id, forum: submission.id, content: { recommendation: decision.content.recommendation.value }};
+        metaReview = { id: decision.id, forum: submission.id, content: { recommendation: decision.content.recommendation.value, certification: decision.content.certification.value }};
       }
 
       paperStatusRows.push({
@@ -211,6 +211,9 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         },
         areachairProgressData: {
           recommendation: metaReview && metaReview.content.recommendation,
+          status: {
+            Certification: metaReview ? metaReview.content.certification.join(', ') : ''
+          },
           numMetaReview: metaReview ? 'One' : 'No',
           areachair: { name: paperActionEditors.map(function(ae) { return view.prettyId(ae.id); }), email: paperActionEditors.map(function(ae) { return ae.id; }) },
           metaReview: metaReview,
