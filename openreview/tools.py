@@ -16,12 +16,25 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
-def concurrent_requests(request_func, params):
+def concurrent_requests(request_func, params, max_workers=6):
+    """
+    Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
+
+    :param request_func: a function to execute for each value of the list.
+    :type request_func: function
+    :param params: a list of values to be executed by request_func.
+    :type params: list
+    :param max_workers: number of workers to use in the multiprocessing tool, default value is 6.
+    :type max_workers: int
+
+    :return: A list of results given for each func value execution
+    :rtype: list
+    """
     futures = []
     gathering_responses = tqdm(total=len(params), desc='Gathering Responses')
     results = []
 
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for param in params:
             futures.append(executor.submit(request_func, param))
 
@@ -915,25 +928,6 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
         params['web'] = web
 
     return iterget(client.get_groups, **params)
-
-def parallel_exec(values, func, processes = None):
-    """
-    Returns a list of results given for each func value execution. It shows a progress bar to know the progress of the task.
-
-    :param values: a list of values.
-    :type values: list
-    :param func: a function to execute for each value of the list.
-    :type func: function
-    :param processes: number of procecces to use in the multiprocessing tool, default value is the number of CPUs available.
-    :type processes: int
-
-    :return: A list of results given for each func value execution
-    :rtype: list
-    """
-    pool = Pool(processes = processes)
-    results = pool.map(func, tqdm(values))
-    pool.close()
-    return results
 
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     """
