@@ -1603,12 +1603,24 @@ class InvitationBuilder(object):
                                 },
                                 'comment': {
                                     'order': 2,
-                                    'description': 'TODO (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                    'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                                     'value': {
                                         'value-regex': '^[\\S\\s]{1,200000}$'
                                     },
                                     'presentation': {
                                         'markdown': True
+                                    }
+                                },
+                                'certification': {
+                                    'order': 3,
+                                    'description': 'TODO',
+                                    'value': {
+                                        'values-dropdown': [
+                                            'Cert 1',
+                                            'Cert 2',
+                                            'Cart 3'
+                                        ],
+                                        'optional': True
                                     }
                                 }
                             }
@@ -1651,9 +1663,9 @@ class InvitationBuilder(object):
                                         'order': 1,
                                         'value': {
                                             'value-radio': [
-                                                "Poor - not very helpful",
-                                                "Good",
-                                                "Outstanding"
+                                                "Exceeds expectations",
+                                                "Meets expectations",
+                                                "Falls below expectations"
                                             ]
                                         }
                                     }

@@ -17,7 +17,7 @@ class TestJournal():
     def journal(self):
         venue_id = '.TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
-        journal=Journal(fabian_client, venue_id, '1234', default_offset_days=0)
+        journal=Journal(fabian_client, venue_id, '1234')
         return journal
 
     def test_setup(self, openreview_client, helpers):
@@ -579,7 +579,7 @@ class TestJournal():
                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
                 note=Note(
                     content={
-                        'rating': { 'value': 'Good' }
+                        'rating': { 'value': 'Exceeds expectations' }
                     }
                 )
             )
@@ -596,7 +596,8 @@ class TestJournal():
             note=Note(
                 content={
                     'recommendation': { 'value': 'Accept as is' },
-                    'comment': { 'value': 'This is a nice paper!' }
+                    'comment': { 'value': 'This is a nice paper!' },
+                    'certification': { 'value': ['Cert 1'] }
                 }
             )
         )

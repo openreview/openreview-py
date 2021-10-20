@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, default_offset_days=10):
+    def __init__(self, client, venue_id, secret_key, default_offset_days=14):
 
         self.client=client
         self.venue_id=venue_id
