@@ -426,6 +426,7 @@ class Journal(object):
         self.setup_submission_groups(note)
         self.invitation_builder.set_revision_submission(self, note)
         self.setup_ae_assignment(note)
+        self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
 
     def setup_under_review_submission(self, note):
 

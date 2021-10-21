@@ -690,80 +690,80 @@ class InvitationBuilder(object):
             )
         )
 
-        suggest_ae_invitation_id=f'{action_editors_id}/-/Recommendation'
-        invitation = Invitation(
-            id=suggest_ae_invitation_id,
-            duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
-            invitees=[authors_id],
-            readers=[venue_id, authors_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            minReplies=1,
-            type='Edge',
-            edit={
-                'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
-                },
-                'readers': {
-                    'values': [venue_id, paper_authors_id]
-                },
-                'nonreaders': {
-                    'values': [],
-                    'optional': True
-                },
-                'writers': {
-                    'values': [venue_id, paper_authors_id]
-                },
-                'signatures': {
-                    'values': [paper_authors_id]
-                },
-                'head': {
-                    'type': 'note',
-                    'value-invitation': f'{venue_id}/-/Author_Submission'
-                },
-                'tail': {
-                    'type': 'profile',
-                    'member-of' : action_editors_id
-                },
-                'weight': {
-                    'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                }
-            }
-        )
+        # suggest_ae_invitation_id=f'{action_editors_id}/-/Recommendation'
+        # invitation = Invitation(
+        #     id=suggest_ae_invitation_id,
+        #     duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
+        #     invitees=[authors_id],
+        #     readers=[venue_id, authors_id],
+        #     writers=[venue_id],
+        #     signatures=[venue_id],
+        #     minReplies=1,
+        #     type='Edge',
+        #     edit={
+        #         'ddate': {
+        #             'int-range': [ 0, 9999999999999 ],
+        #             'optional': True,
+        #             'nullable': True
+        #         },
+        #         'readers': {
+        #             'values': [venue_id, paper_authors_id]
+        #         },
+        #         'nonreaders': {
+        #             'values': [],
+        #             'optional': True
+        #         },
+        #         'writers': {
+        #             'values': [venue_id, paper_authors_id]
+        #         },
+        #         'signatures': {
+        #             'values': [paper_authors_id]
+        #         },
+        #         'head': {
+        #             'type': 'note',
+        #             'value-invitation': f'{venue_id}/-/Author_Submission'
+        #         },
+        #         'tail': {
+        #             'type': 'profile',
+        #             'member-of' : action_editors_id
+        #         },
+        #         'weight': {
+        #             'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        #         }
+        #     }
+        # )
 
-        header = {
-            'title': 'TMLR Action Editor Suggestion',
-            'instructions': '<p class="dark">Recommend a ranked list of action editor for each of your submitted papers.</p>\
-                <p class="dark"><strong>Instructions:</strong></p>\
-                <ul>\
-                    <li>For each of your assigned papers, please select 5 reviewers to recommend.</li>\
-                    <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
-                    <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
-                    <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
-                    <li>To get started click the button below.</li>\
-                </ul>\
-                <br>'
-        }
+        # header = {
+        #     'title': 'TMLR Action Editor Suggestion',
+        #     'instructions': '<p class="dark">Recommend a ranked list of action editor for each of your submitted papers.</p>\
+        #         <p class="dark"><strong>Instructions:</strong></p>\
+        #         <ul>\
+        #             <li>For each of your assigned papers, please select 5 reviewers to recommend.</li>\
+        #             <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
+        #             <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
+        #             <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
+        #             <li>To get started click the button below.</li>\
+        #         </ul>\
+        #         <br>'
+        # }
 
-        conflict_id = conflict_ae_invitation_id
-        score_ids = [affinity_score_ae_invitation_id]
-        start_param = suggest_ae_invitation_id
-        edit_param = suggest_ae_invitation_id
-        browse_param = ';'.join(score_ids)
-        params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
-            invitation.web = content
-            self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=invitation
-            )
+        # conflict_id = conflict_ae_invitation_id
+        # score_ids = [affinity_score_ae_invitation_id]
+        # start_param = suggest_ae_invitation_id
+        # edit_param = suggest_ae_invitation_id
+        # browse_param = ';'.join(score_ids)
+        # params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
+        # with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
+        #     content = f.read()
+        #     content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+        #     content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+        #     content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+        #     invitation.web = content
+        #     self.client.post_invitation_edit(readers=[venue_id],
+        #         writers=[venue_id],
+        #         signatures=[venue_id],
+        #         invitation=invitation
+        #     )
 
 
 
@@ -1031,6 +1031,90 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 invitation=invitation
             )
+
+    def set_ae_recommendation_invitation(self, journal, note, duedate):
+        venue_id = journal.venue_id
+        action_editors_id = journal.get_action_editors_id()
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        authors_id = journal.get_authors_id(number=note.number)
+
+        ae_recommendation_invitation_id=f'{paper_action_editors_id}/-/Recommendation'
+        ae_recommendation_invitation=openreview.tools.get_invitation(self.client, ae_recommendation_invitation_id)
+
+        if not ae_recommendation_invitation:
+            invitation = Invitation(
+                id=ae_recommendation_invitation_id,
+                duedate=duedate,
+                invitees=[authors_id],
+                readers=[venue_id, authors_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                minReplies=1,
+                type='Edge',
+                edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'readers': {
+                        'values': [venue_id, authors_id]
+                    },
+                    'nonreaders': {
+                        'values': [],
+                        'optional': True
+                    },
+                    'writers': {
+                        'values': [venue_id, authors_id]
+                    },
+                    'signatures': {
+                        'values': [authors_id]
+                    },
+                    'head': {
+                        'type': 'note',
+                        'value-invitation': f'{venue_id}/-/Author_Submission'
+                    },
+                    'tail': {
+                        'type': 'profile',
+                        'member-of' : action_editors_id
+                    },
+                    'weight': {
+                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                    }
+                }
+            )
+
+            header = {
+                'title': 'TMLR Action Editor Suggestion',
+                'instructions': '<p class="dark">Recommend a ranked list of action editor for each of your submitted papers.</p>\
+                    <p class="dark"><strong>Instructions:</strong></p>\
+                    <ul>\
+                        <li>For each of your assigned papers, please select 5 reviewers to recommend.</li>\
+                        <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
+                        <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
+                        <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
+                        <li>To get started click the button below.</li>\
+                    </ul>\
+                    <br>'
+            }
+
+            conflict_id = f'{action_editors_id}/-/Conflict'
+            score_ids = [f'{action_editors_id}/-/Affinity_Score']
+            edit_param = ae_recommendation_invitation_id
+            browse_param = ';'.join(score_ids)
+            params = f'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
+                content = f.read()
+                content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+                content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+                invitation.web = content
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
+
 
     def set_review_invitation(self, journal, note):
         venue_id = journal.venue_id
