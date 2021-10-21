@@ -430,28 +430,22 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         print('MESSAGE', messages[0]['content']['text'])
         assert messages[0]['content']['text'] == '''<p>Hi Area CMUChair,<br>
-
 Thank you for accepting the invitation to serve as area chair for the paper number: 5, title: Paper title 5.</p>
-
-<p>Please go to the ARR 2021 - September Area Chair Console and check your pending tasks: <a href="https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs</a>.</p>
-
+<p>Please go to the ARR 2021 - September Area Chair Console and check your pending tasks: <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs</a>.</p>
 <p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>
-
-<p>OpenReview Team</p>'''
+<p>OpenReview Team</p>
+'''
 
 
         # Assignment email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] You have been assigned as a Area Chair for paper number 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Area Chair for paper number 5 for ARR 2021 - September.
-
-To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submissions[0].id}.
-
-To check all of your assigned papers, go to https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs.
-
-Thank you,
-
-ACL ARR 2021 September Program Chairs'''
+        assert messages[0]['content']['text'] == f'''<p>This is to inform you that you have been assigned as a Area Chair for paper number 5 for ARR 2021 - September.</p>
+<p>To review this new assignment, please login to OpenReview and go to <a href=\"https://openreview.net/forum?id={submissions[0].id}\">https://openreview.net/forum?id={submissions[0].id}</a>.</p>
+<p>To check all of your assigned papers, go to <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs</a>.</p>
+<p>Thank you,</p>
+<p>ACL ARR 2021 September Program Chairs</p>
+'''
 
 
         ## AC 2 declines the invitation
@@ -486,12 +480,11 @@ ACL ARR 2021 September Program Chairs'''
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac3@gmail.com', subject='[ARR 2021 - September] Area Chair Invitation declined for paper 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area MITChair,
-You have declined the invitation to serve as area chair for the paper number: 4, title: Paper title 4.
-
-If you would like to change your decision, please click the Accept link in the previous invitation email.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Area MITChair,<br>
+You have declined the invitation to serve as area chair for the paper number: 4, title: Paper title 4.</p>
+<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>
+<p>OpenReview Team</p>
+'''
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
@@ -536,35 +529,30 @@ OpenReview Team'''
         # Confirmation email to the reviewer
         messages = client.get_messages(to='reviewer_arr4@fb.com', subject='[ARR 2021 - September] Reviewer Invitation accepted for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Reviewer ARR Facebook,
-Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
-
-Please go to the ARR 2021 - September Reviewer Console and check your pending tasks: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers.
-
-If you would like to change your decision, please click the Decline link in the previous invitation email.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Reviewer ARR Facebook,<br>
+Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>
+<p>Please go to the ARR 2021 - September Reviewer Console and check your pending tasks: <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers</a>.</p>
+<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>
+<p>OpenReview Team</p>
+'''
 
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Reviewer ARR Facebook accepted to review paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-The Reviewer Reviewer ARR Facebook(reviewer_arr4@fb.com) that was invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Area CMUChair,<br>
+The Reviewer Reviewer ARR Facebook(<a href=\"mailto:reviewer_arr4@fb.com\">reviewer_arr4@fb.com</a>) that was invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.</p>
+<p>OpenReview Team</p>
+'''
 
         # Assignment email to the reviewer
         messages = client.get_messages(to='reviewer_arr4@fb.com', subject='[ARR 2021 - September] You have been assigned as a Reviewer for paper number 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 5 for ARR 2021 - September.
-
-To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submissions[0].id}.
-
-To check all of your assigned papers, go to https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers.
-
-Thank you,
-
-ACL ARR 2021 September Program Chairs'''
+        assert messages[0]['content']['text'] == f'''<p>This is to inform you that you have been assigned as a Reviewer for paper number 5 for ARR 2021 - September.</p>
+<p>To review this new assignment, please login to OpenReview and go to <a href=\"https://openreview.net/forum?id={submissions[0].id}\">https://openreview.net/forum?id={submissions[0].id}</a>.</p>
+<p>To check all of your assigned papers, go to <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers</a>.</p>
+<p>Thank you,</p>
+<p>ACL ARR 2021 September Program Chairs</p>
+'''
 
         ## Reviewer reviewer_arr2@mit.edu declines the invitation
         invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Reviewer_ARR_MIT1')
@@ -596,22 +584,20 @@ ACL ARR 2021 September Program Chairs'''
         # Confirmation email to the reviewer
         messages = client.get_messages(to='reviewer_arr2@mit.edu', subject='[ARR 2021 - September] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Reviewer ARR MIT,
-You have declined the invitation to review the paper number: 5, title: Paper title 5.
-
-If you would like to change your decision, please click the Accept link in the previous invitation email.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Reviewer ARR MIT,<br>
+You have declined the invitation to review the paper number: 5, title: Paper title 5.</p>
+<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>
+<p>OpenReview Team</p>
+'''
 
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Reviewer ARR MIT declined to review paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-The Reviewer Reviewer ARR MIT(reviewer_arr2@mit.edu) that was invited to review paper 5 has declined the invitation.
-
-Please go to the Area Chair console: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs to invite another reviewer.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Area CMUChair,<br>
+The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_arr2@mit.edu</a>) that was invited to review paper 5 has declined the invitation.</p>
+<p>Please go to the Area Chair console: <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs</a> to invite another reviewer.</p>
+<p>OpenReview Team</p>
+'''
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
