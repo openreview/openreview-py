@@ -58,7 +58,7 @@ class Journal(object):
         self.setup_groups(support_role, editors)
         self.invitation_builder.set_submission_invitation(self)
         self.invitation_builder.set_ae_custom_papers_invitation(self)
-        self.invitation_builder.set_ae_assignment_invitation(self)
+        self.invitation_builder.set_ae_assignment(self)
         self.invitation_builder.set_reviewer_assignment_invitation(self)
 
     def set_action_editors(self, editors, custom_papers):
@@ -427,6 +427,7 @@ class Journal(object):
         self.invitation_builder.set_revision_submission(self, note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
+        self.invitation_builder.set_ae_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
 
     def setup_under_review_submission(self, note):
 

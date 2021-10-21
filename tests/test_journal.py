@@ -60,17 +60,15 @@ class TestJournal():
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
         assert len(messages) == 9
 
-        # Disable this until note editor is working
-        messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor', to='joelle@mail.com')
-        assert len(messages) == 1
-        text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        request_page(selenium, accept_url, alert=True)
+        for message in messages:
+            text = message['content']['text']
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+            request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue(openreview_client)
 
         group = openreview_client.get_group('.TMLR/Action_Editors')
-        assert len(group.members) == 1
+        assert len(group.members) == 9
         assert '~Joelle_Pineau1' in group.members
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
@@ -257,7 +255,7 @@ class TestJournal():
         action_editors_id=f'{venue_id}/Action_Editors'
 
         # Assign Action Editor
-        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
