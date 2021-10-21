@@ -98,6 +98,7 @@ class TestCommentNotification():
         assert len(messages) == 2
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
+        assert messages[1]['content']['text'] == f'<p>AnonReviewer1 commented on your submission.</p>\n<p>Paper Number: 1</p>\n<p>Paper Title: &quot;Paper title&quot;</p>\n<p>Comment title: Comment title</p>\n<p>Comment: This is an comment</p>\n<p>To view the comment, click here: <a href=\"http://localhost:3030/forum?id={comment_note.forum}&amp;noteId={comment_note.id}\">http://localhost:3030/forum?id={comment_note.forum}&amp;noteId={comment_note.id}</a></p>\n'
 
         assert client.get_messages(to = 'test@mail.com', subject='MIDL 2019 has received your submission titled Paper title')
         assert client.get_messages(to = 'test@mail.com', subject='[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"')
