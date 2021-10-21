@@ -987,6 +987,7 @@ class InvitationBuilder(object):
                     },
                     'head': {
                         'type': 'note',
+                        'value': note.id,
                         'value-invitation': f'{venue_id}/-/Author_Submission'
                     },
                     'tail': {
@@ -1072,7 +1073,8 @@ class InvitationBuilder(object):
                     },
                     'head': {
                         'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Author_Submission'
+                        'value': note.id,
+                        'value-invitation': f'{venue_id}/-/Author_Submission' ## keep this to make the edge browser work
                     },
                     'tail': {
                         'type': 'profile',
