@@ -344,7 +344,7 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Solicite_Review" in [i.id for i in invitations]
 
         ## David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
@@ -359,7 +359,7 @@ class TestJournal():
         assert process_logs[0]['status'] == 'ok'
 
         ## Carlos Mondragon
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Carlos_Mondragon1'],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
@@ -374,7 +374,7 @@ class TestJournal():
         assert process_logs[0]['status'] == 'ok'
 
         ## Javier Burroni
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Javier_Burroni1'],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
             signatures=[f"{venue_id}/Paper1/Action_Editors"],

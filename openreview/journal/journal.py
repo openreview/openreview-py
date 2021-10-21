@@ -59,7 +59,7 @@ class Journal(object):
         self.invitation_builder.set_submission_invitation(self)
         self.invitation_builder.set_ae_custom_papers_invitation(self)
         self.invitation_builder.set_ae_assignment(self)
-        self.invitation_builder.set_reviewer_assignment_invitation(self)
+        self.invitation_builder.set_reviewer_assignment(self)
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
@@ -436,4 +436,5 @@ class Journal(object):
         self.invitation_builder.set_comment_invitation(self, note)
         self.invitation_builder.set_decision_invitation(self, note)
         self.setup_reviewer_assignment(note)
+        self.invitation_builder.set_reviewer_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
 
