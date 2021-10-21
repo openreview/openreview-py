@@ -14,7 +14,7 @@ var HEADER = {};
 var SENIOR_AREA_CHAIR_NAME = '';
 var AREA_CHAIRS_ID = '';
 var REVIEWERS_ID = '';
-var ASSIGNMENT_INVITATION = 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment';
+var ASSIGNMENT_INVITATION = CONFERENCE_ID + '/' + SENIOR_AREA_CHAIR_NAME + '/-/Proposed_Assignment';
 var ASSIGNMENT_LABEL = null;
 var EMAIL_SENDER = null;
 
@@ -551,7 +551,7 @@ var renderPaginatedTable = function($container, tableData, pageNumber) {
 
   var paginationHtml = null;
   if (tableData.rows.length > PAGE_SIZE) {
-    paginationHtml = view.paginationLinks(tableData.rows.length, PAGE_SIZE, pageNumber);
+    paginationHtml = view.paginationLinks(tableData.rows.length, PAGE_SIZE, pageNumber, null, { showCount: true });
   }
 
   $container.append(tableHtml, paginationHtml);

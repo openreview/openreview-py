@@ -20,7 +20,7 @@ class VenueStages():
         revision_content['Additional Submission Options'] = {
             'order': 18,
             'value-dict': {},
-            'description': 'Configure additional options in the submission form. Valid JSON expected.'
+            'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
         revision_content['remove_submission_options'] = {
             'order': 19,
@@ -160,7 +160,7 @@ class VenueStages():
                 'order' : 28,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the review form. Valid JSON expected.'
+                'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'remove_review_form_options': {
                 'order': 29,
@@ -281,6 +281,28 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'order': 26
+            },
+            'release_meta_reviews_to_authors': {
+                'description': 'Should the meta reviews be visible to paper\'s authors immediately upon posting? Default is "No, meta reviews should NOT be revealed when they are posted to the paper\'s authors".',
+                'value-radio': [
+                    'Yes, meta reviews should be revealed when they are posted to the paper\'s authors',
+                    'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors'
+                ],
+                'required': True,
+                'default': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'order': 27
+            },
+            'release_meta_reviews_to_reviewers': {
+                'description': 'Should the meta reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have submitted their review or no reviewers immediately upon posting?',
+                'value-radio': [
+                    'Meta reviews should be immediately revealed to all reviewers',
+                    'Meta reviews should be immediately revealed to the paper\'s reviewers',
+                    'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                    'Meta review should not be revealed to any reviewer'
+                ],
+                'required': True,
+                'default': 'Meta review should not be revealed to any reviewer',
                 'order': 28
             },
             'recommendation_options': {
@@ -292,7 +314,7 @@ class VenueStages():
                 'order' : 30,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the meta review form. Valid JSON expected.'
+                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'remove_meta_review_form_options': {
                 'order': 31,
@@ -360,7 +382,7 @@ class VenueStages():
             'submission_revision_additional_options': {
                 'order': 39,
                 'value-dict': {},
-                'description': 'Configure additional options in the revision. Valid JSON expected.'
+                'description': 'Configure additional options in the revision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'submission_revision_remove_options': {
                 'order': 40,
@@ -441,6 +463,16 @@ class VenueStages():
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'order': 33
             },
+            'release_decisions_to_area_chairs': {
+                'description': 'Should the decisions be immediately revealed to paper\'s area chairs? Default is "No, decisions should not be immediately revealed to the paper\'s area chairs"',
+                'value-radio': [
+                    'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                    'No, decisions should not be immediately revealed to the paper\'s area chairs'
+                ],
+                'required': True,
+                'default': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                'order': 34
+            },
             'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
                 'value-radio': [
@@ -449,7 +481,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, I will send the emails to the authors',
-                'order': 34
+                'order': 35
             }
         }
 
@@ -979,30 +1011,37 @@ class VenueRequest():
                 'required': True,
                 'order': 2
             },
+            'allow_role_overlap': {
+                'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'required': False,
+                'order': 3
+            },
             'invitee_reduced_load': {
                 'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                 'values-regex': '[0-9]+',
                 'default': ['1', '2', '3'],
                 'required': False,
-                'order': 2
+                'order': 4
             },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
-                'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',
+                'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
                 'required': True,
-                'order': 3
+                'order': 5
             },
             'invitation_email_subject': {
                 'value-regex': '.*',
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 4,
+                'order': 6,
                 'required': True,
                 'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 5,
+                'order': 7,
                 'required': True,
                 'default': '''Dear {name},
 

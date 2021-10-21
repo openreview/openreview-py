@@ -24,6 +24,30 @@ var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking';
 var REVIEWER_PAPER_RANKING_ID = REVIEWER_GROUP + '/-/Paper_Ranking';
+var AREA_CHAIRS_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME;
+var ENABLE_EDIT_REVIEWER_ASSIGNMENTS = false;
+var REVIEWER_ASSIGNMENT_TITLE = '';
+var EDGE_BROWSER_PROPOSED_URL = '/edges/browse?start=' + AREA_CHAIRS_ID + '/-/Assignment,tail:' + user.profile.id + '&' +
+'traverse=' + REVIEWER_GROUP + '/-/Proposed_Assignment,label:' + REVIEWER_ASSIGNMENT_TITLE  + '&' +
+'edit=' + REVIEWER_GROUP + '/-/Proposed_Assignment,label:' + REVIEWER_ASSIGNMENT_TITLE  + '&' +
+'browse=' + REVIEWER_GROUP + '/-/Aggregate_Score,label:' + REVIEWER_ASSIGNMENT_TITLE  + ';' +
+            REVIEWER_GROUP + '/-/Affinity_Score;' +
+            REVIEWER_GROUP + '/-/Custom_Max_Papers,head:ignore&' +
+'hide=' + REVIEWER_GROUP + '/-/Conflict&' +
+'maxColumns=2&' +
+'referrer=[AC Console](/group?id=' + AREA_CHAIRS_ID + ')';
+
+var EDGE_BROWSER_DEPLOYED_URL = '/edges/browse?start=' + AREA_CHAIRS_ID + '/-/Assignment,tail:' + user.profile.id + '&' +
+'traverse=' + REVIEWER_GROUP + '/-/Assignment&' +
+'edit=' + REVIEWER_GROUP + '/-/Invite_Assignment&' +
+'browse=' + REVIEWER_GROUP + '/-/Affinity_Score;' +
+            REVIEWER_GROUP + '/-/Custom_Max_Papers,head:ignore&' +
+'hide=' + REVIEWER_GROUP + '/-/Conflict&' +
+'maxColumns=2&' +
+'referrer=[AC Console](/group?id=' + AREA_CHAIRS_ID + ')';
+
+var EDGE_BROWSER_URL = REVIEWER_ASSIGNMENT_TITLE ? EDGE_BROWSER_PROPOSED_URL : EDGE_BROWSER_DEPLOYED_URL;
+
 
 var filterOperators = ['!=','>=','<=','>','<','=']; // sequence matters
 var propertiesAllowed ={
@@ -425,6 +449,11 @@ var getUserProfiles = function(userIds) {
 // Render functions
 var renderHeader = function() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);
+
+  if (ENABLE_EDIT_REVIEWER_ASSIGNMENTS) {
+    HEADER.instructions += '<p><strong>Edge Browser: </strong><a id="edge_browser_url" href="' + EDGE_BROWSER_URL + '" target="_blank" rel="nofollow">Modify Reviewer Assignments</a></p>';
+  }
+
   Webfield.ui.header(HEADER.title, HEADER.instructions);
 
   var loadingMessage = '<p class="empty-message">Loading...</p>';
