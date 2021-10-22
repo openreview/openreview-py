@@ -1661,12 +1661,13 @@ class InvitationBuilder(object):
                 pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
                 post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
                 post_content = post_content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "'")
-                if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
-                    post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
-                    post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
-                elif options.get('reviewers_name') == 'Area_Chairs':
-                    post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
-                    post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
+                if not options.get('allow_overlap_official_committee'):
+                    if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
+                        post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
+                        post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
+                    elif options.get('reviewers_name') == 'Area_Chairs':
+                        post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
+                        post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
                 pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 if reduced_load:

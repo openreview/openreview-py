@@ -184,7 +184,7 @@ class Matching(object):
                 'id' : edge_id.split('/-/')[0]
             }
             edge_weight={
-                'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
+                'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
                 'required': True
             }
             edge_label=None
@@ -512,7 +512,7 @@ class Matching(object):
                 paper_number = submissions_per_id.get(paper_note_id)
                 if paper_number:
                     profile_id = row[1]
-                    score = row[2]
+                    score = str(max(round(float(row[2]), 4), 0))
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
                         head=paper_note_id,
