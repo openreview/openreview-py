@@ -13,10 +13,6 @@ var HEADER = {
   instructions: 'Put instructions here'
 };
 
-var url = '/edges/browse?start=.TMLR/Action_Editors/-/Assignment,tail:' + user.profile.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&maxColumns=2&version=2&referrer=[Action Editor Console](/group?id=.TMLR/Action_Editors)';
-
-HEADER.instructions = "<strong>Edge Browser:</strong><a href='" + url + "'> Modify Reviewer Assignments</a> </p>";
-
 // Main function is the entry point to the webfield code
 var main = function() {
 
@@ -114,6 +110,13 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
           numReviewers: reviewers.length,
           reviewers: reviewerStatus,
           sendReminder: true,
+          referrer: referrerUrl,
+          actions: [
+            {
+              name: 'Edit Assignments',
+              url: '/invitation?id=.TMLR/Paper' + number + '/Reviewers/-/Assignment'
+            }
+          ]
         },
         actionEditorData: {
           committeeName: 'Action Editor',

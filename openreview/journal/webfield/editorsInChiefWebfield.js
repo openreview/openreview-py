@@ -14,11 +14,6 @@ var HEADER = {
   instructions: 'Put instructions here'
 };
 
-var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Conflict&version=2&referrer=[Editors In Chief Console](/group?id=.TMLR/Editors_In_Chief)';
-var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&version=2&referrer=[Editors In Chief Console](/group?id=.TMLR/Editors_In_Chief)';
-
-HEADER.instructions = "<strong>Edge Browser:</strong><br><a href='" + ae_url + "'> Modify Action Editor Assignments</a><br><a href='" + reviewers_url + "'> Modify Reviewer Assignments</a> </p>";
-
 // Main function is the entry point to the webfield code
 var main = function() {
 
@@ -208,6 +203,17 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           numReviewers: paperReviewers.length,
           reviewers: paperReviewerStatus,
           sendReminder: true,
+          referrer: referrerUrl,
+          actions: [
+            {
+              name: 'Edit Assignments',
+              url: '/invitation?id=.TMLR/Paper' + number + '/Reviewers/-/Assignment'
+            },
+            {
+              name: 'Edit Review Invitation',
+              url: '/invitation/edit?id=.TMLR/Paper' + number + '/-/Review'
+            }
+          ]
         },
         areachairProgressData: {
           recommendation: metaReview && metaReview.content.recommendation,
@@ -219,9 +225,15 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           metaReview: metaReview,
           referrer: referrerUrl,
           metaReviewName: 'Decision',
-          committeeName: 'Action Editor'
+          committeeName: 'Action Editor',
+          actions: [
+            {
+              name: 'Edit Assignments',
+              url: '/invitation?id=.TMLR/Paper' + number + '/Action_Editors/-/Assignment'
+            }
+          ]
         },
-        status: submission.content.venue.value
+        status: submission.content.venue.value,
       })
     }
   })
