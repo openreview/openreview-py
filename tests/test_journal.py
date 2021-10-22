@@ -62,7 +62,7 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
             request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue(openreview_client)
@@ -82,7 +82,7 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
             request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue(openreview_client)
