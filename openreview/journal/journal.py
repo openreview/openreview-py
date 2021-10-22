@@ -441,3 +441,7 @@ class Journal(object):
         self.setup_reviewer_assignment(note)
         self.invitation_builder.set_reviewer_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
 
+        ### expire invitations
+        self.invitation_builder.expire_invitation(self, f'{self.venue_id}/Paper{note.number}/-/Under_Review')
+        self.invitation_builder.expire_invitation(self, f'{self.venue_id}/Paper{note.number}/-/Desk_Rejection')
+

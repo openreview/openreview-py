@@ -289,6 +289,13 @@ class TestJournal():
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Under_Review'
 
+        ## Check active invitations
+        invitations = joelle_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 3
+        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+
         ## Assign Action editor to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
 
@@ -330,9 +337,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 10
-        assert f"{venue_id}/Paper1/-/Under_Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Desk_Rejection"  in [i.id for i in invitations]
+        assert len(invitations) == 8
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]

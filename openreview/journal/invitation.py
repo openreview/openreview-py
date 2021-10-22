@@ -11,6 +11,18 @@ class InvitationBuilder(object):
     def __init__(self, client):
         self.client = client
 
+    def expire_invitation(self, journal, invitation_id, expdate=None):
+        venue_id=journal.venue_id
+        invitation = self.client.get_invitation(invitation_id)
+        self.client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=Invitation(id=invitation.id,
+                expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                signatures=[venue_id]
+            )
+        )
+
     def set_ae_recruitment_invitation(self, journal, hash_seed, header):
 
         venue_id=journal.venue_id
@@ -681,7 +693,7 @@ class InvitationBuilder(object):
                 writers=[venue_id],
                 signatures=[venue_id],
                 invitation=Invitation(id=withdraw_invitation_id,
-                    invitees=[paper_authors_id, venue_id],
+                    invitees=[paper_authors_id],
                     readers=['everyone'],
                     writers=[venue_id],
                     signatures=[venue_id],
