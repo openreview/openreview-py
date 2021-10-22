@@ -13,9 +13,10 @@ var BID_ID = '';
 var SUBJECT_AREAS = '';
 var CONFLICT_SCORE_ID = '';
 var SCORE_IDS = [];
-var AFFINITY_SCORE_ID = '';   
-var BID_OPTIONS = ['Very Low', 'Low', 'Neutral', 'High', 'Very High'];
-var BID_VALUES = [1];
+var ENABLE_SUPER_ALGO = true;
+var BID_OPTIONS = [ 'Very Low', 'Low', 'Neutral', 'High', 'Very High' ];
+var POSITIVE_BIDS = [ 'High', 'Very High' ];
+var BID_VALUES = [ 1 ];
 var TRADE_OFF = 1;
 
 // Bid status data
@@ -76,8 +77,12 @@ function getBidsCount() {
 
 
 function getAffinityScores() {
+  var invitation = selectedScore;
+  if (_.startsWith(selectedScore, 'SUPER_')) {
+    invitation = selectedScore.substring(6);
+  }
   return Webfield.get('/edges', {
-    invitation: AFFINITY_SCORE_ID,
+    invitation: invitation,
     tail: user.profile.id,
     groupBy: 'head',
     select: 'weight'
@@ -107,9 +112,9 @@ function getPaperScores(affinityScores, bidsCount) {
     } else {
       var numberOfBids = 0;
       for (var key in bidsCount[noteId]) {
-        if (key === 'High' || key === 'Very High') {
+        if (_.includes(POSITIVE_BIDS, key)) {
           var value = bidsCount[noteId][key];
-          numberOfBids = numberOfBids+value;
+          numberOfBids = numberOfBids + value;
         }
       }
     }
@@ -238,32 +243,32 @@ function getPapersByBids(bids, bidsByNote) {
 
 // Perform all the required API calls
 function load() {
-  
-  
-  return $.when(getAffinityScores(), getBidsCount())
-    .then(function(affinityScores, bidsCount) {
-      var sortedNotesP = getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), 0);
-      //var sortedNotesP = getPapersSortedByAffinity(0, selectedScore);
-    
-      var conflictIdsP = Webfield.getAll('/edges', {
-        invitation: CONFLICT_SCORE_ID,
-        tail: user.profile.id
-      })
-      .then(function(edges) {
-        return edges.map(function(edge) {
-          return edge.head;
-        });
-     });
-    
-      var bidEdgesP = Webfield.getAll('/edges', {
-        invitation: BID_ID,
-        tail: user.profile.id
+  var sortedNotesP
+  if (_.startsWith(selectedScore, 'SUPER_')) {
+    sortedNotesP = $.when(getAffinityScores(), getBidsCount())
+      .then(function(affinityScores, bidsCount) {
+        return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), 0);
       });
-    
-      return $.when(sortedNotesP, conflictIdsP, bidEdgesP);
-    })
-
+  } else {
+    sortedNotesP = getPapersSortedByAffinity(0);
+  }
   
+  var conflictIdsP = Webfield.getAll('/edges', {
+    invitation: CONFLICT_SCORE_ID,
+    tail: user.profile.id
+  })
+  .then(function(edges) {
+    return edges.map(function(edge) {
+      return edge.head;
+    });
+ });
+
+  var bidEdgesP = Webfield.getAll('/edges', {
+    invitation: BID_ID,
+    tail: user.profile.id
+  });
+
+  return $.when(sortedNotesP, conflictIdsP, bidEdgesP);
 }
 
 
@@ -337,8 +342,18 @@ function renderContent(notes, conflicts, bidEdges) {
 
   $('#invitation-container').on('change', 'form.notes-search-form .score-dropdown', function(e) {
     selectedScore = $(this).val();
-    return getPapersSortedByAlgo(getPaperScores(getAffinityScores(), getBidsCount()), offset)
-    //return getPapersSortedByAffinity(0, selectedScore)
+
+    var sortedNotesP;
+    if (_.startsWith(selectedScore, 'SUPER_')) {
+      sortedNotesP = $.when(getAffinityScores(), getBidsCount())
+        .then(function(affinityScores, bidsCount) {
+          return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), 0);
+        });
+    } else {
+      sortedNotesP = getPapersSortedByAffinity(0);
+    }
+
+    return sortedNotesP
     .then(function(notes) {
       return updateNotes(prepareNotes(notes, conflictIds, bidsByNote));
     });
@@ -426,8 +441,16 @@ function updateNotes(notes) {
     noteCount: noteCount,
     pageSize: 50,
     onPageClick: function(offset) {
-      return getPapersSortedByAlgo(getPaperScores(getAffinityScores(), getBidsCount()), offset)
-     // return getPapersSortedByAffinity(offset, selectedScore)
+      var sortedNotesP;
+      if (_.startsWith(selectedScore, 'SUPER_')) {
+        sortedNotesP = $.when(getAffinityScores(), getBidsCount())
+          .then(function(affinityScores, bidsCount) {
+            return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), offset);
+          });
+      } else {
+        sortedNotesP = getPapersSortedByAffinity(offset);
+      }
+      return sortedNotesP
       .then(function(notes) {
         return prepareNotes(notes, conflictIds, bidsByNote);
       });
@@ -446,6 +469,15 @@ function updateNotes(notes) {
       var selectedClass = selectedScore == scoreId && 'selected';
       optionsHtml = optionsHtml + '<option value="' + scoreId + '" ' + selectedClass + '>' + label + '</option>';
     })
+
+    if (ENABLE_SUPER_ALGO) {
+      SCORE_IDS.forEach(function(scoreId) {
+        var label = 'SUPER ' + view.prettyInvitationId(scoreId);
+        var superScoreId = 'SUPER_' + scoreId;
+        var selectedClass = selectedScore == superScoreId && 'selected';
+        optionsHtml = optionsHtml + '<option value="' + superScoreId + '" ' + selectedClass + '>' + label + '</option>';
+      })
+    }
 
     $('#notes .form-inline.notes-search-form').append(
       '<div class="form-group score">' +
