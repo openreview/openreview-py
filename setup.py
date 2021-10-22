@@ -29,7 +29,8 @@ setup(
         'Deprecated',
         'pylatexenc',
         'tld==0.10',
-        'setuptools==49.6.0'
+        'setuptools==49.6.0',
+        'pyjwt'
     ],
     extras_require={
         'docs': ['nbsphinx', 'sphinx', 'sphinx_rtd_theme', 'nbformat']
