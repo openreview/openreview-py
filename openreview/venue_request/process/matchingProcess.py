@@ -5,15 +5,10 @@ def process(client, note, invitation):
     request_form = client.get_note(note.forum)
     conference = openreview.helpers.get_conference(client, note.forum)
 
-    build_conflicts=note.content.get('build_conflicts', None)
+    build_conflicts=note.content.get('build_conflicts')
 
-    roles={
-        'reviewer': 'Reviewers',
-        'area chair': 'Area_Chairs',
-    }
-
-    matching_group = conference.get_id() + '/' + roles[note.content['matching_group'].strip()]
-    scores = note.content.get('affinity_scores', None)
+    matching_group = note.content['matching_group']
+    scores = note.content.get('affinity_scores')
     file_name=None
 
     if scores:
@@ -23,7 +18,7 @@ def process(client, note, invitation):
         file_name = 'affinity_scores.csv'
 
     matching_status = conference.setup_matching(committee_id=matching_group, build_conflicts=build_conflicts, affinity_score_file=file_name)
-    role_name=roles[note.content['matching_group'].strip()]
+    role_name = matching_group.split('/')[-1]
 
     comment_note = openreview.Note(
         invitation = note.invitation.replace('Matching_Stage', 'Comment'),

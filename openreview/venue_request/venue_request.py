@@ -1182,19 +1182,18 @@ class VenueRequest():
 
         matching_content = {
             'title': {
-                'value': 'Matcher',
+                'value': 'Paper Matching Setup',
                 'required': True,
                 'order': 1
             },
             'matching_group': {
                 'description': 'Please select the group you want to set up matching for.',
-                'value-radio': ['reviewer'],
-                'default': 'reviewer',
+                'value-dropdown': [''],
                 'required': True,
                 'order': 2
             },
             'build_conflicts': {
-                'description': 'Please select whether you want to coompute conflicts of interest between the matching group and submissions. By default, coonflicts will be computed.',
+                'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
                 'value-radio': ['Yes', 'No'],
                 'default': 'Yes',
                 'required': True,

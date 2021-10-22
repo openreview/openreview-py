@@ -1,7 +1,6 @@
-from openreview import tools
-from datetime import datetime
-
 def process(client, note, invitation):
+    from datetime import datetime
+
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
@@ -331,7 +330,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures=['~Super_User1']
     ))
 
-    if (forum.content.get('Submission Deadline', None) and forum.content.get('Paper Matching', None)):
+    if (forum.content.get('Submission Deadline') and forum.content.get('Paper Matching')):
         activation_date = forum.content.get('Submission Deadline').strip()
         try:
             activation_date = datetime.strptime(activation_date, '%Y/%m/%d %H:%M')
@@ -341,7 +340,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Matching_Stage',
             super = SUPPORT_GROUP + '/-/Matching_Stage',
             invitees = readers,
-            cdate = tools.datetime_millis(activation_date),
+            cdate = openreview.tools.datetime_millis(activation_date),
             reply = {
                 'forum': forum.id,
                 'replyto': forum.id,
@@ -354,19 +353,18 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'content': {
                     'title': {
-                        'value': 'Matcher',
+                        'value': 'Paper Matching Setup',
                         'required': True,
                         'order': 1
                     },
                     'matching_group': {
                         'description': 'Please select the group you want to set up matching for.',
-                        'value-radio': ['reviewer'],
-                        'default': 'reviewer',
+                        'value-dropdown' : [conference.get_id() + '/Reviewers', conference.get_id() + '/Area_Chairs'] if forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs" else [conference.get_id() + '/Reviewers'],
                         'required': True,
                         'order': 2
                     },
                     'build_conflicts': {
-                        'description': 'Please select whether you want to coompute conflicts of interest between the matching group and submissions. By default, coonflicts will be computed.',
+                        'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
                         'value-radio': ['Yes', 'No'],
                         'default': 'Yes',
                         'required': True,
@@ -386,7 +384,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             signatures = ['~Super_User1']
         )
 
-        if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
-            matching_invitation.reply['content']['matching_group']['value-radio'] = ['reviewer', 'area chair']
+        if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs"):
+            matching_invitation.reply['content']['matching_group']['value-dropdown'] = [conference.get_id() + '/Reviewers', conference.get_id() + '/Area_Chairs', conference.get_id() + '/Senior_Area_Chairs']
 
         client.post_invitation(matching_invitation)
