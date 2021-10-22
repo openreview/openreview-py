@@ -66,6 +66,13 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
       var review = assignedGroup ? submission.details.directReplies.find(function(reply) {
         return reply.invitations.indexOf(reviewInvitationId) >= 0 && reply.signatures[0] == (VENUE_ID + '/Paper' + number + '/Reviewer_' + assignedGroup.anonId);
       }) : null;
+      var recommendations = submission.details.directReplies.filter(function(reply) {
+        return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Official_Recommendation') >= 0;
+      });
+      var recommendationByReviewer = {};
+      recommendations.forEach(function(recommendation) {
+        recommendationByReviewer[recommendation.signatures[0]] = recommendation;
+      });
       var decision = submission.details.directReplies.find(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Decision') >= 0;
       });
@@ -77,6 +84,7 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
         reviewStatus: {
           invitationUrl: reviewInvitation && '/forum?id=' + submission.forum + '&noteId=' + submission.forum + '&invitationId=' + reviewInvitation.id + '&referrer=' + referrerUrl,
           review: review,
+          recommendation: review ? recommendationByReviewer[review.signatures[0]] : null,
           editUrl: review && ('/forum?id=' + submission.forum + '&noteId=' + review.id + '&referrer=' + referrerUrl)
         },
         actionEditorData: {
@@ -108,11 +116,15 @@ var renderData = function(venueStatusData) {
       Handlebars.templates.noteSummary,
       function(data) {
         if (data.review) {
+          var recommendationHtml = '';
+          if (data.recommendation) {
+            recommendationHtml = '<h4>Recommendation:</h4>' +
+            '<p>' + data.recommendation.content.decision_recommendation.value + '</p>' +
+            '<h4>Certifications:</h4>' +
+            '<p>' + (data.recommendation.content.certification_recommendations && data.recommendation.content.certification_recommendations.value.join(', ')) + '</p>';
+          }
           return '<div>' +
-          '<h4>Recommendation:</h4>' +
-          '<p>' + data.review.content.recommendation.value + '</p>' +
-          '<h4>Confidence:</h4>' +
-          '<p>' + data.review.content.confidence.value + '</p>' +
+          recommendationHtml +
           '<p>' +
             '<a href="' + data.editUrl + '" target="_blank">Read ' + REVIEW_NAME+ '</a>' +
           '</p>' +

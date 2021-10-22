@@ -325,224 +325,6 @@ class InvitationBuilder(object):
                 process=os.path.join(os.path.dirname(__file__), 'process/author_submission_process.py')
             ))
 
-        ## Under review invitation
-        under_review_invitation_id=f'{venue_id}/-/Under_Review'
-        invitation = self.client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=under_review_invitation_id,
-                invitees=[action_editors_id, venue_id],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                maxReplies=1,
-                edit={
-                    'signatures': { 'values-regex': f'{action_editors_regex}|{venue_id}$' },
-                    'readers': { 'values': [ 'everyone']},
-                    'writers': { 'values': [ venue_id, action_editors_value]},
-                    'note': {
-                        'id': { 'value-invitation': submission_invitation_id },
-                        'readers': {
-                            'values': ['everyone']
-                        },
-                        'writers': {
-                            'values': [venue_id]
-                        },
-                        'content': {
-                            'venue': {
-                                'value': {
-                                    'value': 'Under review for TMLR'
-                                }
-                            },
-                            'venueid': {
-                                'value': {
-                                    'value': '.TMLR/Under_Review'
-                                }
-                            }
-                        }
-                    }
-                },
-                process=os.path.join(os.path.dirname(__file__), 'process/under_review_submission_process.py')
-            )
-        )
-
-        ## Desk reject invitation
-        desk_reject_invitation_id=f'{venue_id}/-/Desk_Rejection'
-        invitation = self.client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=desk_reject_invitation_id,
-                invitees=[action_editors_id, venue_id],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                maxReplies=1,
-                edit={
-                    'signatures': { 'values-regex': f'{action_editors_regex}|{venue_id}$' },
-                    'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                    'writers': { 'values': [ venue_id, action_editors_value]},
-                    'note': {
-                        'id': { 'value-invitation': submission_invitation_id },
-                        'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                        'content': {
-                            'venue': {
-                                'value': {
-                                    'value': 'Desk rejected by TMLR'
-                                }
-                            },
-                            'venueid': {
-                                'value': {
-                                    'value': '.TMLR/Desk_Rejection'
-                                }
-                            }
-                        }
-                    }
-                }
-                ))
-
-        ## Withdraw invitation
-        withdraw_invitation_id=f'{venue_id}/-/Withdraw'
-        invitation = self.client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=withdraw_invitation_id,
-                invitees=[authors_id, venue_id],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                maxReplies=1,
-                edit={
-                    'signatures': { 'values-regex': f'{authors_regex}|{venue_id}$' },
-                    'readers': { 'values': [ venue_id, action_editors_value, reviewers_value, authors_value]},
-                    'writers': { 'values': [ venue_id, authors_value]},
-                    'note': {
-                        'id': { 'value-invitation': submission_invitation_id },
-                        'content': {
-                            'withdrawal_confirmation': {
-                                'value': {
-                                    'value-radio': [
-                                        'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-                                    ]
-                                },
-                                'description': 'Please confirm to withdraw.',
-                                'order': 1
-                            },
-                            'venue': {
-                                'value': {
-                                    'value': 'Withdrawn by Authors'
-                                },
-                                'presentation': {
-                                    'hidden': True,
-                                }
-                            },
-                            'venueid': {
-                                'value': {
-                                    'value': '.TMLR/Withdrawn_Submission'
-                                },
-                                'presentation': {
-                                    'hidden': True,
-                                }
-                            }
-                        }
-                    }
-                }
-                ))
-
-        ## Acceptance invitation
-        acceptance_invitation_id=f'{venue_id}/-/Acceptance'
-        invitation = self.client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=acceptance_invitation_id,
-                invitees=[venue_id],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                maxReplies=1,
-                edit={
-                    'signatures': { 'values': [editor_in_chief_id] },
-                    'readers': { 'values': [ 'everyone']},
-                    'writers': { 'values': [ venue_id ]},
-                    'note': {
-                        'id': { 'value-invitation': under_review_invitation_id },
-                        'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                        'content': {
-                            'venue': {
-                                'value': {
-                                    'value': 'TMLR'
-                                }
-                            },
-                            'venueid': {
-                                'value': {
-                                    'value': '.TMLR'
-                                }
-                            },
-                            'authors': {
-                                'value': {
-                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                    'optional': True
-                                },
-                                'description': 'Comma separated list of author names.',
-                                'order': 1,
-                                'presentation': {
-                                    'hidden': True,
-                                },
-                                'readers': {
-                                    'values': ['everyone']
-                                }
-                            },
-                            'authorids': {
-                                'value': {
-                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                                    'optional': True
-                                },
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                'order': 2,
-                                'readers': {
-                                    'values': ['everyone']
-                                }
-                            }
-                        }
-                    }
-                }
-            )
-        )
-
-        ## Reject invitation
-        reject_invitation_id=f'{venue_id}/-/Reject'
-        invitation = self.client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=reject_invitation_id,
-                invitees=[venue_id],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                maxReplies=1,
-                edit={
-                    'signatures': { 'values': [editor_in_chief_id] },
-                    'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                    'writers': { 'values': [ venue_id ]},
-                    'note': {
-                        'id': { 'value-invitation': under_review_invitation_id },
-                        'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                        'content': {
-                            'venue': {
-                                'value': {
-                                    'value': 'Rejected by TMLR'
-                                }
-                            },
-                            'venueid': {
-                                'value': {
-                                    'value': '.TMLR/Rejection'
-                                }
-                            }
-                        }
-                    }
-                }
-            )
-        )
-
     def set_ae_custom_papers_invitation(self, journal):
         venue_id=journal.venue_id
         editor_in_chief_id=journal.get_editors_in_chief_id()
@@ -690,82 +472,6 @@ class InvitationBuilder(object):
             )
         )
 
-        # suggest_ae_invitation_id=f'{action_editors_id}/-/Recommendation'
-        # invitation = Invitation(
-        #     id=suggest_ae_invitation_id,
-        #     duedate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10)),
-        #     invitees=[authors_id],
-        #     readers=[venue_id, authors_id],
-        #     writers=[venue_id],
-        #     signatures=[venue_id],
-        #     minReplies=1,
-        #     type='Edge',
-        #     edit={
-        #         'ddate': {
-        #             'int-range': [ 0, 9999999999999 ],
-        #             'optional': True,
-        #             'nullable': True
-        #         },
-        #         'readers': {
-        #             'values': [venue_id, paper_authors_id]
-        #         },
-        #         'nonreaders': {
-        #             'values': [],
-        #             'optional': True
-        #         },
-        #         'writers': {
-        #             'values': [venue_id, paper_authors_id]
-        #         },
-        #         'signatures': {
-        #             'values': [paper_authors_id]
-        #         },
-        #         'head': {
-        #             'type': 'note',
-        #             'value-invitation': f'{venue_id}/-/Author_Submission'
-        #         },
-        #         'tail': {
-        #             'type': 'profile',
-        #             'member-of' : action_editors_id
-        #         },
-        #         'weight': {
-        #             'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        #         }
-        #     }
-        # )
-
-        # header = {
-        #     'title': 'TMLR Action Editor Suggestion',
-        #     'instructions': '<p class="dark">Recommend a ranked list of action editor for each of your submitted papers.</p>\
-        #         <p class="dark"><strong>Instructions:</strong></p>\
-        #         <ul>\
-        #             <li>For each of your assigned papers, please select 5 reviewers to recommend.</li>\
-        #             <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
-        #             <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
-        #             <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
-        #             <li>To get started click the button below.</li>\
-        #         </ul>\
-        #         <br>'
-        # }
-
-        # conflict_id = conflict_ae_invitation_id
-        # score_ids = [affinity_score_ae_invitation_id]
-        # start_param = suggest_ae_invitation_id
-        # edit_param = suggest_ae_invitation_id
-        # browse_param = ';'.join(score_ids)
-        # params = 'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
-        # with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
-        #     content = f.read()
-        #     content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
-        #     content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-        #     content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
-        #     invitation.web = content
-        #     self.client.post_invitation_edit(readers=[venue_id],
-        #         writers=[venue_id],
-        #         signatures=[venue_id],
-        #         invitation=invitation
-        #     )
-
-
     def set_reviewer_assignment(self, journal):
         venue_id = journal.venue_id
         now = datetime.datetime.utcnow()
@@ -805,7 +511,7 @@ class InvitationBuilder(object):
                     },
                     'head': {
                         'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Under_Review'
+                        'value-invitation': f'{venue_id}/-/Author_Submission'
                     },
                     'tail': {
                         'type': 'profile',
@@ -850,7 +556,7 @@ class InvitationBuilder(object):
                     },
                     'head': {
                         'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Under_Review'
+                        'value-invitation': f'{venue_id}/-/Author_Submission'
                     },
                     'tail': {
                         'type': 'profile',
@@ -866,6 +572,267 @@ class InvitationBuilder(object):
                 }
             )
         )
+
+    def set_under_review_invitation(self, journal, note, duedate):
+        venue_id = journal.venue_id
+        paper_group_id = f'{venue_id}/Paper{note.number}'
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+
+        under_review_invitation_id = f'{paper_group_id}/-/Under_Review'
+        under_review_invitation = openreview.tools.get_invitation(self.client, under_review_invitation_id)
+
+        if not under_review_invitation:
+            under_review_invitation_id=under_review_invitation_id
+            invitation = self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=Invitation(id=under_review_invitation_id,
+                    duedate=duedate,
+                    invitees=[paper_action_editors_id, venue_id],
+                    readers=['everyone'],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    maxReplies=1,
+                    edit={
+                        'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
+                        'readers': { 'values': [ 'everyone']},
+                        'writers': { 'values': [ venue_id, paper_action_editors_id]},
+                        'note': {
+                            'id': { 'value': note.id },
+                            'readers': {
+                                'values': ['everyone']
+                            },
+                            'writers': {
+                                'values': [venue_id]
+                            },
+                            'content': {
+                                'venue': {
+                                    'value': {
+                                        'value': 'Under review for TMLR'
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'value': '.TMLR/Under_Review'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    process=os.path.join(os.path.dirname(__file__), 'process/under_review_submission_process.py')
+                )
+            )
+
+    def set_desk_rejection_invitation(self, journal, note, duedate):
+        venue_id = journal.venue_id
+        paper_group_id = f'{venue_id}/Paper{note.number}'
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
+
+        desk_rejection_invitation_id = f'{paper_group_id}/-/Desk_Rejection'
+        desk_rejection_invitation = openreview.tools.get_invitation(self.client, desk_rejection_invitation_id)
+
+        if not desk_rejection_invitation:
+            invitation = self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=Invitation(id=desk_rejection_invitation_id,
+                    duedate=duedate,
+                    invitees=[paper_action_editors_id, venue_id],
+                    readers=['everyone'],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    maxReplies=1,
+                    edit={
+                        'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
+                        'writers': { 'values': [ venue_id, paper_action_editors_id]},
+                        'note': {
+                            'id': { 'value': note.id },
+                            'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
+                            'content': {
+                                'venue': {
+                                    'value': {
+                                        'value': 'Desk rejected by TMLR'
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'value': '.TMLR/Desk_Rejection'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ))
+
+    def set_withdraw_invitation(self, journal, note, duedate):
+        venue_id = journal.venue_id
+        paper_group_id = f'{venue_id}/Paper{note.number}'
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
+
+        withdraw_invitation_id = f'{paper_group_id}/-/Withdraw'
+        withdraw_invitation = openreview.tools.get_invitation(self.client, withdraw_invitation_id)
+
+        if not withdraw_invitation:
+            invitation = self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=Invitation(id=withdraw_invitation_id,
+                    invitees=[paper_authors_id, venue_id],
+                    readers=['everyone'],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    maxReplies=1,
+                    edit={
+                        'signatures': { 'values-regex': f'{paper_authors_id}|{venue_id}$' },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
+                        'writers': { 'values': [ venue_id, paper_authors_id]},
+                        'note': {
+                            'id': { 'value': note.id },
+                            'content': {
+                                'withdrawal_confirmation': {
+                                    'value': {
+                                        'value-radio': [
+                                            'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                                        ]
+                                    },
+                                    'description': 'Please confirm to withdraw.',
+                                    'order': 1
+                                },
+                                'venue': {
+                                    'value': {
+                                        'value': 'Withdrawn by Authors'
+                                    },
+                                    'presentation': {
+                                        'hidden': True,
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'value': '.TMLR/Withdrawn_Submission'
+                                    },
+                                    'presentation': {
+                                        'hidden': True,
+                                    }
+                                }
+                            }
+                        }
+                    }
+                )
+            )
+
+    def set_acceptance_invitation(self, journal, note, duedate):
+        venue_id = journal.venue_id
+        paper_group_id = f'{venue_id}/Paper{note.number}'
+        editors_in_chief_id = journal.get_editors_in_chief_id()
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
+
+        acceptance_invitation_id = f'{paper_group_id}/-/Acceptance'
+        acceptance_invitation = openreview.tools.get_invitation(self.client, acceptance_invitation_id)
+
+        ## Acceptance invitation
+        if not acceptance_invitation:
+            invitation = self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=Invitation(id=acceptance_invitation_id,
+                    duedate=duedate,
+                    invitees=[venue_id],
+                    readers=['everyone'],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    maxReplies=1,
+                    edit={
+                        'signatures': { 'values': [editors_in_chief_id] },
+                        'readers': { 'values': [ 'everyone']},
+                        'writers': { 'values': [ venue_id ]},
+                        'note': {
+                            'id': { 'value': note.id },
+                            'writers': { 'values': [ venue_id, editors_in_chief_id, paper_authors_id]},
+                            'content': {
+                                'venue': {
+                                    'value': {
+                                        'value': 'TMLR'
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'value': '.TMLR'
+                                    }
+                                },
+                                'authors': {
+                                    'value': {
+                                        'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                        'optional': True
+                                    },
+                                    'description': 'Comma separated list of author names.',
+                                    'order': 1,
+                                    'presentation': {
+                                        'hidden': True,
+                                    },
+                                    'readers': {
+                                        'values': ['everyone']
+                                    }
+                                },
+                                'authorids': {
+                                    'value': {
+                                        'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                        'optional': True
+                                    },
+                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                    'order': 2,
+                                    'readers': {
+                                        'values': ['everyone']
+                                    }
+                                }
+                            }
+                        }
+                    }
+                )
+            )
+
+        ## Reject invitation
+        reject_invitation_id = f'{paper_group_id}/-/Reject'
+        reject_invitation = openreview.tools.get_invitation(self.client, reject_invitation_id)
+
+        if not reject_invitation:
+            invitation = self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=Invitation(id=reject_invitation_id,
+                    invitees=[venue_id],
+                    readers=['everyone'],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    maxReplies=1,
+                    edit={
+                        'signatures': { 'values': [editors_in_chief_id] },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
+                        'writers': { 'values': [ venue_id ]},
+                        'note': {
+                            'id': { 'value': note.id },
+                            'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
+                            'content': {
+                                'venue': {
+                                    'value': {
+                                        'value': 'Rejected by TMLR'
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'value': '.TMLR/Rejection'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                )
+            )
 
     def set_ae_recommendation_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
@@ -1091,7 +1058,7 @@ class InvitationBuilder(object):
                     'head': {
                         'type': 'note',
                         'value': note.id,
-                        'value-invitation': f'{venue_id}/-/Under_Review'
+                        'value-invitation': f'{venue_id}/-/Author_Submission'
                     },
                     'tail': {
                         'type': 'profile',
@@ -1170,7 +1137,8 @@ class InvitationBuilder(object):
                             'id': {
                                 'value-invitation': review_invitation_id,
                                 'optional': True
-                            },                    'forum': { 'value': note.id },
+                            },
+                            'forum': { 'value': note.id },
                             'replyto': { 'value': note.id },
                             'ddate': {
                                 'int-range': [ 0, 9999999999999 ],
@@ -1311,9 +1279,8 @@ class InvitationBuilder(object):
                     writers=[venue_id],
                     signatures=[venue_id],
                     invitation=Invitation(id=solicite_review_invitation_id,
-                        duedate=1613822400000,
                         invitees=['~'],
-                        noninvitees=[f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers', f'{paper_group_id}/Authors'],
+                        noninvitees=[f'{venue_id}/Editors_In_Chief', f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers', f'{paper_group_id}/Authors'],
                         readers=['everyone'],
                         writers=[venue_id],
                         signatures=[venue_id],

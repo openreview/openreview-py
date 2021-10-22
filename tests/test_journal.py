@@ -156,9 +156,9 @@ class TestJournal():
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 4
         assert f"{venue_id}/-/Author_Submission" not in [i.id for i in invitations]
-        assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
-        assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
-        assert f"{venue_id}/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Under_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Desk_Rejection"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         # assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         # assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         # assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
@@ -273,7 +273,7 @@ class TestJournal():
         assert ae_group.members == ['~Joelle_Pineau1']
 
         ## Accept the submission 1
-        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/-/Under_Review',
+        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper1/-/Under_Review',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
                                     note=Note(id=note_id_1))
 
@@ -281,7 +281,7 @@ class TestJournal():
 
         note = joelle_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
@@ -293,13 +293,13 @@ class TestJournal():
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
 
         ## Desk reject the submission 2
-        desk_reject_note = joelle_client.post_note_edit(invitation='.TMLR/-/Desk_Rejection',
+        desk_reject_note = joelle_client.post_note_edit(invitation='.TMLR/Paper2/-/Desk_Rejection',
                                     signatures=[f'{venue_id}/Paper2/Action_Editors'],
                                     note=Note(id=note_id_2))
 
         note = joelle_client.get_note(note_id_2)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Desk_Rejection']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper2/-/Desk_Rejection']
         assert note.readers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
         assert note.signatures == ['.TMLR/Paper2/Authors']
@@ -308,7 +308,7 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Desk_Rejection'
 
         ## Withdraw the submission 3
-        withdraw_note = test_client.post_note_edit(invitation='.TMLR/-/Withdraw',
+        withdraw_note = test_client.post_note_edit(invitation='.TMLR/Paper3/-/Withdraw',
                                     signatures=[f'{venue_id}/Paper3/Authors'],
                                     note=Note(id=note_id_3,
                                         content={
@@ -318,7 +318,7 @@ class TestJournal():
 
         note = test_client.get_note(note_id_3)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Withdraw']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper3/-/Withdraw']
         assert note.readers == ['.TMLR', '.TMLR/Paper3/Action_Editors', '.TMLR/Paper3/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper3/Action_Editors', '.TMLR/Paper3/Authors']
         assert note.signatures == ['.TMLR/Paper3/Authors']
@@ -331,9 +331,9 @@ class TestJournal():
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 10
-        assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
-        assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
-        assert f"{venue_id}/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Under_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Desk_Rejection"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]
         #assert reject_invitation_id in [i.id for i in invitations]
@@ -606,7 +606,7 @@ class TestJournal():
         assert process_logs[0]['status'] == 'ok'
 
 
-        acceptance_note = raia_client.post_note_edit(invitation='.TMLR/-/Acceptance',
+        acceptance_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Acceptance',
                             signatures=['.TMLR/Editors_In_Chief'],
                             note=Note(id=note_id_1))
 
@@ -614,9 +614,9 @@ class TestJournal():
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/-/Acceptance']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Acceptance']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Editors_In_Chief', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'TMLR'
@@ -648,9 +648,9 @@ class TestJournal():
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/-/Acceptance', '.TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Acceptance', '.TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Editors_In_Chief', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'TMLR'

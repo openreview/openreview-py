@@ -425,6 +425,9 @@ class Journal(object):
 
         self.setup_submission_groups(note)
         self.invitation_builder.set_revision_submission(self, note)
+        self.invitation_builder.set_under_review_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
+        self.invitation_builder.set_desk_rejection_invitation(self, note, None)
+        self.invitation_builder.set_withdraw_invitation(self, note, None)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
         self.invitation_builder.set_ae_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
