@@ -1256,7 +1256,8 @@ class InvitationBuilder(object):
                                             'Leaning Reject',
                                             'Reject'
                                         ]
-                                    }
+                                    },
+                                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] }
                                 },
                                 'certification_recommendations': {
                                     'order': 2,
@@ -1268,8 +1269,7 @@ class InvitationBuilder(object):
                                             'Cart 3'
                                         ],
                                         'optional': True
-                                    },
-                                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] }
+                                    }
                                 }
                             }
                         }
