@@ -595,59 +595,66 @@ class InvitationBuilder(object):
 
         if not under_review_invitation:
             under_review_invitation_id=under_review_invitation_id
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
+            invitation = Invitation(id=under_review_invitation_id,
+                duedate=duedate,
+                invitees=[paper_action_editors_id, venue_id],
+                readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                invitation=Invitation(id=under_review_invitation_id,
-                    duedate=duedate,
-                    invitees=[paper_action_editors_id, venue_id],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'ddate': {
-                            'int-range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'nullable': True
+                maxReplies=1,
+                edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
+                    'readers': { 'values': [ 'everyone']},
+                    'writers': { 'values': [ venue_id, paper_action_editors_id]},
+                    'note': {
+                        'id': { 'value': note.id },
+                        'readers': {
+                            'values': ['everyone']
                         },
-                        'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
-                        'readers': { 'values': [ 'everyone']},
-                        'writers': { 'values': [ venue_id, paper_action_editors_id]},
-                        'note': {
-                            'id': { 'value': note.id },
-                            'readers': {
-                                'values': ['everyone']
-                            },
-                            'writers': {
-                                'values': [venue_id]
-                            },
-                            'content': {
-                                'desk_rejection_reason': {
-                                    'value': {
-                                        'value': None,
-                                        'nullable': True
-                                    },
-                                    'presentation': {
-                                        'hidden': True,
-                                    }
+                        'writers': {
+                            'values': [venue_id]
+                        },
+                        'content': {
+                            'desk_rejection_reason': {
+                                'value': {
+                                    'value': None,
+                                    'nullable': True,
+                                    'optional': True
                                 },
-                                'venue': {
-                                    'value': {
-                                        'value': 'Under review for TMLR'
-                                    }
-                                },
-                                'venueid': {
-                                    'value': {
-                                        'value': '.TMLR/Under_Review'
-                                    }
+                                'presentation': {
+                                    'hidden': True,
+                                }
+                            },
+                            'venue': {
+                                'value': {
+                                    'value': 'Under review for TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR/Under_Review'
                                 }
                             }
                         }
-                    },
-                    process=os.path.join(os.path.dirname(__file__), 'process/under_review_submission_process.py')
-                )
+                    }
+                }
             )
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/under_review_submission_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
 
     def set_desk_rejection_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id

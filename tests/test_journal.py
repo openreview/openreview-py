@@ -310,6 +310,16 @@ class TestJournal():
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Under_Review'
 
+        messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>With this email, we request that you assign, <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}), 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;.</p>
+<p>To do so, please follow this link: <a href=\"https://openreview.net/invitation?id=.TMLR/Paper1/Reviewers/-/Assignment\">https://openreview.net/invitation?id=.TMLR/Paper1/Reviewers/-/Assignment</a></p>
+<p>As a reminder, within their annual quota of six reviews per year, reviewers are <strong>expected to performed all requests for review</strong> of submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.</p>
+<p>We thank you for your essential contribution to TMLR!</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 3

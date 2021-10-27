@@ -445,14 +445,14 @@ class Journal(object):
         self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
         self.invitation_builder.set_ae_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
 
-    def setup_under_review_submission(self, note):
+    def setup_under_review_submission(self, note, reviewer_assignment_due_date):
 
         self.invitation_builder.set_review_invitation(self, note)
         self.invitation_builder.set_solicite_review_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.invitation_builder.set_decision_invitation(self, note)
         self.setup_reviewer_assignment(note)
-        self.invitation_builder.set_reviewer_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
+        self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
 
         ### expire invitations
         self.invitation_builder.expire_invitation(self, f'{self.venue_id}/Paper{note.number}/-/Under_Review')
