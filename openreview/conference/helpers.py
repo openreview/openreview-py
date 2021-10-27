@@ -122,9 +122,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '')
 
     email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
-    
-    name = note.content.get('submission_name', 'Submission').strip() #tried w 'Submission' as second quotes
-    print(name, note.content.get('submission_name'))
+
+    name = note.content.get('submission_name', 'Submission').strip()
+
     builder.set_submission_stage(
         name=name,
         double_blind=double_blind,
