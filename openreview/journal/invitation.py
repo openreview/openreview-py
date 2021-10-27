@@ -1135,13 +1135,9 @@ class InvitationBuilder(object):
                 }
             )
 
-            with open(os.path.join(os.path.dirname(__file__), 'process/paper_assignment_process.py')) as f:
+            with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')) as f:
                 content = f.read()
-                content = content.replace("VENUE_ID = ''", "VENUE_ID = '" + venue_id + "'")
-                content = content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + venue_id+ "'")
-                content = content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + journal.get_reviewers_id(number='{number}') + "'")
-                content = content.replace("GROUP_NAME = ''", "GROUP_NAME = 'reviewer'")
-                content = content.replace("GROUP_ID = ''", "GROUP_ID = '" + journal.get_reviewers_id() + "'")
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
                 invitation.process = content
 
             header = {
