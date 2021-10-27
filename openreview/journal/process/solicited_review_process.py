@@ -1,10 +1,10 @@
 def process(client, edit, invitation):
-    venue_id='.TMLR'
-    note=edit.note
-    paper_group_id=edit.invitation.split('/-/')[0]
-    journal = openreview.journal.Journal(client, venue_id, '1234', contact_info='tmlr@jmlr.org', short_name='TMLR')
 
-    ## TODO: send message to the reviewer, AE confirming the review was posted
+    journal = openreview.journal.Journal()
+
+    note=edit.note
+    submission = client.get_note(note.forum)
+    venue_id = journal.venue_id
 
     ## Create invitation to rate reviews
     journal.invitation_builder.set_review_rating_invitation(journal, note)
@@ -19,7 +19,7 @@ def process(client, edit, invitation):
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=Invitation(id=f'{paper_group_id}/-/Release_Review',
+            invitation=Invitation(id=journal.get_release_reviews_id(number=submission.number),
                 bulk=True,
                 invitees=[venue_id],
                 readers=['everyone'],
@@ -27,7 +27,7 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 edit={
                     'signatures': { 'values': [venue_id ] },
-                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${{note.id}.signatures}' ] },
+                    'readers': { 'values': [ venue_id, journal.get_action_editors_id(number=submission.number), '${{note.id}.signatures}' ] },
                     'writers': { 'values': [ venue_id ] },
                     'note': {
                         'id': { 'value-invitation': edit.invitation },
@@ -39,3 +39,65 @@ def process(client, edit, invitation):
         submission = client.get_note(note.forum)
         duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = journal.default_offset_days))
         journal.invitation_builder.set_official_recommendation_invitation(journal, submission, duedate)
+
+        ## Send email notifications to authors
+        now = datetime.datetime.utcnow()
+        duedate = now + datetime.timedelta(weeks = 2)
+        late_duedate = now + datetime.timedelta(weeks = 4)
+        client.post_message(
+            recipients=[journal.get_authors_id(number=submission.number)],
+            subject=f'''[{journal.short_name}] Reviewer responses and discussion for your TMLR submission {submission.content['title']['value']}''',
+            message=f'''Hi {{{{fullname}}}},
+
+Now that 3 reviews have been submitted for your submission, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+
+In 2 weeks ({duedate.strftime("%b %d")}), no later than in 4 weeks ({late_duedate.strftime("%b %d")}), reviewers will be able to submit a formal decision recommendation to the Action Editor in charge of your submission. The reviewers’ goal will be to gather all the information they need to submit their decision recommendation.
+
+Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission.id}
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+
+The TMLR Editors-in-Chief
+''',
+            replyTo=journal.contact_info
+        )
+
+        ## Send email notifications to reviewers
+        client.post_message(
+            recipients=[journal.get_reviewers_id(number=submission.number)],
+            subject=f'''[{journal.short_name}] Start of author discussion for TMLR submission {submission.content['title']['value']}''',
+            message=f'''Hi {{{{fullname}}}},
+
+Thank you for submitting your review for TMLR submission "{submission.content['title']['value']}".
+
+Now that 3 reviews have been submitted for the submission, all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
+
+You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+''',
+            replyTo=journal.contact_info
+        )
+
+        ## Send email notifications to the action editor
+        client.post_message(
+            recipients=[journal.get_action_editors_id(number=submission.number)],
+            subject=f'''[{journal.short_name}] Start of author discussion for TMLR submission {submission.content['title']['value']}''',
+            message=f'''Hi {{{{fullname}}}},
+
+Now that 3 reviews have been submitted for submission {submission.content['title']['value']}, all reviews have been made public. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
+
+You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+''',
+            replyTo=journal.contact_info
+        )

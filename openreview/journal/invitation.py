@@ -1168,7 +1168,7 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
-    def set_review_invitation(self, journal, note):
+    def set_review_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
         paper_group_id=f'{venue_id}/Paper{note.number}'
 
@@ -1176,81 +1176,87 @@ class InvitationBuilder(object):
         review_invitation=openreview.tools.get_invitation(self.client, review_invitation_id)
 
         if not review_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
+            invitation = Invitation(id=review_invitation_id,
+                duedate=duedate,
+                invitees=[venue_id, f"{paper_group_id}/Reviewers"],
+                readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                invitation=Invitation(id=review_invitation_id,
-                    duedate=1613822400000,
-                    invitees=[venue_id, f"{paper_group_id}/Reviewers"],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'signatures': { 'values-regex': f'{paper_group_id}/Reviewer_.*|{paper_group_id}/Action_Editors' },
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values-regex': f'{paper_group_id}/Reviewer_.*|{paper_group_id}/Action_Editors' },
+                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                    'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                    'note': {
+                        'id': {
+                            'value-invitation': review_invitation_id,
+                            'optional': True
+                        },
+                        'forum': { 'value': note.id },
+                        'replyto': { 'value': note.id },
+                        'ddate': {
+                            'int-range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'nullable': True
+                        },
+                        'signatures': { 'values': ['${signatures}'] },
                         'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
                         'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                        'note': {
-                            'id': {
-                                'value-invitation': review_invitation_id,
-                                'optional': True
+                        'content': {
+                            'summary_of_contributions': {
+                                'order': 1,
+                                'description': 'Brief description, in the reviewer’s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$'
+                                },
+                                'presentation': {
+                                    'markdown': True
+                                }
                             },
-                            'forum': { 'value': note.id },
-                            'replyto': { 'value': note.id },
-                            'ddate': {
-                                'int-range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
+                            'strengths_and_weaknesses': {
+                                'order': 2,
+                                'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$'
+                                },
+                                'presentation': {
+                                    'markdown': True
+                                }
                             },
-                            'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                            'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                            'content': {
-                                'summary_of_contributions': {
-                                    'order': 1,
-                                    'description': 'Brief description, in the reviewer’s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,200000}$'
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
+                            'requested_changes': {
+                                'order': 3,
+                                'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
-                                'strengths_and_weaknesses': {
-                                    'order': 2,
-                                    'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,200000}$'
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
+                                'presentation': {
+                                    'markdown': True
+                                }
+                            },
+                            'broader_impact_concerns': {
+                                'order': 4,
+                                'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
-                                'requested_changes': {
-                                    'order': 3,
-                                    'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,200000}$'
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                },
-                                'broader_impact_concerns': {
-                                    'order': 4,
-                                    'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,200000}$'
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
+                                'presentation': {
+                                    'markdown': True
                                 }
                             }
                         }
-                    },
-                    process=os.path.join(os.path.dirname(__file__), 'process/solicited_review_process.py')
-            ))
+                    }
+                })
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/solicited_review_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
 
     def set_official_recommendation_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id

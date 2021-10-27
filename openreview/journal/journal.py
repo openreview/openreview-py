@@ -67,6 +67,10 @@ class Journal(object):
     def get_ae_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
 
+    def get_release_reviews_id(self, number=None):
+        return self.__get_invitation_id(name='Release_Review', number=number)
+
+
     def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)
         self.invitation_builder.set_submission_invitation(self)
@@ -447,7 +451,7 @@ class Journal(object):
 
     def setup_under_review_submission(self, note, reviewer_assignment_due_date):
 
-        self.invitation_builder.set_review_invitation(self, note)
+        self.invitation_builder.set_review_invitation(self, note, reviewer_assignment_due_date)
         self.invitation_builder.set_solicite_review_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.invitation_builder.set_decision_invitation(self, note)
