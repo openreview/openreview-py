@@ -103,7 +103,7 @@ var renderData = function(venueStatusData) {
         var reviews = data.reviews || [];
         var reviewList = reviews.map(function(review) {
           var reviewerRecommendation = data.recommendationByReviewer[review.signatures[0]];
-          var recommendationString = reviewerRecommendation ? (' / Recommendation: <a href="/forum?id=' + reviewerRecommendation.forum + '&noteId=' + reviewerRecommendation.id + '&referrer=' + data.referrer + '" target="_blank">' + reviewerRecommendation.content.decision_recommendation.value + '</a>'): '';
+          var recommendationString = reviewerRecommendation ? (' / Recommendation: <a href="/forum?id=' + reviewerRecommendation.forum + '&noteId=' + reviewerRecommendation.id + '&referrer=' + data.referrer + '" target="_blank">Recommendation</a>'): '';
           return '<li style="margin-bottom: .25rem;"><strong>' + view.prettyId(_.last(review.signatures[0].split('/'))) + ':</strong> ' +
             '<a href="/forum?id=' + review.forum + '&noteId=' + review.id + '&referrer=' + data.referrer + '" target="_blank">Review</a>' +
             recommendationString +

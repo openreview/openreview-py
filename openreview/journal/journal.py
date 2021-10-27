@@ -13,11 +13,13 @@ from tqdm import tqdm
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, default_offset_days=14):
+    def __init__(self, client, venue_id, secret_key, contact_info, short_name, default_offset_days=14):
 
-        self.client=client
-        self.venue_id=venue_id
-        self.secret_key=secret_key
+        self.client = client
+        self.venue_id = venue_id
+        self.secret_key = secret_key
+        self.contact_info = contact_info
+        self.short_name = short_name
         self.default_offset_days = default_offset_days
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
@@ -27,20 +29,28 @@ class Journal(object):
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.header = {
             "title": "Transactions of Machine Learning Research",
-            "short": "TMLR",
+            "short": short_name,
             "subtitle": "To be defined",
             "location": "Everywhere",
             "date": "Ongoing",
             "website": "https://openreview.net",
             "instructions": '',
             "deadline": "",
-            "contact": "info@openreview.net"
+            "contact": self.contact_info
         }
 
     def __get_group_id(self, name, number=None):
         if number:
             return f'{self.venue_id}/{self.submission_group_name}{number}/{name}'
         return f'{self.venue_id}/{name}'
+
+    def __get_invitation_id(self, name, prefix=None, number=None):
+        group_id = self.venue_id
+        if prefix:
+            group_id = prefix
+        if number:
+            return f'{group_id}/{self.submission_group_name}{number}/-/{name}'
+        return f'{group_id}/-/{name}'
 
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
@@ -53,6 +63,9 @@ class Journal(object):
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
+
+    def get_ae_recommendation_id(self, number=None):
+        return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
 
     def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)

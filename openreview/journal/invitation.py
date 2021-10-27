@@ -618,6 +618,12 @@ class InvitationBuilder(object):
                                 'values': [venue_id]
                             },
                             'content': {
+                                # 'desk_rejection_reason': {
+                                #     'value': { 'value': None },
+                                #     'presentation': {
+                                #         'hidden': True,
+                                #     }
+                                # },
                                 'venue': {
                                     'value': {
                                         'value': 'Under review for TMLR'
@@ -645,38 +651,61 @@ class InvitationBuilder(object):
         desk_rejection_invitation = openreview.tools.get_invitation(self.client, desk_rejection_invitation_id)
 
         if not desk_rejection_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
+
+            invitation = Invitation(id=desk_rejection_invitation_id,
+                duedate=duedate,
+                invitees=[paper_action_editors_id, venue_id],
+                readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                invitation=Invitation(id=desk_rejection_invitation_id,
-                    duedate=duedate,
-                    invitees=[paper_action_editors_id, venue_id],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
-                        'writers': { 'values': [ venue_id, paper_action_editors_id]},
-                        'note': {
-                            'id': { 'value': note.id },
-                            'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
-                            'content': {
-                                'venue': {
-                                    'value': {
-                                        'value': 'Desk rejected by TMLR'
-                                    }
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
+                    'writers': { 'values': [ venue_id, paper_action_editors_id]},
+                    'note': {
+                        'id': { 'value': note.id },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
+                        'writers': { 'values': [venue_id, paper_action_editors_id] },
+                        'content': {
+                            'desk_rejection_reason': {
+                                'order': 1,
+                                'description': 'Enter a reason (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
-                                'venueid': {
-                                    'value': {
-                                        'value': '.TMLR/Desk_Rejection'
-                                    }
+                                'presentation': {
+                                    'markdown': True
+                                }
+                            },
+                            'venue': {
+                                'order': 2,
+                                'value': {
+                                    'value': 'Desk rejected by TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'order': 3,
+                                'value': {
+                                    'value': '.TMLR/Desk_Rejection'
                                 }
                             }
                         }
                     }
-                    ))
+                }
+            )
+
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/desk_reject_submission_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
 
     def set_withdraw_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
@@ -849,10 +878,9 @@ class InvitationBuilder(object):
     def set_ae_recommendation_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
         action_editors_id = journal.get_action_editors_id()
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         authors_id = journal.get_authors_id(number=note.number)
 
-        ae_recommendation_invitation_id=f'{paper_action_editors_id}/-/Recommendation'
+        ae_recommendation_invitation_id=journal.get_ae_recommendation_id(number=note.number)
         ae_recommendation_invitation=openreview.tools.get_invitation(self.client, ae_recommendation_invitation_id)
 
         if not ae_recommendation_invitation:
@@ -1009,7 +1037,7 @@ class InvitationBuilder(object):
             }
 
             edit_param = ae_assignment_invitation_id
-            suggest_ae_invitation_id = f'{paper_action_editors_id}/-/Recommendation'
+            suggest_ae_invitation_id = journal.get_ae_recommendation_id(number=note.number)
             affinity_score_ae_invitation_id = f'{action_editors_id}/-/Affinity_Score'
             conflict_ae_invitation_id = f'{action_editors_id}/-/Conflict'
             score_ids = [suggest_ae_invitation_id, affinity_score_ae_invitation_id, conflict_ae_invitation_id]

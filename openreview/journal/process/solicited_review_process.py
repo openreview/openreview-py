@@ -2,7 +2,7 @@ def process(client, edit, invitation):
     venue_id='.TMLR'
     note=edit.note
     paper_group_id=edit.invitation.split('/-/')[0]
-    journal = openreview.journal.Journal(client, venue_id, '1234')
+    journal = openreview.journal.Journal(client, venue_id, '1234', contact_info='tmlr@jmlr.org', short_name='TMLR')
 
     ## TODO: send message to the reviewer, AE confirming the review was posted
 

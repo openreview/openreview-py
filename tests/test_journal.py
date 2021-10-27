@@ -17,7 +17,7 @@ class TestJournal():
     def journal(self):
         venue_id = '.TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
-        journal=Journal(fabian_client, venue_id, '1234')
+        journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', short_name='TMLR')
         return journal
 
     def test_setup(self, openreview_client, helpers):
@@ -48,7 +48,7 @@ class TestJournal():
         andrew_client = helpers.create_user('andrewmc@mail.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
-        journal=Journal(openreview_client, venue_id, '1234')
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', short_name='TMLR')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
@@ -136,6 +136,16 @@ class TestJournal():
         process_logs = openreview_client.get_process_logs(id = submission_note_1['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''<p>Hi SomeFirstName User,</p>
+<p>Thank you for submitting to TMLR your work titled &quot;Paper title&quot;.</p>
+<p>Before the review process starts, we need you to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.</p>
+<p>To do so, please follow this link: <a href=\"https://openreview.net/invitation?id=.TMLR/Paper1/Action_Editors/-/Recommendation\">https://openreview.net/invitation?id=.TMLR/Paper1/Action_Editors/-/Recommendation</a> or check your tasks in the Author Console: <a href=\"https://openreview.net/group?id=.TMLR/Authors\">https://openreview.net/group?id=.TMLR/Authors</a></p>
+<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
@@ -302,17 +312,43 @@ class TestJournal():
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation='.TMLR/Paper2/-/Desk_Rejection',
                                     signatures=[f'{venue_id}/Paper2/Action_Editors'],
-                                    note=Note(id=note_id_2))
+                                    note=Note(id=note_id_2, content={
+                                        'desk_rejection_reason': { 'value': 'missing PDF' }
+                                    }))
+
+        helpers.await_queue(openreview_client)
+
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
+<p>We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title &quot;Paper title 2&quot; was rejected without further review.</p>
+<p>Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).</p>
+<p>To know more about the decision, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_2}\">https://openreview.net/forum?id={note_id_2}</a></p>
+<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
 
         note = joelle_client.get_note(note_id_2)
         assert note
         assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper2/-/Desk_Rejection']
         assert note.readers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
-        assert note.writers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Paper2/Action_Editors']
         assert note.signatures == ['.TMLR/Paper2/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'celeste@mail.com']
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Desk_Rejection'
+
+        ## Check invitations as an author
+        invitations = test_client.get_invitations(replyForum=note_id_2)
+        assert len(invitations) == 2
+        assert invitations[0].details['writable'] == False
+        assert invitations[1].details['writable'] == False
+
+        ## Check invitations as an AE
+        invitations = joelle_client.get_invitations(replyForum=note_id_2)
+        assert len(invitations) == 2
+        assert f"{venue_id}/Paper2/-/Under_Review"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper2/-/Desk_Rejection"  in [i.id for i in invitations]
 
         ## Withdraw the submission 3
         withdraw_note = test_client.post_note_edit(invitation='.TMLR/Paper3/-/Withdraw',
