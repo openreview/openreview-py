@@ -2201,12 +2201,13 @@ class ConferenceBuilder(object):
             papers_released=False,
             readers=None
         ):
+
         submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS, SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
         if public:
             submissions_readers=[SubmissionStage.Readers.EVERYONE]
         if readers:
             submissions_readers=readers
-        
+
         self.submission_stage = SubmissionStage(
             name,
             start_date,
