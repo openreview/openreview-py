@@ -606,6 +606,11 @@ class InvitationBuilder(object):
                     signatures=[venue_id],
                     maxReplies=1,
                     edit={
+                        'ddate': {
+                            'int-range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'nullable': True
+                        },
                         'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
                         'readers': { 'values': [ 'everyone']},
                         'writers': { 'values': [ venue_id, paper_action_editors_id]},
@@ -618,12 +623,15 @@ class InvitationBuilder(object):
                                 'values': [venue_id]
                             },
                             'content': {
-                                # 'desk_rejection_reason': {
-                                #     'value': { 'value': None },
-                                #     'presentation': {
-                                #         'hidden': True,
-                                #     }
-                                # },
+                                'desk_rejection_reason': {
+                                    'value': {
+                                        'value': None,
+                                        'nullable': True
+                                    },
+                                    'presentation': {
+                                        'hidden': True,
+                                    }
+                                },
                                 'venue': {
                                     'value': {
                                         'value': 'Under review for TMLR'
@@ -660,6 +668,11 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 maxReplies=1,
                 edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
                     'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
                     'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
                     'writers': { 'values': [ venue_id, paper_action_editors_id]},
@@ -789,6 +802,11 @@ class InvitationBuilder(object):
                     signatures=[venue_id],
                     maxReplies=1,
                     edit={
+                        'ddate': {
+                            'int-range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'nullable': True
+                        },
                         'signatures': { 'values': [editors_in_chief_id] },
                         'readers': { 'values': [ 'everyone']},
                         'writers': { 'values': [ venue_id ]},
@@ -1383,6 +1401,11 @@ class InvitationBuilder(object):
                     writers=[venue_id],
                     signatures=[venue_id],
                     edit={
+                        'ddate': {
+                            'int-range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'nullable': True
+                        },
                         'signatures': { 'values': [f'{paper_group_id}/Authors'] },
                         'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']},
                         'writers': { 'values': [ venue_id, f'{paper_group_id}/Authors']},
