@@ -2167,7 +2167,7 @@ class ConferenceBuilder(object):
 
     def set_submission_stage(
             self,
-            name=None,
+            name='Submission',
             start_date=None,
             due_date=None,
             second_due_date=None,
@@ -2189,7 +2189,6 @@ class ConferenceBuilder(object):
             papers_released=False,
             readers=None
         ):
-        print(name)
         submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS, SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
         if public:
             submissions_readers=[SubmissionStage.Readers.EVERYONE]

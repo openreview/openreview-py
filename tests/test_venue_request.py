@@ -163,7 +163,8 @@ class TestVenueRequest():
                 'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.',
                 'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'submission_name': 'Submission_Test'
             }))
 
         assert request_form_note
@@ -204,7 +205,7 @@ class TestVenueRequest():
         submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
         abstract_due_date_str = abstract_due_date.strftime('%b %d %Y %I:%M%p')
         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, Abstract Registration: ' + abstract_due_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
-
+        assert conference.get_submission_id() == 'TEST.cc/2021/Conference/-/Submission'
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
