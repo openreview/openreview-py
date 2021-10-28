@@ -58,8 +58,8 @@ class Journal(object):
     def get_action_editors_id(self, number=None):
         return self.__get_group_id(self.action_editors_name, number)
 
-    def get_reviewers_id(self, number=None):
-        return self.__get_group_id(self.reviewers_name, number)
+    def get_reviewers_id(self, number=None, anon=False):
+        return self.__get_group_id('Reviewer_.*' if anon else self.reviewers_name, number)
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
@@ -70,6 +70,11 @@ class Journal(object):
     def get_release_reviews_id(self, number=None):
         return self.__get_invitation_id(name='Release_Review', number=number)
 
+    def get_ae_decision_id(self, number=None):
+        return self.__get_invitation_id(name='Decision', number=number)
+
+    def get_reviewer_recommendation_id(self, number=None):
+        return self.__get_invitation_id(name='Official_Recommendation', number=number)
 
     def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)
@@ -454,7 +459,6 @@ class Journal(object):
         self.invitation_builder.set_review_invitation(self, note, reviewer_assignment_due_date)
         self.invitation_builder.set_solicite_review_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
-        self.invitation_builder.set_decision_invitation(self, note)
         self.setup_reviewer_assignment(note)
         self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
 

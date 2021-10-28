@@ -394,14 +394,13 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 8
+        assert len(invitations) == 7
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]
         #assert reject_invitation_id in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicite_Review" in [i.id for i in invitations]
 
@@ -658,18 +657,58 @@ class TestJournal():
         ## Official Recommendation should be created
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Recommendation")
 
-        ## Post a review edit
+        ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
-                    'certification_recommendations': { 'value': ['Cert 1'] },
+                    'certification_recommendations': { 'value': ['Featured Certification'] },
                 }
             )
         )
 
         helpers.await_queue(openreview_client)
+
+        official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Accept' },
+                    'certification_recommendations': { 'value': ['Survey Certification'] },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>Thank you for overseeing the review process for TMLR submission &quot;Paper title UPDATED&quot;.</p>
+<p>All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:</p>
+<p>Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.<br>
+Rate the quality of the reviews submitted by the reviewers. You will not be able to submit your decision until these ratings have been submitted.</p>
+<p>We ask that you submit your decision within 1 week ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>The possible decisions are:<br>\nAccept as is: once its camera ready version is submitted, the manuscript will be marked as accepted.<br>
+Accept with minor revision: to use if you wish to request some specific revisions to the manuscript, to be specified explicitly in your decision comments. These revisions will be expected from the authors when they submit their camera ready version.<br>
+Reject: the paper is rejected, but you may indicate whether you would be willing to consider a significantly revised version of the manuscript. Such a revised submission will need to be entered as a new submission, that will also provide a link to this rejected submission as well as a description of the changes made since.</p>
+<p>Your decision may also include certification(s) recommendations for the submission (in case of an acceptance).</p>
+<p>For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
+<p>We thank you for your essential contribution to TMLR!</p>
+'''
 
         ## Check permissions of the review revisions
         review_revisions=openreview_client.get_note_edits(noteId=reviews[0].id)
@@ -693,10 +732,6 @@ class TestJournal():
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
-        ## Check decision invitation, should be available only when all the reviews are rated
-        decision_invitation=openreview_client.get_invitation(f"{venue_id}/Paper1/-/Decision")
-        assert decision_invitation.invitees == []
-
         for review in reviews:
             signature=review.signatures[0]
             rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
@@ -711,9 +746,6 @@ class TestJournal():
             process_logs = openreview_client.get_process_logs(id = rating_note['id'])
             assert len(process_logs) == 1
             assert process_logs[0]['status'] == 'ok'
-
-        decision_invitation=openreview_client.get_invitation(f"{venue_id}/Paper1/-/Decision")
-        assert decision_invitation.invitees == [venue_id, f"{venue_id}/Paper1/Action_Editors"]
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],

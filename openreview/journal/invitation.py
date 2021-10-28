@@ -1260,27 +1260,25 @@ class InvitationBuilder(object):
 
     def set_official_recommendation_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number, anon=True)
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_group_id=f'{venue_id}/Paper{note.number}'
 
-        official_recommendation_invitation_id=f'{paper_group_id}/-/Official_Recommendation'
+        official_recommendation_invitation_id=journal.get_reviewer_recommendation_id(number=note.number)
         official_recommendation_invitation=openreview.tools.get_invitation(self.client, official_recommendation_invitation_id)
 
         if not official_recommendation_invitation:
-            print('post official recommendation invitation')
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=Invitation(id=official_recommendation_invitation_id,
+            invitation = Invitation(id=official_recommendation_invitation_id,
                     duedate=duedate,
-                    invitees=[venue_id, f"{paper_group_id}/Reviewers"],
+                    invitees=[venue_id, f"{paper_group_id}/Reviewers"], ## should this be reviewers/submitted??
                     readers=['everyone'],
                     writers=[venue_id],
                     signatures=[venue_id],
                     maxReplies=1,
                     edit={
-                        'signatures': { 'values-regex': f'{paper_group_id}/Reviewer_.*|{paper_group_id}/Action_Editors' },
-                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                        'signatures': { 'values-regex': f'{paper_reviewers_id}|{paper_action_editors_id}' },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                        'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'note': {
                             'id': {
                                 'value-invitation': official_recommendation_invitation_id,
@@ -1294,8 +1292,8 @@ class InvitationBuilder(object):
                                 'nullable': True
                             },
                             'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values': [ 'everyone' ] },
-                            'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                            'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                            'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                             'content': {
                                 'decision_recommendation': {
                                     'order': 1,
@@ -1307,26 +1305,35 @@ class InvitationBuilder(object):
                                             'Leaning Reject',
                                             'Reject'
                                         ]
-                                    },
-                                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] }
+                                    }
                                 },
                                 'certification_recommendations': {
                                     'order': 2,
                                     'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
                                     'value': {
                                         'values-dropdown': [
-                                            'Cert 1',
-                                            'Cert 2',
-                                            'Cart 3'
+                                            'Featured Certification',
+                                            'Reproducibility Certification',
+                                            'Survey Certification'
                                         ],
                                         'optional': True
                                     }
                                 }
                             }
                         }
-                    },
-                    process=os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')
-            ))
+                    }
+            )
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
 
     def set_solicite_review_invitation(self, journal, note):
         venue_id = journal.venue_id
@@ -1701,80 +1708,87 @@ class InvitationBuilder(object):
                 )
             )
 
-    def set_decision_invitation(self, journal, note):
+    def set_decision_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
-        paper_group_id=f'{venue_id}/Paper{note.number}'
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
 
-        decision_invitation_id = f'{paper_group_id}/-/Decision'
+        decision_invitation_id = journal.get_ae_decision_id(number=note.number)
         decision_invitation=openreview.tools.get_invitation(self.client, decision_invitation_id)
 
         if not decision_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
+            invitation = Invitation(id=decision_invitation_id,
+                duedate=duedate,
+                invitees=[venue_id, paper_action_editors_id],
+                readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                invitation=Invitation(id=f'{paper_group_id}/-/Decision',
-                    duedate=1613822400000,
-                    invitees=[], # no invitees, activate when all the ratings are complete
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    edit={
-                        'signatures': { 'values': [f'{paper_group_id}/Action_Editors'] },
-                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
-                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
-                        'note': {
-                            'id': {
-                                'value-invitation': f'{paper_group_id}/-/Decision',
-                                'optional': True
+                edit={
+                    'signatures': { 'values': [paper_action_editors_id] },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'note': {
+                        'id': {
+                            'value-invitation': decision_invitation_id,
+                            'optional': True
+                        },
+                        'forum': { 'value': note.forum },
+                        'replyto': { 'value': note.forum },
+                        'ddate': {
+                            'int-range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'nullable': True
+                        },
+                        'signatures': { 'values': [paper_action_editors_id] },
+                        'readers': { 'values': [ 'everyone' ] },
+                        'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                        'content': {
+                            'recommendation': {
+                                'order': 1,
+                                'value': {
+                                    'value-radio': [
+                                        'Accept as is',
+                                        'Accept with minor revision',
+                                        'Reject'
+                                    ]
+                                }
                             },
-                            'forum': { 'value': note.forum },
-                            'replyto': { 'value': note.forum },
-                            'ddate': {
-                                'int-range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
+                            'comment': {
+                                'order': 2,
+                                'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$'
+                                },
+                                'presentation': {
+                                    'markdown': True
+                                }
                             },
-                            'signatures': { 'values': [f'{paper_group_id}/Action_Editors'] },
-                            'readers': { 'values': [ 'everyone' ] },
-                            'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
-                            'content': {
-                                'recommendation': {
-                                    'order': 1,
-                                    'value': {
-                                        'value-radio': [
-                                            'Accept as is',
-                                            'Accept with revisions',
-                                            'Reject'
-                                        ]
-                                    }
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,200000}$'
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                },
-                                'certification': {
-                                    'order': 3,
-                                    'description': 'TODO',
-                                    'value': {
-                                        'values-dropdown': [
-                                            'Cert 1',
-                                            'Cert 2',
-                                            'Cart 3'
-                                        ],
-                                        'optional': True
-                                    }
+                            'certification': {
+                                'order': 3,
+                                'description': 'TODO',
+                                'value': {
+                                    'values-dropdown': [
+                                        'Cert 1',
+                                        'Cert 2',
+                                        'Cart 3'
+                                    ],
+                                    'optional': True
                                 }
                             }
                         }
-                    },
-                    process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py')
-            ))
+                    }
+                }
+            )
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
 
     def set_review_rating_invitation(self, journal, review):
         venue_id = journal.venue_id
