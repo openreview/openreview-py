@@ -1869,26 +1869,26 @@ class InvitationBuilder(object):
                             invitation=invitation
                         )
 
-    def set_camera_ready_revision_invitation(self, journal, decision):
+    def set_camera_ready_revision_invitation(self, journal, note, decision, duedate):
         venue_id = journal.venue_id
-        note = self.client.get_note(decision.forum)
-        paper_group_id=f'{venue_id}/Paper{note.number}'
-        invitation_name= 'Camera_Ready_Revision' if decision.content['recommendation']['value'] == 'Accept as is' else 'Revision'
+        paper_authors_id = journal.get_authors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        revision_invitation_id = journal.get_camera_ready_revision_id(number=note.number) if decision.content['recommendation']['value'] == 'Accept as is' else journal.get_revision_id(number=note.number)
 
-        revision_invitation_id=f'{paper_group_id}/-/{invitation_name}'
         invitation = self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             invitation=Invitation(id=revision_invitation_id,
-                invitees=[f"{paper_group_id}/Authors"],
+                invitees=[paper_authors_id],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                duedate=1613822400000,
+                duedate=duedate,
                 edit={
-                    'signatures': { 'values': [f'{paper_group_id}/Authors'] },
+                    'signatures': { 'values': [paper_authors_id] },
                     'readers': { 'values': ['everyone']},
-                    'writers': { 'values': [ venue_id, f'{paper_group_id}/Authors']},
+                    'writers': { 'values': [ venue_id, paper_authors_id]},
                     'note': {
                         'id': { 'value': note.forum },
                         'forum': { 'value': note.forum },
@@ -1918,9 +1918,6 @@ class InvitationBuilder(object):
                                 'order': 3,
                                 'presentation': {
                                     'hidden': True,
-                                },
-                                'readers': {
-                                    'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
                                 }
                             },
                             'authorids': {
@@ -1928,10 +1925,7 @@ class InvitationBuilder(object):
                                     'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                                 },
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                'order': 4,
-                                'readers': {
-                                    'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
-                                }
+                                'order': 4
                             },
                             'pdf': {
                                 'value': {
@@ -1958,7 +1952,7 @@ class InvitationBuilder(object):
                                 "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                                 "order": 6,
                                 'readers': {
-                                    'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers', f'{paper_group_id}/Authors']
+                                    'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                                 }
                             },
                             'previous_submission_url': {
@@ -1987,7 +1981,7 @@ class InvitationBuilder(object):
                                 'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
                                 'order': 9,
                                 'readers': {
-                                    'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
+                                    'values': [ venue_id, paper_action_editors_id, paper_authors_id]
                                 }
                             },
                             'human_subjects_reporting': {
@@ -1997,7 +1991,7 @@ class InvitationBuilder(object):
                                 'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
                                 'order': 10,
                                 'readers': {
-                                    'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
+                                    'values': [ venue_id, paper_action_editors_id, paper_authors_id]
                                 }
                             },
                             "video": {

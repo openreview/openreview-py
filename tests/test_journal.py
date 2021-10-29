@@ -841,6 +841,8 @@ Reject: the paper is rejected, but you may indicate whether you would be willing
                                 'certifications': { 'value': ['Survey Certification'] }
                             }))
 
+        helpers.await_queue(openreview_client)
+
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.forum == note_id_1
@@ -853,6 +855,17 @@ Reject: the paper is rejected, but you may indicate whether you would be willing
         assert note.content['venue']['value'] == 'TMLR'
         assert note.content['venueid']['value'] == '.TMLR'
         assert note.content['certifications']['value'] == ['Survey Certification']
+
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
+<p>We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title &quot;Paper title UPDATED&quot; is accepted as is.</p>
+<p>To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work.</p>
+<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
+<p>We thank you for your contribution to TMLR and congratulate you for your successful submission!</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
 
@@ -885,6 +898,9 @@ Reject: the paper is rejected, but you may indicate whether you would be willing
         assert note.writers == ['.TMLR', '.TMLR/Editors_In_Chief', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
+        # TODO: check this with Carlos
+        #assert note.content['authorids'].get('readers') == None
+        #assert note.content['authors'].get('readers') == None
         assert note.content['venue']['value'] == 'TMLR'
         assert note.content['venueid']['value'] == '.TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'

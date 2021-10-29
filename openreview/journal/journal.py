@@ -88,6 +88,13 @@ class Journal(object):
     def get_reviewer_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation', number=number)
 
+    def get_camera_ready_revision_id(self, number=None):
+        return self.__get_invitation_id(name='Camera_Ready_Revision', number=number)
+
+    def get_revision_id(self, number=None):
+        return self.__get_invitation_id(name='Revision', number=number)
+
+
     def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)
         self.invitation_builder.set_submission_invitation(self)
