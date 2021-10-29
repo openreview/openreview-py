@@ -15,8 +15,17 @@ var CONFLICT_SCORE_ID = '';
 var SCORE_IDS = [];
 var ENABLE_SUPER_ALGO = true;
 var BID_OPTIONS = [ 'Very Low', 'Low', 'Neutral', 'High', 'Very High' ];
+// In the SUPER* algorithm, we will map only positive bids to a bid, and treat
+// not positive bids as no bids in the algorithm. The following variables enforce this.
 var POSITIVE_BIDS = [ 'High', 'Very High' ];
 var BID_VALUES = [ 1 ];
+// The following parameter will dictate how much the algorithm optimizes for
+// showing relevant papers to reviewers versus optimizing for each paper getting
+// a sufficient number of bids. Specifically as the TRADE_OFF parameter goes up, 
+// the ordering will get closer to showing the papers in decreasing order of 
+// the relevance scores, and as the TRADE_OFF parameter goes down, the ordering
+// will get closer to showing the papers in increasing order of the number of bids.
+// The value of 1 is a relatively higher choice.
 var TRADE_OFF = 1;
 
 // Bid status data
