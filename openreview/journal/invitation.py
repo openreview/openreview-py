@@ -179,7 +179,7 @@ class InvitationBuilder(object):
     def set_submission_invitation(self, journal):
 
         venue_id=journal.venue_id
-        editor_in_chief_id=journal._id()
+        editor_in_chief_id=journal.get_editors_in_chief_id()
         action_editors_id=journal.get_action_editors_id()
         authors_id=journal.get_authors_id()
         authors_regex=journal.get_authors_id(number='.*')
