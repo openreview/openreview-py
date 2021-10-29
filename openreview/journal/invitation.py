@@ -1358,215 +1358,234 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
-    def set_solicite_review_invitation(self, journal, note):
+    def set_solicit_review_invitation(self, journal, note):
         venue_id = journal.venue_id
-        paper_group_id=f'{venue_id}/Paper{note.number}'
+        paper_authors_id = journal.get_authors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
 
-        solicite_review_invitation_id=f'{paper_group_id}/-/Solicite_Review'
-        solicite_review_invitation=openreview.tools.get_invitation(self.client, solicite_review_invitation_id)
+        solicit_review_invitation_id = journal.get_solicit_review_id(number=note.number)
+        solicit_review_invitation=openreview.tools.get_invitation(self.client, solicit_review_invitation_id)
 
-        if not solicite_review_invitation:
-            with open(os.path.join(os.path.dirname(__file__), 'process/solicite_review_pre_process.py')) as g:
+        if not solicit_review_invitation:
+            with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')) as g:
                 pre_content = g.read()
-                invitation = self.client.post_invitation_edit(readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    invitation=Invitation(id=solicite_review_invitation_id,
-                        invitees=['~'],
-                        noninvitees=[f'{venue_id}/Editors_In_Chief', f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers', f'{paper_group_id}/Authors'],
-                        readers=['everyone'],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        maxReplies=1,
-                        edit={
-                            'signatures': { 'values-regex': f'~.*' },
-                            'readers': { 'values': [ venue_id, '${signatures}'] },
-                            'writers': { 'values': [ venue_id, '${signatures}'] },
-                            'note': {
-                                'id': {
-                                    'value-invitation': solicite_review_invitation_id,
-                                    'optional': True
-                                },
-                                'forum': { 'value': note.id },
-                                'replyto': { 'value': note.id },
-                                'ddate': {
-                                    'int-range': [ 0, 9999999999999 ],
-                                    'optional': True,
-                                    'nullable': True
-                                },
-                                'signatures': { 'values': ['${signatures}'] },
-                                'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                                'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                                'content': {
-                                    'solicite': {
-                                        'order': 1,
-                                        'description': '',
-                                        'value': {
-                                            'value-radio': [
-                                                'I solicite to review this paper.'
-                                            ]
-                                        }
-                                    },
-                                    'comment': {
-                                        'order': 2,
-                                        'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
-                                        'value': {
-                                            'value-regex': '^[\\S\\s]{1,200000}$',
-                                            'optional': True
-                                        },
-                                        'presentation': {
-                                            'markdown': True
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        process=os.path.join(os.path.dirname(__file__), 'process/solicite_review_process.py'),
-                        preprocess=pre_content
-                ))
-
-    def set_revision_submission(self, journal, note):
-        venue_id = journal.venue_id
-        paper_group_id=f'{venue_id}/Paper{note.number}'
-        revision_invitation_id=f'{paper_group_id}/-/Revision'
-        revision_invitation=openreview.tools.get_invitation(self.client, revision_invitation_id)
-        if not revision_invitation:
-            return self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=Invitation(id=revision_invitation_id,
-                    invitees=[f"{paper_group_id}/Authors"],
+                invitation = Invitation(id=solicit_review_invitation_id,
+                    invitees=['~'],
+                    noninvitees=[journal.get_editors_in_chief(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
                     readers=['everyone'],
                     writers=[venue_id],
                     signatures=[venue_id],
+                    maxReplies=1,
                     edit={
-                        'ddate': {
-                            'int-range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'nullable': True
-                        },
-                        'signatures': { 'values': [f'{paper_group_id}/Authors'] },
-                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']},
-                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Authors']},
+                        'signatures': { 'values-regex': f'~.*' },
+                        'readers': { 'values': [ venue_id, '${signatures}'] },
+                        'writers': { 'values': [ venue_id, '${signatures}'] },
                         'note': {
-                            'id': { 'value': note.id },
+                            'id': {
+                                'value-invitation': solicit_review_invitation_id,
+                                'optional': True
+                            },
+                            'forum': { 'value': note.id },
+                            'replyto': { 'value': note.id },
+                            'ddate': {
+                                'int-range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'nullable': True
+                            },
+                            'signatures': { 'values': ['${signatures}'] },
+                            'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                            'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                             'content': {
-                                'title': {
+                                'solicite': {
+                                    'order': 1,
+                                    'description': '',
                                     'value': {
-                                        'value-regex': '^.{1,250}$',
-                                        'optional': True
-                                    },
-                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                    'order': 1
+                                        'value-radio': [
+                                            'I solicite to review this paper.'
+                                        ]
+                                    }
                                 },
-                                'abstract': {
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,5000}$',
-                                        'optional': True
-                                    },
-                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'comment': {
                                     'order': 2,
+                                    'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
+                                    'value': {
+                                        'value-regex': '^[\\S\\s]{1,200000}$',
+                                        'optional': True
+                                    },
                                     'presentation': {
                                         'markdown': True
-                                    }
-                                },
-                                'authors': {
-                                    'value': {
-                                        'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                        'optional': True
-                                    },
-                                    'description': 'Comma separated list of author names.',
-                                    'order': 3,
-                                    'presentation': {
-                                        'hidden': True,
-                                    },
-                                    'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
-                                    }
-                                },
-                                'authorids': {
-                                    'value': {
-                                        'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                                        'optional': True
-                                    },
-                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                    'order': 4,
-                                    'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
-                                    }
-                                },
-                                'pdf': {
-                                    'value': {
-                                        'value-file': {
-                                            'fileTypes': ['pdf'],
-                                            'size': 50
-                                        },
-                                        'optional': True
-                                    },
-                                    'description': 'Upload a PDF file that ends with .pdf',
-                                    'order': 5,
-                                },
-                                "supplementary_material": {
-                                    'value': {
-                                        "value-file": {
-                                            "fileTypes": [
-                                                "zip",
-                                                "pdf"
-                                            ],
-                                            "size": 100
-                                        },
-                                        "optional": True
-                                    },
-                                    "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                                    "order": 6,
-                                    'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers', f'{paper_group_id}/Authors']
-                                    }
-                                },
-                                'previous_submission_url': {
-                                    'value': {
-                                        'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                        'optional': True
-                                    },
-                                    'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from',
-                                    'order': 7,
-                                },
-                                'changes_since_last_submission': {
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,5000}$',
-                                        'optional': True
-                                    },
-                                    'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
-                                    'order': 8,
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                },
-                                'competing_interests': {
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,5000}$'
-                                    },
-                                    'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
-                                    'order': 9,
-                                    'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
-                                    }
-                                },
-                                'human_subjects_reporting': {
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,5000}$'
-                                    },
-                                    'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
-                                    'order': 10,
-                                    'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Authors']
                                     }
                                 }
                             }
                         }
                     },
-                    process=os.path.join(os.path.dirname(__file__), 'process/submission_revision_process.py')
-            ))
+                    preprocess=pre_content
+                )
+
+                with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_process.py')) as f:
+                    content = f.read()
+                    content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                    invitation.process = content
+
+                    self.client.post_invitation_edit(readers=[venue_id],
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        invitation=invitation
+                    )
+
+    def set_revision_submission(self, journal, note):
+        venue_id = journal.venue_id
+        paper_authors_id = journal.get_authors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+
+        revision_invitation_id = journal.get_revision_id(number=note.number)
+        revision_invitation=openreview.tools.get_invitation(self.client, revision_invitation_id)
+        if not revision_invitation:
+            invitation = Invitation(id=revision_invitation_id,
+                invitees=[paper_authors_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'signatures': { 'values': [paper_authors_id] },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
+                    'writers': { 'values': [ venue_id, paper_authors_id]},
+                    'note': {
+                        'id': { 'value': note.id },
+                        'content': {
+                            'title': {
+                                'value': {
+                                    'value-regex': '^.{1,250}$',
+                                    'optional': True
+                                },
+                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'order': 1
+                            },
+                            'abstract': {
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,5000}$',
+                                    'optional': True
+                                },
+                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'order': 2,
+                                'presentation': {
+                                    'markdown': True
+                                }
+                            },
+                            'authors': {
+                                'value': {
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'optional': True
+                                },
+                                'description': 'Comma separated list of author names.',
+                                'order': 3,
+                                'presentation': {
+                                    'hidden': True,
+                                },
+                                'readers': {
+                                    'values': [ venue_id, paper_action_editors_id, paper_authors_id]
+                                }
+                            },
+                            'authorids': {
+                                'value': {
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                    'optional': True
+                                },
+                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                'order': 4,
+                                'readers': {
+                                    'values': [ venue_id, paper_action_editors_id, paper_authors_id]
+                                }
+                            },
+                            'pdf': {
+                                'value': {
+                                    'value-file': {
+                                        'fileTypes': ['pdf'],
+                                        'size': 50
+                                    },
+                                    'optional': True
+                                },
+                                'description': 'Upload a PDF file that ends with .pdf',
+                                'order': 5,
+                            },
+                            "supplementary_material": {
+                                'value': {
+                                    "value-file": {
+                                        "fileTypes": [
+                                            "zip",
+                                            "pdf"
+                                        ],
+                                        "size": 100
+                                    },
+                                    "optional": True
+                                },
+                                "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                                "order": 6,
+                                'readers': {
+                                    'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
+                                }
+                            },
+                            'previous_submission_url': {
+                                'value': {
+                                    'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'optional': True
+                                },
+                                'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from',
+                                'order': 7,
+                            },
+                            'changes_since_last_submission': {
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,5000}$',
+                                    'optional': True
+                                },
+                                'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'order': 8,
+                                'presentation': {
+                                    'markdown': True
+                                }
+                            },
+                            'competing_interests': {
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,5000}$'
+                                },
+                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
+                                'order': 9,
+                                'readers': {
+                                    'values': [ venue_id, paper_action_editors_id, paper_authors_id]
+                                }
+                            },
+                            'human_subjects_reporting': {
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,5000}$'
+                                },
+                                'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
+                                'order': 10,
+                                'readers': {
+                                    'values': [ venue_id, paper_action_editors_id, paper_authors_id]
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/submission_revision_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
 
     def set_comment_invitation(self, journal, note):
         venue_id = journal.venue_id
