@@ -785,85 +785,108 @@ class InvitationBuilder(object):
                 )
             )
 
-    def set_acceptance_invitation(self, journal, note, duedate):
+    def set_acceptance_invitation(self, journal, note, certifications, duedate):
         venue_id = journal.venue_id
-        paper_group_id = f'{venue_id}/Paper{note.number}'
         editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_authors_id = journal.get_authors_id(number=note.number)
 
-        acceptance_invitation_id = f'{paper_group_id}/-/Acceptance'
+        acceptance_invitation_id = journal.get_acceptance_id(number=note.number)
         acceptance_invitation = openreview.tools.get_invitation(self.client, acceptance_invitation_id)
 
         ## Acceptance invitation
         if not acceptance_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
+            invitation = Invitation(id=acceptance_invitation_id,
+                duedate=duedate,
+                invitees=[venue_id],
+                readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                invitation=Invitation(id=acceptance_invitation_id,
-                    duedate=duedate,
-                    invitees=[venue_id],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'ddate': {
-                            'int-range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'nullable': True
-                        },
-                        'signatures': { 'values': [editors_in_chief_id] },
-                        'readers': { 'values': [ 'everyone']},
-                        'writers': { 'values': [ venue_id ]},
-                        'note': {
-                            'id': { 'value': note.id },
-                            'writers': { 'values': [ venue_id, editors_in_chief_id, paper_authors_id]},
-                            'content': {
-                                'venue': {
-                                    'value': {
-                                        'value': 'TMLR'
-                                    }
+                maxReplies=1,
+                edit={
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'signatures': { 'values': [editors_in_chief_id] },
+                    'readers': { 'values': [ 'everyone']},
+                    'writers': { 'values': [ venue_id ]},
+                    'note': {
+                        'id': { 'value': note.id },
+                        'writers': { 'values': [ venue_id, editors_in_chief_id, paper_authors_id]},
+                        'content': {
+                            'venue': {
+                                'value': {
+                                    'value': 'TMLR'
                                 },
-                                'venueid': {
-                                    'value': {
-                                        'value': '.TMLR'
-                                    }
+                                'order': 1
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR'
                                 },
-                                'authors': {
-                                    'value': {
-                                        'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                        'optional': True
-                                    },
-                                    'description': 'Comma separated list of author names.',
-                                    'order': 1,
-                                    'presentation': {
-                                        'hidden': True,
-                                    },
-                                    'readers': {
-                                        'values': ['everyone']
-                                    }
+                                'order': 2
+                            },
+                            'certifications': {
+                                'order': 3,
+                                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                                'value': {
+                                    'values-dropdown': [
+                                        'Featured Certification',
+                                        'Reproducibility Certification',
+                                        'Survey Certification'
+                                    ],
+                                    'optional': True
                                 },
-                                'authorids': {
-                                    'value': {
-                                        'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
-                                        'optional': True
-                                    },
-                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                                    'order': 2,
-                                    'readers': {
-                                        'values': ['everyone']
-                                    }
+                                'presentation': {
+                                    'default': certifications,
+                                },
+                            },
+                            'authors': {
+                                'value': {
+                                    'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'optional': True
+                                },
+                                'description': 'Comma separated list of author names.',
+                                'order': 4,
+                                'presentation': {
+                                    'hidden': True,
+                                },
+                                'readers': {
+                                    'values': ['everyone']
+                                }
+                            },
+                            'authorids': {
+                                'value': {
+                                    'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                    'optional': True
+                                },
+                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                'order': 5,
+                                'readers': {
+                                    'values': ['everyone']
                                 }
                             }
                         }
                     }
-                )
+                }
             )
 
+            with open(os.path.join(os.path.dirname(__file__), 'process/acceptance_submission_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
+
         ## Reject invitation
-        reject_invitation_id = f'{paper_group_id}/-/Reject'
+        reject_invitation_id = journal.get_reject_id(number=note.number)
         reject_invitation = openreview.tools.get_invitation(self.client, reject_invitation_id)
 
         if not reject_invitation:
@@ -1276,7 +1299,7 @@ class InvitationBuilder(object):
                     signatures=[venue_id],
                     maxReplies=1,
                     edit={
-                        'signatures': { 'values-regex': f'{paper_reviewers_id}|{paper_action_editors_id}' },
+                        'signatures': { 'values-regex': f'{paper_reviewers_id}.*|{paper_action_editors_id}' },
                         'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'note': {
@@ -1762,14 +1785,14 @@ class InvitationBuilder(object):
                                     'markdown': True
                                 }
                             },
-                            'certification': {
+                            'certifications': {
                                 'order': 3,
                                 'description': 'TODO',
                                 'value': {
                                     'values-dropdown': [
-                                        'Cert 1',
-                                        'Cert 2',
-                                        'Cart 3'
+                                        'Featured Certification',
+                                        'Reproducibility Certification',
+                                        'Survey Certification'
                                     ],
                                     'optional': True
                                 }
@@ -1790,35 +1813,35 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
-    def set_review_rating_invitation(self, journal, review):
+    def set_review_rating_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
-        note = self.client.get_note(review.forum)
-        paper_group_id=f'{venue_id}/Paper{note.number}'
-        signature=review.signatures[0]
-        if signature.startswith(f'{paper_group_id}/Reviewer_'):
-            rating_invitation_id = f'{signature}/-/Rating'
-            rating_invitation=openreview.tools.get_invitation(self.client, rating_invitation_id)
-            if not rating_invitation:
-                invitation = self.client.post_invitation_edit(readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    invitation=Invitation(id=rating_invitation_id,
-                        duedate=1613822400000, ## check duedate
-                        invitees=[f'{paper_group_id}/Action_Editors'],
-                        readers=[venue_id, f'{paper_group_id}/Action_Editors'],
+        reviews = self.client.get_notes(forum=note.forum, invitation=journal.get_review_id(number=note.number))
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number, anon=True)
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+
+        for review in reviews:
+            signature=review.signatures[0]
+            if signature.startswith(paper_reviewers_id):
+                rating_invitation_id = journal.get_review_rating_id(signature=signature)
+                rating_invitation=openreview.tools.get_invitation(self.client, rating_invitation_id)
+                if not rating_invitation:
+                    invitation = Invitation(id=rating_invitation_id,
+                        duedate=duedate,
+                        invitees=[paper_action_editors_id],
+                        readers=[venue_id, paper_action_editors_id],
                         writers=[venue_id],
                         signatures=[venue_id],
                         maxReplies=1,
                         edit={
-                            'signatures': { 'values': [f'{paper_group_id}/Action_Editors'] },
-                            'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
-                            'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
+                            'signatures': { 'values': [paper_action_editors_id] },
+                            'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                            'writers': { 'values': [ venue_id, paper_action_editors_id] },
                             'note': {
                                 'forum': { 'value': review.forum },
                                 'replyto': { 'value': review.id },
-                                'signatures': { 'values': [f'{paper_group_id}/Action_Editors'] },
-                                'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
-                                'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors'] },
+                                'signatures': { 'values': [paper_action_editors_id] },
+                                'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                                'writers': { 'values': [ venue_id, paper_action_editors_id] },
                                 'content': {
                                     'rating': {
                                         'order': 1,
@@ -1832,9 +1855,19 @@ class InvitationBuilder(object):
                                     }
                                 }
                             }
-                        },
-                        process=os.path.join(os.path.dirname(__file__), 'process/review_rating_process.py')
-                ))
+                        }
+                    )
+
+                    with open(os.path.join(os.path.dirname(__file__), 'process/review_rating_process.py')) as f:
+                        content = f.read()
+                        content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                        invitation.process = content
+
+                        self.client.post_invitation_edit(readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            invitation=invitation
+                        )
 
     def set_camera_ready_revision_invitation(self, journal, decision):
         venue_id = journal.venue_id

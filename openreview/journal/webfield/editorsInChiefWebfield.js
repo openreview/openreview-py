@@ -190,7 +190,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var metaReview = null;
       var decision = decisions.length && decisions[0];
       if (decision) {
-        metaReview = { id: decision.id, forum: submission.id, content: { recommendation: decision.content.recommendation.value, certification: decision.content.certification.value }};
+        metaReview = { id: decision.id, forum: submission.id, content: { recommendation: decision.content.recommendation.value, certification: decision.content.certifications.value }};
       }
 
       paperStatusRows.push({

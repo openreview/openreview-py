@@ -506,6 +506,17 @@ class TestJournal():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        ## Check invitations
+        invitations = openreview_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 7
+        assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Solicite_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
             signatures=['~Peter_Snow1'],
@@ -573,6 +584,17 @@ class TestJournal():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        ## Check invitations
+        invitations = openreview_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 7
+        assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Solicite_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+
 
         ## Poster another review with the same signature and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number 1 of replies for this Invitation'):
@@ -612,6 +634,18 @@ class TestJournal():
         process_logs = openreview_client.get_process_logs(id = review_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        ## Check invitations
+        invitations = openreview_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 8
+        assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Solicite_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         ## All the reviewes should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
@@ -654,9 +688,6 @@ class TestJournal():
 <p>The TMLR Editors-in-Chief</p>
 '''
 
-        ## Official Recommendation should be created
-        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Recommendation")
-
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[carlos_anon_groups[0].id],
@@ -670,6 +701,18 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
+        ## Check invitations
+        invitations = openreview_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 8
+        assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Solicite_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
+
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[david_anon_groups[0].id],
             note=Note(
@@ -682,6 +725,18 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
+        ## Check invitations
+        invitations = openreview_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 8
+        assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Solicite_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
+
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[javier_anon_groups[0].id],
             note=Note(
@@ -693,6 +748,21 @@ class TestJournal():
         )
 
         helpers.await_queue(openreview_client)
+
+        ## Check invitations
+        invitations = openreview_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 11
+        assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Solicite_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
+        assert f"{david_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
+        assert f"{javier_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
+        assert f"{carlos_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
 
         messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
@@ -753,7 +823,7 @@ Reject: the paper is rejected, but you may indicate whether you would be willing
                 content={
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' },
-                    'certification': { 'value': ['Cert 1'] }
+                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
                 }
             )
         )
@@ -766,7 +836,10 @@ Reject: the paper is rejected, but you may indicate whether you would be willing
 
         acceptance_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Acceptance',
                             signatures=['.TMLR/Editors_In_Chief'],
-                            note=Note(id=note_id_1))
+                            note=Note(id=note_id_1,
+                            content= {
+                                'certifications': { 'value': ['Survey Certification'] }
+                            }))
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -779,6 +852,7 @@ Reject: the paper is rejected, but you may indicate whether you would be willing
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'TMLR'
         assert note.content['venueid']['value'] == '.TMLR'
+        assert note.content['certifications']['value'] == ['Survey Certification']
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
 

@@ -59,7 +59,7 @@ class Journal(object):
         return self.__get_group_id(self.action_editors_name, number)
 
     def get_reviewers_id(self, number=None, anon=False):
-        return self.__get_group_id('Reviewer_.*' if anon else self.reviewers_name, number)
+        return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
@@ -72,6 +72,18 @@ class Journal(object):
 
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
+
+    def get_review_id(self, number):
+        return self.__get_invitation_id(name='Review', number=number)
+
+    def get_review_rating_id(self, signature):
+        return self.__get_invitation_id(name='Rating', prefix=signature)
+
+    def get_acceptance_id(self, number):
+        return self.__get_invitation_id(name='Acceptance', number=number)
+
+    def get_reject_id(self, number):
+        return self.__get_invitation_id(name='Reject', number=number)
 
     def get_reviewer_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation', number=number)

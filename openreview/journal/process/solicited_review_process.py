@@ -6,9 +6,6 @@ def process(client, edit, invitation):
     submission = client.get_note(note.forum)
     venue_id = journal.venue_id
 
-    ## Create invitation to rate reviews
-    journal.invitation_builder.set_review_rating_invitation(journal, note)
-
     review_note=client.get_note(note.id)
     if review_note.readers == ['everyone']:
         return

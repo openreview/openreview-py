@@ -1,22 +1,15 @@
 def process(client, edit, invitation):
+    venue_id='.TMLR'
+    note=edit.note
 
     journal = openreview.journal.Journal()
 
-    note = client.get_note(edit.note.id)
+    journal.invitation_builder.set_camera_ready_revision_invitation(journal, note)
 
-    recommendations=client.get_notes(forum=note.forum, invitation=edit.invitation)
-    if len(recommendations) == 3:
-
-        submission = client.get_note(note.forum)
-        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
-
-        journal.invitation_builder.set_review_rating_invitation(journal, submission, openreview.tools.datetime_millis(duedate))
-
-        ## send email to authors
-        client.post_message(
-            recipients=[journal.get_action_editors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for TMLR submission {submission.content['title']['value']}''',
-            message=f'''Hi {{{{fullname}}}},
+    client.post_message(
+        recipients=[journal.get_action_editors_id(number=note.number)],
+        subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for TMLR submission {note.content['title']['value']}''',
+        message=f'''Hi {{{{fullname}}}},
 
 Thank you for overseeing the review process for TMLR submission "{submission.content['title']['value']}".
 
@@ -38,6 +31,6 @@ For more details and guidelines on performing your review, visit jmlr.org/tmlr .
 
 We thank you for your essential contribution to TMLR!
 
-    ''',
-            replyTo=journal.contact_info
-        )
+''',
+        replyTo=journal.contact_info
+    )
