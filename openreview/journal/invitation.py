@@ -179,7 +179,7 @@ class InvitationBuilder(object):
     def set_submission_invitation(self, journal):
 
         venue_id=journal.venue_id
-        editor_in_chief_id=journal.get_editors_in_chief_id()
+        editor_in_chief_id=journal._id()
         action_editors_id=journal.get_action_editors_id()
         authors_id=journal.get_authors_id()
         authors_regex=journal.get_authors_id(number='.*')
@@ -1372,7 +1372,7 @@ class InvitationBuilder(object):
                 pre_content = g.read()
                 invitation = Invitation(id=solicit_review_invitation_id,
                     invitees=['~'],
-                    noninvitees=[journal.get_editors_in_chief(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
+                    noninvitees=[journal.get_editors_in_chief_id(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
                     readers=['everyone'],
                     writers=[venue_id],
                     signatures=[venue_id],
