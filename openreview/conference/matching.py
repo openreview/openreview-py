@@ -832,7 +832,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
+    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, scores_stream=None):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -932,6 +932,48 @@ class Matching(object):
 
         if build_conflicts:
             self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info)
+
+        if scores_stream:
+            score_edges = []
+            deleted_papers = set()
+            invitation = self._create_edge_invitation(self.conference.get_affinity_score_id(self.match_group.id))
+            submissions_per_id = {note.id: note.number for note in submissions}
+            for input_line in scores_stream.decode().split('\n'):
+                if input_line:
+                    input_line = input_line.split(',')
+                    paper_note_id = input_line[0].strip()
+                    paper_number = submissions_per_id.get(paper_note_id)
+                    if paper_number:
+                        profile_id = input_line[1].strip()
+                        score = str(max(round(float(input_line[2]), 4), 0))
+                        score_edges.append(openreview.Edge(
+                            invitation=invitation.id,
+                            head=paper_note_id,
+                            tail=profile_id,
+                            weight=float(score),
+                            readers=self._get_edge_readers(tail=profile_id),
+                            nonreaders=[self.conference.get_authors_id(number=paper_number)],
+                            writers=[self.conference.id],
+                            signatures=[self.conference.id]
+                        ))
+                    else:
+                        deleted_papers.add(paper_note_id)
+
+            print('deleted papers', deleted_papers)
+
+            ##Delete previous scores
+            self.client.delete_edges(invitation.id, wait_to_finish=True)
+
+            openreview.tools.post_bulk_edges(client=self.client, edges=score_edges)
+            # Perform sanity check
+            edges_posted = self.client.get_edges_count(invitation=invitation.id)
+            if edges_posted < len(score_edges):
+                raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
+
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
 
         self._build_config_invitation(score_spec)
         return matching_status

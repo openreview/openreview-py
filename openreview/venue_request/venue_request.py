@@ -1199,9 +1199,15 @@ class VenueRequest():
                 'required': True,
                 'order': 3
             },
-            'affinity_scores': {
-                'description': 'Upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
+            'compute_affinity_scores': {
+                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
                 'order': 4,
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+            },
+            'upload_affinity_scores': {
+                'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
+                'order': 5,
                 'value-file': {
                     'fileTypes': ['csv'],
                     'size': 50

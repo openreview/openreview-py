@@ -8,16 +8,14 @@ def process(client, note, invitation):
     build_conflicts=note.content.get('build_conflicts')
 
     matching_group = note.content['matching_group']
-    scores = note.content.get('affinity_scores')
+    compute_scores = note.content.get('compute_affinity_scores') == 'Yes'
+    scores = note.content.get('upload_affinity_scores')
     file_name=None
 
     if scores:
-        scores_attachment = client.get_attachment(id=note.id, field_name='affinity_scores')
-        with open('affinity_scores.csv','wb') as file:
-            file.write(scores_attachment)
-        file_name = 'affinity_scores.csv'
+        scores_stream = client.get_attachment(id=note.id, field_name='upload_affinity_scores')
 
-    matching_status = conference.setup_matching(committee_id=matching_group, build_conflicts=build_conflicts, affinity_score_file=file_name)
+    matching_status = conference.setup_matching(committee_id=matching_group, build_conflicts=build_conflicts, affinity_score_file=file_name, scores_stream=scores_stream)
     role_name = matching_group.split('/')[-1]
 
     comment_note = openreview.Note(
@@ -30,7 +28,7 @@ def process(client, note, invitation):
         content = {
             'title': 'Matching Status',
             'comment': f'''
-{role_name} without a profile: {len(matching_status.get('no_profiles', []))} users.
+{role_name} without a profile: {len(matching_status.get('no_profiles'))} users: {matching_status.get('no_profiles')}
 
 Please check the {role_name} group to see more details: https://openreview.net/group/edit?id={matching_group}
             '''
