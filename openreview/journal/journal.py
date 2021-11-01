@@ -175,6 +175,8 @@ class Journal(object):
         <p>
             <strong>Editors-in-chief:</strong></br>
             {editors}
+            <strong>Managing Editors:</strong></br>
+            <a href=\"https://openreview.net/profile?id=~Fabian_Pedregosa1\"> Fabian Pedregosa</a>
         </p>
         <p>
             Transactions on Machine Learning Research (TMLR) is a venue for dissemination of machine learning research that is intended to complement JMLR while supporting the unmet needs of a growing ML community.

@@ -253,8 +253,7 @@ class InvitationBuilder(object):
                                 'value-file': {
                                     'fileTypes': ['pdf'],
                                     'size': 50
-                                },
-                                'optional': True
+                                }
                             },
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
@@ -299,7 +298,7 @@ class InvitationBuilder(object):
                             'value': {
                                 'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services.",
+                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
                             'order': 9,
                             'readers': {
                                 'values': [ venue_id, action_editors_value, authors_value]
@@ -309,7 +308,7 @@ class InvitationBuilder(object):
                             'value': {
                                 'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
+                            'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                             'order': 10,
                             'readers': {
                                 'values': [ venue_id, action_editors_value, authors_value]
@@ -1508,8 +1507,7 @@ class InvitationBuilder(object):
                                     'value-file': {
                                         'fileTypes': ['pdf'],
                                         'size': 50
-                                    },
-                                    'optional': True
+                                    }
                                 },
                                 'description': 'Upload a PDF file that ends with .pdf',
                                 'order': 5,
@@ -1554,7 +1552,7 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services.",
+                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
                                 'order': 9,
                                 'readers': {
                                     'values': [ venue_id, paper_action_editors_id, paper_authors_id]
@@ -1564,7 +1562,7 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
+                                'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                                 'order': 10,
                                 'readers': {
                                     'values': [ venue_id, paper_action_editors_id, paper_authors_id]
@@ -1813,7 +1811,7 @@ class InvitationBuilder(object):
                             },
                             'certifications': {
                                 'order': 3,
-                                'description': 'TODO',
+                                'description': 'Optionally and if appropriate, recommend a certification for this submission. See https://jmlr.org/tmlr for information about certifications.',
                                 'value': {
                                     'values-dropdown': [
                                         'Featured Certification',
@@ -1958,8 +1956,7 @@ class InvitationBuilder(object):
                                     'value-file': {
                                         'fileTypes': ['pdf'],
                                         'size': 50
-                                    },
-                                    'optional': True
+                                    }
                                 },
                                 'description': 'Upload a PDF file that ends with .pdf',
                                 'order': 5,
@@ -2004,7 +2001,7 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services.",
+                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
                                 'order': 9,
                                 'readers': {
                                     'values': [ venue_id, paper_action_editors_id, paper_authors_id]
@@ -2014,7 +2011,7 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB).',
+                                'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                                 'order': 10,
                                 'readers': {
                                     'values': [ venue_id, paper_action_editors_id, paper_authors_id]

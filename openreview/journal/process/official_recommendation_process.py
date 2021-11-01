@@ -28,9 +28,9 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
 We ask that you submit your decision within 1 week ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}
 
 The possible decisions are:
-Accept as is: once its camera ready version is submitted, the manuscript will be marked as accepted.
-Accept with minor revision: to use if you wish to request some specific revisions to the manuscript, to be specified explicitly in your decision comments. These revisions will be expected from the authors when they submit their camera ready version.
-Reject: the paper is rejected, but you may indicate whether you would be willing to consider a significantly revised version of the manuscript. Such a revised submission will need to be entered as a new submission, that will also provide a link to this rejected submission as well as a description of the changes made since.
+- **Accept as is**: once its camera ready version is submitted, the manuscript will be marked as accepted.
+- **Accept with minor revision**: to use if you wish to request some specific revisions to the manuscript, to be specified explicitly in your decision comments. These revisions will be expected from the authors when they submit their camera ready version.
+- **Reject**: the paper is rejected, but you may indicate whether you would be willing to consider a significantly revised version of the manuscript. Such a revised submission will need to be entered as a new submission, that will also provide a link to this rejected submission as well as a description of the changes made since.
 
 Your decision may also include certification(s) recommendations for the submission (in case of an acceptance).
 
