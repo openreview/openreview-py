@@ -1661,12 +1661,12 @@ class InvitationBuilder(object):
                     writers=[venue_id],
                     signatures=[venue_id],
                     edit={
-                        'signatures': { 'values-regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*' },
+                        'signatures': { 'values-regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}' },
                         'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id]},
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
                         'note': {
                             'id': {
-                                'value-invitation': public_comment_invitation_id,
+                                'value-invitation': official_comment_invitation_id,
                                 'optional': True
                             },
                             'forum': { 'value': note.id },
@@ -1676,8 +1676,8 @@ class InvitationBuilder(object):
                                 'nullable': True
                             },
                             'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values-dropdown': [f'{venue_id}/Editors_In_Chief', paper_action_editors_id, paper_reviewers_id]},
-                            'writers': { 'values': ['${signatures}']},
+                            'readers': { 'values-dropdown': [editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id, paper_authors_id]},
+                            'writers': { 'values': [venue_id, '${signatures}']},
                             'content': {
                                 'title': {
                                     'order': 1,
