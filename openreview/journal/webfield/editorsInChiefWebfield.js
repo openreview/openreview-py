@@ -11,7 +11,7 @@ var ACTION_EDITOR_NAME = 'Action_Editors'
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME
 var HEADER = {
   title: 'TMLR Editors In Chief Console',
-  instructions: 'Put instructions here'
+  instructions: ''
 };
 
 // Main function is the entry point to the webfield code
@@ -20,7 +20,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Paper Status', 'Action Editor Status', 'Reviewer Status', 'test table'],
+    tabs: ['Paper Status', 'Action Editor Status', 'Reviewer Status'],
     referrer: args && args.referrer
   })
 
@@ -90,6 +90,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         referrer: referrerUrl
       },
       decisionProgressData: {
+        metaReviewName: 'Decision',
+        numPapers: 0,
         numCompletedMetaReviews: 0,
         papers: []
       }
@@ -117,8 +119,21 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var paperActionEditors = aeByNumber[number] || [];
       var paperReviewerStatus = {};
       var confidences = [];
-      var completedReviews = reviews.length == paperReviewers.length;
-      var formattedSubmission = { id: submission.id, number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}};
+      var completedReviews = reviews.length && (reviews.length == paperReviewers.length);
+      var formattedSubmission = {
+        id: submission.id,
+        number: number,
+        cdate: submission.cdate,
+        mdate: submission.mdate,
+        tcdate: submission.tcdate,
+        tmdate: submission.tmdate,
+        showDates: true,
+        content: {
+          title: submission.content.title.value,
+          authors: submission.content.authors.value,
+          authorids: submission.content.authorids.value
+        }
+      };
 
       paperReviewers.forEach(function(reviewer) {
         var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
@@ -164,11 +179,12 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         }
       })
 
-      paperActionEditors.forEach(function(actionEditor) {
-        var completedDecision = decisions.find(function(decision) { return decision.signatures[0].endsWith('/Action_Editor_' + actionEditor.anonId); });
+      paperActionEditors.forEach(function(actionEditor, number) {
+        var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/Paper' + number + '/Action_Editors'; });
         var actionEditorStatus = actionEditorStatusById[actionEditor.id];
         if (actionEditorStatus) {
           actionEditorStatus.reviewProgressData.numPapers += 1;
+          actionEditorStatus.decisionProgressData.numPapers +=1;
           if (completedDecision){
             actionEditorStatus.decisionProgressData.numCompletedMetaReviews += 1;
           }
@@ -190,7 +206,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var metaReview = null;
       var decision = decisions.length && decisions[0];
       if (decision) {
-        metaReview = { id: decision.id, forum: submission.id, content: { recommendation: decision.content.recommendation.value, certification: decision.content.certifications.value }};
+        metaReview = { id: decision.id, forum: submission.id, content: { recommendation: decision.content.recommendation.value, certification: (decision.content.certifications && decision.content.certifications.value) || [] }};
       }
 
       paperStatusRows.push({
@@ -265,6 +281,7 @@ var renderData = function(venueStatusData) {
       sortOptions: {
         Paper_Number: function(row) { return row.submissionNumber.number; },
         Paper_Title: function(row) { return _.toLower(_.trim(row.submission.content.title)); },
+        Paper_Submission_Date: function(row) { return row.submission.cdate; },
         Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
         Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
         Decision: function(row) { return row.areachairProgressData.recommendation; },
@@ -274,6 +291,7 @@ var renderData = function(venueStatusData) {
         number: ['submissionNumber.number'],
         id: ['submission.id'],
         title: ['submission.content.title'],
+        submissionDate: ['submission.cdate'],
         author: ['submission.content.authors','note.content.authorids'], // multi props
         keywords: ['submission.content.keywords'],
         reviewer: ['reviewProgressData.reviewers'],
@@ -360,11 +378,6 @@ var renderData = function(venueStatusData) {
       a: ['a.col1']
     }
   }
-
-  Webfield2.ui.renderTable('#test-table', [
-    { a: { col1: 'This is col 1'}, b: { c: 'this is col 2', d: 'this is col 2'}},
-    { a: { col1: 'This is another col 1'}, b: { c: 'this is another col 2', d: 'this is another col 2'}}
-  ], options);
 
 }
 

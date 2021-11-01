@@ -10,7 +10,8 @@ var VENUE_ID = '.TMLR';
 var SHORT_PHRASE = 'TMLR';
 var SUBMISSION_ID = '.TMLR/-/Author_Submission';
 var HEADER = {
-  title: 'TMLR Author Console'
+  title: 'TMLR Author Console',
+  instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the TMLR author guidelines.'
 };
 var AUTHOR_NAME = 'Authors';
 

@@ -939,7 +939,7 @@ class InvitationBuilder(object):
                 readers=[venue_id, authors_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                minReplies=1,
+                minReplies=3,
                 type='Edge',
                 edit={
                     'ddate': {
@@ -977,13 +977,13 @@ class InvitationBuilder(object):
 
             header = {
                 'title': 'TMLR Action Editor Suggestion',
-                'instructions': '<p class="dark">Recommend a ranked list of action editor for each of your submitted papers.</p>\
+                'instructions': '<p class="dark">Recommend a list of at least Action Editors for your paper.</p>\
                     <p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
-                        <li>For each of your assigned papers, please select 5 reviewers to recommend.</li>\
+                        <li>For your submission, please select at least 3 AEs to recommend.</li>\
                         <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
-                        <li>Reviewers who have conflicts with the selected paper are not shown.</li>\
-                        <li>The list of reviewers for a given paper can be sorted by different parameters such as affinity score or bid. In addition, the search box can be used to search for a specific reviewer by name or institution.</li>\
+                        <li>AEs who have conflicts with the selected paper are not shown.</li>\
+                        <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
                         <li>To get started click the button below.</li>\
                     </ul>\
                     <br>'
@@ -1072,12 +1072,7 @@ class InvitationBuilder(object):
 
             header = {
                 'title': 'TMLR Action Editor Assignment',
-                'instructions': '<p class="dark">Assign an action editor from the list of editors recommended by the submission authors.</p>\
-                    <p class="dark"><strong>Instructions:</strong></p>\
-                    <ul>\
-                        <li>TODO.</li>\
-                    </ul>\
-                    <br>'
+                'instructions': ''
             }
 
             edit_param = ae_assignment_invitation_id
@@ -1168,7 +1163,8 @@ class InvitationBuilder(object):
                 'instructions': '<p class="dark">Assign reviewers based on their affinity scores.</p>\
                     <p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
-                        <li>TODO.</li>\
+                        <li>Assign 3 reviewers to the TMLR submissions you are in charged of.</li>\
+                        <li>Please avoid giving an assignment to a reviewer that already has an uncompleted assignment.</li>\
                     </ul>\
                     <br>'
             }
@@ -1196,6 +1192,7 @@ class InvitationBuilder(object):
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
+        paper_authors_id = journal.get_authors_id(number=note.number)
 
         review_invitation_id=journal.get_review_id(number=note.number)
         review_invitation=openreview.tools.get_invitation(self.client, review_invitation_id)
@@ -1225,7 +1222,7 @@ class InvitationBuilder(object):
                             'nullable': True
                         },
                         'signatures': { 'values': ['${signatures}'] },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}', paper_authors_id] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'content': {
                             'summary_of_contributions': {
@@ -1619,6 +1616,7 @@ class InvitationBuilder(object):
                                 'optional': True
                             },
                             'forum': { 'value': note.id },
+                            'replyto': { 'with-forum': note.id },
                             'ddate': {
                                 'int-range': [ 0, 9999999999999 ],
                                 'optional': True,
@@ -1672,6 +1670,7 @@ class InvitationBuilder(object):
                                 'optional': True
                             },
                             'forum': { 'value': note.id },
+                            'replyto': { 'with-forum': note.id },
                             'ddate': {
                                 'int-range': [ 0, 9999999999999 ],
                                 'optional': True,

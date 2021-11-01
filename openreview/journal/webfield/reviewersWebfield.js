@@ -10,7 +10,8 @@ var VENUE_ID = '.TMLR';
 var SHORT_PHRASE = 'TMLR';
 var SUBMISSION_ID = '.TMLR/-/Author_Submission';
 var HEADER = {
-  title: 'TMLR Reviewer Console'
+  title: 'TMLR Reviewer Console',
+  instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the TMLR reviewer guidelines.'
 };
 var REVIEWERS_NAME = 'Reviewers';
 var REVIEW_NAME = 'Review';

@@ -10,7 +10,7 @@ var REVIEWERS_NAME = 'Reviewers'
 var ACTION_EDITOR_ID = '.TMLR/Action_Editors'
 var HEADER = {
   title: 'TMLR',
-  instructions: 'Put instructions here'
+  instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the TMLR AE guidelines.'
 };
 
 // Main function is the entry point to the webfield code
@@ -19,7 +19,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Assigned Papers', 'Action Editor Tasks', 'test table'],
+    tabs: ['Assigned Papers', 'Action Editor Tasks'],
     referrer: args && args.referrer
   })
 
@@ -177,21 +177,6 @@ var renderData = function(venueStatusData) {
       },
       extraClasses: 'ac-console-table'
   })
-
-  var options = {
-    sortOptions: {
-      a: function(row) { return row.a.col1; }
-    },
-    searchProperties: {
-      a: ['a.col1']
-    }
-  }
-
-  Webfield2.ui.renderTable('#test-table', [
-    { a: { col1: 'This is col 1'}, b: { c: 'this is col 2', d: 'this is col 2'}},
-    { a: { col1: 'This is another col 1'}, b: { c: 'this is another col 2', d: 'this is another col 2'}}
-  ], options);
-
 }
 
 main();
