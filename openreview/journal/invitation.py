@@ -1193,23 +1193,25 @@ class InvitationBuilder(object):
 
     def set_review_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
-        paper_group_id=f'{venue_id}/Paper{note.number}'
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
 
-        review_invitation_id=f'{paper_group_id}/-/Review'
+        review_invitation_id=journal.get_review_id(number=note.number)
         review_invitation=openreview.tools.get_invitation(self.client, review_invitation_id)
 
         if not review_invitation:
             invitation = Invitation(id=review_invitation_id,
                 duedate=duedate,
-                invitees=[venue_id, f"{paper_group_id}/Reviewers"],
+                invitees=[venue_id, paper_reviewers_id],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
                 maxReplies=1,
                 edit={
-                    'signatures': { 'values-regex': f'{paper_group_id}/Reviewer_.*|{paper_group_id}/Action_Editors' },
-                    'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                    'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                    'signatures': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                    'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                     'note': {
                         'id': {
                             'value-invitation': review_invitation_id,
@@ -1223,8 +1225,8 @@ class InvitationBuilder(object):
                             'nullable': True
                         },
                         'signatures': { 'values': ['${signatures}'] },
-                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
-                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}'] },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                        'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'content': {
                             'summary_of_contributions': {
                                 'order': 1,
