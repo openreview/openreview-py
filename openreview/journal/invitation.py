@@ -212,14 +212,14 @@ class InvitationBuilder(object):
                             'value': {
                                 'value-regex': '^.{1,250}$'
                             },
-                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 1
                         },
                         'abstract': {
                             'value': {
                                 'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2,
                             'presentation': {
                                 'markdown': True
@@ -256,7 +256,7 @@ class InvitationBuilder(object):
                                 },
                                 'optional': True
                             },
-                            'description': 'Upload a PDF file that ends with .pdf',
+                            'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
                         "supplementary_material": {
@@ -281,7 +281,7 @@ class InvitationBuilder(object):
                                 'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
-                            'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from',
+                            'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
@@ -289,7 +289,7 @@ class InvitationBuilder(object):
                                 'value-regex': '^[\\S\\s]{1,5000}$',
                                 'optional': True
                             },
-                            'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                            'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 8,
                             'presentation': {
                                 'markdown': True
@@ -299,7 +299,7 @@ class InvitationBuilder(object):
                             'value': {
                                 'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
+                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services.",
                             'order': 9,
                             'readers': {
                                 'values': [ venue_id, action_editors_value, authors_value]
@@ -690,7 +690,7 @@ class InvitationBuilder(object):
                         'content': {
                             'desk_rejection_reason': {
                                 'order': 1,
-                                'description': 'Enter a reason (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'description': 'Enter a reason (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
@@ -1230,7 +1230,7 @@ class InvitationBuilder(object):
                         'content': {
                             'summary_of_contributions': {
                                 'order': 1,
-                                'description': 'Brief description, in the reviewer’s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'description': 'Brief description, in the reviewer’s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
@@ -1240,7 +1240,7 @@ class InvitationBuilder(object):
                             },
                             'strengths_and_weaknesses': {
                                 'order': 2,
-                                'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
@@ -1250,7 +1250,7 @@ class InvitationBuilder(object):
                             },
                             'requested_changes': {
                                 'order': 3,
-                                'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
@@ -1260,7 +1260,7 @@ class InvitationBuilder(object):
                             },
                             'broader_impact_concerns': {
                                 'order': 4,
-                                'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
@@ -1467,7 +1467,7 @@ class InvitationBuilder(object):
                                     'value-regex': '^.{1,250}$',
                                     'optional': True
                                 },
-                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                 'order': 1
                             },
                             'abstract': {
@@ -1475,7 +1475,7 @@ class InvitationBuilder(object):
                                     'value-regex': '^[\\S\\s]{1,5000}$',
                                     'optional': True
                                 },
-                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                 'order': 2,
                                 'presentation': {
                                     'markdown': True
@@ -1539,7 +1539,7 @@ class InvitationBuilder(object):
                                     'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True
                                 },
-                                'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from',
+                                'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from.',
                                 'order': 7,
                             },
                             'changes_since_last_submission': {
@@ -1547,7 +1547,7 @@ class InvitationBuilder(object):
                                     'value-regex': '^[\\S\\s]{1,5000}$',
                                     'optional': True
                                 },
-                                'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                 'order': 8,
                                 'presentation': {
                                     'markdown': True
@@ -1557,7 +1557,7 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
+                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services.",
                                 'order': 9,
                                 'readers': {
                                     'values': [ venue_id, paper_action_editors_id, paper_authors_id]
@@ -1637,7 +1637,7 @@ class InvitationBuilder(object):
                                 },
                                 'comment': {
                                     'order': 2,
-                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                     'value': {
                                         'value-regex': '^[\\S\\s]{1,5000}$'
                                     },
@@ -1690,7 +1690,7 @@ class InvitationBuilder(object):
                                 },
                                 'comment': {
                                     'order': 2,
-                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                     'value': {
                                         'value-regex': '^[\\S\\s]{1,5000}$'
                                     },
@@ -1741,7 +1741,7 @@ class InvitationBuilder(object):
                                 },
                                 'comment': {
                                     'order': 2,
-                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                     'value': {
                                         'value-regex': '^[\\S\\s]{1,5000}$'
                                     },
@@ -1804,7 +1804,7 @@ class InvitationBuilder(object):
                             },
                             'comment': {
                                 'order': 2,
-                                'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,200000}$'
                                 },
@@ -1924,14 +1924,14 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value-regex': '^.{1,250}$'
                                 },
-                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                 'order': 1
                             },
                             'abstract': {
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                 'order': 2,
                                 'presentation': {
                                     'markdown': True
@@ -1987,7 +1987,7 @@ class InvitationBuilder(object):
                                     'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True
                                 },
-                                'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from',
+                                'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from.',
                                 'order': 7,
                             },
                             'changes_since_last_submission': {
@@ -1995,7 +1995,7 @@ class InvitationBuilder(object):
                                     'value-regex': '^[\\S\\s]{1,5000}$',
                                     'optional': True
                                 },
-                                'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
+                                'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                 'order': 8,
                                 'presentation': {
                                     'markdown': True
@@ -2005,7 +2005,7 @@ class InvitationBuilder(object):
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,5000}$'
                                 },
-                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services",
+                                'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services.",
                                 'order': 9,
                                 'readers': {
                                     'values': [ venue_id, paper_action_editors_id, paper_authors_id]
