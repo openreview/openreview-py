@@ -201,8 +201,8 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 edit={
                     'signatures': { 'values-regex': '~.*' },
-                    'readers': { 'values': [ venue_id, '${signatures}', action_editors_value, authors_value]},
-                    'writers': { 'values': [ venue_id, '${signatures}', authors_value]},
+                    'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
+                    'writers': { 'values': [ venue_id, ]},
                     'note': {
                         'signatures': { 'values': [authors_value] },
                         'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
@@ -1589,9 +1589,13 @@ class InvitationBuilder(object):
 
     def set_comment_invitation(self, journal, note):
         venue_id = journal.venue_id
-        paper_group_id=f'{venue_id}/Paper{note.number}'
-        public_comment_invitation_id=f'{paper_group_id}/-/Public_Comment'
-        public_comment_invitation=openreview.tools.get_invitation(self.client, public_comment_invitation_id)
+        editors_in_chief_id = journal.get_editors_in_chief_id()
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
+
+        public_comment_invitation_id = journal.get_public_comment_id(number=note.number)
+        public_comment_invitation = openreview.tools.get_invitation(self.client, public_comment_invitation_id)
 
         if not public_comment_invitation:
             invitation = self.client.post_invitation_edit(readers=[venue_id],
@@ -1599,13 +1603,14 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 invitation=Invitation(id=public_comment_invitation_id,
                     invitees=['everyone'],
+                    noninvitees=[paper_action_editors_id, paper_reviewers_id, paper_authors_id],
                     readers=['everyone'],
                     writers=[venue_id],
                     signatures=[venue_id],
                     edit={
-                        'signatures': { 'values-regex': f'~.*|{venue_id}/Editors_In_Chief|{paper_group_id}/Action_Editors|{paper_group_id}/Reviewers/.*|{paper_group_id}/Authors' },
-                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}']},
-                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}']},
+                        'signatures': { 'values-regex': f'~.*' },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
+                        'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
                         'note': {
                             'id': {
                                 'value-invitation': public_comment_invitation_id,
@@ -1619,7 +1624,7 @@ class InvitationBuilder(object):
                             },
                             'signatures': { 'values': ['${signatures}'] },
                             'readers': { 'values': [ 'everyone']},
-                            'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}']},
+                            'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
                             'content': {
                                 'title': {
                                     'order': 1,
@@ -1642,22 +1647,23 @@ class InvitationBuilder(object):
                         }
                     }))
 
-        official_comment_invitation_id=f'{paper_group_id}/-/Official_Comment'
+        official_comment_invitation_id=journal.get_official_comment_id(number=note.number)
         official_comment_invitation=openreview.tools.get_invitation(self.client, official_comment_invitation_id)
 
         if not official_comment_invitation:
+            paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
             invitation = self.client.post_invitation_edit(readers=[venue_id],
                 writers=[venue_id],
                 signatures=[venue_id],
                 invitation=Invitation(id=official_comment_invitation_id,
-                    invitees=[venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers'],
+                    invitees=[venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
                     readers=['everyone'],
                     writers=[venue_id],
                     signatures=[venue_id],
                     edit={
-                        'signatures': { 'values-regex': f'{venue_id}/Editors_In_Chief|{paper_group_id}/Action_Editors|{paper_group_id}/Reviewers/.*' },
-                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers']},
-                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}']},
+                        'signatures': { 'values-regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*' },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id]},
+                        'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
                         'note': {
                             'id': {
                                 'value-invitation': public_comment_invitation_id,
@@ -1670,7 +1676,7 @@ class InvitationBuilder(object):
                                 'nullable': True
                             },
                             'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values-dropdown': [f'{venue_id}/Editors_In_Chief', f'{paper_group_id}/Action_Editors', f'{paper_group_id}/Reviewers']},
+                            'readers': { 'values-dropdown': [f'{venue_id}/Editors_In_Chief', paper_action_editors_id, paper_reviewers_id]},
                             'writers': { 'values': ['${signatures}']},
                             'content': {
                                 'title': {
@@ -1694,22 +1700,22 @@ class InvitationBuilder(object):
                         }
                     }))
 
-        moderate_invitation_id=f'{paper_group_id}/-/Moderate'
-        moderate_invitation=openreview.tools.get_invitation(self.client, moderate_invitation_id)
+        moderation_invitation_id=journal.get_moderation_id(number=note.number)
+        moderation_invitation=openreview.tools.get_invitation(self.client, moderation_invitation_id)
 
-        if not moderate_invitation:
+        if not moderation_invitation:
             invitation = self.client.post_invitation_edit(readers=[venue_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                invitation=Invitation(id=moderate_invitation_id,
-                    invitees=[venue_id, f'{paper_group_id}/Action_Editors'],
-                    readers=[venue_id, f'{paper_group_id}/Action_Editors'],
+                invitation=Invitation(id=moderation_invitation_id,
+                    invitees=[venue_id, paper_action_editors_id],
+                    readers=[venue_id, paper_action_editors_id],
                     writers=[venue_id],
                     signatures=[venue_id],
                     edit={
-                        'signatures': { 'values-regex': f'{paper_group_id}/Action_Editors|{venue_id}$' },
-                        'readers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors']},
-                        'writers': { 'values': [ venue_id, f'{paper_group_id}/Action_Editors']},
+                        'signatures': { 'values-regex': f'{editors_in_chief_id}|{paper_action_editors_id}' },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id]},
+                        'writers': { 'values': [ venue_id, paper_action_editors_id]},
                         'note': {
                             'id': { 'value-invitation': public_comment_invitation_id },
                             'forum': { 'value': note.id },
@@ -1717,7 +1723,7 @@ class InvitationBuilder(object):
                                 'values': ['everyone']
                             },
                             'writers': {
-                                'values': [venue_id, f'{paper_group_id}/Action_Editors']
+                                'values': [venue_id, paper_action_editors_id]
                             },
                             'signatures': { 'values-regex': '~.*', 'optional': True },
                             'content': {
@@ -1728,7 +1734,7 @@ class InvitationBuilder(object):
                                         'value-regex': '^.{1,500}$'
                                     },
                                     'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}']
+                                        'values': [ venue_id, paper_action_editors_id, '${signatures}']
                                     }
                                 },
                                 'comment': {
@@ -1741,7 +1747,7 @@ class InvitationBuilder(object):
                                         'markdown': True
                                     },
                                     'readers': {
-                                        'values': [ venue_id, f'{paper_group_id}/Action_Editors', '${signatures}']
+                                        'values': [ venue_id, paper_action_editors_id, '${signatures}']
                                     }
                                 }
                             }

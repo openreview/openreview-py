@@ -97,6 +97,14 @@ class Journal(object):
     def get_solicit_review_id(self, number):
         return self.__get_invitation_id(name='Solicit_Review', number=number)
 
+    def get_public_comment_id(self, number):
+        return self.__get_invitation_id(name='Public_Comment', number=number)
+
+    def get_official_comment_id(self, number):
+        return self.__get_invitation_id(name='Official_Comment', number=number)
+
+    def get_moderation_id(self, number):
+        return self.__get_invitation_id(name='Moderation', number=number)
 
     def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)

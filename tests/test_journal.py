@@ -169,11 +169,6 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
-        # assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
-        # assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        # assert f"{venue_id}/Paper1/-/Decision" in [i.id for i in invitations]
-        # assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        # assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
 
         ## Update submission 1
@@ -322,10 +317,9 @@ class TestJournal():
 
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 3
-        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert len(invitations) == 2
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
 
         ## Assign Action editor to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
@@ -515,7 +509,7 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
@@ -542,7 +536,7 @@ class TestJournal():
 
 
         # Moderate a public comment
-        moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderate',
+        moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderation',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             note=Note(
                 id=comment_note_id,
@@ -555,7 +549,7 @@ class TestJournal():
 
         note = guest_client.get_note(comment_note_id)
         assert note
-        assert note.invitations == ['.TMLR/Paper1/-/Public_Comment', '.TMLR/Paper1/-/Moderate']
+        assert note.invitations == ['.TMLR/Paper1/-/Public_Comment', '.TMLR/Paper1/-/Moderation']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors']
         assert note.signatures == ['~Peter_Snow1']
@@ -593,7 +587,7 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
 
 
         ## Poster another review with the same signature and get an error
@@ -644,7 +638,7 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         ## All the reviewes should be public now
@@ -710,7 +704,7 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
@@ -734,7 +728,7 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
@@ -758,7 +752,7 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Moderate" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
         assert f"{david_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
         assert f"{javier_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
