@@ -182,7 +182,8 @@ class TestJournal():
                     'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mail.com']},
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
                 }
             ))
         helpers.await_queue(openreview_client)
@@ -214,7 +215,8 @@ class TestJournal():
                                             'authors': { 'value': ['Test User', 'Celeste Martinez']},
                                             'authorids': { 'value': ['~SomeFirstName_User1', 'celeste@mail.com']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                                            'human_subjects_reporting': { 'value': 'Not applicable'}
+                                            'human_subjects_reporting': { 'value': 'Not applicable'},
+                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
                                         }
                                     ))
 
@@ -240,7 +242,8 @@ class TestJournal():
                                             'authors': { 'value': ['Test User', 'Andrew McCallum']},
                                             'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mail.com']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                                            'human_subjects_reporting': { 'value': 'Not applicable'}
+                                            'human_subjects_reporting': { 'value': 'Not applicable'},
+                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
                                         }
                                     ))
 
@@ -766,9 +769,12 @@ class TestJournal():
 <p>Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.<br>
 Rate the quality of the reviews submitted by the reviewers. You will not be able to submit your decision until these ratings have been submitted.</p>
 <p>We ask that you submit your decision within 1 week ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>The possible decisions are:<br>\nAccept as is: once its camera ready version is submitted, the manuscript will be marked as accepted.<br>
-Accept with minor revision: to use if you wish to request some specific revisions to the manuscript, to be specified explicitly in your decision comments. These revisions will be expected from the authors when they submit their camera ready version.<br>
-Reject: the paper is rejected, but you may indicate whether you would be willing to consider a significantly revised version of the manuscript. Such a revised submission will need to be entered as a new submission, that will also provide a link to this rejected submission as well as a description of the changes made since.</p>
+<p>The possible decisions are:</p>
+<ul>
+<li><strong>Accept as is</strong>: once its camera ready version is submitted, the manuscript will be marked as accepted.</li>
+<li><strong>Accept with minor revision</strong>: to use if you wish to request some specific revisions to the manuscript, to be specified explicitly in your decision comments. These revisions will be expected from the authors when they submit their camera ready version.</li>
+<li><strong>Reject</strong>: the paper is rejected, but you may indicate whether you would be willing to consider a significantly revised version of the manuscript. Such a revised submission will need to be entered as a new submission, that will also provide a link to this rejected submission as well as a description of the changes made since.</li>
+</ul>
 <p>Your decision may also include certification(s) recommendations for the submission (in case of an acceptance).</p>
 <p>For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
 <p>We thank you for your essential contribution to TMLR!</p>
