@@ -514,6 +514,23 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
 
+        ## Post an official comment from the authors
+        comment_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=[f"{venue_id}/Paper1/Authors"],
+            note=Note(
+                readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
+                signatures=[f"{venue_id}/Paper1/Authors"],
+                forum=note_id_1,
+                replyto=review_note['id'],
+                content={
+                    'title': { 'value': 'Thanks for your review' },
+                    'comment': { 'value': 'This is helpfull feedback' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
             signatures=['~Peter_Snow1'],
@@ -536,7 +553,6 @@ class TestJournal():
         assert note.signatures == ['~Peter_Snow1']
         assert note.content['title']['value'] == 'Comment title'
         assert note.content['comment']['value'] == 'This is an inapropiate comment'
-
 
         # Moderate a public comment
         moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderation',
