@@ -67,8 +67,11 @@ class Journal(object):
     def get_ae_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
 
-    def get_release_reviews_id(self, number=None):
+    def get_release_review_id(self, number=None):
         return self.__get_invitation_id(name='Release_Review', number=number)
+
+    def get_release_comment_id(self, number=None):
+        return self.__get_invitation_id(name='Release_Comment', number=number)
 
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)

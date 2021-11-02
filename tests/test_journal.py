@@ -531,6 +531,23 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
+        ## Post an official comment from the reviewer
+        comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                signatures=[david_anon_groups[0].id],
+                forum=note_id_1,
+                replyto=comment_note['note']['id'],
+                content={
+                    'title': { 'value': 'I updated the review' },
+                    'comment': { 'value': 'Thanks for the response, I updated the review.' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
             signatures=['~Peter_Snow1'],
@@ -670,7 +687,13 @@ class TestJournal():
         assert reviews[2].readers == ['everyone']
         assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission Paper title UPDATED')
+        ## All the comments should be public now
+        comments = openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Official_Comment', sort= 'number:asc')
+        assert len(comments) == 2
+        assert comments[0].readers == ['everyone']
+        assert comments[1].readers == ['everyone']
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
 <p>Now that 3 reviews have been submitted for your submission, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.</p>
@@ -680,7 +703,7 @@ class TestJournal():
 <p>The TMLR Editors-in-Chief</p>
 '''
 
-        messages = journal.client.get_messages(to = 'carlos@mail.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
+        messages = openreview_client.get_messages(to = 'carlos@mail.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
 <p>Thank you for submitting your review for TMLR submission &quot;Paper title UPDATED&quot;.</p>
@@ -691,7 +714,7 @@ class TestJournal():
 <p>The TMLR Editors-in-Chief</p>
 '''
 
-        messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
+        messages = openreview_client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>Now that 3 reviews have been submitted for submission Paper title UPDATED, all reviews have been made public. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in <strong>2 weeks</strong>.</p>

@@ -1202,7 +1202,7 @@ class InvitationBuilder(object):
                 invitees=[venue_id, paper_reviewers_id],
                 readers=['everyone'],
                 writers=[venue_id],
-                signatures=[venue_id],
+                signatures=[journal.get_editors_in_chief_id()],
                 maxReplies=1,
                 edit={
                     'signatures': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' },
@@ -1268,7 +1268,7 @@ class InvitationBuilder(object):
                     }
                 })
 
-            with open(os.path.join(os.path.dirname(__file__), 'process/solicited_review_process.py')) as f:
+            with open(os.path.join(os.path.dirname(__file__), 'process/review_process.py')) as f:
                 content = f.read()
                 content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
                 invitation.process = content

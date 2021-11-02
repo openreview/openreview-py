@@ -16,7 +16,7 @@ def process(client, edit, invitation):
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=Invitation(id=journal.get_release_reviews_id(number=submission.number),
+            invitation=Invitation(id=journal.get_release_review_id(number=submission.number),
                 bulk=True,
                 invitees=[venue_id],
                 readers=['everyone'],
@@ -32,12 +32,50 @@ def process(client, edit, invitation):
                     }
                 }
         ))
+
+        ## Release the comments to everyone
+        official_comment_invitation_id = journal.get_official_comment_id(number=submission.number)
+        release_comment_invitation_id = journal.get_release_comment_id(number=submission.number)
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=Invitation(id=release_comment_invitation_id,
+                invitees=[venue_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                edit={
+                    'signatures': { 'values': [venue_id ] },
+                    'readers': { 'values': [ venue_id, '${{note.id}.signatures}' ] },
+                    'writers': { 'values': [ venue_id ] },
+                    'note': {
+                        'id': { 'value-invitation': official_comment_invitation_id },
+                        'readers': { 'values': [ 'everyone' ] }
+                    }
+                }
+        ))
+
+        print(f'Get comments from invitation {official_comment_invitation_id}')
+        comments = client.get_notes(invitation=official_comment_invitation_id)
+        authors_id = journal.get_authors_id(number=submission.number)
+        anon_reviewers_id = journal.get_reviewers_id(number=submission.number, anon=True)
+        print(f'Releasing {len(comments)} comments...')
+        for comment in comments:
+            #if authors_id in comment.readers and [r for r in comment.readers if anon_reviewers_id in r]:
+            client.post_note_edit(invitation=release_comment_invitation_id,
+                signatures=[ venue_id ],
+                note=openreview.api.Note(
+                    id=comment.id
+                )
+            )
+
         ## Enable official recommendation
-        submission = client.get_note(note.forum)
+        print('Enable official recommendations')
         duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = journal.default_offset_days))
         journal.invitation_builder.set_official_recommendation_invitation(journal, submission, duedate)
 
         ## Send email notifications to authors
+        print('Send emails to authors')
         now = datetime.datetime.utcnow()
         duedate = now + datetime.timedelta(weeks = 2)
         late_duedate = now + datetime.timedelta(weeks = 4)
@@ -60,6 +98,7 @@ The TMLR Editors-in-Chief
         )
 
         ## Send email notifications to reviewers
+        print('Send emails to reviewers')
         client.post_message(
             recipients=[journal.get_reviewers_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Start of author discussion for TMLR submission {submission.content['title']['value']}''',
@@ -81,6 +120,7 @@ The TMLR Editors-in-Chief
         )
 
         ## Send email notifications to the action editor
+        print('Send emails to action editor')
         client.post_message(
             recipients=[journal.get_action_editors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Start of author discussion for TMLR submission {submission.content['title']['value']}''',
