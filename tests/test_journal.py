@@ -521,7 +521,7 @@ class TestJournal():
                 readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
                 signatures=[f"{venue_id}/Paper1/Authors"],
                 forum=note_id_1,
-                replyto=review_note['id'],
+                replyto=review_note['note']['id'],
                 content={
                     'title': { 'value': 'Thanks for your review' },
                     'comment': { 'value': 'This is helpfull feedback' }
