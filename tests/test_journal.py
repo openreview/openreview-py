@@ -516,9 +516,9 @@ class TestJournal():
 
         ## Post an official comment from the authors
         comment_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
             signatures=[f"{venue_id}/Paper1/Authors"],
             note=Note(
-                readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
                 signatures=[f"{venue_id}/Paper1/Authors"],
                 forum=note_id_1,
                 replyto=review_note['note']['id'],
