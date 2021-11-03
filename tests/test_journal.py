@@ -888,6 +888,11 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [venue_id, f"{venue_id}/Paper1/Action_Editors"]
 
+        ## Check invitations
+        invitations = raia_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 7
+        assert f"{venue_id}/Paper1/-/Decision_Approval"  in [i.id for i in invitations]
+
         ## EIC approves the decision
         approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Decision_Approval',
                             signatures=['.TMLR/Editors_In_Chief'],

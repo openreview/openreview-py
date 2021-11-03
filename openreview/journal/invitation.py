@@ -1596,7 +1596,7 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 invitation=Invitation(id=public_comment_invitation_id,
                     invitees=['everyone'],
-                    noninvitees=[paper_action_editors_id, paper_reviewers_id, paper_authors_id],
+                    noninvitees=[editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
                     readers=['everyone'],
                     writers=[venue_id],
                     signatures=[venue_id],
@@ -1857,16 +1857,19 @@ class InvitationBuilder(object):
         if not decision_approval_invitation:
             invitation = Invitation(id=decision_approval_invitation_id,
                 duedate=duedate,
-                invitees=[venue_id, paper_action_editors_id],
+                invitees=[venue_id],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
+                minReplies=1,
+                maxReplies=1,
                 edit={
                     'signatures': { 'values': [editors_in_chief_id] },
                     'readers': { 'values': [ venue_id, paper_action_editors_id] },
                     'writers': { 'values': [ venue_id] },
                     'note': {
                         'id': { 'value': decision.id },
+                        'forum': { 'value': note.id },
                         'readers': { 'values': [ 'everyone' ] },
                         'content': {
                             'editors_comment': {
