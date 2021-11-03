@@ -546,6 +546,22 @@ class TestJournal():
             )
         )
 
+        ## Poster a comment without EIC as readers
+        with pytest.raises(openreview.OpenReviewException, match=r'Editors In Chief must be readers of the comment'):
+            comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+                signatures=[david_anon_groups[0].id],
+                note=Note(
+                    signatures=[david_anon_groups[0].id],
+                    readers=['.TMLR/Paper1/Action_Editors', david_anon_groups[0].id],
+                    forum=note_id_1,
+                    replyto=note_id_1,
+                    content={
+                        'title': { 'value': 'Contact AE' },
+                        'comment': { 'value': 'I want to contact the AE.' }
+                    }
+                )
+            )
+
         helpers.await_queue(openreview_client)
 
         # Post a public comment
