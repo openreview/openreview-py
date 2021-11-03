@@ -61,13 +61,13 @@ def process(client, edit, invitation):
         anon_reviewers_id = journal.get_reviewers_id(number=submission.number, anon=True)
         print(f'Releasing {len(comments)} comments...')
         for comment in comments:
-            #if authors_id in comment.readers and [r for r in comment.readers if anon_reviewers_id in r]:
-            client.post_note_edit(invitation=release_comment_invitation_id,
-                signatures=[ venue_id ],
-                note=openreview.api.Note(
-                    id=comment.id
+            if authors_id in comment.readers and [r for r in comment.readers if anon_reviewers_id in r]:
+                client.post_note_edit(invitation=release_comment_invitation_id,
+                    signatures=[ venue_id ],
+                    note=openreview.api.Note(
+                        id=comment.id
+                    )
                 )
-            )
 
         ## Enable official recommendation
         print('Enable official recommendations')
