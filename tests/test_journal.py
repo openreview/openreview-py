@@ -516,10 +516,10 @@ class TestJournal():
 
         ## Post an official comment from the authors
         comment_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
-            readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
             signatures=[f"{venue_id}/Paper1/Authors"],
             note=Note(
                 signatures=[f"{venue_id}/Paper1/Authors"],
+                readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
                 forum=note_id_1,
                 replyto=review_note['note']['id'],
                 content={
@@ -533,10 +533,10 @@ class TestJournal():
 
         ## Post an official comment from the reviewer
         comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
-            readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
             signatures=[david_anon_groups[0].id],
             note=Note(
                 signatures=[david_anon_groups[0].id],
+                readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
                 forum=note_id_1,
                 replyto=comment_note['note']['id'],
                 content={

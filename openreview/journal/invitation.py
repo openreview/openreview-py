@@ -1660,7 +1660,7 @@ class InvitationBuilder(object):
                     signatures=[venue_id],
                     edit={
                         'signatures': { 'values-regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}' },
-                        'readers': { 'values-dropdown': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id]},
+                        'readers': { 'values': [ venue_id, '${signatures}' ] },
                         'writers': { 'values': [ venue_id, '${signatures}' ] },
                         'note': {
                             'id': {
@@ -1675,7 +1675,7 @@ class InvitationBuilder(object):
                                 'nullable': True
                             },
                             'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values': ['${readers}'] },
+                            'readers': { 'values-dropdown': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id]},
                             'writers': { 'values': ['${writers}'] },
                             'content': {
                                 'title': {
