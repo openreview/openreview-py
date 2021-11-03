@@ -68,13 +68,16 @@ class Journal(object):
         return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
 
     def get_release_review_id(self, number=None):
-        return self.__get_invitation_id(name='Release_Review', number=number)
+        return self.__get_invitation_id(name='Review_Release', number=number)
 
     def get_release_comment_id(self, number=None):
-        return self.__get_invitation_id(name='Release_Comment', number=number)
+        return self.__get_invitation_id(name='Comment_Release', number=number)
 
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
+
+    def get_decision_approval_id(self, number=None):
+        return self.__get_invitation_id(name='Decision_Approval', number=number)
 
     def get_review_id(self, number):
         return self.__get_invitation_id(name='Review', number=number)
@@ -94,6 +97,9 @@ class Journal(object):
     def get_camera_ready_revision_id(self, number=None):
         return self.__get_invitation_id(name='Camera_Ready_Revision', number=number)
 
+    def get_camera_ready_verification_id(self, number=None):
+        return self.__get_invitation_id(name='Camera_Ready_Verification', number=number)
+
     def get_revision_id(self, number=None):
         return self.__get_invitation_id(name='Revision', number=number)
 
@@ -108,6 +114,9 @@ class Journal(object):
 
     def get_moderation_id(self, number):
         return self.__get_invitation_id(name='Moderation', number=number)
+
+    def get_submission_editable_id(self, number):
+        return self.__get_invitation_id(name='Submission_Editable', number=number)
 
     def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)

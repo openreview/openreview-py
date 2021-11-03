@@ -839,21 +839,21 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
         review_revisions=openreview_client.get_note_edits(noteId=reviews[0].id)
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
-        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         review_revisions=openreview_client.get_note_edits(noteId=reviews[1].id)
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
-        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
         review_revisions=openreview_client.get_note_edits(noteId=reviews[2].id)
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
-        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Release_Review"
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
@@ -884,32 +884,46 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
         )
 
         helpers.await_queue(openreview_client)
-        process_logs = openreview_client.get_process_logs(id = decision_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
+        decision_note = joelle_client.get_note(decision_note['note']['id'])
+        assert decision_note.readers == [venue_id, f"{venue_id}/Paper1/Action_Editors"]
 
-        acceptance_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Acceptance',
+        ## EIC approves the decision
+        approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Decision_Approval',
                             signatures=['.TMLR/Editors_In_Chief'],
-                            note=Note(id=note_id_1,
+                            note=Note(id=decision_note.id,
                             content= {
-                                'certifications': { 'value': ['Survey Certification'] }
+                                'editors_comment': { 'value': 'I agree with the AE' }
                             }))
 
         helpers.await_queue(openreview_client)
 
-        note = openreview_client.get_note(note_id_1)
-        assert note
-        assert note.forum == note_id_1
-        assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Acceptance']
-        assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Editors_In_Chief', '.TMLR/Paper1/Authors']
-        assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
-        assert note.content['venue']['value'] == 'TMLR'
-        assert note.content['venueid']['value'] == '.TMLR'
-        assert note.content['certifications']['value'] == ['Survey Certification']
+
+        decision_note = raia_client.get_note(decision_note.id)
+        assert decision_note.readers == ['everyone']
+
+
+        # acceptance_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Acceptance',
+        #                     signatures=['.TMLR/Editors_In_Chief'],
+        #                     note=Note(id=note_id_1,
+        #                     content= {
+        #                         'certifications': { 'value': ['Survey Certification'] }
+        #                     }))
+
+        # helpers.await_queue(openreview_client)
+
+        # note = openreview_client.get_note(note_id_1)
+        # assert note
+        # assert note.forum == note_id_1
+        # assert note.replyto is None
+        # assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Acceptance']
+        # assert note.readers == ['everyone']
+        # assert note.writers == ['.TMLR', '.TMLR/Editors_In_Chief', '.TMLR/Paper1/Authors']
+        # assert note.signatures == ['.TMLR/Paper1/Authors']
+        # assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
+        # assert note.content['venue']['value'] == 'TMLR'
+        # assert note.content['venueid']['value'] == '.TMLR'
+        # assert note.content['certifications']['value'] == ['Survey Certification']
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title UPDATED')
         assert len(messages) == 1
@@ -944,16 +958,60 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
             )
         )
 
+        helpers.await_queue(openreview_client)
+
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Acceptance', '.TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Editors_In_Chief', '.TMLR/Paper1/Authors']
+        assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
         # TODO: check this with Carlos
+        #assert note.content['authorids'].get('readers') == None
+        #assert note.content['authors'].get('readers') == None
+        assert note.content['venue']['value'] == 'Under review for TMLR'
+        assert note.content['venueid']['value'] == '.TMLR/Under_Review'
+        assert note.content['title']['value'] == 'Paper title VERSION 2'
+        assert note.content['abstract']['value'] == 'Paper abstract'
+
+        messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Review camera ready version for TMLR paper Paper title VERSION 2')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>The authors of TMLR paper Paper title VERSION 2 have now submitted the deanonymized camera ready version of their work.</p>
+<p>As your final task for this submission, please verify that the camera ready manuscript complies with the TMLR stylefile, with all author information inserted in the manuscript as well as the link to the OpenReview page for the submission.</p>
+<p>Moreover, if the paper was accepted with minor revision, verify that the changes requested have been followed.</p>
+<p>Visit the following link to perform this task: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>If any correction is needed, you may contact the authors directly by email or through OpenReview.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
+        ## AE verifies the camera ready revision
+        verification_note = joelle_client.post_note_edit(invitation='.TMLR/Paper1/-/Camera_Ready_Verification',
+                            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                            note=Note(
+                                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                                forum=note_id_1,
+                                replyto=note_id_1,
+                                content= {
+                                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the TMLR stylefile and, if appropriate, includes the minor revisions that were requested.' }
+                                 }
+                            ))
+
+        helpers.await_queue(openreview_client)
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision', '.TMLR/Paper1/-/Acceptance']
+        assert note.readers == ['everyone']
+        assert note.writers == ['.TMLR']
+        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
+        # Check with cArlos
         #assert note.content['authorids'].get('readers') == None
         #assert note.content['authors'].get('readers') == None
         assert note.content['venue']['value'] == 'TMLR'
