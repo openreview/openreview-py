@@ -601,7 +601,7 @@ class InvitationBuilder(object):
                 signatures=[venue_id],
                 maxReplies=1,
                 edit={
-                    'signatures': { 'values': [paper_action_editors_id] },
+                    'signatures': { 'values-regex': paper_action_editors_id },
                     'readers': { 'values': [ venue_id, paper_action_editors_id] },
                     'writers': { 'values': [ venue_id, paper_action_editors_id] },
                     'note': {
@@ -1221,6 +1221,7 @@ class InvitationBuilder(object):
 
     def set_review_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
@@ -1235,7 +1236,7 @@ class InvitationBuilder(object):
                 invitees=[venue_id, paper_reviewers_id],
                 readers=['everyone'],
                 writers=[venue_id],
-                signatures=[journal.get_editors_in_chief_id()],
+                signatures=[editors_in_chief_id],
                 maxReplies=1,
                 edit={
                     'signatures': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' },
@@ -1254,7 +1255,7 @@ class InvitationBuilder(object):
                             'nullable': True
                         },
                         'signatures': { 'values': ['${signatures}'] },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}', paper_authors_id] },
+                        'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, '${signatures}', paper_authors_id] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'content': {
                             'summary_of_contributions': {

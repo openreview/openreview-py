@@ -16,6 +16,7 @@ def process(client, edit, invitation):
         invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
             #bulk=True,
             invitees=[venue_id],
+            noninvitees=[journal.get_editors_in_chief_id()],
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
