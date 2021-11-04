@@ -164,12 +164,13 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 4
+        assert len(invitations) == 5
         assert f"{venue_id}/-/Author_Submission" not in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Under_Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Desk_Rejection"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
 
         ## Update submission 1
         updated_submission_note_1 = test_client.post_note_edit(invitation='.TMLR/Paper1/-/Revision',
@@ -292,15 +293,17 @@ class TestJournal():
 '''
 
         ## Accept the submission 1
-        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper1/-/Under_Review',
+        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper1/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
-                                    note=Note(id=note_id_1))
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for review' }
+                                    }))
 
         helpers.await_queue(openreview_client)
 
         note = joelle_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
@@ -320,18 +323,20 @@ class TestJournal():
 
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 2
+        assert len(invitations) == 3
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
 
         ## Assign Action editor to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
 
         ## Desk reject the submission 2
-        desk_reject_note = joelle_client.post_note_edit(invitation='.TMLR/Paper2/-/Desk_Rejection',
+        desk_reject_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper2/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper2/Action_Editors'],
-                                    note=Note(id=note_id_2, content={
-                                        'desk_rejection_reason': { 'value': 'missing PDF' }
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Desk Reject' },
+                                        'comment': { 'value': 'missing PDF' }
                                     }))
 
         helpers.await_queue(openreview_client)
@@ -348,7 +353,7 @@ class TestJournal():
 
         note = joelle_client.get_note(note_id_2)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper2/-/Desk_Rejection']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Desk_Rejection']
         assert note.readers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper2/Action_Editors']
         assert note.signatures == ['.TMLR/Paper2/Authors']
@@ -364,9 +369,9 @@ class TestJournal():
 
         ## Check invitations as an AE
         invitations = joelle_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 2
-        assert f"{venue_id}/Paper2/-/Under_Review"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper2/-/Desk_Rejection"  in [i.id for i in invitations]
+        assert len(invitations) == 1
+        assert f"{venue_id}/Paper2/-/Review_Approval"  in [i.id for i in invitations]
+
 
         ## Withdraw the submission 3
         withdraw_note = test_client.post_note_edit(invitation='.TMLR/Paper3/-/Withdraw',
@@ -391,7 +396,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 7
+        assert len(invitations) == 10
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]
@@ -505,7 +510,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 7
+        assert len(invitations) == 10
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -632,7 +637,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 7
+        assert len(invitations) == 10
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -683,7 +688,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 8
+        assert len(invitations) == 11
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -755,7 +760,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 8
+        assert len(invitations) == 11
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -779,7 +784,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 8
+        assert len(invitations) == 11
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -803,7 +808,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 11
+        assert len(invitations) == 14
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -947,7 +952,7 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
@@ -989,7 +994,7 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision', '.TMLR/Paper1/-/Acceptance']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision', '.TMLR/Paper1/-/Acceptance']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']

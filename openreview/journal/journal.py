@@ -64,6 +64,18 @@ class Journal(object):
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
 
+    def get_review_approval_id(self, number=None):
+        return self.__get_invitation_id(name='Review_Approval', number=number)
+
+    def get_under_review_id(self):
+        return self.__get_invitation_id(name='Under_Review')
+
+    def get_desk_rejection_id(self):
+        return self.__get_invitation_id(name='Desk_Rejection')
+
+    def get_author_submission_id(self):
+        return self.__get_invitation_id(name='Author_Submission')
+
     def get_ae_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
 
@@ -121,6 +133,8 @@ class Journal(object):
     def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)
         self.invitation_builder.set_submission_invitation(self)
+        self.invitation_builder.set_under_review_invitation(self)
+        self.invitation_builder.set_desk_rejection_invitation(self)
         self.invitation_builder.set_ae_custom_papers_invitation(self)
         self.invitation_builder.set_ae_assignment(self)
         self.invitation_builder.set_reviewer_assignment(self)
@@ -491,8 +505,7 @@ class Journal(object):
 
         self.setup_submission_groups(note)
         self.invitation_builder.set_revision_submission(self, note)
-        self.invitation_builder.set_under_review_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
-        self.invitation_builder.set_desk_rejection_invitation(self, note, None)
+        self.invitation_builder.set_review_approval_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_withdraw_invitation(self, note, None)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
@@ -505,8 +518,4 @@ class Journal(object):
         self.invitation_builder.set_comment_invitation(self, note)
         self.setup_reviewer_assignment(note)
         self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
-
-        ### expire invitations
-        self.invitation_builder.expire_invitation(self, f'{self.venue_id}/Paper{note.number}/-/Under_Review')
-        self.invitation_builder.expire_invitation(self, f'{self.venue_id}/Paper{note.number}/-/Desk_Rejection')
 

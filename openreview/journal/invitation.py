@@ -190,7 +190,7 @@ class InvitationBuilder(object):
 
 
         ## Submission invitation
-        submission_invitation_id=f'{venue_id}/-/Author_Submission'
+        submission_invitation_id=journal.get_author_submission_id()
         invitation=self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -584,19 +584,86 @@ class InvitationBuilder(object):
             )
         )
 
-    def set_under_review_invitation(self, journal, note, duedate):
+    def set_review_approval_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
-        paper_group_id = f'{venue_id}/Paper{note.number}'
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
 
-        under_review_invitation_id = f'{paper_group_id}/-/Under_Review'
+        review_approval_invitation_id=journal.get_review_approval_id(number=note.number)
+        review_approval_invitation=openreview.tools.get_invitation(self.client, review_approval_invitation_id)
+
+        if not review_approval_invitation:
+            invitation = Invitation(id=review_approval_invitation_id,
+                duedate=duedate,
+                invitees=[paper_action_editors_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values': [paper_action_editors_id] },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'note': {
+                        'id': {
+                            'value-invitation': review_approval_invitation_id,
+                            'optional': True
+                        },
+                        'forum': { 'value': note.id },
+                        'replyto': { 'value': note.id },
+                        'ddate': {
+                            'int-range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'nullable': True
+                        },
+                        'signatures': { 'values': ['${signatures}'] },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
+                        'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                        'content': {
+                            'under_review': {
+                                'order': 1,
+                                'description': 'TODO.',
+                                'value': {
+                                    'value-radio': ['Appropriate for review', 'Desk Reject']
+                                }
+                            },
+                            'comment': {
+                                'order': 2,
+                                'description': 'Enter a reason if the decision is Desk Reject. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$',
+                                    'optional': True
+                                },
+                                'presentation': {
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                })
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
+
+    def set_under_review_invitation(self, journal):
+        venue_id = journal.venue_id
+
+        under_review_invitation_id = journal.get_under_review_id()
         under_review_invitation = openreview.tools.get_invitation(self.client, under_review_invitation_id)
 
         if not under_review_invitation:
             under_review_invitation_id=under_review_invitation_id
             invitation = Invitation(id=under_review_invitation_id,
-                duedate=duedate,
-                invitees=[paper_action_editors_id, venue_id],
+                invitees=[venue_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
@@ -607,11 +674,11 @@ class InvitationBuilder(object):
                         'optional': True,
                         'nullable': True
                     },
-                    'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
+                    'signatures': { 'values': [ venue_id ] },
                     'readers': { 'values': [ 'everyone']},
-                    'writers': { 'values': [ venue_id, paper_action_editors_id]},
+                    'writers': { 'values': [ venue_id ]},
                     'note': {
-                        'id': { 'value': note.id },
+                        'id': { 'value-invitation': journal.get_author_submission_id() },
                         'readers': {
                             'values': ['everyone']
                         },
@@ -619,16 +686,6 @@ class InvitationBuilder(object):
                             'values': [venue_id]
                         },
                         'content': {
-                            'desk_rejection_reason': {
-                                'value': {
-                                    'value': None,
-                                    'nullable': True,
-                                    'optional': True
-                                },
-                                'presentation': {
-                                    'hidden': True,
-                                }
-                            },
                             'venue': {
                                 'value': {
                                     'value': 'Under review for TMLR'
@@ -655,20 +712,19 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
-    def set_desk_rejection_invitation(self, journal, note, duedate):
+    def set_desk_rejection_invitation(self, journal):
         venue_id = journal.venue_id
-        paper_group_id = f'{venue_id}/Paper{note.number}'
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+        paper_action_editors_id = journal.get_action_editors_id(number='${note.number}')
+        paper_authors_id = journal.get_authors_id(number='${note.number}')
 
-        desk_rejection_invitation_id = f'{paper_group_id}/-/Desk_Rejection'
+        desk_rejection_invitation_id = journal.get_desk_rejection_id()
         desk_rejection_invitation = openreview.tools.get_invitation(self.client, desk_rejection_invitation_id)
 
         if not desk_rejection_invitation:
 
             invitation = Invitation(id=desk_rejection_invitation_id,
-                duedate=duedate,
-                invitees=[paper_action_editors_id, venue_id],
+                invitees=[venue_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
@@ -679,24 +735,14 @@ class InvitationBuilder(object):
                         'optional': True,
                         'nullable': True
                     },
-                    'signatures': { 'values-regex': f'{paper_action_editors_id}|{venue_id}$' },
+                    'signatures': { 'values': [venue_id] },
                     'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
                     'writers': { 'values': [ venue_id, paper_action_editors_id]},
                     'note': {
-                        'id': { 'value': note.id },
+                        'id': { 'value-invitation': journal.get_author_submission_id()  },
                         'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
                         'writers': { 'values': [venue_id, paper_action_editors_id] },
                         'content': {
-                            'desk_rejection_reason': {
-                                'order': 1,
-                                'description': 'Enter a reason (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                'value': {
-                                    'value-regex': '^[\\S\\s]{1,200000}$'
-                                },
-                                'presentation': {
-                                    'markdown': True
-                                }
-                            },
                             'venue': {
                                 'order': 2,
                                 'value': {
