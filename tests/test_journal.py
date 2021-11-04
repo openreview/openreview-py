@@ -890,7 +890,7 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
 
         ## Check invitations
         invitations = raia_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 7
+        assert len(invitations) == 6
         assert f"{venue_id}/Paper1/-/Decision_Approval"  in [i.id for i in invitations]
 
         ## EIC approves the decision
@@ -907,28 +907,6 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
 
-
-        # acceptance_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Acceptance',
-        #                     signatures=['.TMLR/Editors_In_Chief'],
-        #                     note=Note(id=note_id_1,
-        #                     content= {
-        #                         'certifications': { 'value': ['Survey Certification'] }
-        #                     }))
-
-        # helpers.await_queue(openreview_client)
-
-        # note = openreview_client.get_note(note_id_1)
-        # assert note
-        # assert note.forum == note_id_1
-        # assert note.replyto is None
-        # assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/Paper1/-/Under_Review', '.TMLR/Paper1/-/Acceptance']
-        # assert note.readers == ['everyone']
-        # assert note.writers == ['.TMLR', '.TMLR/Editors_In_Chief', '.TMLR/Paper1/Authors']
-        # assert note.signatures == ['.TMLR/Paper1/Authors']
-        # assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
-        # assert note.content['venue']['value'] == 'TMLR'
-        # assert note.content['venueid']['value'] == '.TMLR'
-        # assert note.content['certifications']['value'] == ['Survey Certification']
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title UPDATED')
         assert len(messages) == 1
@@ -1017,8 +995,8 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
         assert note.signatures == ['.TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
         # Check with cArlos
-        #assert note.content['authorids'].get('readers') == None
-        #assert note.content['authors'].get('readers') == None
+        assert note.content['authorids'].get('readers') == ['everyone']
+        assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'TMLR'
         assert note.content['venueid']['value'] == '.TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'

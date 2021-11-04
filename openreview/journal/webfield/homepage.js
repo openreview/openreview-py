@@ -149,177 +149,36 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     $('.tabs-container a[href="#your-consoles"]').parent().hide();
   }
 
-  var acceptedPapers = acceptedResponse.notes || [];
-  var acceptedPapersCount = acceptedResponse.count || 0;
-
-  $('#accepted-papers').empty();
-
-  if (acceptedPapersCount) {
-    var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
-      container: '#accepted-papers',
-      autoLoad: false
-    });
-
-    Webfield2.ui.submissionList(acceptedPapers, {
-      heading: null,
-      container: '#accepted-papers',
-      search: {
-        enabled: true,
-        localSearch: false,
-        invitation: SUBMISSION_ID,
-        onResults: function(searchResults) {
-          Webfield2.ui.searchResults(searchResults, searchResultsListOptions);
-        },
-        onReset: function() {
-          Webfield2.ui.searchResults(notes, searchResultsListOptions);
-          $('#accepted-papers').append(view.paginationLinks(acceptedPapersCount, PAGE_SIZE, 1));
-        }
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: acceptedPapersCount,
-      pageSize: PAGE_SIZE,
-      onPageClick: function(offset) {
-        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
-          'content.venueid': CONFERENCE_ID,
-          details: 'replyCount',
-          pageSize: PAGE_SIZE,
-          offset: offset
-        });
-      },
-      fadeIn: false
-    });
+  var options = {
+    paperDisplayOptions: paperDisplayOptions,
+    page_size: PAGE_SIZE
+  }
+  if (acceptedResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#accepted-papers', SUBMISSION_ID, acceptedResponse.notes, acceptedResponse.count, Object.assign(options, { query: {'content.venueid': VENUE_ID } } ));
   } else {
     $('.tabs-container a[href="#accepted-papers"]').parent().hide();
   }
 
-  var underReviewSubmissions = underReviewResponse.notes || [];
-  var underReviewCount = underReviewResponse.count || 0;
-
-  $('#under-review').empty();
-
-  if (underReviewCount) {
-    var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
-      container: '#under-review',
-      autoLoad: false
-    });
-
-    Webfield2.ui.submissionList(underReviewSubmissions, {
-      heading: null,
-      container: '#under-review',
-      search: {
-        enabled: true,
-        localSearch: false,
-        invitation: SUBMISSION_ID,
-        onResults: function(searchResults) {
-          Webfield2.ui.searchResults(searchResults, searchResultsListOptions);
-        },
-        onReset: function() {
-          Webfield2.ui.searchResults(notes, searchResultsListOptions);
-          $('#under-review-submissions').append(view.paginationLinks(underReviewCount, PAGE_SIZE, 1));
-        }
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: underReviewCount,
-      pageSize: PAGE_SIZE,
-      onPageClick: function(offset) {
-        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
-          'content.venueid': UNDER_REVIEW_ID,
-          details: 'replyCount',
-          pageSize: PAGE_SIZE,
-          offset: offset
-        });
-      },
-      fadeIn: false
-    });
+  if (underReviewResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#under-review', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count, Object.assign(options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
   } else {
     $('.tabs-container a[href="#under-review"]').parent().hide();
   }
 
-  var submissionNotesCount = submittedResponse.count || 0;
-  if (submissionNotesCount) {
-    $('#submissions').empty();
-
-    var notes = submittedResponse.notes || [];
-    Webfield2.ui.submissionList(notes, {
-      heading: null,
-      container: '#submissions',
-      search: {
-        enabled: false
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: submissionNotesCount,
-      pageSize: PAGE_SIZE,
-      onPageClick: function(offset) {
-        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
-          'content.venueid': SUBMITTED_ID,
-          details: 'replyCount',
-          pageSize: PAGE_SIZE,
-          offset: offset
-        });
-      },
-      fadeIn: false
-    });
+  if (submittedResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#submissions', SUBMISSION_ID, submittedResponse.notes, submittedResponse.count, Object.assign(options, { query: {'content.venueid': SUBMITTED_ID } } ));
   } else {
     $('.tabs-container a[href="#submissions"]').parent().hide();
   }
 
-  var rejectedNotesCount = rejectedResponse.count || 0;
-  if (rejectedNotesCount) {
-    $('#rejected-submissions').empty();
-
-    var rejectedNotesArray = rejectedResponse.notes || [];
-    Webfield2.ui.submissionList(rejectedNotesArray, {
-      heading: null,
-      container: '#rejected-submissions',
-      search: {
-        enabled: false
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: rejectedNotesCount,
-      pageSize: PAGE_SIZE,
-      onPageClick: function(offset) {
-        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
-          'content.venueid': REJECTED_ID,
-          details: 'replyCount',
-          pageSize: PAGE_SIZE,
-          offset: offset
-        });
-      },
-      fadeIn: false
-    });
+  if (rejectedResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#rejected-submissions', SUBMISSION_ID, rejectedResponse.notes, rejectedResponse.count, Object.assign(options, { query: {'content.venueid': REJECTED_ID } } ));
   } else {
     $('.tabs-container a[href="#rejected-submissions"]').parent().hide();
   }
 
-  var withDrawnNotesCount = withdrawnResponse.count || 0;
-  if (withDrawnNotesCount) {
-    $('#withdrawn-submissions').empty();
-
-    var withdrawnNotesArray = withdrawnResponse.notes || [];
-    Webfield2.ui.submissionList(withdrawnNotesArray, {
-      heading: null,
-      container: '#withdrawn-submissions',
-      search: {
-        enabled: false
-      },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: withDrawnNotesCount,
-      pageSize: PAGE_SIZE,
-      onPageClick: function(offset) {
-        return Webfield2.api.getSubmissions(SUBMISSION_ID, {
-          'content.venueid': WITHDRAWN_ID,
-          details: 'replyCount',
-          pageSize: PAGE_SIZE,
-          offset: offset
-        });
-      },
-      fadeIn: false
-    });
+  if (withdrawnResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#withdrawn-submissions', SUBMISSION_ID, withdrawnResponse.notes, withdrawnResponse.count, Object.assign(options, { query: {'content.venueid': WITHDRAWN_ID } } ));
   } else {
     $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
   }
