@@ -41,7 +41,7 @@ function main() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Your Consoles', 'Accepted Papers', 'Under Review', 'Submissions', 'Rejected Submissions', 'Withdrawn Submissions'],
+    tabs: ['Your Consoles', 'Featured Papers', 'Reproducibility Papers', 'Survey Papers', 'Under Review Submissions', 'Rejected Submissions'],
     referrer: args && args.referrer,
     showBanner: false
   })
@@ -64,8 +64,25 @@ function main() {
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
 
-  var submittedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': SUBMITTED_ID,
+  var featuredAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
+    'content.venueid': VENUE_ID,
+    'content.certifications': 'Featured Certification',
+    pageSize: PAGE_SIZE,
+    details: 'replyCount',
+    includeCount: true
+  });
+
+  var reproducibilityAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
+    'content.venueid': VENUE_ID,
+    'content.certifications': 'Reproducibility Certification',
+    pageSize: PAGE_SIZE,
+    details: 'replyCount',
+    includeCount: true
+  });
+
+  var surveyAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
+    'content.venueid': VENUE_ID,
+    'content.certifications': 'Survey Certification',
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
@@ -79,21 +96,7 @@ function load() {
   });
 
   var rejectedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': DESK_REJECTED_ID + ',' + REJECTED_ID,
-    pageSize: PAGE_SIZE,
-    details: 'replyCount',
-    includeCount: true
-  });
-
-  var withdrawnNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': WITHDRAWN_ID,
-    pageSize: PAGE_SIZE,
-    details: 'replyCount',
-    includeCount: true
-  });
-
-  var acceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': VENUE_ID,
+    'content.venueid': REJECTED_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
@@ -104,7 +107,7 @@ function load() {
     userGroupsP = Webfield2.getAll('/groups', { regex: VENUE_ID + '/.*', member: user.id, web: true });
   }
 
-  return $.when(acceptedNotesP, submittedNotesP, underReviewNotesP, rejectedNotesP, withdrawnNotesP, userGroupsP);
+  return $.when(featuredAcceptedNotesP, reproducibilityAcceptedNotesP, surveyAcceptedNotesP, underReviewNotesP, rejectedNotesP, userGroupsP);
 }
 
 function createConsoleLinks(allGroups) {
@@ -128,7 +131,7 @@ function createConsoleLinks(allGroups) {
 }
 
 // Render functions
-function renderContent(acceptedResponse, submittedResponse, underReviewResponse, rejectedResponse, withdrawnResponse, userGroups) {
+function renderContent(featuredResponse, reproducibilityResponse, surveyResponse, underReviewResponse, rejectedResponse, userGroups) {
 
   // Your Consoles tab
   if (userGroups.length) {
@@ -153,34 +156,37 @@ function renderContent(acceptedResponse, submittedResponse, underReviewResponse,
     paperDisplayOptions: paperDisplayOptions,
     page_size: PAGE_SIZE
   }
-  if (acceptedResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#accepted-papers', SUBMISSION_ID, acceptedResponse.notes, acceptedResponse.count, Object.assign(options, { query: {'content.venueid': VENUE_ID } } ));
+  if (featuredResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#featured-papers', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
+    Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
   } else {
-    $('.tabs-container a[href="#accepted-papers"]').parent().hide();
+    $('.tabs-container a[href="#features-papers"]').parent().hide();
+  }
+
+  if (reproducibilityResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#reproducibility-papers', SUBMISSION_ID, reproducibilityResponse.notes, reproducibilityResponse.count,
+    Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Reproducibility Certification' }}));
+  } else {
+    $('.tabs-container a[href="#reproducibility-papers"]').parent().hide();
+  }
+
+  if (surveyResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#survey-papers', SUBMISSION_ID, surveyResponse.notes, surveyResponse.count,
+    Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Survey Certification' }}));
+  } else {
+    $('.tabs-container a[href="#survey-papers"]').parent().hide();
   }
 
   if (underReviewResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#under-review', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count, Object.assign(options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
+    Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count, Object.assign(options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
   } else {
-    $('.tabs-container a[href="#under-review"]').parent().hide();
-  }
-
-  if (submittedResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#submissions', SUBMISSION_ID, submittedResponse.notes, submittedResponse.count, Object.assign(options, { query: {'content.venueid': SUBMITTED_ID } } ));
-  } else {
-    $('.tabs-container a[href="#submissions"]').parent().hide();
+    $('.tabs-container a[href="#under-review-submissions"]').parent().hide();
   }
 
   if (rejectedResponse.count > 0) {
     Webfield2.ui.renderSubmissionList('#rejected-submissions', SUBMISSION_ID, rejectedResponse.notes, rejectedResponse.count, Object.assign(options, { query: {'content.venueid': REJECTED_ID } } ));
   } else {
     $('.tabs-container a[href="#rejected-submissions"]').parent().hide();
-  }
-
-  if (withdrawnResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#withdrawn-submissions', SUBMISSION_ID, withdrawnResponse.notes, withdrawnResponse.count, Object.assign(options, { query: {'content.venueid': WITHDRAWN_ID } } ));
-  } else {
-    $('.tabs-container a[href="#withdrawn-submissions"]').parent().hide();
   }
 
   $('#notes .spinner-container').remove();
