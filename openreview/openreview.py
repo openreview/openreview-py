@@ -1392,7 +1392,7 @@ class Client(object):
         response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
-        return response.json()['results']
+        return response.json()
 
 class Group(object):
     """
