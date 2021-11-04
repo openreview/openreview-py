@@ -835,6 +835,14 @@ class VenueRequest():
                 'order': 31,
                 'required': False,
                 'hidden': True
+            },
+            'submission_name':{
+                'value-regex': '\S*',
+                'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
+                'default': 'Submission',
+                'order':32,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
             }
         }
 
