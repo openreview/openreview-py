@@ -1137,14 +1137,24 @@ class Conference(object):
 
         return self.webfield_builder.set_impersonate_page(self, impersonate_group)
 
-    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, alternate_matching_group=None, scores_stream=None, compute_scores=False):
+    ## Deprecated, use setup_commitee_matching
+    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
         conference_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts, scores_stream, compute_scores)
+        return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
+
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, build_conflicts=False, alternate_matching_group=None):
+        if committee_id is None:
+            committee_id=self.get_reviewers_id()
+        if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
+            alternate_matching_group = self.get_area_chairs_id()
+        conference_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+
+        return conference_matching.setup(build_conflicts=build_conflicts, compute_affinity_scores=compute_affinity_scores,)
 
     def set_matching_conflicts(self, profile_id, build_conflicts=True):
         # Re-generates conflicts for a single reviewer
@@ -1156,7 +1166,6 @@ class Conference(object):
 
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
-
 
     def set_assignment(self, user, number, is_area_chair = False):
 

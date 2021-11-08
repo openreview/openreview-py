@@ -8,14 +8,13 @@ def process(client, note, invitation):
     build_conflicts=note.content.get('build_conflicts')
 
     matching_group = note.content['matching_group']
-    compute_scores = note.content.get('compute_affinity_scores') == 'Yes'
+    compute_affinity_scores = note.content.get('compute_affinity_scores') == 'Yes'
     scores = note.content.get('upload_affinity_scores')
-    file_name=None
 
     if scores:
-        scores_stream = client.get_attachment(id=note.id, field_name='upload_affinity_scores')
+        compute_affinity_scores = client.get_attachment(id=note.id, field_name='upload_affinity_scores')
 
-    matching_status = conference.setup_matching(committee_id=matching_group, build_conflicts=build_conflicts, affinity_score_file=file_name, scores_stream=scores_stream, compute_scores=compute_scores)
+    matching_status = conference.setup_committee_matching(committee_id=matching_group, build_conflicts=build_conflicts, compute_affinity_scores=compute_affinity_scores)
     role_name = matching_group.split('/')[-1]
 
     comment_note = openreview.Note(

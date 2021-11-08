@@ -616,7 +616,12 @@ class Matching(object):
     def _compute_scores(self, score_invitation_id, submissions, matching_status):
         invitation = self._create_edge_invitation(score_invitation_id)
 
-        job_id = self.client.request_expertise(name=self.conference.get_short_name(), group_id=self.match_group.id, paper_invitation=self.conference.get_blind_submission_id(), model='specter+mfr')
+        job_id = self.client.request_expertise(
+            name=self.conference.get_short_name(),
+            group_id=self.match_group.id,
+            paper_invitation=self.conference.get_blind_submission_id(),
+            exclusion_inv=self.conference.get_expertise_selection_id(),
+            model='specter+mfr')
         status = False
         call_count = 0
         while not status:
@@ -860,7 +865,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, scores_stream=None, compute_scores=False):
+    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, compute_affinity_scores=False):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -930,10 +935,13 @@ class Matching(object):
                 'default': 0
             }
 
-        if affinity_score_file:
+        type_affinity_scores = type(compute_affinity_scores)
+
+        if type_affinity_scores == str or  affinity_score_file:
+            compute_affinity_scores = affinity_score_file if affinity_score_file else compute_affinity_scores
             invitation = self._build_scores_from_file(
                 self.conference.get_affinity_score_id(self.match_group.id),
-                affinity_score_file,
+                compute_affinity_scores,
                 submissions
             )
             score_spec[invitation.id] = {
@@ -941,10 +949,10 @@ class Matching(object):
                 'default': 0
             }
 
-        if scores_stream:
+        if type_affinity_scores == bytes:
             invitation = self._build_scores_from_stream(
                 self.conference.get_affinity_score_id(self.match_group.id),
-                scores_stream,
+                compute_affinity_scores,
                 submissions
             )
             score_spec[invitation.id] = {
@@ -970,7 +978,7 @@ class Matching(object):
                 'default': 0
             }
 
-        if compute_scores:
+        if compute_affinity_scores == True:
             invitation, matching_status = self._compute_scores(
                 self.conference.get_affinity_score_id(self.match_group.id),
                 submissions,

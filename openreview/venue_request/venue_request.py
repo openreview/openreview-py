@@ -583,6 +583,7 @@ class VenueRequest():
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
         self.matching_process = os.path.join(os.path.dirname(__file__), 'process/matchingProcess.py')
+        self.matching_pre_process = os.path.join(os.path.dirname(__file__), 'process/matching_pre_process.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
@@ -1224,28 +1225,31 @@ class VenueRequest():
             }
         }
 
-        with open(self.matching_process, 'r') as f:
-            file_content = f.read()
-            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+        with open(self.matching_pre_process, 'r') as pre:
+            with open(self.matching_process, 'r') as f:
+                pre_process_file_content = pre.read()
+                file_content = f.read()
+                file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
-            self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
-                id=self.support_group.id + '/-/Matching_Stage',
-                readers=['everyone'],
-                writers=[],
-                signatures=[self.support_group.id],
-                invitees=[self.support_group.id],
-                process_string=file_content,
-                multiReply=True,
-                reply={
-                    'readers': {
-                        'values': ['everyone']
-                    },
-                    'writers': {
-                        'values':[],
-                    },
-                    'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
-                    },
-                    'content': matching_content
-                }
-            ))
+                self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                    id=self.support_group.id + '/-/Matching_Stage',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.support_group.id],
+                    invitees=[self.support_group.id],
+                    process_string=file_content,
+                    preprocess=pre_process_file_content,
+                    multiReply=True,
+                    reply={
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'writers': {
+                            'values':[],
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                        },
+                        'content': matching_content
+                    }
+                ))

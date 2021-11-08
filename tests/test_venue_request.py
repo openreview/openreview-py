@@ -560,7 +560,7 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_stage_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert 'Reviewers without a profile: 1 users: [\'some_user@mail.com\']' in matching_status.content['comment']
+        assert '1 Reviewers without a profile: [\'some_user@mail.com\']' in matching_status.content['comment']
 
         scores_invitation = client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
