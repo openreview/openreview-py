@@ -8,6 +8,16 @@ def process(client, edit, invitation):
     decision = client.get_note(edit.note.id)
     submission = client.get_note(decision.forum)
 
+    if decision.content['recommendation']['value'] == 'Reject':
+        ## Post a reject edit
+        client.post_note_edit(invitation=journal.get_reject_id(),
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=submission.id
+            )
+        )
+        return
+
     ## Make submission editable by the authors
     print('Make submission editable by the authors')
     invitation = client.post_invitation_edit(readers=[venue_id],

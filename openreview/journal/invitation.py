@@ -830,6 +830,55 @@ class InvitationBuilder(object):
                 )
             )
 
+    def set_reject_invitation(self, journal):
+
+        venue_id = journal.venue_id
+
+        ## Reject invitation
+        reject_invitation_id = journal.get_reject_id()
+        reject_invitation = openreview.tools.get_invitation(self.client, reject_invitation_id)
+
+        if not reject_invitation:
+            invitation = Invitation(id=reject_invitation_id,
+                invitees=[venue_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values': [venue_id] },
+                    'readers': { 'values': [ 'everyone' ] },
+                    'writers': { 'values': [ venue_id ]},
+                    'note': {
+                        'id': { 'value-invitation': journal.get_author_submission_id() },
+                        'content': {
+                            'venue': {
+                                'value': {
+                                    'value': 'Rejected by TMLR'
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': '.TMLR/Rejection'
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/rejected_submission_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
+
     def set_acceptance_invitation(self, journal, note):
         venue_id = journal.venue_id
         editors_in_chief_id = journal.get_editors_in_chief_id()
@@ -916,44 +965,6 @@ class InvitationBuilder(object):
                     signatures=[venue_id],
                     invitation=invitation
                 )
-
-        ## Reject invitation
-        reject_invitation_id = journal.get_reject_id(number=note.number)
-        reject_invitation = openreview.tools.get_invitation(self.client, reject_invitation_id)
-
-        if not reject_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=Invitation(id=reject_invitation_id,
-                    invitees=[venue_id],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'signatures': { 'values': [editors_in_chief_id] },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
-                        'writers': { 'values': [ venue_id ]},
-                        'note': {
-                            'id': { 'value': note.id },
-                            'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
-                            'content': {
-                                'venue': {
-                                    'value': {
-                                        'value': 'Rejected by TMLR'
-                                    }
-                                },
-                                'venueid': {
-                                    'value': {
-                                        'value': '.TMLR/Rejection'
-                                    }
-                                }
-                            }
-                        }
-                    }
-                )
-            )
 
     def set_ae_recommendation_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id

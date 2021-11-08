@@ -41,7 +41,7 @@ function main() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Your Consoles', 'Featured Papers', 'Reproducibility Papers', 'Survey Papers', 'Under Review Submissions', 'Rejected Submissions'],
+    tabs: ['Your Consoles', 'Accepted Papers', 'Featured Papers', 'Reproducibility Papers', 'Survey Papers', 'Under Review Submissions', 'Rejected Submissions'],
     referrer: args && args.referrer,
     showBanner: false
   })
@@ -63,6 +63,13 @@ function main() {
 // Load makes all the API calls needed to get the data to render the page
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
+
+  var acceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
+    'content.venueid': VENUE_ID,
+    pageSize: PAGE_SIZE,
+    details: 'replyCount',
+    includeCount: true
+  });
 
   var featuredAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     'content.venueid': VENUE_ID,
@@ -107,7 +114,7 @@ function load() {
     userGroupsP = Webfield2.getAll('/groups', { regex: VENUE_ID + '/.*', member: user.id, web: true });
   }
 
-  return $.when(featuredAcceptedNotesP, reproducibilityAcceptedNotesP, surveyAcceptedNotesP, underReviewNotesP, rejectedNotesP, userGroupsP);
+  return $.when(acceptedNotesP, featuredAcceptedNotesP, reproducibilityAcceptedNotesP, surveyAcceptedNotesP, underReviewNotesP, rejectedNotesP, userGroupsP);
 }
 
 function createConsoleLinks(allGroups) {
@@ -131,7 +138,7 @@ function createConsoleLinks(allGroups) {
 }
 
 // Render functions
-function renderContent(featuredResponse, reproducibilityResponse, surveyResponse, underReviewResponse, rejectedResponse, userGroups) {
+function renderContent(acceptedResponse, featuredResponse, reproducibilityResponse, surveyResponse, underReviewResponse, rejectedResponse, userGroups) {
 
   // Your Consoles tab
   if (userGroups.length) {
@@ -156,6 +163,14 @@ function renderContent(featuredResponse, reproducibilityResponse, surveyResponse
     paperDisplayOptions: paperDisplayOptions,
     page_size: PAGE_SIZE
   }
+
+  if (acceptedResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#accepted-papers', SUBMISSION_ID, acceptedResponse.notes, acceptedResponse.count,
+    Object.assign(options, { query: { 'content.venueid': VENUE_ID }}));
+  } else {
+    $('.tabs-container a[href="#accepted-papers"]').parent().hide();
+  }
+
   if (featuredResponse.count > 0) {
     Webfield2.ui.renderSubmissionList('#featured-papers', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
     Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
