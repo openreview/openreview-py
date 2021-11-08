@@ -85,6 +85,9 @@ class Journal(object):
     def get_release_comment_id(self, number=None):
         return self.__get_invitation_id(name='Comment_Release', number=number)
 
+    def get_release_decision_id(self, number=None):
+        return self.__get_invitation_id(name='Decision_Release', number=number)
+
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
 

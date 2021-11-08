@@ -5,9 +5,33 @@ def process(client, edit, invitation):
 
     duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4))
 
-    decision = client.get_note(edit.note.id)
+    decision = client.get_note(edit.note.replyto)
     submission = client.get_note(decision.forum)
 
+    ## Make the decision public
+    print('Make decision public')
+    invitation = client.post_invitation_edit(readers=[venue_id],
+        writers=[venue_id],
+        signatures=[venue_id],
+        invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
+            bulk=True,
+            invitees=[venue_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'values': [venue_id ] },
+                'readers': { 'values': [ venue_id, journal.get_action_editors_id(number=submission.number) ] },
+                'writers': { 'values': [ venue_id ] },
+                'note': {
+                    'id': { 'value-invitation': journal.get_ae_decision_id(number=submission.number) },
+                    'readers': { 'values': [ 'everyone' ] }
+                }
+            }
+    ))
+
+    print('Check rejection')
+    print(decision.content)
     if decision.content['recommendation']['value'] == 'Reject':
         ## Post a reject edit
         client.post_note_edit(invitation=journal.get_reject_id(),

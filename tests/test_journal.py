@@ -899,16 +899,18 @@ class TestJournal():
 
         ## Check invitations
         invitations = raia_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 6
+        assert len(invitations) == 5
         assert f"{venue_id}/Paper1/-/Decision_Approval"  in [i.id for i in invitations]
 
         ## EIC approves the decision
         approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Decision_Approval',
                             signatures=['.TMLR/Editors_In_Chief'],
-                            note=Note(id=decision_note.id,
-                            content= {
-                                'editors_comment': { 'value': 'I agree with the AE' }
-                            }))
+                            note=Note(
+                                content= {
+                                    'approval': { 'value': 'I approve the AE decision. TODO.' },
+                                    'comment_to_the_AE': { 'value': 'I agree with the AE' }
+                                }
+                            ))
 
         helpers.await_queue(openreview_client)
 
@@ -1224,9 +1226,10 @@ class TestJournal():
         ## EIC approves the decision
         approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper4/-/Decision_Approval',
                             signatures=['.TMLR/Editors_In_Chief'],
-                            note=Note(id=decision_note.id,
+                            note=Note(
                             content= {
-                                'editors_comment': { 'value': 'I agree with the AE' }
+                                'approval': { 'value': 'I approve the AE decision. TODO.' },
+                                'comment_to_the_AE': { 'value': 'I agree with the AE' }
                             }))
 
         helpers.await_queue(openreview_client)

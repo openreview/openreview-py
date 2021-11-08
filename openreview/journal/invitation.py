@@ -1824,6 +1824,7 @@ class InvitationBuilder(object):
             invitation = Invitation(id=decision_invitation_id,
                 duedate=duedate,
                 invitees=[venue_id, paper_action_editors_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
@@ -1917,31 +1918,27 @@ class InvitationBuilder(object):
                     'readers': { 'values': [ venue_id, paper_action_editors_id] },
                     'writers': { 'values': [ venue_id] },
                     'note': {
-                        'id': { 'value': decision.id },
                         'forum': { 'value': note.id },
-                        'readers': { 'values': [ 'everyone' ] },
+                        'replyto': { 'value': decision.id },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                        'writers': { 'values': [ venue_id] },
+                        'signatures': { 'values': [editors_in_chief_id] },
                         'content': {
-                            'editors_comment': {
+                            'approval': {
                                 'order': 1,
-                                'description': 'TODO.',
+                                'value': {
+                                    'value-checkbox': 'I approve the AE decision. TODO.'
+                                }
+                            },
+                            'comment_to_the_AE': {
+                                'order': 2,
+                                'description': 'Optionally add any additional notes that might be useful for the AE.',
                                 'value': {
                                     'value-regex': '^[\\S\\s]{1,200000}$',
                                     'optional': True
                                 },
                                 'presentation': {
                                     'markdown': True
-                                }
-                            },
-                            'certifications': {
-                                'order': 2,
-                                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
-                                'value': {
-                                    'values-dropdown': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True
                                 }
                             }
                         }
