@@ -3,7 +3,7 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
-    if edit.note.content['under_review']['value'] == 'Appropriate for review':
+    if edit.note.content['under_review']['value'] == 'Appropriate for Review':
         return client.post_note_edit(invitation= journal.get_under_review_id(),
                                 signatures=[venue_id],
                                 note=openreview.api.Note(id=edit.note.forum))

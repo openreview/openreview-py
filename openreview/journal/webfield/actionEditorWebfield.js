@@ -39,7 +39,7 @@ var loadData = function() {
       assignedGroups,
       Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
       Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
-      Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)})
+      Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) })
     );
   })
 
@@ -101,7 +101,7 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
       })
 
       rows.push({
-        submissionNumber: { number: number},
+        submissionNumber: { number: parseInt(number)},
         submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: submission.content.authors.value, authorids: submission.content.authorids.value}},
         reviewProgressData: {
           noteId: submission.id,
@@ -111,18 +111,19 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
           reviewers: reviewerStatus,
           sendReminder: true,
           referrer: referrerUrl,
-          actions: [
+          actions: submission.content.venueid.value == '.TMLR/Under_Review' ? [
             {
               name: 'Edit Assignments',
               url: '/invitation?id=.TMLR/Paper' + number + '/Reviewers/-/Assignment'
             }
-          ]
+          ] : []
         },
         actionEditorData: {
           committeeName: 'Action Editor',
           recommendation: decision && decision.content.recommendation.value,
           editUrl: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
-        }
+        },
+        status: submission.content.venue.value
       })
     }
   })
@@ -141,21 +142,25 @@ var renderData = function(venueStatusData) {
 
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
       headings: ['#', 'Paper Summary',
-      'Review Progress', 'Decision Status'],
+      'Review Progress', 'Decision Status', 'Status'],
       renders: [
         function(data) {
           return '<strong class="note-number">' + data.number + '</strong>';
         },
         Handlebars.templates.noteSummary,
         Handlebars.templates.noteReviewers,
-        Handlebars.templates.noteMetaReviewStatus
+        Handlebars.templates.noteMetaReviewStatus,
+        function(data) {
+          return '<h4>' + data + '</h4>';
+        }
       ],
       sortOptions: {
         Paper_Number: function(row) { return row.submissionNumber.number; },
         Paper_Title: function(row) { return _.toLower(_.trim(row.submission.content.title)); },
         Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
         Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
-        Recommendation: function(row) { return row.actionEditorData.recommendation; }
+        Recommendation: function(row) { return row.actionEditorData.recommendation; },
+        Status: function(row) { return row.status; }
       },
       searchProperties: {
         number: ['submissionNumber.number'],
@@ -166,7 +171,8 @@ var renderData = function(venueStatusData) {
         reviewer: ['reviewProgressData.reviewers'],
         numReviewersAssigned: ['reviewProgressData.numReviewers'],
         numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
-        recommendation: ['actionEditorData.recommendation']
+        recommendation: ['actionEditorData.recommendation'],
+        status: ['status']
       },
       reminderOptions: {
         container: 'a.send-reminder-link',
@@ -175,7 +181,15 @@ var renderData = function(venueStatusData) {
         'Click on the link below to go to the review page:\n\n{{submit_review_link}}' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor'
       },
-      extraClasses: 'ac-console-table'
+      extraClasses: 'console-table paper-table',
+      postRenderTable: function() {
+        $('.console-table th').eq(0).css('width', '5%');
+        $('.console-table th').eq(1).css('width', '25%');
+        $('.console-table th').eq(2).css('width', '30%');
+        $('.console-table th').eq(3).css('width', '28%');
+        $('.console-table th').eq(4).css('width', '12%');
+      }
+
   })
 }
 

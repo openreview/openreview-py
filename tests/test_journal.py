@@ -297,7 +297,7 @@ class TestJournal():
         under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper1/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
                                     note=Note(content={
-                                        'under_review': { 'value': 'Appropriate for review' }
+                                        'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
         helpers.await_queue(openreview_client)
@@ -827,9 +827,11 @@ class TestJournal():
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>Thank you for overseeing the review process for TMLR submission &quot;Paper title UPDATED&quot;.</p>
 <p>All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:</p>
-<p>Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.<br>
-Rate the quality of the reviews submitted by the reviewers. You will not be able to submit your decision until these ratings have been submitted.</p>
-<p>We ask that you submit your decision within 1 week ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<ul>
+<li>Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.</li>
+<li>Rate the quality of the reviews submitted by the reviewers. <strong>You will not be able to submit your decision until these ratings have been submitted</strong>. To rate a review, go on the submission’s page and click on button “Rating” for each of the reviews.</li>
+</ul>
+<p>We ask that you submit your decision <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>The possible decisions are:</p>
 <ul>
 <li><strong>Accept as is</strong>: once its camera ready version is submitted, the manuscript will be marked as accepted.</li>
@@ -839,6 +841,7 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
 <p>Your decision may also include certification(s) recommendations for the submission (in case of an acceptance).</p>
 <p>For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
 <p>We thank you for your essential contribution to TMLR!</p>
+<p>The TMLR Editors-in-Chief</p>
 '''
 
         ## Check permissions of the review revisions
@@ -942,7 +945,7 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'video': { 'value': '/attachment/' + 's' * 40 +'.mp4'}
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
                 }
             )
         )
@@ -1062,7 +1065,7 @@ Rate the quality of the reviews submitted by the reviewers. You will not be able
         under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper4/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper4/Action_Editors'],
                                     note=Note(content={
-                                        'under_review': { 'value': 'Appropriate for review' }
+                                        'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
         helpers.await_queue(openreview_client)

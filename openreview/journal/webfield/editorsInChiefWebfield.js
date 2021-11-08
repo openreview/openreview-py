@@ -210,7 +210,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
 
       paperStatusRows.push({
-        submissionNumber: { number: number},
+        submissionNumber: { number: parseInt(number)},
         submission: formattedSubmission,
         reviewProgressData: {
           noteId: submission.id,
@@ -220,7 +220,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           reviewers: paperReviewerStatus,
           sendReminder: true,
           referrer: referrerUrl,
-          actions: [
+          actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
               url: '/invitation?id=.TMLR/Paper' + number + '/Reviewers/-/Assignment'
@@ -229,7 +229,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
               name: 'Edit Review Invitation',
               url: '/invitation/edit?id=.TMLR/Paper' + number + '/-/Review'
             }
-          ]
+          ] : []
         },
         areachairProgressData: {
           recommendation: metaReview && metaReview.content.recommendation,
@@ -242,12 +242,12 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           referrer: referrerUrl,
           metaReviewName: 'Decision',
           committeeName: 'Action Editor',
-          actions: [
+          actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
               url: '/invitation?id=.TMLR/Paper' + number + '/Action_Editors/-/Assignment'
             }
-          ]
+          ] : []
         },
         status: submission.content.venue.value,
       })

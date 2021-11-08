@@ -622,9 +622,9 @@ class InvitationBuilder(object):
                         'content': {
                             'under_review': {
                                 'order': 1,
-                                'description': 'TODO.',
+                                'description': 'Determine whether this submission is appropriate for review at JMLR or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
                                 'value': {
-                                    'value-radio': ['Appropriate for review', 'Desk Reject']
+                                    'value-radio': ['Appropriate for Review', 'Desk Reject']
                                 }
                             },
                             'comment': {
@@ -2139,15 +2139,19 @@ class InvitationBuilder(object):
                             }
                         },
                         "video": {
-                            "order": 6,
-                            "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                            "order": 11,
+                            "description": "Optionally, you may submit a link to a video summarizing your work.",
                             'value': {
-                                "value-file": {
-                                    "fileTypes": [
-                                        "mp4"
-                                    ],
-                                    "size": 100
-                                }
+                                "value-regex": 'https?://.+',
+                                'optional': True
+                            }
+                        },
+                        "code": {
+                            "order": 12,
+                            "description": "Optionally, you may submit a link to code for your work.",
+                            'value': {
+                                "value-regex": 'https?://.+',
+                                'optional': True
                             }
                         }
                     }
@@ -2194,7 +2198,6 @@ class InvitationBuilder(object):
                         'content': {
                             'verification': {
                                 'order': 1,
-                                'description': 'TODO.',
                                 'value': {
                                     'value-checkbox': 'I confirm that camera ready manuscript complies with the TMLR stylefile and, if appropriate, includes the minor revisions that were requested.'
                                 }

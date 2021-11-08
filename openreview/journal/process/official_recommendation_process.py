@@ -22,10 +22,10 @@ Thank you for overseeing the review process for TMLR submission "{submission.con
 
 All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:
 
-Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.
-Rate the quality of the reviews submitted by the reviewers. You will not be able to submit your decision until these ratings have been submitted.
+- Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.
+- Rate the quality of the reviews submitted by the reviewers. **You will not be able to submit your decision until these ratings have been submitted**. To rate a review, go on the submission’s page and click on button “Rating” for each of the reviews.
 
-We ask that you submit your decision within 1 week ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}
+We ask that you submit your decision **within 1 week** ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}
 
 The possible decisions are:
 - **Accept as is**: once its camera ready version is submitted, the manuscript will be marked as accepted.
@@ -38,6 +38,7 @@ For more details and guidelines on performing your review, visit jmlr.org/tmlr .
 
 We thank you for your essential contribution to TMLR!
 
-    ''',
+The TMLR Editors-in-Chief
+''',
             replyTo=journal.contact_info
         )
