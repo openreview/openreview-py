@@ -1154,7 +1154,7 @@ class Conference(object):
             alternate_matching_group = self.get_area_chairs_id()
         conference_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return conference_matching.setup(build_conflicts=build_conflicts, compute_affinity_scores=compute_affinity_scores,)
+        return conference_matching.setup(build_conflicts=compute_conflicts, compute_affinity_scores=compute_affinity_scores,)
 
     def set_matching_conflicts(self, profile_id, build_conflicts=True):
         # Re-generates conflicts for a single reviewer

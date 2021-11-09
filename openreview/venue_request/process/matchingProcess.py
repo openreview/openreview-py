@@ -5,7 +5,7 @@ def process(client, note, invitation):
     request_form = client.get_note(note.forum)
     conference = openreview.helpers.get_conference(client, note.forum)
 
-    build_conflicts=note.content.get('build_conflicts')
+    compute_conflicts=note.content.get('compute_conflicts')
 
     matching_group = note.content['matching_group']
     compute_affinity_scores = note.content.get('compute_affinity_scores') == 'Yes'
@@ -14,7 +14,7 @@ def process(client, note, invitation):
     if scores:
         compute_affinity_scores = client.get_attachment(id=note.id, field_name='upload_affinity_scores')
 
-    matching_status = conference.setup_committee_matching(committee_id=matching_group, build_conflicts=build_conflicts, compute_affinity_scores=compute_affinity_scores)
+    matching_status = conference.setup_committee_matching(committee_id=matching_group, compute_conflicts=compute_conflicts, compute_affinity_scores=compute_affinity_scores)
     role_name = matching_group.split('/')[-1]
 
     comment_note = openreview.Note(

@@ -1201,7 +1201,7 @@ class VenueRequest():
                 'required': True,
                 'order': 2
             },
-            'build_conflicts': {
+            'compute_conflicts': {
                 'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
                 'value-radio': ['Yes', 'No'],
                 'default': 'Yes',

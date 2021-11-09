@@ -543,7 +543,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'build_conflicts': 'Yes',
+                'compute_conflicts': 'Yes',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': url
             },
