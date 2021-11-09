@@ -363,7 +363,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                         'required': True,
                         'order': 2
                     },
-                    'build_conflicts': {
+                    'compute_conflicts': {
                         'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
                         'value-radio': ['Yes', 'No'],
                         'default': 'Yes',
@@ -371,7 +371,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                         'order': 3
                     },
                     'compute_affinity_scores': {
-                        'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                        'description': 'Please select whether you would like affinity scores to be computed by our expertise API and uploaded automatically.',
                         'order': 4,
                         'value-radio': ['Yes', 'No'],
                         'required': True,
