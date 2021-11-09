@@ -923,8 +923,8 @@ class TestJournal():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
 <p>We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title &quot;Paper title UPDATED&quot; is accepted as is.</p>
-<p>To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work.</p>
+<p>To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button &quot;Camera Ready Revision&quot;: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.</p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
 <p>We thank you for your contribution to TMLR and congratulate you for your successful submission!</p>
 <p>The TMLR Editors-in-Chief</p>
