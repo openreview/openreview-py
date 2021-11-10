@@ -122,6 +122,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var completedReviews = reviews.length && (reviews.length == paperReviewers.length);
       var formattedSubmission = {
         id: submission.id,
+        forum: submission.forum,
         number: number,
         cdate: submission.cdate,
         mdate: submission.mdate,
