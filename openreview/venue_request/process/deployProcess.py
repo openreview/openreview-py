@@ -337,8 +337,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         except ValueError:
             activation_date = datetime.strptime(activation_date, '%Y/%m/%d')
         matching_invitation = openreview.Invitation(
-            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Matching_Stage',
-            super = SUPPORT_GROUP + '/-/Matching_Stage',
+            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Paper_Matching_Setup',
+            super = SUPPORT_GROUP + '/-/Paper_Matching_Setup',
             invitees = readers,
             cdate = openreview.tools.datetime_millis(activation_date),
             reply = {

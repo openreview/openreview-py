@@ -528,7 +528,7 @@ class TestVenueRequest():
                 writer.writerow([submission.id, '~Venue_Reviewer1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Venue_Reviewer2', round(random.random(), 2)])
 
-        invitation='{}/-/Request{}/Matching_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
+        invitation = '{}/-/Request{}/Paper_Matching_Setup'.format(venue['support_group_id'], venue['request_form_note'].number)
 
         matching_inv = client.get_invitation(invitation)
         activation = datetime.datetime.utcnow()
@@ -539,7 +539,7 @@ class TestVenueRequest():
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores.csv'), invitation, 'upload_affinity_scores')
 
         #post matching setup note
-        matching_stage_note = test_client.post_note(openreview.Note(
+        matching_setup_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
@@ -554,11 +554,11 @@ class TestVenueRequest():
             signatures=['~SomeFirstName_User1'],
             writers=[]
         ))
-        assert matching_stage_note
+        assert matching_setup_note
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_stage_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
         assert '1 Reviewers without a profile: [\'some_user@mail.com\']' in matching_status.content['comment']
 

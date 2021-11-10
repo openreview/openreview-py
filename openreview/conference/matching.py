@@ -492,19 +492,19 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of TPMS edges! Input file:{0}, Scores found: {1}, Edges posted: {2}'.format(tpms_score_file, len(edges), edges_posted))
         return invitation
 
-    def _build_scores_from_file(self, score_invitation_id, score_file, submissions):
+    def _build_scores_from_file(self, score_invitation_id, score_file, submissions, matching_status):
         if self.alternate_matching_group:
             return self._build_profile_scores(score_invitation_id, score_file)
         scores = []
         with open(score_file) as file_handle:
             scores = [row for row in csv.reader(file_handle)]
-        return self._build_note_scores(score_invitation_id, scores, submissions)
+        return self._build_note_scores(score_invitation_id, scores, submissions, matching_status)
 
-    def _build_scores_from_stream(self, score_invitation_id, scores_stream, submissions):
+    def _build_scores_from_stream(self, score_invitation_id, scores_stream, submissions, matching_status):
         scores = [input_line.split(',') for input_line in scores_stream.decode().split('\n')]
-        return self._build_note_scores(score_invitation_id, scores, submissions)
+        return self._build_note_scores(score_invitation_id, scores, submissions, matching_status)
 
-    def _build_note_scores(self, score_invitation_id, scores, submissions):
+    def _build_note_scores(self, score_invitation_id, scores, submissions, matching_status=None):
         '''
         Given an array of scores and submissions, create score edges
         '''
@@ -544,7 +544,7 @@ class Matching(object):
         edges_posted = self.client.get_edges_count(invitation=invitation.id)
         if edges_posted < len(edges):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
-        return invitation
+        return invitation, matching_status
 
     def _build_profile_scores(self, score_invitation_id, score_file):
         '''
@@ -616,26 +616,29 @@ class Matching(object):
     def _compute_scores(self, score_invitation_id, submissions, matching_status):
         invitation = self._create_edge_invitation(score_invitation_id)
 
-        job_id = self.client.request_expertise(
-            name=self.conference.get_short_name(),
-            group_id=self.match_group.id,
-            paper_invitation=self.conference.get_blind_submission_id(),
-            exclusion_inv=self.conference.get_expertise_selection_id(),
-            model='specter+mfr')
-        status = False
-        call_count = 0
-        while not status:
-            call_count+=1
-            status = 'Completed' in self.client.get_expertise_status(job_id['job_id'])['results'][0]['status']
-            if call_count == 30:
-                break
-            time.sleep(30)
-        if status:
-            result = self.client.get_expertise_results(job_id['job_id'])
-            scores = [[entry['submission'],entry['user'],entry['score']] for entry in result['results']]
-            matching_status['no_profiles'] = result['metadata']['no_profile']
-            matching_status['no_publications'] = result['metadata']['no_publications']
-            return self._build_note_scores(invitation, scores, submissions), matching_status
+        try:
+            job_id = self.client.request_expertise(
+                name=self.conference.get_short_name(),
+                group_id=self.match_group.id,
+                paper_invitation=self.conference.get_blind_submission_id(),
+                exclusion_inv=self.conference.get_expertise_selection_id(),
+                model='specter+mfr')
+            status = False
+            call_count = 0
+            while not status:
+                call_count += 1
+                status = 'Completed' in self.client.get_expertise_status(job_id['job_id'])['results'][0]['status']
+                if call_count == 30:
+                    break
+                time.sleep(30)
+            if status:
+                result = self.client.get_expertise_results(job_id['job_id'])
+                scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
+                matching_status['no_profiles'] = result['metadata']['no_profile']
+                matching_status['no_publications'] = result['metadata']['no_publications']
+                return self._build_note_scores(invitation, scores, submissions, matching_status)
+        except openreview.OpenReviewException as e:
+            matching_status['error'].append(e)
         return None, matching_status
 
     def _build_custom_max_papers(self, user_profiles):
@@ -872,7 +875,8 @@ class Matching(object):
         score_spec = {}
         matching_status = {
             'no_profiles': [],
-            'no_publications': []
+            'no_publications': [],
+            'error': []
         }
 
         try:
@@ -910,7 +914,7 @@ class Matching(object):
 
         user_profiles = _get_profiles(self.client, self.match_group.members, with_publications=build_conflicts)
 
-        invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
+        invitation = self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
         if not self.is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'templates/proposed_assignment_pre_process.py')) as f:
                 content = f.read()
@@ -950,18 +954,20 @@ class Matching(object):
             }
 
         if type_affinity_scores == bytes:
-            invitation = self._build_scores_from_stream(
+            invitation, matching_status = self._build_scores_from_stream(
                 self.conference.get_affinity_score_id(self.match_group.id),
                 compute_affinity_scores,
-                submissions
+                submissions,
+                matching_status
             )
-            score_spec[invitation.id] = {
-                'weight': 1,
-                'default': 0
-            }
+            if invitation:
+                score_spec[invitation.id] = {
+                    'weight': 1,
+                    'default': 0
+                }
 
         if elmo_score_file:
-            invitation = self._build_scores_from_file(
+            invitation, matching_status = self._build_scores_from_file(
                 self.conference.get_elmo_score_id(self.match_group.id),
                 elmo_score_file,
                 submissions

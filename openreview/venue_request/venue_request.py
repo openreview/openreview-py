@@ -1232,7 +1232,7 @@ class VenueRequest():
                 file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
                 self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
-                    id=self.support_group.id + '/-/Matching_Stage',
+                    id=self.support_group.id + '/-/Paper_Matching_Setup',
                     readers=['everyone'],
                     writers=[],
                     signatures=[self.support_group.id],

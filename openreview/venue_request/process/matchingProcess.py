@@ -18,7 +18,7 @@ def process(client, note, invitation):
     role_name = matching_group.split('/')[-1]
 
     comment_note = openreview.Note(
-        invitation = note.invitation.replace('Matching_Stage', 'Comment'),
+        invitation = note.invitation.replace('Paper_Matching_Setup', 'Comment'),
         forum = note.forum,
         replyto = note.id,
         readers = request_form.content.get('program_chair_emails', []) + [SUPPORT_GROUP],
@@ -26,16 +26,36 @@ def process(client, note, invitation):
         signatures = [SUPPORT_GROUP],
         content = {
             'title': 'Matching Status',
-            'comment': f'''
-{len(matching_status.get('no_profiles'))} {role_name} without a profile: {matching_status.get('no_profiles')}
-
-Please check the {role_name} group to see more details: https://openreview.net/group/edit?id={matching_group}'''
+            'comment': ''
         }
     )
-    if matching_status.get('no_publications'):
-        no_publications_status=f'''{len(matching_status.get('no_publications'))} {role_name} with no publications: {matching_status.get('no_publications')}'''
+
+    if matching_status.get('error'):
+        error_status=f'''{len(matching_status.get('error'))} error(s): {matching_status.get('error')}'''
         comment_note.content['comment'] += f'''
 
-{no_publications_status}'''
+{error_status}'''
+
+    else:
+        no_profiles_status = matching_status.get('no_profiles')
+        if no_profiles_status:
+            profiles_status=f'''
+{len(no_profiles_status)} {role_name} without a profile: {no_profiles_status}
+
+Affinity scores and/or conflicts could not be computed for these users. Please ask these users to sign up in OpenReview and upload their papers. Alternatively, you can remove these users from the {role_name} group. 
+
+Please check the {role_name} group to see more details: https://openreview.net/group?id={matching_group}'''
+        else:
+            profiles_status=f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group/edit?id={conference.get_program_chairs_id()}
+
+Please refer to the FAQ for pointers on how to run the matcher: https://openreview.net/faq#question-edge-browswer'''
+
+        comment_note.content['comment'] += f'''{profiles_status}'''
+
+        if matching_status.get('no_publications'):
+            no_publications_status=f'''{len(matching_status.get('no_publications'))} {role_name} with no publications: {matching_status.get('no_publications')}'''
+            comment_note.content['comment'] += f'''
+
+    {no_publications_status}'''
 
     client.post_note(comment_note)
