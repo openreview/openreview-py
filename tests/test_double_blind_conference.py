@@ -1424,6 +1424,21 @@ class TestDoubleBlindConference():
         assert len(accepted_author_group.members) == 0
         assert accepted_author_group.members == []
 
+        # Re-accepting
+        notes = list(client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision'))
+        note = notes[0]
+        note.content['decision'] = 'Accept (Oral)'
+        note.content['comment'] = 'Actually okay'
+        decision_note = client.post_note(note)
+        
+        assert decision_note
+        helpers.await_queue()
+    
+        accepted_author_group = client.get_group(conference.get_accepted_authors_id())
+        assert accepted_author_group
+        print(accepted_author_group)
+        assert len(accepted_author_group.members) == 1
+        assert accepted_author_group.members == [conference.id + '/Paper{}/Authors'.format(submission.number)]
 
     def test_consoles(self, client, test_client, selenium, request_page):
 
