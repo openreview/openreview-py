@@ -494,7 +494,7 @@ class Matching(object):
 
     def _build_scores_from_file(self, score_invitation_id, score_file, submissions, matching_status):
         if self.alternate_matching_group:
-            return self._build_profile_scores(score_invitation_id, score_file)
+            return self._build_profile_scores(score_invitation_id, score_file), matching_status
         scores = []
         with open(score_file) as file_handle:
             scores = [row for row in csv.reader(file_handle)]
@@ -932,6 +932,14 @@ class Matching(object):
             invitation=self.conference.get_blind_submission_id(),
             details='original'))
 
+        if not submissions:
+            matching_status['error'] = ['Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.']
+            return matching_status
+        if not self.match_group.members:
+            role = self.match_group.id.split('/')[-1].replace('_',' ')
+            matching_status['error'] = [f'Could not compute affinity scores and conflicts since there are no {role}. You can use the \'Recruitment\' button to recruit {role}.']
+            return matching_status
+
         if tpms_score_file:
             invitation = self._build_tpms_scores(tpms_score_file, submissions, user_profiles)
             score_spec[invitation.id] = {
@@ -943,10 +951,11 @@ class Matching(object):
 
         if type_affinity_scores == str or  affinity_score_file:
             compute_affinity_scores = affinity_score_file if affinity_score_file else compute_affinity_scores
-            invitation = self._build_scores_from_file(
+            invitation, matching_status = self._build_scores_from_file(
                 self.conference.get_affinity_score_id(self.match_group.id),
                 compute_affinity_scores,
-                submissions
+                submissions,
+                matching_status
             )
             score_spec[invitation.id] = {
                 'weight': 1,
