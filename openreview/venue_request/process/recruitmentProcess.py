@@ -55,6 +55,10 @@ def process(client, note, invitation):
 
 {recruitment_status.get('already_invited', {})}''' if recruitment_status.get('already_invited') else ''
 
+    already_member_status=f'''No recruitment invitation was sent to the following users because they are already members of the group:
+
+{recruitment_status.get('already_member', '')}''' if recruitment_status.get('already_member') else ''
+
     comment_note = openreview.Note(
         invitation = note.invitation.replace('Recruitment', 'Comment'),
         forum = note.forum,
@@ -68,6 +72,8 @@ def process(client, note, invitation):
 Invited: {len(recruitment_status.get('invited', []))} users.
 
 {non_invited_status}
+
+{already_member_status}
 
 Please check the invitee group to see more details: https://openreview.net/group?id={conference.id}/{role_name}/Invited
             '''
