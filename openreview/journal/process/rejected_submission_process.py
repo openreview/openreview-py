@@ -26,3 +26,6 @@ The TMLR Editors-in-Chief
 ''',
         replyTo=journal.contact_info
     )
+
+    print('Enable Author deanonymize')
+    journal.invitation_builder.set_authors_deanonymization_invitation(journal, submission)

@@ -966,6 +966,55 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
+    def set_authors_release_invitation(self, journal, note):
+
+        venue_id = journal.venue_id
+
+        authors_release_invitation_id = journal.get_authors_release_id(number=note.number)
+        authors_release_invitation = openreview.tools.get_invitation(self.client, authors_release_invitation_id)
+
+        if not authors_release_invitation:
+            invitation = Invitation(id=authors_release_invitation_id,
+                invitees=[venue_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values': [venue_id] },
+                    'readers': { 'values': [ 'everyone' ] },
+                    'writers': { 'values': [ venue_id ]},
+                    'note': {
+                        'id': { 'value-invitation': journal.get_reject_id() },
+                        'content': {
+                            'authors': {
+                                'value': {
+                                    'values': note.content['authors']['value']
+                                },
+                                'readers': {
+                                    'values': ['everyone']
+                                }
+                            },
+                            'authorids': {
+                                'value': {
+                                    'values': note.content['authorids']['value']
+                                },
+                                'readers': {
+                                    'values': ['everyone']
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+
+            self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=invitation
+            )
+
     def set_ae_recommendation_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
         action_editors_id = journal.get_action_editors_id()
@@ -2205,6 +2254,53 @@ class InvitationBuilder(object):
             )
 
             with open(os.path.join(os.path.dirname(__file__), 'process/camera_ready_verification_process.py')) as f:
+                content = f.read()
+                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+                invitation.process = content
+
+                self.client.post_invitation_edit(readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=invitation
+                )
+
+    def set_authors_deanonymization_invitation(self, journal, note):
+        venue_id = journal.venue_id
+        paper_authors_id = journal.get_authors_id(number=note.number)
+
+        authors_deanonymization_invitation_id = journal.get_authors_deanonymization_id(number=note.number)
+        authors_deanonymization_invitation = openreview.tools.get_invitation(self.client, authors_deanonymization_invitation_id)
+
+        if not authors_deanonymization_invitation:
+            invitation = Invitation(id=authors_deanonymization_invitation_id,
+                invitees=[venue_id, paper_authors_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                edit={
+                    'signatures': { 'values': [ paper_authors_id ] },
+                    'readers': { 'values': [ venue_id, paper_authors_id ] },
+                    'writers': { 'values': [ venue_id ] },
+                    'note': {
+                        'signatures': { 'values': [ paper_authors_id ] },
+                        'forum': { 'value': note.id },
+                        'replyto': { 'value': note.id },
+                        'readers': { 'values': [ venue_id, paper_authors_id ] },
+                        'writers': { 'values': [ venue_id ] },
+                        'content': {
+                            'confirmation': {
+                                'order': 1,
+                                'value': {
+                                    'value-checkbox': 'I want to reveal all author names on behalf of myself and my co-authors.'
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+
+            with open(os.path.join(os.path.dirname(__file__), 'process/authors_deanonimization_process.py')) as f:
                 content = f.read()
                 content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
                 invitation.process = content

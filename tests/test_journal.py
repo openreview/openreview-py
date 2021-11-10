@@ -1264,3 +1264,28 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
+
+        deanonymize_authors_note = test_client.post_note_edit(invitation='.TMLR/Paper4/-/Authors_De-Anonymization',
+                            signatures=['.TMLR/Paper4/Authors'],
+                            note=Note(
+                            content= {
+                                'confirmation': { 'value': 'I want to reveal all author names on behalf of myself and my co-authors.' }
+                            }))
+
+        helpers.await_queue(openreview_client)
+
+        note = openreview_client.get_note(note_id_4)
+        assert note
+        assert note.forum == note_id_4
+        assert note.replyto is None
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review', '.TMLR/-/Rejection', '.TMLR/Paper4/-/Authors_Release']
+        assert note.readers == ['everyone']
+        assert note.writers == ['.TMLR']
+        assert note.signatures == ['.TMLR/Paper4/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids'].get('readers') == ['everyone']
+        assert note.content['authors'].get('readers') == ['everyone']
+        assert note.content['venue']['value'] == 'Rejected by TMLR'
+        assert note.content['venueid']['value'] == '.TMLR/Rejection'
+        assert note.content['title']['value'] == 'Paper title 4'
+        assert note.content['abstract']['value'] == 'Paper abstract'

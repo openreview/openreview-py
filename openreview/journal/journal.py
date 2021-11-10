@@ -88,6 +88,12 @@ class Journal(object):
     def get_release_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision_Release', number=number)
 
+    def get_authors_release_id(self, number=None):
+        return self.__get_invitation_id(name='Authors_Release', number=number)
+
+    def get_authors_deanonymization_id(self, number=None):
+        return self.__get_invitation_id(name='Authors_De-Anonymization', number=number)
+
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
 
@@ -139,6 +145,7 @@ class Journal(object):
         self.invitation_builder.set_under_review_invitation(self)
         self.invitation_builder.set_desk_rejection_invitation(self)
         self.invitation_builder.set_reject_invitation(self)
+        #self.invitation_builder.set_authors_release_invitation(self)
         self.invitation_builder.set_ae_custom_papers_invitation(self)
         self.invitation_builder.set_ae_assignment(self)
         self.invitation_builder.set_reviewer_assignment(self)
