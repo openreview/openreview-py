@@ -1,3 +1,6 @@
+from re import match
+
+
 def process(client, note, invitation):
     import datetime
     GROUP_PREFIX = ''
@@ -16,7 +19,19 @@ def process(client, note, invitation):
     if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
         conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
-    if invitation_type == 'Bid_Stage':
+    if invitation_type == 'Revision':
+        submission_deadline = forum_note.get('Submission Deadline')
+        if submission_deadline:
+            try:
+                submission_deadline = datetime.strptime(submission_deadline, '%Y/%m/%d %H:%M')
+            except ValueError:
+                submission_deadline = datetime.strptime(submission_deadline, '%Y/%m/%d')
+            matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
+            if matching_invitation:
+                matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
+                client.post_invitation(matching_invitation)
+
+    elif invitation_type == 'Bid_Stage':
         ## TODO: run setup_matching inside of BidStage?
         conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
         conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
