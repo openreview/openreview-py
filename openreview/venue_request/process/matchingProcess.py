@@ -42,11 +42,11 @@ def process(client, note, invitation):
             profiles_status=f'''
 {len(no_profiles_status)} {role_name} without a profile: {no_profiles_status}
 
-Affinity scores and/or conflicts could not be computed for these users. Please ask these users to sign up in OpenReview and upload their papers. Alternatively, you can remove these users from the {role_name} group. 
+Affinity scores and/or conflicts could not be computed for these users. Please ask these users to sign up in OpenReview and upload their papers. Alternatively, you can remove these users from the {role_name} group.
 
 Please check the {role_name} group to see more details: https://openreview.net/group?id={matching_group}'''
         else:
-            profiles_status=f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group/edit?id={conference.get_program_chairs_id()}
+            profiles_status=f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group?id={conference.get_program_chairs_id()}
 
 Please refer to the FAQ for pointers on how to run the matcher: https://openreview.net/faq#question-edge-browswer'''
 
