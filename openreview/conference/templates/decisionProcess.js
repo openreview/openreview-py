@@ -1,4 +1,4 @@
-function (){
+function processUpdate(){
     var or3client = lib.or3client;
 
     var CONFERENCE_ID = '';

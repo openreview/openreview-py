@@ -1408,6 +1408,23 @@ class TestDoubleBlindConference():
         notes = conference.get_submissions(accepted=True)
         assert notes
 
+        # Reverting acceptance decision 
+        notes = list(client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision'))
+        note = notes[0]
+        note.content['decision'] = 'Reject'
+        note.content['comment'] = 'Never mind!'
+        decision_note = client.post_note(note)
+        
+        assert decision_note
+        helpers.await_queue()
+    
+        accepted_author_group = client.get_group(conference.get_accepted_authors_id())
+        assert accepted_author_group
+        print(accepted_author_group)
+        assert len(accepted_author_group.members) == 0
+        assert accepted_author_group.members == []
+
+
     def test_consoles(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
