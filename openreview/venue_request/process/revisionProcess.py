@@ -1,6 +1,3 @@
-from re import match
-
-
 def process(client, note, invitation):
     import datetime
     GROUP_PREFIX = ''
@@ -20,12 +17,12 @@ def process(client, note, invitation):
         conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
     if invitation_type == 'Revision':
-        submission_deadline = forum_note.get('Submission Deadline')
+        submission_deadline = forum_note.content.get('Submission Deadline')
         if submission_deadline:
             try:
-                submission_deadline = datetime.strptime(submission_deadline, '%Y/%m/%d %H:%M')
+                submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d %H:%M')
             except ValueError:
-                submission_deadline = datetime.strptime(submission_deadline, '%Y/%m/%d')
+                submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d')
             matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
             if matching_invitation:
                 matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
