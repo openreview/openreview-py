@@ -933,12 +933,10 @@ class Matching(object):
             details='original'))
 
         if not self.match_group.members:
-            role = self.match_group.id.split('/')[-1]
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
-        elif self.alternate_matching_group:
+        if self.alternate_matching_group:
             other_matching_group = self.client.get_group(self.alternate_matching_group)
             if not other_matching_group.members:
-                role = self.alternate_matching_group.split('/')[-1]
                 raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
         elif not submissions:
             raise openreview.OpenReviewException('Submissions not found.')
