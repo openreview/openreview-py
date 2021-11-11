@@ -29,11 +29,8 @@ def process(client, note, invitation):
                 client.post_invitation(matching_invitation)
 
     elif invitation_type == 'Bid_Stage':
-        ## TODO: run setup_matching inside of BidStage?
-        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
         conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
         if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
-            conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True)
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_area_chairs_id()))
 
     elif invitation_type == 'Review_Stage':

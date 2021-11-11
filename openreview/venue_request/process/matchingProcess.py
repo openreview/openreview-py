@@ -11,11 +11,23 @@ def process(client, note, invitation):
     compute_affinity_scores = note.content.get('compute_affinity_scores') == 'Yes'
     scores = note.content.get('upload_affinity_scores')
 
+    matching_status = {'error': ['There was an error in setting up the matcher. Please contact info@openreview.net.']}
+
     if scores:
         compute_affinity_scores = client.get_attachment(id=note.id, field_name='upload_affinity_scores')
 
-    matching_status = conference.setup_committee_matching(committee_id=matching_group, compute_conflicts=compute_conflicts, compute_affinity_scores=compute_affinity_scores)
     role_name = matching_group.split('/')[-1]
+
+    try:
+        matching_status = conference.setup_committee_matching(committee_id=matching_group, compute_conflicts=compute_conflicts, compute_affinity_scores=compute_affinity_scores)
+    except openreview.OpenReviewException as e:
+        if 'Submissions not found.' in str(e):
+            matching_status['error'] = ['Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.']
+        elif f'The match group is empty' in str(e):
+            matching_status['error'] = [f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.']
+        elif 'The alternate match group is empty' in str(e):
+            role_name = conference.get_area_chairs_name()
+            matching_status['error'] = ['Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.']
 
     comment_note = openreview.Note(
         invitation = note.invitation.replace('Paper_Matching_Setup', 'Comment'),

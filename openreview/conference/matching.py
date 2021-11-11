@@ -932,13 +932,16 @@ class Matching(object):
             invitation=self.conference.get_blind_submission_id(),
             details='original'))
 
-        if not submissions:
-            matching_status['error'] = ['Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.']
-            return matching_status
         if not self.match_group.members:
-            role = self.match_group.id.split('/')[-1].replace('_',' ')
-            matching_status['error'] = [f'Could not compute affinity scores and conflicts since there are no {role}. You can use the \'Recruitment\' button to recruit {role}.']
-            return matching_status
+            role = self.match_group.id.split('/')[-1]
+            raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
+        elif self.alternate_matching_group:
+            other_matching_group = self.client.get_group(self.alternate_matching_group)
+            if not other_matching_group.members:
+                role = self.alternate_matching_group.split('/')[-1]
+                raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
+        elif not submissions:
+            raise openreview.OpenReviewException('Submissions not found.')
 
         if tpms_score_file:
             invitation = self._build_tpms_scores(tpms_score_file, submissions, user_profiles)
