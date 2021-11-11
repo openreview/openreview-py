@@ -23,6 +23,21 @@ class InvitationBuilder(object):
             )
         )
 
+    def save_invitation(self, journal, invitation):
+
+        existing_invitation = openreview.tools.get_invitation(self.client, invitation.id)
+
+        if not existing_invitation:
+            venue_id = journal.venue_id
+            if invitation.process:
+                invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
+
+            return self.client.post_invitation_edit(readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitation=invitation
+            )
+
     def set_ae_recruitment_invitation(self, journal, hash_seed, header):
 
         venue_id=journal.venue_id
@@ -590,68 +605,59 @@ class InvitationBuilder(object):
         paper_authors_id = journal.get_authors_id(number=note.number)
 
         review_approval_invitation_id=journal.get_review_approval_id(number=note.number)
-        review_approval_invitation=openreview.tools.get_invitation(self.client, review_approval_invitation_id)
 
-        if not review_approval_invitation:
-            invitation = Invitation(id=review_approval_invitation_id,
-                duedate=duedate,
-                invitees=[paper_action_editors_id],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                maxReplies=1,
-                edit={
-                    'signatures': { 'values-regex': paper_action_editors_id },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id] },
+        invitation = Invitation(id=review_approval_invitation_id,
+            duedate=duedate,
+            invitees=[paper_action_editors_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            maxReplies=1,
+            edit={
+                'signatures': { 'values-regex': paper_action_editors_id },
+                'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                'note': {
+                    'id': {
+                        'value-invitation': review_approval_invitation_id,
+                        'optional': True
+                    },
+                    'forum': { 'value': note.id },
+                    'replyto': { 'value': note.id },
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'signatures': { 'values': ['${signatures}'] },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
                     'writers': { 'values': [ venue_id, paper_action_editors_id] },
-                    'note': {
-                        'id': {
-                            'value-invitation': review_approval_invitation_id,
-                            'optional': True
+                    'content': {
+                        'under_review': {
+                            'order': 1,
+                            'description': 'Determine whether this submission is appropriate for review at JMLR or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
+                            'value': {
+                                'value-radio': ['Appropriate for Review', 'Desk Reject']
+                            }
                         },
-                        'forum': { 'value': note.id },
-                        'replyto': { 'value': note.id },
-                        'ddate': {
-                            'int-range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'nullable': True
-                        },
-                        'signatures': { 'values': ['${signatures}'] },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
-                        'writers': { 'values': [ venue_id, paper_action_editors_id] },
-                        'content': {
-                            'under_review': {
-                                'order': 1,
-                                'description': 'Determine whether this submission is appropriate for review at JMLR or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
-                                'value': {
-                                    'value-radio': ['Appropriate for Review', 'Desk Reject']
-                                }
+                        'comment': {
+                            'order': 2,
+                            'description': 'Enter a reason if the decision is Desk Reject. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$',
+                                'optional': True
                             },
-                            'comment': {
-                                'order': 2,
-                                'description': 'Enter a reason if the decision is Desk Reject. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                'value': {
-                                    'value-regex': '^[\\S\\s]{1,200000}$',
-                                    'optional': True
-                                },
-                                'presentation': {
-                                    'markdown': True
-                                }
+                            'presentation': {
+                                'markdown': True
                             }
                         }
                     }
-                })
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py'))
 
-            with open(os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py')) as f:
-                content = f.read()
-                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
-                invitation.process = content
+        self.save_invitation(journal, invitation)
 
-                self.client.post_invitation_edit(readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    invitation=invitation
-                )
 
     def set_under_review_invitation(self, journal):
         venue_id = journal.venue_id
@@ -1457,74 +1463,123 @@ class InvitationBuilder(object):
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
 
         solicit_review_invitation_id = journal.get_solicit_review_id(number=note.number)
-        solicit_review_invitation=openreview.tools.get_invitation(self.client, solicit_review_invitation_id)
 
-        if not solicit_review_invitation:
-            with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')) as g:
-                pre_content = g.read()
-                invitation = Invitation(id=solicit_review_invitation_id,
-                    invitees=['~'],
-                    noninvitees=[journal.get_editors_in_chief_id(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'signatures': { 'values-regex': f'~.*' },
-                        'readers': { 'values': [ venue_id, '${signatures}'] },
-                        'writers': { 'values': [ venue_id, '${signatures}'] },
-                        'note': {
-                            'id': {
-                                'value-invitation': solicit_review_invitation_id,
-                                'optional': True
+        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')) as g:
+            pre_content = g.read()
+            invitation = Invitation(id=solicit_review_invitation_id,
+                invitees=['~'],
+                noninvitees=[journal.get_editors_in_chief_id(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values-regex': f'~.*' },
+                    'readers': { 'values': [ venue_id, '${signatures}'] },
+                    'writers': { 'values': [ venue_id, '${signatures}'] },
+                    'note': {
+                        'id': {
+                            'value-invitation': solicit_review_invitation_id,
+                            'optional': True
+                        },
+                        'forum': { 'value': note.id },
+                        'replyto': { 'value': note.id },
+                        'ddate': {
+                            'int-range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'nullable': True
+                        },
+                        'signatures': { 'values': ['${signatures}'] },
+                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                        'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                        'content': {
+                            'solicit': {
+                                'order': 1,
+                                'description': '',
+                                'value': {
+                                    'value-radio': [
+                                        'I solicit to review this paper.'
+                                    ]
+                                }
                             },
-                            'forum': { 'value': note.id },
-                            'replyto': { 'value': note.id },
-                            'ddate': {
-                                'int-range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
-                            },
-                            'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                            'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                            'content': {
-                                'solicite': {
-                                    'order': 1,
-                                    'description': '',
-                                    'value': {
-                                        'value-radio': [
-                                            'I solicite to review this paper.'
-                                        ]
-                                    }
+                            'comment': {
+                                'order': 2,
+                                'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$',
+                                    'optional': True
                                 },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
+                                'presentation': {
+                                    'markdown': True
                                 }
                             }
                         }
-                    },
-                    preprocess=pre_content
-                )
+                    }
+                },
+                process=os.path.join(os.path.dirname(__file__), 'process/solicit_review_process.py'),
+                preprocess=pre_content
+            )
 
-                with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_process.py')) as f:
-                    content = f.read()
-                    content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
-                    invitation.process = content
+            self.save_invitation(journal, invitation)
 
-                    self.client.post_invitation_edit(readers=[venue_id],
-                        writers=[venue_id],
-                        signatures=[venue_id],
-                        invitation=invitation
-                    )
+    def set_solicit_review_approval_invitation(self, journal, note, solitic_note):
+
+        venue_id = journal.venue_id
+        signature = solitic_note.signatures[0]
+        paper_authors_id = journal.get_authors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+
+        solicit_review_invitation_approval_id = journal.get_solicit_review_approval_id(number=note.number, signature=signature)
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_pre_process.py')) as g:
+            pre_content = g.read()
+            invitation = Invitation(id=solicit_review_invitation_approval_id,
+                invitees=[venue_id, paper_action_editors_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values': [ paper_action_editors_id ] },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id ] },
+                    'writers': { 'values': [ venue_id ] },
+                    'note': {
+                        'forum': { 'value': note.id },
+                        'replyto': { 'value-invitation': journal.get_solicit_review_id(number=note.number) },
+                        'signatures': { 'values': [ paper_action_editors_id ] },
+                        'readers': { 'values': [ '${{note.replyto}.readers}' ] },
+                        'writers': { 'values': [ venue_id ] },
+                        'content': {
+                            'decision': {
+                                'order': 1,
+                                'description': '',
+                                'value': {
+                                    'value-radio': [
+                                        'Yes, I approve the solicit review.',
+                                        'No, I decline the solitic review.'
+                                    ]
+                                }
+                            },
+                            'comment': {
+                                'order': 2,
+                                'description': 'TODO.',
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$',
+                                    'optional': True
+                                },
+                                'presentation': {
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                },
+                process=os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_process.py'),
+                preprocess=pre_content
+            )
+            self.save_invitation(journal, invitation)
 
     def set_revision_submission(self, journal, note):
         venue_id = journal.venue_id

@@ -1021,6 +1021,7 @@ class TestJournal():
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
         raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
         joelle_client = OpenReviewClient(username='joelle@mail.com', password='1234')
+        peter_client = OpenReviewClient(username='petersnow@mail.com', password='1234')
 
 
         ## Reviewers
@@ -1107,6 +1108,39 @@ class TestJournal():
         ))
 
         helpers.await_queue(openreview_client)
+
+        ## Ask solitic review
+        solitic_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
+            signatures=['~Peter_Snow1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        invitations = joelle_client.get_invitations(replyForum=note_id_4)
+        assert f'{venue_id}/Paper4/-/Solicit_Review_Approval' in [i.id for i in invitations]
+
+        ## Post a response
+        solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review_Approval',
+            signatures=[f"{venue_id}/Paper4/Action_Editors"],
+            note=Note(
+                forum=note_id_4,
+                replyto=solitic_review_note['note']['id'],
+                content={
+                    'decision': { 'value': 'No, I decline the solitic review.' },
+                    'comment': { 'value': 'I am sorry you can not review this paper' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        assert '~Peter_Snow1' in solitic_review_approval_note['note']['readers']
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')
