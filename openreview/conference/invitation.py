@@ -1181,14 +1181,15 @@ class DecisionInvitation(openreview.Invitation):
         }
 
         file_content = None
-        with open(os.path.join(os.path.dirname(__file__), 'templates/decisionProcess.js')) as f:
+        decision_process_file = 'templates/decision_process.py'
+        with open(os.path.join(os.path.dirname(__file__), decision_process_file)) as f:
             file_content = f.read()
 
-            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
-            file_content = file_content.replace("var ACCEPTED_AUTHORS_NAME = '';", "var ACCEPTED_AUTHORS_NAME = '" + conference.authors_name + '/Accepted' + "';")
-
+            file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
+            file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
+            #file_content = file_content.replace("ACCEPTED_AUTHORS_NAME = ''", "ACCEPTED_AUTHORS_NAME = 'Authors/Accepted'")
+            
             if decision_stage.email_authors:
                 file_content = file_content.replace("var EMAIL_AUTHORS = false;", "var EMAIL_AUTHORS = true;")
 
