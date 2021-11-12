@@ -601,7 +601,7 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '1 error(s): [OpenReviewException({\'name\': \'Not Found\', \'message\': \'The requested page could not be found: /expertise\', \'status\': 404})]' in matching_status.content['comment']
+        assert '{\'name\': \'Not Found\', \'message\': \'The requested page could not be found: /expertise\', \'status\': 404}' in matching_status.content['comment']
 
         ## Setup matching with no computation selected
         with pytest.raises(openreview.OpenReviewException, match=r'You need to compute either conflicts or affinity scores or both'):
