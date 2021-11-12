@@ -5,6 +5,7 @@ def process_update(client, edge, invitation, existing_edge):
     GROUP_ID = ''
     GROUP_NAME = ''
     PAPER_GROUP_ID = ''
+    SYNC_SAC_ID = ''
     print(edge.id)
     print(invitation.id)
     print(existing_edge)
@@ -13,12 +14,26 @@ def process_update(client, edge, invitation, existing_edge):
     group=client.get_group(PAPER_GROUP_ID.format(number=note.number))
     if edge.ddate and edge.tail in group.members:
         print(f'Remove member {edge.tail} from {group.id}')
-        return client.remove_members_from_group(group.id, edge.tail)
+        client.remove_members_from_group(group.id, edge.tail)
+
+        if SYNC_SAC_ID:
+            print(f'Remove member from SAC group')
+            group = client.get_group(SYNC_SAC_ID.format(number=note.number))
+            group.members = []
+            client.post_group(group)
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
         client.add_members_to_group(group.id, edge.tail)
         client.add_members_to_group(GROUP_ID, edge.tail)
+
+        if SYNC_SAC_ID:
+            print('Add the SAC to the paper group')
+            assignments = client.get_edges(invitation=CONFERENCE_ID + '/Senior_Area_Chairs/-/Assignment', head=edge.tail)
+            if assignments:
+                client.add_members_to_group(SYNC_SAC_ID.format(number=note.number), assignments[0].tail)
+            else:
+                print('No SAC assignments found')
 
         signature=f'{openreview.tools.pretty_id(edge.signatures[0])}({edge.tauthor})'
 
