@@ -76,9 +76,6 @@ class Journal(object):
     def get_author_submission_id(self):
         return self.__get_invitation_id(name='Author_Submission')
 
-    def get_ae_recommendation_id(self, number=None):
-        return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
-
     def get_release_review_id(self, number=None):
         return self.__get_invitation_id(name='Review_Release', number=number)
 
@@ -96,6 +93,21 @@ class Journal(object):
 
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
+
+    def get_ae_conflict_id(self):
+        return self.__get_invitation_id(name='Conflict', prefix=self.get_action_editors_id())
+
+    def get_ae_affinity_score_id(self):
+        return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_action_editors_id())
+
+    def get_ae_assignment_id(self):
+        return self.__get_invitation_id(name='Assignment', prefix=self.get_action_editors_id())
+
+    def get_ae_recommendation_id(self, number=None):
+        return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
+
+    def get_ae_custom_max_papers_id(self, number=None):
+        return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_action_editors_id(number=number))
 
     def get_decision_approval_id(self, number=None):
         return self.__get_invitation_id(name='Decision_Approval', number=number)
@@ -149,7 +161,6 @@ class Journal(object):
         self.invitation_builder.set_desk_rejection_invitation(self)
         self.invitation_builder.set_reject_invitation(self)
         #self.invitation_builder.set_authors_release_invitation(self)
-        self.invitation_builder.set_ae_custom_papers_invitation(self)
         self.invitation_builder.set_ae_assignment(self)
         self.invitation_builder.set_reviewer_assignment(self)
 
@@ -523,7 +534,7 @@ class Journal(object):
         self.invitation_builder.set_withdraw_invitation(self, note, None)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
-        self.invitation_builder.set_ae_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
+        #self.invitation_builder.set_ae_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
 
     def setup_under_review_submission(self, note, reviewer_assignment_due_date):
 

@@ -26,7 +26,7 @@ def process(client, edit, invitation):
                 'note': {
                     'id': { 'value-invitation': journal.get_ae_decision_id(number=submission.number) },
                     'readers': { 'values': [ 'everyone' ] },
-                    #'nonreaders': { 'values': None }
+                    'nonreaders': { 'values': [] }
                 }
             }
     ))

@@ -265,7 +265,7 @@ class TestJournal():
         action_editors_id=f'{venue_id}/Action_Editors'
 
         # Assign Action Editor
-        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Action_Editors/-/Assignment',
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
@@ -917,7 +917,7 @@ class TestJournal():
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
-        #assert decision_note.nonreaders == []
+        assert decision_note.nonreaders == []
 
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title UPDATED')
@@ -1054,7 +1054,7 @@ class TestJournal():
         note_id_4=submission_note_4['note']['id']
 
         # Assign Action Editor
-        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Paper4/Action_Editors/-/Assignment',
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],

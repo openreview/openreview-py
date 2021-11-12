@@ -351,152 +351,229 @@ class InvitationBuilder(object):
                 process=os.path.join(os.path.dirname(__file__), 'process/author_submission_process.py')
             ))
 
-    def set_ae_custom_papers_invitation(self, journal):
-        venue_id=journal.venue_id
-        editor_in_chief_id=journal.get_editors_in_chief_id()
-        action_editors_id=journal.get_action_editors_id()
-
-        custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
-        invitation = self.client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(
-                id=custom_papers_ae_invitation_id,
-                invitees=[venue_id, editor_in_chief_id],
-                readers=[venue_id, editor_in_chief_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                type='Edge',
-                edit={
-                    'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
-                    'readers': {
-                        'values': [venue_id, '${tail}']
-                    },
-                    'writers': {
-                        'values': [venue_id, '${tail}']
-                    },
-                    'signatures': {
-                        'values': [venue_id]
-                    },
-                    'head': {
-                        'type': 'group',
-                        'value': action_editors_id
-                    },
-                    'tail': {
-                        'type': 'profile',
-                        'member-of': action_editors_id
-                    },
-                    'weight': {
-                        'value-regex': '[-+]?[0-9]*\\.?[0-9]*'
-                    }
-                }
-            )
-        )
-
     def set_ae_assignment(self, journal):
-        venue_id=journal.venue_id
-        editor_in_chief_id=journal.get_editors_in_chief_id()
-        action_editors_id=journal.get_action_editors_id()
+        venue_id = journal.venue_id
+        author_submission_id = journal.get_author_submission_id()
+        editor_in_chief_id = journal.get_editors_in_chief_id()
+        action_editors_id = journal.get_action_editors_id()
         authors_id = journal.get_authors_id()
-        paper_action_editors_id=journal.get_action_editors_id(number='${{head}.number}')
-        paper_authors_id=journal.get_authors_id(number='${{head}.number}')
+        paper_action_editors_id = journal.get_action_editors_id(number='${{head}.number}')
+        paper_authors_id = journal.get_authors_id(number='${{head}.number}')
 
         conflict_ae_invitation_id=f'{action_editors_id}/-/Conflict'
         custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
 
         now = datetime.datetime.utcnow()
-        self.client.post_invitation_edit(readers=[venue_id],
+        invitation = Invitation(
+            id=journal.get_ae_conflict_id(),
+            invitees=[venue_id],
+            readers=[venue_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=Invitation(
-                id=conflict_ae_invitation_id,
-                invitees=[venue_id],
-                readers=[venue_id, authors_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                type='Edge',
-                edit={
-                    'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
-                    'readers': {
-                        'values': [venue_id, paper_authors_id, '${tail}']
-                    },
-                    'writers': {
-                        'values': [venue_id]
-                    },
-                    'signatures': {
-                        'values': [venue_id]
-                    },
-                    'head': {
-                        'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Author_Submission'
-                    },
-                    'tail': {
-                        'type': 'profile',
-                        'member-of' : action_editors_id
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*',
-                        'optional': True
-                    }
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, paper_authors_id, '${tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'head': {
+                    'type': 'note',
+                    'value-invitation': author_submission_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : action_editors_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                },
+                'label': {
+                    'value-regex': '.*',
+                    'optional': True
                 }
-            )
+            }
+        )
+        self.save_invitation(journal, invitation)
+
+        invitation = Invitation(
+            id=journal.get_ae_affinity_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id, authors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, paper_authors_id, '${tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'head': {
+                    'type': 'note',
+                    'value-invitation': f'{venue_id}/-/Author_Submission'
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : action_editors_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                },
+                'label': {
+                    'value-regex': '.*',
+                    'optional': True
+                }
+            }
         )
 
-        affinity_score_ae_invitation_id=f'{action_editors_id}/-/Affinity_Score'
-        self.client.post_invitation_edit(readers=[venue_id],
+        self.save_invitation(journal, invitation)
+
+        invitation = Invitation(
+            id=journal.get_ae_assignment_id(),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=Invitation(
-                id=affinity_score_ae_invitation_id,
-                invitees=[venue_id],
-                readers=[venue_id, authors_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                type='Edge',
-                edit={
-                    'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
-                    'readers': {
-                        'values': [venue_id, paper_authors_id, '${tail}']
-                    },
-                    'writers': {
-                        'values': [venue_id]
-                    },
-                    'signatures': {
-                        'values': [venue_id]
-                    },
-                    'head': {
-                        'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Author_Submission'
-                    },
-                    'tail': {
-                        'type': 'profile',
-                        'member-of' : action_editors_id
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*',
-                        'optional': True
-                    }
+            minReplies=1,
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, editor_in_chief_id, '${tail}']
+                },
+                'nonreaders': {
+                    'values': [],
+                    'optional': True,
+                    'nullable': True # make it compatible with the UI
+                },
+                'writers': {
+                    'values': [venue_id, editor_in_chief_id]
+                },
+                'signatures': {
+                    'values': [editor_in_chief_id]
+                },
+                'head': {
+                    'type': 'note',
+                    'value-invitation': author_submission_id ## keep this to make the edge browser work
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : action_editors_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                },
+                'label': {
+                    'value-regex': '.*',
+                    'optional': True
                 }
-            )
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py')
         )
+
+        self.save_invitation(journal, invitation)
+
+        invitation = Invitation(
+            id=journal.get_ae_recommendation_id(),
+            invitees=[authors_id],
+            readers=[venue_id, authors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, paper_authors_id]
+                },
+                'nonreaders': {
+                    'values': [],
+                    'optional': True
+                },
+                'writers': {
+                    'values': [venue_id, paper_authors_id]
+                },
+                'signatures': {
+                    'values': [paper_authors_id]
+                },
+                'head': {
+                    'type': 'note',
+                    'value-invitation': author_submission_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : action_editors_id
+                },
+                'weight': {
+                    'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                }
+            }
+        )
+        self.save_invitation(journal, invitation)
+
+        invitation = Invitation(
+            id=journal.get_ae_custom_max_papers_id(),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, editor_in_chief_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, '${tail}']
+                },
+                'writers': {
+                    'values': [venue_id, '${tail}']
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'head': {
+                    'type': 'group',
+                    'value': action_editors_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of': action_editors_id
+                },
+                'weight': {
+                    'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
+                    #'default': 12
+                }
+            }
+        )
+        self.save_invitation(journal, invitation)
 
     def set_reviewer_assignment(self, journal):
         venue_id = journal.venue_id
@@ -941,17 +1018,11 @@ class InvitationBuilder(object):
                                 }
                             },
                             'authors': {
-                                'value': {
-                                    'values': note.content['authors']['value']
-                                },
                                 'readers': {
                                     'values': ['everyone']
                                 }
                             },
                             'authorids': {
-                                'value': {
-                                    'values': note.content['authorids']['value']
-                                },
                                 'readers': {
                                     'values': ['everyone']
                                 }
@@ -995,17 +1066,11 @@ class InvitationBuilder(object):
                         'id': { 'value-invitation': journal.get_reject_id() },
                         'content': {
                             'authors': {
-                                'value': {
-                                    'values': note.content['authors']['value']
-                                },
                                 'readers': {
                                     'values': ['everyone']
                                 }
                             },
                             'authorids': {
-                                'value': {
-                                    'values': note.content['authorids']['value']
-                                },
                                 'readers': {
                                     'values': ['everyone']
                                 }
@@ -1089,98 +1154,10 @@ class InvitationBuilder(object):
 
             conflict_id = f'{action_editors_id}/-/Conflict'
             score_ids = [f'{action_editors_id}/-/Affinity_Score']
-            edit_param = ae_recommendation_invitation_id
+            edit_param = f'{action_editors_id}/-/Recommendation'
             browse_param = ';'.join(score_ids)
             params = f'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'
             with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
-                content = f.read()
-                content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
-                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-                content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
-                invitation.web = content
-                self.client.post_invitation_edit(readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    invitation=invitation
-                )
-
-    def set_ae_assignment_invitation(self, journal, note, duedate):
-
-        venue_id = journal.venue_id
-        action_editors_id = journal.get_action_editors_id()
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        editor_in_chief_id = journal.get_editors_in_chief_id()
-
-        ae_assignment_invitation_id=f'{paper_action_editors_id}/-/Assignment'
-        ae_assignment_invitation=openreview.tools.get_invitation(self.client, ae_assignment_invitation_id)
-
-        if not ae_assignment_invitation:
-            invitation = Invitation(
-                id=ae_assignment_invitation_id,
-                duedate=duedate,
-                invitees=[editor_in_chief_id],
-                readers=[venue_id, editor_in_chief_id, paper_action_editors_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                minReplies=1,
-                type='Edge',
-                edit={
-                    'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
-                    'readers': {
-                        'values': [venue_id, editor_in_chief_id, '${tail}']
-                    },
-                    'nonreaders': {
-                        'values': [],
-                        'optional': True,
-                        'nullable': True # make it compatible with the UI
-                    },
-                    'writers': {
-                        'values': [venue_id, editor_in_chief_id]
-                    },
-                    'signatures': {
-                        'values': [editor_in_chief_id]
-                    },
-                    'head': {
-                        'type': 'note',
-                        'value': note.id,
-                        'value-invitation': f'{venue_id}/-/Author_Submission' ## keep this to make the edge browser work
-                    },
-                    'tail': {
-                        'type': 'profile',
-                        'member-of' : action_editors_id
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*',
-                        'optional': True
-                    }
-                }
-            )
-
-            with open(os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py')) as f:
-                content = f.read()
-                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
-                invitation.process = content
-
-            header = {
-                'title': 'TMLR Action Editor Assignment',
-                'instructions': ''
-            }
-
-            edit_param = ae_assignment_invitation_id
-            suggest_ae_invitation_id = journal.get_ae_recommendation_id(number=note.number)
-            affinity_score_ae_invitation_id = f'{action_editors_id}/-/Affinity_Score'
-            conflict_ae_invitation_id = f'{action_editors_id}/-/Conflict'
-            score_ids = [suggest_ae_invitation_id, affinity_score_ae_invitation_id, conflict_ae_invitation_id]
-            browse_param = ';'.join(score_ids)
-            params = f'traverse={edit_param}&edit={edit_param}&browse={browse_param}&version=2&referrer=[Return Instructions](/invitation?id={edit_param})'
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/assignAEWebfield.js')) as f:
                 content = f.read()
                 content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
