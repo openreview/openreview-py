@@ -917,6 +917,7 @@ class TestJournal():
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
+        #assert decision_note.nonreaders == []
 
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title UPDATED')

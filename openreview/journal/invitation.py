@@ -1383,6 +1383,7 @@ class InvitationBuilder(object):
         venue_id = journal.venue_id
         paper_reviewers_id = journal.get_reviewers_id(number=note.number, anon=True)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
         paper_group_id=f'{venue_id}/Paper{note.number}'
 
         official_recommendation_invitation_id=journal.get_reviewer_recommendation_id(number=note.number)
@@ -1399,6 +1400,7 @@ class InvitationBuilder(object):
                     edit={
                         'signatures': { 'values-regex': f'{paper_reviewers_id}.*|{paper_action_editors_id}' },
                         'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                        'nonreaders': { 'values': [ paper_authors_id ] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'note': {
                             'id': {
@@ -1414,6 +1416,7 @@ class InvitationBuilder(object):
                             },
                             'signatures': { 'values': ['${signatures}'] },
                             'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                            'nonreaders': { 'values': [ paper_authors_id ] },
                             'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                             'content': {
                                 'decision_recommendation': {
@@ -1476,6 +1479,7 @@ class InvitationBuilder(object):
                 edit={
                     'signatures': { 'values-regex': f'~.*' },
                     'readers': { 'values': [ venue_id, '${signatures}'] },
+                    'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id, '${signatures}'] },
                     'note': {
                         'id': {
@@ -1491,6 +1495,7 @@ class InvitationBuilder(object):
                         },
                         'signatures': { 'values': ['${signatures}'] },
                         'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                        'nonreaders': { 'values': [ paper_authors_id ] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'content': {
                             'solicit': {
@@ -1544,12 +1549,14 @@ class InvitationBuilder(object):
                 edit={
                     'signatures': { 'values': [ paper_action_editors_id ] },
                     'readers': { 'values': [ venue_id, paper_action_editors_id ] },
+                    'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id ] },
                     'note': {
                         'forum': { 'value': note.id },
                         'replyto': { 'value-invitation': journal.get_solicit_review_id(number=note.number) },
                         'signatures': { 'values': [ paper_action_editors_id ] },
                         'readers': { 'values': [ '${{note.replyto}.readers}' ] },
+                        'nonreaders': { 'values': [ paper_authors_id ] },
                         'writers': { 'values': [ venue_id ] },
                         'content': {
                             'decision': {
@@ -1920,6 +1927,7 @@ class InvitationBuilder(object):
     def set_decision_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
 
         decision_invitation_id = journal.get_ae_decision_id(number=note.number)
         decision_invitation=openreview.tools.get_invitation(self.client, decision_invitation_id)
@@ -1935,6 +1943,7 @@ class InvitationBuilder(object):
                 edit={
                     'signatures': { 'values': [paper_action_editors_id] },
                     'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id, paper_action_editors_id] },
                     'note': {
                         'id': {
@@ -1950,6 +1959,7 @@ class InvitationBuilder(object):
                         },
                         'signatures': { 'values': [paper_action_editors_id] },
                         'readers': { 'values': [ venue_id, paper_action_editors_id ] },
+                        'nonreaders': { 'values': [ paper_authors_id ] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id] },
                         'content': {
                             'recommendation': {
@@ -2004,6 +2014,7 @@ class InvitationBuilder(object):
         venue_id = journal.venue_id
         editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
 
         decision_approval_invitation_id = journal.get_decision_approval_id(number=note.number)
         decision_approval_invitation=openreview.tools.get_invitation(self.client, decision_approval_invitation_id)
@@ -2020,11 +2031,13 @@ class InvitationBuilder(object):
                 edit={
                     'signatures': { 'values': [editors_in_chief_id] },
                     'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id] },
                     'note': {
                         'forum': { 'value': note.id },
                         'replyto': { 'value': decision.id },
                         'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                        'nonreaders': { 'values': [ paper_authors_id ] },
                         'writers': { 'values': [ venue_id] },
                         'signatures': { 'values': [editors_in_chief_id] },
                         'content': {
@@ -2067,6 +2080,7 @@ class InvitationBuilder(object):
         reviews = self.client.get_notes(forum=note.forum, invitation=journal.get_review_id(number=note.number))
         paper_reviewers_id = journal.get_reviewers_id(number=note.number, anon=True)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
 
         for review in reviews:
             signature=review.signatures[0]
@@ -2084,12 +2098,14 @@ class InvitationBuilder(object):
                         edit={
                             'signatures': { 'values': [paper_action_editors_id] },
                             'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                            'nonreaders': { 'values': [ paper_authors_id ] },
                             'writers': { 'values': [ venue_id, paper_action_editors_id] },
                             'note': {
                                 'forum': { 'value': review.forum },
                                 'replyto': { 'value': review.id },
                                 'signatures': { 'values': [paper_action_editors_id] },
                                 'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                                'nonreaders': { 'values': [ paper_authors_id ] },
                                 'writers': { 'values': [ venue_id, paper_action_editors_id] },
                                 'content': {
                                     'rating': {
