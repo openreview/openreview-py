@@ -24,13 +24,12 @@ var REVIEWERS_ID = '';
 var AREA_CHAIRS_ID = '';
 var SENIOR_AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
-var SAC_ASSIGNMENT_LABEL = null;
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
-var SAC_ASSIGNMENT_INVITATION = SENIOR_AREA_CHAIRS_ID + '/-/Proposed_Assignment';
+var SAC_ASSIGNMENT_INVITATION = SENIOR_AREA_CHAIRS_ID + '/-/Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
 var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
 var SENIOR_AREA_CHAIRS_INVITED_ID = SENIOR_AREA_CHAIRS_ID ? SENIOR_AREA_CHAIRS_ID + '/Invited' : '';
@@ -271,8 +270,7 @@ var main = function() {
 var getSACEdges = function() {
   if (SENIOR_AREA_CHAIRS_ID) {
     return Webfield.getAll('/edges', {
-      invitation: SAC_ASSIGNMENT_INVITATION,
-      label: SAC_ASSIGNMENT_LABEL
+      invitation: SAC_ASSIGNMENT_INVITATION
     });
   }
   return $.Deferred().resolve([]);

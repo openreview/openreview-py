@@ -1236,16 +1236,18 @@ class Matching(object):
                         sac_group.members.append(sac)
                         self.client.post_group(sac_group)
 
-                        assignment_edges.append(openreview.Edge(
-                            invitation=assignment_invitation_id,
-                            head=ac,
-                            tail=sac_assignment['tail'],
-                            readers=sac_assignment['readers'],
-                            nonreaders=sac_assignment['nonreaders'],
-                            writers=sac_assignment['writers'],
-                            signatures=sac_assignment['signatures'],
-                            weight=sac_assignment.get('weight')
-                        ))
+        for head, sac_assignments in proposed_assignment_edges.items():
+            for sac_assignment in sac_assignments:
+                assignment_edges.append(openreview.Edge(
+                    invitation=assignment_invitation_id,
+                    head=head,
+                    tail=sac_assignment['tail'],
+                    readers=sac_assignment['readers'],
+                    nonreaders=sac_assignment['nonreaders'],
+                    writers=sac_assignment['writers'],
+                    signatures=sac_assignment['signatures'],
+                    weight=sac_assignment.get('weight')
+                ))
 
         print('POsting assignments edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=self.client, edges=assignment_edges)

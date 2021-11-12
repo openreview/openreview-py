@@ -940,7 +940,7 @@ class TestNeurIPSConference():
         assert ['~SeniorArea_NeurIPSChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs').members
         assert ['~SeniorArea_NeurIPSChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs').members
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 5
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
 
         ## Check if the SAC can edit the AC assignments
         print('http://localhost:3030/edges/browse?traverse=NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment&edit=NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment&browse=NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score&hide=NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict&maxColumns=2')
@@ -1006,6 +1006,9 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         submissions=conference.get_submissions()
 
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+
         ac_assignment = pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment', head=submissions[0].id)[0]
 
         ## Remove AC assignment
@@ -1013,6 +1016,9 @@ class TestNeurIPSConference():
         pc_client.post_edge(ac_assignment)
 
         helpers.await_queue()
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 4
 
         assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
@@ -1022,6 +1028,9 @@ class TestNeurIPSConference():
         pc_client.post_edge(ac_assignment)
 
         helpers.await_queue()
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
 
         assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
@@ -1035,6 +1044,9 @@ class TestNeurIPSConference():
 
         helpers.await_queue()
 
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 2
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+
         assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
 
@@ -1046,6 +1058,9 @@ class TestNeurIPSConference():
         pc_client.post_edge(sac_assignment)
 
         helpers.await_queue()
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
 
         assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
