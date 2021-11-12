@@ -54,6 +54,7 @@ class Client(object):
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.jobs_status = self.baseurl + '/jobs/status'
+        self.institutions = self.baseurl + '/settings/institutions'
         self.venues_url = self.baseurl + '/venues'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
@@ -202,6 +203,24 @@ class Client(object):
         response = self.__handle_response(response)
         self.__handle_token(response.json()['activatable'])
         return self.token
+
+    def get_institution(self, domain):
+        """
+        Get a single Institution by id (domain) if available
+
+        :param domain: domain of the Institution
+        :type domain: str
+
+        :return: Dictionary with the Institution information
+        :rtype: dict
+
+        Example:
+
+        >>> institution = client.get_institution('umass.edu')
+        """
+        response = requests.get(self.institutions, params = { 'id': domain }, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def get_group(self, id):
         """
@@ -957,6 +976,21 @@ class Client(object):
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
 
+    def post_institution(self, institution):
+        """
+        Requires Super User permission.
+        Adds an institution if the institution id is not found in the database,
+        otherwise, the institution is updated.
+
+        :param institution: institution to be posted
+        :type institution: dict
+
+        :return: The posted institution
+        :rtype: dict
+        """
+        response = requests.post(self.institutions, json = institution, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def post_group(self, group, overwrite = True):
         """
