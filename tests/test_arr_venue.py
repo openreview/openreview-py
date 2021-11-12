@@ -225,6 +225,68 @@ class TestNeurIPSConference():
         assert len(accepted_group.members) == 1
         assert '~Area_CMUChair1' in accepted_group.members
 
+        ## Manual add an AC to the group and then invite them
+        client.add_members_to_group('aclweb.org/ACL/ARR/2021/September/Area_Chairs', 'previous_ac@mail.com')
+
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
+        assert len(accepted_group.members) == 2
+        assert '~Area_CMUChair1' in accepted_group.members
+        assert 'previous_ac@mail.com' in accepted_group.members
+
+        reviewer_details = '''previous_ac@mail.com, Previous AC'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'area chair',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert 'Invited: 0 users.' in recruitment_status_notes[0].content['comment']
+        assert 'No recruitment invitation was sent to the following users because they are already members of the group:\n\n{\'aclweb.org/ACL/ARR/2021/September/Area_Chairs\': [\'previous_ac@mail.com\']}' in recruitment_status_notes[0].content['comment']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
+
+        reviewer_details = '''previous_ac@mail.com, Previous AC'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'reviewer',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
+
+
 
     def test_submit_papers(self, test_client, client, helpers):
 

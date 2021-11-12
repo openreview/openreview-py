@@ -1247,6 +1247,7 @@ class Conference(object):
             'invited': [],
             'reminded': [],
             'already_invited': {},
+            'already_member': {},
             'errors': []
         }
 
@@ -1358,14 +1359,21 @@ Program Chairs
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
             memberships = [g.id for g in self.client.get_groups(member=email, regex=self.id)] if tools.get_group(self.client, email) else []
             invited_roles = [f'{self.id}/{role}/Invited' for role in committee_roles]
+            member_roles = [f'{self.id}/{role}' for role in committee_roles]
 
             invited_group_ids=list(set(invited_roles) & set(memberships))
+            member_group_ids=list(set(member_roles) & set(memberships))
 
             if invited_group_ids:
                 invited_group_id=invited_group_ids[0]
                 if invited_group_id not in recruitment_status['already_invited']:
                     recruitment_status['already_invited'][invited_group_id] = []
                 recruitment_status['already_invited'][invited_group_id].append(email)
+            elif member_group_ids:
+                member_group_id = member_group_ids[0]
+                if member_group_id not in recruitment_status['already_member']:
+                    recruitment_status['already_member'][member_group_id] = []
+                recruitment_status['already_member'][member_group_id].append(email)
             else:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
