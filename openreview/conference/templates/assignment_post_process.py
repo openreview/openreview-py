@@ -6,6 +6,7 @@ def process_update(client, edge, invitation, existing_edge):
     GROUP_NAME = ''
     PAPER_GROUP_ID = ''
     SYNC_SAC_ID = ''
+    SAC_ASSIGNMENT_INVITATION_ID = ''
     print(edge.id)
     print(invitation.id)
     print(existing_edge)
@@ -29,7 +30,7 @@ def process_update(client, edge, invitation, existing_edge):
 
         if SYNC_SAC_ID:
             print('Add the SAC to the paper group')
-            assignments = client.get_edges(invitation=CONFERENCE_ID + '/Senior_Area_Chairs/-/Assignment', head=edge.tail)
+            assignments = client.get_edges(invitation=SAC_ASSIGNMENT_INVITATION_ID, head=edge.tail)
             if assignments:
                 client.add_members_to_group(SYNC_SAC_ID.format(number=note.number), assignments[0].tail)
             else:

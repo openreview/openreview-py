@@ -1940,6 +1940,16 @@ class InvitationBuilder(object):
         is_senior_area_chair = committee_id == conference.get_senior_area_chairs_id()
         is_reviewer = committee_id == conference.get_reviewers_id()
 
+        if is_senior_area_chair:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/sac_assignment_post_process.py')) as post:
+                post_content = post.read()
+                post_content = post_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + conference.get_senior_area_chairs_id(number='{number}') + "'")
+                post_content = post_content.replace("AC_ASSIGNMENT_INVITATION_ID = ''", "AC_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(conference.get_area_chairs_id(), deployed=True) + "'")
+                invitation.process=post_content
+                invitation.signatures=[conference.get_program_chairs_id()] ## Program Chairs can see the reviews
+                return self.client.post_invitation(invitation)
+
         with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_pre_process.py')) as pre:
             pre_content = pre.read()
             pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + conference.get_invitation_id(conference.meta_review_stage.name if is_area_chair else conference.review_stage.name, '{number}') + "'")
@@ -1953,6 +1963,7 @@ class InvitationBuilder(object):
                 post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + (conference.get_area_chairs_id() if is_area_chair else conference.get_reviewers_id()) + "'")
                 if conference.use_senior_area_chairs and is_area_chair:
                     post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + conference.get_senior_area_chairs_id(number='{number}') + "'")
+                    post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(conference.get_senior_area_chairs_id(), deployed=True) + "'")
                 invitation.process=post_content
                 invitation.preprocess=pre_content
                 invitation.signatures=[conference.get_program_chairs_id()] ## Program Chairs can see the reviews
