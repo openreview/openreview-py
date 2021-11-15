@@ -1149,6 +1149,8 @@ class TestJournal():
 
         assert '~Peter_Snow1' in solitic_review_approval_note['note']['readers']
 
+        #assert '~Peter_Snow1' in joelle_client.get_group(f'{venue_id}/Paper4/Reviewers').members
+
         ## Post a review edit
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1

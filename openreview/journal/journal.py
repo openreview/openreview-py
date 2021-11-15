@@ -561,6 +561,12 @@ class Journal(object):
 
         profile = self.client.get_profile(reviewer)
         ## Check conflicts again?
-        # self.client.post_edge(
-        #     invitation=self.get_
-        # )
+        self.client.post_edge(openreview.Edge(invitation=self.get_reviewer_assignment_id(),
+            readers=[self.venue_id, self.get_action_editors_id(number=note.number), profile.id],
+            nonreaders=[self.get_authors_id(number=note.number)],
+            writers=[self.venue_id, self.get_action_editors_id(number=note.number)],
+            signatures=[self.venue_id],
+            head=note.id,
+            tail=profile.id,
+            weight=1
+        ))

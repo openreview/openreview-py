@@ -694,7 +694,7 @@ class InvitationBuilder(object):
                     'values': [venue_id, paper_action_editors_id]
                 },
                 'signatures': {
-                    'values-regex': editor_in_chief_id + '|' + journal.get_action_editors_id(number='.*')
+                    'values-regex': venue_id + '|' + editor_in_chief_id + '|' + journal.get_action_editors_id(number='.*')
                 },
                 'head': {
                     'type': 'note',
