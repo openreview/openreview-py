@@ -248,7 +248,30 @@ class TestNeurIPSConference():
         assert len(area_chairs.members) == 1
         assert 'ac1@mit.edu' in area_chairs.members
 
-        pc_client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1'])
+    def test_sac_matching(self, client, conference, helpers, request_page, selenium):
+
+        #remove SACs from group
+        client.remove_members_from_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs', ['sac1@google.com','sac2@gmail.com'])
+
+        #remove AC from AC group
+        client.remove_members_from_group('NeurIPS.cc/2021/Conference/Area_Chairs', 'ac1@mit.edu')
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        conference=openreview.helpers.get_conference(pc_client, request_form.id)
+
+        #setup matching for SACs with empty SAC group
+        with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
+            conference.setup_committee_matching(committee_id=conference.get_senior_area_chairs_id(), compute_conflicts=True)
+
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs', ['sac1@google.com','sac2@gmail.com'])
+
+        #setup matching for SACs with empty AC group
+        with pytest.raises(openreview.OpenReviewException, match=r'The alternate match group is empty'):
+            conference.setup_committee_matching(committee_id=conference.get_senior_area_chairs_id(), compute_conflicts=True)
+
+        client.add_members_to_group('NeurIPS.cc/2021/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1', 'ac1@mit.edu'])
 
     def test_sac_bidding(self, conference, helpers, request_page, selenium):
 
