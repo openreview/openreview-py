@@ -685,7 +685,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         conference.setup_matching(
             build_conflicts=True,
-            compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'),
+            affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv')
         )
 
@@ -710,7 +710,7 @@ Please contact info@openreview.net with any questions or concerns about this int
                 writer.writerow([submission.number, 'ac1@eccv.org', round(random.random(), 2)])
                 writer.writerow([submission.number, 'ac2@eccv.org', round(random.random(), 2)])
 
-        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True, compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'),
             tpms_score_file=os.path.join(os.path.dirname(__file__), 'data/temp.csv'))
 
         request_page(selenium, url='http://localhost:3030/assignments?group=thecvf.com/ECCV/2020/Conference/Reviewers', token=conference.client.token)

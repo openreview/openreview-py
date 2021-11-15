@@ -280,7 +280,7 @@ class TestNeurIPSConference():
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
 
-        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=True, compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
+        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
         now = datetime.datetime.utcnow()
         conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score']))
 
@@ -816,7 +816,7 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Area_GoogleChair1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
 
-        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -828,7 +828,7 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Reviewer_Google1', round(random.random(), 2)])
 
 
-        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='neurips', compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
         conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True))
         conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True))

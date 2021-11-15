@@ -1029,7 +1029,7 @@ class TestDoubleBlindConference():
             writer.writerow([submission.id, '~Reviewer_DoubleBlind1', '0.9'])
             writer.writerow([submission.id, '~Reviewer_Domain1', '0.8'])
 
-        conference.setup_matching(compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), build_conflicts=True)
+        conference.setup_matching(affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), build_conflicts=True)
 
         request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
         tabs = selenium.find_element_by_class_name('tabs-container')
