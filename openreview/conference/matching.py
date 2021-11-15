@@ -1330,7 +1330,7 @@ class Matching(object):
                     weight=sac_assignment.get('weight')
                 ))
 
-        print('POsting assignments edges', len(assignment_edges))
+        print('Posting assignments edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=self.client, edges=assignment_edges)
 
 
