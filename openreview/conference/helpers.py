@@ -123,7 +123,10 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
 
+    name = note.content.get('submission_name', 'Submission').strip()
+
     builder.set_submission_stage(
+        name=name,
         double_blind=double_blind,
         public=public,
         start_date=submission_start_date,

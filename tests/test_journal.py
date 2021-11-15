@@ -60,7 +60,7 @@ class TestJournal():
         messages = client.get_messages(subject = 'Invitation to be an Action Editor', to='joelle@mail.com')
         assert len(messages) == 1
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue()
@@ -80,7 +80,7 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
             helpers.await_queue()
 

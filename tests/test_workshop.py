@@ -223,6 +223,7 @@ class TestWorkshop():
 
     def test_setup_matching(self, client, conference):
 
+        conference.set_reviewers(emails = ['reviewer4@mail.com'])
         conference.setup_matching()
 
         invitation = client.get_invitation('icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers/-/Assignment_Configuration')
@@ -254,8 +255,6 @@ class TestWorkshop():
         assert len(group.members) == 3
 
     def test_open_reviews(self, client, conference, test_client, selenium, request_page, helpers):
-
-        conference.set_reviewers(emails = ['reviewer4@mail.com'])
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[2]

@@ -27,15 +27,15 @@ function(){
       ignoreGroups.push(note.tauthor);
       var content = `
 
-      Paper Number: ${forumNote.number}
+Paper Number: ${forumNote.number}
 
-      Paper Title: "${forumNote.content.title}"
+Paper Title: "${forumNote.content.title}"
 
-      Comment title: ${note.content.title}
+Comment title: ${note.content.title}
 
-      Comment: ${note.content.comment}
+Comment: ${note.content.comment}
 
-      To view the comment, click here: ${baseUrl}/forum?id=${note.forum}&noteId=${note.id}`
+To view the comment, click here: ${baseUrl}/forum?id=${note.forum}&noteId=${note.id}`
 
       var ac_mail = {
         groups: [AREA_CHAIRS_ID],

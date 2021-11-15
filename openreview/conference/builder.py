@@ -13,6 +13,7 @@ from . import webfield
 from . import invitation
 from . import matching
 from .. import invitations
+from deprecated.sphinx import deprecated
 
 class Conference(object):
 
@@ -1137,6 +1138,7 @@ class Conference(object):
 
         return self.webfield_builder.set_impersonate_page(self, impersonate_group)
 
+    @deprecated(version='1.0.24', reason="Use setup_committeee_matching() instead")
     def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
@@ -1145,6 +1147,15 @@ class Conference(object):
         conference_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
         return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
+
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
+        if committee_id is None:
+            committee_id=self.get_reviewers_id()
+        if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
+            alternate_matching_group = self.get_area_chairs_id()
+        conference_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+
+        return conference_matching.setup(compute_affinity_scores=compute_affinity_scores, build_conflicts=compute_conflicts)
 
     def set_matching_conflicts(self, profile_id, build_conflicts=True):
         # Re-generates conflicts for a single reviewer
@@ -1156,7 +1167,6 @@ class Conference(object):
 
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
-
 
     def set_assignment(self, user, number, is_area_chair = False):
 
@@ -1247,6 +1257,7 @@ class Conference(object):
             'invited': [],
             'reminded': [],
             'already_invited': {},
+            'already_member': {},
             'errors': []
         }
 
@@ -1269,35 +1280,35 @@ class Conference(object):
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reduced_load_id'])
 
         role = 'reviewer' if reviewers_name == 'Reviewers' else 'area chair'
-        recruit_message = '''Dear {name},
+        recruit_message = f'''Dear {{name}},
 
-        You have been nominated by the program chair committee of '''+ self.get_short_name() + ''' to serve as '''+ role +'''. As a respected researcher in the area, we hope you will accept and help us make ''' + self.short_name + ''' a success.
+You have been nominated by the program chair committee of {self.get_short_name()} to serve as {role}. As a respected researcher in the area, we hope you will accept and help us make {self.get_short_name()} a success.
 
-        You are also welcome to submit papers, so please also consider submitting to '''+ self.get_short_name() + '''.
+You are also welcome to submit papers, so please also consider submitting to {self.get_short_name()}.
 
-        We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
 
-        To ACCEPT the invitation, please click on the following link:
+To ACCEPT the invitation, please click on the following link:
 
-        {accept_url}
+{{accept_url}}
 
-        To DECLINE the invitation, please click on the following link:
+To DECLINE the invitation, please click on the following link:
 
-        {decline_url}
+{{decline_url}}
 
-        Please answer within 10 days.
+Please answer within 10 days.
 
-        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-        If you have any questions, please contact {contact_info}.
+If you have any questions, please contact {{contact_info}}.
 
-        Cheers!
+Cheers!
 
-        Program Chairs
+Program Chairs
 
         '''
 
-        recruit_message_subj = '[' + self.get_short_name() + ']: Invitation to serve as ' + role.title()
+        recruit_message_subj = f'[{self.get_short_name()}]: Invitation to serve as {role.title()}'
 
         if title:
             recruit_message_subj = title
@@ -1358,14 +1369,21 @@ class Conference(object):
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
             memberships = [g.id for g in self.client.get_groups(member=email, regex=self.id)] if tools.get_group(self.client, email) else []
             invited_roles = [f'{self.id}/{role}/Invited' for role in committee_roles]
+            member_roles = [f'{self.id}/{role}' for role in committee_roles]
 
             invited_group_ids=list(set(invited_roles) & set(memberships))
+            member_group_ids=list(set(member_roles) & set(memberships))
 
             if invited_group_ids:
                 invited_group_id=invited_group_ids[0]
                 if invited_group_id not in recruitment_status['already_invited']:
                     recruitment_status['already_invited'][invited_group_id] = []
                 recruitment_status['already_invited'][invited_group_id].append(email)
+            elif member_group_ids:
+                member_group_id = member_group_ids[0]
+                if member_group_id not in recruitment_status['already_member']:
+                    recruitment_status['already_member'][member_group_id] = []
+                recruitment_status['already_member'][member_group_id].append(email)
             else:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:

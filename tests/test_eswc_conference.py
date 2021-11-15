@@ -215,7 +215,11 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert 'melisa@mail.com' in recipients
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
-        assert messages[0]['content']['text'] == '''Your new revision of the submission to ESWC 2021 has been posted.\n\nTitle: EDITED Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+        text = messages[0]['content']['text']
+        assert 'Your new revision of the submission to ESWC 2021 has been posted.' in text
+        assert 'Title: EDITED Paper title 5' in text
+        assert 'Abstract: This is an abstract 5' in text
+        assert 'To view your submission, click here:' in text
 
         ## Edit revision
         references = client.get_references(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper2/-/Revision')
@@ -232,7 +236,11 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert 'melisa@mail.com' in recipients
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
-        assert messages[0]['content']['text'] == '''Your new revision of the submission to ESWC 2021 has been updated.\n\nTitle: EDITED Rev 2 Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+        text = messages[0]['content']['text']
+        assert 'Your new revision of the submission to ESWC 2021 has been updated.' in text
+        assert 'Title: EDITED Rev 2 Paper title 5' in text
+        assert 'Abstract: This is an abstract 5' in text
+        assert 'To view your submission, click here:' in text
 
         ## Desk Reject paper
         pc_client = openreview.Client(username='pc@eswc-conferences.org', password='1234')

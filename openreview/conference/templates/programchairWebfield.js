@@ -156,7 +156,7 @@ var main = function() {
       });
       var paperOfficialReviews = _.filter(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, submission.number)]);
       var paperMetaReviews = _.find(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, submission.number)]);
-      var paperDecisions = _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]) ?? { content: { decision: 'No Decision' } };
+      var paperDecisions = _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]) || { content: { decision: 'No Decision' } };
       officialReviews = officialReviews.concat(paperOfficialReviews);
       metaReviews = metaReviews.concat(paperMetaReviews);
       decisions = decisions.concat(decisions);
@@ -1407,7 +1407,7 @@ var displayPaperStatusTable = function() {
   if (AREA_CHAIRS_ID) {
     sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
   }
-  sortOptions['Decision'] = function (row) { return row.decision.content.decision ?? 'No Decision' }
+  sortOptions['Decision'] = function (row) { return row.decision.content.decision || 'No Decision' }
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       var tags = pcTags[row.note.id];
@@ -1432,7 +1432,7 @@ var displayPaperStatusTable = function() {
       var search = [
         row.note.number,
         row.note.content.title,
-        row.note.content.keywords?.join('\n'),
+        row.note.content.keywords ? row.note.content.keywords.join('\n') : null,
         row.note.content.authors.join('\n'),
         row.note.content.authorids.join('\n')
       ].join('\n').toLowerCase()
@@ -1557,7 +1557,7 @@ var displayPaperStatusTable = function() {
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
-      var decisionHtml = '<h4>' + (d.decision.content.decision ?? 'No Decision') + '</h4>';
+      var decisionHtml = '<h4>' + (d.decision.content.decision || 'No Decision') + '</h4>';
 
       var rows = [checked, numberHtml, summaryHtml, reviewHtml];
       if (AREA_CHAIRS_ID) {
@@ -3056,7 +3056,7 @@ var buildCSV = function(){
     areachairProfileTwo.name,
     areachairProfileTwo.email,
     acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
-    paperTableRow.decision && paperTableRow.decision?.content?.decision
+    paperTableRow.decision && paperTableRow.decision.content && paperTableRow.decision.content.decision
     ].join(',') + '\n');
   });
 
@@ -3133,15 +3133,15 @@ var buildAreaChairsCSV = function(){
   var rowData = [];
   rowData.push(columnNames.join(',') + '\n');
   _.forEach(tableDataInDisplay, function(ac) {
-    var id = ac.summary?.id;
-    var name = ac.summary?.name;
-    var email = ac.summary?.email;
-    var assignedPapers = ac.reviewProgressData?.numPapers;
-    var reviewsCompleted = ac.reviewProgressData?.numCompletedReviews;
-    var metaReviewsCompleted = ac.reviewProgressData?.numCompletedMetaReviews;
-    var sacId = ac.seniorSummary?.id
-    var sacName = ac.seniorSummary?.name
-    var sacEmail = ac.seniorSummary?.email
+    var id = ac.summary && ac.summary.id;
+    var name = ac.summary && ac.summary.name;
+    var email = ac.summary && ac.summary.email;
+    var assignedPapers = ac.reviewProgressData && ac.reviewProgressData.numPapers;
+    var reviewsCompleted = ac.reviewProgressData && ac.reviewProgressData.numCompletedReviews;
+    var metaReviewsCompleted = ac.reviewProgressData && ac.reviewProgressData.numCompletedMetaReviews;
+    var sacId = ac.seniorSummary && ac.seniorSummary.id
+    var sacName = ac.seniorSummary && ac.seniorSummary.name
+    var sacEmail = ac.seniorSummary && ac.seniorSummary.email
 
     if(SENIOR_AREA_CHAIRS_ID){
       rowData.push([id,name,email,assignedPapers,reviewsCompleted,metaReviewsCompleted,sacId,sacName,sacEmail].join(',') + '\n');
@@ -3165,7 +3165,7 @@ $('#group-container').on('click', 'button.btn.btn-export-reviewers', function(e)
 });
 
 $('#group-container').on('click', 'button.btn.btn-export-areachairs', function(e) {
-  var notFiltered = conferenceStatusData.areaChairs.length === tableDataInDisplay?.length;
+  var notFiltered = conferenceStatusData.areaChairs.length === (tableDataInDisplay && tableDataInDisplay.length);
   var blob = new Blob(buildAreaChairsCSV(), {type: 'text/csv'});
   var fileName = notFiltered
     ? SHORT_PHRASE.replace(/\s/g, '_') + '_ac_status.csv'

@@ -582,6 +582,8 @@ class VenueRequest():
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
+        self.matching_process = os.path.join(os.path.dirname(__file__), 'process/matchingProcess.py')
+        self.matching_pre_process = os.path.join(os.path.dirname(__file__), 'process/matching_pre_process.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
@@ -590,6 +592,7 @@ class VenueRequest():
         self.setup_venue_post_submission()
         self.setup_venue_recruitment()
         self.setup_venue_remind_recruitment()
+        self.setup_matching()
 
         # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
@@ -833,6 +836,14 @@ class VenueRequest():
                 'order': 31,
                 'required': False,
                 'hidden': True
+            },
+            'submission_name':{
+                'value-regex': '\S*',
+                'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
+                'default': 'Submission',
+                'order':32,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
             }
         }
 
@@ -1175,3 +1186,70 @@ class VenueRequest():
                     'content': remind_recruitment_content
                 }
             ))
+
+    def setup_matching(self):
+
+        matching_content = {
+            'title': {
+                'value': 'Paper Matching Setup',
+                'required': True,
+                'order': 1
+            },
+            'matching_group': {
+                'description': 'Please select the group you want to set up matching for.',
+                'value-dropdown': [''],
+                'required': True,
+                'order': 2
+            },
+            'compute_conflicts': {
+                'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'Yes',
+                'required': True,
+                'order': 3
+            },
+            'compute_affinity_scores': {
+                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                'order': 4,
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+            },
+            'upload_affinity_scores': {
+                'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
+                'order': 5,
+                'value-file': {
+                    'fileTypes': ['csv'],
+                    'size': 50
+                },
+                'required': False
+            }
+        }
+
+        with open(self.matching_pre_process, 'r') as pre:
+            with open(self.matching_process, 'r') as f:
+                pre_process_file_content = pre.read()
+                file_content = f.read()
+                file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+
+                self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                    id=self.support_group.id + '/-/Paper_Matching_Setup',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.support_group.id],
+                    invitees=[self.support_group.id],
+                    process_string=file_content,
+                    preprocess=pre_process_file_content,
+                    multiReply=True,
+                    reply={
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'writers': {
+                            'values':[],
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                        },
+                        'content': matching_content
+                    }
+                ))
