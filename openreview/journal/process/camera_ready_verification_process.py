@@ -11,9 +11,7 @@ def process(client, edit, invitation):
 
     decision = decisions[0]
 
-    journal.invitation_builder.set_acceptance_invitation(journal, submission)
-
-    acceptance_note = client.post_note_edit(invitation=journal.get_acceptance_id(number=submission.number),
+    acceptance_note = client.post_note_edit(invitation=journal.get_acceptance_id(),
                         signatures=[venue_id],
                         note=openreview.api.Note(id=submission.id,
                             content= {

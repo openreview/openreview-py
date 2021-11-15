@@ -1001,7 +1001,7 @@ class TestJournal():
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision', '.TMLR/Paper1/-/Acceptance']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision', '.TMLR/-/Acceptance']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
@@ -1313,7 +1313,7 @@ class TestJournal():
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review', '.TMLR/-/Rejection', '.TMLR/Paper4/-/Authors_Release']
+        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review', '.TMLR/-/Rejection', '.TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper4/Authors']

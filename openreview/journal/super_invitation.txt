@@ -1,0 +1,186 @@
+### Create super Review invitation
+
+{
+    readers: ['.TMLR'],
+    writers: ['.TMLR'],
+    signatures '.TMLR',
+    invitations: //No invitation??? who has permission to create this super invitation?
+    invitation: {
+        id: '.TMLR/Review',
+        invitees: ['.TMLR'],
+        readers: ['.TMLR'],
+        writers: ['.TMLR'],
+        signatures: ['.TMLR'],
+        process: 'def process()...',
+        edit: {
+            readers: { const: ['.TMLR']},
+            writers: { const: ['.TMLR']},
+            signature: { const: ['.TMLR']},
+            param: //add the submission id???
+            invitation: {
+                id: { const: '.TMLR/Paper${param.number}/-/Review'}
+                readers: { const: ['.TMLR', '.TMLR/Paper${param.number}/Action_Editors', '.TMLR/Paper${param.number}/Reviewers'] }, //how to pass the number????
+                writers: { const: ['.TMLR'] },
+                signature: { const: ['.TMLR'] },
+                invitees: { const: ['.TMLR', '.TMLR/Paper${param.number}/Reviewers'] },
+                maxReplies: { const: 1 },
+                duedate: {
+                    range: [ 01032021, 01062021 ],
+                    default: 1635254942000
+                },
+                expdate: {
+                    range: [ 01032021, 01062021 ],
+                    optional: true
+                }
+                process: { const: 'def process()...'},
+                edit: {
+                    readers: { const: { const: [ '.TMLR', '.TMLR/Paper${param.number}/Action_Editors', '$signature' ] } }
+                    writers: { const: { const: ['.TMLR', '$signature' ] } }
+                    signature: { const: { regex: '.TMLR/Paper${param.number}/Reviewer_.*' } }
+                    note: {
+                        id: {
+                            const: {
+                                value-invitation: '.TMLR/Paper{param.number}/-/Review',
+                                optional: true
+                            }
+                        },
+                        forum: { const: { const: param.id } },
+                        replyto: { const: { const: param.id } },
+                        ddate: {
+                            const: {
+                                int-range: [
+                                    0,
+                                    9999999999999
+                                ],
+                                optional: true,
+                                nullable: true
+                            }
+                        },
+                        signatures: {
+                            const: {
+                                const: [
+                                    '${signatures}'
+                                ]
+                            }
+                        },
+                        readers: {
+                            const: {
+                                const: [
+                                    '.TMLR',
+                                    '.TMLR/Paper${param.number}/Action_Editors',
+                                    '${signatures}'
+                                ]
+                            }
+                        },
+                        writers: {
+                            const: {
+                                const: [
+                                    '.TMLR',
+                                    '.TMLR/Paper${param.number}/Action_Editors',
+                                    '${signatures}'
+                                ]
+                            }
+                        },
+                        content: { //Add a const to each field?
+                            summary_of_contributions: {
+                                const: {
+                                    order: 1,
+                                    description: "Brief description, in the reviewer’s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
+                                    value: {
+                                        regex: "^[\\S\\s]{1,200000}$"
+                                    },
+                                    presentation: {
+                                        markdown: true
+                                    }
+                                }
+                            },
+                            "strengths_and_weaknesses": {
+                                "order": 2,
+                                "description": "List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
+                                "value": {
+                                    "value-regex": "^[\\S\\s]{1,200000}$"
+                                },
+                                "presentation": {
+                                    "markdown": true
+                                }
+                            },
+                            "requested_changes": {
+                                "order": 3,
+                                "description": "List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
+                                "value": {
+                                    "value-regex": "^[\\S\\s]{1,200000}$"
+                                },
+                                "presentation": {
+                                    "markdown": true
+                                }
+                            },
+                            "broader_impact_concerns": {
+                                "order": 4,
+                                "description": "Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
+                                "value": {
+                                    "value-regex": "^[\\S\\s]{1,200000}$"
+                                },
+                                "presentation": {
+                                    "markdown": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+### Create a review invitation for submission 1
+
+{
+    readers: ['.TMLR'],
+    writers: ['.TMLR'],
+    signatures '.TMLR',
+    invitations: '.TMLR/Review'
+    param: 'fdkX12z',
+    invitation: {
+        duedate: 1635254942000
+    }
+}
+
+### Update super invitation or create a new one to perform bulk changes
+
+{
+    readers: ['.TMLR'],
+    writers: ['.TMLR'],
+    signatures '.TMLR',
+    invitation: {
+        id: '.TMLR/Review',
+        edit: {
+            invitation: {
+                edit: {
+                    note: {
+                        readers: { const: { const: [ 'everyone' ] } }
+                    }
+                }
+            }
+        }
+    }
+}
+
+or (how do I make the change for all the current child invitations?)
+
+{
+    readers: ['.TMLR'],
+    writers: ['.TMLR'],
+    signatures '.TMLR',
+    invitation: {
+        id: '.TMLR/Release_Review',
+        edit: {
+            invitation: {
+                edit: {
+                    note: {
+                        readers: { const: { const: [ 'everyone' ] } }
+                    }
+                }
+            }
+        }
+    }
+}

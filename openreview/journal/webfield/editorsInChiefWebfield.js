@@ -246,7 +246,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
-              url: '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Conflict;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore'
+              url: '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Conflict;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&version=2'
             }
           ] : []
         },

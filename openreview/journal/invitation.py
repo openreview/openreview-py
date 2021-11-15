@@ -569,7 +569,9 @@ class InvitationBuilder(object):
                 },
                 'weight': {
                     'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
-                    #'default': 12
+                    'presentation': {
+                        'default': 12
+                    }
                 }
             }
         )
@@ -962,14 +964,10 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
-    def set_acceptance_invitation(self, journal, note):
+    def set_acceptance_invitation(self, journal):
         venue_id = journal.venue_id
-        editors_in_chief_id = journal.get_editors_in_chief_id()
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
 
-        acceptance_invitation_id = journal.get_acceptance_id(number=note.number)
+        acceptance_invitation_id = journal.get_acceptance_id()
         acceptance_invitation = openreview.tools.get_invitation(self.client, acceptance_invitation_id)
 
         ## Acceptance invitation
@@ -990,7 +988,7 @@ class InvitationBuilder(object):
                     'readers': { 'values': [ 'everyone']},
                     'writers': { 'values': [ venue_id ]},
                     'note': {
-                        'id': { 'value': note.id },
+                        'id': { 'value-invitation': journal.get_under_review_id() },
                         'writers': { 'values': [ venue_id ]},
                         'content': {
                             'venue': {
@@ -1043,11 +1041,11 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
-    def set_authors_release_invitation(self, journal, note):
+    def set_authors_release_invitation(self, journal):
 
         venue_id = journal.venue_id
 
-        authors_release_invitation_id = journal.get_authors_release_id(number=note.number)
+        authors_release_invitation_id = journal.get_authors_release_id()
         authors_release_invitation = openreview.tools.get_invitation(self.client, authors_release_invitation_id)
 
         if not authors_release_invitation:
@@ -1522,7 +1520,6 @@ class InvitationBuilder(object):
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
-                maxReplies=1,
                 edit={
                     'signatures': { 'values': [ paper_action_editors_id ] },
                     'readers': { 'values': [ venue_id, paper_action_editors_id ] },

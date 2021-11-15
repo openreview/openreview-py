@@ -118,8 +118,8 @@ class Journal(object):
     def get_review_rating_id(self, signature):
         return self.__get_invitation_id(name='Rating', prefix=signature)
 
-    def get_acceptance_id(self, number):
-        return self.__get_invitation_id(name='Acceptance', number=number)
+    def get_acceptance_id(self):
+        return self.__get_invitation_id(name='Acceptance')
 
     def get_reject_id(self):
         return self.__get_invitation_id(name='Rejection')
@@ -160,7 +160,8 @@ class Journal(object):
         self.invitation_builder.set_under_review_invitation(self)
         self.invitation_builder.set_desk_rejection_invitation(self)
         self.invitation_builder.set_reject_invitation(self)
-        #self.invitation_builder.set_authors_release_invitation(self)
+        self.invitation_builder.set_acceptance_invitation(self)
+        self.invitation_builder.set_authors_release_invitation(self)
         self.invitation_builder.set_ae_assignment(self)
         self.invitation_builder.set_reviewer_assignment(self)
 
@@ -544,3 +545,10 @@ class Journal(object):
         self.setup_reviewer_assignment(note)
         self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
 
+    def assign_reviewer(self, note, reviewer):
+
+        profile = self.client.get_profile(reviewer)
+        ## Check conflicts again?
+        # self.client.post_edge(
+        #     invitation=self.get_
+        # )
