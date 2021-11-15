@@ -17,6 +17,6 @@ def process(client, note, invitation):
     if note.content['response'] == 'No':
         memberships = client.get_groups(regex=VENUE_ID+'/Paper.*/Reviewers$', member=user)
         if memberships:
-            raise openreview.OpenReviewException('You have already been assigned to a paper. Please contact the paper\'s area chair to be unassigned.')
+            raise openreview.OpenReviewException('You have already been assigned to a paper. Please contact the paper area chair or program chairs to be unassigned.')
 
 
