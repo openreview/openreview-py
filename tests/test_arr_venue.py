@@ -332,7 +332,7 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Area_MITChair1', round(random.random(), 2)])
                 writer.writerow([submission.id, '~Area_AmazonChair1', round(random.random(), 2)])
 
-        venue.setup_matching(committee_id=venue.get_area_chairs_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'))
+        venue.setup_matching(committee_id=venue.get_area_chairs_id(), build_conflicts=True, compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'))
 
 
         venue.set_reviewers(['~Reviewer_ARR_UMass1', '~Reviewer_ARR_MIT1', '~Reviewer_ARR_IBM1', '~Reviewer_ARR_Facebook1', '~Reviewer_ARR_Google1'])
@@ -347,7 +347,7 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Reviewer_ARR_Google1', round(random.random(), 2)])
 
 
-        venue.setup_matching(committee_id=venue.get_reviewers_id(), build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        venue.setup_matching(committee_id=venue.get_reviewers_id(), build_conflicts=True, compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
 
         ## AC assignments

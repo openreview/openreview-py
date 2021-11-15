@@ -68,6 +68,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         if matching_status.get('no_publications'):
             no_publications_status=f'''{len(matching_status.get('no_publications'))} {role_name} with no publications: {matching_status.get('no_publications')}'''
+            no_publications_status = no_publications_status.replace('~', '\~')
             comment_note.content['comment'] += f'''
 
 {no_publications_status}'''

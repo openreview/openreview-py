@@ -873,7 +873,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, compute_affinity_scores=False):
+    def setup(self, compute_affinity_scores=False, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
         '''
         Build all the invitations and edges necessary to run a match
         '''
@@ -954,8 +954,7 @@ class Matching(object):
 
         type_affinity_scores = type(compute_affinity_scores)
 
-        if type_affinity_scores == str or  affinity_score_file:
-            compute_affinity_scores = affinity_score_file if affinity_score_file else compute_affinity_scores
+        if type_affinity_scores == str:
             invitation = self._build_scores_from_file(
                 self.conference.get_affinity_score_id(self.match_group.id),
                 compute_affinity_scores,

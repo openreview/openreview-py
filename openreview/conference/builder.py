@@ -1138,14 +1138,14 @@ class Conference(object):
         return self.webfield_builder.set_impersonate_page(self, impersonate_group)
 
     ## Deprecated, use setup_commitee_matching
-    def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, alternate_matching_group=None):
+    def setup_matching(self, committee_id=None, compute_affinity_scores=False, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
         if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
             alternate_matching_group = self.get_area_chairs_id()
         conference_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return conference_matching.setup(affinity_score_file, tpms_score_file, elmo_score_file, build_conflicts)
+        return conference_matching.setup(compute_affinity_scores, tpms_score_file, elmo_score_file, build_conflicts)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:
@@ -1154,7 +1154,7 @@ class Conference(object):
             alternate_matching_group = self.get_area_chairs_id()
         conference_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
-        return conference_matching.setup(build_conflicts=compute_conflicts, compute_affinity_scores=compute_affinity_scores,)
+        return conference_matching.setup(compute_affinity_scores=compute_affinity_scores, build_conflicts=compute_conflicts)
 
     def set_matching_conflicts(self, profile_id, build_conflicts=True):
         # Re-generates conflicts for a single reviewer

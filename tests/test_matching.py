@@ -1254,7 +1254,7 @@ class TestMatching():
                     writer.writerow([mentee, mentor, round(random.random(), 2)])
 
         conference.setup_matching(committee_id=conference.id + '/Reviewers_Mentors',
-        affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/mentors_affinity_scores.csv'),
+        compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/mentors_affinity_scores.csv'),
         alternate_matching_group=conference.id + '/Reviewers_Mentees')
 
         affinity_scores = pc_client.get_edges(invitation=conference.id + '/Reviewers_Mentors/-/Affinity_Score')
