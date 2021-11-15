@@ -114,7 +114,7 @@ var formatData = function(assignedGroups, reviewersByNumber, invitations, submis
           actions: submission.content.venueid.value == '.TMLR/Under_Review' ? [
             {
               name: 'Edit Assignments',
-              url: '/invitation?id=.TMLR/Paper' + number + '/Reviewers/-/Assignment'
+              url: '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&hide=.TMLR/Reviewers/-/Conflict&maxColumns=2&version=2'
             }
           ] : []
         },

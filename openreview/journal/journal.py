@@ -127,6 +127,18 @@ class Journal(object):
     def get_reviewer_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation', number=number)
 
+    def get_reviewer_conflict_id(self):
+        return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())
+
+    def get_reviewer_affinity_score_id(self):
+        return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_reviewers_id())
+
+    def get_reviewer_assignment_id(self):
+        return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id())
+
+    def get_reviewer_custom_max_papers_id(self):
+        return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())
+
     def get_camera_ready_revision_id(self, number=None):
         return self.__get_invitation_id(name='Camera_Ready_Revision', number=number)
 
@@ -543,7 +555,7 @@ class Journal(object):
         self.invitation_builder.set_solicit_review_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.setup_reviewer_assignment(note)
-        self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
+        #self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
 
     def assign_reviewer(self, note, reviewer):
 

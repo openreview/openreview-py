@@ -221,10 +221,10 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           reviewers: paperReviewerStatus,
           sendReminder: true,
           referrer: referrerUrl,
-          actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
+          actions: ['.TMLR/Under_Review'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
-              url: '/invitation?id=.TMLR/Paper' + number + '/Reviewers/-/Assignment'
+              url: '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&version=2'
             },
             {
               name: 'Edit Review Invitation',
@@ -246,7 +246,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
-              url: '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Conflict;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&version=2'
+              url: '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2'
             }
           ] : []
         },

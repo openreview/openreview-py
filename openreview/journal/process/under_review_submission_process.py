@@ -15,7 +15,7 @@ def process(client, edit, invitation):
 
 With this email, we request that you assign, **within 1 week** ({duedate.strftime("%b %d")}), 3 reviewers to your assigned TMLR submission "{note.content['title']['value']}".
 
-To do so, please follow this link: https://openreview.net/invitation?id=.TMLR/Paper{note.number}/Reviewers/-/Assignment
+To do so, please follow this link: https://openreview.net/group?id={journal.get_action_editors_id()}
 
 As a reminder, within their annual quota of six reviews per year, reviewers are **expected to performed all requests for review** of submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.
 

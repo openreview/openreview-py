@@ -316,7 +316,7 @@ class TestJournal():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>With this email, we request that you assign, <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}), 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;.</p>
-<p>To do so, please follow this link: <a href=\"https://openreview.net/invitation?id=.TMLR/Paper1/Reviewers/-/Assignment\">https://openreview.net/invitation?id=.TMLR/Paper1/Reviewers/-/Assignment</a></p>
+<p>To do so, please follow this link: <a href=\"https://openreview.net/group?id=.TMLR/Action_Editors\">https://openreview.net/group?id=.TMLR/Action_Editors</a></p>
 <p>As a reminder, within their annual quota of six reviews per year, reviewers are <strong>expected to performed all requests for review</strong> of submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.</p>
 <p>We thank you for your essential contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -408,8 +408,9 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
 
         ## David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             head=note_id_1,
@@ -434,8 +435,9 @@ class TestJournal():
 '''
 
         ## Carlos Mondragon
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Carlos_Mondragon1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             head=note_id_1,
@@ -460,8 +462,9 @@ class TestJournal():
 '''
 
         ## Javier Burroni
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper1/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Javier_Burroni1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             head=note_id_1,
@@ -1075,8 +1078,9 @@ class TestJournal():
         helpers.await_queue(openreview_client)
 
         ## Assign David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper4/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper4/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper4/Authors"],
             writers=[venue_id, f"{venue_id}/Paper4/Action_Editors"],
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             head=note_id_4,
@@ -1087,8 +1091,9 @@ class TestJournal():
         helpers.await_queue(openreview_client)
 
         ## Assign Carlos Mondragon
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper4/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper4/Action_Editors", '~Carlos_Mondragon1'],
+            nonreaders=[f"{venue_id}/Paper4/Authors"],
             writers=[venue_id, f"{venue_id}/Paper4/Action_Editors"],
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             head=note_id_4,
@@ -1099,8 +1104,9 @@ class TestJournal():
         helpers.await_queue(openreview_client)
 
         ## Assign Javier Burroni
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Paper4/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper4/Action_Editors", '~Javier_Burroni1'],
+            nonreaders=[f"{venue_id}/Paper4/Authors"],
             writers=[venue_id, f"{venue_id}/Paper4/Action_Editors"],
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             head=note_id_4,

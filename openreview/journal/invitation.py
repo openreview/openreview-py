@@ -579,104 +579,183 @@ class InvitationBuilder(object):
 
     def set_reviewer_assignment(self, journal):
         venue_id = journal.venue_id
-        now = datetime.datetime.utcnow()
-        reviewers_id = journal.get_reviewers_id()
-        action_editors = journal.get_action_editors_id()
-        paper_authors_id = journal.get_authors_id(number='${{head}.number}')
-        paper_reviewers_id = journal.get_reviewers_id(number='${{head}.number}')
-        paper_action_editors_id = journal.get_action_editors_id(number='${{head}.number}')
+        author_submission_id = journal.get_author_submission_id()
         editor_in_chief_id = journal.get_editors_in_chief_id()
+        action_editors_id = journal.get_action_editors_id()
+        reviewers_id = journal.get_reviewers_id()
+        authors_id = journal.get_authors_id()
+        paper_action_editors_id = journal.get_action_editors_id(number='${{head}.number}')
+        paper_authors_id = journal.get_authors_id(number='${{head}.number}')
 
-        conflict_reviewers_invitation_id=f'{reviewers_id}/-/Conflict'
-
-        self.client.post_invitation_edit(readers=[venue_id],
+        invitation = Invitation(
+            id=journal.get_reviewer_conflict_id(),
+            invitees=[venue_id],
+            readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=Invitation(
-                id=conflict_reviewers_invitation_id,
-                invitees=[venue_id],
-                readers=[venue_id, action_editors],
-                writers=[venue_id],
-                signatures=[venue_id],
-                type='Edge',
-                edit={
-                    'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
-                    'readers': {
-                        'values': [venue_id, paper_action_editors_id, '${tail}']
-                    },
-                    'writers': {
-                        'values': [venue_id]
-                    },
-                    'signatures': {
-                        'values': [venue_id]
-                    },
-                    'head': {
-                        'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Author_Submission'
-                    },
-                    'tail': {
-                        'type': 'profile',
-                        'member-of' : reviewers_id
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*',
-                        'optional': True
-                    }
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, paper_action_editors_id, '${tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'head': {
+                    'type': 'note',
+                    'value-invitation': author_submission_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : reviewers_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                },
+                'label': {
+                    'value-regex': '.*',
+                    'optional': True
                 }
-            )
+            }
         )
+        self.save_invitation(journal, invitation)
 
-        affinity_score_reviewers_invitation_id=f'{reviewers_id}/-/Affinity_Score'
-        self.client.post_invitation_edit(readers=[venue_id],
+        invitation = Invitation(
+            id=journal.get_reviewer_affinity_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=Invitation(
-                id=affinity_score_reviewers_invitation_id,
-                invitees=[venue_id],
-                readers=[venue_id, action_editors],
-                writers=[venue_id],
-                signatures=[venue_id],
-                type='Edge',
-                edit={
-                    'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
-                    'readers': {
-                        'values': [venue_id, paper_action_editors_id, '${tail}']
-                    },
-                    'writers': {
-                        'values': [venue_id]
-                    },
-                    'signatures': {
-                        'values': [venue_id]
-                    },
-                    'head': {
-                        'type': 'note',
-                        'value-invitation': f'{venue_id}/-/Author_Submission'
-                    },
-                    'tail': {
-                        'type': 'profile',
-                        'member-of' : reviewers_id
-                    },
-                    'weight': {
-                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                    },
-                    'label': {
-                        'value-regex': '.*',
-                        'optional': True
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, paper_action_editors_id, '${tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'head': {
+                    'type': 'note',
+                    'value-invitation': author_submission_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : reviewers_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                },
+                'label': {
+                    'value-regex': '.*',
+                    'optional': True
+                }
+            }
+        )
+
+        self.save_invitation(journal, invitation)
+
+        invitation = Invitation(
+            id=journal.get_reviewer_assignment_id(),
+            invitees=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, paper_action_editors_id, '${tail}']
+                },
+                'nonreaders': {
+                    'values': [paper_authors_id]
+                },
+                'writers': {
+                    'values': [venue_id, paper_action_editors_id]
+                },
+                'signatures': {
+                    'values-regex': editor_in_chief_id + '|' + journal.get_action_editors_id(number='.*')
+                },
+                'head': {
+                    'type': 'note',
+                    'value-invitation': author_submission_id ## keep this to make the edge browser work
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of' : reviewers_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                },
+                'label': {
+                    'value-regex': '.*',
+                    'optional': True
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')
+        )
+
+        self.save_invitation(journal, invitation)
+
+        invitation = Invitation(
+            id=journal.get_reviewer_custom_max_papers_id(),
+            invitees=[venue_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, '${tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [editor_in_chief_id]
+                },
+                'head': {
+                    'type': 'group',
+                    'value': reviewers_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'member-of': reviewers_id
+                },
+                'weight': {
+                    'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
+                    'presentation': {
+                        'default': 6
                     }
                 }
-            )
+            }
         )
+        self.save_invitation(journal, invitation)
 
     def set_review_approval_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
@@ -697,20 +776,11 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ venue_id, paper_action_editors_id] },
                 'writers': { 'values': [ venue_id, paper_action_editors_id] },
                 'note': {
-                    'id': {
-                        'value-invitation': review_approval_invitation_id,
-                        'optional': True
-                    },
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
-                    'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
                     'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
-                    'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'writers': { 'values': [ venue_id ] },
                     'content': {
                         'under_review': {
                             'order': 1,
