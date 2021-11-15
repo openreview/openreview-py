@@ -256,7 +256,7 @@ class TestClient():
         merged_profile = client.get_profile(email_or_id = '~Celeste_Bok1')
         merged_profile.id == '~Melissa_Bok1'
 
-        profile = client.rename_profile('~Melisa_Bok1', 'Celeste_Bok1')
+        profile = client.rename_profile('~Melisa_Bok1', '~Celeste_Bok1')
         assert profile.id == '~Celeste_Bok1'
 
     @pytest.mark.xfail
