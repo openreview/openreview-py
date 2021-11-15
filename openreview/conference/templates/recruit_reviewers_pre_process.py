@@ -3,6 +3,7 @@ def process(client, note, invitation):
     import urllib.parse
     HASH_SEED = ''
     REVIEWERS_INVITED_ID = ''
+    VENUE_ID=''
 
     user = urllib.parse.unquote(note.content['user'])
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
@@ -12,5 +13,10 @@ def process(client, note, invitation):
 
     if not client.get_groups(id=REVIEWERS_INVITED_ID, member=user):
         raise openreview.OpenReviewException('User not in invited group, please accept the invitation using the email address you were invited with')
+
+    if note.content['response'] == 'No':
+        memberships = client.get_groups(regex=VENUE_ID+'/Paper.*/Reviewers$', member=user)
+        if memberships:
+            raise openreview.OpenReviewException('You have already been assigned to a paper. Please contact the paper\'s area chair to be unassigned.')
 
 
