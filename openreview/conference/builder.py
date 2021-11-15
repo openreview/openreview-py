@@ -1138,7 +1138,7 @@ class Conference(object):
 
         return self.webfield_builder.set_impersonate_page(self, impersonate_group)
 
-    @deprecated(version='1.0.23', reason="Use setup_committeee_matching() instead")
+    @deprecated(version='1.0.24', reason="Use setup_committeee_matching() instead")
     def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
