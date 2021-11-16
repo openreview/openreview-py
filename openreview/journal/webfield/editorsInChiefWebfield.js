@@ -14,6 +14,12 @@ var HEADER = {
   instructions: ''
 };
 
+var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&version=2&referrer=[Editors In Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&version=2&referrer=[Editors In Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+
+HEADER.instructions = "<strong>Edge Browser:</strong><br><a href='" + ae_url + "'> Modify Action Editor Assignments</a><br><a href='" + reviewers_url + "'> Modify Reviewer Assignments</a> </p>";
+
+
 // Main function is the entry point to the webfield code
 var main = function() {
 
@@ -224,7 +230,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           actions: ['.TMLR/Under_Review'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
-              url: '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&version=2'
+              url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&version=2'
             },
             {
               name: 'Edit Review Invitation',
@@ -246,7 +252,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
-              url: '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2'
+              url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2'
             }
           ] : []
         },
