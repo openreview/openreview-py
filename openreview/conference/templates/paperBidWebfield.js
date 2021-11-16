@@ -13,7 +13,21 @@ var BID_ID = '';
 var SUBJECT_AREAS = '';
 var CONFLICT_SCORE_ID = '';
 var SCORE_IDS = [];
+var SCORE_IDS_WITH_SUPER = [];
+var ENABLE_SUPER_ALGO = false;
 var BID_OPTIONS = [];
+// In the SUPER* algorithm, we will map only positive bids to a bid, and treat
+// not positive bids as no bids in the algorithm. The following variables enforce this.
+var POSITIVE_BIDS = [];
+var BID_VALUES = [ 1 ];
+// The following parameter will dictate how much the algorithm optimizes for
+// showing relevant papers to reviewers versus optimizing for each paper getting
+// a sufficient number of bids. Specifically as the TRADE_OFF parameter goes up, 
+// the ordering will get closer to showing the papers in decreasing order of 
+// the relevance scores, and as the TRADE_OFF parameter goes down, the ordering
+// will get closer to showing the papers in increasing order of the number of bids.
+// The value of 1 is a relatively higher choice.
+var TRADE_OFF = 1;
 
 // Bid status data
 var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
@@ -52,6 +66,110 @@ function main() {
   Webfield.ui.spinner('#notes', { inline: true });
 
   load().then(renderContent).then(Webfield.ui.done);
+}
+
+function getBidsCount() {
+  return Webfield.get('/edges', {
+    invitation: BID_ID,
+    groupBy: 'label,head',
+    select: 'count'
+  })
+  .then(function(result) {
+    return _.reduce(result.groupedEdges, function(idToBids, edge) {
+      if (idToBids[edge.id.head] === undefined) {
+        idToBids[edge.id.head] = {};
+      } 
+      idToBids[edge.id.head][edge.id.label] = edge.count;
+      return idToBids;
+    }, {});
+  });
+}
+
+
+function getAffinityScores() {
+  var invitation = selectedScore;
+  if (_.startsWith(selectedScore, 'SUPER_')) {
+    invitation = selectedScore.substring(6);
+  }
+  return Webfield.get('/edges', {
+    invitation: invitation,
+    tail: user.profile.id,
+    groupBy: 'head',
+    select: 'weight'
+  })
+  .then(function(result) {
+    return _.reduce(result.groupedEdges, function(idToScore, edge) {
+      idToScore[edge.id.head] = edge.values[0].weight;
+      return idToScore;
+    }, {});
+  });
+}
+
+function paperScoringFunction(value) {
+  return Math.sqrt(value);
+}
+
+
+function getPaperScores(affinityScores, bidsCount) {
+  var paperScores = [];
+  var noteIds = Object.keys(affinityScores);
+  for (var i = 0; i < noteIds.length; i++) {
+    var partialScore = 0;
+    var noteId = noteIds[i];
+    var affinityScore = affinityScores[noteId];
+    if (bidsCount[noteId] === undefined) {
+      var numberOfBids = 0;
+    } else {
+      var numberOfBids = 0;
+      for (var key in bidsCount[noteId]) {
+        if (_.includes(POSITIVE_BIDS, key)) {
+          var value = bidsCount[noteId][key];
+          numberOfBids = numberOfBids + value;
+        }
+      }
+    }
+    for (var j = 0; j < BID_VALUES.length; j++) {
+      var bidValue = BID_VALUES[j];
+      partialScore = partialScore + paperScoringFunction(numberOfBids + bidValue) - paperScoringFunction(numberOfBids);
+    }
+    paperScores.push({
+      id: noteId,
+      score: -1 * (partialScore * affinityScore / BID_VALUES.length + TRADE_OFF * (Math.pow(2, affinityScore) - 1))
+    });
+  }
+  return _.sortBy(paperScores, [ 'score' ]);
+}
+
+function getPapersSortedByAlgo(paperScores, offset) {
+  var limit = 50;
+  if (!paperScores.length) {
+    return Webfield.get('/notes', {
+      invitation: BLIND_SUBMISSION_ID,
+      offset: offset,
+      limit: limit
+    })
+    .then(function(result) {
+      noteCount = result.count;
+      return result.notes;
+    });
+  }
+  noteCount = paperScores.length;
+  var notes = paperScores.slice(offset, offset + limit);
+  var noteIds = _.map(notes, function(note) {
+    return note.id;
+  });
+  return Webfield.post('/notes/search', {
+    ids: noteIds
+  })
+  .then(function(result) {
+    //Keep score order
+    var notesById = _.keyBy(result.notes, function(note) {
+      return note.id;
+    });
+    return noteIds.map(function(id) {
+      return notesById[id];
+    });
+  });
 }
 
 function getPapersSortedByAffinity(offset) {
@@ -135,9 +253,16 @@ function getPapersByBids(bids, bidsByNote) {
 
 // Perform all the required API calls
 function load() {
-
-  var sortedNotesP = getPapersSortedByAffinity(0, selectedScore);
-
+  var sortedNotesP
+  if (_.startsWith(selectedScore, 'SUPER_')) {
+    sortedNotesP = $.when(getAffinityScores(), getBidsCount())
+      .then(function(affinityScores, bidsCount) {
+        return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), 0);
+      });
+  } else {
+    sortedNotesP = getPapersSortedByAffinity(0);
+  }
+  
   var conflictIdsP = Webfield.getAll('/edges', {
     invitation: CONFLICT_SCORE_ID,
     tail: user.profile.id
@@ -227,7 +352,18 @@ function renderContent(notes, conflicts, bidEdges) {
 
   $('#invitation-container').on('change', 'form.notes-search-form .score-dropdown', function(e) {
     selectedScore = $(this).val();
-    return getPapersSortedByAffinity(0, selectedScore)
+
+    var sortedNotesP;
+    if (_.startsWith(selectedScore, 'SUPER_')) {
+      sortedNotesP = $.when(getAffinityScores(), getBidsCount())
+        .then(function(affinityScores, bidsCount) {
+          return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), 0);
+        });
+    } else {
+      sortedNotesP = getPapersSortedByAffinity(0);
+    }
+
+    return sortedNotesP
     .then(function(notes) {
       return updateNotes(prepareNotes(notes, conflictIds, bidsByNote));
     });
@@ -315,7 +451,16 @@ function updateNotes(notes) {
     noteCount: noteCount,
     pageSize: 50,
     onPageClick: function(offset) {
-      return getPapersSortedByAffinity(offset, selectedScore)
+      var sortedNotesP;
+      if (_.startsWith(selectedScore, 'SUPER_')) {
+        sortedNotesP = $.when(getAffinityScores(), getBidsCount())
+          .then(function(affinityScores, bidsCount) {
+            return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), offset);
+          });
+      } else {
+        sortedNotesP = getPapersSortedByAffinity(offset);
+      }
+      return sortedNotesP
       .then(function(notes) {
         return prepareNotes(notes, conflictIds, bidsByNote);
       });
@@ -334,6 +479,17 @@ function updateNotes(notes) {
       var selectedClass = selectedScore == scoreId && 'selected';
       optionsHtml = optionsHtml + '<option value="' + scoreId + '" ' + selectedClass + '>' + label + '</option>';
     })
+
+    if (ENABLE_SUPER_ALGO) {
+      SCORE_IDS.forEach(function(scoreId) {
+        // Only add SUPER to the specified scores
+        if (_.includes(SCORE_IDS_WITH_SUPER, scoreId)) return;
+        var label = 'SUPER ' + view.prettyInvitationId(scoreId);
+        var superScoreId = 'SUPER_' + scoreId;
+        var selectedClass = selectedScore == superScoreId && 'selected';
+        optionsHtml = optionsHtml + '<option value="' + superScoreId + '" ' + selectedClass + '>' + label + '</option>';
+      })
+    }
 
     $('#notes .form-inline.notes-search-form').append(
       '<div class="form-group score">' +
