@@ -603,6 +603,9 @@ class InvitationBuilder(object):
                 'readers': {
                     'values': [venue_id, paper_action_editors_id, '${tail}']
                 },
+                'nonreaders': {
+                    'values': [paper_authors_id]
+                },
                 'writers': {
                     'values': [venue_id]
                 },
@@ -643,6 +646,9 @@ class InvitationBuilder(object):
                 },
                 'readers': {
                     'values': [venue_id, paper_action_editors_id, '${tail}']
+                },
+                'nonreaders': {
+                    'values': [paper_authors_id]
                 },
                 'writers': {
                     'values': [venue_id]
@@ -1345,6 +1351,7 @@ class InvitationBuilder(object):
             invitation = Invitation(id=review_invitation_id,
                 duedate=duedate,
                 invitees=[venue_id, paper_reviewers_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[editors_in_chief_id],
@@ -1426,10 +1433,10 @@ class InvitationBuilder(object):
 
     def set_official_recommendation_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number, anon=True)
+        paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_authors_id = journal.get_authors_id(number=note.number)
-        paper_group_id=f'{venue_id}/Paper{note.number}'
 
         official_recommendation_invitation_id=journal.get_reviewer_recommendation_id(number=note.number)
         official_recommendation_invitation=openreview.tools.get_invitation(self.client, official_recommendation_invitation_id)
@@ -1437,13 +1444,14 @@ class InvitationBuilder(object):
         if not official_recommendation_invitation:
             invitation = Invitation(id=official_recommendation_invitation_id,
                     duedate=duedate,
-                    invitees=[venue_id, f"{paper_group_id}/Reviewers"], ## should this be reviewers/submitted??
+                    invitees=[venue_id, paper_reviewers_id], ## should this be reviewers/submitted??
+                    noninvitees=[journal.get_editors_in_chief_id()],
                     readers=['everyone'],
                     writers=[venue_id],
                     signatures=[venue_id],
                     maxReplies=1,
                     edit={
-                        'signatures': { 'values-regex': f'{paper_reviewers_id}.*|{paper_action_editors_id}' },
+                        'signatures': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' },
                         'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'nonreaders': { 'values': [ paper_authors_id ] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
@@ -2067,6 +2075,7 @@ class InvitationBuilder(object):
             invitation = Invitation(id=decision_approval_invitation_id,
                 duedate=duedate,
                 invitees=[venue_id],
+                noninvitees=[paper_authors_id],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],

@@ -408,12 +408,14 @@ class Journal(object):
         venue_id=self.venue_id
         reviewers_id=self.get_reviewers_id()
         action_editors_id=self.get_action_editors_id(number=note.number)
+        authors_id = self.get_authors_id(number=note.number)
         note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=note.number)[0]
 
         ## Create conflict and affinity score edges
         for r in self.get_reviewers():
             edge = openreview.Edge(invitation = f'{reviewers_id}/-/Affinity_Score',
                 readers = [venue_id, action_editors_id, r],
+                nonreaders = [authors_id],
                 writers = [venue_id],
                 signatures = [venue_id],
                 head = note.id,
@@ -426,6 +428,7 @@ class Journal(object):
             if random_number <= 0.3:
                 edge = openreview.Edge(invitation = f'{reviewers_id}/-/Conflict',
                     readers = [venue_id, action_editors_id, r],
+                    nonreaders = [authors_id],
                     writers = [venue_id],
                     signatures = [venue_id],
                     head = note.id,

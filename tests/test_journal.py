@@ -902,7 +902,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = raia_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 5
+        assert len(invitations) == 3
         assert f"{venue_id}/Paper1/-/Decision_Approval"  in [i.id for i in invitations]
 
         ## EIC approves the decision
@@ -1300,9 +1300,6 @@ class TestJournal():
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper4/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
-        # Check with cArlos
-        # assert note.content['authorids'].get('readers') == ['everyone']
-        # assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
@@ -1332,3 +1329,250 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
+
+    def test_eic_submission(self, journal, openreview_client, test_client, helpers):
+
+        venue_id = journal.venue_id
+        editor_in_chief_group_id = journal.get_editors_in_chief_id()
+        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mail.com', password='1234')
+        cho_client = OpenReviewClient(username='kyunghyun@mail.com', password='1234')
+
+
+        ## Reviewers
+        david_client=OpenReviewClient(username='david@mail.com', password='1234')
+        javier_client=OpenReviewClient(username='javier@mail.com', password='1234')
+        carlos_client=OpenReviewClient(username='carlos@mail.com', password='1234')
+        andrew_client=OpenReviewClient(username='andrewmc@mail.com', password='1234')
+        hugo_client=OpenReviewClient(username='hugo@mail.com', password='1234')
+
+        now = datetime.datetime.utcnow()
+
+        ## Post the submission 5
+        submission_note_5 = raia_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+            signatures=['~Raia_Hadsell1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 5' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Test User', 'Melisa Bok', 'Raia Hadsell']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com', '~Raia_Hadsell1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                }
+            ))
+
+        helpers.await_queue(openreview_client)
+        note_id_5=submission_note_5['note']['id']
+
+        # Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_5,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        ## Accept the submission 5
+        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper5/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper5/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue(openreview_client)
+
+        ## Assign David Belanger
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper5/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper5/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper5/Action_Editors"],
+            signatures=[f"{venue_id}/Paper5/Action_Editors"],
+            head=note_id_5,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        ## Assign Carlos Mondragon
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper5/Action_Editors", '~Carlos_Mondragon1'],
+            nonreaders=[f"{venue_id}/Paper5/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper5/Action_Editors"],
+            signatures=[f"{venue_id}/Paper5/Action_Editors"],
+            head=note_id_5,
+            tail='~Carlos_Mondragon1',
+            weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        ## Assign Javier Burroni
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper5/Action_Editors", '~Javier_Burroni1'],
+            nonreaders=[f"{venue_id}/Paper5/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper5/Action_Editors"],
+            signatures=[f"{venue_id}/Paper5/Action_Editors"],
+            head=note_id_5,
+            tail='~Javier_Burroni1',
+            weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        ## Post a review edit
+        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')
+        assert len(david_anon_groups) == 1
+
+        review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        ## Post a review edit
+        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Javier_Burroni1')
+        assert len(javier_anon_groups) == 1
+        review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        ## Post a review edit
+        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        assert len(carlos_anon_groups) == 1
+        review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        ## Post a review recommendation
+        official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Official_Recommendation',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Reject' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        ## Post a review recommendation
+        official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Official_Recommendation',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Reject' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        ## Post a review recommendation
+        official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Official_Recommendation',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Reject' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        reviews=openreview_client.get_notes(forum=note_id_5, invitation=f'{venue_id}/Paper5/-/Review', sort= 'number:asc')
+
+        for review in reviews:
+            signature=review.signatures[0]
+            rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
+                signatures=[f"{venue_id}/Paper5/Action_Editors"],
+                note=Note(
+                    content={
+                        'rating': { 'value': 'Exceeds expectations' }
+                    }
+                )
+            )
+            helpers.await_queue(openreview_client)
+
+        decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Decision',
+            signatures=[f"{venue_id}/Paper5/Action_Editors"],
+            note=Note(
+                content={
+                    'recommendation': { 'value': 'Accept with minor revision' },
+                    'comment': { 'value': 'This is a good paper' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        decision_note = joelle_client.get_note(decision_note['note']['id'])
+        assert decision_note.readers == [venue_id, f"{venue_id}/Paper5/Action_Editors"]
+
+        ## EIC approves the decision
+        with pytest.raises(openreview.OpenReviewException, match=r'NotInviteeError'):
+            approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper5/-/Decision_Approval',
+                                signatures=['.TMLR/Editors_In_Chief'],
+                                note=Note(
+                                content= {
+                                    'approval': { 'value': 'I approve the AE decision. TODO.' },
+                                    'comment_to_the_AE': { 'value': 'I agree with the AE' }
+                                }))
+
+        approval_note = cho_client.post_note_edit(invitation='.TMLR/Paper5/-/Decision_Approval',
+                            signatures=['.TMLR/Editors_In_Chief'],
+                            note=Note(
+                            content= {
+                                'approval': { 'value': 'I approve the AE decision. TODO.' },
+                                'comment_to_the_AE': { 'value': 'I agree with the AE' }
+                            }))
+
+        helpers.await_queue(openreview_client)
+
+        decision_note = raia_client.get_note(decision_note.id)
+        assert decision_note.readers == ['everyone']
+
+        messages = journal.client.get_messages(to = 'raia@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 5')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
+<p>We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title &quot;Paper title 5&quot; is accepted with minor revision.</p>
+<p>To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button &quot;Camera Ready Revision&quot;: <a href=\"https://openreview.net/forum?id={note_id_5}\">https://openreview.net/forum?id={note_id_5}</a></p>
+<p>The Action Editor responsible for your submission will have provided a description of the revision expected for accepting your final manuscript.</p>
+<p>In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.</p>
+<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
+<p>We thank you for your contribution to TMLR and congratulate you for your successful submission!</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
