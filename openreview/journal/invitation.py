@@ -1230,7 +1230,7 @@ class InvitationBuilder(object):
             score_ids = [f'{action_editors_id}/-/Affinity_Score']
             edit_param = f'{action_editors_id}/-/Recommendation'
             browse_param = ';'.join(score_ids)
-            params = f'traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'
+            params = f'start=staticList,type:head,ids:' + note.id + '&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'
             with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
                 content = f.read()
                 content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
@@ -2398,10 +2398,10 @@ class InvitationBuilder(object):
         if not authors_deanonymization_invitation:
             invitation = Invitation(id=authors_deanonymization_invitation_id,
                 invitees=[venue_id, paper_authors_id],
-                noninvitees=[journal.get_editors_in_chief_id()],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
+                maxReplies=1,
                 edit={
                     'signatures': { 'values': [ paper_authors_id ] },
                     'readers': { 'values': [ venue_id, paper_authors_id ] },

@@ -1397,6 +1397,15 @@ class OpenReviewClient(object):
 
         return response.json()
 
+    def post_edit(self, edit):
+        """
+        """
+
+        response = requests.post(self.note_edits_url, json = edit.to_json(), headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
     def get_jobs_status(self):
         """
         **Only for Super User**. Retrieves the jobs status of the queue
@@ -1446,24 +1455,15 @@ class Edit(object):
         cdate = None,
         ddate = None):
 
-        if (id):
-            self.id = id
-        if (cdate):
-            self.cdate = cdate
-        if (ddate):
-            self.ddate = ddate
-        if (readers):
-            self.readers = readers
-        if (nonreaders):
-            self.nonreaders = nonreaders
-        if (writers):
-            self.writers = writers
-        if (signatures):
-            self.signatures = signatures
-        if (note):
-            self.note = note
-        if (invitation):
-            self.invitation = invitation
+        self.id = id
+        self.cdate = cdate
+        self.ddate = ddate
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.writers = writers
+        self.signatures = signatures
+        self.note = note
+        self.invitation = invitation
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1493,9 +1493,11 @@ class Edit(object):
         if (self.signatures):
             body['signatures'] = self.signatures
         if (self.note):
-            body['note'] = self.note
+            body['note'] = self.note.to_json()
         if (self.invitation):
             body['invitation'] = self.invitation
+        if (self.ddate):
+            body['ddate'] = self.ddate
 
         return body
 
