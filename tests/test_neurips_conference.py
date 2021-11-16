@@ -2182,6 +2182,7 @@ Thank you,
             forum=submissions[0].id,
             replyto=submissions[0].id,
             readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
             writers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
             signatures=[signatory_groups[0].id],
             content={

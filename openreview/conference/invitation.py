@@ -1123,6 +1123,7 @@ class PaperMetaReviewInvitation(openreview.Invitation):
         readers = meta_review_stage.get_readers(conference, note.number)
         invitees = [conference.get_program_chairs_id()]
         writers = [conference.get_program_chairs_id()]
+        nonreaders = meta_review_stage.get_nonreaders(conference, note.number)
 
         if conference.use_area_chairs:
             paper_area_chair = conference.get_area_chairs_id(number = note.number)
@@ -1142,6 +1143,9 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                 'readers': {
                     "description": "Select all user groups that should be able to read this comment.",
                     "values": readers
+                },
+                'nonreaders': {
+                    'values': nonreaders
                 },
                 'writers': {
                     'values': writers,
