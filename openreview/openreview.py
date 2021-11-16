@@ -1372,10 +1372,10 @@ class Client(object):
         return response.json()
 
 
-    def request_expertise(self, name, group_id, paper_invitation, model=None, baseurl=None):
+    def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'model': model}, headers = self.headers)
+        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'exclusion_inv': exclusion_inv, 'model': model}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1394,7 +1394,7 @@ class Client(object):
         response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
-        return response.json()['results']
+        return response.json()
 
 class Group(object):
     """

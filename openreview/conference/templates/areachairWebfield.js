@@ -15,7 +15,6 @@ var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
 var SENIOR_AREA_CHAIRS_ID = '';
-var ASSIGNMENT_LABEL = '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
 
@@ -255,7 +254,7 @@ var loadData = function(paperNums) {
   });
 
   if (SENIOR_AREA_CHAIRS_ID) {
-    assignedSACP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Proposed_Assignment', label: ASSIGNMENT_LABEL, head: user.profile.id })
+    assignedSACP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Assignment', head: user.profile.id })
     .then(function(result) {
       if (result && result.edges.length) {
         return result.edges[0].tail;
