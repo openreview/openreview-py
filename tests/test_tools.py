@@ -350,6 +350,7 @@ class TestTools():
         os.environ["OPENREVIEW_PASSWORD"] = ""
         guest_client = openreview.Client()
 
-        with pytest.raises(openreview.OpenReviewException, match=r'forbidden'):
-            assert openreview.tools.get_group(guest_client, '~Super_User1')
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            openreview.tools.get_group(guest_client, '~Super_User1')
+        assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 
