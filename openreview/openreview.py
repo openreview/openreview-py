@@ -311,7 +311,7 @@ class Client(object):
         if profiles:
             return Profile.from_json(profiles[0])
         else:
-            raise OpenReviewException(['Profile not found'])
+            raise OpenReviewException(['Profile Not Found'])
 
     def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """

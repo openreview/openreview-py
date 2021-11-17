@@ -62,10 +62,14 @@ class TestClient():
             guest = openreview.Client()
             guest.login_user()
         except openreview.OpenReviewException as e:
-            assert ["Email is missing"] in e.args, "guest log in did not produce correct error"
+            assert "Email is missing" in e.args[0].get('message'), "guest log in did not produce correct error"
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*Password is missing.*'):
             guest.login_user(username = "openreview.net")
+
+        except openreview.OpenReviewException as e:
+            assert "Password is missing" in e.args[0].get('message'), "super user log in did not produce correct error"
+
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*Invalid username or password.*'):
             guest.login_user(username = "openreview.net", password = "1111")
@@ -89,7 +93,7 @@ class TestClient():
         assert isinstance(profile, openreview.Profile)
         assert 'openreview.net' in profile.content['emails']
 
-        with pytest.raises(openreview.OpenReviewException, match=r'.*Profile not found.*'):
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Profile Not Found.*'):
             profile = client.get_profile('mbok@sss.edu')
 
         assert openreview.tools.get_profile(client, '~Super_User1')
