@@ -92,19 +92,9 @@ class OpenReviewClient(object):
     def __handle_response(self,response):
         try:
             response.raise_for_status()
-
-            if("application/json" in response.headers['content-type']):
-                if 'errors' in response.json():
-                    raise OpenReviewException(response.json()['errors'])
-                if 'error' in response.json():
-                    raise OpenReviewException(response.json()['error'])
-
             return response
         except requests.exceptions.HTTPError as e:
-            if 'errors' in response.json():
-                raise OpenReviewException(response.json()['errors'])
-            else:
-                raise OpenReviewException(response.json())
+            raise OpenReviewException(response.json())
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
@@ -305,7 +295,7 @@ class OpenReviewClient(object):
         if profiles:
             return Profile.from_json(profiles[0])
         else:
-            raise OpenReviewException(['Profile not found'])
+            raise OpenReviewException(['Profile Not Found'])
 
     @deprecated(version='0.9.20', reason="Use search_profiles instead")
     def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
