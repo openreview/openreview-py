@@ -281,6 +281,28 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'order': 26
+            },
+            'release_meta_reviews_to_authors': {
+                'description': 'Should the meta reviews be visible to paper\'s authors immediately upon posting? Default is "No, meta reviews should NOT be revealed when they are posted to the paper\'s authors".',
+                'value-radio': [
+                    'Yes, meta reviews should be revealed when they are posted to the paper\'s authors',
+                    'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors'
+                ],
+                'required': True,
+                'default': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'order': 27
+            },
+            'release_meta_reviews_to_reviewers': {
+                'description': 'Should the meta reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have submitted their review or no reviewers immediately upon posting?',
+                'value-radio': [
+                    'Meta reviews should be immediately revealed to all reviewers',
+                    'Meta reviews should be immediately revealed to the paper\'s reviewers',
+                    'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                    'Meta review should not be revealed to any reviewer'
+                ],
+                'required': True,
+                'default': 'Meta review should not be revealed to any reviewer',
                 'order': 28
             },
             'recommendation_options': {
@@ -441,6 +463,16 @@ class VenueStages():
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'order': 33
             },
+            'release_decisions_to_area_chairs': {
+                'description': 'Should the decisions be immediately revealed to paper\'s area chairs? Default is "No, decisions should not be immediately revealed to the paper\'s area chairs"',
+                'value-radio': [
+                    'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                    'No, decisions should not be immediately revealed to the paper\'s area chairs'
+                ],
+                'required': True,
+                'default': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                'order': 34
+            },
             'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
                 'value-radio': [
@@ -449,7 +481,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, I will send the emails to the authors',
-                'order': 34
+                'order': 35
             }
         }
 
@@ -550,6 +582,8 @@ class VenueRequest():
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
+        self.matching_process = os.path.join(os.path.dirname(__file__), 'process/matchingProcess.py')
+        self.matching_pre_process = os.path.join(os.path.dirname(__file__), 'process/matching_pre_process.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
@@ -558,6 +592,7 @@ class VenueRequest():
         self.setup_venue_post_submission()
         self.setup_venue_recruitment()
         self.setup_venue_remind_recruitment()
+        self.setup_matching()
 
         # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
@@ -801,6 +836,14 @@ class VenueRequest():
                 'order': 31,
                 'required': False,
                 'hidden': True
+            },
+            'submission_name':{
+                'value-regex': '\S*',
+                'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
+                'default': 'Submission',
+                'order':32,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
             }
         }
 
@@ -977,30 +1020,37 @@ class VenueRequest():
                 'required': True,
                 'order': 2
             },
+            'allow_role_overlap': {
+                'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'required': False,
+                'order': 3
+            },
             'invitee_reduced_load': {
                 'description': 'Please enter a comma separated list of reduced load options. If an invitee declines the reviewing invitation, they will be able to choose a reduced load from this list.',
                 'values-regex': '[0-9]+',
                 'default': ['1', '2', '3'],
                 'required': False,
-                'order': 2
+                'order': 4
             },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
-                'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',
+                'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
                 'required': True,
-                'order': 3
+                'order': 5
             },
             'invitation_email_subject': {
                 'value-regex': '.*',
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 4,
+                'order': 6,
                 'required': True,
                 'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                'order': 5,
+                'order': 7,
                 'required': True,
                 'default': '''Dear {name},
 
@@ -1136,3 +1186,70 @@ class VenueRequest():
                     'content': remind_recruitment_content
                 }
             ))
+
+    def setup_matching(self):
+
+        matching_content = {
+            'title': {
+                'value': 'Paper Matching Setup',
+                'required': True,
+                'order': 1
+            },
+            'matching_group': {
+                'description': 'Please select the group you want to set up matching for.',
+                'value-dropdown': [''],
+                'required': True,
+                'order': 2
+            },
+            'compute_conflicts': {
+                'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'Yes',
+                'required': True,
+                'order': 3
+            },
+            'compute_affinity_scores': {
+                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                'order': 4,
+                'value-radio': ['Yes', 'No'],
+                'required': True,
+            },
+            'upload_affinity_scores': {
+                'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
+                'order': 5,
+                'value-file': {
+                    'fileTypes': ['csv'],
+                    'size': 50
+                },
+                'required': False
+            }
+        }
+
+        with open(self.matching_pre_process, 'r') as pre:
+            with open(self.matching_process, 'r') as f:
+                pre_process_file_content = pre.read()
+                file_content = f.read()
+                file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+
+                self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                    id=self.support_group.id + '/-/Paper_Matching_Setup',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.support_group.id],
+                    invitees=[self.support_group.id],
+                    process_string=file_content,
+                    preprocess=pre_process_file_content,
+                    multiReply=True,
+                    reply={
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'writers': {
+                            'values':[],
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                        },
+                        'content': matching_content
+                    }
+                ))

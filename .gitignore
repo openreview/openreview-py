@@ -11,7 +11,4 @@ pytest_report.xml
 cov.xml
 .coverage*
 tests/drivers/geckodriver
-tests/data/reviewer_affinity_scores.csv
-tests/data/ac_affinity_scores.csv
-tests/data/mentors_affinity_scores.csv
-tests/data/temp.csv
+tests/data/*.csv
