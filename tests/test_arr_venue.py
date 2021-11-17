@@ -93,6 +93,201 @@ class TestNeurIPSConference():
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Reviewers')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Authors')
 
+    def test_recruit_actions_editors(self, client, helpers, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        ## Invite ~Area_CMUChair1 as AC
+        reviewer_details = '''~Area_CMUChair1'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'area chair',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
+
+
+        ## Invite ~Area_CMUChair1 as Reviewer
+        reviewer_details = '''~Area_CMUChair1'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'reviewer',
+                'invitee_details': reviewer_details,
+                'allow_role_overlap': 'Yes',
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
+
+
+        ## Invite ~Area_CMUChair1 as AC again
+        reviewer_details = '''~Area_CMUChair1\n~Area_MITChair1'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'area chair',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
+        assert 'No recruitment invitation was sent to the following users because they have already been invited:\n\n{\'aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited\': [\'~Area_CMUChair1\']}' in recruitment_status_notes[0].content['comment']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
+
+        ## Accept to be a reviewer
+        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as reviewer')
+        text = messages[0]['content']['text']
+        # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        # decline_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        decline_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        request_page(selenium, accept_url, alert=True)
+        helpers.await_queue()
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers')
+        assert len(accepted_group.members) == 1
+        assert '~Area_CMUChair1' in accepted_group.members
+        assert client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Reviewer Invitation accepted')
+
+        ## Accept to be an AC
+        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as area chair')
+        text = messages[0]['content']['text']
+        # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        request_page(selenium, accept_url, alert=True)
+        helpers.await_queue()
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
+        assert len(accepted_group.members) == 1
+        assert '~Area_CMUChair1' in accepted_group.members
+        assert client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Area Chair Invitation accepted')
+
+        ## Decline to be a reviewer
+        request_page(selenium, decline_url, alert=True)
+        helpers.await_queue()
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers')
+        assert len(accepted_group.members) == 0
+        declined_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers/Declined')
+        assert len(declined_group.members) == 1
+        assert '~Area_CMUChair1' in declined_group.members
+        assert client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Reviewer Invitation declined')
+
+        ## Keep in the AC group
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
+        assert len(accepted_group.members) == 1
+        assert '~Area_CMUChair1' in accepted_group.members
+
+        ## Manual add an AC to the group and then invite them
+        client.add_members_to_group('aclweb.org/ACL/ARR/2021/September/Area_Chairs', 'previous_ac@mail.com')
+
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
+        assert len(accepted_group.members) == 2
+        assert '~Area_CMUChair1' in accepted_group.members
+        assert 'previous_ac@mail.com' in accepted_group.members
+
+        reviewer_details = '''previous_ac@mail.com, Previous AC'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'area chair',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert 'Invited: 0 users.' in recruitment_status_notes[0].content['comment']
+        assert 'No recruitment invitation was sent to the following users because they are already members of the group:\n\n{\'aclweb.org/ACL/ARR/2021/September/Area_Chairs\': [\'previous_ac@mail.com\']}' in recruitment_status_notes[0].content['comment']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
+
+        reviewer_details = '''previous_ac@mail.com, Previous AC'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'reviewer',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
+
+
+
     def test_submit_papers(self, test_client, client, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
@@ -273,7 +468,8 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -294,28 +490,24 @@ class TestNeurIPSConference():
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Area Chair Invitation accepted for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-Thank you for accepting the invitation to serve as area chair for the paper number: 5, title: Paper title 5.
-
-Please go to the ARR 2021 - September Area Chair Console and check your pending tasks: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs.
-
-If you would like to change your decision, please click the Decline link in the previous invitation email.
-
-OpenReview Team'''
+        print('MESSAGE', messages[0]['content']['text'])
+        assert messages[0]['content']['text'] == '''<p>Hi Area CMUChair,<br>
+Thank you for accepting the invitation to serve as area chair for the paper number: 5, title: Paper title 5.</p>
+<p>Please go to the ARR 2021 - September Area Chair Console and check your pending tasks: <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs</a>.</p>
+<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>
+<p>OpenReview Team</p>
+'''
 
 
         # Assignment email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] You have been assigned as a Area Chair for paper number 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Area Chair for paper number 5 for ARR 2021 - September.
-
-To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submissions[0].id}.
-
-To check all of your assigned papers, go to https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs.
-
-Thank you,
-
-ACL ARR 2021 September Program Chairs'''
+        assert messages[0]['content']['text'] == f'''<p>This is to inform you that you have been assigned as a Area Chair for paper number 5 for ARR 2021 - September.</p>
+<p>To review this new assignment, please login to OpenReview and go to <a href=\"https://openreview.net/forum?id={submissions[0].id}\">https://openreview.net/forum?id={submissions[0].id}</a>.</p>
+<p>To check all of your assigned papers, go to <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs</a>.</p>
+<p>Thank you,</p>
+<p>ACL ARR 2021 September Program Chairs</p>
+'''
 
 
         ## AC 2 declines the invitation
@@ -328,7 +520,8 @@ ACL ARR 2021 September Program Chairs'''
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, decline_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -349,12 +542,11 @@ ACL ARR 2021 September Program Chairs'''
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac3@gmail.com', subject='[ARR 2021 - September] Area Chair Invitation declined for paper 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area MITChair,
-You have declined the invitation to serve as area chair for the paper number: 4, title: Paper title 4.
-
-If you would like to change your decision, please click the Accept link in the previous invitation email.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Area MITChair,<br>
+You have declined the invitation to serve as area chair for the paper number: 4, title: Paper title 4.</p>
+<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>
+<p>OpenReview Team</p>
+'''
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
@@ -378,7 +570,8 @@ OpenReview Team'''
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -398,35 +591,30 @@ OpenReview Team'''
         # Confirmation email to the reviewer
         messages = client.get_messages(to='reviewer_arr4@fb.com', subject='[ARR 2021 - September] Reviewer Invitation accepted for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Reviewer ARR Facebook,
-Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
-
-Please go to the ARR 2021 - September Reviewer Console and check your pending tasks: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers.
-
-If you would like to change your decision, please click the Decline link in the previous invitation email.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Reviewer ARR Facebook,<br>
+Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>
+<p>Please go to the ARR 2021 - September Reviewer Console and check your pending tasks: <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers</a>.</p>
+<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>
+<p>OpenReview Team</p>
+'''
 
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Reviewer ARR Facebook accepted to review paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-The Reviewer Reviewer ARR Facebook(reviewer_arr4@fb.com) that was invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Area CMUChair,<br>
+The Reviewer Reviewer ARR Facebook(<a href=\"mailto:reviewer_arr4@fb.com\">reviewer_arr4@fb.com</a>) that was invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.</p>
+<p>OpenReview Team</p>
+'''
 
         # Assignment email to the reviewer
         messages = client.get_messages(to='reviewer_arr4@fb.com', subject='[ARR 2021 - September] You have been assigned as a Reviewer for paper number 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == f'''This is to inform you that you have been assigned as a Reviewer for paper number 5 for ARR 2021 - September.
-
-To review this new assignment, please login to OpenReview and go to https://openreview.net/forum?id={submissions[0].id}.
-
-To check all of your assigned papers, go to https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers.
-
-Thank you,
-
-ACL ARR 2021 September Program Chairs'''
+        assert messages[0]['content']['text'] == f'''<p>This is to inform you that you have been assigned as a Reviewer for paper number 5 for ARR 2021 - September.</p>
+<p>To review this new assignment, please login to OpenReview and go to <a href=\"https://openreview.net/forum?id={submissions[0].id}\">https://openreview.net/forum?id={submissions[0].id}</a>.</p>
+<p>To check all of your assigned papers, go to <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers</a>.</p>
+<p>Thank you,</p>
+<p>ACL ARR 2021 September Program Chairs</p>
+'''
 
         ## Reviewer reviewer_arr2@mit.edu declines the invitation
         invite_edges=pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Reviewer_ARR_MIT1')
@@ -437,7 +625,8 @@ ACL ARR 2021 September Program Chairs'''
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, decline_url, alert=True)
         notes = selenium.find_element_by_id("notes")
         assert notes
@@ -457,22 +646,20 @@ ACL ARR 2021 September Program Chairs'''
         # Confirmation email to the reviewer
         messages = client.get_messages(to='reviewer_arr2@mit.edu', subject='[ARR 2021 - September] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Reviewer ARR MIT,
-You have declined the invitation to review the paper number: 5, title: Paper title 5.
-
-If you would like to change your decision, please click the Accept link in the previous invitation email.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Reviewer ARR MIT,<br>
+You have declined the invitation to review the paper number: 5, title: Paper title 5.</p>
+<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>
+<p>OpenReview Team</p>
+'''
 
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Reviewer ARR MIT declined to review paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-The Reviewer Reviewer ARR MIT(reviewer_arr2@mit.edu) that was invited to review paper 5 has declined the invitation.
-
-Please go to the Area Chair console: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs to invite another reviewer.
-
-OpenReview Team'''
+        assert messages[0]['content']['text'] == '''<p>Hi Area CMUChair,<br>
+The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_arr2@mit.edu</a>) that was invited to review paper 5 has declined the invitation.</p>
+<p>Please go to the Area Chair console: <a href=\"https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs\">https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs</a> to invite another reviewer.</p>
+<p>OpenReview Team</p>
+'''
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password='1234')

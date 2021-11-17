@@ -12,6 +12,7 @@ import requests
 import pprint
 import os
 import re
+import jwt
 
 
 class OpenReviewException(Exception):
@@ -58,6 +59,7 @@ class Client(object):
 
         self.token = token
         self.profile = None
+        self.user = None
         self.headers = {
             'User-Agent': self.user_agent,
             'Accept': 'application/json'
@@ -65,6 +67,7 @@ class Client(object):
 
         if self.token:
             self.headers['Authorization'] = self.token
+            self.user = jwt.decode(self.token.replace('Bearer ', ''), "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
             try:
                 self.profile = self.get_profile()
             except:
@@ -87,6 +90,7 @@ class Client(object):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
+        self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
         return response
 
     def __handle_response(self,response):
@@ -1363,6 +1367,31 @@ class Client(object):
 
         response = requests.get(self.jobs_status, headers=self.headers)
         response = self.__handle_response(response)
+        return response.json()
+
+
+    def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'exclusion_inv': exclusion_inv, 'model': model}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_expertise_status(self, job_id, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = requests.get(base_url + '/expertise/status', params = {'id': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_expertise_results(self, job_id, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+
         return response.json()
 
 class Group(object):

@@ -24,13 +24,12 @@ var REVIEWERS_ID = '';
 var AREA_CHAIRS_ID = '';
 var SENIOR_AREA_CHAIRS_ID = '';
 var PROGRAM_CHAIRS_ID = '';
-var SAC_ASSIGNMENT_LABEL = null;
 var REQUEST_FORM_ID = '';
 var EMAIL_SENDER = null;
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 var PC_PAPER_TAG_INVITATION = PROGRAM_CHAIRS_ID + '/-/Paper_Assignment';
-var SAC_ASSIGNMENT_INVITATION = SENIOR_AREA_CHAIRS_ID + '/-/Proposed_Assignment';
+var SAC_ASSIGNMENT_INVITATION = SENIOR_AREA_CHAIRS_ID + '/-/Assignment';
 var REVIEWERS_INVITED_ID = REVIEWERS_ID + '/Invited';
 var AREA_CHAIRS_INVITED_ID = AREA_CHAIRS_ID ? AREA_CHAIRS_ID + '/Invited' : '';
 var SENIOR_AREA_CHAIRS_INVITED_ID = SENIOR_AREA_CHAIRS_ID ? SENIOR_AREA_CHAIRS_ID + '/Invited' : '';
@@ -56,7 +55,8 @@ var propertiesAllowed ={
     confidenceAvg:['reviewProgressData.averageConfidence'],
     confidenceMax:['reviewProgressData.maxConfidence'],
     confidenceMin:['reviewProgressData.minConfidence'],
-    replyCount:['reviewProgressData.forumReplyCount']
+    replyCount:['reviewProgressData.forumReplyCount'],
+    decision: ['decision.content.decision'],
 }
 
 // Page State
@@ -66,6 +66,7 @@ var pcTags = {};
 var selectedNotesById = {};
 var matchingNoteIds = [];
 var paperStatusNeedsRerender = false;
+var tableDataInDisplay = null;
 
 $.getScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js');
 
@@ -154,7 +155,7 @@ var main = function() {
       });
       var paperOfficialReviews = _.filter(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_REVIEW_NAME, submission.number)]);
       var paperMetaReviews = _.find(submission.details.directReplies, ['invitation', getInvitationId(OFFICIAL_META_REVIEW_NAME, submission.number)]);
-      var paperDecisions =  _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]);
+      var paperDecisions = _.find(submission.details.directReplies, ['invitation', getInvitationId(DECISION_NAME, submission.number)]) || { content: { decision: 'No Decision' } };
       officialReviews = officialReviews.concat(paperOfficialReviews);
       metaReviews = metaReviews.concat(paperMetaReviews);
       decisions = decisions.concat(decisions);
@@ -269,8 +270,7 @@ var main = function() {
 var getSACEdges = function() {
   if (SENIOR_AREA_CHAIRS_ID) {
     return Webfield.getAll('/edges', {
-      invitation: SAC_ASSIGNMENT_INVITATION,
-      label: SAC_ASSIGNMENT_LABEL
+      invitation: SAC_ASSIGNMENT_INVITATION
     });
   }
   return $.Deferred().resolve([]);
@@ -847,7 +847,7 @@ var calcMetaReviewCount = function(blindedNotes) {
 var calcDecisions = function(blindedNotes) {
   var finalDecisions = [];
   blindedNotes.forEach(function(note) {
-    if (note.details.decision) {
+    if (note.details.decision && note.details.decision.content.decision !== 'No Decision') {
       finalDecisions.push(note.details.decision);
     }
   })
@@ -1405,7 +1405,7 @@ var displayPaperStatusTable = function() {
   if (AREA_CHAIRS_ID) {
     sortOptions['Meta_Review_Missing'] = function(row) { return row.areachairProgressData.numMetaReview; }
   }
-  sortOptions['Decision'] = function(row) { return row.decision ? row.decision.content.decision : 'No Decision'; }
+  sortOptions['Decision'] = function (row) { return row.decision.content.decision || 'No Decision' }
   if (pcAssignmentTagInvitations && pcAssignmentTagInvitations.length) {
     sortOptions['Papers_Assigned_to_Me'] = function(row) {
       var tags = pcTags[row.note.id];
@@ -1430,7 +1430,7 @@ var displayPaperStatusTable = function() {
       var search = [
         row.note.number,
         row.note.content.title,
-        row.note.content.keywords.join('\n'),
+        row.note.content.keywords ? row.note.content.keywords.join('\n') : null,
         row.note.content.authors.join('\n'),
         row.note.content.authorids.join('\n')
       ].join('\n').toLowerCase()
@@ -1555,7 +1555,7 @@ var displayPaperStatusTable = function() {
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
       var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
-      var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
+      var decisionHtml = '<h4>' + (d.decision.content.decision || 'No Decision') + '</h4>';
 
       var rows = [checked, numberHtml, summaryHtml, reviewHtml];
       if (AREA_CHAIRS_ID) {
@@ -1779,6 +1779,7 @@ var displayAreaChairsStatusTable = function() {
       order = order === 'asc' ? 'desc' : 'asc';
     }
     var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    tableDataInDisplay = rowDataToRender;
     renderTable(container, rowDataToRender);
   }
 
@@ -1804,6 +1805,7 @@ var displayAreaChairsStatusTable = function() {
     } else {
       filteredRows = rowData;
     }
+    tableDataInDisplay = filteredRows;
     renderTable(container, filteredRows);
   };
 
@@ -1926,8 +1928,10 @@ var displayAreaChairsStatusTable = function() {
         '<li><a class="msg-submitted-none-metareviews">Area Chairs with 0 submitted meta reviews</a></li>' +
         '<li><a class="msg-unsubmitted-metareviews">Area Chairs with unsubmitted meta reviews</a></li>' +
       '</ul>' +
-    '</div>'
+    '</div>' +
+    '<div class="btn-group"><button class="btn btn-export-areachairs" type="button">Export</button></div>'
   );
+  tableDataInDisplay = rowData;
   renderTable(container, rowData);
 };
 
@@ -2124,7 +2128,7 @@ var displayReviewerStatusTable = function() {
         return row.summary.completedBids === 0;
       },
       'msg-unsubmitted-reviews': function(row) {
-        return row.reviewProgressData.numCompletedReviews < row.reviewProgressData.numPapers;
+        return row.reviewerProgressData.numCompletedReviews < row.reviewerProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -3050,7 +3054,7 @@ var buildCSV = function(){
     areachairProfileTwo.name,
     areachairProfileTwo.email,
     acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
-    paperTableRow.decision && paperTableRow.decision.content.decision
+    paperTableRow.decision && paperTableRow.decision.content && paperTableRow.decision.content.decision
     ].join(',') + '\n');
   });
 
@@ -3121,6 +3125,32 @@ var buildReviewersCSV = function(){
   return [rowData.join('')];
 };
 
+var buildAreaChairsCSV = function(){
+  var columnNames = ['id','name','email','assigned papers','reviews completed','meta reviews completed']
+  if(SENIOR_AREA_CHAIRS_ID) columnNames=columnNames.concat(['sac id','sac name','sac email'])
+  var rowData = [];
+  rowData.push(columnNames.join(',') + '\n');
+  _.forEach(tableDataInDisplay, function(ac) {
+    var id = ac.summary && ac.summary.id;
+    var name = ac.summary && ac.summary.name;
+    var email = ac.summary && ac.summary.email;
+    var assignedPapers = ac.reviewProgressData && ac.reviewProgressData.numPapers;
+    var reviewsCompleted = ac.reviewProgressData && ac.reviewProgressData.numCompletedReviews;
+    var metaReviewsCompleted = ac.reviewProgressData && ac.reviewProgressData.numCompletedMetaReviews;
+    var sacId = ac.seniorSummary && ac.seniorSummary.id
+    var sacName = ac.seniorSummary && ac.seniorSummary.name
+    var sacEmail = ac.seniorSummary && ac.seniorSummary.email
+
+    if(SENIOR_AREA_CHAIRS_ID){
+      rowData.push([id,name,email,assignedPapers,reviewsCompleted,metaReviewsCompleted,sacId,sacName,sacEmail].join(',') + '\n');
+    } else {
+      rowData.push([id,name,email,assignedPapers,reviewsCompleted,metaReviewsCompleted].join(',') + '\n');
+    }
+  });
+
+  return [rowData.join('')];
+}
+
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/csv'});
   var fileName = conferenceStatusData.filteredNotes ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
@@ -3130,4 +3160,13 @@ $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
 $('#group-container').on('click', 'button.btn.btn-export-reviewers', function(e) {
   var blob = new Blob(buildReviewersCSV(), {type: 'text/csv'});
   saveAs(blob, SHORT_PHRASE.replace(/\s/g, '_') + '_reviewer_status.csv');
+});
+
+$('#group-container').on('click', 'button.btn.btn-export-areachairs', function(e) {
+  var notFiltered = conferenceStatusData.areaChairs.length === (tableDataInDisplay && tableDataInDisplay.length);
+  var blob = new Blob(buildAreaChairsCSV(), {type: 'text/csv'});
+  var fileName = notFiltered
+    ? SHORT_PHRASE.replace(/\s/g, '_') + '_ac_status.csv'
+    : SHORT_PHRASE.replace(/\s/g, '_') + '_ac_status(Filtered).csv'
+  saveAs(blob, fileName);
 });

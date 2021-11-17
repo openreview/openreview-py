@@ -502,7 +502,7 @@ class TestDoubleBlindConference():
         # Accept invitation
         messages = client.get_messages(to = 'mbok@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue()
@@ -516,8 +516,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        recruit_invitation = re.search(r'https://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
-        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        recruitment_notes = pc_client.get_notes(invitation = 'AKBC.ws/2019/Conference/-/Recruit_Reviewers')
         acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
         assert len(acceptance_notes) == 1
 
@@ -533,10 +532,11 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
+        assert messages[0]['content']['text'] == '<p>Thank you for accepting the invitation to be a Reviewer for AKBC 2019.<br>\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n'
 
         # Reject invitation
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
         request_page(selenium, reject_url, alert=True)
 
         helpers.await_queue()
@@ -550,7 +550,7 @@ class TestDoubleBlindConference():
         assert len(group.members) == 1
         assert 'mbok@mail.com' in group.members
 
-        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        recruitment_notes = pc_client.get_notes(invitation = 'AKBC.ws/2019/Conference/-/Recruit_Reviewers')
         acceptance_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'Yes']
         decline_notes = [note for note in recruitment_notes if 'response' in note.content and note.content['response'] == 'No']
         assert len(acceptance_notes) == 1
@@ -559,13 +559,15 @@ class TestDoubleBlindConference():
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'] == 'You have declined the invitation to become a Reviewer for AKBC 2019.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\n'
+        text = messages[0]['content']['text']
+        assert 'You have declined the invitation to become a Reviewer for AKBC 2019.' in text
+        assert 'If you would like to change your decision, please click the Accept link in the previous invitation email.' in text
 
         # Accept invitation using encoded user email
         messages = client.get_messages(to = 'mbok@mail.com', subject = '[AKBC 2019]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         print(accept_url)
 
         encoded_url = accept_url.split('%40')[0] + '%2540' + accept_url.split('%40')[1]
@@ -582,16 +584,14 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        recruit_invitation = re.search(r'https://.*/invitation\?id=(.*)\&user=.*response=Yes', text).group(1)
-        recruitment_notes = pc_client.get_notes(invitation = recruit_invitation)
+        recruitment_notes = pc_client.get_notes(invitation = 'AKBC.ws/2019/Conference/-/Recruit_Reviewers')
         acceptance_notes = [note for note in recruitment_notes if ('response' in note.content) and (note.content['response'] == 'Yes')]
         assert len(acceptance_notes) == 2
 
         messages = client.get_messages(to='mbok@mail.com', subject='[AKBC 2019] Reviewer Invitation accepted')
         assert messages
         assert len(messages) == 2
-        assert messages[0]['content']['text'] == 'Thank you for accepting the invitation to be a Reviewer for AKBC 2019.\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.\n\nIf you would like to change your decision, please click the Decline link in the previous invitation email.'
-
+        assert messages[0]['content']['text'] == '<p>Thank you for accepting the invitation to be a Reviewer for AKBC 2019.<br>\nThe AKBC 2019 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n'
         # Recruit more reviewers
         result = conference.recruit_reviewers(['mbok@mail.com', 'other@mail.com'])
         assert result
@@ -669,7 +669,8 @@ class TestDoubleBlindConference():
         assert 'You have been nominated by the program chair committee of AKBC 2019' in text
 
         # accept invitation with invalid user/key keeps group same
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('ac%40mail.com', 'test%40mail.com')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&').replace('ac%40mail.com', 'test%40mail.com')
+
         request_page(selenium, accept_url, alert=True)
 
         error_message = selenium.find_element_by_class_name('important_message')
@@ -1236,6 +1237,7 @@ class TestDoubleBlindConference():
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Reviewers', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
             content = {
@@ -1246,6 +1248,11 @@ class TestDoubleBlindConference():
         )
         meta_review_note = ac_client.post_note(note)
         assert meta_review_note
+
+        assert meta_review_note.nonreaders == ['AKBC.ws/2019/Conference/Paper1/Authors']
+
+        invitation = client.get_invitation('AKBC.ws/2019/Conference/Paper1/-/Meta_Review')
+        assert invitation.reply['nonreaders']['values'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
 
     def test_open_meta_reviews_additional_options(self, client, test_client, selenium, request_page, helpers):
 
@@ -1320,6 +1327,7 @@ class TestDoubleBlindConference():
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Reviewers', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
             content = {
@@ -1355,7 +1363,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
-        builder.set_decision_stage()
+        builder.set_decision_stage(release_to_area_chairs=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         conference = builder.get_result()
@@ -1401,7 +1409,7 @@ class TestDoubleBlindConference():
         assert decisions
         assert decisions[0].readers == ['everyone']
 
-        builder.set_decision_stage(release_to_authors=True)
+        builder.set_decision_stage(release_to_authors=True, release_to_area_chairs=True)
         conference = builder.get_result()
 
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')

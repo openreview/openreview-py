@@ -10,7 +10,7 @@ var CONFERENCE_ID = '';
 var SUBMISSION_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var OFFICIAL_REVIEW_NAME = '';
-var OFFICIAL_META_REVIEW_NAME = '';
+var DECISION_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var HEADER = {};
@@ -187,10 +187,10 @@ function renderStatusTable(notes) {
   var $container = $('#your-submissions');
   var rows = notes.map(function(note) {
     var invitationPrefix = CONFERENCE_ID + '/Paper' + note.number + '/-/';
-    var metaReview = _.find(note.details.directReplies, ['invitation', invitationPrefix + OFFICIAL_META_REVIEW_NAME]);
+    var decision = _.find(note.details.directReplies, ['invitation', invitationPrefix + DECISION_NAME]);
     var noteCompletedReviews = _.filter(note.details.directReplies, ['invitation', invitationPrefix + OFFICIAL_REVIEW_NAME]);
 
-    return buildTableRow(note, noteCompletedReviews, metaReview);
+    return buildTableRow(note, noteCompletedReviews, decision);
   });
 
   if (rows.length === 0) {
@@ -213,7 +213,7 @@ function renderStatusTable(notes) {
   });
 
   var tableHtml = Handlebars.templates['components/table']({
-    headings: ['#', 'Paper Summary', 'Reviews'].concat(OFFICIAL_META_REVIEW_NAME ? 'Meta Review' : []),
+    headings: ['#', 'Paper Summary', 'Reviews', 'Decision'],
     rows: rowsHtml,
     extraClasses: 'console-table'
   });
@@ -221,17 +221,12 @@ function renderStatusTable(notes) {
   $container.empty().append(tableHtml);
 
   $('#your-submissions .console-table th').eq(0).css('width', '4%');
-  if (OFFICIAL_META_REVIEW_NAME) {
-    $('#your-submissions .console-table th').eq(1).css('width', '36%');
-    $('#your-submissions .console-table th').eq(2).css('width', '30%');
-    $('#your-submissions .console-table th').eq(3).css('width', '30%');
-  } else {
-    $('#your-submissions .console-table th').eq(1).css('width', '46%');
-    $('#your-submissions .console-table th').eq(2).css('width', '50%');
-  }
+  $('#your-submissions .console-table th').eq(1).css('width', '36%');
+  $('#your-submissions .console-table th').eq(2).css('width', '30%');
+  $('#your-submissions .console-table th').eq(3).css('width', '30%');
 }
 
-function buildTableRow(note, completedReviews, metaReview) {
+function buildTableRow(note, completedReviews, decision) {
   // Paper number cell
   var cell0 = { number: note.number };
 
@@ -298,12 +293,12 @@ function buildTableRow(note, completedReviews, metaReview) {
 
   // Status cell
   var cell3 = {};
-  if (metaReview) {
-    cell3.recommendation = metaReview.content.recommendation;
-    cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id;
+  if (decision) {
+    cell3.recommendation = decision.content.decision;
+    cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + decision.id;
   }
 
-  return [cell0, cell1, cell2].concat(OFFICIAL_META_REVIEW_NAME ? cell3 : []);
+  return [cell0, cell1, cell2, cell3];
 }
 
 function renderReviewSummary(data) {

@@ -123,7 +123,10 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
 
+    name = note.content.get('submission_name', 'Submission').strip()
+
     builder.set_submission_stage(
+        name=name,
         double_blind=double_blind,
         public=public,
         start_date=submission_start_date,
@@ -283,7 +286,7 @@ def get_meta_review_stage(client, request_forum):
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
-        release_to_authors = (request_forum.content.get('release_reviews_to_authors', '').startswith('Yes')),
+        release_to_authors = (request_forum.content.get('release_meta_reviews_to_authors', '').startswith('Yes')),
         release_to_reviewers = release_to_reviewers,
         additional_fields = meta_review_form_additional_options,
         remove_fields = meta_review_form_remove_options
@@ -318,6 +321,7 @@ def get_decision_stage(client, request_forum):
             public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
+            release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
             email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
     else:
         return openreview.DecisionStage(
@@ -326,6 +330,7 @@ def get_decision_stage(client, request_forum):
             public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
+            release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
             email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
 
 def get_submission_revision_stage(client, request_forum):
