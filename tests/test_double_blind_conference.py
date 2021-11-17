@@ -1338,8 +1338,9 @@ class TestDoubleBlindConference():
             }
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid Field'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             meta_review_note = ac_client.post_note(note)
+        assert openReviewError.value.args[0].get('name') == 'InvalidFieldError'
 
         note.content = {
             'metareview': 'Excellent Paper!',

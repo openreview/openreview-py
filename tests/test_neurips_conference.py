@@ -2353,13 +2353,14 @@ Thank you,
             signatures = [reviewer2_anon_id])
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
                 forum = blinded_notes[0].id,
                 tag = '1 of 5',
                 readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
                 signatures = [reviewer2_anon_id])
             )
+        assert  openReviewError.value.args[0].get('name') == 'TooManyError'
 
     def test_review_rating_stage(self, conference, helpers, test_client, client):
 
