@@ -2033,6 +2033,16 @@ class MetaReviewStage(object):
 
         return readers
 
+    def get_nonreaders(self, conference, number):
+
+        if self.public:
+            return []
+
+        if self.release_to_authors:
+            return []
+
+        return [conference.get_authors_id(number = number)]
+
     def get_signatures_regex(self, conference, number):
 
         committee = [conference.get_program_chairs_id()]
