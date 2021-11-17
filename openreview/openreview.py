@@ -96,19 +96,9 @@ class Client(object):
     def __handle_response(self,response):
         try:
             response.raise_for_status()
-
-            if("application/json" in response.headers['content-type']):
-                if 'errors' in response.json():
-                    raise OpenReviewException(response.json()['errors'])
-                if 'error' in response.json():
-                    raise OpenReviewException(response.json()['error'])
-
             return response
         except requests.exceptions.HTTPError as e:
-            if 'errors' in response.json():
-                raise OpenReviewException(response.json()['errors'])
-            else:
-                raise OpenReviewException(response.json())
+            raise OpenReviewException(response.json())
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
