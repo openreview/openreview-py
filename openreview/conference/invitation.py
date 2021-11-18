@@ -1188,10 +1188,9 @@ class DecisionInvitation(openreview.Invitation):
             file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
             file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
             file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
-            #file_content = file_content.replace("ACCEPTED_AUTHORS_NAME = ''", "ACCEPTED_AUTHORS_NAME = 'Authors/Accepted'")
-            
+            file_content = file_content.replace("AUTHORS_NAME_ACCEPTED = ''", "AUTHORS_NAME_ACCEPTED = '"  + conference.authors_name + '/Accepted' + "'")
             if decision_stage.email_authors:
-                file_content = file_content.replace("var EMAIL_AUTHORS = false;", "var EMAIL_AUTHORS = true;")
+                file_content = file_content.replace("EMAIL_AUTHORS = false", "EMAIL_AUTHORS = true")
 
         super(DecisionInvitation, self).__init__(id = conference.get_invitation_id(decision_stage.name),
             cdate = tools.datetime_millis(start_date),
