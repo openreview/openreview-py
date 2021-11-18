@@ -1290,7 +1290,6 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                 pre_content = pre.read()
                 post_content = post.read()
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
-                pre_content = pre_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
                 post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
                 post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + conference.get_committee_name(committee_id, pretty=True) + "'")
                 post_content = post_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
@@ -1655,7 +1654,8 @@ class InvitationBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
                 pre_content = pre.read()
                 post_content = post.read()
-                pre_content = pre_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
+                pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")
+                pre_content = pre_content.replace("var CHECK_DECLINE = False;", "var CHECK_DECLINE = True;")
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
                 post_content = post_content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.get_id() + "'")
                 post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "'")
