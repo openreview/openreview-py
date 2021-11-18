@@ -963,7 +963,11 @@ class TestNeurIPSConference():
         assert ['~SeniorArea_NeurIPSChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs').members
         assert ['~SeniorArea_NeurIPSChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs').members
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 0
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+
+        ## Check if the SAC can edit the AC assignments
+        print('http://localhost:3030/edges/browse?traverse=NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment&edit=NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment&browse=NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score&hide=NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict&maxColumns=2')
+        #assert False
 
         ## Reviewer assignments
         # Paper 5
@@ -1019,6 +1023,74 @@ class TestNeurIPSConference():
 
         # print(url)
         # assert False
+
+    def test_ac_reassignment(self, conference, helpers, client):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        submissions=conference.get_submissions()
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+
+        ac_assignment = pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment', head=submissions[0].id)[0]
+
+        ## Remove AC assignment
+        ac_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client.post_edge(ac_assignment)
+
+        helpers.await_queue()
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 4
+
+        assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
+        assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
+
+        ## Add AC assignment
+        ac_assignment.ddate = None
+        pc_client.post_edge(ac_assignment)
+
+        helpers.await_queue()
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+
+        assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
+        assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
+
+        sac_assignment = pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment', head='~Area_IBMChair1')[0]
+        assert sac_assignment.tail == '~SeniorArea_GoogleChair1'
+
+        ## Add SAC assignment
+        sac_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        pc_client.post_edge(sac_assignment)
+
+        helpers.await_queue()
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 2
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+
+        assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
+        assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
+
+        assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs').members
+        assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs').members
+
+        ## Add SAC assignment
+        sac_assignment.ddate = None
+        pc_client.post_edge(sac_assignment)
+
+        helpers.await_queue()
+
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+
+        assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
+        assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
+
+        assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Area_Chairs').members
+        assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs').members
+
 
     def test_reassignment_stage(self, conference, helpers, client, selenium, request_page):
 
@@ -2182,6 +2254,7 @@ Thank you,
             forum=submissions[0].id,
             replyto=submissions[0].id,
             readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
+            nonreaders = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
             writers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs'],
             signatures=[signatory_groups[0].id],
             content={
@@ -2280,13 +2353,14 @@ Thank you,
             signatures = [reviewer2_anon_id])
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2021/Conference/Reviewers/-/Paper_Ranking',
                 forum = blinded_notes[0].id,
                 tag = '1 of 5',
                 readers = ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
                 signatures = [reviewer2_anon_id])
             )
+        assert  openReviewError.value.args[0].get('name') == 'TooManyError'
 
     def test_review_rating_stage(self, conference, helpers, test_client, client):
 

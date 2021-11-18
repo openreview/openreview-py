@@ -448,6 +448,7 @@ class TestWorkshop():
             forum = submission.id,
             replyto = submission.id,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            nonreaders = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
             writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             content = {
