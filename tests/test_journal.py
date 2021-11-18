@@ -924,7 +924,7 @@ class TestJournal():
                             signatures=['.TMLR/Editors_In_Chief'],
                             note=Note(
                                 content= {
-                                    'approval': { 'value': 'I approve the AE decision. TODO.' },
+                                    'approval': { 'value': 'I approve the AE\'s decision.' },
                                     'comment_to_the_AE': { 'value': 'I agree with the AE' }
                                 }
                             ))
@@ -1298,7 +1298,7 @@ class TestJournal():
                             signatures=['.TMLR/Editors_In_Chief'],
                             note=Note(
                             content= {
-                                'approval': { 'value': 'I approve the AE decision. TODO.' },
+                                'approval': { 'value': 'I approve the AE\'s decision.' },
                                 'comment_to_the_AE': { 'value': 'I agree with the AE' }
                             }))
 
@@ -1589,7 +1589,7 @@ class TestJournal():
                                 signatures=['.TMLR/Editors_In_Chief'],
                                 note=Note(
                                 content= {
-                                    'approval': { 'value': 'I approve the AE decision. TODO.' },
+                                    'approval': { 'value': 'I approve the AE\'s decision.' },
                                     'comment_to_the_AE': { 'value': 'I agree with the AE' }
                                 }))
 
@@ -1597,7 +1597,7 @@ class TestJournal():
                             signatures=['.TMLR/Editors_In_Chief'],
                             note=Note(
                             content= {
-                                'approval': { 'value': 'I approve the AE decision. TODO.' },
+                                'approval': { 'value': 'I approve the AE\'s decision.' },
                                 'comment_to_the_AE': { 'value': 'I agree with the AE' }
                             }))
 

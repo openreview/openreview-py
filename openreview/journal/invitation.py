@@ -2086,7 +2086,7 @@ class InvitationBuilder(object):
                             'approval': {
                                 'order': 1,
                                 'value': {
-                                    'value-checkbox': 'I approve the AE decision. TODO.'
+                                    'value-checkbox': 'I approve the AE\'s decision.'
                                 }
                             },
                             'comment_to_the_AE': {
