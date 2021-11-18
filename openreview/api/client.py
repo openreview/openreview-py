@@ -1681,7 +1681,7 @@ class Invitation(object):
         self.reply_forum_views = reply_forum_views
         self.web = None
         self.process = None
-        self.preprocess = None
+        self.preprocess = preprocess
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1696,8 +1696,6 @@ class Invitation(object):
             self.process = process_string
         if web_string:
             self.web = web_string
-        if preprocess is not None:
-            self.preprocess=preprocess
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1715,20 +1713,41 @@ class Invitation(object):
         :rtype: dict
         """
         body = {
-            'id': self.id,
-            'cdate': self.cdate,
-            'ddate': self.ddate,
-            'duedate': self.duedate,
-            'expdate': self.expdate,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'writers': self.writers,
-            'invitees': self.invitees,
-            'noninvitees': self.noninvitees,
-            'signatures': self.signatures,
-            'transform': self.transform,
-            'replyForumViews': self.reply_forum_views
+            'id': self.id
         }
+
+        if self.cdate:
+            body['cdate'] = self.cdate
+
+        if self.ddate:
+            body['ddate'] = self.ddate
+
+        if self.duedate:
+            body['duedate'] = self.duedate
+
+        if self.expdate:
+            body['expdate'] = self.expdate
+
+        if self.readers:
+            body['readers'] = self.readers
+
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+
+        if self.writers:
+            body['writers'] = self.writers
+
+        if self.invitees:
+            body['invitees'] = self.invitees
+
+        if self.noninvitees:
+            body['noninvitees'] = self.noninvitees
+
+        if self.signatures:
+            body['signatures'] = self.signatures
+
+        if self.reply_forum_views:
+            body['reply_forum_views'] = self.reply_forum_views
 
         if  self.minReplies:
             body['minReplies']=self.minReplies
@@ -1738,6 +1757,8 @@ class Invitation(object):
             body['web']=self.web
         if  self.process:
             body['process']=self.process
+        if  self.preprocess:
+            body['preprocess']=self.preprocess
         if self.edit is not None:
             if self.type == 'Note':
                 body['edit']=self.edit
@@ -1745,8 +1766,6 @@ class Invitation(object):
                 body['edge']=self.edit
         if self.bulk is not None:
             body['bulk']=self.bulk
-        if hasattr(self,'preprocess'):
-            body['preprocess']=self.preprocess
         return body
 
     @classmethod

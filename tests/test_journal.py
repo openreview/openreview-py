@@ -749,6 +749,20 @@ class TestJournal():
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        raia_client.post_invitation_edit(
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                signatures=[venue_id]
+            )
+        )
+
+
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[carlos_anon_groups[0].id],
@@ -1201,6 +1215,19 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
+        invitation = raia_client.get_invitation(f'{venue_id}/Paper4/-/Official_Recommendation')
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        raia_client.post_invitation_edit(
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper4/-/Official_Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                signatures=[venue_id]
+            )
+        )
+
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Official_Recommendation',
             signatures=[carlos_anon_groups[0].id],
@@ -1476,6 +1503,20 @@ class TestJournal():
         )
 
         helpers.await_queue(openreview_client)
+
+
+        invitation = cho_client.get_invitation(f'{venue_id}/Paper5/-/Official_Recommendation')
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        cho_client.post_invitation_edit(
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Official_Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                signatures=[venue_id]
+            )
+        )
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Official_Recommendation',

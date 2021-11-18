@@ -1431,86 +1431,75 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
-    def set_official_recommendation_invitation(self, journal, note, duedate):
+    def set_official_recommendation_invitation(self, journal, note, cdate, duedate):
         venue_id = journal.venue_id
         paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_authors_id = journal.get_authors_id(number=note.number)
 
-        official_recommendation_invitation_id=journal.get_reviewer_recommendation_id(number=note.number)
-        official_recommendation_invitation=openreview.tools.get_invitation(self.client, official_recommendation_invitation_id)
-
-        if not official_recommendation_invitation:
-            invitation = Invitation(id=official_recommendation_invitation_id,
-                    duedate=duedate,
-                    invitees=[venue_id, paper_reviewers_id], ## should this be reviewers/submitted??
-                    noninvitees=[journal.get_editors_in_chief_id()],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'signatures': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' },
+        invitation = Invitation(id=journal.get_reviewer_recommendation_id(number=note.number),
+                cdate=openreview.tools.datetime_millis(cdate),
+                duedate=openreview.tools.datetime_millis(duedate),
+                invitees=[venue_id, paper_reviewers_id], ## should this be reviewers/submitted??
+                noninvitees=[journal.get_editors_in_chief_id()],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[venue_id],
+                maxReplies=1,
+                edit={
+                    'signatures': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                    'nonreaders': { 'values': [ paper_authors_id ] },
+                    'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                    'note': {
+                        'id': {
+                            'value-invitation': journal.get_reviewer_recommendation_id(number=note.number),
+                            'optional': True
+                        },
+                        'forum': { 'value': note.id },
+                        'replyto': { 'value': note.id },
+                        'ddate': {
+                            'int-range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'nullable': True
+                        },
+                        'signatures': { 'values': ['${signatures}'] },
                         'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'nonreaders': { 'values': [ paper_authors_id ] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                        'note': {
-                            'id': {
-                                'value-invitation': official_recommendation_invitation_id,
-                                'optional': True
+                        'content': {
+                            'decision_recommendation': {
+                                'order': 1,
+                                'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
+                                'value': {
+                                    'value-radio': [
+                                        'Accept',
+                                        'Leaning Accept',
+                                        'Leaning Reject',
+                                        'Reject'
+                                    ]
+                                }
                             },
-                            'forum': { 'value': note.id },
-                            'replyto': { 'value': note.id },
-                            'ddate': {
-                                'int-range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
-                            },
-                            'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                            'nonreaders': { 'values': [ paper_authors_id ] },
-                            'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                            'content': {
-                                'decision_recommendation': {
-                                    'order': 1,
-                                    'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
-                                    'value': {
-                                        'value-radio': [
-                                            'Accept',
-                                            'Leaning Accept',
-                                            'Leaning Reject',
-                                            'Reject'
-                                        ]
-                                    }
-                                },
-                                'certification_recommendations': {
-                                    'order': 2,
-                                    'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
-                                    'value': {
-                                        'values-dropdown': [
-                                            'Featured Certification',
-                                            'Reproducibility Certification',
-                                            'Survey Certification'
-                                        ],
-                                        'optional': True
-                                    }
+                            'certification_recommendations': {
+                                'order': 2,
+                                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                                'value': {
+                                    'values-dropdown': [
+                                        'Featured Certification',
+                                        'Reproducibility Certification',
+                                        'Survey Certification'
+                                    ],
+                                    'optional': True
                                 }
                             }
                         }
                     }
-            )
+                },
+                process=os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')
+        )
 
-            with open(os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')) as f:
-                content = f.read()
-                content = content.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", short_name="{journal.short_name}")')
-                invitation.process = content
-
-                self.client.post_invitation_edit(readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    invitation=invitation
-                )
+        self.save_invitation(journal, invitation)
 
     def set_solicit_review_invitation(self, journal, note):
         venue_id = journal.venue_id

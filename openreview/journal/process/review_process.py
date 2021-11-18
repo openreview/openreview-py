@@ -71,8 +71,9 @@ def process(client, edit, invitation):
 
         ## Enable official recommendation
         print('Enable official recommendations')
-        duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = journal.default_offset_days))
-        journal.invitation_builder.set_official_recommendation_invitation(journal, submission, duedate)
+        cdate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
+        duedate = cdate + datetime.timedelta(weeks = 2)
+        journal.invitation_builder.set_official_recommendation_invitation(journal, submission, cdate, duedate)
 
         ## Send email notifications to authors
         print('Send emails to authors')
