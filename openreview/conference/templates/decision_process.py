@@ -13,10 +13,6 @@ def process_update(client, note, invitation, existing_note):
     
     # Check if the content of the existing note is the same as the updated note
     if (existing_note):
-      groups = [AUTHORS_ID]
-      subject = SHORT_PHRASE + ' Decision posted to your submission - Paper number: ' + str(forum_note.number) + ', Paper title: "' + forum_note.content['title'] + '"'
-      message = 'IF EXISTING NOTE To view the decision, click here: ' + str(existing_note) + '/forum?id=' + note.forum + '&noteId=' + note.id
-      client.post_message(subject, groups, message)
       equal = True
       for key in existing_note.content:
         if note.content[key] and (existing_note.content[key] != note.content[key]):
@@ -31,9 +27,9 @@ def process_update(client, note, invitation, existing_note):
     else:
       groups = [AUTHORS_ID]
       subject = SHORT_PHRASE + ' Decision posted to your submission - Paper number: ' + str(forum_note.number) + ', Paper title: "' + forum_note.content['title'] + '"'
-      message = 'ELSE To view the decision, click here: ' + str(existing_note) + '/forum?id=' + note.forum + '&noteId=' + note.id
+      message = 'Note readers: ' + note.readers 
       client.post_message(subject, groups, message)
-      print('no existing note')
+
       if (EMAIL_AUTHORS and ('everyone' in note.readers or AUTHORS_ID in note.readers)):
         groups = [AUTHORS_ID]
         subject = SHORT_PHRASE + ' Decision posted to your submission - Paper number: ' + str(forum_note.number) + ', Paper title: "' + forum_note.content['title'] + '"'

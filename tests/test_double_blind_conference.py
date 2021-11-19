@@ -1389,7 +1389,7 @@ class TestDoubleBlindConference():
         # Check that message was sent 
         messages = client.get_messages(subject = 'AKBC 2019 Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
         print(messages)
-        assert len(messages) == 1
+        assert len(messages) == 3
 
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
         assert accepted_author_group
@@ -1425,7 +1425,7 @@ class TestDoubleBlindConference():
 
         # Check that email was sent 
         messages = client.get_messages(subject = '^AKBC 2019 Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
-        assert len(messages) == 2
+        assert len(messages) == 6
         print(messages)
 
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
@@ -1446,7 +1446,7 @@ class TestDoubleBlindConference():
 
         # Check that email was sent 
         messages = client.get_messages(subject = '^AKBC 2019 Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
-        assert len(messages) == 2
+        assert len(messages) == 9
     
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
         assert accepted_author_group
@@ -1464,7 +1464,7 @@ class TestDoubleBlindConference():
         helpers.await_queue()
 
         messages = client.get_messages(subject = 'AKBC 2019 Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
-        assert len(messages) == 2
+        assert len(messages) == 9
 
     def test_consoles(self, client, test_client, selenium, request_page):
 
