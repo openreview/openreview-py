@@ -1084,6 +1084,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         conference.set_assignment('~Reviewer_ECCV_One1', 2)
         conference.set_assignment('~Reviewer_ECCV_Two1', 1)
         conference.set_assignment('~Reviewer_ECCV_Two1', 2)
+        conference.set_assignment('~ReviewerFirstName_Eccv1', 1)
 
         now = datetime.datetime.utcnow()
 
@@ -1237,6 +1238,32 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert not client.get_messages(subject = '[ECCV 2020] A review has been received on Paper number: 1, Paper title: "Paper title 1"')
         ## Authors
         assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
+
+    def test_decline_after_assignment(self, conference, client, test_client, selenium, request_page, helpers):
+
+        messages = client.get_messages(to='test_reviewer_eccv@mail.com', subject='[ECCV 2020] Reviewer Invitation accepted')
+        assert messages
+        assert len(messages)
+        text = messages[0]['content']['text']
+        assert 'Thank you for accepting the invitation to be a Reviewer for ECCV 2020.' in text
+
+        reviewer_group = client.get_group(id='thecvf.com/ECCV/2020/Conference/Reviewers')
+        assert '~ReviewerFirstName_Eccv1' in reviewer_group.members
+
+        paper_reviewer_group = client.get_group(id='thecvf.com/ECCV/2020/Conference/Paper1/Reviewers')
+        assert '~ReviewerFirstName_Eccv1' in paper_reviewer_group.members
+
+        messages = client.get_messages(to = 'mohit+1@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
+        text = messages[0]['content']['text']
+        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        #Assert reviewer is still in reviewer group
+        request_page(selenium, reject_url, alert=True)
+        reviewer_group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers')
+        assert '~ReviewerFirstName_Eccv1' in reviewer_group.members
+
+        paper_reviewer_group = client.get_group('thecvf.com/ECCV/2020/Conference/Paper1/Reviewers')
+        assert '~ReviewerFirstName_Eccv1' in paper_reviewer_group.members
 
     def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
@@ -1431,13 +1458,14 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             signatures = [signatory])
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
                 forum = blinded_notes[-1].id,
                 tag = '1 of 2',
                 readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', signatory],
                 signatures = [signatory])
             )
+        assert  openReviewError.value.args[0].get('name') == 'TooManyError'
 
     def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
