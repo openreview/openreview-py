@@ -250,7 +250,7 @@ def create_authorid_profiles(client, note, print=print):
 
     return created_profiles
 
-def get_preferred_name(profile):
+def get_preferred_name(profile, last_name_only=True):
     """
     Accepts openreview.Profile object
 
@@ -267,6 +267,9 @@ def get_preferred_name(profile):
         primary_preferred_name = preferred_names[0]
     else:
         primary_preferred_name = names[0]
+
+    if last_name_only:
+        return primary_preferred_name['last']
 
     name_parts = []
     if primary_preferred_name.get('first'):

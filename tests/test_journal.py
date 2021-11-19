@@ -17,7 +17,7 @@ class TestJournal():
     def journal(self):
         venue_id = '.TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
-        journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', short_name='TMLR')
+        journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
         return journal
 
     def test_setup(self, openreview_client, helpers):
@@ -48,7 +48,7 @@ class TestJournal():
         andrew_client = helpers.create_user('andrewmc@mail.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mail.com', 'Hugo', 'Larochelle')
 
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', short_name='TMLR')
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
@@ -312,6 +312,7 @@ class TestJournal():
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mail.com']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Under_Review'
+        assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
 
         messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
@@ -1154,8 +1155,8 @@ class TestJournal():
                 forum=note_id_4,
                 replyto=solitic_review_note['note']['id'],
                 content={
-                    'decision': { 'value': 'No, I decline the solitic review.' },
-                    'comment': { 'value': 'I am sorry you can not review this paper' }
+                    'decision': { 'value': 'Yes, I approve the solicit review.' },
+                    'comment': { 'value': 'thanks!' }
                 }
             )
         )
@@ -1164,7 +1165,7 @@ class TestJournal():
 
         assert '~Peter_Snow1' in solitic_review_approval_note['note']['readers']
 
-        #assert '~Peter_Snow1' in joelle_client.get_group(f'{venue_id}/Paper4/Reviewers').members
+        assert '~Peter_Snow1' in joelle_client.get_group(f'{venue_id}/Paper4/Reviewers').members
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')

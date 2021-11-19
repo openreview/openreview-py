@@ -10,22 +10,27 @@ import datetime
 import random
 import secrets
 from tqdm import tqdm
+from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, contact_info, short_name, default_offset_days=14):
+    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name):
 
         self.client = client
         self.venue_id = venue_id
         self.secret_key = secret_key
         self.contact_info = contact_info
         self.short_name = short_name
-        self.default_offset_days = default_offset_days
+        self.full_name = full_name
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
         self.reviewers_name = 'Reviewers'
         self.authors_name = 'Authors'
         self.submission_group_name = 'Paper'
+        self.under_review_venue_id = f'{venue_id}/Under_Review'
+        self.rejected_venue_id = f'{venue_id}/Rejection'
+        self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
+        self.accepted_venue_id = venue_id
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.header = {
             "title": "Transactions of Machine Learning Research",
@@ -580,3 +585,40 @@ class Journal(object):
             tail=profile.id,
             weight=1
         ))
+
+    def get_bibtex(self, note, new_venue_id):
+
+        u = UnicodeToLatexEncoder(
+            conversion_rules=[
+                UnicodeToLatexConversionRule(
+                    rule_type=RULE_REGEX,
+                    rule=[
+                        (re.compile(r'[A-Z]{2,}'), r'{\g<0>}')
+                    ]),
+                'defaults'
+            ]
+        )
+
+        first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
+        bibtex_title = u.unicode_to_latex(note.content['title']['value'])
+
+        if new_venue_id == self.under_review_venue_id:
+
+            first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
+            first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
+            authors = ' and '.join(note.content['authors']['value'])
+            year = datetime.datetime.fromtimestamp(note.cdate/1000).year
+
+            bibtex = [
+                '@article{',
+                utf8tolatex(first_author_last_name + first_word + ','),
+                'title={' + bibtex_title + '},',
+                'author={' + utf8tolatex(authors) + '},',
+                'journal={Submitted to ' + self.full_name + '},',
+                'year={' + str(year) + '},',
+                'url={https://openreview.net/forum?id=' + note.forum + '},',
+                'note={Under review}',
+                '}'
+            ]
+            return '\n'.join(bibtex)
+
