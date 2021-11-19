@@ -772,7 +772,8 @@ class InvitationBuilder(object):
 
         invitation = Invitation(id=review_approval_invitation_id,
             duedate=duedate,
-            invitees=[paper_action_editors_id],
+            invitees=[venue_id, paper_action_editors_id],
+            noninvitees=[journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -810,6 +811,57 @@ class InvitationBuilder(object):
                 }
             },
             process=os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py'))
+
+        self.save_invitation(journal, invitation)
+
+    def set_withdraw_invitation(self, journal, note):
+        venue_id = journal.venue_id
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
+
+        invitation = Invitation(id=journal.get_withdraw_id(number=note.number),
+            invitees=[venue_id, paper_authors_id],
+            noninvitees=[journal.get_editors_in_chief_id()],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            maxReplies=1,
+            edit={
+                'signatures': { 'values-regex': paper_authors_id },
+                'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] },
+                'writers': { 'values': [ venue_id, paper_authors_id] },
+                'note': {
+                    'forum': { 'value': note.id },
+                    'replyto': { 'value': note.id },
+                    'signatures': { 'values': [paper_authors_id] },
+                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] },
+                    'writers': { 'values': [ venue_id ] },
+                    'content': {
+                        'withdrawal_confirmation': {
+                            'value': {
+                                'value-radio': [
+                                    'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                                ]
+                            },
+                            'description': 'Please confirm to withdraw.',
+                            'order': 1
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$',
+                                'optional': True
+                            },
+                            'presentation': {
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/withdraw_submission_process.py'))
 
         self.save_invitation(journal, invitation)
 
@@ -933,70 +985,48 @@ class InvitationBuilder(object):
                     invitation=invitation
                 )
 
-    def set_withdraw_invitation(self, journal, note, duedate):
+    def set_withdrawn_invitation(self, journal):
         venue_id = journal.venue_id
-        paper_group_id = f'{venue_id}/Paper{note.number}'
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
 
-        withdraw_invitation_id = f'{paper_group_id}/-/Withdraw'
-        withdraw_invitation = openreview.tools.get_invitation(self.client, withdraw_invitation_id)
+        withdraw_invitation_id = journal.get_withdrawn_id()
 
-        if not withdraw_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=Invitation(id=withdraw_invitation_id,
-                    invitees=[paper_authors_id],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    maxReplies=1,
-                    edit={
-                        'signatures': { 'values-regex': f'{paper_authors_id}|{venue_id}$' },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
-                        'writers': { 'values': [ venue_id, paper_authors_id]},
-                        'note': {
-                            'id': { 'value': note.id },
-                            'content': {
-                                'withdrawal_confirmation': {
-                                    'value': {
-                                        'value-radio': [
-                                            'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-                                        ]
-                                    },
-                                    'description': 'Please confirm to withdraw.',
-                                    'order': 1
-                                },
-                                'venue': {
-                                    'value': {
-                                        'value': 'Withdrawn by Authors'
-                                    },
-                                    'presentation': {
-                                        'hidden': True,
-                                    }
-                                },
-                                'venueid': {
-                                    'value': {
-                                        'value': '.TMLR/Withdrawn_Submission'
-                                    },
-                                    'presentation': {
-                                        'hidden': True,
-                                    }
-                                }
+        invitation = Invitation(id=withdraw_invitation_id,
+            invitees=[venue_id],
+            noninvitees=[journal.get_editors_in_chief_id()],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [ 'everyone' ] },
+                'writers': { 'values': [ venue_id ]},
+                'note': {
+                    'id': { 'value-invitation': journal.get_author_submission_id() },
+                    'content': {
+                        'venue': {
+                            'value': {
+                                'value': 'Withdrawn by Authors'
+                            }
+                        },
+                        'venueid': {
+                            'value': {
+                                'value': '.TMLR/Withdrawn_Submission'
                             }
                         }
                     }
-                )
-            )
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
 
-    def set_reject_invitation(self, journal):
+        )
+        self.save_invitation(journal, invitation)
+
+    def set_rejection_invitation(self, journal):
 
         venue_id = journal.venue_id
 
         ## Reject invitation
-        reject_invitation_id = journal.get_reject_id()
+        reject_invitation_id = journal.get_rejection_id()
         reject_invitation = openreview.tools.get_invitation(self.client, reject_invitation_id)
 
         if not reject_invitation:
@@ -1050,6 +1080,7 @@ class InvitationBuilder(object):
         if not acceptance_invitation:
             invitation = Invitation(id=acceptance_invitation_id,
                 invitees=[venue_id],
+                noninvitees=[journal.get_editors_in_chief_id()],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
@@ -1137,7 +1168,7 @@ class InvitationBuilder(object):
                     'readers': { 'values': [ 'everyone' ] },
                     'writers': { 'values': [ venue_id ]},
                     'note': {
-                        'id': { 'value-invitation': journal.get_reject_id() },
+                        'id': { 'value-invitation': journal.get_rejection_id() },
                         'content': {
                             'authors': {
                                 'readers': {
@@ -1512,7 +1543,7 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')) as g:
             pre_content = g.read()
             invitation = Invitation(id=solicit_review_invitation_id,
-                invitees=['~'],
+                invitees=[venue_id, '~'],
                 noninvitees=[journal.get_editors_in_chief_id(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
                 readers=['everyone'],
                 writers=[venue_id],
@@ -1639,7 +1670,7 @@ class InvitationBuilder(object):
         revision_invitation=openreview.tools.get_invitation(self.client, revision_invitation_id)
         if not revision_invitation:
             invitation = Invitation(id=revision_invitation_id,
-                invitees=[paper_authors_id],
+                invitees=[venue_id, paper_authors_id],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
@@ -2132,7 +2163,8 @@ class InvitationBuilder(object):
                 if not rating_invitation:
                     invitation = Invitation(id=rating_invitation_id,
                         duedate=duedate,
-                        invitees=[paper_action_editors_id],
+                        invitees=[venue_id, paper_action_editors_id],
+                        noninvitees=[journal.get_editors_in_chief_id()],
                         readers=[venue_id, paper_action_editors_id],
                         writers=[venue_id],
                         signatures=[venue_id],

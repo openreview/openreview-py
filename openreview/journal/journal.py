@@ -67,11 +67,17 @@ class Journal(object):
     def get_review_approval_id(self, number=None):
         return self.__get_invitation_id(name='Review_Approval', number=number)
 
+    def get_withdraw_id(self, number=None):
+        return self.__get_invitation_id(name='Withdraw', number=number)
+
     def get_under_review_id(self):
         return self.__get_invitation_id(name='Under_Review')
 
     def get_desk_rejection_id(self):
         return self.__get_invitation_id(name='Desk_Rejection')
+
+    def get_withdrawn_id(self):
+        return self.__get_invitation_id(name='Withdrawn')
 
     def get_author_submission_id(self):
         return self.__get_invitation_id(name='Author_Submission')
@@ -121,7 +127,7 @@ class Journal(object):
     def get_acceptance_id(self):
         return self.__get_invitation_id(name='Acceptance')
 
-    def get_reject_id(self):
+    def get_rejection_id(self):
         return self.__get_invitation_id(name='Rejection')
 
     def get_reviewer_recommendation_id(self, number=None):
@@ -171,7 +177,8 @@ class Journal(object):
         self.invitation_builder.set_submission_invitation(self)
         self.invitation_builder.set_under_review_invitation(self)
         self.invitation_builder.set_desk_rejection_invitation(self)
-        self.invitation_builder.set_reject_invitation(self)
+        self.invitation_builder.set_rejection_invitation(self)
+        self.invitation_builder.set_withdrawn_invitation(self)
         self.invitation_builder.set_acceptance_invitation(self)
         self.invitation_builder.set_authors_release_invitation(self)
         self.invitation_builder.set_ae_assignment(self)
@@ -547,7 +554,7 @@ class Journal(object):
         self.setup_submission_groups(note)
         self.invitation_builder.set_revision_submission(self, note)
         self.invitation_builder.set_review_approval_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
-        self.invitation_builder.set_withdraw_invitation(self, note, None)
+        self.invitation_builder.set_withdraw_invitation(self, note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
         #self.invitation_builder.set_ae_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
