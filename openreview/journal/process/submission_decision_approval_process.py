@@ -38,7 +38,12 @@ def process(client, edit, invitation):
         client.post_note_edit(invitation=journal.get_rejection_id(),
             signatures=[venue_id],
             note=openreview.api.Note(
-                id=submission.id
+                id=submission.id,
+                content={
+                    '_bibtex': {
+                        'value': journal.get_bibtex(submission, journal.rejected_venue_id, anonymous=True)
+                    }
+                }
             )
         )
         return

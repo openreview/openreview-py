@@ -586,7 +586,7 @@ class Journal(object):
             weight=1
         ))
 
-    def get_bibtex(self, note, new_venue_id):
+    def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
 
         u = UnicodeToLatexEncoder(
             conversion_rules=[
@@ -621,4 +621,49 @@ class Journal(object):
                 '}'
             ]
             return '\n'.join(bibtex)
+
+        if new_venue_id == self.rejected_venue_id:
+
+            if anonymous:
+                first_author_last_name = 'anonymous'
+                authors = 'Anonymous'
+            else:
+                first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
+                first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
+                authors = ' and '.join(note.content['authors']['value'])
+            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
+
+            bibtex = [
+                '@article{',
+                utf8tolatex(first_author_last_name + first_word + ','),
+                'title={' + bibtex_title + '},',
+                'author={' + utf8tolatex(authors) + '},',
+                'journal={Submitted to ' + self.full_name + '},',
+                'year={' + str(year) + '},',
+                'url={https://openreview.net/forum?id=' + note.forum + '},',
+                'note={Rejected}',
+                '}'
+            ]
+            return '\n'.join(bibtex)
+
+        if new_venue_id == self.accepted_venue_id:
+
+            first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
+            first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
+            authors = ' and '.join(note.content['authors']['value'])
+            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
+
+            bibtex = [
+                '@article{',
+                utf8tolatex(first_author_last_name + first_word + ','),
+                'title={' + bibtex_title + '},',
+                'author={' + utf8tolatex(authors) + '},',
+                'journal={' + self.full_name + '},',
+                'year={' + str(year) + '},',
+                'url={https://openreview.net/forum?id=' + note.forum + '},',
+                'note={' + ', '.join(certifications) + '}',
+                '}'
+            ]
+            return '\n'.join(bibtex)
+
 

@@ -1037,6 +1037,11 @@ class InvitationBuilder(object):
                 'note': {
                     'id': { 'value-invitation': journal.get_author_submission_id() },
                     'content': {
+                        '_bibtex': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$'
+                            }
+                        },
                         'venue': {
                             'value': {
                                 'value': 'Rejected by TMLR'
@@ -1079,6 +1084,11 @@ class InvitationBuilder(object):
                     'id': { 'value-invitation': journal.get_under_review_id() },
                     'writers': { 'values': [ venue_id ]},
                     'content': {
+                        '_bibtex': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$'
+                            }
+                        },
                         'venue': {
                             'value': {
                                 'value': 'TMLR'
@@ -1143,6 +1153,11 @@ class InvitationBuilder(object):
                     'note': {
                         'id': { 'value-invitation': journal.get_rejection_id() },
                         'content': {
+                            '_bibtex': {
+                                'value': {
+                                    'value-regex': '^[\\S\\s]{1,200000}$'
+                                }
+                            },
                             'authors': {
                                 'readers': {
                                     'values': ['everyone']
