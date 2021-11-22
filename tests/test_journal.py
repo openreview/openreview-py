@@ -140,8 +140,8 @@ class TestJournal():
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''<p>Hi SomeFirstName User,</p>
-<p>Thank you for submitting to TMLR your work titled &quot;Paper title&quot;.</p>
-<p>Before the review process starts, we need you to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.</p>
+<p>Thank you for submitting your work titled &quot;Paper title&quot; to TMLR.</p>
+<p>Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.</p>
 <p>To do so, please follow this link: <a href=\"https://openreview.net/invitation?id=.TMLR/Paper1/Action_Editors/-/Recommendation\">https://openreview.net/invitation?id=.TMLR/Paper1/Action_Editors/-/Recommendation</a> or check your tasks in the Author Console: <a href=\"https://openreview.net/group?id=.TMLR/Authors\">https://openreview.net/group?id=.TMLR/Authors</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -286,12 +286,12 @@ class TestJournal():
         messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Assignment to new TMLR submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>With this email, we request that you handle the review process for new TMLR submission titled &quot;Paper title UPDATED&quot;.</p>
-<p>As a reminder, TMLR AEs are <strong>expected to accept all AE requests</strong> of submissions that fall within your expertise and quota. Acceptable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at <a href=\"mailto:tmlr@jmlr.org\">tmlr@jmlr.org</a> .</p>
-<p>Your first task is to make sure the submitted preprint is appropriate for TMLR and respects our submission guidelines. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication). If you suspect but are unsure about whether a submission might need to be desk rejected for any other reasons (e.g. lack of fit with the scope of TMLR or lack of technical depth), simply reach out to us.</p>
+<p>With this email, we request that you manage the review process for a new TMLR submission titled &quot;Paper title UPDATED&quot;.</p>
+<p>As a reminder, TMLR Action Editors (AEs) are <strong>expected to accept all AE requests</strong> to manage submissions that fall within your expertise and quota. Reasonable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at <a href=\"mailto:tmlr@jmlr.org\">tmlr@jmlr.org</a> .</p>
+<p>Your first task is to make sure the submitted preprint is appropriate for TMLR and respects our submission guidelines. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication). If you suspect but are unsure about whether a submission might need to be desk rejected for any other reasons (e.g. lack of fit with the scope of TMLR or lack of technical depth), please email us.</p>
 <p>Please follow this link to perform this task: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+<p>If you think the submission can continue through TMLR’s review process, click the button &quot;Under Review&quot;. Otherwise, click on &quot;Desk Reject&quot;. Once the submission has been confirmed, then the review process will begin immediately, and your next step will be to assign 3 reviewers to the paper.</p>
+<p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
         ## Accept the submission 1
@@ -318,9 +318,8 @@ class TestJournal():
         messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>With this email, we request that you assign, <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}), 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;.</p>
-<p>To do so, please follow this link: <a href=\"https://openreview.net/group?id=.TMLR/Action_Editors\">https://openreview.net/group?id=.TMLR/Action_Editors</a></p>
-<p>As a reminder, within their annual quota of six reviews per year, reviewers are <strong>expected to performed all requests for review</strong> of submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.</p>
+<p>With this email, we request that you assign 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;. The assignments must be completed <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/group?id=.TMLR/Action_Editors\">https://openreview.net/group?id=.TMLR/Action_Editors</a></p>
+<p>As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.</p>
 <p>We thank you for your essential contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
@@ -348,7 +347,7 @@ class TestJournal():
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title &quot;Paper title 2&quot; was rejected without further review.</p>
+<p>We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title &quot;Paper title 2&quot; has been rejected without further review.</p>
 <p>Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).</p>
 <p>To know more about the decision, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_2}\">https://openreview.net/forum?id={note_id_2}</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
@@ -431,11 +430,9 @@ class TestJournal():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
-<p>As a reminder, reviewers are expected to accept all requests for review of submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc to this email).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>
-<p>When submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc on this email).</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">http://jmlr.org/tmlr</a> .</p>
+<p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
         ## Carlos Mondragon
@@ -458,11 +455,9 @@ class TestJournal():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
-<p>As a reminder, reviewers are expected to accept all requests for review of submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc to this email).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>
-<p>When submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc on this email).</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">http://jmlr.org/tmlr</a> .</p>
+<p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
         ## Javier Burroni
@@ -485,11 +480,9 @@ class TestJournal():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Javier Burroni,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
-<p>As a reminder, reviewers are expected to accept all requests for review of submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc to this email).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>
-<p>When submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc on this email).</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">http://jmlr.org/tmlr</a> .</p>
+<p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
         reviewerrs_group = raia_client.get_group(f'{venue_id}/Paper1/Reviewers')
