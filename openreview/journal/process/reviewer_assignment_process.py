@@ -20,11 +20,11 @@ def process_update(client, edge, invitation, existing_edge):
 
 With this email, we request that you submit, within 2 weeks ({duedate.strftime("%b %d")}) a review for your newly assigned TMLR submission "{note.content['title']['value']}". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
-As a reminder, reviewers are expected to accept all requests for review of submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc to this email).
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc on this email).
 
 To submit your review, please follow this link: https://openreview.net/forum?id={note.id} or check your tasks in the Reviewers Console: https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks
 
-When submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit jmlr.org/tmlr .
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit http://jmlr.org/tmlr .
 
 We thank you for your essential contribution to TMLR!
 

@@ -13,9 +13,9 @@ def process(client, edit, invitation):
         subject=f'[{journal.short_name}] Suggest candidate Action Editor for your new TMLR submission',
         message=f'''Hi {{{{fullname}}}},
 
-Thank you for submitting to TMLR your work titled "{note.content['title']['value']}".
+Thank you for submitting your work titled "{note.content['title']['value']}" to TMLR.
 
-Before the review process starts, we need you to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
 
 To do so, please follow this link: https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=note.number)} or check your tasks in the Author Console: https://openreview.net/group?id=.TMLR/Authors
 
