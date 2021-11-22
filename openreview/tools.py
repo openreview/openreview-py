@@ -250,7 +250,7 @@ def create_authorid_profiles(client, note, print=print):
 
     return created_profiles
 
-def get_preferred_name(profile, last_name_only=True):
+def get_preferred_name(profile, last_name_only=False):
     """
     Accepts openreview.Profile object
 
