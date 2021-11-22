@@ -10,7 +10,7 @@ def process(client, edit, invitation):
         subject=f'''[{journal.short_name}] Decision for your TMLR submission {note.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title "{note.content['title']['value']}" was rejected without further review.
+We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title "{note.content['title']['value']}" has been rejected without further review.
 
 Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).
 
