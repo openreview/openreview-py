@@ -483,7 +483,7 @@ function updateNotes(notes) {
     if (ENABLE_SUPER_ALGO) {
       SCORE_IDS.forEach(function(scoreId) {
         // Only add SUPER to the specified scores
-        if (_.includes(SCORE_IDS_WITH_SUPER, scoreId)) return;
+        if (!_.includes(SCORE_IDS_WITH_SUPER, scoreId)) return;
         var label = 'SUPER ' + view.prettyInvitationId(scoreId);
         var superScoreId = 'SUPER_' + scoreId;
         var selectedClass = selectedScore == superScoreId && 'selected';
