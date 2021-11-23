@@ -65,7 +65,7 @@ def get_profile(client, value, with_publications=False):
             profile.content['publications'] = list(iterget_notes(client, content={'authorids': profile.id}))
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
-        if e.args[0][0] != 'Profile not found':
+        if 'Profile Not Found' not in e.args[0]:
             raise e
     return profile
 
@@ -86,7 +86,7 @@ def get_group(client, id):
         group = client.get_group(id = id)
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
-        error = e.args[0][0]
+        error =  e.args[0].get('message')
         if isinstance(error, str) and error.startswith('Group Not Found'):
             return None
         else:
@@ -521,7 +521,7 @@ def replace_members_with_ids(client, group):
                 profile = client.get_profile(member.lower())
                 return ('ids', profile.id)
             except openreview.OpenReviewException as e:
-                if 'Profile not found' in e.args[0][0]:
+                if 'Profile Not Found' in e.args[0]:
                     return ('emails', member.lower())
                 else:
                     raise e
@@ -984,7 +984,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
     try:
         parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
     except openreview.OpenReviewException as e:
-        if 'Group Not Found' in e.args[0][0]:
+        if 'Group Not Found' in e.args[0].get('message'):
             # Set the default values for the parent and individual groups
             group_params_default = {
                 'readers': [conference, '{}/Program_Chairs'.format(conference)],

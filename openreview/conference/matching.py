@@ -1285,8 +1285,10 @@ class Matching(object):
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
 
-        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-            label=assignment_title, groupby='head', select='tail')}
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select=None)}
+        assignment_edges = []
+        assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
 
         ac_groups = {g.id:g for g in openreview.tools.iterget_groups(self.client, regex=self.conference.get_area_chairs_id('.*'))}
 
@@ -1304,7 +1306,7 @@ class Matching(object):
                     raise openreview.OpenReviewException('AC assignments must be deployed first')
 
                 for ac in ac_group.members:
-                    sac_assignments = assignment_edges.get(ac, [])
+                    sac_assignments = proposed_assignment_edges.get(ac, [])
 
                     for sac_assignment in sac_assignments:
                         sac=sac_assignment['tail']
@@ -1315,8 +1317,21 @@ class Matching(object):
                         sac_group.members.append(sac)
                         self.client.post_group(sac_group)
 
-        ac_group=self.client.get_group(self.conference.get_area_chairs_id())
-        self.conference.webfield_builder.edit_web_value(ac_group, 'ASSIGNMENT_LABEL', assignment_title)
+        for head, sac_assignments in proposed_assignment_edges.items():
+            for sac_assignment in sac_assignments:
+                assignment_edges.append(openreview.Edge(
+                    invitation=assignment_invitation_id,
+                    head=head,
+                    tail=sac_assignment['tail'],
+                    readers=sac_assignment['readers'],
+                    nonreaders=sac_assignment['nonreaders'],
+                    writers=sac_assignment['writers'],
+                    signatures=sac_assignment['signatures'],
+                    weight=sac_assignment.get('weight')
+                ))
+
+        print('Posting assignments edges', len(assignment_edges))
+        openreview.tools.post_bulk_edges(client=self.client, edges=assignment_edges)
 
 
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
@@ -1332,11 +1347,11 @@ class Matching(object):
             return self.deploy_reviewers(assignment_title, overwrite)
 
 
-        if self.match_group.id == self.conference.get_senior_area_chairs_id():
-            return self.deploy_sac_assignments(assignment_title, overwrite)
-
         ## Deploy assingments creating groups and assignment edges
-        self.deploy_assignments(assignment_title, overwrite)
+        if self.match_group.id == self.conference.get_senior_area_chairs_id():
+            self.deploy_sac_assignments(assignment_title, overwrite)
+        else:
+            self.deploy_assignments(assignment_title, overwrite)
 
         ## Add sync process function
         self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id)
