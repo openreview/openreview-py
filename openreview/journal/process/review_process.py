@@ -82,12 +82,12 @@ def process(client, edit, invitation):
         late_duedate = now + datetime.timedelta(weeks = 4)
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Reviewer responses and discussion for your TMLR submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Reviewer responses and discussion for your TMLR submission''',
             message=f'''Hi {{{{fullname}}}},
 
-Now that 3 reviews have been submitted for your submission, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+Now that 3 reviews have been submitted for your submission  {submission.content['title']['value']}, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
-In 2 weeks ({duedate.strftime("%b %d")}), no later than in 4 weeks ({late_duedate.strftime("%b %d")}), reviewers will be able to submit a formal decision recommendation to the Action Editor in charge of your submission. The reviewers’ goal will be to gather all the information they need to submit their decision recommendation.
+You will have at least 2 weeks to respond to the reviewers. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks (({duedate.strftime("%b %d")})), and no later than 4 weeks ({late_duedate.strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission.id}
 
