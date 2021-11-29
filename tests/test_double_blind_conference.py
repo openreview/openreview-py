@@ -1237,6 +1237,7 @@ class TestDoubleBlindConference():
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Reviewers', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
             content = {
@@ -1247,6 +1248,11 @@ class TestDoubleBlindConference():
         )
         meta_review_note = ac_client.post_note(note)
         assert meta_review_note
+
+        assert meta_review_note.nonreaders == ['AKBC.ws/2019/Conference/Paper1/Authors']
+
+        invitation = client.get_invitation('AKBC.ws/2019/Conference/Paper1/-/Meta_Review')
+        assert invitation.reply['nonreaders']['values'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
 
     def test_open_meta_reviews_additional_options(self, client, test_client, selenium, request_page, helpers):
 
@@ -1321,6 +1327,7 @@ class TestDoubleBlindConference():
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Reviewers', 'AKBC.ws/2019/Conference/Program_Chairs'],
+            nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
             content = {
@@ -1331,8 +1338,9 @@ class TestDoubleBlindConference():
             }
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid Field'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             meta_review_note = ac_client.post_note(note)
+        assert openReviewError.value.args[0].get('name') == 'InvalidFieldError'
 
         note.content = {
             'metareview': 'Excellent Paper!',

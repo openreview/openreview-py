@@ -14,6 +14,7 @@ import tld
 import re
 from tqdm import tqdm
 from .. import tools
+import time
 
 def _jaccard_similarity(list1, list2):
     '''
@@ -491,14 +492,21 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of TPMS edges! Input file:{0}, Scores found: {1}, Edges posted: {2}'.format(tpms_score_file, len(edges), edges_posted))
         return invitation
 
-    def _build_scores(self, score_invitation_id, score_file, submissions):
+    def _build_scores_from_file(self, score_invitation_id, score_file, submissions):
         if self.alternate_matching_group:
             return self._build_profile_scores(score_invitation_id, score_file)
-        return self._build_note_scores(score_invitation_id, score_file, submissions)
+        scores = []
+        with open(score_file) as file_handle:
+            scores = [row for row in csv.reader(file_handle)]
+        return self._build_note_scores(score_invitation_id, scores, submissions)
 
-    def _build_note_scores(self, score_invitation_id, score_file, submissions):
+    def _build_scores_from_stream(self, score_invitation_id, scores_stream, submissions):
+        scores = [input_line.split(',') for input_line in scores_stream.decode().split('\n')]
+        return self._build_note_scores(score_invitation_id, scores, submissions)
+
+    def _build_note_scores(self, score_invitation_id, scores, submissions):
         '''
-        Given a csv file with affinity scores, create score edges
+        Given an array of scores and submissions, create score edges
         '''
         invitation = self._create_edge_invitation(score_invitation_id)
 
@@ -506,13 +514,13 @@ class Matching(object):
 
         edges = []
         deleted_papers = set()
-        with open(score_file) as file_handle:
-            for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
-                paper_note_id = row[0]
+        for score_line in tqdm(scores, desc='_build_scores'):
+            if score_line:
+                paper_note_id = score_line[0]
                 paper_number = submissions_per_id.get(paper_note_id)
                 if paper_number:
-                    profile_id = row[1]
-                    score = str(max(round(float(row[2]), 4), 0))
+                    profile_id = score_line[1]
+                    score = str(max(round(float(score_line[2]), 4), 0))
                     edges.append(openreview.Edge(
                         invitation=invitation.id,
                         head=paper_note_id,
@@ -527,7 +535,7 @@ class Matching(object):
                     deleted_papers.add(paper_note_id)
 
         print('deleted papers', deleted_papers)
-
+        
         ## Delete previous scores
         self.client.delete_edges(invitation.id, wait_to_finish=True)
 
@@ -604,6 +612,39 @@ class Matching(object):
         if edges_posted < len(edges):
             raise openreview.OpenReviewException('Failed during bulk post of edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
         return invitation
+
+    def _compute_scores(self, score_invitation_id, submissions):
+
+        matching_status = {
+            'no_profiles': [],
+            'no_publications': []
+        }
+
+        try:
+            job_id = self.client.request_expertise(
+                name=self.conference.get_short_name(),
+                group_id=self.match_group.id,
+                paper_invitation=self.conference.get_blind_submission_id(),
+                exclusion_inv=self.conference.get_expertise_selection_id(),
+                model='specter+mfr')
+            status = ''
+            call_count = 0
+            while 'Completed' not in status and 'Error' not in status:
+                if call_count == 30:
+                    break
+                time.sleep(30)
+                status = self.client.get_expertise_status(job_id['job_id'])['results'][0]['status']
+                call_count += 1
+            if 'Completed' in status:
+                result = self.client.get_expertise_results(job_id['job_id'])
+                scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
+                matching_status['no_profiles'] = result['metadata']['no_profile']
+                matching_status['no_publications'] = result['metadata']['no_publications']
+                return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
+            else:
+                raise openreview.OpenReviewException('There was an error computing scores, status: ' + status)
+        except openreview.OpenReviewException as e:
+            raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
 
     def _build_custom_max_papers(self, user_profiles):
         invitation=self._create_edge_invitation(self.conference.get_custom_max_papers_id(self.match_group.id))
@@ -832,11 +873,15 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def setup(self, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
+    def setup(self, compute_affinity_scores=False, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
         '''
         Build all the invitations and edges necessary to run a match
         '''
         score_spec = {}
+        matching_status = {
+            'no_profiles': [],
+            'no_publications': []
+        }
 
         try:
             invitation = self.client.get_invitation(self.conference.get_bid_id(self.match_group.id))
@@ -865,14 +910,15 @@ class Matching(object):
 
         # The reviewers are all emails so convert to tilde ids
         self.match_group = openreview.tools.replace_members_with_ids(self.client, self.match_group)
-        if not all(['~' in member for member in self.match_group.members]):
+        matching_status['no_profiles'] = [member for member in self.match_group.members if '~' not in member]
+        if matching_status['no_profiles']:
             print(
                 'WARNING: not all reviewers have been converted to profile IDs.',
                 'Members without profiles will not have metadata created.')
 
         user_profiles = _get_profiles(self.client, self.match_group.members, with_publications=build_conflicts)
 
-        invitation=self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
+        invitation = self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
         if not self.is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'templates/proposed_assignment_pre_process.py')) as f:
                 content = f.read()
@@ -890,6 +936,15 @@ class Matching(object):
             invitation=self.conference.get_blind_submission_id(),
             details='original'))
 
+        if not self.match_group.members:
+            raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
+        if self.alternate_matching_group:
+            other_matching_group = self.client.get_group(self.alternate_matching_group)
+            if not other_matching_group.members:
+                raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
+        elif not submissions:
+            raise openreview.OpenReviewException('Submissions not found.')
+
         if tpms_score_file:
             invitation = self._build_tpms_scores(tpms_score_file, submissions, user_profiles)
             score_spec[invitation.id] = {
@@ -897,10 +952,12 @@ class Matching(object):
                 'default': 0
             }
 
-        if affinity_score_file:
-            invitation = self._build_scores(
+        type_affinity_scores = type(compute_affinity_scores)
+
+        if type_affinity_scores == str:
+            invitation = self._build_scores_from_file(
                 self.conference.get_affinity_score_id(self.match_group.id),
-                affinity_score_file,
+                compute_affinity_scores,
                 submissions
             )
             score_spec[invitation.id] = {
@@ -908,8 +965,20 @@ class Matching(object):
                 'default': 0
             }
 
+        if type_affinity_scores == bytes:
+            invitation = self._build_scores_from_stream(
+                self.conference.get_affinity_score_id(self.match_group.id),
+                compute_affinity_scores,
+                submissions
+            )
+            if invitation:
+                score_spec[invitation.id] = {
+                    'weight': 1,
+                    'default': 0
+                }
+
         if elmo_score_file:
-            invitation = self._build_scores(
+            invitation = self._build_scores_from_file(
                 self.conference.get_elmo_score_id(self.match_group.id),
                 elmo_score_file,
                 submissions
@@ -926,10 +995,22 @@ class Matching(object):
                 'default': 0
             }
 
+        if compute_affinity_scores == True:
+            invitation, matching_status = self._compute_scores(
+                self.conference.get_affinity_score_id(self.match_group.id),
+                submissions
+            )
+            if invitation:
+                score_spec[invitation.id] = {
+                    'weight': 1,
+                    'default': 0
+                }
+
         if build_conflicts:
             self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info)
 
         self._build_config_invitation(score_spec)
+        return matching_status
 
     def setup_invite_assignment(self, hash_seed, assignment_title=None, due_date=None, invitation_labels={}, invited_committee_name='External_Reviewers', email_template=None, proposed=False):
 
@@ -1204,8 +1285,10 @@ class Matching(object):
 
         papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
 
-        assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
-            label=assignment_title, groupby='head', select='tail')}
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select=None)}
+        assignment_edges = []
+        assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
 
         ac_groups = {g.id:g for g in openreview.tools.iterget_groups(self.client, regex=self.conference.get_area_chairs_id('.*'))}
 
@@ -1223,7 +1306,7 @@ class Matching(object):
                     raise openreview.OpenReviewException('AC assignments must be deployed first')
 
                 for ac in ac_group.members:
-                    sac_assignments = assignment_edges.get(ac, [])
+                    sac_assignments = proposed_assignment_edges.get(ac, [])
 
                     for sac_assignment in sac_assignments:
                         sac=sac_assignment['tail']
@@ -1234,8 +1317,21 @@ class Matching(object):
                         sac_group.members.append(sac)
                         self.client.post_group(sac_group)
 
-        ac_group=self.client.get_group(self.conference.get_area_chairs_id())
-        self.conference.webfield_builder.edit_web_value(ac_group, 'ASSIGNMENT_LABEL', assignment_title)
+        for head, sac_assignments in proposed_assignment_edges.items():
+            for sac_assignment in sac_assignments:
+                assignment_edges.append(openreview.Edge(
+                    invitation=assignment_invitation_id,
+                    head=head,
+                    tail=sac_assignment['tail'],
+                    readers=sac_assignment['readers'],
+                    nonreaders=sac_assignment['nonreaders'],
+                    writers=sac_assignment['writers'],
+                    signatures=sac_assignment['signatures'],
+                    weight=sac_assignment.get('weight')
+                ))
+
+        print('Posting assignments edges', len(assignment_edges))
+        openreview.tools.post_bulk_edges(client=self.client, edges=assignment_edges)
 
 
     def deploy(self, assignment_title, overwrite=False, enable_reviewer_reassignment=False):
@@ -1251,11 +1347,11 @@ class Matching(object):
             return self.deploy_reviewers(assignment_title, overwrite)
 
 
-        if self.match_group.id == self.conference.get_senior_area_chairs_id():
-            return self.deploy_sac_assignments(assignment_title, overwrite)
-
         ## Deploy assingments creating groups and assignment edges
-        self.deploy_assignments(assignment_title, overwrite)
+        if self.match_group.id == self.conference.get_senior_area_chairs_id():
+            self.deploy_sac_assignments(assignment_title, overwrite)
+        else:
+            self.deploy_assignments(assignment_title, overwrite)
 
         ## Add sync process function
         self.conference.invitation_builder.set_paper_group_invitation(self.conference, self.match_group.id)

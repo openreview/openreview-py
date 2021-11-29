@@ -81,6 +81,14 @@ class TestMatching():
 
     def test_setup_matching(self, conference, pc_client, test_client, helpers):
 
+        ## setup matching with no reviewers
+        with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
+            conference.setup_committee_matching(committee_id=conference.get_reviewers_id(), compute_conflicts=True)
+
+        ## setup matching with no area chairs
+        with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
+            conference.setup_committee_matching(committee_id=conference.get_area_chairs_id(), compute_conflicts=True)
+
         ## Set committee
         conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
         conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com'])
@@ -147,6 +155,10 @@ class TestMatching():
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_3.content['pdf'] = url
         note_3 = test_client.post_note(note_3)
+
+        ## setup matching with no submissions
+        with pytest.raises(openreview.OpenReviewException, match=r'Submissions not found'):
+            conference.setup_committee_matching(committee_id=conference.get_reviewers_id(), compute_conflicts=True)
 
         ## Create blind submissions
         conference.setup_post_submission_stage(force=True)
