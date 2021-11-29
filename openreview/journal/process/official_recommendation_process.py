@@ -2,9 +2,12 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
+    ## Notify readers
+    journal.notify_readers(edit)
+
     note = client.get_note(edit.note.id)
 
-    recommendations=client.get_notes(forum=note.forum, invitation=edit.invitation)
+    recommendations = client.get_notes(forum=note.forum, invitation=edit.invitation)
     if len(recommendations) == 3:
 
         submission = client.get_note(note.forum)
@@ -12,7 +15,7 @@ def process(client, edit, invitation):
 
         journal.invitation_builder.set_review_rating_invitation(journal, submission, openreview.tools.datetime_millis(duedate))
 
-        ## send email to authors
+        ## send email to action editors
         client.post_message(
             recipients=[journal.get_action_editors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for TMLR submission {submission.content['title']['value']}''',

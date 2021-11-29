@@ -230,7 +230,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           actions: ['.TMLR/Under_Review'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
-              url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict&version=2'
+              url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2'
             },
             {
               name: 'Edit Review Invitation',

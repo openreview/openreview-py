@@ -1,6 +1,10 @@
 def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
+
+    ## Notify readers
+    journal.notify_readers(edit, content_fields=['under_review', 'comment'])
+
     venue_id = journal.venue_id
 
     submission = client.get_note(edit.note.forum)

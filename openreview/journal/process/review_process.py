@@ -6,6 +6,9 @@ def process(client, edit, invitation):
     submission = client.get_note(note.forum)
     venue_id = journal.venue_id
 
+    ## Notify readers
+    journal.notify_readers(edit)
+
     ## Decrease pending reviews counter
     profile = openreview.tools.get_profile(client, edit.tauthor)
     edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=profile.id)

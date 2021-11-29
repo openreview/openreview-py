@@ -326,10 +326,11 @@ class TestJournal():
 
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 3
+        assert len(invitations) == 4
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Solicit_Review_Approval" in [i.id for i in invitations]
 
         ## Assign Action editor to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
@@ -400,7 +401,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 12
+        assert len(invitations) == 13
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]
@@ -511,7 +512,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 12
+        assert len(invitations) == 13
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -536,6 +537,9 @@ class TestJournal():
         )
 
         helpers.await_queue(openreview_client)
+
+        messages = journal.client.get_messages(subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
+        assert len(messages) == 4
 
         ## Post an official comment from the reviewer
         comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
@@ -638,7 +642,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 12
+        assert len(invitations) == 13
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -689,7 +693,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 14
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -775,7 +779,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 14
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -799,7 +803,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 14
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -823,7 +827,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 16
+        assert len(invitations) == 17
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -1182,6 +1186,8 @@ class TestJournal():
         )
 
         helpers.await_queue(openreview_client)
+
+        messages = journal.client.get_messages(subject = '[TMLR] Review posted on TMLR submission Paper title 4')
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Javier_Burroni1')

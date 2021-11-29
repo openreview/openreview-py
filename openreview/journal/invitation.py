@@ -1604,15 +1604,14 @@ class InvitationBuilder(object):
 
         self.save_invitation(journal, invitation)
 
-    def set_solicit_review_approval_invitation(self, journal, note, solitic_note):
+    def set_solicit_review_approval_invitation(self, journal, note):
 
         venue_id = journal.venue_id
-        signature = solitic_note.signatures[0]
         paper_authors_id = journal.get_authors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
 
-        solicit_review_invitation_approval_id = journal.get_solicit_review_approval_id(number=note.number, signature=signature)
+        solicit_review_invitation_approval_id = journal.get_solicit_review_approval_id(number=note.number)
 
         invitation = Invitation(id=solicit_review_invitation_approval_id,
             invitees=[venue_id, paper_action_editors_id],

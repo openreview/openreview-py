@@ -2,6 +2,9 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
+    ## Notify readers
+    journal.notify_readers(edit)
+
     note=edit.note
 
     duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7))

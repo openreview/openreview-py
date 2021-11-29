@@ -165,7 +165,7 @@ class Journal(object):
     def get_solicit_review_id(self, number):
         return self.__get_invitation_id(name='Solicit_Review', number=number)
 
-    def get_solicit_review_approval_id(self, number, signature):
+    def get_solicit_review_approval_id(self, number):
         return self.__get_invitation_id(name='Solicit_Review_Approval', number=number)
 
     def get_public_comment_id(self, number):
@@ -571,6 +571,7 @@ class Journal(object):
 
         self.invitation_builder.set_review_invitation(self, note, reviewer_assignment_due_date)
         self.invitation_builder.set_solicit_review_invitation(self, note)
+        self.invitation_builder.set_solicit_review_approval_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.setup_reviewer_assignment(note)
         #self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
@@ -669,4 +670,72 @@ class Journal(object):
             ]
             return '\n'.join(bibtex)
 
+    def notify_readers(self, edit, content_fields=[]):
 
+        vowels = ['a', 'e', 'i', 'o', 'u']
+        note = self.client.get_note(edit.note.id)
+        forum = self.client.get_note(note.forum)
+
+        if note.ddate:
+            return
+
+        action = 'posted' if note.tcdate == note.tmdate else 'edited'
+
+        readers = note.readers
+        nonreaders = note.nonreaders + [edit.tauthor]
+        formatted_invitation = edit.invitation.split('/-/')[1].replace('_', ' ')
+        lower_formatted_invitation = formatted_invitation.lower()
+        before_invitation = 'An' if lower_formatted_invitation[0] in vowels else 'A'
+        is_public = 'everyone' in readers
+
+        subject = f'''[{self.short_name}] {formatted_invitation} {action} on submission {forum.content['title']['value']}'''
+
+        formatted_content = ''
+        for field in content_fields:
+            formatted_field = field.replace('_', ' ')
+            formatted_content = formatted_content + f'{formatted_field}: {note.content.get(field, {}).get("value", "")}' + '\n'
+
+        content = f'''{formatted_content}
+To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id=${note.forum}&noteId=${note.id}`
+'''
+
+        ## Notify author of the note
+        if action == 'posted':
+            message = f'''Hi {{{{fullname}}}},
+Your {lower_formatted_invitation} was {action} on submission {forum.content['title']['value']}
+{content}
+            '''
+            self.client.post_message(recipients=[edit.tauthor], subject=subject, message=message, replyTo=self.contact_info)
+
+        ## Notify authors
+        if is_public or self.get_authors_id(number=forum.number) in readers:
+            message = f'''Hi {{{{fullname}}}},
+{before_invitation} {lower_formatted_invitation} {action} on your submission {forum.content['title']['value']}
+{content}
+            '''
+            self.client.post_message(recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+
+        ## Notify reviewers
+        reviewer_recipients = []
+        if is_public or self.get_reviewers_id(number=forum.number) in readers:
+            reviewer_recipients = [self.get_reviewers_id(number=forum.number)]
+        else:
+            anon_reviewer_id = self.get_reviewers_id(number=forum.number, anon=True)
+            for reader in readers:
+                if reader.startswith(anon_reviewer_id):
+                    reviewer_recipients.append(reader)
+        if reviewer_recipients:
+            message = f'''Hi {{{{fullname}}}},
+{before_invitation} {lower_formatted_invitation} {action} on a submission for which you are serving as reviewer {forum.content['title']['value']}
+{content}
+            '''
+            self.client.post_message(recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+
+
+        ## Notify action editors
+        if is_public or self.get_action_editors_id(number=forum.number) in readers:
+            message = f'''Hi {{{{fullname}}}},
+{before_invitation} {lower_formatted_invitation} {action} on a submission for which you are serving as Action Editor {forum.content['title']['value']}
+{content}
+            '''
+            self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
