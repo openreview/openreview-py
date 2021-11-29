@@ -1126,6 +1126,10 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
+        ## Check pending review edges
+        edges = joelle_client.get_edges(invitation='.TMLR/Reviewers/-/Pending_Reviews')
+        assert len(edges) == 3
+
         ## Ask solitic review
         solitic_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
             signatures=['~Peter_Snow1'],
@@ -1210,6 +1214,14 @@ class TestJournal():
         )
 
         helpers.await_queue(openreview_client)
+
+        ## Check pending review edges
+        edges = joelle_client.get_edges(invitation='.TMLR/Reviewers/-/Pending_Reviews')
+        assert len(edges) == 4
+        assert edges[0].weight == 0
+        assert edges[1].weight == 0
+        assert edges[2].weight == 0
+        assert edges[3].weight == 1
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper4/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())

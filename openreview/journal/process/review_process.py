@@ -6,6 +6,14 @@ def process(client, edit, invitation):
     submission = client.get_note(note.forum)
     venue_id = journal.venue_id
 
+    ## Decrease pending reviews counter
+    profile = openreview.tools.get_profile(client, edit.tauthor)
+    edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=profile.id)
+    if edges and edges[0].weight > 0:
+        pending_review_edge = edges[0]
+        pending_review_edge.weight -= 1
+        client.post_edge(pending_review_edge)
+
     review_note=client.get_note(note.id)
     if review_note.readers == ['everyone']:
         return

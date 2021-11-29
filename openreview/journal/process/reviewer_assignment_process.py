@@ -2,15 +2,40 @@ def process_update(client, edge, invitation, existing_edge):
 
     journal = openreview.journal.Journal()
 
-    note=client.get_note(edge.head)
-    group=client.get_group(journal.get_reviewers_id(number=note.number))
+    venue_id = journal.venue_id
+    note = client.get_note(edge.head)
+    group = client.get_group(journal.get_reviewers_id(number=note.number))
+    edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
+    pending_review_edge = None
+    if edges:
+        pending_review_edge = edges[0]
+
     if edge.ddate and edge.tail in group.members:
         print(f'Remove member {edge.tail} from {group.id}')
-        return client.remove_members_from_group(group.id, edge.tail)
+        client.remove_members_from_group(group.id, edge.tail)
+
+        if pending_review_edge and pending_review_edge.weight > 0:
+            pending_review_edge.weight -= 1
+            client.post_edge(pending_review_edge)
+
+        return
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
         client.add_members_to_group(group.id, edge.tail)
+
+        if pending_review_edge:
+            pending_review_edge.weight += 1
+            client.post_edge(pending_review_edge)
+        else:
+            client.post_edge(openreview.api.Edge(invitation = journal.get_reviewer_pending_review_id(),
+                readers = [venue_id, journal.get_action_editors_id(), edge.tail],
+                writers = [venue_id],
+                signatures = [venue_id],
+                head = journal.get_reviewers_id(),
+                tail = edge.tail,
+                weight = 1
+            ))
 
         duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
 

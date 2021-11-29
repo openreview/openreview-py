@@ -771,6 +771,43 @@ class InvitationBuilder(object):
         )
         self.save_invitation(journal, invitation)
 
+        invitation = Invitation(
+            id=journal.get_reviewer_pending_review_id(),
+            invitees=[venue_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            type='Edge',
+            edit={
+                'ddate': {
+                    'int-range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'values': [venue_id, action_editors_id, '${tail}']
+                },
+                'writers': {
+                    'values': [venue_id]
+                },
+                'signatures': {
+                    'values': [venue_id]
+                },
+                'head': {
+                    'type': 'group',
+                    'value': reviewers_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    #'member-of': reviewers_id
+                },
+                'weight': {
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                }
+            }
+        )
+        self.save_invitation(journal, invitation)
+
     def set_review_approval_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)

@@ -1443,7 +1443,8 @@ class Edit(object):
         invitation = None,
         nonreaders = None,
         cdate = None,
-        ddate = None):
+        ddate = None,
+        tauthor = None):
 
         self.id = id
         self.cdate = cdate
@@ -1454,6 +1455,7 @@ class Edit(object):
         self.signatures = signatures
         self.note = note
         self.invitation = invitation
+        self.tauthor = tauthor
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1511,6 +1513,7 @@ class Edit(object):
             signatures = e.get('signatures'),
             note = Note.from_json(e['note']) if 'note' in e else None,
             invitation = e.get('invitation'),
+            tauthor = e.get('tauthor')
             )
         return edit
 
@@ -1845,8 +1848,8 @@ class Edge(object):
         }
         if self.id:
             body['id'] = self.id
-        if self.cdate:
-            body['cdate'] = self.cdate
+        # if self.cdate:
+        #     body['cdate'] = self.cdate
         if self.ddate:
             body['ddate'] = self.ddate
         if self.nonreaders:

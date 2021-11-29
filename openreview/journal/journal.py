@@ -150,6 +150,9 @@ class Journal(object):
     def get_reviewer_custom_max_papers_id(self):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())
 
+    def get_reviewer_pending_review_id(self):
+        return self.__get_invitation_id(name='Pending_Reviews', prefix=self.get_reviewers_id())
+
     def get_camera_ready_revision_id(self, number=None):
         return self.__get_invitation_id(name='Camera_Ready_Revision', number=number)
 
@@ -425,7 +428,7 @@ class Journal(object):
 
         ## Create conflict and affinity score edges
         for r in self.get_reviewers():
-            edge = openreview.Edge(invitation = f'{reviewers_id}/-/Affinity_Score',
+            edge = Edge(invitation = f'{reviewers_id}/-/Affinity_Score',
                 readers = [venue_id, action_editors_id, r],
                 nonreaders = [authors_id],
                 writers = [venue_id],
@@ -438,7 +441,7 @@ class Journal(object):
 
             random_number=round(random.random(), 2)
             if random_number <= 0.3:
-                edge = openreview.Edge(invitation = f'{reviewers_id}/-/Conflict',
+                edge = Edge(invitation = f'{reviewers_id}/-/Conflict',
                     readers = [venue_id, action_editors_id, r],
                     nonreaders = [authors_id],
                     writers = [venue_id],
@@ -576,7 +579,7 @@ class Journal(object):
 
         profile = self.client.get_profile(reviewer)
         ## Check conflicts again?
-        self.client.post_edge(openreview.Edge(invitation=self.get_reviewer_assignment_id(),
+        self.client.post_edge(Edge(invitation=self.get_reviewer_assignment_id(),
             readers=[self.venue_id, self.get_action_editors_id(number=note.number), profile.id],
             nonreaders=[self.get_authors_id(number=note.number)],
             writers=[self.venue_id, self.get_action_editors_id(number=note.number)],

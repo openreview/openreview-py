@@ -2086,20 +2086,28 @@ class Edge(object):
         '''
         Returns serialized json string for a given object
         '''
-        return {
-            'id': self.id,
-            'cdate': self.cdate,
-            'ddate': self.ddate,
+        body = {
             'invitation': self.invitation,
             'readers': self.readers,
-            'nonreaders': self.nonreaders,
             'writers': self.writers,
             'signatures': self.signatures,
             'head': self.head,
             'tail': self.tail,
-            'weight': self.weight,
-            'label': self.label
         }
+        if self.id:
+            body['id'] = self.id
+        if self.cdate:
+            body['cdate'] = self.cdate
+        if self.ddate:
+            body['ddate'] = self.ddate
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+        if self.weight is not None:
+            body['weight'] = self.weight
+        if self.label:
+            body['label'] = self.label
+
+        return body
 
     @classmethod
     def from_json(Edge, e):
