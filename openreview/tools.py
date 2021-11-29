@@ -13,6 +13,38 @@ from multiprocessing import Pool
 from tqdm import tqdm
 import tld
 import urllib.parse as urlparse
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
+
+def concurrent_requests(request_func, params, max_workers=6):
+    """
+    Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
+
+    :param request_func: a function to execute for each value of the list.
+    :type request_func: function
+    :param params: a list of values to be executed by request_func.
+    :type params: list
+    :param max_workers: number of workers to use in the multiprocessing tool, default value is 6.
+    :type max_workers: int
+
+    :return: A list of results given for each func value execution
+    :rtype: list
+    """
+    futures = []
+    gathering_responses = tqdm(total=len(params), desc='Gathering Responses')
+    results = []
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for param in params:
+            futures.append(executor.submit(request_func, param))
+
+        for future in futures:
+            gathering_responses.update(1)
+            results.append(future.result())
+
+        gathering_responses.close()
+
+        return results
 
 def get_profile(client, value, with_publications=False):
     """
@@ -33,7 +65,7 @@ def get_profile(client, value, with_publications=False):
             profile.content['publications'] = list(iterget_notes(client, content={'authorids': profile.id}))
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
-        if e.args[0][0] != 'Profile not found':
+        if 'Profile Not Found' not in e.args[0]:
             raise e
     return profile
 
@@ -54,7 +86,7 @@ def get_group(client, id):
         group = client.get_group(id = id)
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
-        error = e.args[0][0]
+        error =  e.args[0].get('message')
         if isinstance(error, str) and error.startswith('Group Not Found'):
             return None
         else:
@@ -482,26 +514,38 @@ def replace_members_with_ids(client, group):
     ids = []
     emails = []
     invalid_ids = []
-    for member in group.members:
+
+    def classify_members(member):
         if '~' not in member:
             try:
                 profile = client.get_profile(member.lower())
-                ids.append(profile.id)
+                return ('ids', profile.id)
             except openreview.OpenReviewException as e:
-                if 'Profile not found' in e.args[0][0]:
-                    emails.append(member.lower())
+                if 'Profile Not Found' in e.args[0]:
+                    return ('emails', member.lower())
                 else:
                     raise e
         else:
             profile = get_profile(client, member)
             if profile:
-                ids.append(profile.id)
+                return ('ids', profile.id)
             else:
-                invalid_ids.append(member)
+                return ('invalid_ids', member)
+
+    results = concurrent_requests(classify_members, group.members)
+
+    for key, member in results:
+        if key == 'ids':
+            ids.append(member)
+        elif key == 'emails':
+            emails.append(member)
+        elif key == 'invalid_ids':
+            invalid_ids.append(member)
 
     if invalid_ids:
         print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
     group.members = ids + emails
+
     return client.post_group(group)
 
 class iterget:
@@ -885,25 +929,6 @@ def iterget_groups(client, id = None, regex = None, member = None, host = None, 
 
     return iterget(client.get_groups, **params)
 
-def parallel_exec(values, func, processes = None):
-    """
-    Returns a list of results given for each func value execution. It shows a progress bar to know the progress of the task.
-
-    :param values: a list of values.
-    :type values: list
-    :param func: a function to execute for each value of the list.
-    :type func: function
-    :param processes: number of procecces to use in the multiprocessing tool, default value is the number of CPUs available.
-    :type processes: int
-
-    :return: A list of results given for each func value execution
-    :rtype: list
-    """
-    pool = Pool(processes = processes)
-    results = pool.map(func, tqdm(values))
-    pool.close()
-    return results
-
 def next_individual_suffix(unassigned_individual_groups, individual_groups, individual_label):
     """
     Gets an individual group's suffix (e.g. AnonReviewer1). The suffix will be the next available empty group or will be the suffix of the largest indexed group +1
@@ -959,7 +984,7 @@ def get_reviewer_groups(client, paper_number, conference, group_params, parent_l
     try:
         parent_group = client.get_group('{}/Paper{}/{}'.format(conference, paper_number, parent_label))
     except openreview.OpenReviewException as e:
-        if 'Group Not Found' in e.args[0][0]:
+        if 'Group Not Found' in e.args[0].get('message'):
             # Set the default values for the parent and individual groups
             group_params_default = {
                 'readers': [conference, '{}/Program_Chairs'.format(conference)],

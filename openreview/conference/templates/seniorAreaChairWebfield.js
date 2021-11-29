@@ -14,7 +14,7 @@ var HEADER = {};
 var SENIOR_AREA_CHAIR_NAME = '';
 var AREA_CHAIRS_ID = '';
 var REVIEWERS_ID = '';
-var ASSIGNMENT_INVITATION = CONFERENCE_ID + '/' + SENIOR_AREA_CHAIR_NAME + '/-/Proposed_Assignment';
+var ASSIGNMENT_INVITATION = CONFERENCE_ID + '/' + SENIOR_AREA_CHAIR_NAME + '/-/Assignment';
 var ASSIGNMENT_LABEL = null;
 var EMAIL_SENDER = null;
 
