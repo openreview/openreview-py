@@ -12,7 +12,7 @@ def process_update(client, note, invitation, existing_note):
     AUTHORS_ID = CONFERENCE_ID + '/Paper' + str(forum_note.number) + '/' + AUTHORS_NAME
     
     # Check if the content of the existing note is the same as the updated note
-    if (existing_note):
+    if existing_note:
       equal = True
       for key in existing_note.content:
         if note.content[key] and (existing_note.content[key] != note.content[key]):
