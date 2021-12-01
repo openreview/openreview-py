@@ -1150,6 +1150,12 @@ class InvitationBuilder(object):
                                 'optional': True
                             }
                         },
+                        'license': {
+                            'value': {
+                                'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)'
+                            },
+                            'order': 4
+                        },
                         'authors': {
                             'readers': {
                                 'values': ['everyone']
