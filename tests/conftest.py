@@ -44,9 +44,10 @@ class Helpers:
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
     @staticmethod
-    def await_queue():
-        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
-        assert super_client is not None, 'Super Client is none'
+    def await_queue(super_client=None):
+        if super_client is None:
+            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
+            assert super_client is not None, 'Super Client is none'
 
         while True:
             jobs = super_client.get_jobs_status()
@@ -85,6 +86,10 @@ def helpers():
 @pytest.fixture(scope="session")
 def client():
     yield openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
+
+@pytest.fixture(scope="session")
+def openreview_client():
+    yield openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password='1234')
 
 @pytest.fixture(scope="session")
 def test_client():
