@@ -21,7 +21,7 @@ def process_update(client, note, invitation, existing_note):
       if(not equal):
         if (EMAIL_AUTHORS and ('everyone' in note.readers or AUTHORS_ID in note.readers)):
           groups = [AUTHORS_ID]
-          subject = '{SHORT_PHRASE} Decision posted to your submission - Paper number: {paper_number}, Paper title: {paper_title}'.format(
+          subject = '[{SHORT_PHRASE}] Decision updated for your submission - Paper number: {paper_number}, Paper title: {paper_title}'.format(
             SHORT_PHRASE = SHORT_PHRASE,
             paper_number = str(forum_note.number),
             paper_title = forum_note.content['title']
@@ -37,7 +37,7 @@ def process_update(client, note, invitation, existing_note):
       if (EMAIL_AUTHORS and ('everyone' in note.readers or AUTHORS_ID in note.readers)):
 
         groups = [AUTHORS_ID]
-        subject = '{SHORT_PHRASE} Decision posted to your submission - Paper number: {paper_number}, Paper title: {paper_title}'.format(
+        subject = '[{SHORT_PHRASE}] Decision posted to your submission - Paper number: {paper_number}, Paper title: {paper_title}'.format(
             SHORT_PHRASE = SHORT_PHRASE,
             paper_number = str(forum_note.number),
             paper_title = forum_note.content['title']

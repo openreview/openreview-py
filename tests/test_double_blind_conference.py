@@ -1395,7 +1395,7 @@ class TestDoubleBlindConference():
         helpers.await_queue()
 
         # Check that message was sent 
-        messages = client.get_messages(subject = 'AKBC 2019 Decision posted to your submission - Paper number: 1, Paper title: New paper title')
+        messages = client.get_messages(subject = '[AKBC 2019] Decision posted to your submission - Paper number: 1, Paper title: New paper title')
         assert len(messages) == 3
 
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
@@ -1410,7 +1410,7 @@ class TestDoubleBlindConference():
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
         assert decisions
         assert decisions[0].readers == ['everyone']
-        messages = client.get_messages(subject = 'AKBC 2019 Decision posted to your submission - Paper number: 1, Paper title: New paper title')
+        messages = client.get_messages(subject = '[AKBC 2019] Decision posted to your submission - Paper number: 1, Paper title: New paper title')
         assert len(messages) == 3
 
         builder.set_decision_stage(release_to_authors=True, release_to_area_chairs=True,email_authors=True)
@@ -1436,8 +1436,8 @@ class TestDoubleBlindConference():
         helpers.await_queue()
 
         # Check that email was sent 
-        messages = client.get_messages(subject = 'AKBC 2019 Decision posted to your submission - Paper number: 1, Paper title: New paper title')
-        assert len(messages) == 6
+        messages = client.get_messages(subject = '[AKBC 2019] Decision updated for your submission - Paper number: 1, Paper title: New paper title')
+        assert len(messages) == 3
 
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
         assert accepted_author_group
@@ -1457,8 +1457,8 @@ class TestDoubleBlindConference():
         helpers.await_queue()
 
         # Check that email was sent 
-        messages = client.get_messages(subject = 'AKBC 2019 Decision posted to your submission - Paper number: 1, Paper title: New paper title')
-        assert len(messages) == 9
+        messages = client.get_messages(subject = '[AKBC 2019] Decision updated for your submission - Paper number: 1, Paper title: New paper title')
+        assert len(messages) == 6
     
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
         assert accepted_author_group
