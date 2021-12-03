@@ -10,6 +10,7 @@ import json
 import random
 import string
 import openreview
+from openreview import Edge
 import tld
 import re
 from tqdm import tqdm
@@ -315,7 +316,7 @@ class Matching(object):
                 conflicts.update(author_publications.intersection(user_info['publications']))
 
                 if conflicts:
-                    edges.append(openreview.Edge(
+                    edges.append(Edge(
                         invitation=invitation.id,
                         head=submission.id,
                         tail=user_info['id'],
@@ -380,7 +381,7 @@ class Matching(object):
                 conflicts.update(author_publications.intersection(user_info['publications']))
 
                 if conflicts:
-                    edges.append(openreview.Edge(
+                    edges.append(Edge(
                         invitation=invitation.id,
                         head=submission.id,
                         tail=user_info['id'],
@@ -423,7 +424,7 @@ class Matching(object):
                 conflicts.update(head_profile_info['emails'].intersection(user_info['relations']))
                 conflicts.update(head_profile_info['emails'].intersection(user_info['emails']))
                 if conflicts:
-                    edges.append(openreview.Edge(
+                    edges.append(Edge(
                         invitation=invitation.id,
                         head=head_profile_info['id'],
                         tail=user_info['id'],
@@ -471,7 +472,7 @@ class Matching(object):
                     else:
                         profile_id = row[1]
 
-                    edges.append(openreview.Edge(
+                    edges.append(Edge(
                         invitation=invitation.id,
                         head=paper_note_id,
                         tail=profile_id,
@@ -554,7 +555,7 @@ class Matching(object):
         edges = []
         with open(score_file) as file_handle:
             for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
-                edges.append(openreview.Edge(
+                edges.append(Edge(
                     invitation=invitation.id,
                     head=row[0],
                     tail=row[1],
@@ -593,7 +594,7 @@ class Matching(object):
                 if profile_id in self.match_group.members:
                     subject_areas = subject_area_note.content['subject_areas']
                     score = _jaccard_similarity(note_subject_areas, subject_areas)
-                    edges.append(openreview.Edge(
+                    edges.append(Edge(
                         invitation=invitation.id,
                         head=paper_note_id,
                         tail=profile_id,
@@ -606,6 +607,7 @@ class Matching(object):
         ## Delete previous scores
         self.client.delete_edges(invitation.id, wait_to_finish=True)
 
+        print('post edges', edges)
         openreview.tools.post_bulk_edges(client=self.conference.client, edges=edges)
         # Perform sanity check
         edges_posted = self.conference.client.get_edges_count(invitation=invitation.id)
@@ -648,7 +650,7 @@ class Matching(object):
 
     def _build_custom_max_papers(self, user_profiles):
         invitation=self._create_edge_invitation(self.conference.get_custom_max_papers_id(self.match_group.id))
-        current_custom_max_edges={ e['id']['tail']: openreview.Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail', select=None)}
+        current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail', select=None)}
 
         reduced_loads = {}
         reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load', prefix = self.match_group.id), sort='tcdate:asc')
@@ -679,7 +681,7 @@ class Matching(object):
                         self.client.post_edge(current_edge)
 
                 else:
-                    edge = openreview.Edge(
+                    edge = Edge(
                         head=self.match_group.id,
                         tail=user_profile.id,
                         invitation=invitation.id,
@@ -1228,7 +1230,7 @@ class Matching(object):
                 proposed_edges=proposed_assignment_edges[paper.id]
                 for proposed_edge in proposed_edges:
                     paper_group.members.append(proposed_edge['tail'])
-                    assignment_edges.append(openreview.Edge(
+                    assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
                         tail=proposed_edge['tail'],

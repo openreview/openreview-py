@@ -18,7 +18,6 @@ class TestClient():
         assert 'openreview.net' in group_names
         assert 'active_venues' in group_names
         assert 'host' in group_names
-        assert 'test.org/2019/Conference/Reviewers/Declined' in group_names
 
     def test_create_client(self, client, test_client):
 
@@ -59,25 +58,20 @@ class TestClient():
         assert '~SomeFirstName_User1' == client.profile.id
 
     def test_login_user(self):
-        try:
-            guest = openreview.Client()
+
+        guest = openreview.Client()
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Email is missing.*'):
             guest.login_user()
-        except openreview.OpenReviewException as e:
-            assert "Email is missing" in e.args[0].get('message'), "guest log in did not produce correct error"
 
-        try:
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Password is missing.*'):
             guest.login_user(username = "openreview.net")
-        except openreview.OpenReviewException as e:
-            assert "Password is missing" in e.args[0].get('message'), "super user log in did not produce correct error"
 
-        try:
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Invalid username or password.*'):
             guest.login_user(username = "openreview.net", password = "1111")
-        except openreview.OpenReviewException as e:
-            assert "Invalid username or password" in e.args[0].get('message'), "super user log in did not produce correct error"
 
         response = guest.login_user(username = "openreview.net", password = "1234")
         assert response
-        print(response)
 
     def test_get_notes_with_details(self, client):
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
