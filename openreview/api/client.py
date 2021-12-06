@@ -7,18 +7,15 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
-from . import tools
 import requests
 import pprint
 import os
 import re
-import jwt
+from openreview import Profile
+from openreview import OpenReviewException
+from openreview import Group
 
-
-class OpenReviewException(Exception):
-    pass
-
-class Client(object):
+class OpenReviewClient(object):
     """
     :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
     :type baseurl: str, optional
@@ -33,7 +30,7 @@ class Client(object):
 
         self.baseurl = baseurl
         if not self.baseurl:
-           self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
+           self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3001')
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -46,7 +43,6 @@ class Client(object):
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
-        self.profiles_rename = self.baseurl + '/profiles/rename'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -55,7 +51,6 @@ class Client(object):
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.jobs_status = self.baseurl + '/jobs/status'
-        self.institutions = self.baseurl + '/settings/institutions'
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
@@ -63,7 +58,6 @@ class Client(object):
 
         self.token = token
         self.profile = None
-        self.user = None
         self.headers = {
             'User-Agent': self.user_agent,
             'Accept': 'application/json'
@@ -71,7 +65,6 @@ class Client(object):
 
         if self.token:
             self.headers['Authorization'] = self.token
-            self.user = jwt.decode(self.token.replace('Bearer ', ''), "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
             try:
                 self.profile = self.get_profile()
             except:
@@ -94,7 +87,6 @@ class Client(object):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
-        self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
         return response
 
     def __handle_response(self,response):
@@ -197,24 +189,6 @@ class Client(object):
         self.__handle_token(response.json()['activatable'])
         return self.token
 
-    def get_institution(self, domain):
-        """
-        Get a single Institution by id (domain) if available
-
-        :param domain: domain of the Institution
-        :type domain: str
-
-        :return: Dictionary with the Institution information
-        :rtype: dict
-
-        Example:
-
-        >>> institution = client.get_institution('umass.edu')
-        """
-        response = requests.get(self.institutions, params = { 'id': domain }, headers = self.headers)
-        response = self.__handle_response(response)
-        return response.json()
-
     def get_group(self, id):
         """
         Get a single Group by id if available
@@ -301,7 +275,7 @@ class Client(object):
         """
         Get a single Profile by id, if available
 
-        :param email_or_id: e-mail confirmed or id of the profile
+        :param email_or_id: e-mail or id of the profile
         :type email_or_id: str, optional
 
         :return: Profile object with its information
@@ -313,7 +287,7 @@ class Client(object):
             if tildematch.match(email_or_id):
                 att = 'id'
             else:
-                att = 'confirmedEmail'
+                att = 'email'
             params[att] = email_or_id
         response = requests.get(self.profiles_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -323,12 +297,76 @@ class Client(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    @deprecated(version='0.9.20', reason="Use search_profiles instead")
+    def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
+        """
+        Gets a list of profiles
+
+        :param email_or_id_list: List of ids or emails
+        :type email_or_id_list: list, optional
+        :param id: OpenReview username id
+        :type id: str, optional
+        :param email: e-mail registered in OpenReview
+        :type email: str, optional
+        :param first: First name of the user
+        :type first: str, optional
+        :param middle: Middle name of the user
+        :type middle: str, optional
+        :param last: Last name of the user
+        :type last: str, optional
+
+        :return: List of profiles
+        :rtype: list[Profile]
+        """
+
+        ## Deprecated, don't use it
+        if email_or_id_list is not None:
+            pure_tilde_ids = all(['~' in i for i in email_or_id_list])
+            pure_emails = all(['@' in i for i in email_or_id_list])
+
+            def get_ids_response(id_list):
+                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
+                response = self.__handle_response(response)
+                return [Profile.from_json(p) for p in response.json()['profiles']]
+
+            def get_emails_response(email_list):
+                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
+                response = self.__handle_response(response)
+                return { p['email'] : Profile.from_json(p['profile'])
+                    for p in response.json()['profiles'] }
+
+            if pure_tilde_ids:
+                get_response = get_ids_response
+                update_result = lambda result, response: result.extend(response)
+                result = []
+            elif pure_emails:
+                get_response = get_emails_response
+                update_result = lambda result, response: result.update(response)
+                result = {}
+            else:
+                raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
+
+            done = False
+            offset = 0
+            limit = 1000
+            while not done:
+                current_batch = email_or_id_list[offset:offset+limit]
+                offset += limit
+                response = get_response(current_batch)
+                update_result(result, response)
+                if len(current_batch) < limit:
+                    done = True
+
+            return result
+
+        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
+        response = self.__handle_response(response)
+        return [Profile.from_json(p) for p in response.json()['profiles']]
+
+    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
-        :param confirmedEmails: List of confirmed emails registered in OpenReview
-        :type confirmedEmails: list, optional
         :param emails: List of emails registered in OpenReview
         :type emails: list, optional
         :param ids: List of OpenReview username ids
@@ -342,7 +380,7 @@ class Client(object):
         :param last: Last name of user
         :type last: str, optional
 
-        :return: List of profiles, if emails is present then a dictionary of { email: profiles } is returned. If confirmedEmails is present then a dictionary of { email: profile } is returned
+        :return: List of profiles
         :rtype: list[Profile]
         """
 
@@ -370,28 +408,7 @@ class Client(object):
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
-            profiles_by_email = {}
-            for p in full_response:
-                if p['email'] not in profiles_by_email:
-                    profiles_by_email[p['email']] = []
-                profiles_by_email[p['email']].append(Profile.from_json(p))
-            return profiles_by_email
-
-        if confirmedEmails:
-            full_response = []
-            for email_batch in batches(confirmedEmails):
-                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
-                response = self.__handle_response(response)
-                full_response.extend(response.json()['profiles'])
-
-            profiles_by_email = {}
-            for p in full_response:
-                profile = Profile.from_json(p)
-                if p['email'] in profile.content['emailsConfirmed']:
-                    profiles_by_email[p['email']] = profile
-            return profiles_by_email
-
-
+            return {p['email']: Profile.from_json(p) for p in full_response}
 
         if ids:
             full_response = []
@@ -559,27 +576,6 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
-    def rename_profile(self, current_id, new_id):
-        """
-        Updates a Profile
-
-        :param profile: Profile object
-        :type profile: Profile
-
-        :return: The new updated Profile
-        :rtype: Profile
-        """
-        response = requests.post(
-            self.profiles_rename,
-            json = {
-                'currentId': current_id,
-                'newId': new_id
-            },
-            headers = self.headers)
-
-        response = self.__handle_response(response)
-        return Profile.from_json(response.json())
-
     def merge_profiles(self, profileTo, profileFrom):
         """
         Merges two Profiles
@@ -602,6 +598,7 @@ class Client(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
 
     def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None):
         """
@@ -814,64 +811,36 @@ class Client(object):
 
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_reference(self, id):
+    def get_note_edit(self, id):
         """
-        Get a single reference by id if available
+        Get a single edit by id if available
 
-        :param id: id of the reference
+        :param id: id of the edit
         :type id: str
 
-        :return: reference matching the passed id
+        :return: edit matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.reference_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
-        n = response.json()['references'][0]
-        return Note.from_json(n)
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
 
-    def get_references(self, referent = None, invitation = None, content = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
+    def get_note_edits(self, noteId = None):
         """
-        Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
+        Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
-        Refer to the section of Mental Models and then click on Blind Submissions for more information.
-
-        :param referent: A Note ID. If provided, returns references whose "referent" value is this Note ID.
-        :type referent: str, optional
-        :param invitation: An Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
-        :type invitation: str, optional
-        :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns references
-            whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
-        :type mintcdate: int, optional
-        :param bool original: If True then get_references will additionally return the references to the original note.
-        :type offset: int, optional
-        :type original: bool, optional
-
-        :return: List of revisions
-        :rtype: list[Note]
+        :return: List of edits
+        :rtype: list[Edit]
         """
         params = {}
-        if referent is not None:
-            params['referent'] = referent
-        if invitation is not None:
-            params['invitation'] = invitation
-        if mintcdate is not None:
-            params['mintcdate'] = mintcdate
-        if content is not None:
-            for k in content:
-                params['content.' + k] = content[k]
-        if limit is not None:
-            params['limit'] = limit
-        if offset is not None:
-            params['offset'] = offset
-        if original == True:
-            params['original'] = "true"
-        if trash:
-            params['trash'] = trash
+        if noteId:
+            params['note.id'] = noteId
 
-        response = requests.get(self.reference_url, params = params, headers = self.headers)
+        response = requests.get(self.note_edits_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Note.from_json(n) for n in response.json()['references']]
+        return [Edit.from_json(n) for n in response.json()['edits']]
 
     def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
         """
@@ -909,7 +878,7 @@ class Client(object):
 
         return [Tag.from_json(t) for t in response.json()['tags']]
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -928,7 +897,6 @@ class Client(object):
         params['label'] = label
         params['limit'] = limit
         params['offset'] = offset
-        params['sort'] = sort
 
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
@@ -989,21 +957,6 @@ class Client(object):
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
 
-    def post_institution(self, institution):
-        """
-        Requires Super User permission.
-        Adds an institution if the institution id is not found in the database,
-        otherwise, the institution is updated.
-
-        :param institution: institution to be posted
-        :type institution: dict
-
-        :return: The posted institution
-        :rtype: dict
-        """
-        response = requests.post(self.institutions, json = institution, headers = self.headers)
-        response = self.__handle_response(response)
-        return response.json()
 
     def post_group(self, group, overwrite = True):
         """
@@ -1100,7 +1053,7 @@ class Client(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1127,7 +1080,6 @@ class Client(object):
             delete_query['tail'] = tail
 
         delete_query['waitToFinish'] = wait_to_finish
-        delete_query['softDelete'] = soft_delete
 
         response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
@@ -1177,7 +1129,7 @@ class Client(object):
         return response.json()
 
 
-    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, useJob=False):
+    def post_message(self, subject, recipients, message, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1206,8 +1158,7 @@ class Client(object):
             'ignoreGroups': ignoreRecipients,
             'from': sender,
             'replyTo': replyTo,
-            'parentGroup': parentGroup,
-            'useJob': useJob
+            'parentGroup': parentGroup
             }, headers = self.headers)
         response = self.__handle_response(response)
 
@@ -1404,6 +1355,47 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
+    def post_invitation_edit(self, readers, writers, signatures, invitation):
+        """
+        """
+        edit_json = {
+            'readers': readers,
+            'writers': writers,
+            'signatures': signatures,
+            'invitation': invitation.to_json()
+        }
+
+        response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def post_note_edit(self, invitation, signatures, note=None, readers=None):
+        """
+        """
+        edit_json = {
+            'invitation': invitation,
+            'signatures': signatures,
+            'note': note.to_json() if note else {}
+        }
+
+        if readers:
+            edit_json['readers'] = readers
+
+        response = requests.post(self.note_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def post_edit(self, edit):
+        """
+        """
+
+        response = requests.post(self.note_edits_url, json = edit.to_json(), headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
     def get_jobs_status(self):
         """
         **Only for Super User**. Retrieves the jobs status of the queue
@@ -1417,247 +1409,22 @@ class Client(object):
         return response.json()
 
 
-    def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
-
-        base_url = baseurl if baseurl else self.baseurl
-        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'exclusion_inv': exclusion_inv, 'model': model}, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
-    def get_expertise_status(self, job_id, baseurl=None):
-
-        base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/status', params = {'id': job_id}, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
-    def get_expertise_results(self, job_id, baseurl=None):
-
-        base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
-class Group(object):
+class Edit(object):
     """
-    When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
-
-    :param id: id of the Group
+    :param id: Edit id
     :type id: str
-    :param readers: List of readers in the Group, each reader is a Group id
-    :type readers: list[str]
-    :param writers: List of writers in the Group, each writer is a Group id
-    :type writers: list[str]
-    :param signatories: List of signatories in the Group, each writer is a Group id
-    :type signatories: list[str]
-    :param signatures: List of signatures in the Group, each signature is a Group id
-    :type signatures: list[str]
-    :param cdate: Creation date of the Group
-    :type cdate: int, optional
-    :param ddate: Deletion date of the Group
-    :type ddate: int, optional
-    :param tcdate: true creation date of the Group
-    :type tcdate: int, optional
-    :param tmdate: true modification date of the Group
-    :type tmdate: int, optional
-    :param members: List of members in the Group, each member is a Group id
-    :type members: list[str], optional
-    :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
-    :type nonreaders: list[str], optional
-    :param web: Path to a file that contains the webfield
-    :type web: optional
-    :param web_string: String containing the webfield for this Group
-    :type web_string: str, optional
-    :param details:
-    :type details: optional
-    """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
-        # post attributes
-        self.id=id
-        self.invitation=invitation
-        self.cdate = cdate
-        self.ddate = ddate
-        self.tcdate = tcdate
-        self.tmdate = tmdate
-        self.writers = writers
-        self.members = [] if members is None else members
-        self.readers = readers
-        self.nonreaders = [] if nonreaders is None else nonreaders
-        self.signatures = signatures
-        self.signatories = signatories
-        self.anonids = anonids
-        self.web=None
-        self.impersonators = impersonators
-        if web is not None:
-            with open(web) as f:
-                self.web = f.read()
-
-        if web_string:
-            self.web = web_string
-
-        self.anonids = anonids
-        self.deanonymizers = deanonymizers
-        self.details = details
-
-    def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-        return 'Group(' + content + ')'
-
-    def __str__(self):
-        pp = pprint.PrettyPrinter()
-        return pp.pformat(vars(self))
-
-
-    def to_json(self):
-        """
-        Converts Group instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-
-        :return: Dictionary containing all the parameters of a Group instance
-        :rtype: dict
-        """
-        body = {
-            'id': self.id,
-            'invitation': self.invitation,
-            'cdate': self.cdate,
-            'ddate': self.ddate,
-            'signatures': self.signatures,
-            'writers': self.writers,
-            'members': self.members,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'signatories': self.signatories,
-            'impersonators': self.impersonators,
-            'anonids': self.anonids,
-            'deanonymizers': self.deanonymizers,
-            'web': self.web,
-            'details': self.details
-        }
-
-        return body
-
-    @classmethod
-    def from_json(Group,g):
-        """
-        Creates a Group object from a dictionary that contains keys values equivalent to the name of the instance variables of the Group class
-
-        :param g: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Group class
-        :type g: dict
-
-        :return: Group whose instance variables contain the values from the dictionary
-        :rtype: Group
-        """
-        group = Group(g['id'],
-            invitation=g.get('invitation'),
-            cdate = g.get('cdate'),
-            ddate = g.get('ddate'),
-            tcdate = g.get('tcdate'),
-            tmdate = g.get('tmdate'),
-            writers = g.get('writers'),
-            members = g.get('members'),
-            readers = g.get('readers'),
-            nonreaders = g.get('nonreaders'),
-            signatories = g.get('signatories'),
-            signatures = g.get('signatures'),
-            anonids=g.get('anonids'),
-            deanonymizers=g.get('deanonymizers'),
-            impersonators=g.get('impersonators'),
-            details = g.get('details'))
-        if 'web' in g:
-            group.web = g['web']
-        return group
-
-    def add_member(self, member):
-        """
-        Adds a member to the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
-
-        :param member: Member to add to the group
-        :type member: str
-
-        :return: Group with the new member added
-        :rtype: Group
-        """
-        if type(member) is Group:
-            self.members.append(member.id)
-        else:
-            self.members.append(str(member))
-        return self
-
-    def remove_member(self, member):
-        """
-        Removes a member from the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
-
-        :param member: Member to remove from the group
-        :type member: str
-
-        :return: Group after the member was removed
-        :rtype: Group
-        """
-        if type(member) is Group:
-            try:
-                self.members.remove(member.id)
-            except(ValueError):
-                pass
-        else:
-            try:
-                self.members.remove(str(member))
-            except(ValueError):
-                pass
-        return self
-
-    def add_webfield(self, web):
-        """
-        Adds a webfield to the group
-
-        :param web: Path to the file that contains the webfield
-        :type web: str
-        """
-        with open(web) as f:
-            self.web = f.read()
-
-    def post(self, client):
-        """
-        Posts a group to OpenReview
-
-        :param client: Client that will post the Group
-        :type client: Client
-        """
-        client.post_group(self)
-
-class Invitation(object):
-    """
-    :param id: Invitation id
-    :type id: str
-    :param readers: List of readers in the Invitation, each reader is a Group id
+    :param readers: List of readers in the Edit, each reader is a Group id
     :type readers: list[str], optional
-    :param writers: List of writers in the Invitation, each writer is a Group id
+    :param writers: List of writers in the Edit, each writer is a Group id
     :type writers: list[str], optional
-    :param invitees: List of invitees in the Invitation, each invitee is a Group id
-    :type invitees: list[str], optional
-    :param signatures: List of signatures in the Invitation, each signature is a Group id
+    :param signatures: List of signatures in the Edit, each signature is a Group id
     :type signatures: list[str], optional
-    :param reply: Template of the Note that will be created
-    :type reply: dict, optional
-    :param super: Parent Invitation id
-    :type super: str, optional
-    :param noninvitees: List of noninvitees in the Invitation, each noninvitee is a Group id
-    :type noninvitees: list[str], optional
-    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
+    :param note: Template of the Note that will be created
+    :type note: dict, optional
+    :param invitation: Template of the Invitation that will be created
+    :type invitation: dict, optional
+    :param nonreaders: List of nonreaders in the Edit, each nonreader is a Group id
     :type nonreaders: list[str], optional
-    :param web: Path to a file containing a webfield
-    :type web: str, optional
-    :param web_string: String containing the webfield
-    :type web_string: str, optional
-    :param process: Path to a file containing the process function
-    :type process: str, optional
-    :param process_string: String containing the process function
-    :type process_string: str, optional
-    :param duedate: Due date
-    :type duedate: int, optional
-    :param expdate: Expiration date
-    :type expdate: int, optional
     :param cdate: Creation date
     :type cdate: int, optional
     :param ddate: Deletion date
@@ -1666,14 +1433,206 @@ class Invitation(object):
     :type tcdate: int, optional
     :param tmdate: Modification date
     :type tmdate: int, optional
-    :param multiReply: If true, allows for multiple Notes created from this Invitation (e.g. comments in a forum), otherwise, only one Note may be created (e.g. paper submission)
-    :type multiReply: bool, optional
-    :param taskCompletionCount: Keeps count of the number of times the Invitation has been used
-    :type taskCompletionCount: int, optional
-    :param transform: Path to a file that contains the transform function
-    :type transform: str, optional
-    :param details:
-    :type details: dict, optional
+    """
+    def __init__(self,
+        id = None,
+        readers = None,
+        writers = None,
+        signatures = None,
+        note = None,
+        invitation = None,
+        nonreaders = None,
+        cdate = None,
+        ddate = None,
+        tauthor = None):
+
+        self.id = id
+        self.cdate = cdate
+        self.ddate = ddate
+        self.readers = readers
+        self.nonreaders = nonreaders
+        self.writers = writers
+        self.signatures = signatures
+        self.note = note
+        self.invitation = invitation
+        self.tauthor = tauthor
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Edit(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+    def to_json(self):
+        """
+        Converts Edit instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Edit instance
+        :rtype: dict
+        """
+        body = {}
+
+        if (self.id):
+            body['id'] = self.id
+        if (self.readers):
+            body['readers'] = self.readers
+        if (self.nonreaders):
+            body['nonreaders'] = self.nonreaders
+        if (self.writers):
+            body['writers'] = self.writers
+        if (self.signatures):
+            body['signatures'] = self.signatures
+        if (self.note):
+            body['note'] = self.note.to_json()
+        if (self.invitation):
+            body['invitation'] = self.invitation
+        if (self.ddate):
+            body['ddate'] = self.ddate
+
+        return body
+
+    @classmethod
+    def from_json(Edit,e):
+        """
+        Creates an Edit object from a dictionary that contains keys values equivalent to the name of the instance variables of the Edit class
+
+        :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Edit class
+        :type i: dict
+
+        :return: Edit whose instance variables contain the values from the dictionary
+        :rtype: Edit
+        """
+        edit = Edit(e.get('id'),
+            cdate = e.get('cdate'),
+            ddate = e.get('ddate'),
+            readers = e.get('readers'),
+            nonreaders = e.get('nonreaders'),
+            writers = e.get('writers'),
+            signatures = e.get('signatures'),
+            note = Note.from_json(e['note']) if 'note' in e else None,
+            invitation = e.get('invitation'),
+            tauthor = e.get('tauthor')
+            )
+        return edit
+
+class Note(object):
+    """
+    TODO: write docs
+    """
+    def __init__(self,
+        invitations=None,
+        readers=None,
+        writers=None,
+        signatures=None,
+        content=None,
+        id=None,
+        number=None,
+        cdate=None,
+        mdate=None,
+        tcdate=None,
+        tmdate=None,
+        ddate=None,
+        forum=None,
+        replyto=None,
+        nonreaders=None,
+        details = None):
+
+        self.id = id
+        self.number = number
+        self.cdate = cdate
+        self.mdate = mdate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.ddate = ddate
+        self.content = content
+        self.forum = forum
+        self.replyto = replyto
+        self.readers = readers
+        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.signatures = signatures
+        self.writers = writers
+        self.number = number
+        self.details = details
+        self.invitations = invitations
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Note(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+    def to_json(self):
+        """
+        Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Note instance
+        :rtype: dict
+        """
+        body = {
+        }
+        if self.id:
+            body['id'] = self.id
+        if self.forum:
+            body['forum'] = self.forum
+        if self.replyto:
+            body['replyto'] = self.replyto
+        if self.content:
+            body['content'] = self.content
+        if self.invitations:
+            body['invitations'] = self.invitations
+        if self.cdate:
+            body['cdate'] = self.cdate
+        if self.mdate:
+            body['mdate'] = self.mdate
+        if self.ddate:
+            body['ddate'] = self.ddate
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+        if self.signatures:
+            body['signatures'] = self.signatures
+        if self.writers:
+            body['writers'] = self.writers
+        if self.readers:
+            body['readers'] = self.readers
+        return body
+
+    @classmethod
+    def from_json(Note,n):
+        """
+        Creates a Note object from a dictionary that contains keys values equivalent to the name of the instance variables of the Note class
+
+        :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Note class
+        :type n: dict
+
+        :return: Note whose instance variables contain the values from the dictionary
+        :rtype: Note
+        """
+        note = Note(
+        id = n.get('id'),
+        number = n.get('number'),
+        cdate = n.get('cdate'),
+        mdate = n.get('mdate'),
+        tcdate = n.get('tcdate'),
+        tmdate =n.get('tmdate'),
+        ddate=n.get('ddate'),
+        content=n.get('content'),
+        forum=n.get('forum'),
+        invitations=n.get('invitations'),
+        replyto=n.get('replyto'),
+        readers=n.get('readers'),
+        nonreaders=n.get('nonreaders'),
+        signatures=n.get('signatures'),
+        writers=n.get('writers'),
+        details=n.get('details')
+        )
+        return note
+
+class Invitation(object):
+    """
     """
     def __init__(self,
         id = None,
@@ -1681,9 +1640,8 @@ class Invitation(object):
         writers = None,
         invitees = None,
         signatures = None,
-        reply = None,
         edit = None,
-        super = None,
+        type = 'Note',
         noninvitees = None,
         nonreaders = None,
         web = None,
@@ -1697,15 +1655,14 @@ class Invitation(object):
         ddate = None,
         tcdate = None,
         tmdate = None,
-        multiReply = None,
-        taskCompletionCount = None,
+        minReplies = None,
+        maxReplies = None,
         transform = None,
         bulk = None,
         reply_forum_views = [],
         details = None):
 
         self.id = id
-        self.super = super
         self.cdate = cdate
         self.ddate = ddate
         self.duedate = duedate
@@ -1716,10 +1673,10 @@ class Invitation(object):
         self.invitees = invitees
         self.noninvitees = noninvitees
         self.signatures = signatures
-        self.multiReply = multiReply
-        self.taskCompletionCount = taskCompletionCount
-        self.reply = reply
+        self.minReplies = minReplies
+        self.maxReplies = maxReplies
         self.edit = edit
+        self.type = type
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.bulk = bulk
@@ -1727,7 +1684,7 @@ class Invitation(object):
         self.reply_forum_views = reply_forum_views
         self.web = None
         self.process = None
-        self.preprocess = None
+        self.preprocess = preprocess
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1742,8 +1699,6 @@ class Invitation(object):
             self.process = process_string
         if web_string:
             self.web = web_string
-        if preprocess is not None:
-            self.preprocess=preprocess
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -1761,40 +1716,59 @@ class Invitation(object):
         :rtype: dict
         """
         body = {
-            'id': self.id,
-            'cdate': self.cdate,
-            'ddate': self.ddate,
-            'tcdate': self.tcdate,
-            'tmdate': self.tmdate,
-            'duedate': self.duedate,
-            'expdate': self.expdate,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'writers': self.writers,
-            'invitees': self.invitees,
-            'noninvitees': self.noninvitees,
-            'signatures': self.signatures,
-            'multiReply': self.multiReply,
-            'transform': self.transform,
-            'replyForumViews': self.reply_forum_views
+            'id': self.id
         }
 
-        if self.super:
-            body['super']=self.super
-        if  self.taskCompletionCount:
-            body['taskCompletionCount']=self.taskCompletionCount
+        if self.cdate:
+            body['cdate'] = self.cdate
+
+        if self.ddate:
+            body['ddate'] = self.ddate
+
+        if self.duedate:
+            body['duedate'] = self.duedate
+
+        if self.expdate:
+            body['expdate'] = self.expdate
+
+        if self.readers:
+            body['readers'] = self.readers
+
+        if self.nonreaders:
+            body['nonreaders'] = self.nonreaders
+
+        if self.writers:
+            body['writers'] = self.writers
+
+        if self.invitees:
+            body['invitees'] = self.invitees
+
+        if self.noninvitees:
+            body['noninvitees'] = self.noninvitees
+
+        if self.signatures:
+            body['signatures'] = self.signatures
+
+        if self.reply_forum_views:
+            body['reply_forum_views'] = self.reply_forum_views
+
+        if  self.minReplies:
+            body['minReplies']=self.minReplies
+        if  self.maxReplies:
+            body['maxReplies']=self.maxReplies
         if self.web:
             body['web']=self.web
         if  self.process:
             body['process']=self.process
+        if  self.preprocess:
+            body['preprocess']=self.preprocess
         if self.edit is not None:
-            body['edit']=self.edit
-        if self.reply is not None:
-            body['reply']=self.reply
+            if self.type == 'Note':
+                body['edit']=self.edit
+            if self.type == 'Edge':
+                body['edge']=self.edit
         if self.bulk is not None:
             body['bulk']=self.bulk
-        if hasattr(self,'preprocess'):
-            body['preprocess']=self.preprocess
         return body
 
     @classmethod
@@ -1809,7 +1783,6 @@ class Invitation(object):
         :rtype: Invitation
         """
         invitation = Invitation(i['id'],
-            super = i.get('super'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
             tcdate = i.get('tcdate'),
@@ -1822,9 +1795,9 @@ class Invitation(object):
             invitees = i.get('invitees'),
             noninvitees = i.get('noninvitees'),
             signatures = i.get('signatures'),
-            multiReply = i.get('multiReply'),
-            taskCompletionCount = i.get('taskCompletionCount'),
-            reply = i.get('reply'),
+            minReplies = i.get('minReplies'),
+            edit = i.get('edit'),
+            maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
             bulk = i.get('bulk')
@@ -1837,252 +1810,10 @@ class Invitation(object):
             invitation.transform = i['transform']
         if 'preprocess' in i:
             invitation.preprocess = i['preprocess']
+        if 'edge' in i:
+            invitation.edit = i['edge']
+            invitation.type = 'Edge'
         return invitation
-
-class Note(object):
-    """
-    :param invitation: Invitation id
-    :type invitation: str
-    :param readers: List of readers in the Invitation, each reader is a Group id
-    :type readers: list[str]
-    :param writers: List of writers in the Invitation, each writer is a Group id
-    :type writers: list[str]
-    :param signatures: List of signatures in the Invitation, each signature is a Group id
-    :type signatures: list[str]
-    :param content: Content of the Note
-    :type content: dict
-    :param id: Note id
-    :type id: str, optional
-    :param original: If this Note is a blind copy of a Note, then this contains the id of that Note
-    :type original: str, optional
-    :param number: Note number. E.g. when the Note is a paper submission, this value is the paper number
-    :type number: int, optional
-    :param cdate: Creation date
-    :type cdate: int, optional
-    :param tcdate: True creation date
-    :type tcdate: int, optional
-    :param tmdate: Modification date
-    :type tmdate: int, optional
-    :param ddate: Deletion date
-    :type ddate: int, optional
-    :param forum: Forum id
-    :type forum: str, optional
-    :param referent: If this Note is used as a ref, this field points to the Profile
-    :type referent: str, optional
-    :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID
-    :type replyto: str, optional
-    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-    :type nonreaders: list[str], optional
-    :param details:
-    :type details: dict, optional
-    :param tauthor: True author
-    :type tauthor: str, optional
-    """
-    def __init__(self,
-        invitation,
-        readers,
-        writers,
-        signatures,
-        content,
-        id=None,
-        original=None,
-        number=None,
-        cdate=None,
-        mdate=None,
-        tcdate=None,
-        tmdate=None,
-        ddate=None,
-        forum=None,
-        referent=None,
-        replyto=None,
-        nonreaders=None,
-        details = None,
-        tauthor=None):
-
-        self.id = id
-        self.original = original
-        self.number = number
-        self.cdate = cdate
-        self.mdate = mdate
-        self.tcdate = tcdate
-        self.tmdate = tmdate
-        self.ddate = ddate
-        self.content = content
-        self.forum = forum
-        self.referent = referent
-        self.invitation = invitation
-        self.replyto = replyto
-        self.readers = readers
-        self.nonreaders = [] if nonreaders is None else nonreaders
-        self.signatures = signatures
-        self.writers = writers
-        self.number = number
-        self.details = details
-        if tauthor:
-            self.tauthor = tauthor
-
-    def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-        return 'Note(' + content + ')'
-
-    def __str__(self):
-        pp = pprint.PrettyPrinter()
-        return pp.pformat(vars(self))
-
-    def to_json(self):
-        """
-        Converts Note instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-        :return: Dictionary containing all the parameters of a Note instance
-        :rtype: dict
-        """
-        body = {
-            'id': self.id,
-            'original': self.original,
-            'cdate': self.cdate,
-            'mdate': self.mdate,
-            'tcdate': self.tcdate,
-            'tmdate': self.tmdate,
-            'ddate': self.ddate,
-            'number': self.number,
-            'content': self.content,
-            'forum': self.forum,
-            'referent': self.referent,
-            'invitation': self.invitation,
-            'replyto': self.replyto,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'signatures': self.signatures,
-            'writers': self.writers,
-            'number': self.number
-        }
-        if hasattr(self, 'tauthor'):
-            body['tauthor'] = self.tauthor
-        return body
-
-    @classmethod
-    def from_json(Note,n):
-        """
-        Creates a Note object from a dictionary that contains keys values equivalent to the name of the instance variables of the Note class
-        :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Note class
-        :type n: dict
-        :return: Note whose instance variables contain the values from the dictionary
-        :rtype: Note
-        """
-        note = Note(
-        id = n.get('id'),
-        original = n.get('original'),
-        number = n.get('number'),
-        cdate = n.get('cdate'),
-        mdate = n.get('mdate'),
-        tcdate = n.get('tcdate'),
-        tmdate =n.get('tmdate'),
-        ddate=n.get('ddate'),
-        content=n.get('content'),
-        forum=n.get('forum'),
-        referent=n.get('referent'),
-        invitation=n.get('invitation'),
-        replyto=n.get('replyto'),
-        readers=n.get('readers'),
-        nonreaders=n.get('nonreaders'),
-        signatures=n.get('signatures'),
-        writers=n.get('writers'),
-        details=n.get('details'),
-        tauthor=n.get('tauthor')
-        )
-        return note
-
-class Tag(object):
-    """
-    :param tag: Content of the tag
-    :type tag: str
-    :param invitation: Invitation id
-    :type invitation: str
-    :param readers: List of readers in the Invitation, each reader is a Group id
-    :type readers: list[str]
-    :param signatures: List of signatures in the Invitation, each signature is a Group id
-    :type signatures: list[str]
-    :param id: Tag id
-    :type id: str, optional
-    :param cdate: Creation date
-    :type cdate: int, optional
-    :param tcdate: True creation date
-    :type tcdate: int, optional
-    :param ddate: Deletion date
-    :type ddate: int, optional
-    :param forum: Forum id
-    :type forum: str, optional
-    :param replyto: Note id
-    :type replyto: list[str], optional
-    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-    :type nonreaders: list[str], optional
-    """
-    def __init__(self, tag, invitation, readers, signatures, id=None, cdate=None, tcdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
-        self.id = id
-        self.cdate = cdate
-        self.tcdate = tcdate
-        self.ddate = ddate
-        self.tag = tag
-        self.forum = forum
-        self.invitation = invitation
-        self.replyto = replyto
-        self.readers = readers
-        self.nonreaders = [] if nonreaders is None else nonreaders
-        self.signatures = signatures
-
-    def to_json(self):
-        """
-        Converts Tag instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-
-        :return: Dictionary containing all the parameters of a Tag instance
-        :rtype: dict
-        """
-        return {
-            'id': self.id,
-            'cdate': self.cdate,
-            'tcdate': self.tcdate,
-            'ddate': self.ddate,
-            'tag': self.tag,
-            'forum': self.forum,
-            'invitation': self.invitation,
-            'replyto': self.replyto,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'signatures': self.signatures
-        }
-
-    @classmethod
-    def from_json(Tag, t):
-        """
-        Creates a Tag object from a dictionary that contains keys values equivalent to the name of the instance variables of the Tag class
-
-        :param n: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Tag class
-        :type n: dict
-
-        :return: Tag whose instance variables contain the values from the dictionary
-        :rtype: Tag
-        """
-        tag = Tag(
-            id = t.get('id'),
-            cdate = t.get('cdate'),
-            tcdate = t.get('tcdate'),
-            ddate = t.get('ddate'),
-            tag = t.get('tag'),
-            forum = t.get('forum'),
-            invitation = t.get('invitation'),
-            replyto = t.get('replyto'),
-            readers = t.get('readers'),
-            nonreaders = t.get('nonreaders'),
-            signatures = t.get('signatures'),
-        )
-        return tag
-
-    def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-        return 'Tag(' + content + ')'
-
-    def __str__(self):
-        pp = pprint.PrettyPrinter()
-        return pp.pformat(vars(self))
 
 class Edge(object):
     def __init__(self, head, tail, invitation, readers, writers, signatures, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
@@ -2117,8 +1848,8 @@ class Edge(object):
         }
         if self.id:
             body['id'] = self.id
-        if self.cdate:
-            body['cdate'] = self.cdate
+        # if self.cdate:
+        #     body['cdate'] = self.cdate
         if self.ddate:
             body['ddate'] = self.ddate
         if self.nonreaders:
@@ -2165,145 +1896,4 @@ class Edge(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
-class Profile(object):
-    """
-    :param id: Profile id
-    :type id: str, optional
-    :param tcdate: True creation date
-    :type tcdate: int, optional
-    :param tmdate: Modification date
-    :type tmdate: int, optional
-    :param referent: If this is a ref, it contains the Profile id that it points to
-    :type referent: str, optional
-    :param packaging: Contains previous versions of this Profile
-    :type packaging: dict, optional
-    :param invitation: Invitation id
-    :type invitation: str, optional
-    :param readers: List of readers in the Invitation, each reader is a Group id
-    :type readers: str, optional
-    :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
-    :type nonreaders: str, optional
-    :param signatures: List of signatures in the Invitation, each signature is a Group id
-    :type signatures: str, optional
-    :param writers: List of writers in the Invitation, each writer is a Group id
-    :type writers: str, optional
-    :param content: Dictionary containing the information of the Profile
-    :type content: dict, optional
-    :param metaContent: Contains information of the entities that have changed the Profile
-    :type metaContent: dict, optional
-    :param active: If true, the Profile is active in OpenReview
-    :type active: bool, optional
-    :param password: If true, the Profile has a password, otherwise, it was automatically created and the person that it belongs to has not set a password yet
-    :type password: bool, optional
-    :param tauthor: True author
-    :type tauthor: str, optional
-    """
-    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
-        self.id = id
-        self.number = number
-        self.tcdate = tcdate
-        self.tmdate = tmdate
-        self.referent = referent
-        self.packaging = packaging
-        self.invitation = invitation
-        self.readers = readers
-        self.nonreaders = nonreaders
-        self.signatures = signatures
-        self.writers = writers
-        self.content = content
-        self.metaContent = metaContent
-        self.active = active
-        self.password = password
-        if tauthor:
-            self.tauthor = tauthor
-
-    def __repr__(self):
-        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
-        return 'Profile(' + content + ')'
-
-    def __str__(self):
-        pp = pprint.PrettyPrinter()
-        return pp.pformat(vars(self))
-
-
-    def get_preferred_name(self, pretty=False):
-        username=self.id
-        for name in self.content['names']:
-            if 'username' in name and name.get('preferred', False):
-                username=name['username']
-        if pretty:
-            return tools.pretty_id(username)
-        return username
-
-    def get_preferred_email(self):
-        preferred_email=self.content.get('preferredEmail')
-        if preferred_email:
-            return preferred_email
-
-        if self.content['emailsConfirmed']:
-            return self.content['emailsConfirmed'][0]
-
-        if self.content['emails']:
-            return self.content['emails'][0]
-
-        return None
-
-
-    def to_json(self):
-        """
-        Converts Profile instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
-
-        :return: Dictionary containing all the parameters of a Profile instance
-        :rtype: dict
-        """
-        body = {
-            'id': self.id,
-            'tcdate': self.tcdate,
-            'tmdate': self.tmdate,
-            'referent': self.referent,
-            'packaging': self.packaging,
-            'invitation': self.invitation,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'signatures': self.signatures,
-            'writers': self.writers,
-            'content': self.content,
-            'metaContent': self.metaContent,
-            'active': self.active,
-            'password': self.password
-        }
-        if hasattr(self, 'tauthor'):
-            body['tauthor'] = self.tauthor
-        return body
-
-    @classmethod
-    def from_json(Profile,n):
-        """
-        Creates a Profile object from a dictionary that contains keys values equivalent to the name of the instance variables of the Profile class
-
-        :param i: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Profile class
-        :type i: dict
-
-        :return: Profile whose instance variables contain the values from the dictionary
-        :rtype: Profile
-        """
-        profile = Profile(
-        id = n.get('id'),
-        active = n.get('active'),
-        password = n.get('password'),
-        number = n.get('number'),
-        tcdate = n.get('tcdate'),
-        tmdate=n.get('tmdate'),
-        referent=n.get('referent'),
-        packaging=n.get('packaging'),
-        invitation=n.get('invitation'),
-        readers=n.get('readers'),
-        nonreaders=n.get('nonreaders'),
-        signatures=n.get('signatures'),
-        writers=n.get('writers'),
-        content=n.get('content'),
-        metaContent=n.get('metaContent'),
-        tauthor=n.get('tauthor')
-        )
-        return profile
 
