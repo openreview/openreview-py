@@ -13,6 +13,8 @@ var HEADER = {
   title: 'TMLR Editors In Chief Console',
   instructions: ''
 };
+var SUBMITTED_STATUS = '.TMLR/Submitted';
+var UNDER_REVIEW_STATUS = '.TMLR/Under_Review';
 
 var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&version=2&referrer=[Editors In Chief Console](/group?id=.TMLR/Editors_In_Chief)';
 var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=[Editors In Chief Console](/group?id=.TMLR/Editors_In_Chief)';
@@ -26,7 +28,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Paper Status', 'Action Editor Status', 'Reviewer Status'],
+    tabs: ['Submission Status', 'Under Review Status', 'Action Editor Status', 'Reviewer Status'],
     referrer: args && args.referrer
   })
 
@@ -56,6 +58,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
   var submissionsByNumber = _.keyBy(submissions, 'number');
 
   //build the rows
+  var submissionStatusRows = [];
   var paperStatusRows = [];
   var reviewerStatusById = {};
   reviewers.members.forEach(function(reviewer, index) {
@@ -105,8 +108,39 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
   });
 
   submissions.forEach(function(submission) {
-    if (submission) {
-      var number = submission.number;
+    var number = submission.number;
+    var formattedSubmission = {
+      id: submission.id,
+      forum: submission.forum,
+      number: number,
+      cdate: submission.cdate,
+      mdate: submission.mdate,
+      tcdate: submission.tcdate,
+      tmdate: submission.tmdate,
+      showDates: true,
+      content: {
+        title: submission.content.title.value,
+        authors: submission.content.authors.value,
+        authorids: submission.content.authorids.value,
+        venueid: submission.content.venueid.value,
+      }
+    };
+
+    if (submission.content.venueid.value == SUBMITTED_STATUS) {
+      var paperActionEditors = aeByNumber[number] || [];
+      var actionEditorSummary = { id: 'No Action Editor' };
+      if (paperActionEditors.length && actionEditorStatusById[paperActionEditors[0].id]) {
+        actionEditorSummary = actionEditorStatusById[paperActionEditors[0].id].summary;
+      }
+
+      submissionStatusRows.push({
+        submissionNumber: { number: parseInt(number)},
+        submission: formattedSubmission,
+        actionEditor: actionEditorSummary,
+        status: submission.content.venue.value,
+      })
+    }
+    else {
 
       var reviews = submission.details.directReplies.filter(function(reply) {
         return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Review') >= 0;
@@ -126,21 +160,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var paperReviewerStatus = {};
       var confidences = [];
       var completedReviews = reviews.length && (reviews.length == paperReviewers.length);
-      var formattedSubmission = {
-        id: submission.id,
-        forum: submission.forum,
-        number: number,
-        cdate: submission.cdate,
-        mdate: submission.mdate,
-        tcdate: submission.tcdate,
-        tmdate: submission.tmdate,
-        showDates: true,
-        content: {
-          title: submission.content.title.value,
-          authors: submission.content.authors.value,
-          authorids: submission.content.authorids.value
-        }
-      };
 
       paperReviewers.forEach(function(reviewer) {
         var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
@@ -262,7 +281,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
   })
 
   return venueStatusData = {
-    paperStatusRows: paperStatusRows,
+    submissionStatusRows: submissionStatusRows,
+    paperStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid == UNDER_REVIEW_STATUS; }),
     reviewerStatusRows: Object.values(reviewerStatusById),
     actionEditorStatusRows: Object.values(actionEditorStatusById)
   };
@@ -271,7 +291,56 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 // Render functions
 var renderData = function(venueStatusData) {
 
-  Webfield2.ui.renderTable('#paper-status', venueStatusData.paperStatusRows, {
+  Webfield2.ui.renderTable('#submission-status', venueStatusData.submissionStatusRows, {
+    headings: ['#', 'Paper Summary', 'Action Editor', 'Status'],
+    renders: [
+      function(data) {
+        return '<strong class="note-number">' + data.number + '</strong>';
+      },
+      Handlebars.templates.noteSummary,
+      Handlebars.templates.committeeSummary,
+      function(data) {
+        return '<h4>' + data + '</h4>';
+      },
+    ],
+    sortOptions: {
+      Paper_Number: function(row) { return row.submissionNumber.number; },
+      Paper_Title: function(row) { return _.toLower(_.trim(row.submission.content.title)); },
+      Paper_Submission_Date: function(row) { return row.submission.cdate; },
+      Action_Editor: function(row) { return (row.areachairProgressData.areachair ? row.areachairProgressData.areachair.name : 'No Action Ediror'); },
+      Status: function(row) { return row.status; }
+    },
+    searchProperties: {
+      number: ['submissionNumber.number'],
+      id: ['submission.id'],
+      title: ['submission.content.title'],
+      submissionDate: ['submission.cdate'],
+      author: ['submission.content.authors','note.content.authorids'], // multi props
+      keywords: ['submission.content.keywords'],
+      reviewer: ['reviewProgressData.reviewers'],
+      actionEditor: ['areachairProgressData.areachair'],
+      status: ['status'],
+      default: ['submissionNumber.number', 'submission.content.title']
+    },
+    reminderOptions: {
+      container: 'a.send-reminder-link',
+      defaultSubject: SHORT_PHRASE + ' Reminder',
+      defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
+      'Click on the link below to go to the review page:\n\n{{submit_review_link}}' +
+      '\n\nThank you,\n' + SHORT_PHRASE + ' Editor in Chief'
+    },
+    extraClasses: 'console-table paper-table',
+    postRenderTable: function() {
+      $('.console-table th').eq(0).css('width', '5%');
+      $('.console-table th').eq(1).css('width', '25%');
+      $('.console-table th').eq(2).css('width', '30%');
+      $('.console-table th').eq(3).css('width', '28%');
+      $('.console-table th').eq(4).css('width', '12%');
+    }
+})
+
+
+  Webfield2.ui.renderTable('#under-review-status', venueStatusData.paperStatusRows, {
       headings: ['#', 'Paper Summary',
       'Review Progress', 'Action Editor Decision', 'Status'],
       renders: [
