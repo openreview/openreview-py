@@ -179,7 +179,42 @@ var renderData = function(venueStatusData) {
         defaultSubject: SHORT_PHRASE + ' Reminder',
         defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the review page:\n\n{{submit_review_link}}' +
-        '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor'
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
+        menu: [
+          {
+            id: 'all-reviewers',
+            name: 'All Reviewers',
+            getUsers: function() {
+              return venueStatusData.rows.map(function(row) {
+                return {
+                  groups: Object.values(row.reviewProgressData.reviewers),
+                  forumUrl: 'https://openreview.net/forum?' + $.param({
+                    id: row.submission.forum,
+                    noteId: row.submission.forum,
+                    invitationId: VENUE_ID + '/Paper' + row.submission.number + '/-/Review'
+                  })
+                }
+              });
+            }
+          },
+          {
+            id: 'unsubmitted-reviewers',
+            name: 'Reviewers with missing reviews',
+            getUsers: function() {
+              return venueStatusData.rows.map(function(row) {
+                return {
+                  groups: Object.values(row.reviewProgressData.reviewers).filter(function(r) { return !r.completedReview; }),
+                  forumUrl: 'https://openreview.net/forum?' + $.param({
+                    id: row.submission.forum,
+                    noteId: row.submission.forum,
+                    invitationId: VENUE_ID + '/Paper' + row.submission.number + '/-/Review'
+                  })
+                }
+              });
+            }
+          }
+        ]
+
       },
       extraClasses: 'console-table paper-table',
       postRenderTable: function() {
