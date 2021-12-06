@@ -86,8 +86,8 @@ def get_group(client, id):
         group = client.get_group(id = id)
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
-        error =  e.args[0].get('message')
-        if isinstance(error, str) and error.startswith('Group Not Found'):
+        error =  e.args[0]
+        if error.get('name') == 'NotFoundError' or error.get('message').startswith('Group Not Found'):
             return None
         else:
             raise e
@@ -250,7 +250,7 @@ def create_authorid_profiles(client, note, print=print):
 
     return created_profiles
 
-def get_preferred_name(profile):
+def get_preferred_name(profile, last_name_only=False):
     """
     Accepts openreview.Profile object
 
@@ -267,6 +267,9 @@ def get_preferred_name(profile):
         primary_preferred_name = preferred_names[0]
     else:
         primary_preferred_name = names[0]
+
+    if last_name_only:
+        return primary_preferred_name['last']
 
     name_parts = []
     if primary_preferred_name.get('first'):
