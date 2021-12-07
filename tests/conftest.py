@@ -14,13 +14,14 @@ class Helpers:
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
         res = client.register_user(email = email, first = first, last = last, password = '1234')
+        username = res.get('id')
         assert res, "Res i none"
         profile_content={
             'names': [
                     {
                         'first': first,
                         'last': last,
-                        'username': '~' + first + '_' + last + '1'
+                        'username': username
                     }
                 ],
             'emails': [email] + alternates,
