@@ -123,7 +123,7 @@ class Journal(object):
     def get_decision_approval_id(self, number=None):
         return self.__get_invitation_id(name='Decision_Approval', number=number)
 
-    def get_review_id(self, number):
+    def get_review_id(self, number=None):
         return self.__get_invitation_id(name='Review', number=number)
 
     def get_review_rating_id(self, signature):
@@ -191,6 +191,7 @@ class Journal(object):
         self.invitation_builder.set_authors_release_invitation(self)
         self.invitation_builder.set_ae_assignment(self)
         self.invitation_builder.set_reviewer_assignment(self)
+        self.invitation_builder.set_super_review_invitation(self)
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
