@@ -1419,7 +1419,7 @@ class InvitationBuilder(object):
                     'duedate': { 'value-regex': '.*' }
                 },
                 'invitation': {
-                    #'id': { 'value': paper_review_invitation_id },
+                    'id': { 'value': paper_review_invitation_id },
                     'id': { 'value-regex': '.*' },
                     'signatures': { 'values': [ editors_in_chief_id ] },
                     'readers': { 'values': ['everyone'] },
@@ -1435,12 +1435,12 @@ class InvitationBuilder(object):
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                         'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                         'note': {
-                            # 'id': {
-                            #     'value': {
-                            #         'value-invitation': paper_review_invitation_id,
-                            #         'optional': True
-                            #     }
-                            # },
+                            'id': {
+                                'value': {
+                                    'value-invitation': paper_review_invitation_id,
+                                    'optional': True
+                                }
+                            },
                             'forum': { 'value': { 'value': '${params.noteId}' }},
                             'replyto': { 'value': { 'value': '${params.noteId}' }},
                             'ddate': { 'value': {
