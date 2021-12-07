@@ -219,16 +219,37 @@ class TestClient():
         assert to_profile['id'] == '~Melissa_Bok1'
 
         profile = client.merge_profiles('~Melissa_Bok1', '~Celeste_Bok1')
-
         assert profile, 'Could not merge the profiles'
         assert profile.id == '~Melissa_Bok1'
         usernames = [name['username'] for name in profile.content['names']]
         assert '~Melissa_Bok1' in usernames
         assert '~Celeste_Bok1' in usernames
-
         merged_profile = client.get_profile(email_or_id = '~Celeste_Bok1')
         merged_profile.id == '~Melissa_Bok1'
 
+        
+
+    def test_rename_profile(self, client):
+        guest = openreview.Client()
+        from_profile = guest.register_user(email = 'lbahy@mail.com', first = 'Nadia', last = 'LBahy', password = '1234')
+        assert from_profile
+        to_profile = guest.register_user(email = 'steph@mail.com', first = 'David', last = 'Steph', password = '5678')
+        assert to_profile
+
+        assert from_profile['id'] == '~Nadia_LBahy1'
+        assert to_profile['id'] == '~David_Steph1'
+
+        profile = client.merge_profiles('~David_Steph1', '~Nadia_LBahy1')
+        assert profile, 'Could not merge the profiles'
+        assert profile.id == '~David_Steph1'
+        usernames = [name['username'] for name in profile.content['names']]
+        assert '~Nadia_LBahy1' in usernames
+        assert '~David_Steph1' in usernames
+
+        # Test rename profile 
+        assert profile.id == '~David_Steph1'
+        profile = client.rename_profile('~David_Steph1', '~Nadia_LBahy1')
+        assert profile.id == '~Nadia_LBahy1'
 
     @pytest.mark.xfail
     def test_post_venue(self, client):

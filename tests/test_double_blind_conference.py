@@ -1360,7 +1360,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
-        builder.set_decision_stage(release_to_area_chairs=True)
+        builder.set_decision_stage(release_to_area_chairs=True, email_authors=True, release_to_authors=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         conference = builder.get_result()
@@ -1375,12 +1375,12 @@ class TestDoubleBlindConference():
 
         notes = pc_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[2]
-
+        print(submission.readers)
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
-            nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs','AKBC.ws/2019/Conference/Paper1/Authors'],
+            nonreaders = [],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
@@ -1394,19 +1394,26 @@ class TestDoubleBlindConference():
         assert decision_note
         helpers.await_queue()
 
+        # Check that message was sent 
+        messages = client.get_messages(subject = '[AKBC 2019] Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 3
+
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
         assert accepted_author_group
         assert len(accepted_author_group.members) == 1
         assert accepted_author_group.members == [conference.id + '/Paper{}/Authors'.format(submission.number)]
 
-        builder.set_decision_stage(public=True)
+        # Change readership of decision and make sure no emails are sent 
+        builder.set_decision_stage(public=True,email_authors=True)
         conference = builder.get_result()
 
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
         assert decisions
         assert decisions[0].readers == ['everyone']
+        messages = client.get_messages(subject = '[AKBC 2019] Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 3
 
-        builder.set_decision_stage(release_to_authors=True, release_to_area_chairs=True)
+        builder.set_decision_stage(release_to_authors=True, release_to_area_chairs=True,email_authors=True)
         conference = builder.get_result()
 
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
@@ -1415,6 +1422,48 @@ class TestDoubleBlindConference():
 
         notes = conference.get_submissions(accepted=True)
         assert notes
+
+        # Reverting acceptance decision 
+        
+        notes = list(client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision'))
+        note = notes[0]
+        note.content['decision'] = 'Reject'
+        note.content['comment'] = 'Never mind!'
+        note.readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs','AKBC.ws/2019/Conference/Paper1/Authors']
+        decision_note = client.post_note(note)
+        
+        assert decision_note
+        helpers.await_queue()
+
+        # Check that email was sent 
+        messages = client.get_messages(subject = '[AKBC 2019] Decision updated for your submission - Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 3
+
+        accepted_author_group = client.get_group(conference.get_accepted_authors_id())
+        assert accepted_author_group
+        assert len(accepted_author_group.members) == 0
+        assert accepted_author_group.members == []
+
+        # Re-accepting
+        notes = list(client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision'))
+        note = notes[0]
+        note.content['decision'] = 'Accept (Oral)'
+        note.content['comment'] = 'Actually okay'
+        note.readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs','AKBC.ws/2019/Conference/Paper1/Authors']
+
+        decision_note = client.post_note(note)
+        
+        assert decision_note
+        helpers.await_queue()
+
+        # Check that email was sent 
+        messages = client.get_messages(subject = '[AKBC 2019] Decision updated for your submission - Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 6
+    
+        accepted_author_group = client.get_group(conference.get_accepted_authors_id())
+        assert accepted_author_group
+        assert len(accepted_author_group.members) == 1
+        assert accepted_author_group.members == [conference.id + '/Paper{}/Authors'.format(submission.number)]
 
     def test_consoles(self, client, test_client, selenium, request_page):
 

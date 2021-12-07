@@ -46,6 +46,7 @@ class Client(object):
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
+        self.profiles_rename = self.baseurl + '/profiles/rename'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -558,6 +559,27 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
+    def rename_profile(self, current_id, new_id):
+        """
+        Updates a Profile
+
+        :param profile: Profile object
+        :type profile: Profile
+
+        :return: The new updated Profile
+        :rtype: Profile
+        """
+        response = requests.post(
+            self.profiles_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())
+
     def merge_profiles(self, profileTo, profileFrom):
         """
         Merges two Profiles
@@ -580,7 +602,6 @@ class Client(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
-
 
     def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None):
         """
