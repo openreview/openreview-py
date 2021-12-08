@@ -23,11 +23,11 @@ class InvitationBuilder(object):
             )
         )
 
-    def save_invitation(self, journal, invitation):
+    def save_invitation(self, journal, invitation, overwrite=False):
 
         existing_invitation = openreview.tools.get_invitation(self.client, invitation.id)
 
-        if not existing_invitation:
+        if not existing_invitation or overwrite:
             venue_id = journal.venue_id
 
             if invitation.preprocess:
@@ -198,7 +198,7 @@ class InvitationBuilder(object):
                 print(invitation)
                 return invitation
 
-    def set_submission_invitation(self, journal):
+    def set_submission_invitation(self, journal, overwrite):
 
         venue_id=journal.venue_id
         editor_in_chief_id=journal.get_editors_in_chief_id()
@@ -354,7 +354,7 @@ class InvitationBuilder(object):
             },
             process=os.path.join(os.path.dirname(__file__), 'process/author_submission_process.py')
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(journal, invitation, overwrite)
 
     def set_ae_assignment(self, journal):
         venue_id = journal.venue_id
@@ -911,7 +911,7 @@ class InvitationBuilder(object):
         self.save_invitation(journal, invitation)
 
 
-    def set_under_review_invitation(self, journal):
+    def set_under_review_invitation(self, journal, overwrite):
         venue_id = journal.venue_id
 
         under_review_invitation_id = journal.get_under_review_id()
@@ -967,9 +967,9 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/under_review_submission_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(journal, invitation, overwrite)
 
-    def set_desk_rejection_invitation(self, journal):
+    def set_desk_rejection_invitation(self, journal, overwrite):
         venue_id = journal.venue_id
         paper_action_editors_id = journal.get_action_editors_id(number='${note.number}')
         paper_authors_id = journal.get_authors_id(number='${note.number}')
@@ -1015,9 +1015,9 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/desk_reject_submission_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(journal, invitation, overwrite)
 
-    def set_withdrawn_invitation(self, journal):
+    def set_withdrawn_invitation(self, journal, overwrite):
         venue_id = journal.venue_id
 
         withdraw_invitation_id = journal.get_withdrawn_id()
@@ -1051,9 +1051,9 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
 
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(journal, invitation, overwrite)
 
-    def set_rejection_invitation(self, journal):
+    def set_rejection_invitation(self, journal, overwrite):
 
         venue_id = journal.venue_id
 
@@ -1095,9 +1095,9 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/rejected_submission_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(journal, invitation, overwrite)
 
-    def set_acceptance_invitation(self, journal):
+    def set_acceptance_invitation(self, journal, overwrite):
         venue_id = journal.venue_id
 
         acceptance_invitation_id = journal.get_acceptance_id()
@@ -1172,9 +1172,9 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/acceptance_submission_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(journal, invitation, overwrite)
 
-    def set_authors_release_invitation(self, journal):
+    def set_authors_release_invitation(self, journal, overwrite):
 
         venue_id = journal.venue_id
 
