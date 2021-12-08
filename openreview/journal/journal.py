@@ -180,15 +180,15 @@ class Journal(object):
     def get_submission_editable_id(self, number):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
-    def setup(self, support_role, editors=[], overwrite=False):
+    def setup(self, support_role, editors=[]):
         self.setup_groups(support_role, editors)
-        self.invitation_builder.set_submission_invitation(self, overwrite)
-        self.invitation_builder.set_under_review_invitation(self, overwrite)
-        self.invitation_builder.set_desk_rejection_invitation(self, overwrite)
-        self.invitation_builder.set_rejection_invitation(self, overwrite)
-        self.invitation_builder.set_withdrawn_invitation(self, overwrite)
-        self.invitation_builder.set_acceptance_invitation(self, overwrite)
-        self.invitation_builder.set_authors_release_invitation(self, overwrite)
+        self.invitation_builder.set_submission_invitation(self)
+        self.invitation_builder.set_under_review_invitation(self)
+        self.invitation_builder.set_desk_rejection_invitation(self)
+        self.invitation_builder.set_rejection_invitation(self)
+        self.invitation_builder.set_withdrawn_invitation(self)
+        self.invitation_builder.set_acceptance_invitation(self)
+        self.invitation_builder.set_authors_release_invitation(self)
         self.invitation_builder.set_ae_assignment(self)
         self.invitation_builder.set_reviewer_assignment(self)
 
