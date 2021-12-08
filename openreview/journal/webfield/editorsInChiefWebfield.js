@@ -50,7 +50,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submission Status', 'Under Review Status', 'Action Editor Status', 'Reviewer Status'],
+    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status'],
     referrer: args && args.referrer
   })
 
@@ -74,7 +74,7 @@ var loadData = function() {
       regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
       select: 'id,cdate,duedate,expdate',
-      expired: true
+      //expired: true
     })
     .then(function(invitations) {
       return _.keyBy(invitations, 'id');
@@ -185,7 +185,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     var decisionApprovalNotes = getReplies(submission, DECISION_APPROVAL_NAME);
     //Camera Ready Revision by Authors
     var cameraReadyRevisionInvitation = invitationsById[getInvitationId(number, CAMERA_READY_REVISION_NAME)];
-    var camerayReadyRevisions = CAMERA_READY_REVISION_NAME in submission.invitations;
     //Camera Ready Verification by AE
     var cameraReadyVerificationInvitation = invitationsById[getInvitationId(number, CAMERA_READY_VERIFICATION_NAME)];
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
@@ -245,7 +244,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         id: cameraReadyRevisionInvitation.id,
         startdate: cameraReadyRevisionInvitation.cdate,
         duedate: cameraReadyRevisionInvitation.duedate,
-        complete: camerayReadyRevisions,
+        complete: submission.invitations.includes(cameraReadyRevisionInvitation.id),
         replies: []
       });
     }
@@ -366,7 +365,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           }
         ] : []
       },
-      areachairProgressData: {
+      actionEditorProgressData: {
         recommendation: metaReview && metaReview.content.recommendation,
         status: {
           Certification: metaReview ? metaReview.content.certification.join(', ') : ''
@@ -376,6 +375,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         actionEditor: actionEditor,
         metaReview: metaReview,
         referrer: referrerUrl,
+        decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
         actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
@@ -386,22 +386,26 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         ] : []
       },
       tasks: tasks,
+      status: submission.content.venue.value
     })
   })
 
   return venueStatusData = {
     submissionStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid == SUBMITTED_STATUS; }),
     paperStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid == UNDER_REVIEW_STATUS; }),
+    decisionApprovalStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid == UNDER_REVIEW_STATUS && row.actionEditorProgressData.decisionApprovalPending; }),
+    completeSubmissionStatusRows: paperStatusRows.filter(function(row) { return ![SUBMITTED_STATUS, UNDER_REVIEW_STATUS].includes(row.submission.content.venueid); }),
     reviewerStatusRows: Object.values(reviewerStatusById),
     actionEditorStatusRows: Object.values(actionEditorStatusById)
   };
 }
 
 // Render functions
-var renderData = function(venueStatusData) {
 
-  Webfield2.ui.renderTable('#submission-status', venueStatusData.submissionStatusRows, {
-    headings: ['#', 'Paper Summary', 'Reviewers', 'Action Editor', 'Tasks'],
+var renderTable = function(container, rows) {
+  Webfield2.ui.renderTable('#' + container, rows, {
+    headings: ['#', 'Paper Summary',
+    'Review Progress', 'Action Editor Decision', 'Tasks', 'Status'],
     renders: [
       function(data) {
         return '<strong class="note-number">' + data.number + '</strong>';
@@ -422,12 +426,17 @@ var renderData = function(venueStatusData) {
           items.join('\n') +
         '</ul>';
       },
+      function(data) {
+        return '<h4>' + data + '</h4>';
+      }
     ],
     sortOptions: {
       Paper_Number: function(row) { return row.submissionNumber.number; },
       Paper_Title: function(row) { return _.toLower(_.trim(row.submission.content.title)); },
       Paper_Submission_Date: function(row) { return row.submission.cdate; },
-      Action_Editor: function(row) { return row.actionEditor.name; },
+      Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
+      Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+      Decision: function(row) { return row.actionEditorProgressData.recommendation; },
       Status: function(row) { return row.status; }
     },
     searchProperties: {
@@ -436,7 +445,11 @@ var renderData = function(venueStatusData) {
       title: ['submission.content.title'],
       submissionDate: ['submission.cdate'],
       author: ['submission.content.authors','note.content.authorids'], // multi props
-      actionEditor: ['actionEditor.name'],
+      keywords: ['submission.content.keywords'],
+      reviewer: ['reviewProgressData.reviewers'],
+      numReviewersAssigned: ['reviewProgressData.numReviewers'],
+      numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
+      decision: ['actionEditorProgressData.recommendation'],
       status: ['status'],
       default: ['submissionNumber.number', 'submission.content.title']
     },
@@ -455,72 +468,15 @@ var renderData = function(venueStatusData) {
       $('.console-table th').eq(3).css('width', '28%');
       $('.console-table th').eq(4).css('width', '12%');
     }
-})
-
-
-  Webfield2.ui.renderTable('#under-review-status', venueStatusData.paperStatusRows, {
-      headings: ['#', 'Paper Summary',
-      'Review Progress', 'Action Editor Decision', 'Tasks'],
-      renders: [
-        function(data) {
-          return '<strong class="note-number">' + data.number + '</strong>';
-        },
-        Handlebars.templates.noteSummary,
-        Handlebars.templates.noteReviewers,
-        Handlebars.templates.noteAreaChairs,
-        function(data) {
-          var items = data.map(function(d) { return '<li class="note">' +
-            '<h4>' +
-              '<a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a>: ' +
-              '<span class="duedate">' + view.forumDate(d.duedate) + '</span>' +
-              '<span >' + d.complete + '(' + d.replies.length + ')</span>' +
-            '</h4>' +
-          '</li>';
-          })
-          return '<ul>' +
-            items.join('\n') +
-          '</ul>';
-        },
-      ],
-      sortOptions: {
-        Paper_Number: function(row) { return row.submissionNumber.number; },
-        Paper_Title: function(row) { return _.toLower(_.trim(row.submission.content.title)); },
-        Paper_Submission_Date: function(row) { return row.submission.cdate; },
-        Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
-        Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
-        Decision: function(row) { return row.areachairProgressData.recommendation; },
-        Status: function(row) { return row.status; }
-      },
-      searchProperties: {
-        number: ['submissionNumber.number'],
-        id: ['submission.id'],
-        title: ['submission.content.title'],
-        submissionDate: ['submission.cdate'],
-        author: ['submission.content.authors','note.content.authorids'], // multi props
-        keywords: ['submission.content.keywords'],
-        reviewer: ['reviewProgressData.reviewers'],
-        numReviewersAssigned: ['reviewProgressData.numReviewers'],
-        numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
-        decision: ['areachairProgressData.recommendation'],
-        status: ['status'],
-        default: ['submissionNumber.number', 'submission.content.title']
-      },
-      reminderOptions: {
-        container: 'a.send-reminder-link',
-        defaultSubject: SHORT_PHRASE + ' Reminder',
-        defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
-        'Click on the link below to go to the review page:\n\n{{submit_review_link}}' +
-        '\n\nThank you,\n' + SHORT_PHRASE + ' Editor in Chief'
-      },
-      extraClasses: 'console-table paper-table',
-      postRenderTable: function() {
-        $('.console-table th').eq(0).css('width', '5%');
-        $('.console-table th').eq(1).css('width', '25%');
-        $('.console-table th').eq(2).css('width', '30%');
-        $('.console-table th').eq(3).css('width', '28%');
-        $('.console-table th').eq(4).css('width', '12%');
-      }
   })
+}
+var renderData = function(venueStatusData) {
+
+  renderTable('submission-status', venueStatusData.submissionStatusRows);
+  renderTable('under-review-status', venueStatusData.paperStatusRows);
+  renderTable('decision-approval-status', venueStatusData.decisionApprovalStatusRows);
+  renderTable('complete-submission-status', venueStatusData.completeSubmissionStatusRows);
+
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
     headings: ['#', 'Reviewer', 'Review Progress', 'Status'],

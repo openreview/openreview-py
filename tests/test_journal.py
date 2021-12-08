@@ -1874,6 +1874,29 @@ class TestJournal():
             else:
                 assert not i.expdate
 
+    def test_submitted_submission(self, journal, openreview_client, helpers):
+
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+
+        ## Post the submission 7
+        submission_note_7 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 7' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                }
+            ))
+
+        helpers.await_queue(openreview_client)
+
+
 
 
 
