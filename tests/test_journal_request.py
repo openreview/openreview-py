@@ -97,7 +97,9 @@ class TestJournalRequest():
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Recruitment']
 
-        reviewer_details = { 'value': '''reviewer_journal1@mail.com, First Reviewer\nreviewer_journal2@mail.com, Second Reviewer'''}
+        helpers.create_user('reviewer_journal2@mail.com', 'Second', 'Reviewer')
+
+        reviewer_details = { 'value': '''reviewer_journal1@mail.com, First Reviewer\n~Second_Reviewer1'''}
         recruitment_note = test_client.post_note_edit(
             invitation = '{}/-/Journal_Request{}/Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
             signatures = ['~Support_Role1'],
@@ -124,3 +126,15 @@ class TestJournalRequest():
         invited_group = openreview_client.get_group('{}/Reviewers/Invited'.format(journal['journal_request_note']['content']['venue_id']['value']))
         assert invited_group
         assert len(invited_group.members) == 2
+        assert 'reviewer_journal1@mail.com' in invited_group.members
+        assert '~Second_Reviewer1' in invited_group.members
+
+        messages = openreview_client.get_messages(to = 'reviewer_journal1@mail.com')
+        assert len(messages) == 1
+        assert messages[0]['content']['subject'] == '[TJ22] Invitation to serve as reviewer'
+        assert messages[0]['content']['text'].startswith('<p>Dear First Reviewer,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as reviewer.</p>')
+
+        messages = openreview_client.get_messages(to = 'reviewer_journal2@mail.com')
+        assert len(messages) == 2
+        assert messages[0]['content']['subject'] == '[TJ22] Invitation to serve as reviewer'
+        assert messages[0]['content']['text'].startswith('<p>Dear Second Reviewer,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as reviewer.</p>')
