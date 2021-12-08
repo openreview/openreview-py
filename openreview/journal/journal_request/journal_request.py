@@ -77,11 +77,11 @@ class JournalRequest():
                 writers = [],
                 signatures = ['~Super_User1'],
                 edit = {
-                    'signatures': { 'values-regex': '.*' },
+                    'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
                     'writers': { 'values': ['${note.content.venue_id.value}'] },
                     'readers': { 'values': ['${note.content.venue_id.value}'] },
                     'note': {
-                        'signatures': { 'values-regex': f'.*|{self.support_group_id}' },
+                        'signatures': { 'values': ['${signatures}'] },
                         'readers': { 'values': [self.support_group_id, '${note.content.venue_id.value}'] },
                         'writers': {'values': [self.support_group_id, '${note.content.venue_id.value}'] },
                         'content': journal_request_content
@@ -108,10 +108,10 @@ class JournalRequest():
 You have been nominated by the program chair committee of {short_name} to serve as {invitee_role}.
 
 ACCEPT LINK:
-{accept_link}
+{accept_url}
 
 DECLINE LINK:
-{decline_link}
+{decline_url}
 
 Cheers!'''.replace('{short_name}', short_name)
 
@@ -165,13 +165,13 @@ Cheers!'''.replace('{short_name}', short_name)
             writers = [],
             signatures = ['~Super_User1'],
             edit = {
-                'signatures': { 'values-regex': '.*' },
+                'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
                 'writers': { 'values': [self.support_group_id, venue_id] },
                 'readers': { 'values': [self.support_group_id, venue_id] },
                 'note': {
                     'forum': { 'value': note.id },
                     'replyto': {'value': note.id },
-                    'signatures': { 'values-regex': f'.*|{self.support_group_id}' },
+                    'signatures': { 'values': ['${signatures}'] },
                     'readers': { 'values': [self.support_group_id, venue_id] },
                     'writers': { 'values': [self.support_group_id, venue_id]},
                     'content': recruitment_content
