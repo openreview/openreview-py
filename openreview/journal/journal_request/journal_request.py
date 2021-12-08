@@ -20,21 +20,24 @@ class JournalRequest():
                 }
             },
             'official_venue_name': {
+                'description': 'This will appear in your journal\'s OpenReview homepage.',
                 'order': 2,
                 'value' : {
                     'value-regex': '.*'
                 }
             },
             'abbreviated_venue_name': {
+                'description': 'This will be used to identify your journal in OpenReview and in email subject lines',
                 'order': 3,
                 'value' : {
                     'value-regex': '.*'
                 }
             },
             'venue_id': {
+                'description': 'Journal venue id should start with a period.',
                 'order': 4,
                 'value' : {
-                    'value-regex': '.*'
+                    'value-regex': '[.].+'
                 }
             },
             'contact_info': {
@@ -53,7 +56,7 @@ class JournalRequest():
             'support_role': {
                 'order': 7,
                 'value': {
-                    'value-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                    'value-regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                 }
             },
             'editors': {
@@ -120,19 +123,21 @@ Cheers!'''.replace('{short_name}', short_name)
                 }
             },
             'invitee_role': {
+                'description': 'Please select the role of the invitees in the journal,',
                 'order': 2,
                 'value' : {
                     'value-radio': ['action editor', 'reviewer']
                 }
             },
             'invitee_details': {
+                'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
                 'order': 3,
                 'value' : {
-                    'value-regex': '.*'
+                    'value-regex': '[\\S\\s]{1,50000}'
                 }
             },
             'email_subject': {
-                'description': '',
+                'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
                 'order': 4,
                 'value' : {
                     'value-regex': '.*'
@@ -142,7 +147,7 @@ Cheers!'''.replace('{short_name}', short_name)
                 }
             },
             'email_content': {
-                'description': '',
+                'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
                 'order': 5,
                 'value' : {
                     'value-regex': '[\\S\\s]{1,10000}'
