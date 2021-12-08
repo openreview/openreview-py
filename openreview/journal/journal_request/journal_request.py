@@ -108,10 +108,10 @@ class JournalRequest():
 You have been nominated by the program chair committee of {short_name} to serve as {invitee_role}.
 
 ACCEPT LINK:
-{accept_link}
+{accept_url}
 
 DECLINE LINK:
-{decline_link}
+{decline_url}
 
 Cheers!'''.replace('{short_name}', short_name)
 
