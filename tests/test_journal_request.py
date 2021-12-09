@@ -129,12 +129,10 @@ class TestJournalRequest():
         assert 'reviewer_journal1@mail.com' in invited_group.members
         assert '~Second_Reviewer1' in invited_group.members
 
-        messages = openreview_client.get_messages(to = 'reviewer_journal1@mail.com')
+        messages = openreview_client.get_messages(to = 'reviewer_journal1@mail.com', subject = '[TJ22] Invitation to serve as reviewer')
         assert len(messages) == 1
-        assert messages[0]['content']['subject'] == '[TJ22] Invitation to serve as reviewer'
         assert messages[0]['content']['text'].startswith('<p>Dear First Reviewer,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as reviewer.</p>')
 
-        messages = openreview_client.get_messages(to = 'reviewer_journal2@mail.com')
-        assert len(messages) == 2
-        assert messages[0]['content']['subject'] == '[TJ22] Invitation to serve as reviewer'
+        messages = openreview_client.get_messages(to = 'reviewer_journal2@mail.com', subject = '[TJ22] Invitation to serve as reviewer')
+        assert len(messages) == 1
         assert messages[0]['content']['text'].startswith('<p>Dear Second Reviewer,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as reviewer.</p>')
