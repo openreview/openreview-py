@@ -15,5 +15,5 @@ def process(client, edit, invitation):
 
     journal.setup(support_role, editors)
 
-    journal_request = openreview.JournalRequest(client, SUPPORT_GROUP)
+    journal_request = openreview.journal.JournalRequest(client, SUPPORT_GROUP)
     journal_request.setup_recruitment_invitation(edit.note.id)

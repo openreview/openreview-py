@@ -3,7 +3,7 @@ import pytest
 from openreview.api import OpenReviewClient
 from openreview.api import Invitation
 from openreview.api import Note
-from openreview import JournalRequest
+from openreview.journal import JournalRequest
 
 class TestJournalRequest():
 
@@ -31,7 +31,7 @@ class TestJournalRequest():
                     'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] }
                 }
             ))
-        
+
         helpers.await_queue()
 
         #return journal details
