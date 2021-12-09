@@ -1577,6 +1577,7 @@ def get_profile_info(profile):
     emails = set()
     relations = set()
     publications = set()
+    publication_years = 3
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
 
@@ -1592,6 +1593,17 @@ def get_profile_info(profile):
 
     ## Relations section
     relations.update([r['email'] for r in profile.content.get('relations', [])])
+
+    ## TODO:: Parameterize the number of years for publications to consider
+    ## Publications section: get publications within last three years
+    current_year = datetime.datetime.now().year
+    for pub in profile.content.get('publications', []):
+        if pub.cdate:
+            year = int(datetime.datetime.fromtimestamp(pub.cdate / 1000).year)
+        else:
+            year = int(datetime.datetime.fromtimestamp(pub.tcdate / 1000).year)
+        if year >= current_year - publication_years:
+            publications.add(pub.id)
 
     ## Filter common domains
     for common_domain in common_domains:
