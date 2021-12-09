@@ -19,6 +19,7 @@ setup(
         'openreview/agora',
         'openreview/venue_request',
         'openreview/journal',
+        'openreview/journal/journal_request',
         'openreview.api'
     ],
     install_requires=[
