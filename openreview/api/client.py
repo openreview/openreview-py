@@ -13,7 +13,6 @@ import os
 import re
 from openreview import Profile
 from openreview import OpenReviewException
-from openreview import Group
 
 class OpenReviewClient(object):
     """
@@ -1895,5 +1894,191 @@ class Edge(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+class Group(object):
+    """
+    When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
+
+    :param id: id of the Group
+    :type id: str
+    :param readers: List of readers in the Group, each reader is a Group id
+    :type readers: list[str]
+    :param writers: List of writers in the Group, each writer is a Group id
+    :type writers: list[str]
+    :param signatories: List of signatories in the Group, each writer is a Group id
+    :type signatories: list[str]
+    :param signatures: List of signatures in the Group, each signature is a Group id
+    :type signatures: list[str]
+    :param cdate: Creation date of the Group
+    :type cdate: int, optional
+    :param ddate: Deletion date of the Group
+    :type ddate: int, optional
+    :param tcdate: true creation date of the Group
+    :type tcdate: int, optional
+    :param tmdate: true modification date of the Group
+    :type tmdate: int, optional
+    :param members: List of members in the Group, each member is a Group id
+    :type members: list[str], optional
+    :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
+    :type nonreaders: list[str], optional
+    :param web: Path to a file that contains the webfield
+    :type web: optional
+    :param web_string: String containing the webfield for this Group
+    :type web_string: str, optional
+    :param details:
+    :type details: optional
+    """
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+        # post attributes
+        self.id=id
+        self.invitation=invitation
+        self.cdate = cdate
+        self.ddate = ddate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.writers = writers
+        self.members = [] if members is None else members
+        self.readers = readers
+        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.signatures = signatures
+        self.signatories = signatories
+        self.anonids = anonids
+        self.web=None
+        self.impersonators = impersonators
+        if web is not None:
+            with open(web) as f:
+                self.web = f.read()
+
+        if web_string:
+            self.web = web_string
+
+        self.anonids = anonids
+        self.deanonymizers = deanonymizers
+        self.details = details
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Group(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+
+    def to_json(self):
+        """
+        Converts Group instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Group instance
+        :rtype: dict
+        """
+        body = {
+            'id': self.id,
+            'invitation': self.invitation,
+            'cdate': self.cdate,
+            'ddate': self.ddate,
+            'signatures': self.signatures,
+            'writers': self.writers,
+            'members': self.members,
+            'readers': self.readers,
+            'nonreaders': self.nonreaders,
+            'signatories': self.signatories,
+            'impersonators': self.impersonators,
+            'anonids': self.anonids,
+            'deanonymizers': self.deanonymizers,
+            'web': self.web,
+            'details': self.details
+        }
+
+        return body
+
+    @classmethod
+    def from_json(Group,g):
+        """
+        Creates a Group object from a dictionary that contains keys values equivalent to the name of the instance variables of the Group class
+
+        :param g: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Group class
+        :type g: dict
+
+        :return: Group whose instance variables contain the values from the dictionary
+        :rtype: Group
+        """
+        group = Group(g['id'],
+            invitation=g.get('invitation'),
+            cdate = g.get('cdate'),
+            ddate = g.get('ddate'),
+            tcdate = g.get('tcdate'),
+            tmdate = g.get('tmdate'),
+            writers = g.get('writers'),
+            members = g.get('members'),
+            readers = g.get('readers'),
+            nonreaders = g.get('nonreaders'),
+            signatories = g.get('signatories'),
+            signatures = g.get('signatures'),
+            anonids=g.get('anonids'),
+            deanonymizers=g.get('deanonymizers'),
+            impersonators=g.get('impersonators'),
+            details = g.get('details'))
+        if 'web' in g:
+            group.web = g['web']
+        return group
+
+    def add_member(self, member):
+        """
+        Adds a member to the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
+
+        :param member: Member to add to the group
+        :type member: str
+
+        :return: Group with the new member added
+        :rtype: Group
+        """
+        if type(member) is Group:
+            self.members.append(member.id)
+        else:
+            self.members.append(str(member))
+        return self
+
+    def remove_member(self, member):
+        """
+        Removes a member from the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
+
+        :param member: Member to remove from the group
+        :type member: str
+
+        :return: Group after the member was removed
+        :rtype: Group
+        """
+        if type(member) is Group:
+            try:
+                self.members.remove(member.id)
+            except(ValueError):
+                pass
+        else:
+            try:
+                self.members.remove(str(member))
+            except(ValueError):
+                pass
+        return self
+
+    def add_webfield(self, web):
+        """
+        Adds a webfield to the group
+
+        :param web: Path to the file that contains the webfield
+        :type web: str
+        """
+        with open(web) as f:
+            self.web = f.read()
+
+    def post(self, client):
+        """
+        Posts a group to OpenReview
+
+        :param client: Client that will post the Group
+        :type client: Client
+        """
+        client.post_group(self)
+
 
 
