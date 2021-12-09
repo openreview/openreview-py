@@ -719,11 +719,11 @@ class TestJournal():
         assert comments[0].readers == ['everyone']
         assert comments[1].readers == ['everyone']
 
-        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission Paper title UPDATED')
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>Now that 3 reviews have been submitted for your submission, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.</p>
-<p>In 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), no later than in 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will be able to submit a formal decision recommendation to the Action Editor in charge of your submission. The reviewers’ goal will be to gather all the information they need to submit their decision recommendation.</p>
+<p>Now that 3 reviews have been submitted for your submission  Paper title UPDATED, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.</p>
+<p>You will have at least 2 weeks to respond to the reviewers. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.</p>
 <p>Visit the following link to respond to the reviews: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a> .</p>
 <p>The TMLR Editors-in-Chief</p>
