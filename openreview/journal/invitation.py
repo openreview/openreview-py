@@ -11,6 +11,17 @@ class InvitationBuilder(object):
     def __init__(self, client):
         self.client = client
 
+    def set_invitations(self, journal):
+        self.set_submission_invitation(journal)
+        self.set_under_review_invitation(journal)
+        self.set_desk_rejection_invitation(journal)
+        self.set_rejection_invitation(journal)
+        self.set_withdrawn_invitation(journal)
+        self.set_acceptance_invitation(journal)
+        self.set_authors_release_invitation(journal)
+        self.set_ae_assignment(journal)
+        self.set_reviewer_assignment(journal)
+
     def expire_invitation(self, journal, invitation_id, expdate=None):
         venue_id=journal.venue_id
         invitation = self.client.get_invitation(invitation_id)
