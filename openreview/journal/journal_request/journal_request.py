@@ -97,6 +97,64 @@ class JournalRequest():
                 signatures = ['~Super_User1'],
                 invitation = invitation
             )
+    def setup_journal_group(self, note_id):
+        
+        note = self.client.get_note(note_id)
+        journal_request_group = self.client.post_group(openreview.Group(
+            id = f'{self.support_group_id}/Journal_Request' + str(note.number),
+            readers = ['everyone'],
+            writers = [self.support_group_id],
+            signatures = [self.support_group_id],
+            signatories = [self.support_group_id.split('/')[0]],
+            members = []
+        ))
+
+    def setup_comment_invitation(self, note_id):
+
+        note = self.client.get_note(note_id)
+        venue_id = note.content['venue_id']['value']
+
+        invitation = openreview.api.Invitation(
+            id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Comment',
+            invitees = [venue_id],
+            readers = ['everyone'],
+            writers = [],
+            signatures = ['~Super_User1'],
+            edit = {
+                'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
+                'writers': { 'values': [self.support_group_id, venue_id] },
+                'readers': { 'values': [self.support_group_id, venue_id] },
+                'note': {
+                    'signatures': { 'values': ['${signatures}'] },
+                    'readers': { 'values': [self.support_group_id, venue_id] },
+                    'writers': { 'values': [self.support_group_id, venue_id]},
+                    'content': {
+                        'title': {
+                            'description': 'Brief summary of your comment.',
+                            'order': 1,
+                            'value': {
+                                'value-regex': '.{1,500}'
+                            }
+                        },
+                        'comment': {
+                            'description': 'Your comment or reply (max 200000 characters).',
+                            'order': 2,
+                            'value' : {
+                                'value-regex': '[\\S\\s]{1,200000}'
+                            }
+                        }
+                    }
+                }
+            },
+            process = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
+        )
+    
+        self.client.post_invitation_edit(
+                    readers = ['~Super_User1'],
+                    writers = ['~Super_User1'],
+                    signatures = ['~Super_User1'],
+                    invitation = invitation
+                )
 
     def setup_recruitment_invitation(self, note_id):
 
@@ -158,31 +216,34 @@ Cheers!'''.replace('{short_name}', short_name)
             }
         }
 
-        invitation = openreview.api.Invitation(
-            id = f'{self.support_group_id}/-/Journal_Request' + str(note.number) + '/Recruitment',
-            invitees = [venue_id],
-            readers = ['everyone'],
-            writers = [],
-            signatures = ['~Super_User1'],
-            edit = {
-                'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
-                'writers': { 'values': [self.support_group_id, venue_id] },
-                'readers': { 'values': [self.support_group_id, venue_id] },
-                'note': {
-                    'forum': { 'value': note.id },
-                    'replyto': {'value': note.id },
-                    'signatures': { 'values': ['${signatures}'] },
+        with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as f:
+            content = f.read()
+            content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
+            invitation = openreview.api.Invitation(
+                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Recruitment',
+                invitees = [venue_id],
+                readers = ['everyone'],
+                writers = [],
+                signatures = ['~Super_User1'],
+                edit = {
+                    'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
+                    'writers': { 'values': [self.support_group_id, venue_id] },
                     'readers': { 'values': [self.support_group_id, venue_id] },
-                    'writers': { 'values': [self.support_group_id, venue_id]},
-                    'content': recruitment_content
-                }
-            },
-            process = os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')
-        )
+                    'note': {
+                        'forum': { 'value': note.id },
+                        'replyto': {'value': note.id },
+                        'signatures': { 'values': ['${signatures}'] },
+                        'readers': { 'values': [self.support_group_id, venue_id] },
+                        'writers': { 'values': [self.support_group_id, venue_id]},
+                        'content': recruitment_content
+                    }
+                },
+                process_string = content
+            )
 
-        self.client.post_invitation_edit(
-            readers = ['~Super_User1'],
-            writers = ['~Super_User1'],
-            signatures = ['~Super_User1'],
-            invitation = invitation
-        )
+            self.client.post_invitation_edit(
+                readers = ['~Super_User1'],
+                writers = ['~Super_User1'],
+                signatures = ['~Super_User1'],
+                invitation = invitation
+            )
