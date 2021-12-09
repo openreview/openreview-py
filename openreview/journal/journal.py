@@ -3,6 +3,7 @@ from .. import tools
 from . import invitation
 from . import group
 from . import recruitment
+from .assignment import Assignment
 from openreview.api import Edge
 from openreview.api import Group
 
@@ -46,6 +47,7 @@ class Journal(object):
             "deadline": "",
             "contact": self.contact_info
         }
+        self.assignment = Assignment(self)
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -217,70 +219,11 @@ class Journal(object):
     def get_reviewers(self):
         return self.client.get_group(self.get_reviewers_id()).members
 
-
     def setup_ae_assignment(self, note):
-        venue_id=self.venue_id
-        action_editors_id=self.get_action_editors_id()
-        authors_id=self.get_authors_id(number=note.number)
-
-        ## Create conflict and affinity score edges
-        for ae in self.get_action_editors():
-            edge = Edge(invitation = f'{action_editors_id}/-/Affinity_Score',
-                readers = [venue_id, authors_id, ae],
-                writers = [venue_id],
-                signatures = [venue_id],
-                head = note.id,
-                tail = ae,
-                weight=round(random.random(), 2)
-            )
-            self.client.post_edge(edge)
-
-            random_number=round(random.random(), 2)
-            if random_number <= 0.3:
-                edge = Edge(invitation = f'{action_editors_id}/-/Conflict',
-                    readers = [venue_id, authors_id, ae],
-                    writers = [venue_id],
-                    signatures = [venue_id],
-                    head = note.id,
-                    tail = ae,
-                    weight=-1,
-                    label='Conflict'
-                )
-                self.client.post_edge(edge)
+        return self.assignment.setup_ae_assignment(note)
 
     def setup_reviewer_assignment(self, note):
-        venue_id=self.venue_id
-        reviewers_id=self.get_reviewers_id()
-        action_editors_id=self.get_action_editors_id(number=note.number)
-        authors_id = self.get_authors_id(number=note.number)
-        note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=note.number)[0]
-
-        ## Create conflict and affinity score edges
-        for r in self.get_reviewers():
-            edge = Edge(invitation = f'{reviewers_id}/-/Affinity_Score',
-                readers = [venue_id, action_editors_id, r],
-                nonreaders = [authors_id],
-                writers = [venue_id],
-                signatures = [venue_id],
-                head = note.id,
-                tail = r,
-                weight=round(random.random(), 2)
-            )
-            self.client.post_edge(edge)
-
-            random_number=round(random.random(), 2)
-            if random_number <= 0.3:
-                edge = Edge(invitation = f'{reviewers_id}/-/Conflict',
-                    readers = [venue_id, action_editors_id, r],
-                    nonreaders = [authors_id],
-                    writers = [venue_id],
-                    signatures = [venue_id],
-                    head = note.id,
-                    tail = r,
-                    weight=-1,
-                    label='Conflict'
-                )
-                self.client.post_edge(edge)
+        return self.assignment.setup_reviewer_assignment(note)
 
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
         return recruitment.Recruitment(self).invite_action_editors(message, subject, invitees, invitee_names)
@@ -288,39 +231,23 @@ class Journal(object):
     def invite_reviewers(self, message, subject, invitees, invitee_names=None):
         return recruitment.Recruitment(self).invite_reviewers(message, subject, invitees, invitee_names)
 
-
     def setup_author_submission(self, note):
-
         self.group_builder.setup_submission_groups(self, note)
         self.invitation_builder.set_revision_submission(self, note)
         self.invitation_builder.set_review_approval_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_withdraw_invitation(self, note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
-        #self.invitation_builder.set_ae_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
 
     def setup_under_review_submission(self, note, reviewer_assignment_due_date):
-
         self.invitation_builder.set_review_invitation(self, note, reviewer_assignment_due_date)
         self.invitation_builder.set_solicit_review_invitation(self, note)
         self.invitation_builder.set_solicit_review_approval_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.setup_reviewer_assignment(note)
-        #self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
 
     def assign_reviewer(self, note, reviewer):
-
-        profile = self.client.get_profile(reviewer)
-        ## Check conflicts again?
-        self.client.post_edge(Edge(invitation=self.get_reviewer_assignment_id(),
-            readers=[self.venue_id, self.get_action_editors_id(number=note.number), profile.id],
-            nonreaders=[self.get_authors_id(number=note.number)],
-            writers=[self.venue_id, self.get_action_editors_id(number=note.number)],
-            signatures=[self.venue_id],
-            head=note.id,
-            tail=profile.id,
-            weight=1
-        ))
+        self.assignment.assign_reviewer(note, reviewer)
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
 
