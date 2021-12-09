@@ -183,3 +183,52 @@ class GroupBuilder(object):
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
             authors_group.web = content
             self.client.post_group(authors_group)
+
+    def setup_submission_groups(self, journal, note):
+        venue_id = journal.venue_id
+        paper_group_id=f'{venue_id}/{journal.submission_group_name}{note.number}'
+        paper_group=openreview.tools.get_group(self.client, paper_group_id)
+        if not paper_group:
+            paper_group=self.client.post_group(Group(id=paper_group_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[venue_id]
+            ))
+
+        authors_group_id=f'{paper_group.id}/{journal.authors_name}'
+        authors_group=self.client.post_group(Group(id=authors_group_id,
+            readers=[venue_id, authors_group_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            signatories=[venue_id, authors_group_id],
+            members=note.content['authorids']['value'] ## always update authors
+        ))
+        self.client.add_members_to_group(f'{venue_id}/{journal.authors_name}', authors_group_id)
+
+        action_editors_group_id=f'{paper_group.id}/{journal.action_editors_name}'
+        reviewers_group_id=f'{paper_group.id}/{journal.reviewers_name}'
+
+        action_editors_group=openreview.tools.get_group(self.client, action_editors_group_id)
+        if not action_editors_group:
+            action_editors_group=self.client.post_group(Group(id=action_editors_group_id,
+                readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                nonreaders=[authors_group_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[venue_id, action_editors_group_id],
+                members=[]
+            ))
+
+        reviewers_group=openreview.tools.get_group(self.client, reviewers_group_id)
+        if not reviewers_group:
+            reviewers_group=self.client.post_group(Group(id=reviewers_group_id,
+                readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                deanonymizers=[venue_id, action_editors_group_id],
+                nonreaders=[authors_group_id],
+                writers=[venue_id, action_editors_group_id],
+                signatures=[venue_id],
+                signatories=[venue_id],
+                members=[],
+                anonids=True
+            ))

@@ -2,6 +2,7 @@ from .. import openreview
 from .. import tools
 from . import invitation
 from . import group
+from . import recruitment
 from openreview.api import Edge
 from openreview.api import Group
 
@@ -107,6 +108,9 @@ class Journal(object):
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
 
+    def get_ae_recruitment_id(self):
+        return self.__get_invitation_id(name='Recruitment', prefix=self.get_action_editors_id())
+
     def get_ae_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_action_editors_id())
 
@@ -139,6 +143,9 @@ class Journal(object):
 
     def get_reviewer_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation', number=number)
+
+    def get_reviewer_recruitment_id(self):
+        return self.__get_invitation_id(name='Recruitment', prefix=self.get_reviewers_id())
 
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())
@@ -276,112 +283,15 @@ class Journal(object):
                 self.client.post_edge(edge)
 
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
-
-        action_editors_id = self.get_action_editors_id()
-        action_editors_declined_id = action_editors_id + '/Declined'
-        action_editors_invited_id = action_editors_id + '/Invited'
-        hash_seed = self.secret_key
-
-        invitation = self.invitation_builder.set_ae_recruitment_invitation(self, hash_seed, self.header)
-        invited_members = self.client.get_group(action_editors_invited_id).members
-
-        for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
-            profile=openreview.tools.get_profile(self.client, invitee)
-            invitee = profile.id if profile else invitee
-            if invitee not in invited_members:
-                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, invitee, name,
-                    hash_seed,
-                    invitation['invitation']['id'],
-                    message,
-                    subject,
-                    action_editors_invited_id,
-                    verbose = False)
-
-        return self.client.get_group(id = action_editors_invited_id)
+        return recruitment.Recruitment(self).invite_action_editors(message, subject, invitees, invitee_names)
 
     def invite_reviewers(self, message, subject, invitees, invitee_names=None):
+        return recruitment.Recruitment(self).invite_reviewers(message, subject, invitees, invitee_names)
 
-        reviewers_id = self.get_reviewers_id()
-        reviewers_declined_id = reviewers_id + '/Declined'
-        reviewers_invited_id = reviewers_id + '/Invited'
-        hash_seed = self.secret_key
-
-        invitation = self.invitation_builder.set_reviewer_recruitment_invitation(self, hash_seed, self.header)
-        invited_members = self.client.get_group(reviewers_invited_id).members
-
-        for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if (invitee.startswith('~') or tools.get_group(self.client, invitee)) else []
-            profile=openreview.tools.get_profile(self.client, invitee)
-            invitee = profile.id if profile else invitee
-            if invitee not in invited_members:
-                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, invitee, name,
-                    hash_seed,
-                    invitation['invitation']['id'],
-                    message,
-                    subject,
-                    reviewers_invited_id,
-                    verbose = False)
-
-        return self.client.get_group(id = reviewers_invited_id)
-
-    def setup_submission_groups(self, note):
-        venue_id = self.venue_id
-        paper_group_id=f'{venue_id}/Paper{note.number}'
-        paper_group=openreview.tools.get_group(self.client, paper_group_id)
-        if not paper_group:
-            paper_group=self.client.post_group(Group(id=paper_group_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                signatories=[venue_id]
-            ))
-
-        authors_group_id=f'{paper_group.id}/Authors'
-        authors_group=self.client.post_group(Group(id=authors_group_id,
-            readers=[venue_id, authors_group_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            signatories=[venue_id, authors_group_id],
-            members=note.content['authorids']['value'] ## always update authors
-        ))
-        self.client.add_members_to_group(f'{venue_id}/Authors', authors_group_id)
-
-        action_editors_group_id=f'{paper_group.id}/Action_Editors'
-        reviewers_group_id=f'{paper_group.id}/Reviewers'
-
-        action_editors_group=openreview.tools.get_group(self.client, action_editors_group_id)
-        if not action_editors_group:
-            action_editors_group=self.client.post_group(Group(id=action_editors_group_id,
-                readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                nonreaders=[authors_group_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                signatories=[venue_id, action_editors_group_id],
-                members=[]
-            ))
-
-        reviewers_group=openreview.tools.get_group(self.client, reviewers_group_id)
-        if not reviewers_group:
-            reviewers_group=self.client.post_group(Group(id=reviewers_group_id,
-                readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                deanonymizers=[venue_id, action_editors_group_id],
-                nonreaders=[authors_group_id],
-                writers=[venue_id, action_editors_group_id],
-                signatures=[venue_id],
-                signatories=[venue_id],
-                members=[],
-                anonids=True
-            ))
 
     def setup_author_submission(self, note):
 
-        self.setup_submission_groups(note)
+        self.group_builder.setup_submission_groups(self, note)
         self.invitation_builder.set_revision_submission(self, note)
         self.invitation_builder.set_review_approval_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_withdraw_invitation(self, note)

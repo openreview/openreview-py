@@ -12,6 +12,8 @@ class InvitationBuilder(object):
         self.client = client
 
     def set_invitations(self, journal):
+        self.set_ae_recruitment_invitation(journal)
+        self.set_reviewer_recruitment_invitation(journal)
         self.set_submission_invitation(journal)
         self.set_under_review_invitation(journal)
         self.set_desk_rejection_invitation(journal)
@@ -56,7 +58,7 @@ class InvitationBuilder(object):
                 invitation=invitation
             )
 
-    def set_ae_recruitment_invitation(self, journal, hash_seed, header):
+    def set_ae_recruitment_invitation(self, journal):
 
         venue_id=journal.venue_id
         action_editors_id = journal.get_action_editors_id()
@@ -70,17 +72,17 @@ class InvitationBuilder(object):
             process_content = process_content.replace("ACTION_EDITOR_INVITED_ID = ''", f"ACTION_EDITOR_INVITED_ID = '{action_editors_invited_id}'")
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{action_editors_id}'")
             process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{action_editors_declined_id}'")
-            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{hash_seed}'")
+            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{journal.secret_key}'")
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
                 webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(journal.header) + ";")
 
                 invitation=self.client.post_invitation_edit(readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
-                    invitation=Invitation(id=f'{action_editors_id}/-/Recruitment',
+                    invitation=Invitation(id=journal.get_ae_recruitment_id(),
                         invitees = ['everyone'],
                         readers = ['everyone'],
                         writers = [venue_id],
@@ -132,7 +134,7 @@ class InvitationBuilder(object):
                 )
                 return invitation
 
-    def set_reviewer_recruitment_invitation(self, journal, hash_seed, header):
+    def set_reviewer_recruitment_invitation(self, journal):
 
         venue_id=journal.venue_id
         reviewers_id = journal.get_reviewers_id()
@@ -146,17 +148,17 @@ class InvitationBuilder(object):
             process_content = process_content.replace("ACTION_EDITOR_INVITED_ID = ''", f"ACTION_EDITOR_INVITED_ID = '{reviewers_invited_id}'")
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{reviewers_id}'")
             process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{reviewers_declined_id}'")
-            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{hash_seed}'")
+            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{journal.secret_key}'")
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
                 webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(journal.header) + ";")
 
                 invitation=self.client.post_invitation_edit(readers=[venue_id],
                     writers=[venue_id],
                     signatures=[venue_id],
-                    invitation=Invitation(id=f'{reviewers_id}/-/Recruitment',
+                    invitation=Invitation(id=journal.get_reviewer_recruitment_id(),
                         invitees = ['everyone'],
                         readers = ['everyone'],
                         writers = [venue_id],
