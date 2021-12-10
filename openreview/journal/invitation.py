@@ -396,7 +396,7 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_authors_id, '${tail}']
+                    'values': [venue_id, paper_authors_id]
                 },
                 'writers': {
                     'values': [venue_id]
@@ -619,7 +619,7 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_action_editors_id, '${tail}']
+                    'values': [venue_id, paper_action_editors_id]
                 },
                 'nonreaders': {
                     'values': [paper_authors_id]

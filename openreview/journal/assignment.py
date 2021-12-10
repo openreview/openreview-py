@@ -41,16 +41,16 @@ class Assignment(object):
         for action_editor_profile in tqdm(action_editor_profiles):
 
             conflicts = tools.get_conflicts(author_profiles, action_editor_profile, policy='neurips')
-            print('Compute conflict', note.id, action_editor_profile.id, conflicts)
+            print('Compute AE conflict', note.id, action_editor_profile.id, conflicts)
             if conflicts:
                 edge = Edge(invitation = self.journal.get_ae_conflict_id(),
-                    readers = [venue_id, authors_id, ae],
+                    readers = [venue_id, authors_id],
                     writers = [venue_id],
                     signatures = [venue_id],
                     head = note.id,
                     tail = action_editor_profile.id,
-                    weight=-1,
-                    label='Conflict'
+                    weight = -1,
+                    label =  'Conflict'
                 )
                 conflict_edges.append(edge)
 
@@ -62,6 +62,12 @@ class Assignment(object):
         action_editors_id=self.journal.get_action_editors_id(number=note.number)
         authors_id = self.journal.get_authors_id(number=note.number)
         note=self.client.get_notes(invitation=self.journal.get_author_submission_id(), number=note.number)[0]
+
+        reviewers = self.journal.get_reviewers()
+        reviewer_profiles = tools.get_profiles(self.client, reviewers, with_publications=True)
+
+        authors = self.journal.get_authors(number=note.number)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
 
         ## Create conflict and affinity score edges
         for r in self.journal.get_reviewers():
@@ -76,19 +82,24 @@ class Assignment(object):
             )
             self.client.post_edge(edge)
 
-            random_number=round(random.random(), 2)
-            if random_number <= 0.3:
-                edge = Edge(invitation = self.journal.get_reviewer_conflict_id(),
-                    readers = [venue_id, action_editors_id, r],
-                    nonreaders = [authors_id],
+        conflict_edges = []
+        for reviewer_profile in tqdm(reviewer_profiles):
+
+            conflicts = tools.get_conflicts(author_profiles, reviewer_profile, policy='neurips')
+            print('Compute Reviewer conflict', note.id, reviewer_profile.id, conflicts)
+            if conflicts:
+                edge = Edge(invitation = self.journal.get_ae_conflict_id(),
+                    readers = [venue_id, action_editors_id],
                     writers = [venue_id],
                     signatures = [venue_id],
                     head = note.id,
-                    tail = r,
-                    weight=-1,
-                    label='Conflict'
+                    tail = reviewer_profile.id,
+                    weight = -1,
+                    label =  'Conflict'
                 )
-                self.client.post_edge(edge)
+                conflict_edges.append(edge)
+
+        tools.post_bulk_edges(self.client, conflict_edges)
 
     def assign_reviewer(self, note, reviewer):
 
