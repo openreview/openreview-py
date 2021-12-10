@@ -4,9 +4,7 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
-
-    journal.setup_under_review_submission(note, openreview.tools.datetime_millis(duedate))
+    journal.setup_under_review_submission(note)
 
     client.post_message(
         recipients=[journal.get_action_editors_id(number=note.number)],
