@@ -88,8 +88,9 @@ class Assignment(object):
             conflicts = tools.get_conflicts(author_profiles, reviewer_profile, policy='neurips')
             print('Compute Reviewer conflict', note.id, reviewer_profile.id, conflicts)
             if conflicts:
-                edge = Edge(invitation = self.journal.get_ae_conflict_id(),
+                edge = Edge(invitation = self.journal.get_reviewer_conflict_id(),
                     readers = [venue_id, action_editors_id],
+                    nonreaders = [authors_id],
                     writers = [venue_id],
                     signatures = [venue_id],
                     head = note.id,
