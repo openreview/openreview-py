@@ -27,3 +27,20 @@ def process(client, edit, invitation):
                             }
                         )
                     )
+
+    ## Send email to Authors
+    print('Send email to Authors')
+    client.post_message(
+        recipients=[journal.get_authors_id(number=submission.number)],
+        subject=f'''[{journal.short_name}] Camera ready version accepted for your TMLR submission {submission.content['title']['value']}''',
+        message=f'''Hi {{{{fullname}}}},
+
+This is to inform you that your submitted camera ready version of your paper {submission.content['title']['value']} has been verified and confirmed by the Action Editor.
+
+We thank you again for your contribution to TMLR and congratulate you for your successful submission!
+
+The TMLR Editors-in-Chief
+
+''',
+        replyTo=journal.contact_info
+    )
