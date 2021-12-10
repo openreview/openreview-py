@@ -708,6 +708,21 @@ class OpenReviewClient(object):
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         return invitations
 
+    def get_invitation_edit(self, id):
+        """
+        Get a single edit by id if available
+
+        :param id: id of the edit
+        :type id: str
+
+        :return: edit matching the passed id
+        :rtype: Note
+        """
+        response = requests.get(self.invitation_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.__handle_response(response)
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
+
     def get_notes(self, id = None,
             paperhash = None,
             forum = None,

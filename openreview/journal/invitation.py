@@ -25,25 +25,22 @@ class InvitationBuilder(object):
 
     def save_invitation(self, journal, invitation):
 
-        existing_invitation = openreview.tools.get_invitation(self.client, invitation.id)
+        venue_id = journal.venue_id
 
-        if not existing_invitation:
-            venue_id = journal.venue_id
+        if invitation.preprocess:
+            with open(invitation.preprocess) as f:
+                preprocess = f.read()
+                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}")')
+                invitation.preprocess = preprocess
 
-            if invitation.preprocess:
-                with open(invitation.preprocess) as f:
-                    preprocess = f.read()
-                    preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}")')
-                    invitation.preprocess = preprocess
+        if invitation.process:
+            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}")')
 
-            if invitation.process:
-                invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}")')
-
-            return self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=invitation
-            )
+        return self.client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=invitation
+        )
 
     def set_ae_recruitment_invitation(self, journal, hash_seed, header):
 
@@ -1292,7 +1289,7 @@ class InvitationBuilder(object):
             score_ids = [f'{action_editors_id}/-/Affinity_Score']
             edit_param = f'{action_editors_id}/-/Recommendation'
             browse_param = ';'.join(score_ids)
-            params = f'start=staticList,type:head,ids:' + note.id + '&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'
+            params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2&version=2'
             with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
                 content = f.read()
                 content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
