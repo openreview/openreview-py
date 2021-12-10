@@ -1965,6 +1965,67 @@ url={'''
         assert 'venue' in note.content and not note.content['venue']
         assert 'venueid' in note.content and not note.content['venueid']
 
+    def test_release_accepted_notes_without_revealing_authors(self, client, request_page, selenium):
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind=True, public=True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_name('Automated Knowledge Base Construction Conference')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_decision_stage(public=True)
+        conference = builder.get_result()
+
+        conference.post_decision_stage(reveal_authors_accepted=False,
+                                       decision_heading_map={'Accept (Poster)': 'Accepted poster papers',
+                                                             'Accept (Oral)': 'Accepted oral papers',
+                                                             'Reject': 'Reject'})
+
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
+        assert "AKBC 2019 Conference | OpenReview" in selenium.title
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert "AKBC.ws/2019/Conference" == header.find_element_by_tag_name("h1").text
+        invitation_panel = selenium.find_element_by_id('invitation')
+        assert invitation_panel
+        assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        with pytest.raises(NoSuchElementException):
+            notes_panel.find_element_by_class_name('spinner-container')
+        assert tabs.find_element_by_id('accepted-poster-papers')
+        assert tabs.find_element_by_id('accepted-oral-papers')
+        assert tabs.find_element_by_id('reject')
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        valid_bibtex = r'''@inproceedings{
+anonymous2019paper,
+title={Paper title {REVISED} {PART} 2},
+author={Anonymous},
+booktitle={Automated Knowledge Base Construction Conference},
+year={2019},
+url={'''
+        valid_bibtex = valid_bibtex + 'https://openreview.net/forum?id=' + note.forum + '''}
+}'''
+        assert note.content['_bibtex'] == valid_bibtex
+        assert note.content['venue'] == 'AKBC 2019 Oral'
+        assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
+        assert note.content['authors'] == ['Anonymous']
+        assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
+
+        accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
+        assert accepted_authors
+        assert accepted_authors.members == ['AKBC.ws/2019/Conference/Paper1/Authors']
+
     def test_release_accepted_notes(self, client, request_page, selenium):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1980,7 +2041,7 @@ url={'''
         builder.set_decision_stage(public=True)
         conference = builder.get_result()
 
-        conference.post_decision_stage(reveal_authors_accepted=False, decision_heading_map={'Accept (Poster)': 'Accepted poster papers', 'Accept (Oral)': 'Accepted oral papers', 'Reject': 'Reject'})
+        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={'Accept (Poster)': 'Accepted poster papers', 'Accept (Oral)': 'Accepted oral papers', 'Reject': 'Reject'})
 
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
@@ -2018,8 +2079,6 @@ url={'''
         assert note.content['venue'] == 'AKBC 2019 Oral'
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
 
-        assert note.content['authors'] == ['Anonymous']
-        assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
         assert accepted_authors.members == ['AKBC.ws/2019/Conference/Paper1/Authors']
