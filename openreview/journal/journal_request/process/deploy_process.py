@@ -19,3 +19,4 @@ def process(client, edit, invitation):
     journal_request.setup_journal_group(edit.note.id)
     journal_request.setup_comment_invitation(edit.note.id)
     journal_request.setup_recruitment_invitation(edit.note.id)
+    journal_request.setup_recruitment_by_action_editors(edit.note.id)

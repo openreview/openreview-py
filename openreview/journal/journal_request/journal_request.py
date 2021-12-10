@@ -82,7 +82,7 @@ class JournalRequest():
                     'readers': { 'values': ['${note.content.venue_id.value}'] },
                     'note': {
                         'signatures': { 'values': ['${signatures}'] },
-                        'readers': { 'values': [self.support_group_id, '${note.content.venue_id.value}'] },
+                        'readers': { 'values': [self.support_group_id, '${note.content.venue_id.value}','${note.content.venue_id.value}/Action_Editors' ] },
                         'writers': {'values': [self.support_group_id, '${note.content.venue_id.value}'] },
                         'content': journal_request_content
                     }
@@ -145,8 +145,7 @@ class JournalRequest():
                         }
                     }
                 }
-            },
-            process = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
+            }
         )
     
         self.client.post_invitation_edit(
@@ -234,6 +233,85 @@ Cheers!'''.replace('{short_name}', short_name)
                         'replyto': {'value': note.id },
                         'signatures': { 'values': ['${signatures}'] },
                         'readers': { 'values': [self.support_group_id, venue_id] },
+                        'writers': { 'values': [self.support_group_id, venue_id]},
+                        'content': recruitment_content
+                    }
+                },
+                process_string = content
+            )
+
+            self.client.post_invitation_edit(
+                readers = ['~Super_User1'],
+                writers = ['~Super_User1'],
+                signatures = ['~Super_User1'],
+                invitation = invitation
+            )
+
+    def setup_recruitment_by_action_editors(self, note_id):
+
+        note = self.client.get_note(note_id)
+        short_name = note.content['abbreviated_venue_name']['value']
+        venue_id = note.content['venue_id']['value']
+        recruitment_email_template = '''Dear {name},
+
+You have been nominated to serve as a reviewer for {short_name}.
+
+ACCEPT LINK:
+{accept_url}
+
+DECLINE LINK:
+{decline_url}
+
+Cheers!'''.replace('{short_name}', short_name)
+
+        recruitment_content = {
+            'invitee_details': {
+                'description': 'Enter a tilde ID or email,name pair. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
+                'order': 2,
+                'value' : {
+                    'value-regex': '.{1,100}'
+                }
+            },
+            'email_subject': {
+                'description': 'Please carefully review the email subject for the recruitment email. Make sure not to remove the parenthesized tokens.',
+                'order': 4,
+                'value' : {
+                    'value-regex': '.*'
+                },
+                'presentation': {
+                    'default': '[{short_name}] Invitation to serve as reviewer'
+                }
+            },
+            'email_content': {
+                'description': 'Please carefully review the template below before you click submit to send out the recruitment email. Make sure not to remove the parenthesized tokens.',
+                'order': 5,
+                'value' : {
+                    'value-regex': '[\\S\\s]{1,10000}'
+                },
+                'presentation': {
+                    'default': recruitment_email_template
+                }
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/ae_recruitment_process.py')) as f:
+            content = f.read()
+            content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
+            invitation = openreview.api.Invitation(
+                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Reviewer_Recruitment',
+                invitees = [venue_id, f'{venue_id}/Action_Editors'],
+                readers = ['everyone'],
+                writers = [],
+                signatures = ['~Super_User1'],
+                edit = {
+                    'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
+                    'writers': { 'values': [self.support_group_id, venue_id] },
+                    'readers': { 'values': [self.support_group_id, venue_id] },
+                    'note': {
+                        'forum': { 'value': note.id },
+                        'replyto': {'value': note.id },
+                        'signatures': { 'values': ['${signatures}'] },
+                        'readers': { 'values': [self.support_group_id, venue_id, f'{venue_id}/Action_Editors'] },
                         'writers': { 'values': [self.support_group_id, venue_id]},
                         'content': recruitment_content
                     }
