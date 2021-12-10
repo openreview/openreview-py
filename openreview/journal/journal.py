@@ -2,7 +2,7 @@ from .. import openreview
 from .. import tools
 from . import invitation
 from . import group
-from . import recruitment
+from .recruitment import Recruitment
 from .assignment import Assignment
 from openreview.api import Edge
 from openreview.api import Group
@@ -48,6 +48,7 @@ class Journal(object):
             "contact": self.contact_info
         }
         self.assignment = Assignment(self)
+        self.recruitment = Recruitment(self)
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -229,10 +230,10 @@ class Journal(object):
         return self.assignment.setup_reviewer_assignment(note)
 
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
-        return recruitment.Recruitment(self).invite_action_editors(message, subject, invitees, invitee_names)
+        return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
     def invite_reviewers(self, message, subject, invitees, invitee_names=None):
-        return recruitment.Recruitment(self).invite_reviewers(message, subject, invitees, invitee_names)
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names)
 
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
