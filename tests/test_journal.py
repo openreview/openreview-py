@@ -925,6 +925,23 @@ class TestJournal():
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## Update the official recommendation and don't send the email again
+        official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                id=official_recommendation_note['note']['id'],
+                content={
+                    'decision_recommendation': { 'value': 'Leaning Accept' },
+                    'certification_recommendations': { 'value': ['Survey Certification'] },
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
+        assert len(messages) == 1
+
         ## Check permissions of the review revisions
         review_revisions=openreview_client.get_note_edits(noteId=reviews[0].id)
         assert len(review_revisions) == 3

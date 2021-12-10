@@ -4,6 +4,10 @@ def process(client, edit, invitation):
 
     note = edit.note
 
+    ## On update or delete return
+    if note.tcdate != note.tmdate:
+        return
+
     submission = client.get_note(note.forum)
 
     ## If yes then assign the reviewer to the papers
