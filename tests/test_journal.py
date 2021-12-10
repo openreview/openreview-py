@@ -493,7 +493,7 @@ class TestJournal():
         assert len(david_anon_groups) == 1
 
         ## Post a review edit
-        review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+        david_review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
@@ -506,7 +506,7 @@ class TestJournal():
         )
 
         helpers.await_queue(openreview_client)
-        process_logs = openreview_client.get_process_logs(id = review_note['id'])
+        process_logs = openreview_client.get_process_logs(id = david_review_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -528,7 +528,7 @@ class TestJournal():
                 signatures=[f"{venue_id}/Paper1/Authors"],
                 readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
                 forum=note_id_1,
-                replyto=review_note['note']['id'],
+                replyto=david_review_note['note']['id'],
                 content={
                     'title': { 'value': 'Thanks for your review' },
                     'comment': { 'value': 'This is helpfull feedback' }
@@ -750,6 +750,68 @@ class TestJournal():
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## Edit a review and don't release the review again
+        review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                id=david_review_note['note']['id'],
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions V2 ' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses V2' },
+                    'requested_changes': { 'value': 'requested_changes V2' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
+        assert len(messages) == 1
+
+
+        ## Assign reviewer 4
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Hugo_Larochelle1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~Hugo_Larochelle1',
+            weight=1
+        ))
+
+        helpers.await_queue(openreview_client)
+
+        hugo_anon_groups=hugo_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Hugo_Larochelle1')
+        assert len(hugo_anon_groups) == 1
+
+        ## Post a review edit
+        review_note = hugo_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[hugo_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        ## All the reviewes should be public now
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
+        assert len(reviews) == 4
+        assert reviews[0].readers == ['everyone']
+        assert reviews[0].signatures == [david_anon_groups[0].id]
+        assert reviews[1].readers == ['everyone']
+        assert reviews[1].signatures == [javier_anon_groups[0].id]
+        assert reviews[2].readers == ['everyone']
+        assert reviews[2].signatures == [carlos_anon_groups[0].id]
+        assert reviews[3].readers == ['everyone']
+        assert reviews[3].signatures == [hugo_anon_groups[0].id]
+
         invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
@@ -827,7 +889,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 17
+        assert len(invitations) == 18
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -839,6 +901,7 @@ class TestJournal():
         assert f"{david_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
         assert f"{javier_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
         assert f"{carlos_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
+        assert f"{hugo_anon_groups[0].id}/-/Rating" in [i.id for i in invitations]
 
         messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
@@ -864,11 +927,13 @@ class TestJournal():
 
         ## Check permissions of the review revisions
         review_revisions=openreview_client.get_note_edits(noteId=reviews[0].id)
-        assert len(review_revisions) == 2
+        assert len(review_revisions) == 3
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
-        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
+        assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
-        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
+        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review_Release"
+        assert review_revisions[2].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
+        assert review_revisions[2].invitation == f"{venue_id}/Paper1/-/Review"
 
         review_revisions=openreview_client.get_note_edits(noteId=reviews[1].id)
         assert len(review_revisions) == 2
@@ -1132,7 +1197,7 @@ class TestJournal():
 
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='.TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 3
+        assert len(edges) == 4
 
         ## Ask solitic review
         solitic_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
@@ -1223,11 +1288,12 @@ class TestJournal():
 
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='.TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 4
+        assert len(edges) == 5
         assert edges[0].weight == 0
         assert edges[1].weight == 0
         assert edges[2].weight == 0
-        assert edges[3].weight == 1
+        assert edges[3].weight == 0
+        assert edges[4].weight == 1
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper4/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())

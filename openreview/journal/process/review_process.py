@@ -23,6 +23,19 @@ def process(client, edit, invitation):
 
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
     if len(reviews) == 3:
+        ## Change review invitation readers
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=Invitation(id=journal.get_review_id(number=submission.number),
+                signatures=[venue_id],
+                edit={
+                    'note': {
+                        'readers': { 'values': [ 'everyone' ] }
+                    }
+                }
+        ))
+
         ## Release the reviews to everyone
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
