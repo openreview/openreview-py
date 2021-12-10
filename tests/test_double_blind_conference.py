@@ -2019,7 +2019,7 @@ url={'''
         assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
 
         assert note.content['authors'] == ['Anonymous']
-        assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authorss']
+        assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
         accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
         assert accepted_authors
         assert accepted_authors.members == ['AKBC.ws/2019/Conference/Paper1/Authors']
