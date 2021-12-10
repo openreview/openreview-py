@@ -219,6 +219,9 @@ class Journal(object):
     def get_reviewers(self):
         return self.client.get_group(self.get_reviewers_id()).members
 
+    def get_authors(self, number):
+        return self.client.get_group(self.get_authors_id(number=number)).members
+
     def setup_ae_assignment(self, note):
         return self.assignment.setup_ae_assignment(note)
 

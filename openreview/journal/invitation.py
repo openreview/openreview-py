@@ -230,11 +230,11 @@ class InvitationBuilder(object):
             invitees=['~'],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editor_in_chief_id],
             edit={
                 'signatures': { 'values-regex': '~.*' },
                 'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                'writers': { 'values': [ venue_id, ]},
+                'writers': { 'values': [ venue_id ]},
                 'note': {
                     'signatures': { 'values': [authors_value] },
                     'readers': { 'values': [ venue_id, action_editors_value, authors_value]},

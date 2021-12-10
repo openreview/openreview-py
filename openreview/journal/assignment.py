@@ -4,6 +4,7 @@ from .. import tools
 from openreview.api import Edge
 
 import random
+from tqdm import tqdm
 
 class Assignment(object):
 
@@ -17,8 +18,15 @@ class Assignment(object):
         action_editors_id=self.journal.get_action_editors_id()
         authors_id=self.journal.get_authors_id(number=note.number)
 
+        action_editors = self.journal.get_action_editors()
+        action_editor_profiles = tools.get_profiles(self.client, action_editors, with_publications=True)
+
+        authors = self.journal.get_authors(number=note.number)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
+
         ## Create conflict and affinity score edges
-        for ae in self.journal.get_action_editors():
+        for ae in action_editors:
+
             edge = Edge(invitation = self.journal.get_ae_affinity_score_id(),
                 readers = [venue_id, authors_id, ae],
                 writers = [venue_id],
@@ -29,18 +37,24 @@ class Assignment(object):
             )
             self.client.post_edge(edge)
 
-            random_number=round(random.random(), 2)
-            if random_number <= 0.3:
+        conflict_edges = []
+        for action_editor_profile in tqdm(action_editor_profiles):
+
+            conflicts = tools.get_conflicts(author_profiles, action_editor_profile, policy='neurips')
+            print('Compute conflict', note.id, action_editor_profile.id, conflicts)
+            if conflicts:
                 edge = Edge(invitation = self.journal.get_ae_conflict_id(),
                     readers = [venue_id, authors_id, ae],
                     writers = [venue_id],
                     signatures = [venue_id],
                     head = note.id,
-                    tail = ae,
+                    tail = action_editor_profile.id,
                     weight=-1,
                     label='Conflict'
                 )
-                self.client.post_edge(edge)
+                conflict_edges.append(edge)
+
+        tools.post_bulk_edges(self.client, conflict_edges)
 
     def setup_reviewer_assignment(self, note):
         venue_id=self.journal.venue_id
