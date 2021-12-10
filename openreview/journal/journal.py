@@ -2,7 +2,7 @@ from .. import openreview
 from .. import tools
 from . import invitation
 from openreview.api import Edge
-from openreview import Group
+from openreview.api import Group
 import os
 import re
 import json
@@ -221,7 +221,7 @@ class Journal(object):
         venue_id=self.venue_id
         editor_in_chief_id=self.get_editors_in_chief_id()
         ## venue group
-        venue_group=self.client.post_group(openreview.Group(id=venue_id,
+        venue_group=self.client.post_group(Group(id=venue_id,
                         readers=['everyone'],
                         writers=[venue_id],
                         signatures=['~Super_User1'],
@@ -234,7 +234,7 @@ class Journal(object):
         ## editor in chief
         editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
         if not editor_in_chief_group:
-            editor_in_chief_group=self.client.post_group(openreview.Group(id=editor_in_chief_id,
+            editor_in_chief_group=self.client.post_group(Group(id=editor_in_chief_id,
                             readers=['everyone'],
                             writers=[editor_in_chief_id],
                             signatures=[venue_id],
@@ -301,7 +301,7 @@ class Journal(object):
         action_editors_id = self.get_action_editors_id()
         action_editor_group = openreview.tools.get_group(self.client, action_editors_id)
         if not action_editor_group:
-            action_editor_group=self.client.post_group(openreview.Group(id=action_editors_id,
+            action_editor_group=self.client.post_group(Group(id=action_editors_id,
                             readers=['everyone'],
                             writers=[venue_id],
                             signatures=[venue_id],
@@ -316,7 +316,7 @@ class Journal(object):
         action_editors_invited_id = f'{action_editors_id}/Invited'
         action_editors_invited_group = openreview.tools.get_group(self.client, action_editors_invited_id)
         if not action_editors_invited_group:
-            self.client.post_group(openreview.Group(id=action_editors_invited_id,
+            self.client.post_group(Group(id=action_editors_invited_id,
                             readers=[venue_id],
                             writers=[venue_id],
                             signatures=[venue_id],
@@ -327,7 +327,7 @@ class Journal(object):
         action_editors_declined_id = f'{action_editors_id}/Declined'
         action_editors_declined_group = openreview.tools.get_group(self.client, action_editors_declined_id)
         if not action_editors_declined_group:
-            self.client.post_group(openreview.Group(id=action_editors_declined_id,
+            self.client.post_group(Group(id=action_editors_declined_id,
                             readers=[venue_id],
                             writers=[venue_id],
                             signatures=[venue_id],
@@ -338,7 +338,7 @@ class Journal(object):
         reviewers_id = self.get_reviewers_id()
         reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
         if not reviewer_group:
-            reviewer_group = openreview.Group(id=reviewers_id,
+            reviewer_group = Group(id=reviewers_id,
                             readers=[venue_id, action_editors_id, reviewers_id],
                             writers=[venue_id],
                             signatures=[venue_id],
@@ -355,7 +355,7 @@ class Journal(object):
         reviewers_invited_id = f'{reviewers_id}/Invited'
         reviewers_invited_group = openreview.tools.get_group(self.client, reviewers_invited_id)
         if not reviewers_invited_group:
-            self.client.post_group(openreview.Group(id=reviewers_invited_id,
+            self.client.post_group(Group(id=reviewers_invited_id,
                             readers=[venue_id],
                             writers=[venue_id],
                             signatures=[venue_id],
@@ -366,7 +366,7 @@ class Journal(object):
         reviewers_declined_id = f'{reviewers_id}/Declined'
         reviewers_declined_group = openreview.tools.get_group(self.client, reviewers_declined_id)
         if not reviewers_declined_group:
-            self.client.post_group(openreview.Group(id=reviewers_declined_id,
+            self.client.post_group(Group(id=reviewers_declined_id,
                             readers=[venue_id],
                             writers=[venue_id],
                             signatures=[venue_id],
@@ -377,7 +377,7 @@ class Journal(object):
         authors_id = self.get_authors_id()
         authors_group = openreview.tools.get_group(self.client, authors_id)
         if not authors_group:
-            authors_group = openreview.Group(id=authors_id,
+            authors_group = Group(id=authors_id,
                             readers=[venue_id, authors_id],
                             writers=[venue_id],
                             signatures=[venue_id],
