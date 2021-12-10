@@ -694,10 +694,16 @@ class TestJournal():
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 14
+        assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
+        assert f"{venue_id}/-/Rejection"  in [i.id for i in invitations]
+        assert f"{venue_id}/-/Withdrawn"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdraw" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Solicit_Review_Approval" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]

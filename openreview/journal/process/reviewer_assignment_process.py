@@ -39,6 +39,15 @@ def process_update(client, edge, invitation, existing_edge):
 
         duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
 
+        ## Update review invitation duedate
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=Invitation(id=journal.get_review_id(number=note.number),
+                signatures=[journal.get_editors_in_chief_id()],
+                duedate=openreview.tools.datetime_millis(duedate)
+        ))
+
         recipients=[edge.tail]
         subject=f'''[{journal.short_name}] Assignment to review new TMLR submission {note.content['title']['value']}'''
         message=f'''Hi {{{{fullname}}}},

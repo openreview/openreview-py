@@ -6,6 +6,8 @@ def process(client, edit, invitation):
 
     journal.setup_under_review_submission(note)
 
+    duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
+
     client.post_message(
         recipients=[journal.get_action_editors_id(number=note.number)],
         subject=f'''[{journal.short_name}] Perform reviewer assignments for TMLR submission {note.content['title']['value']}''',

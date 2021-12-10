@@ -22,20 +22,24 @@ def process(client, edit, invitation):
 
     ## On update or delete return
     if note.tcdate != note.tmdate:
+        print('Review edited, exit')
         return
 
     review_note=client.get_note(note.id)
     if review_note.readers == ['everyone']:
+        print('Review already public, exit')
         return
 
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
+    print(f'Reviews found {len(reviews)}')
     if len(reviews) == 3:
+        print('Relese review to the public...')
         ## Change review invitation readers
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             invitation=Invitation(id=journal.get_review_id(number=submission.number),
-                signatures=[venue_id],
+                signatures=[journal.get_editors_in_chief_id()],
                 edit={
                     'note': {
                         'readers': { 'values': [ 'everyone' ] }
