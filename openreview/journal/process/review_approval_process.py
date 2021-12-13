@@ -7,6 +7,10 @@ def process(client, edit, invitation):
 
     venue_id = journal.venue_id
 
+    ## On update or delete return
+    if edit.note.tcdate != edit.note.tmdate:
+        return
+
     submission = client.get_note(edit.note.forum)
     paper_action_editor_group = client.get_group(id=journal.get_action_editors_id(number=submission.number))
 
