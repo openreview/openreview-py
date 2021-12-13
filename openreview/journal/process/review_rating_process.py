@@ -2,6 +2,10 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     note=edit.note
 
+    ## On update or delete return
+    if note.tcdate != note.tmdate:
+        return
+
     ## check all the ratings are done and enable the Decision invitation
     submission = client.get_note(note.forum)
     reviews = client.get_notes(invitation=journal.get_review_id(number=submission.number))
