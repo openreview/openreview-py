@@ -28,6 +28,7 @@ class Journal(object):
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
         self.reviewers_name = 'Reviewers'
+        self.solicit_reviewers_name = 'Solicit_Reviewers'
         self.authors_name = 'Authors'
         self.submission_group_name = 'Paper'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
@@ -71,6 +72,9 @@ class Journal(object):
 
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
+
+    def get_solicit_reviewers_id(self, number=None):
+        return self.__get_group_id(self.solicit_reviewers_name, number)
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
@@ -251,8 +255,8 @@ class Journal(object):
         self.invitation_builder.set_comment_invitation(self, note)
         self.setup_reviewer_assignment(note)
 
-    def assign_reviewer(self, note, reviewer):
-        self.assignment.assign_reviewer(note, reviewer)
+    def assign_reviewer(self, note, reviewer, solicit):
+        self.assignment.assign_reviewer(note, reviewer, solicit)
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
 

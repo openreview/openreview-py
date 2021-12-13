@@ -107,8 +107,8 @@ class TestJournal():
         andrew_client=OpenReviewClient(username='andrewmc@mail.com', password='1234')
         hugo_client=OpenReviewClient(username='hugo@mail.com', password='1234')
 
-        peter_client=helpers.create_user('petersnow@mail.com', 'Peter', 'Snow')
-        peter_client=OpenReviewClient(username='petersnow@mail.com', password='1234')
+        peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
+        peter_client=OpenReviewClient(username='petersnow@yahoo.com', password='1234')
         if os.environ.get("OPENREVIEW_USERNAME"):
             os.environ.pop("OPENREVIEW_USERNAME")
         if os.environ.get("OPENREVIEW_PASSWORD"):
@@ -1136,7 +1136,10 @@ class TestJournal():
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
         raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
         joelle_client = OpenReviewClient(username='joelle@mail.com', password='1234')
-        peter_client = OpenReviewClient(username='petersnow@mail.com', password='1234')
+        peter_client = OpenReviewClient(username='petersnow@yahoo.com', password='1234')
+        tom_client=helpers.create_user('tom@mail.com', 'Tom', 'Rain')
+        tom_client = OpenReviewClient(username='tom@mail.com', password='1234')
+
 
 
         ## Reviewers
@@ -1231,6 +1234,33 @@ class TestJournal():
         edges = joelle_client.get_edges(invitation='.TMLR/Reviewers/-/Pending_Reviews')
         assert len(edges) == 4
 
+        ## Ask solitic review with a conflict
+        solitic_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
+            signatures=['~Tom_Rain1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue(openreview_client)
+
+        ## Post a response
+        with pytest.raises(openreview.OpenReviewException, match=r'Solicit review not allowed at this time'):
+            solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review_Approval',
+                signatures=[f"{venue_id}/Paper4/Action_Editors"],
+                note=Note(
+                    forum=note_id_4,
+                    replyto=solitic_review_note['note']['id'],
+                    content={
+                        'decision': { 'value': 'Yes, I approve the solicit review.' },
+                        'comment': { 'value': 'thanks!' }
+                    }
+                )
+            )
+
         ## Ask solitic review
         solitic_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
             signatures=['~Peter_Snow1'],
@@ -1266,7 +1296,7 @@ class TestJournal():
 
         assert '~Peter_Snow1' in joelle_client.get_group(f'{venue_id}/Paper4/Reviewers').members
 
-        messages = journal.client.get_messages(to = 'petersnow@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been accepted')
+        messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been accepted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Peter Snow,</p>
 <p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 4 has been accepted by the Action Editor (AE).</p>
@@ -1276,6 +1306,9 @@ class TestJournal():
 <p>We thank you for your contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
+
+        messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title 4')
+        assert len(messages) == 0
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')

@@ -14,7 +14,7 @@ def process(client, edit, invitation):
     if note.content['decision']['value'] == 'Yes, I approve the solicit review.':
         print('Assign reviewer from solicit review')
         solitic_request = client.get_note(note.replyto)
-        journal.assign_reviewer(submission, solitic_request.signatures[0])
+        journal.assign_reviewer(submission, solitic_request.signatures[0], solicit=True)
 
         print('Send email to solicit reviewer')
         duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)

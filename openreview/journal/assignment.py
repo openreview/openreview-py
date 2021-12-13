@@ -102,7 +102,7 @@ class Assignment(object):
 
         tools.post_bulk_edges(self.client, conflict_edges)
 
-    def assign_reviewer(self, note, reviewer):
+    def assign_reviewer(self, note, reviewer, solicit=False):
 
         profile = self.client.get_profile(reviewer)
         ## Check conflicts again?
@@ -115,3 +115,15 @@ class Assignment(object):
             tail=profile.id,
             weight=1
         ))
+
+        if solicit:
+            self.client.add_members_to_group(self.journal.get_solicit_reviewers_id(number=note.number), profile.id)
+
+    def compute_conflicts(self, note, reviewer):
+
+        reviewer_profiles = tools.get_profiles(self.client, [reviewer], with_publications=True)
+
+        authors = self.journal.get_authors(number=note.number)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
+
+        return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='neurips')

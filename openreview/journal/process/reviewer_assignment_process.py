@@ -48,7 +48,8 @@ def process_update(client, edge, invitation, existing_edge):
                 duedate=openreview.tools.datetime_millis(duedate)
         ))
 
-        recipients=[edge.tail]
+        recipients = [edge.tail]
+        ignoreRecipients = [journal.get_solicit_reviewers_id(number=note.number)]
         subject=f'''[{journal.short_name}] Assignment to review new TMLR submission {note.content['title']['value']}'''
         message=f'''Hi {{{{fullname}}}},
 
@@ -65,4 +66,4 @@ We thank you for your essential contribution to TMLR!
 The TMLR Editors-in-Chief
 '''
 
-        client.post_message(subject, recipients, message, parentGroup=group.id)
+        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
