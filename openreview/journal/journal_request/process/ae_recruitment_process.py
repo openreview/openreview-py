@@ -34,6 +34,9 @@ def process(client, edit, invitation):
     non_invited_status = f'''No recruitment invitation was sent to the following user because they have already been invited as reviewer:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
 
+    already_member_status = f'''No recruitment invitation was sent to the following user because they are already members of the reviewer group:
+{status.get('already_member')}''' if status.get('already_member') else ''
+
     error_status = f'''{len(status.get('errors'))} error(s) in the recruitment process:
 
 {status.get('errors')}''' if status.get('errors') else ''
@@ -42,6 +45,7 @@ def process(client, edit, invitation):
 Invited: {len(status.get('invited'))} reviewers.
 
 {non_invited_status}
+{already_member_status}
 
 Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/Reviewers/Invited
 '''

@@ -158,7 +158,10 @@ class TestJournalRequest():
         #add ae to invited group
         openreview_client.add_members_to_group(journal['journal_request_note']['content']['venue_id']['value']+ '/Action_Editors/Invited', 'ae_journal1@mail.com')
 
-        ae_details = { 'value': '''ae_journal1@mail.com, First AE\nae_journal2@mail.com, Second AE\nae_journal3@mail.com, Third AE'''}
+        #add ae to action editors group
+        openreview_client.add_members_to_group(journal['journal_request_note']['content']['venue_id']['value']+ '/Action_Editors', 'already_actioneditor@mail.com')
+
+        ae_details = { 'value': '''ae_journal1@mail.com, First AE\nae_journal2@mail.com, Second AE\nae_journal3@mail.com, Third AE\nalready_actioneditor@mail.com, Action Editor'''}
         recruitment_note = test_client.post_note_edit(
             invitation = '{}/Journal_Request{}/-/Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
             signatures = ['~Support_Role1'],
@@ -185,6 +188,9 @@ class TestJournalRequest():
         messages = openreview_client.get_messages(to = 'ae_journal1@mail.com')
         assert len(messages) == 0
 
+        messages = openreview_client.get_messages(to = 'already_actioneditor@mail.com')
+        assert len(messages) == 0
+
         messages = openreview_client.get_messages(to = 'ae_journal2@mail.com', subject = '[TJ22] Invitation to serve as action editor')
         assert len(messages) == 1
         assert messages[0]['content']['text'].startswith('<p>Dear Second AE,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as action editor.</p>')
@@ -199,6 +205,7 @@ class TestJournalRequest():
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
         assert 'Invited: 2 action editors.' in recruitment_status[0].content['comment']['value']
+        assert 'No recruitment invitation was sent to the following users because they are already members of the action editor group:'
 
     def test_journal_reviewer_recruitment_by_ae(self, openreview_client, selenium, request_page, helpers, journal):
 
