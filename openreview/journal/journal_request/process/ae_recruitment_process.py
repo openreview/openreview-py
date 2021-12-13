@@ -25,14 +25,11 @@ def process(client, edit, invitation):
             email = invitee_details[0].strip()
             name = invitee_details[1].strip()
 
-    print(email, name)
     subject = recruitment_note.content['email_subject']['value']
     message = recruitment_note.content['email_content']['value']
-    print(subject)
-    print(message)
+    message = message.replace('{inviter}', recruitment_note.signatures[0])
 
-    group, status = journal.invite_reviewers(message, subject, [email], [name])
-    print('Group, group')
+    status = journal.invite_reviewers(message, subject, [email], [name])
 
     non_invited_status = f'''No recruitment invitation was sent to the following user because they have already been invited as reviewer:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
@@ -46,7 +43,7 @@ Invited: {len(status.get('invited'))} reviewers.
 
 {non_invited_status}
 
-Please check the invitee group to see more details: https://openreview.net/group?id={group.id}
+Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/Reviewers/Invited
 '''
     if status['errors']:
         error_status=f'''{len(status.get('errors'))} error(s) in the recruitment process:
@@ -63,5 +60,6 @@ Error: {error_status}'''
                 'comment': { 'value': comment_content}
             },
             forum = recruitment_note.forum,
-            replyto = recruitment_note.id
+            replyto = recruitment_note.id,
+            readers = [SUPPORT_GROUP, venue_id, journal.get_action_editors_id()]
         ))

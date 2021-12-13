@@ -43,9 +43,9 @@ def process(client, edit, invitation):
                 invitee_names.append(name)
 
     if role == 'reviewer':
-        group, status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
+        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
     else:
-        group, status = journal.invite_action_editors(content, subject, invitee_emails, invitee_names)
+        status = journal.invite_action_editors(content, subject, invitee_emails, invitee_names)
 
     non_invited_status = f'''No recruitment invitation was sent to the following users because they have already been invited as {role}:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
@@ -76,5 +76,6 @@ Error: {error_status}'''
                 'comment': { 'value': comment_content}
             },
             forum = recruitment_note.forum,
-            replyto = recruitment_note.id
+            replyto = recruitment_note.id,
+            readers = [SUPPORT_GROUP, venue_id, journal.get_action_editors_id()]
         ))

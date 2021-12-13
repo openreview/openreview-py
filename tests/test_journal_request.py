@@ -224,7 +224,7 @@ class TestJournalRequest():
                 content = {
                     'invitee_details': reviewer_details,
                     'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as reviewer' },
-                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated to serve as reviewer for TJ22.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!'}
+                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated to serve as reviewer for TJ22.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!\n{inviter}'}
                 },
                 forum = journal['journal_request_note']['forum'],
                 replyto = journal['journal_request_note']['forum'],
@@ -241,3 +241,10 @@ class TestJournalRequest():
         messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to serve as reviewer')
         assert len(messages) == 1
         assert messages[0]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22.</p>')
+
+        inv = '{}/Journal_Request{}/-/Comment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
+        recruitment_status = ae_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])
+
+        assert recruitment_status
+        assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
+        assert 'Invited: 1 reviewer' in recruitment_status[0].content['comment']['value']

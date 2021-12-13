@@ -47,7 +47,7 @@ class Recruitment(object):
             else:
                 recruitment_status['already_invited'].append(invitee)
 
-        return self.client.get_group(id = action_editors_invited_id), recruitment_status
+        return recruitment_status
 
     def invite_reviewers(self, message, subject, invitees, invitee_names=None):
 
@@ -87,4 +87,4 @@ class Recruitment(object):
             else:
                 recruitment_status['already_invited'].append(invitee)
 
-        return self.client.get_group(id = reviewers_invited_id), recruitment_status
+        return recruitment_status

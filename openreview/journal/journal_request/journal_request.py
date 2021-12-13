@@ -109,51 +109,56 @@ class JournalRequest():
             members = []
         ))
 
-    def setup_comment_invitation(self, note_id):
+    def setup_comment_invitation(self, note_id, action_editors_id=None):
 
         note = self.client.get_note(note_id)
         venue_id = note.content['venue_id']['value']
 
-        invitation = openreview.api.Invitation(
-            id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Comment',
-            invitees = [venue_id],
-            readers = ['everyone'],
-            writers = [],
-            signatures = ['~Super_User1'],
-            edit = {
-                'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
-                'writers': { 'values': [self.support_group_id, venue_id] },
-                'readers': { 'values': [self.support_group_id, venue_id] },
-                'note': {
-                    'signatures': { 'values': ['${signatures}'] },
+        with open(os.path.join(os.path.dirname(__file__), 'process/comment_process.py')) as f:
+            content = f.read()
+            content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
+            invitation = openreview.api.Invitation(
+                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Comment',
+                invitees = ['everyone'],
+                readers = ['everyone'],
+                writers = [],
+                signatures = ['~Super_User1'],
+                edit = {
+                    'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
+                    'writers': { 'values': [self.support_group_id, venue_id] },
                     'readers': { 'values': [self.support_group_id, venue_id] },
-                    'writers': { 'values': [self.support_group_id, venue_id]},
-                    'content': {
-                        'title': {
-                            'description': 'Brief summary of your comment.',
-                            'order': 1,
-                            'value': {
-                                'value-regex': '.{1,500}'
-                            }
-                        },
-                        'comment': {
-                            'description': 'Your comment or reply (max 200000 characters).',
-                            'order': 2,
-                            'value' : {
-                                'value-regex': '[\\S\\s]{1,200000}'
+                    'note': {
+                        'signatures': { 'values': ['${signatures}'] },
+                        'readers': { 'values-dropdown': [self.support_group_id, venue_id, action_editors_id] },
+                        'writers': { 'values': [self.support_group_id, venue_id]},
+                        'forum': { 'value': note.id },
+                        'content': {
+                            'title': {
+                                'description': 'Brief summary of your comment.',
+                                'order': 1,
+                                'value': {
+                                    'value-regex': '.{1,500}'
+                                }
+                            },
+                            'comment': {
+                                'description': 'Your comment or reply (max 200000 characters).',
+                                'order': 2,
+                                'value' : {
+                                    'value-regex': '[\\S\\s]{1,200000}'
+                                }
                             }
                         }
                     }
-                }
-            }
-        )
-    
-        self.client.post_invitation_edit(
-                    readers = ['~Super_User1'],
-                    writers = ['~Super_User1'],
-                    signatures = ['~Super_User1'],
-                    invitation = invitation
-                )
+                },
+                process_string = content
+            )
+
+            self.client.post_invitation_edit(
+                        readers = ['~Super_User1'],
+                        writers = ['~Super_User1'],
+                        signatures = ['~Super_User1'],
+                        invitation = invitation
+                    )
 
     def setup_recruitment_invitation(self, note_id):
 
@@ -262,7 +267,8 @@ ACCEPT LINK:
 DECLINE LINK:
 {decline_url}
 
-Cheers!'''.replace('{short_name}', short_name)
+Cheers!
+{inviter}'''.replace('{short_name}', short_name)
 
         recruitment_content = {
             'invitee_details': {
