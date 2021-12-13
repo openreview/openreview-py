@@ -951,7 +951,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_desk_reject_submission(self, conference, client, test_client, selenium, request_page, helpers):
 
-        conference.setup_post_submission_stage(force=True)
+        conference.setup_post_submission_stage(force=True, hide_fields=['_bibtex'])
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 5
@@ -1000,6 +1000,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         desk_reject_note = test_client.get_note(posted_note.id)
         assert desk_reject_note
         assert desk_reject_note.content['desk_reject_comments'] == 'PC has decided to reject this submission.'
+        assert desk_reject_note.content['_bibtex'] == ''
 
         author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
         assert author_group
@@ -1016,7 +1017,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_withdraw_submission(self, conference, client, test_client, selenium, request_page, helpers):
 
-        conference.setup_post_submission_stage(force=True)
+        conference.setup_post_submission_stage(force=True, hide_fields=['_bibtex'])
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 4
@@ -1061,6 +1062,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs']
+        assert withdrawn_notes[0].content['_bibtex'] == ''
 
         author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
         assert author_group
