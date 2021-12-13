@@ -13,6 +13,7 @@ def process(client, note, invitation):
     REVEAL_AUTHORS_ON_WITHDRAW = False
     REVEAL_SUBMISSIONS_ON_WITHDRAW = False
     EMAIL_PROGRAM_CHAIRS = False
+    HIDE_FIELDS = []
 
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
@@ -61,6 +62,8 @@ def process(client, note, invitation):
         forum_note.content['venue'] = ''
         forum_note.content['venueid'] = ''
 
+    for field in HIDE_FIELDS:
+        forum_note.content[field] = ''
 
     forum_note = client.post_note(forum_note)
 
