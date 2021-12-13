@@ -16,6 +16,7 @@ import re
 from tqdm import tqdm
 from .. import tools
 import time
+from deprecated.sphinx import deprecated
 
 def _jaccard_similarity(list1, list2):
     '''
@@ -27,6 +28,7 @@ def _jaccard_similarity(list1, list2):
     union = set1.union(set2)
     return len(intersection) / len(union)
 
+@deprecated(version='1.1.1', reason="Use tools.get_profiles instead")
 def _get_profiles(client, ids_or_emails, with_publications=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
@@ -253,7 +255,7 @@ class Matching(object):
     def _build_conflicts(self, submissions, user_profiles, get_profile_info):
         if self.alternate_matching_group:
             other_matching_group = self.client.get_group(self.alternate_matching_group)
-            other_matching_profiles = _get_profiles(self.client, other_matching_group.members)
+            other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members)
             return self._build_profile_conflicts(other_matching_profiles, user_profiles)
         return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
 
@@ -264,7 +266,7 @@ class Matching(object):
 
         # Adapt single profile to multi-profile code
         user_profiles = [profile_id]
-        user_profiles = _get_profiles(self.client, user_profiles, with_publications=build_conflicts)
+        user_profiles = tools.get_profiles(self.client, user_profiles, with_publications=build_conflicts)
         # Check for existing OpenReview profile - perform dummy check
         if user_profiles[0].active == None:
             raise openreview.OpenReviewException('No profile exists')
@@ -293,7 +295,7 @@ class Matching(object):
                 authorids = submission.details['original']['content']['authorids']
 
             # Extract domains from each profile
-            author_profiles = _get_profiles(self.client, authorids, with_publications=True)
+            author_profiles = tools.get_profiles(self.client, authorids, with_publications=True)
             author_domains = set()
             author_emails = set()
             author_relations = set()
@@ -358,7 +360,7 @@ class Matching(object):
                 authorids = submission.details['original']['content']['authorids']
 
             # Extract domains from each profile
-            author_profiles = _get_profiles(self.client, authorids, with_publications=True)
+            author_profiles = tools.get_profiles(self.client, authorids, with_publications=True)
             author_domains = set()
             author_emails = set()
             author_relations = set()
@@ -536,7 +538,7 @@ class Matching(object):
                     deleted_papers.add(paper_note_id)
 
         print('deleted papers', deleted_papers)
-        
+
         ## Delete previous scores
         self.client.delete_edges(invitation.id, wait_to_finish=True)
 
@@ -918,7 +920,7 @@ class Matching(object):
                 'WARNING: not all reviewers have been converted to profile IDs.',
                 'Members without profiles will not have metadata created.')
 
-        user_profiles = _get_profiles(self.client, self.match_group.members, with_publications=build_conflicts)
+        user_profiles = tools.get_profiles(self.client, self.match_group.members, with_publications=build_conflicts)
 
         invitation = self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
         if not self.is_senior_area_chair:
