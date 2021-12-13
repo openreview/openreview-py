@@ -1,9 +1,12 @@
 from .. import openreview
 from .. import tools
 from . import invitation
+from . import group
+from .recruitment import Recruitment
+from .assignment import Assignment
 from openreview.api import Edge
 from openreview.api import Group
-import os
+
 import re
 import json
 import datetime
@@ -32,9 +35,10 @@ class Journal(object):
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
         self.accepted_venue_id = venue_id
         self.invitation_builder = invitation.InvitationBuilder(client)
+        self.group_builder = group.GroupBuilder(client)
         self.header = {
             "title": "Transactions of Machine Learning Research",
-            "short": short_name,
+            "short": self.short_name,
             "subtitle": "To be defined",
             "location": "Everywhere",
             "date": "Ongoing",
@@ -43,6 +47,8 @@ class Journal(object):
             "deadline": "",
             "contact": self.contact_info
         }
+        self.assignment = Assignment(self)
+        self.recruitment = Recruitment(self)
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -105,6 +111,9 @@ class Journal(object):
     def get_ae_decision_id(self, number=None):
         return self.__get_invitation_id(name='Decision', number=number)
 
+    def get_ae_recruitment_id(self):
+        return self.__get_invitation_id(name='Recruitment', prefix=self.get_action_editors_id())
+
     def get_ae_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_action_editors_id())
 
@@ -137,6 +146,9 @@ class Journal(object):
 
     def get_reviewer_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation', number=number)
+
+    def get_reviewer_recruitment_id(self):
+        return self.__get_invitation_id(name='Recruitment', prefix=self.get_reviewers_id())
 
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())
@@ -181,16 +193,8 @@ class Journal(object):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
     def setup(self, support_role, editors=[]):
-        self.setup_groups(support_role, editors)
-        self.invitation_builder.set_submission_invitation(self)
-        self.invitation_builder.set_under_review_invitation(self)
-        self.invitation_builder.set_desk_rejection_invitation(self)
-        self.invitation_builder.set_rejection_invitation(self)
-        self.invitation_builder.set_withdrawn_invitation(self)
-        self.invitation_builder.set_acceptance_invitation(self)
-        self.invitation_builder.set_authors_release_invitation(self)
-        self.invitation_builder.set_ae_assignment(self)
-        self.invitation_builder.set_reviewer_assignment(self)
+        self.group_builder.set_groups(self, support_role, editors)
+        self.invitation_builder.set_invitations(self)
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
@@ -216,379 +220,38 @@ class Journal(object):
     def get_reviewers(self):
         return self.client.get_group(self.get_reviewers_id()).members
 
-    def setup_groups(self, support_role, editors):
-        venue_id=self.venue_id
-        editor_in_chief_id=self.get_editors_in_chief_id()
-        ## venue group
-        venue_group=self.client.post_group(Group(id=venue_id,
-                        readers=['everyone'],
-                        writers=[venue_id],
-                        signatures=['~Super_User1'],
-                        signatories=[venue_id],
-                        members=[support_role]
-                        ))
-
-        self.client.add_members_to_group('host', venue_id)
-
-        ## editor in chief
-        editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
-        if not editor_in_chief_group:
-            editor_in_chief_group=self.client.post_group(Group(id=editor_in_chief_id,
-                            readers=['everyone'],
-                            writers=[editor_in_chief_id],
-                            signatures=[venue_id],
-                            signatories=[editor_in_chief_id, venue_id],
-                            members=editors
-                            ))
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/editorsInChiefWebfield.js')) as f:
-            content = f.read()
-            editor_in_chief_group.web = content
-            self.client.post_group(editor_in_chief_group)
-
-        editors=""
-        for m in editor_in_chief_group.members:
-            name=m.replace('~', ' ').replace('_', ' ')[:-1]
-            editors+=f'<a href="https://openreview.net/profile?id={m}">{name}</a></br>'
-
-        self.header['instructions'] = '''
-        <p>
-            <strong>Editors-in-chief:</strong></br>
-            {editors}
-            <strong>Managing Editors:</strong></br>
-            <a href=\"https://openreview.net/profile?id=~Fabian_Pedregosa1\"> Fabian Pedregosa</a>
-        </p>
-        <p>
-            Transactions on Machine Learning Research (TMLR) is a venue for dissemination of machine learning research that is intended to complement JMLR while supporting the unmet needs of a growing ML community.
-        </p>
-        <ul>
-            <li>
-                <p>TMLR emphasizes technical correctness over subjective significance, in order to ensure we facilitate scientific discourses on topics that are deemed less significant by contemporaries but may be so in the future.</p>
-            </li>
-            <li>
-                <p>TMLR caters to the shorter format manuscripts that are usually submitted to conferences, providing fast turnarounds and double blind reviewing. </p>
-            </li>
-            <li>
-                <p>TMLR employs a rolling submission process, shortened review period, flexible timelines, and variable manuscript length, to enable deep and sustained interactions among authors, reviewers, editors and readers.</p>
-            </li>
-            <li>
-                <p>TMLR does not accept submissions that have any overlap with previously published work.</p>
-            </li>
-        </ul>
-        <p>
-            For more information on TMLR, visit
-            <a href="http://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a>.
-        </p>
-        '''.format(editors=editors)
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
-            content = f.read()
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.header) + ";")
-            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + venue_id + "/-/Author_Submission';")
-            content = content.replace("var SUBMITTED_ID = '';", "var SUBMITTED_ID = '" + venue_id + "/Submitted';")
-            content = content.replace("var UNDER_REVIEW_ID = '';", "var UNDER_REVIEW_ID = '" + venue_id + "/Under_Review';")
-            content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + venue_id + "/Desk_Rejection';")
-            content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + venue_id + "/Withdrawn_Submission';")
-            content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
-            venue_group.web = content
-            self.client.post_group(venue_group)
-
-        ## Add editors in chief to have all the permissions
-        self.client.add_members_to_group(venue_group, editor_in_chief_id)
-
-        ## action editors group
-        action_editors_id = self.get_action_editors_id()
-        action_editor_group = openreview.tools.get_group(self.client, action_editors_id)
-        if not action_editor_group:
-            action_editor_group=self.client.post_group(Group(id=action_editors_id,
-                            readers=['everyone'],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[]))
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/actionEditorWebfield.js')) as f:
-            content = f.read()
-            action_editor_group.web = content
-            self.client.post_group(action_editor_group)
-
-        ## action editors invited group
-        action_editors_invited_id = f'{action_editors_id}/Invited'
-        action_editors_invited_group = openreview.tools.get_group(self.client, action_editors_invited_id)
-        if not action_editors_invited_group:
-            self.client.post_group(Group(id=action_editors_invited_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[],
-                            members=[]))
-
-        ## action editors declined group
-        action_editors_declined_id = f'{action_editors_id}/Declined'
-        action_editors_declined_group = openreview.tools.get_group(self.client, action_editors_declined_id)
-        if not action_editors_declined_group:
-            self.client.post_group(Group(id=action_editors_declined_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[],
-                            members=[]))
-
-        ## reviewers group
-        reviewers_id = self.get_reviewers_id()
-        reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
-        if not reviewer_group:
-            reviewer_group = Group(id=reviewers_id,
-                            readers=[venue_id, action_editors_id, reviewers_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[]
-                            )
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            reviewer_group.web = content
-            self.client.post_group(reviewer_group)
-
-        ## reviewers invited group
-        reviewers_invited_id = f'{reviewers_id}/Invited'
-        reviewers_invited_group = openreview.tools.get_group(self.client, reviewers_invited_id)
-        if not reviewers_invited_group:
-            self.client.post_group(Group(id=reviewers_invited_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[],
-                            members=[]))
-
-        ## reviewers declined group
-        reviewers_declined_id = f'{reviewers_id}/Declined'
-        reviewers_declined_group = openreview.tools.get_group(self.client, reviewers_declined_id)
-        if not reviewers_declined_group:
-            self.client.post_group(Group(id=reviewers_declined_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[],
-                            members=[]))
-
-        ## authors group
-        authors_id = self.get_authors_id()
-        authors_group = openreview.tools.get_group(self.client, authors_id)
-        if not authors_group:
-            authors_group = Group(id=authors_id,
-                            readers=[venue_id, authors_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[])
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            authors_group.web = content
-            self.client.post_group(authors_group)
+    def get_authors(self, number):
+        return self.client.get_group(self.get_authors_id(number=number)).members
 
     def setup_ae_assignment(self, note):
-        venue_id=self.venue_id
-        action_editors_id=self.get_action_editors_id()
-        authors_id=self.get_authors_id(number=note.number)
-
-        ## Create conflict and affinity score edges
-        for ae in self.get_action_editors():
-            edge = Edge(invitation = f'{action_editors_id}/-/Affinity_Score',
-                readers = [venue_id, authors_id, ae],
-                writers = [venue_id],
-                signatures = [venue_id],
-                head = note.id,
-                tail = ae,
-                weight=round(random.random(), 2)
-            )
-            self.client.post_edge(edge)
-
-            random_number=round(random.random(), 2)
-            if random_number <= 0.3:
-                edge = Edge(invitation = f'{action_editors_id}/-/Conflict',
-                    readers = [venue_id, authors_id, ae],
-                    writers = [venue_id],
-                    signatures = [venue_id],
-                    head = note.id,
-                    tail = ae,
-                    weight=-1,
-                    label='Conflict'
-                )
-                self.client.post_edge(edge)
+        return self.assignment.setup_ae_assignment(note)
 
     def setup_reviewer_assignment(self, note):
-        venue_id=self.venue_id
-        reviewers_id=self.get_reviewers_id()
-        action_editors_id=self.get_action_editors_id(number=note.number)
-        authors_id = self.get_authors_id(number=note.number)
-        note=self.client.get_notes(invitation=f'{venue_id}/-/Author_Submission', number=note.number)[0]
-
-        ## Create conflict and affinity score edges
-        for r in self.get_reviewers():
-            edge = Edge(invitation = f'{reviewers_id}/-/Affinity_Score',
-                readers = [venue_id, action_editors_id, r],
-                nonreaders = [authors_id],
-                writers = [venue_id],
-                signatures = [venue_id],
-                head = note.id,
-                tail = r,
-                weight=round(random.random(), 2)
-            )
-            self.client.post_edge(edge)
-
-            random_number=round(random.random(), 2)
-            if random_number <= 0.3:
-                edge = Edge(invitation = f'{reviewers_id}/-/Conflict',
-                    readers = [venue_id, action_editors_id, r],
-                    nonreaders = [authors_id],
-                    writers = [venue_id],
-                    signatures = [venue_id],
-                    head = note.id,
-                    tail = r,
-                    weight=-1,
-                    label='Conflict'
-                )
-                self.client.post_edge(edge)
+        return self.assignment.setup_reviewer_assignment(note)
 
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
-
-        action_editors_id = self.get_action_editors_id()
-        action_editors_declined_id = action_editors_id + '/Declined'
-        action_editors_invited_id = action_editors_id + '/Invited'
-        hash_seed = self.secret_key
-
-        invitation = self.invitation_builder.set_ae_recruitment_invitation(self, hash_seed, self.header)
-        invited_members = self.client.get_group(action_editors_invited_id).members
-
-        for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
-            profile=openreview.tools.get_profile(self.client, invitee)
-            invitee = profile.id if profile else invitee
-            if invitee not in invited_members:
-                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, invitee, name,
-                    hash_seed,
-                    invitation['invitation']['id'],
-                    message,
-                    subject,
-                    action_editors_invited_id,
-                    verbose = False)
-
-        return self.client.get_group(id = action_editors_invited_id)
+        return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
     def invite_reviewers(self, message, subject, invitees, invitee_names=None):
-
-        reviewers_id = self.get_reviewers_id()
-        reviewers_declined_id = reviewers_id + '/Declined'
-        reviewers_invited_id = reviewers_id + '/Invited'
-        hash_seed = self.secret_key
-
-        invitation = self.invitation_builder.set_reviewer_recruitment_invitation(self, hash_seed, self.header)
-        invited_members = self.client.get_group(reviewers_invited_id).members
-
-        for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if (invitee.startswith('~') or tools.get_group(self.client, invitee)) else []
-            profile=openreview.tools.get_profile(self.client, invitee)
-            invitee = profile.id if profile else invitee
-            if invitee not in invited_members:
-                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
-                r=tools.recruit_reviewer(self.client, invitee, name,
-                    hash_seed,
-                    invitation['invitation']['id'],
-                    message,
-                    subject,
-                    reviewers_invited_id,
-                    verbose = False)
-
-        return self.client.get_group(id = reviewers_invited_id)
-
-    def setup_submission_groups(self, note):
-        venue_id = self.venue_id
-        paper_group_id=f'{venue_id}/Paper{note.number}'
-        paper_group=openreview.tools.get_group(self.client, paper_group_id)
-        if not paper_group:
-            paper_group=self.client.post_group(Group(id=paper_group_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                signatories=[venue_id]
-            ))
-
-        authors_group_id=f'{paper_group.id}/Authors'
-        authors_group=self.client.post_group(Group(id=authors_group_id,
-            readers=[venue_id, authors_group_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            signatories=[venue_id, authors_group_id],
-            members=note.content['authorids']['value'] ## always update authors
-        ))
-        self.client.add_members_to_group(f'{venue_id}/Authors', authors_group_id)
-
-        action_editors_group_id=f'{paper_group.id}/Action_Editors'
-        reviewers_group_id=f'{paper_group.id}/Reviewers'
-
-        action_editors_group=openreview.tools.get_group(self.client, action_editors_group_id)
-        if not action_editors_group:
-            action_editors_group=self.client.post_group(Group(id=action_editors_group_id,
-                readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                nonreaders=[authors_group_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                signatories=[venue_id, action_editors_group_id],
-                members=[]
-            ))
-
-        reviewers_group=openreview.tools.get_group(self.client, reviewers_group_id)
-        if not reviewers_group:
-            reviewers_group=self.client.post_group(Group(id=reviewers_group_id,
-                readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                deanonymizers=[venue_id, action_editors_group_id],
-                nonreaders=[authors_group_id],
-                writers=[venue_id, action_editors_group_id],
-                signatures=[venue_id],
-                signatories=[venue_id],
-                members=[],
-                anonids=True
-            ))
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names)
 
     def setup_author_submission(self, note):
-
-        self.setup_submission_groups(note)
+        self.group_builder.setup_submission_groups(self, note)
         self.invitation_builder.set_revision_submission(self, note)
         self.invitation_builder.set_review_approval_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_withdraw_invitation(self, note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 7)))
-        #self.invitation_builder.set_ae_assignment_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 14)))
 
     def setup_under_review_submission(self, note, reviewer_assignment_due_date):
-
         self.invitation_builder.set_review_invitation(self, note, reviewer_assignment_due_date)
         self.invitation_builder.set_solicit_review_invitation(self, note)
         self.invitation_builder.set_solicit_review_approval_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.setup_reviewer_assignment(note)
-        #self.invitation_builder.set_reviewer_assignment_invitation(self, note, reviewer_assignment_due_date)
 
     def assign_reviewer(self, note, reviewer):
-
-        profile = self.client.get_profile(reviewer)
-        ## Check conflicts again?
-        self.client.post_edge(Edge(invitation=self.get_reviewer_assignment_id(),
-            readers=[self.venue_id, self.get_action_editors_id(number=note.number), profile.id],
-            nonreaders=[self.get_authors_id(number=note.number)],
-            writers=[self.venue_id, self.get_action_editors_id(number=note.number)],
-            signatures=[self.venue_id],
-            head=note.id,
-            tail=profile.id,
-            weight=1
-        ))
+        self.assignment.assign_reviewer(note, reviewer)
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
 
