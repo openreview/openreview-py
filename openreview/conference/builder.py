@@ -1514,7 +1514,7 @@ Program Chairs
                     }
                     if not release_authors:
                         submission.content['authors'] = ['Anonymous']
-                        submission.content['authorids'] = ['Anonymous']
+                        submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
                 else:
                     submission.content['_bibtex'] = tools.get_bibtex(
                                     submission,

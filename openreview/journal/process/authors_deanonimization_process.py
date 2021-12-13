@@ -3,6 +3,10 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
+    ## On update or delete return
+    if edit.note.tcdate != edit.note.tmdate:
+        return
+
     submission = client.get_note(edit.note.forum)
 
     print('Release authors')
