@@ -362,10 +362,12 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return [Profile.from_json(p) for p in response.json()['profiles']]
 
-    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
+        :param confirmedEmails: List of confirmed emails registered in OpenReview
+        :type confirmedEmails: list, optional
         :param emails: List of emails registered in OpenReview
         :type emails: list, optional
         :param ids: List of OpenReview username ids
@@ -379,7 +381,7 @@ class OpenReviewClient(object):
         :param last: Last name of user
         :type last: str, optional
 
-        :return: List of profiles
+        :return: List of profiles, if emails is present then a dictionary of { email: profiles } is returned. If confirmedEmails is present then a dictionary of { email: profile } is returned
         :rtype: list[Profile]
         """
 
@@ -407,7 +409,28 @@ class OpenReviewClient(object):
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
-            return {p['email']: Profile.from_json(p) for p in full_response}
+            profiles_by_email = {}
+            for p in full_response:
+                if p['email'] not in profiles_by_email:
+                    profiles_by_email[p['email']] = []
+                profiles_by_email[p['email']].append(Profile.from_json(p))
+            return profiles_by_email
+
+        if confirmedEmails:
+            full_response = []
+            for email_batch in batches(confirmedEmails):
+                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            profiles_by_email = {}
+            for p in full_response:
+                profile = Profile.from_json(p)
+                if p['email'] in profile.content['emailsConfirmed']:
+                    profiles_by_email[p['email']] = profile
+            return profiles_by_email
+
+
 
         if ids:
             full_response = []
@@ -707,6 +730,21 @@ class OpenReviewClient(object):
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         return invitations
+
+    def get_invitation_edit(self, id):
+        """
+        Get a single edit by id if available
+
+        :param id: id of the edit
+        :type id: str
+
+        :return: edit matching the passed id
+        :rtype: Note
+        """
+        response = requests.get(self.invitation_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.__handle_response(response)
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
 
     def get_notes(self, id = None,
             paperhash = None,

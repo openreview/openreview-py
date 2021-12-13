@@ -17,6 +17,7 @@ class TestJournal():
     def journal(self):
         venue_id = '.TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
+        fabian_client.impersonate('.TMLR/Editors_In_Chief')
         journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
         return journal
 
