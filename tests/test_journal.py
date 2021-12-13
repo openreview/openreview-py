@@ -1401,6 +1401,18 @@ class TestJournal():
             )
             helpers.await_queue(openreview_client)
 
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision Reject can not have certifications'):
+            decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Decision',
+                signatures=[f"{venue_id}/Paper4/Action_Editors"],
+                note=Note(
+                    content={
+                        'recommendation': { 'value': 'Reject' },
+                        'comment': { 'value': 'This is not a good paper' },
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
+                    }
+                )
+            )
+
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Decision',
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(

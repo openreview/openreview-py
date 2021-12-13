@@ -2060,6 +2060,7 @@ class InvitationBuilder(object):
                     }
                 }
             },
+            preprocess=os.path.join(os.path.dirname(__file__), 'process/submission_decision_pre_process.py'),
             process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py')
         )
 
