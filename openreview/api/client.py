@@ -296,72 +296,6 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    @deprecated(version='0.9.20', reason="Use search_profiles instead")
-    def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
-        """
-        Gets a list of profiles
-
-        :param email_or_id_list: List of ids or emails
-        :type email_or_id_list: list, optional
-        :param id: OpenReview username id
-        :type id: str, optional
-        :param email: e-mail registered in OpenReview
-        :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-
-        :return: List of profiles
-        :rtype: list[Profile]
-        """
-
-        ## Deprecated, don't use it
-        if email_or_id_list is not None:
-            pure_tilde_ids = all(['~' in i for i in email_or_id_list])
-            pure_emails = all(['@' in i for i in email_or_id_list])
-
-            def get_ids_response(id_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return [Profile.from_json(p) for p in response.json()['profiles']]
-
-            def get_emails_response(email_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return { p['email'] : Profile.from_json(p['profile'])
-                    for p in response.json()['profiles'] }
-
-            if pure_tilde_ids:
-                get_response = get_ids_response
-                update_result = lambda result, response: result.extend(response)
-                result = []
-            elif pure_emails:
-                get_response = get_emails_response
-                update_result = lambda result, response: result.update(response)
-                result = {}
-            else:
-                raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
-
-            done = False
-            offset = 0
-            limit = 1000
-            while not done:
-                current_batch = email_or_id_list[offset:offset+limit]
-                offset += limit
-                response = get_response(current_batch)
-                update_result(result, response)
-                if len(current_batch) < limit:
-                    done = True
-
-            return result
-
-        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
-        response = self.__handle_response(response)
-        return [Profile.from_json(p) for p in response.json()['profiles']]
-
     def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
@@ -532,26 +466,6 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         return response.json()['venues']
-
-    @deprecated(version='1.0.3', reason="Use put_attachment instead")
-    def put_pdf(self, fname):
-        """
-        Uploads a pdf to the openreview server
-
-        :param fname: Path to the pdf
-        :type fname: str
-
-        :return: A relative URL for the uploaded pdf
-        :rtype: str
-        """
-        headers = self.headers.copy()
-
-        with open(fname, 'rb') as f:
-            headers['content-type'] = 'application/pdf'
-            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
-
-        response = self.__handle_response(response)
-        return response.json()['url']
 
     def put_attachment(self, file_path, invitation, name):
         """
@@ -1225,26 +1139,6 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    @deprecated(version='1.0.6', reason="Use post_message instead")
-    def send_mail(self, subject, recipients, message):
-        """
-        Posts a message to the recipients and consequently sends them emails as well
-
-        :param subject: Subject of the e-mail
-        :type subject: str
-        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
-        :type recipients: list[str]
-        :param message: Message in the e-mail
-        :type message: str
-
-        :return: Contains the message that was sent to each Group
-        :rtype: dict
-        """
-        response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
     def add_members_to_group(self, group, members):
         """
         Adds members to a group
@@ -1444,6 +1338,63 @@ class OpenReviewClient(object):
         response = requests.get(self.jobs_status, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
+
+    def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'exclusion_inv': exclusion_inv, 'model': model}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def request_single_paper_expertise(self, name, group_id, paper_id, model=None, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            return {}
+        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_expertise_status(self, job_id, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            return { 'status': 'Completed' }
+        response = requests.get(base_url + '/expertise/status', params = {'id': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            return { 'results': [] }
+
+        if wait_for_complete:
+            status = None
+            status_response = None
+            call_count = 0
+            while status not in ['Completed', 'Error'] and call_count < 30:
+                time.sleep(30)
+                status_response = self.client.get_expertise_status(job_id)
+                status = status_response.get('status')
+                call_count += 1
+
+            if 'Completed' == status:
+                return self.client.get_expertise_results(job_id)
+            if 'Error' == status:
+                raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
+            if call_count == 30:
+                raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
+            raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
+        else:
+            response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
+            response = self.__handle_response(response)
+
+            return response.json()
 
 
 class Edit(object):
