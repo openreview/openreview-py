@@ -353,7 +353,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': '.TMLR/Submitted',
+                                'value': journal.submitted_venue_id,
                             },
                             'presentation': {
                                 'hidden': True,
@@ -506,7 +506,8 @@ class InvitationBuilder(object):
                     'optional': True
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py')
+            process=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py'),
+            preprocess=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_pre_process.py'),
         )
 
         self.save_invitation(journal, invitation)
@@ -736,7 +737,8 @@ class InvitationBuilder(object):
                     'optional': True
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')
+            process=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py'),
+            preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py')
         )
 
         self.save_invitation(journal, invitation)

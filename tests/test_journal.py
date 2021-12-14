@@ -389,6 +389,27 @@ class TestJournal():
         assert len(invitations) == 1
         assert f"{venue_id}/Paper2/-/Review_Approval"  in [i.id for i in invitations]
 
+        ## Check assignment invitations
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission'):
+            paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+                readers=[venue_id, editor_in_chief_group_id, '~Ryan_Adams1'],
+                writers=[venue_id, editor_in_chief_group_id],
+                signatures=[editor_in_chief_group_id],
+                head=note_id_2,
+                tail='~Ryan_Adams1',
+                weight=1
+            ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission: .TMLR/Desk_Rejection'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+                readers=[venue_id, f"{venue_id}/Paper2/Action_Editors", '~David_Belanger1'],
+                nonreaders=[f"{venue_id}/Paper2/Authors"],
+                writers=[venue_id, f"{venue_id}/Paper2/Action_Editors"],
+                signatures=[f"{venue_id}/Paper2/Action_Editors"],
+                head=note_id_2,
+                tail='~David_Belanger1',
+                weight=1
+            ))
 
         ## Withdraw the submission 3
         withdraw_note = test_client.post_note_edit(invitation='.TMLR/Paper3/-/Withdraw',

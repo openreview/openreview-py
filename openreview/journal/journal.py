@@ -31,6 +31,7 @@ class Journal(object):
         self.solicit_reviewers_name = 'Solicit_Reviewers'
         self.authors_name = 'Authors'
         self.submission_group_name = 'Paper'
+        self.submitted_venue_id = f'{venue_id}/Submitted'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
         self.rejected_venue_id = f'{venue_id}/Rejection'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
