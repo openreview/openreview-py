@@ -181,8 +181,8 @@ class Journal(object):
     def get_solicit_review_id(self, number):
         return self.__get_invitation_id(name='Solicit_Review', number=number)
 
-    def get_solicit_review_approval_id(self, number):
-        return self.__get_invitation_id(name='Solicit_Review_Approval', number=number)
+    def get_solicit_review_approval_id(self, number, signature):
+        return self.__get_invitation_id(name=f'{signature}_Solicit_Review_Approval', number=number)
 
     def get_public_comment_id(self, number):
         return self.__get_invitation_id(name='Public_Comment', number=number)
@@ -251,7 +251,6 @@ class Journal(object):
     def setup_under_review_submission(self, note):
         self.invitation_builder.set_review_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)))
         self.invitation_builder.set_solicit_review_invitation(self, note)
-        self.invitation_builder.set_solicit_review_approval_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.setup_reviewer_assignment(note)
 

@@ -1612,7 +1612,7 @@ class InvitationBuilder(object):
 
         self.save_invitation(journal, invitation)
 
-    def set_solicit_review_approval_invitation(self, journal, note):
+    def set_solicit_review_approval_invitation(self, journal, note, solicit_note, duedate):
 
         venue_id = journal.venue_id
         editors_in_chief_id = journal.get_editors_in_chief_id()
@@ -1620,14 +1620,15 @@ class InvitationBuilder(object):
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
 
-        solicit_review_invitation_approval_id = journal.get_solicit_review_approval_id(number=note.number)
+        solicit_review_invitation_approval_id = journal.get_solicit_review_approval_id(number=note.number, signature=solicit_note.signatures[0])
 
         invitation = Invitation(id=solicit_review_invitation_approval_id,
             invitees=[venue_id, paper_action_editors_id],
             noninvitees=[editors_in_chief_id],
-            readers=['everyone'],
+            readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
             signatures=[editors_in_chief_id],
+            duedate=openreview.tools.datetime_millis(duedate),
             edit={
                 'signatures': { 'values': [ paper_action_editors_id ] },
                 'readers': { 'values': [ venue_id, paper_action_editors_id ] },
@@ -1635,7 +1636,7 @@ class InvitationBuilder(object):
                 'writers': { 'values': [ venue_id ] },
                 'note': {
                     'forum': { 'value': note.id },
-                    'replyto': { 'value-invitation': journal.get_solicit_review_id(number=note.number) },
+                    'replyto': { 'value': solicit_note.id },
                     'signatures': { 'values': [ paper_action_editors_id ] },
                     'readers': { 'values': [ '${{note.replyto}.readers}' ] },
                     'nonreaders': { 'values': [ paper_authors_id ] },
@@ -1643,7 +1644,7 @@ class InvitationBuilder(object):
                     'content': {
                         'decision': {
                             'order': 1,
-                            'description': '',
+                            'description': 'Select you decision about approving the solicit review.',
                             'value': {
                                 'value-radio': [
                                     'Yes, I approve the solicit review.',
@@ -1653,7 +1654,7 @@ class InvitationBuilder(object):
                         },
                         'comment': {
                             'order': 2,
-                            'description': 'TODO.',
+                            'description': '',
                             'value': {
                                 'value-regex': '^[\\S\\s]{1,200000}$',
                                 'optional': True

@@ -327,11 +327,10 @@ class TestJournal():
 
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 4
+        assert len(invitations) == 3
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review_Approval" in [i.id for i in invitations]
 
         ## Assign Action editor to submission 2
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
@@ -402,7 +401,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 12
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]
@@ -513,7 +512,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 12
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -643,7 +642,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 12
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -694,7 +693,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 14
+        assert len(invitations) == 13
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejection"  in [i.id for i in invitations]
@@ -704,7 +703,6 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Withdraw" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review_Approval" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
@@ -848,7 +846,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 14
+        assert len(invitations) == 13
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -872,7 +870,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 14
+        assert len(invitations) == 13
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -896,7 +894,7 @@ class TestJournal():
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 18
+        assert len(invitations) == 17
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -1247,9 +1245,20 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
+        messages = journal.client.get_messages(to = 'joelle@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been submitted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>This is to inform you that an OpenReview user has requested to review TMLR submission Paper title 4, which you are the AE for.</p>
+<p>Please consult the request and either accept or reject it, by visiting this link:</p>
+<p><a href=\"https://openreview.net/forum?id={note_id_4}&amp;noteId={solitic_review_note['note']['id']}\">https://openreview.net/forum?id={note_id_4}&amp;noteId={solitic_review_note['note']['id']}</a></p>
+<p>We ask that you provide a response within 1 week, by {(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (<a href=\"https://openreview.net/profile?id=~Tom_Rain1\">https://openreview.net/profile?id=~Tom_Rain1</a>) before making a decision.</p>
+<p>We thank you for your contribution to TMLR!</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
         ## Post a response
         with pytest.raises(openreview.OpenReviewException, match=r'Solicit review not allowed at this time'):
-            solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review_Approval',
+            solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Solicit_Review_Approval',
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
                     forum=note_id_4,
@@ -1275,10 +1284,10 @@ class TestJournal():
         helpers.await_queue(openreview_client)
 
         invitations = joelle_client.get_invitations(replyForum=note_id_4)
-        assert f'{venue_id}/Paper4/-/Solicit_Review_Approval' in [i.id for i in invitations]
+        assert f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval' in [i.id for i in invitations]
 
         ## Post a response
-        solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review_Approval',
+        solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval',
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
                 forum=note_id_4,
