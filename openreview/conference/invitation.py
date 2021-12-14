@@ -308,6 +308,9 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                     'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
                     'required': False,
                     'order': 2
+                },
+                'keywords': {
+                    'values-regex': '~.*',
                 }
             }
             if not reveal_authors:
