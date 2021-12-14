@@ -132,6 +132,7 @@ class JournalRequest():
                         'readers': { 'values-dropdown': [self.support_group_id, venue_id, action_editors_id] },
                         'writers': { 'values': [self.support_group_id, venue_id]},
                         'forum': { 'value': note.id },
+                        'replyto': { 'with-forum': note.id },
                         'content': {
                             'title': {
                                 'description': 'Brief summary of your comment.',

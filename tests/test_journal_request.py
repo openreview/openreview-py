@@ -84,9 +84,19 @@ class TestJournalRequest():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        helpers.create_user('support_role@mail.com', 'Support', 'Role')
+        test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
+
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
+        recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form['note']['id']))
+        assert recruitment_div
+        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        assert reply_row
+        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        assert [btn for btn in buttons if btn.text == 'Comment']
+
     def test_journal_reviewer_recruitment(self, openreview_client, selenium, request_page, helpers, journal):
 
-        helpers.create_user('support_role@mail.com', 'Support', 'Role')
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), test_client.token)
