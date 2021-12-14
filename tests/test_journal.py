@@ -54,9 +54,12 @@ class TestJournal():
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
-        res=journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['user@mail.com', 'joelle@mail.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
-        assert res.id == '.TMLR/Action_Editors/Invited'
-        assert res.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
+        venue_id = '.TMLR'
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
+
+        journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['user@mail.com', 'joelle@mail.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        invited_group = openreview_client.get_group('.TMLR/Action_Editors/Invited')
+        assert invited_group.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
         assert len(messages) == 9
@@ -74,9 +77,12 @@ class TestJournal():
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
-        res=journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
-        assert res.id == '.TMLR/Reviewers/Invited'
-        assert res.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
+        venue_id = '.TMLR'
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
+
+        journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+        invited_group = openreview_client.get_group('.TMLR/Reviewers/Invited')
+        assert invited_group.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer')
         assert len(messages) == 6
@@ -91,6 +97,13 @@ class TestJournal():
         group = openreview_client.get_group('.TMLR/Reviewers')
         assert len(group.members) == 6
         assert '~Javier_Burroni1' in group.members
+
+        status = journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['javier@mail.com'])
+        messages = openreview_client.get_messages(to = 'javier@mail.com', subject = 'Invitation to be an Reviewer')
+        assert len(messages) == 1
+
+        assert status.get('already_member')
+        assert 'javier@mail.com' in status.get('already_member')
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
