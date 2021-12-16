@@ -44,11 +44,12 @@ function main() {
 
 // Load makes all the API calls needed to get the data to render the page
 function load() {
-  var notesP = Webfield.get('/notes', {
-    AUTHOR_SUBMISSION_FIELD: user.profile.id,
+  var query = {
     invitation: SUBMISSION_ID,
     details: 'invitation,overwriting,directReplies'
-  }).then(function(result) {
+  }
+  query[AUTHOR_SUBMISSION_FIELD] = user.profile.id;
+  var notesP = Webfield.get('/notes', query).then(function(result) {
     //Get the blind submissions to have backward compatibility with the paper number
     var originalNotes = result.notes;
     blindNoteIds = [];
