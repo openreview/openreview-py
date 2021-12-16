@@ -1633,13 +1633,17 @@ class SubmissionStage(object):
             return {'values': ['everyone']}
 
         if under_submission or self.double_blind:
+            has_authorids = 'authorids' in self.get_content()
             readers = {
                 'values-copied': [
-                    conference.get_id(),
-                    '{content.authorids}',
-                    '{signatures}'
+                    conference.get_id()
                 ]
             }
+
+            if has_authorids:
+                readers['values-copied'].append('{content.authorids}')
+            readers['values-copied'].append('{signatures}')
+
             if submission_readers:
                 readers['values-copied'] = readers['values-copied'] + submission_readers
             return readers
@@ -1650,6 +1654,26 @@ class SubmissionStage(object):
         ## allow any reader until we can figure out how to set the readers by paper number
         return {
             'values-regex': '.*'
+        }
+
+    def get_invitation_writers(self, conference, under_submission):
+
+        if under_submission:
+            has_authorids = 'authorids' in self.get_content()
+            writers = {
+                'values-copied': [
+                    conference.get_id()
+                ]
+            }
+
+            if has_authorids:
+                writers['values-copied'].append('{content.authorids}')
+            writers['values-copied'].append('{signatures}')
+
+            return writers
+
+        return {
+            'values': [conference.get_id()]
         }
 
     def get_submission_id(self, conference):

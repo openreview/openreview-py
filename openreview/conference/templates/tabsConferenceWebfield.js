@@ -23,6 +23,7 @@ var PROGRAM_CHAIRS_ID = '';
 var AUTHORS_ID = '';
 var HEADER = {};
 var PUBLIC = false;
+var AUTHOR_SUBMISSION_FIELD = '';
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var BUFFER = 0;  // deprecated
@@ -105,7 +106,7 @@ function load() {
 
     authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
       pageSize: PAGE_SIZE,
-      'content.authorids': user.profile.id
+      AUTHOR_SUBMISSION_FIELD: user.profile.id
     });
   }
 
