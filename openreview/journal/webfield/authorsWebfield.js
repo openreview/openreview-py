@@ -14,6 +14,7 @@ var HEADER = {
   instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the TMLR author guidelines.'
 };
 var AUTHOR_NAME = 'Authors';
+var AUTHOR_SUBMISSION_FIELD = 'content.authorids';
 
 
 function main() {
@@ -35,7 +36,7 @@ function main() {
 // Load makes all the API calls needed to get the data to render the page
 var loadData = function() {
   var notesP = Webfield2.getAll('/notes', {
-    'content.authorids': user.profile.id,
+    AUTHOR_SUBMISSION_FIELD: user.profile.id,
     invitation: SUBMISSION_ID,
     details: 'directReplies'
   });

@@ -637,7 +637,7 @@ class Matching(object):
                 if call_count == 30:
                     break
                 time.sleep(30)
-                status = self.client.get_expertise_status(job_id['job_id'])['results'][0]['status']
+                status = self.client.get_expertise_status(job_id['job_id'])['status']
                 call_count += 1
             if 'Completed' in status:
                 result = self.client.get_expertise_results(job_id['job_id'])
