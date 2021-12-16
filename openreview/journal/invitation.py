@@ -36,6 +36,17 @@ class InvitationBuilder(object):
             )
         )
 
+    def expire_paper_invitations(self, journal, note):
+
+        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitations = self.client.get_invitations(regex=f'{journal.venue_id}/Paper{note.number}/.*')
+        exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
+
+        for invitation in invitations:
+            if invitation.id.split('/')[-1] not in exceptions:
+                self.expire_invitation(journal, invitation.id, now)
+
+
     def save_invitation(self, journal, invitation):
 
         venue_id = journal.venue_id

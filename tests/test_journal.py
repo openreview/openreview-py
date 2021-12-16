@@ -1160,6 +1160,17 @@ class TestJournal():
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
+        ## Check invitations
+        invitations = openreview_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 7
+        assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
+
 
     def test_rejected_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -1567,6 +1578,18 @@ class TestJournal():
         assert note.content['venueid']['value'] == '.TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
+
+        ## Check invitations
+        invitations = openreview_client.get_invitations(replyForum=note_id_4)
+        assert len(invitations) == 8
+        assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper4/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper4/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper4/-/Moderation" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper4/-/Authors_De-Anonymization" in [i.id for i in invitations]
 
     def test_eic_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -2063,13 +2086,16 @@ class TestJournal():
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == '.TMLR/Withdrawn_Submission'
 
+        ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_6)
-        for i in invitations:
-            if 'Paper6' in i.id:
-                assert i.expdate
-                assert i.expdate <= openreview.tools.datetime_millis(datetime.datetime.utcnow())
-            else:
-                assert not i.expdate
+        assert len(invitations) == 7
+        assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper6/-/Official_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper6/-/Public_Comment" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper6/-/Moderation" in [i.id for i in invitations]
 
         messages = journal.client.get_messages(subject = '[TMLR] Authors have withdrawn TMLR submission Paper title 6')
         assert len(messages) == 4
