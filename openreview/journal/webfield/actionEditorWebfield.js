@@ -20,10 +20,18 @@ var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
 var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
+var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
+
+var reviewers_url = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
+'&traverse=' + REVIEWERS_ASSIGNMENT_ID +
+'&edit=' + REVIEWERS_ASSIGNMENT_ID +
+'&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
+'&maxColumns=2&version=2&referrer=[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')';
+
 
 var HEADER = {
-  title: 'TMLR',
-  instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the TMLR AE guidelines.'
+  title: SHORT_PHRASE + 'Action Editor Console',
+  instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewers_url + "'> Modify Reviewer Assignments</a> </p>"
 };
 
 // Tools
@@ -149,8 +157,8 @@ var formatData = function(reviewersByNumber, invitations, submissions) {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
             '&edit=' + REVIEWERS_ASSIGNMENT_ID +
-            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore&' +
-            'hide=' + REVIEWERS_CONFLICT_ID + '&maxColumns=2&version=2'
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore&' +
+            'maxColumns=2&version=2'
           }
         ] : []
       },
