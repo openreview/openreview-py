@@ -112,7 +112,7 @@ class TestACLCommitment():
             writers = [conference.id, '~SomeFirstName_User1'],
             signatures = ['~SomeFirstName_User1'],
             content = {
-                'title': 'Paper title',
+                'title': 'ARR Paper title',
                 'paper_link': 'https://openreview.net/forum?id=sdfjenxw',
                 'paper_type': 'Long paper (up to eight pages of content + unlimited references and appendices)',
                 'track': 'Question Answering',
@@ -123,12 +123,12 @@ class TestACLCommitment():
 
         helpers.await_queue()
 
-        messages = client.get_messages(subject = 'ACL-2022 has received your submission titled Paper title')
+        messages = client.get_messages(subject = 'ACL-2022 has received your submission titled ARR Paper title')
         assert len(messages) == 1
 
         messages[0]['content']['text'] == f'''<p>Your submission to ACL-2022 has been posted.</p>
 <p>Submission Number: 1</p>
-<p>Title: Paper title</p>
+<p>Title: ARR Paper title</p>
 <p>To view your submission, click here: <a href=\"http://localhost:3030/forum?id={note.id}\">http://localhost:3030/forum?id={note.id}</a></p>
 '''
 
