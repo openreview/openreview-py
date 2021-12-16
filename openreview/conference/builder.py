@@ -1656,25 +1656,21 @@ class SubmissionStage(object):
             'values-regex': '.*'
         }
 
-    def get_invitation_writers(self, conference, under_submission):
+    def get_invitation_writers(self, conference):
 
-        if under_submission:
-            has_authorids = 'authorids' in self.get_content()
-            writers = {
-                'values-copied': [
-                    conference.get_id()
-                ]
-            }
-
-            if has_authorids:
-                writers['values-copied'].append('{content.authorids}')
-            writers['values-copied'].append('{signatures}')
-
-            return writers
-
-        return {
-            'values': [conference.get_id()]
+        has_authorids = 'authorids' in self.get_content()
+        writers = {
+            'values-copied': [
+                conference.get_id()
+            ]
         }
+
+        if has_authorids:
+            writers['values-copied'].append('{content.authorids}')
+        writers['values-copied'].append('{signatures}')
+
+        return writers
+
 
     def get_submission_id(self, conference):
         return conference.get_invitation_id(self.name)

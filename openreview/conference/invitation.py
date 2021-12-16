@@ -57,7 +57,7 @@ class SubmissionInvitation(openreview.Invitation):
                 'forum': None,
                 'replyto': None,
                 'readers': readers,
-                'writers': submission_stage.get_invitation_writers(conference, under_submission),
+                'writers': submission_stage.get_invitation_writers(conference),
                 'signatures': {
                     'values-regex': '~.*'
                 },
