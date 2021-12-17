@@ -23,6 +23,7 @@ var PROGRAM_CHAIRS_ID = '';
 var AUTHORS_ID = '';
 var HEADER = {};
 var PUBLIC = false;
+var AUTHOR_SUBMISSION_FIELD = '';
 
 var WILDCARD_INVITATION = CONFERENCE_ID + '/.*';
 var BUFFER = 0;  // deprecated
@@ -103,10 +104,11 @@ function load() {
 
     userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true });
 
-    authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, {
-      pageSize: PAGE_SIZE,
-      'content.authorids': user.profile.id
-    });
+    var query = {
+      pageSize: PAGE_SIZE
+    };
+    query[AUTHOR_SUBMISSION_FIELD] = user.profile.id;
+    authorNotesP = Webfield.api.getSubmissions(SUBMISSION_ID, query);
   }
 
   return $.when(notesP, userGroupsP, activityNotesP, authorNotesP, withdrawnNotesP, deskRejectedNotesP);

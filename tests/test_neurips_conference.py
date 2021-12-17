@@ -2406,7 +2406,7 @@ Thank you,
         assert notes_panel
 
     def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
-        # conference.setup_post_submission_stage(force=True, hide_fields=['_bibtex'])
+
         submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
         assert len(submissions) == 5
 
@@ -2425,7 +2425,7 @@ Thank you,
             signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
-                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
             }
         ))
         helpers.await_queue()
@@ -2434,12 +2434,7 @@ Thank you,
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        # withdrawn_submission=client.get_note(submissions[0].id)
-        withdrawn_notes = client.get_notes(
-            invitation=conference.submission_stage.get_withdrawn_submission_id(conference))
-
-        assert len(withdrawn_notes) == 1
-        withdrawn_submission = withdrawn_notes[0]
+        withdrawn_submission=client.get_note(submissions[0].id)
         assert withdrawn_submission.invitation == 'NeurIPS.cc/2021/Conference/-/Withdrawn_Submission'
         assert withdrawn_submission.readers == [
                 'NeurIPS.cc/2021/Conference/Paper5/Authors',
@@ -2447,6 +2442,7 @@ Thank you,
                 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Program_Chairs']
+        assert withdrawn_submission.content['keywords'] == ''
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
@@ -2466,3 +2462,40 @@ Thank you,
         assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
         assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
         assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
+
+    def test_desk_reject_after_review(self, conference, helpers, test_client, client, selenium, request_page):
+
+        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        assert len(submissions) == 4
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+
+        desk_reject_note = pc_client.post_note(openreview.Note(
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            invitation=f'NeurIPS.cc/2021/Conference/Paper4/-/Desk_Reject',
+            readers = [
+                'NeurIPS.cc/2021/Conference',
+                'NeurIPS.cc/2021/Conference/Paper4/Authors',
+                'NeurIPS.cc/2021/Conference/Paper4/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Program_Chairs'],
+            writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Program_Chairs'],
+            signatures = ['NeurIPS.cc/2021/Conference/Program_Chairs'],
+            content = {
+                'title': 'Submission Desk Rejected by Program Chairs',
+                'desk_reject_comments': 'Wrong PDF.'
+            }
+        ))
+        helpers.await_queue()
+
+        desk_rejected_submission=client.get_note(submissions[0].id)
+        assert desk_rejected_submission.invitation == 'NeurIPS.cc/2021/Conference/-/Desk_Rejected_Submission'
+        assert desk_rejected_submission.readers == [
+                'NeurIPS.cc/2021/Conference/Paper4/Authors',
+                'NeurIPS.cc/2021/Conference/Paper4/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Program_Chairs']
+        assert desk_rejected_submission.content['keywords'] == ''
