@@ -36,6 +36,17 @@ class InvitationBuilder(object):
             )
         )
 
+    def expire_paper_invitations(self, journal, note):
+
+        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitations = self.client.get_invitations(regex=f'{journal.venue_id}/Paper{note.number}/.*')
+        exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
+
+        for invitation in invitations:
+            if invitation.id.split('/')[-1] not in exceptions:
+                self.expire_invitation(journal, invitation.id, now)
+
+
     def save_invitation(self, journal, invitation):
 
         venue_id = journal.venue_id
@@ -353,7 +364,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': '.TMLR/Submitted',
+                                'value': journal.submitted_venue_id,
                             },
                             'presentation': {
                                 'hidden': True,
@@ -506,7 +517,8 @@ class InvitationBuilder(object):
                     'optional': True
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py')
+            process=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py'),
+            preprocess=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_pre_process.py'),
         )
 
         self.save_invitation(journal, invitation)
@@ -736,7 +748,8 @@ class InvitationBuilder(object):
                     'optional': True
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')
+            process=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py'),
+            preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py')
         )
 
         self.save_invitation(journal, invitation)
@@ -1188,49 +1201,41 @@ class InvitationBuilder(object):
 
         venue_id = journal.venue_id
 
-        authors_release_invitation_id = journal.get_authors_release_id()
-        authors_release_invitation = openreview.tools.get_invitation(self.client, authors_release_invitation_id)
-
-        if not authors_release_invitation:
-            invitation = Invitation(id=authors_release_invitation_id,
-                invitees=[venue_id],
-                noninvitees=[journal.get_editors_in_chief_id()],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                maxReplies=1,
-                edit={
-                    'signatures': { 'values': [venue_id] },
-                    'readers': { 'values': [ 'everyone' ] },
-                    'writers': { 'values': [ venue_id ]},
-                    'note': {
-                        'id': { 'value-invitation': journal.get_rejection_id() },
-                        'content': {
-                            '_bibtex': {
-                                'value': {
-                                    'value-regex': '^[\\S\\s]{1,200000}$'
-                                }
-                            },
-                            'authors': {
-                                'readers': {
-                                    'values': ['everyone']
-                                }
-                            },
-                            'authorids': {
-                                'readers': {
-                                    'values': ['everyone']
-                                }
+        invitation = Invitation(id=journal.get_authors_release_id(),
+            invitees=[venue_id],
+            noninvitees=[journal.get_editors_in_chief_id()],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            maxReplies=1,
+            edit={
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [ 'everyone' ] },
+                'writers': { 'values': [ venue_id ]},
+                'note': {
+                    'id': { 'value-invitation': journal.get_rejection_id() },
+                    'content': {
+                        '_bibtex': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$'
+                            }
+                        },
+                        'authors': {
+                            'readers': {
+                                'values': ['everyone']
+                            }
+                        },
+                        'authorids': {
+                            'readers': {
+                                'values': ['everyone']
                             }
                         }
                     }
                 }
-            )
+            }
+        )
 
-            self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=invitation
-            )
+        self.save_invitation(journal, invitation)
 
     def set_ae_recommendation_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
@@ -1320,15 +1325,13 @@ class InvitationBuilder(object):
         venue_id = journal.venue_id
         reviewers_id = journal.get_reviewers_id()
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_authors_id = journal.get_authors_id(number=note.number)
-        editor_in_chief_id = journal.get_editors_in_chief_id()
 
-        reviewer_assignment_invitation_id=f'{paper_reviewers_id}/-/Assignment'
+        reviewer_assignment_invitation_id = journal.get_reviewer_assignment_id(number=note.number)
 
         invitation = Invitation(
             id=reviewer_assignment_invitation_id,
-            duedate=duedate,
+            duedate=openreview.tools.datetime_millis(duedate),
             invitees=[venue_id, paper_action_editors_id],
             readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
@@ -1342,54 +1345,46 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_action_editors_id, '${tail}']
+                    'values': [venue_id, paper_action_editors_id]
                 },
                 'nonreaders': {
                     'values': [paper_authors_id]
                 },
                 'writers': {
-                    'values': [venue_id, paper_action_editors_id]
+                    'values': [venue_id]
                 },
                 'signatures': {
-                    'values-regex': f'{venue_id}|{editor_in_chief_id}|{paper_action_editors_id}'
+                    'values': [paper_action_editors_id]
                 },
                 'head': {
                     'type': 'note',
-                    'value': note.id,
-                    'value-invitation': f'{venue_id}/-/Author_Submission'
+                    'value': note.id
                 },
                 'tail': {
-                    'type': 'profile',
-                    'member-of' : reviewers_id
+                    'type': 'group',
+                    'value' : reviewers_id
                 },
                 'weight': {
                     'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
-                },
-                'label': {
-                    'value-regex': '.*',
-                    'optional': True
                 }
-            },
-            process=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')
+            }
         )
 
         header = {
-            'title': 'TMLR Reviewer Assignment',
-            'instructions': '<p class="dark">Assign reviewers based on their affinity scores.</p>\
+            'title': f'{journal.short_name} Reviewer Assignment',
+            'instructions': f'<p class="dark">Assign reviewers based on their affinity scores.</p>\
                 <p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
-                    <li>Assign 3 reviewers to the TMLR submissions you are in charged of.</li>\
+                    <li>Assign 3 reviewers to the {journal.short_name} submissions you are in charged of.</li>\
                     <li>Please avoid giving an assignment to a reviewer that already has an uncompleted assignment.</li>\
                 </ul>\
                 <br>'
         }
 
-        affinity_score_reviewers_invitation_id = f'{reviewers_id}/-/Affinity_Score'
-        conflict_reviewers_invitation_id = f'{reviewers_id}/-/Conflict'
-        edit_param = invitation.id
-        score_ids = [affinity_score_reviewers_invitation_id, conflict_reviewers_invitation_id]
+        edit_param = journal.get_reviewer_assignment_id()
+        score_ids = [journal.get_reviewer_affinity_score_id(), journal.get_reviewer_conflict_id(), journal.get_reviewer_custom_max_papers_id() + ',head:ignore', journal.get_reviewer_pending_review_id() + ',head:ignore']
         browse_param = ';'.join(score_ids)
-        params = f'traverse={edit_param}&edit={edit_param}&browse={browse_param}&version=2&referrer=[Return Instructions](/invitation?id={edit_param})'
+        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/assignReviewerWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
@@ -1620,21 +1615,23 @@ class InvitationBuilder(object):
 
         self.save_invitation(journal, invitation)
 
-    def set_solicit_review_approval_invitation(self, journal, note):
+    def set_solicit_review_approval_invitation(self, journal, note, solicit_note, duedate):
 
         venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_authors_id = journal.get_authors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
 
-        solicit_review_invitation_approval_id = journal.get_solicit_review_approval_id(number=note.number)
+        solicit_review_invitation_approval_id = journal.get_solicit_review_approval_id(number=note.number, signature=solicit_note.signatures[0])
 
         invitation = Invitation(id=solicit_review_invitation_approval_id,
             invitees=[venue_id, paper_action_editors_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
-            readers=['everyone'],
+            noninvitees=[editors_in_chief_id],
+            readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editors_in_chief_id],
+            duedate=openreview.tools.datetime_millis(duedate),
             edit={
                 'signatures': { 'values': [ paper_action_editors_id ] },
                 'readers': { 'values': [ venue_id, paper_action_editors_id ] },
@@ -1642,7 +1639,7 @@ class InvitationBuilder(object):
                 'writers': { 'values': [ venue_id ] },
                 'note': {
                     'forum': { 'value': note.id },
-                    'replyto': { 'value-invitation': journal.get_solicit_review_id(number=note.number) },
+                    'replyto': { 'value': solicit_note.id },
                     'signatures': { 'values': [ paper_action_editors_id ] },
                     'readers': { 'values': [ '${{note.replyto}.readers}' ] },
                     'nonreaders': { 'values': [ paper_authors_id ] },
@@ -1650,7 +1647,7 @@ class InvitationBuilder(object):
                     'content': {
                         'decision': {
                             'order': 1,
-                            'description': '',
+                            'description': 'Select you decision about approving the solicit review.',
                             'value': {
                                 'value-radio': [
                                     'Yes, I approve the solicit review.',
@@ -1660,7 +1657,7 @@ class InvitationBuilder(object):
                         },
                         'comment': {
                             'order': 2,
-                            'description': 'TODO.',
+                            'description': '',
                             'value': {
                                 'value-regex': '^[\\S\\s]{1,200000}$',
                                 'optional': True
@@ -2060,6 +2057,7 @@ class InvitationBuilder(object):
                     }
                 }
             },
+            preprocess=os.path.join(os.path.dirname(__file__), 'process/submission_decision_pre_process.py'),
             process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py')
         )
 

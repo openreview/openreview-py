@@ -232,3 +232,14 @@ class GroupBuilder(object):
                 members=[],
                 anonids=True
             ))
+
+        ## solicit reviewers group
+        solicit_reviewers_id = journal.get_solicit_reviewers_id(number=note.number)
+        solicit_reviewers_group = openreview.tools.get_group(self.client, solicit_reviewers_id)
+        if not solicit_reviewers_group:
+            self.client.post_group(Group(id=solicit_reviewers_id,
+                readers=[venue_id, action_editors_group_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[],
+                members=[]))
