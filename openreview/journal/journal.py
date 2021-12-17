@@ -161,8 +161,8 @@ class Journal(object):
     def get_reviewer_affinity_score_id(self):
         return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_reviewers_id())
 
-    def get_reviewer_assignment_id(self):
-        return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id())
+    def get_reviewer_assignment_id(self, number=None):
+        return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id(number))
 
     def get_reviewer_custom_max_papers_id(self):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())

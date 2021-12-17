@@ -73,16 +73,18 @@ var loadData = function() {
     return $.when(
       Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
       Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
-      Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) })
+      Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
+      Webfield2.api.get('/edges', { invitation: REVIEWERS_ASSIGNMENT_ID, groupBy: 'head'})
+      .then(function(result) { return result.groupedEdges; })
     );
   })
 
 }
 
-var formatData = function(reviewersByNumber, invitations, submissions) {
+var formatData = function(reviewersByNumber, invitations, submissions, assignmentEdges) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
 
-  //build the rows
+    //build the rows
   var rows = [];
 
   submissions.forEach(function(submission) {
@@ -169,6 +171,15 @@ var formatData = function(reviewersByNumber, invitations, submissions) {
       },
       status: submission.content.venue.value
     })
+
+    //Add the assignment edges to each paper assignmnt invitation
+    paper_assignment_invitation = invitations.find(function(i) { return i.id == getInvitationId(submission.number, 'Assignment', REVIEWERS_NAME)});
+    if (paper_assignment_invitation) {
+      var foundEdges = assignmentEdges.find(function(a) { return a.id.head == submission.id})
+      if (foundEdges) {
+        paper_assignment_invitation.details.repliedEdges = foundEdges.values;
+      }
+    }
   })
 
 
