@@ -284,7 +284,7 @@ class CommentInvitation(openreview.Invitation):
 
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, reveal_authors, reveal_submission, hide_fields):
+    def __init__(self, conference, reveal_authors, reveal_submission, hide_fields=None):
 
         signatures = {'values-regex': '~.*'}
         writers = {'values-regex': '.*'}
@@ -310,11 +310,12 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
             if not reveal_authors:
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
-            for field in hide_fields:
-                content[field] = {
-                    'values-regex': '.*',
-                    'required': False
-                }
+            if hide_fields:
+                for field in hide_fields:
+                    content[field] = {
+                        'values-regex': '.*',
+                        'required': False
+                    }
         else:
             content = conference.submission_stage.get_content()
 
@@ -465,11 +466,12 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
             if not reveal_authors:
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
-            for field in hide_fields:
-                content[field] = {
-                    'values-regex': '.*',
-                    'required': False
-                }
+            if hide_fields:
+                for field in hide_fields:
+                    content[field] = {
+                        'values-regex': '.*',
+                        'required': False
+                    }
         else:
             content = conference.submission_stage.get_content()
 
