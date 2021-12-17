@@ -118,6 +118,7 @@ class WebfieldBuilder(object):
             content = content.replace("var WITHDRAWN_SUBMISSION_ID = '';", "var WITHDRAWN_SUBMISSION_ID = '" + conference.submission_stage.get_withdrawn_submission_id(conference) + "';")
             content = content.replace("var DESK_REJECTED_SUBMISSION_ID = '';", "var DESK_REJECTED_SUBMISSION_ID = '" + conference.submission_stage.get_desk_rejected_submission_id(conference) + "';")
             content = content.replace("var PUBLIC = false;", "var PUBLIC = true;" if conference.submission_stage.public else "var PUBLIC = false;")
+            content = content.replace("var AUTHOR_SUBMISSION_FIELD = '';", "var AUTHOR_SUBMISSION_FIELD = '" + ('content.authorids' if 'authorids' in conference.submission_stage.get_content() else 'signature') + "';")
 
             return self.__update_group(group, content, conference.id)
 
@@ -375,6 +376,7 @@ class WebfieldBuilder(object):
             content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
             content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
             content = content.replace("var DECISION_NAME = '';", "var DECISION_NAME = '" + conference.decision_stage.name + "';")
+            content = content.replace("var AUTHOR_SUBMISSION_FIELD = '';", "var AUTHOR_SUBMISSION_FIELD = '" + ('content.authorids' if 'authorids' in conference.submission_stage.get_content() else 'signature') + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             return self.__update_group(group, content)
 
