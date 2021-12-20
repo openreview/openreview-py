@@ -1355,7 +1355,6 @@ class OpenReviewClient(object):
             return {}
         print('compute expertise', {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model})
         response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model}, headers = self.headers)
-        print(response)
         print('response json', response.json())
         response = self.__handle_response(response)
 
