@@ -21,20 +21,6 @@ var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var DECISION_NAME = 'Decision';
 var AE_RECOMMENDATION_ID = VENUE_ID + '/' + ACTION_EDITORS_NAME + '/-/Recommendation';
 
-// Tools
-var getInvitationId = function(number, name, prefix) {
-  if (prefix) {
-    return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/' + prefix + '/-/' + name;
-  }
-  return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/-/' + name;
-}
-
-var getReplies = function(submission, name) {
-  return submission.details.directReplies.filter(function(reply) {
-    return reply.invitations.indexOf(getInvitationId(submission.number, name)) >= 0;
-  });
-}
-
 function main() {
 
   Webfield2.ui.setup('#group-container', VENUE_ID, {
@@ -75,13 +61,13 @@ var formatData = function(notes, invitations, recommendationEdges) {
   var rows = [];
 
   notes.map(function(submission) {
-    var reviews = getReplies(submission, REVIEW_NAME);
-    var recommendations = getReplies(submission, OFFICIAL_RECOMMENDATION_NAME);
+    var reviews =  Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
+    var recommendations =  Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
     var recommendationByReviewer = {};
     recommendations.forEach(function(recommendation) {
       recommendationByReviewer[recommendation.signatures[0]] = recommendation;
     });
-    var decisions = getReplies(submission, DECISION_NAME);
+    var decisions =  Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, DECISION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
     var decision = decisions.length && decisions[0];
 
     rows.push({
@@ -101,7 +87,7 @@ var formatData = function(notes, invitations, recommendationEdges) {
     })
 
     //Add the assignment edges to each paper assignmnt invitation
-    paper_recommendation_invitation = invitations.find(function(i) { return i.id == getInvitationId(submission.number, 'Recommendation', ACTION_EDITORS_NAME)});
+    paper_recommendation_invitation = invitations.find(function(i) { return i.id == Webfield2.utils.getInvitationId(VENUE_ID, submission.number, 'Recommendation', { prefix: ACTION_EDITORS_NAME, submissionGroupName: SUBMISSION_GROUP_NAME })});
     if (paper_recommendation_invitation) {
       var foundEdges = recommendationEdges.find(function(a) { return a.id.head == submission.id})
       if (foundEdges) {
