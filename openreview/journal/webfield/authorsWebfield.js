@@ -9,13 +9,31 @@
 var VENUE_ID = '.TMLR';
 var SHORT_PHRASE = 'TMLR';
 var SUBMISSION_ID = '.TMLR/-/Author_Submission';
+var SUBMISSION_GROUP_NAME = 'Paper';
 var HEADER = {
   title: 'TMLR Author Console',
   instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the TMLR author guidelines.'
 };
 var AUTHOR_NAME = 'Authors';
-var AUTHOR_SUBMISSION_FIELD = 'content.authorids';
+var ACTION_EDITORS_NAME = 'Action_Editors';
+var REVIEW_NAME = 'Review';
+var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
+var DECISION_NAME = 'Decision';
+var AE_RECOMMENDATION_ID = VENUE_ID + '/' + ACTION_EDITORS_NAME + '/-/Recommendation';
 
+// Tools
+var getInvitationId = function(number, name, prefix) {
+  if (prefix) {
+    return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/' + prefix + '/-/' + name;
+  }
+  return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/-/' + name;
+}
+
+var getReplies = function(submission, name) {
+  return submission.details.directReplies.filter(function(reply) {
+    return reply.invitations.indexOf(getInvitationId(submission.number, name)) >= 0;
+  });
+}
 
 function main() {
 
@@ -36,15 +54,20 @@ function main() {
 // Load makes all the API calls needed to get the data to render the page
 var loadData = function() {
   var notesP = Webfield2.getAll('/notes', {
-    AUTHOR_SUBMISSION_FIELD: user.profile.id,
+    'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
     details: 'directReplies'
   });
 
-  return $.when(notesP, Webfield2.api.getAssignedInvitations(VENUE_ID, AUTHOR_NAME));
+  return $.when(
+    notesP,
+    Webfield2.api.getAssignedInvitations(VENUE_ID, AUTHOR_NAME),
+    Webfield2.api.get('/edges', { invitation: AE_RECOMMENDATION_ID, groupBy: 'head'})
+    .then(function(result) { return result.groupedEdges; })
+  );
 }
 
-var formatData = function(notes, invitations) {
+var formatData = function(notes, invitations, recommendationEdges) {
 
   var referrerUrl = encodeURIComponent('[Author Console](/group?id=' + VENUE_ID + '/' + AUTHOR_NAME + '#your-submissions)');
 
@@ -52,19 +75,14 @@ var formatData = function(notes, invitations) {
   var rows = [];
 
   notes.map(function(submission) {
-    var reviews = submission.details.directReplies.filter(function(reply) {
-      return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Review') >= 0;
-    });
-    var recommendations = submission.details.directReplies.filter(function(reply) {
-      return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Official_Recommendation') >= 0;
-    });
+    var reviews = getReplies(submission, REVIEW_NAME);
+    var recommendations = getReplies(submission, OFFICIAL_RECOMMENDATION_NAME);
     var recommendationByReviewer = {};
     recommendations.forEach(function(recommendation) {
       recommendationByReviewer[recommendation.signatures[0]] = recommendation;
     });
-    var decision = submission.details.directReplies.find(function(reply) {
-      return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Decision') >= 0;
-    });
+    var decisions = getReplies(submission, DECISION_NAME);
+    var decision = decisions.length && decisions[0];
 
     rows.push({
       submissionNumber: { number: submission.number},
@@ -81,6 +99,15 @@ var formatData = function(notes, invitations) {
         editUrl: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
       }
     })
+
+    //Add the assignment edges to each paper assignmnt invitation
+    paper_recommendation_invitation = invitations.find(function(i) { return i.id == getInvitationId(submission.number, 'Recommendation', ACTION_EDITORS_NAME)});
+    if (paper_recommendation_invitation) {
+      var foundEdges = recommendationEdges.find(function(a) { return a.id.head == submission.id})
+      if (foundEdges) {
+        paper_recommendation_invitation.details.repliedEdges = foundEdges.values;
+      }
+    }
   });
 
   return {
