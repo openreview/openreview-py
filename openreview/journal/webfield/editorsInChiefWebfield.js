@@ -256,7 +256,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           actions: [VENUE_ID + '/Under_Review'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
-              url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ID + '/-/Assignment&edit=' + REVIEWERS_ID + '/-/Assignment;' + REVIEWERS_ID + '/-/Custom_Max_Papers,head:ignore;&browse=' + REVIEWERS_ID + '/-/Affinity_Score;' + REVIEWERS_ID + '/-/Conflict;' + REVIEWERS_ID + '/-/Pending_Reviews,head:ignore&version=2'
+              url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID + '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore&version=2'
             },
             {
               name: 'Edit Review Invitation',
@@ -278,7 +278,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           actions: [VENUE_ID + '/Under_Review', VENUE_ID + '/Submitted'].includes(submission.content.venueid.value) ? [
             {
               name: 'Edit Assignments',
-              url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + ACTION_EDITOR_ID + '/-/Assignment&edit=' + ACTION_EDITOR_ID + '/-/Assignment;' + ACTION_EDITOR_ID + '/-/Custom_Max_Papers,head:ignore&browse=' + ACTION_EDITOR_ID + '/-/Affinity_Score;' + ACTION_EDITOR_ID + '/-/Recommendation;' + ACTION_EDITOR_ID + '/-/Conflict&version=2'
+              url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID + '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + '&version=2'
             }
           ] : []
         },
