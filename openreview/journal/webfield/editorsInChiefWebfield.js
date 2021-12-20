@@ -26,7 +26,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Paper Status', 'Action Editor Status', 'Reviewer Status'],
+    tabs: ['Paper Status', 'Action Editor Status', 'Reviewer Status', 'Editors In Chief Tasks'],
     referrer: args && args.referrer
   })
 
@@ -45,12 +45,13 @@ var loadData = function() {
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
-    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true})
+    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
+    Webfield2.api.getAssignedInvitations(VENUE_ID, EDITORS_IN_CHIEF_NAME),
   );
 
 }
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers) {
+var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitations) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   var submissionsByNumber = _.keyBy(submissions, 'number');
@@ -264,7 +265,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
   return venueStatusData = {
     paperStatusRows: paperStatusRows,
     reviewerStatusRows: Object.values(reviewerStatusById),
-    actionEditorStatusRows: Object.values(actionEditorStatusById)
+    actionEditorStatusRows: Object.values(actionEditorStatusById),
+    invitations: invitations
   };
 }
 
@@ -377,14 +379,8 @@ var renderData = function(venueStatusData) {
     extraClasses: 'console-table'
   })
 
-  var options = {
-    sortOptions: {
-      a: function(row) { return row.a.col1; }
-    },
-    searchProperties: {
-      a: ['a.col1']
-    }
-  }
+  Webfield2.ui.renderTasks('#editors-in-chief-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)')});
+
 
 }
 

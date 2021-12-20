@@ -28,8 +28,10 @@ class Journal(object):
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
         self.reviewers_name = 'Reviewers'
+        self.solicit_reviewers_name = 'Solicit_Reviewers'
         self.authors_name = 'Authors'
         self.submission_group_name = 'Paper'
+        self.submitted_venue_id = f'{venue_id}/Submitted'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
         self.rejected_venue_id = f'{venue_id}/Rejection'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
@@ -71,6 +73,9 @@ class Journal(object):
 
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
+
+    def get_solicit_reviewers_id(self, number=None):
+        return self.__get_group_id(self.solicit_reviewers_name, number)
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
@@ -156,8 +161,8 @@ class Journal(object):
     def get_reviewer_affinity_score_id(self):
         return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_reviewers_id())
 
-    def get_reviewer_assignment_id(self):
-        return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id())
+    def get_reviewer_assignment_id(self, number=None):
+        return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id(number))
 
     def get_reviewer_custom_max_papers_id(self):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())
@@ -177,8 +182,8 @@ class Journal(object):
     def get_solicit_review_id(self, number):
         return self.__get_invitation_id(name='Solicit_Review', number=number)
 
-    def get_solicit_review_approval_id(self, number):
-        return self.__get_invitation_id(name='Solicit_Review_Approval', number=number)
+    def get_solicit_review_approval_id(self, number, signature):
+        return self.__get_invitation_id(name=f'{signature}_Solicit_Review_Approval', number=number)
 
     def get_public_comment_id(self, number):
         return self.__get_invitation_id(name='Public_Comment', number=number)
@@ -247,12 +252,11 @@ class Journal(object):
     def setup_under_review_submission(self, note):
         self.invitation_builder.set_review_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)))
         self.invitation_builder.set_solicit_review_invitation(self, note)
-        self.invitation_builder.set_solicit_review_approval_invitation(self, note)
         self.invitation_builder.set_comment_invitation(self, note)
         self.setup_reviewer_assignment(note)
 
-    def assign_reviewer(self, note, reviewer):
-        self.assignment.assign_reviewer(note, reviewer)
+    def assign_reviewer(self, note, reviewer, solicit):
+        self.assignment.assign_reviewer(note, reviewer, solicit)
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
 

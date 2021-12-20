@@ -4,13 +4,7 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    invitations = client.get_invitations(replyForum=edit.note.id)
-
-    print(f'Expire invitations: {[i.id for i in invitations]}')
-
-    for invitation in invitations:
-        if f'/Paper{note.number}/' in invitation.id:
-            journal.invitation_builder.expire_invitation(journal, invitation.id)
+    journal.invitation_builder.expire_paper_invitations(journal, note)
 
     print('Send email to AE and Reviewers')
     client.post_message(

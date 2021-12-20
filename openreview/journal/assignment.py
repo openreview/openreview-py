@@ -4,6 +4,7 @@ from .. import tools
 from openreview.api import Edge
 
 import random
+import time
 from tqdm import tqdm
 
 class Assignment(object):
@@ -24,19 +25,25 @@ class Assignment(object):
         authors = self.journal.get_authors(number=note.number)
         author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
 
-        ## Create conflict and affinity score edges
-        for ae in action_editors:
+        ## Create affinity scores
+        affinity_score_edges = []
+        entries = self.compute_affinity_scores(note, self.journal.get_action_editors_id())
+        for entry in entries:
+            action_editor = entry.get('user')
+            if note.id == entry.get('submission'):
+                edge = Edge(invitation = self.journal.get_ae_affinity_score_id(),
+                    readers = [venue_id, authors_id, action_editor],
+                    writers = [venue_id],
+                    signatures = [venue_id],
+                    head = note.id,
+                    tail = action_editor,
+                    weight=entry.get('score')
+                )
+                affinity_score_edges.append(edge)
 
-            edge = Edge(invitation = self.journal.get_ae_affinity_score_id(),
-                readers = [venue_id, authors_id, ae],
-                writers = [venue_id],
-                signatures = [venue_id],
-                head = note.id,
-                tail = ae,
-                weight=round(random.random(), 2)
-            )
-            self.client.post_edge(edge)
+        tools.post_bulk_edges(self.client, affinity_score_edges)
 
+        ## Create conflicts
         conflict_edges = []
         for action_editor_profile in tqdm(action_editor_profiles):
 
@@ -69,19 +76,26 @@ class Assignment(object):
         authors = self.journal.get_authors(number=note.number)
         author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
 
-        ## Create conflict and affinity score edges
-        for r in self.journal.get_reviewers():
-            edge = Edge(invitation = self.journal.get_reviewer_affinity_score_id(),
-                readers = [venue_id, action_editors_id, r],
-                nonreaders = [authors_id],
-                writers = [venue_id],
-                signatures = [venue_id],
-                head = note.id,
-                tail = r,
-                weight=round(random.random(), 2)
-            )
-            self.client.post_edge(edge)
+        ## Create affinity scores
+        affinity_score_edges = []
+        entries = self.compute_affinity_scores(note, self.journal.get_reviewers_id())
+        for entry in entries:
+            reviewer = entry.get('user')
+            if note.id == entry.get('submission'):
+                edge = Edge(invitation = self.journal.get_reviewer_affinity_score_id(),
+                    readers = [venue_id, action_editors_id, reviewer],
+                    nonreaders = [authors_id],
+                    writers = [venue_id],
+                    signatures = [venue_id],
+                    head = note.id,
+                    tail = reviewer,
+                    weight = entry.get('score')
+                )
+                affinity_score_edges.append(edge)
 
+        tools.post_bulk_edges(self.client, affinity_score_edges)
+
+        ## Create conflicts
         conflict_edges = []
         for reviewer_profile in tqdm(reviewer_profiles):
 
@@ -102,7 +116,7 @@ class Assignment(object):
 
         tools.post_bulk_edges(self.client, conflict_edges)
 
-    def assign_reviewer(self, note, reviewer):
+    def assign_reviewer(self, note, reviewer, solicit=False):
 
         profile = self.client.get_profile(reviewer)
         ## Check conflicts again?
@@ -115,3 +129,26 @@ class Assignment(object):
             tail=profile.id,
             weight=1
         ))
+
+        if solicit:
+            self.client.add_members_to_group(self.journal.get_solicit_reviewers_id(number=note.number), profile.id)
+
+    def compute_conflicts(self, note, reviewer):
+
+        reviewer_profiles = tools.get_profiles(self.client, [reviewer], with_publications=True)
+
+        authors = self.journal.get_authors(number=note.number)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True)
+
+        return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='neurips')
+
+    def compute_affinity_scores(self, note, committee_id):
+
+        job = self.client.request_single_paper_expertise(
+            name=f'{self.journal.venue_id}_{note.id}',
+            group_id=committee_id,
+            paper_id=note.id,
+            model='specter+mfr')
+        job_id = job.get('job_id')
+        response = self.client.get_expertise_results(job_id, wait_for_complete=True)
+        return response.get('results', [])
