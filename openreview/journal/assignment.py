@@ -144,11 +144,15 @@ class Assignment(object):
 
     def compute_affinity_scores(self, note, committee_id):
 
-        job = self.client.request_single_paper_expertise(
-            name=f'{self.journal.venue_id}_{note.id}',
-            group_id=committee_id,
-            paper_id=note.id,
-            model='specter+mfr')
-        job_id = job.get('job_id')
-        response = self.client.get_expertise_results(job_id, wait_for_complete=True)
-        return response.get('results', [])
+        try:
+            job = self.client.request_single_paper_expertise(
+                name=f'{self.journal.venue_id}_{note.id}',
+                group_id=committee_id,
+                paper_id=note.id,
+                model='specter+mfr')
+            job_id = job.get('job_id')
+            response = self.client.get_expertise_results(job_id, wait_for_complete=True)
+            return response.get('results', [])
+        except Exception as e:
+            print('Error computing affinity scores', e)
+            return []
