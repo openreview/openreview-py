@@ -32,3 +32,6 @@ The TMLR Editors-in-Chief
 '''
 
         client.post_message(subject, recipients, message, parentGroup=group.id)
+
+        ## expire AE recommendation
+        journal.invitation_builder.expire_invitation(journal, journal.get_ae_recommendation_id(number=note.number))
