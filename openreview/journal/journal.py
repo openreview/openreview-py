@@ -39,7 +39,7 @@ class Journal(object):
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.group_builder = group.GroupBuilder(client)
         self.header = {
-            "title": "Transactions of Machine Learning Research",
+            "title": self.full_name,
             "short": self.short_name,
             "subtitle": "To be defined",
             "location": "Everywhere",
