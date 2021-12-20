@@ -303,9 +303,6 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                     'required': False,
                     'order': 2
                 },
-                'keywords': {
-                    'values-regex': '~.*',
-                }
             }
             if not reveal_authors:
                 content['authors'] = {'values': ['Anonymous']}
