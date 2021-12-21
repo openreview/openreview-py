@@ -659,17 +659,18 @@ class Conference(object):
             readers.append(self.get_reviewers_id(number))
         return readers
 
-    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False, force=False):
-
+    def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False,
+                                    hide_fields=None, force=False):
         if not force and reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
 
         if not force and not reveal_authors and not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Can not hide authors of submissions in single blind or open venue')
 
-        return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission, email_pcs)
+        return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)
 
-    def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False, force=False):
+    def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False,
+                                       hide_fields=None, force=False):
 
         if not force and reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal desk-rejected submissions that are not originally public')
@@ -677,7 +678,7 @@ class Conference(object):
         if not force and not reveal_authors and not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Can not hide authors of submissions in single blind or open venue')
 
-        return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission)
+        return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission, hide_fields=hide_fields)
 
     def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False):
 
@@ -853,11 +854,13 @@ class Conference(object):
             reveal_authors=not self.submission_stage.double_blind,
             reveal_submission=False,
             email_pcs=False,
+            hide_fields=hide_fields,
             force=True
         )
         self.create_desk_reject_invitations(
             reveal_authors=not self.submission_stage.double_blind,
             reveal_submission=False,
+            hide_fields=hide_fields,
             force=True
         )
 
@@ -889,11 +892,13 @@ class Conference(object):
         self.create_withdraw_invitations(
             reveal_authors=self.submission_stage.withdrawn_submission_reveal_authors,
             reveal_submission=self.submission_stage.withdrawn_submission_public,
-            email_pcs=self.submission_stage.email_pcs_on_withdraw
+            email_pcs=self.submission_stage.email_pcs_on_withdraw,
+            hide_fields=hide_fields
         )
         self.create_desk_reject_invitations(
             reveal_authors=self.submission_stage.desk_rejected_submission_reveal_authors,
-            reveal_submission=self.submission_stage.desk_rejected_submission_public
+            reveal_submission=self.submission_stage.desk_rejected_submission_public,
+            hide_fields=hide_fields
         )
 
         self.set_authors()

@@ -16,6 +16,9 @@ var HEADER = {
 var REVIEWERS_NAME = 'Reviewers';
 var REVIEW_NAME = 'Review';
 var ACTION_EDITORS_NAME = 'Action_Editors';
+var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
+var DECISION_NAME = 'Decision';
+var SUBMISSION_GROUP_NAME = 'Paper';
 
 
 function main() {
@@ -57,43 +60,38 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
   //build the rows
   var rows = [];
 
-  Object.keys(assignedGroups).forEach(function(number) {
-    var submission = submissionsByNumber[number];
-    if (submission) {
+  submissions.forEach(function(submission) {
 
-      var assignedReviewers = assignedGroups[number];
-      var assignedGroup = assignedReviewers.find(function(group) { return group.id ==  user.profile.id && group.anonId;  });
-      var reviewInvitationId = VENUE_ID + '/Paper' + number + '/-/' + REVIEW_NAME;
-      var review = assignedGroup ? submission.details.directReplies.find(function(reply) {
-        return reply.invitations.indexOf(reviewInvitationId) >= 0 && reply.signatures[0] == (VENUE_ID + '/Paper' + number + '/Reviewer_' + assignedGroup.anonId);
-      }) : null;
-      var recommendations = submission.details.directReplies.filter(function(reply) {
-        return reply.invitations.indexOf(VENUE_ID + '/Paper' + submission.number + '/-/Official_Recommendation') >= 0;
-      });
-      var recommendationByReviewer = {};
-      recommendations.forEach(function(recommendation) {
-        recommendationByReviewer[recommendation.signatures[0]] = recommendation;
-      });
-      var decision = submission.details.directReplies.find(function(reply) {
-        return reply.invitations.indexOf(VENUE_ID + '/Paper' + number + '/-/Decision') >= 0;
-      });
-      var reviewInvitation = invitations.find(function(invitation) { return invitation.id == reviewInvitationId; })
+    var number = submission.number;
+    var assignedReviewers = assignedGroups[number];
+    var assignedGroup = assignedReviewers.find(function(group) { return group.id ==  user.profile.id && group.anonId;  });
+    var reviewInvitationId = VENUE_ID + '/Paper' + number + '/-/' + REVIEW_NAME;
+    var review = assignedGroup ? submission.details.directReplies.find(function(reply) {
+      return reply.invitations.indexOf(reviewInvitationId) >= 0 && reply.signatures[0] == (VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Reviewer_' + assignedGroup.anonId);
+    }) : null;
+    var recommendations = Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
+    var recommendationByReviewer = {};
+    recommendations.forEach(function(recommendation) {
+      recommendationByReviewer[recommendation.signatures[0]] = recommendation;
+    });
+    var decisions =  Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, DECISION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
+    var decision = decisions.length && decisions[0];
+    var reviewInvitation = invitations.find(function(invitation) { return invitation.id == reviewInvitationId; })
 
-      rows.push({
-        submissionNumber: { number: number},
-        submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: ['Anonymous']}, referrer: referrerUrl},
-        reviewStatus: {
-          invitationUrl: reviewInvitation && '/forum?id=' + submission.forum + '&noteId=' + submission.forum + '&invitationId=' + reviewInvitation.id + '&referrer=' + referrerUrl,
-          review: review,
-          recommendation: review ? recommendationByReviewer[review.signatures[0]] : null,
-          editUrl: review && ('/forum?id=' + submission.forum + '&noteId=' + review.id + '&referrer=' + referrerUrl)
-        },
-        actionEditorData: {
-          recommendation: decision && decision.content.recommendation.value,
-          url: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
-        }
-      })
-    }
+    rows.push({
+      submissionNumber: { number: number},
+      submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: ['Anonymous']}, referrer: referrerUrl},
+      reviewStatus: {
+        invitationUrl: reviewInvitation && '/forum?id=' + submission.forum + '&noteId=' + submission.forum + '&invitationId=' + reviewInvitation.id + '&referrer=' + referrerUrl,
+        review: review,
+        recommendation: review ? recommendationByReviewer[review.signatures[0]] : null,
+        editUrl: review && ('/forum?id=' + submission.forum + '&noteId=' + review.id + '&referrer=' + referrerUrl)
+      },
+      actionEditorData: {
+        recommendation: decision && decision.content.recommendation.value,
+        url: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
+      }
+    })
   })
 
 

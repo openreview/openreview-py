@@ -34,20 +34,6 @@ var HEADER = {
   instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewers_url + "'> Modify Reviewer Assignments</a> </p>"
 };
 
-// Tools
-var getInvitationId = function(number, name, prefix) {
-  if (prefix) {
-    return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/' + prefix + '/-/' + name;
-  }
-  return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/-/' + name;
-}
-
-var getReplies = function(submission, name) {
-  return submission.details.directReplies.filter(function(reply) {
-    return reply.invitations.indexOf(getInvitationId(submission.number, name)) >= 0;
-  });
-}
-
 // Main function is the entry point to the webfield code
 var main = function() {
 
@@ -105,13 +91,13 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
         authorids: submission.content.authorids.value
       }
     };
-    var reviews = getReplies(submission, REVIEW_NAME);
-    var recommendations = getReplies(submission, OFFICIAL_RECOMMENDATION_NAME);
+    var reviews = Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
+    var recommendations = Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
     var recommendationByReviewer = {};
     recommendations.forEach(function(recommendation) {
       recommendationByReviewer[recommendation.signatures[0]] = recommendation;
     });
-    var decisions = getReplies(submission, DECISION_NAME);
+    var decisions = Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, DECISION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
     var decision = decisions.length && decisions[0];
     var reviewers = reviewersByNumber[number] || [];
     var reviewerStatus = {};
@@ -138,7 +124,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
         forumUrl: 'https://openreview.net/forum?' + $.param({
           id: submission.id,
           noteId: submission.id,
-          invitationId: getInvitationId(submission.number, REVIEW_NAME)
+          invitationId: Webfield2.utils.getInvitationId(VENUE_ID, submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
         })
       }
     })
@@ -173,7 +159,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     })
 
     //Add the assignment edges to each paper assignmnt invitation
-    paper_assignment_invitation = invitations.find(function(i) { return i.id == getInvitationId(submission.number, 'Assignment', REVIEWERS_NAME)});
+    paper_assignment_invitation = invitations.find(function(i) { return i.id == Webfield2.utils.getInvitationId(VENUE_ID, submission.number, 'Assignment', { prefix: REVIEWERS_NAME, submissionGroupName: SUBMISSION_GROUP_NAME })});
     if (paper_assignment_invitation) {
       var foundEdges = assignmentEdges.find(function(a) { return a.id.head == submission.id})
       if (foundEdges) {
