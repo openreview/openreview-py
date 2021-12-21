@@ -39,7 +39,7 @@ class InvitationBuilder(object):
     def expire_paper_invitations(self, journal, note):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=f'{journal.venue_id}/Paper{note.number}/.*')
+        invitations = self.client.get_invitations(regex=f'{journal.venue_id}/Paper{note.number}/.*', type='all')
         exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
 
         for invitation in invitations:
@@ -1332,7 +1332,8 @@ class InvitationBuilder(object):
         invitation = Invitation(
             id=reviewer_assignment_invitation_id,
             duedate=openreview.tools.datetime_millis(duedate),
-            invitees=[venue_id, paper_action_editors_id],
+            invitees=[paper_action_editors_id],
+            noninvitees=[paper_authors_id],
             readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -2073,7 +2074,7 @@ class InvitationBuilder(object):
 
         invitation = Invitation(id=decision_approval_invitation_id,
             duedate=duedate,
-            invitees=[venue_id],
+            invitees=[editors_in_chief_id],
             noninvitees=[paper_authors_id],
             readers=['everyone'],
             writers=[venue_id],
@@ -2175,7 +2176,7 @@ class InvitationBuilder(object):
         paper_authors_id = journal.get_authors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        revision_invitation_id = journal.get_camera_ready_revision_id(number=note.number) if decision.content['recommendation']['value'] == 'Accept as is' else journal.get_revision_id(number=note.number)
+        revision_invitation_id = journal.get_camera_ready_revision_id(number=note.number)
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[paper_authors_id],
