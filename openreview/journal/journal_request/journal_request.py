@@ -17,6 +17,9 @@ class JournalRequest():
                 'order': 1,
                 'value': {
                     'value': '${note.content.official_venue_name.value}'
+                },
+                'presentation': {
+                    'hidden': True
                 }
             },
             'official_venue_name': {
@@ -84,7 +87,11 @@ class JournalRequest():
                         'signatures': { 'values': ['${signatures}'] },
                         'readers': { 'values': [self.support_group_id, '${note.content.venue_id.value}','${note.content.venue_id.value}/Action_Editors' ] },
                         'writers': {'values': [self.support_group_id, '${note.content.venue_id.value}'] },
-                        'content': journal_request_content
+                        'content': journal_request_content,
+                        'id' : {
+                            'value-invitation': f'{self.support_group_id}/-/Journal_Request',
+                            'optional': True
+                        }
                     }
                 },
                 process_string = content
