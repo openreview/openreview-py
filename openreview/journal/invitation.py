@@ -149,7 +149,7 @@ class InvitationBuilder(object):
         reviewers_declined_id = reviewers_id + '/Declined'
         reviewers_invited_id = reviewers_id + '/Invited'
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/recruit_ae_process.py')) as process_reader:
+        with open(os.path.join(os.path.dirname(__file__), 'process/recruit_process.py')) as process_reader:
             process_content = process_reader.read()
             process_content = process_content.replace("SHORT_PHRASE = ''", f"SHORT_PHRASE = '{journal.short_name}'")
             process_content = process_content.replace("ACTION_EDITOR_NAME = ''", f"ACTION_EDITOR_NAME = 'Reviewer'")
