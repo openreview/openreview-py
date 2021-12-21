@@ -364,7 +364,7 @@ class Journal(object):
             formatted_content = formatted_content + f'{formatted_field}: {note.content.get(field, {}).get("value", "")}' + '\n'
 
         content = f'''{formatted_content}
-To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}noteId=${note.id}
+To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}
 '''
 
         ## Notify author of the note
