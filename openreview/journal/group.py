@@ -155,6 +155,10 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
+            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + venue_id + "/-/Author_Submission';")
+            content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
+            content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
             reviewer_group.web = content
             self.client.post_group(reviewer_group)
 

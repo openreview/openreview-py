@@ -6,16 +6,16 @@
 // ------------------------------------
 
 // Constants
-var VENUE_ID = '.TMLR';
-var SHORT_PHRASE = 'TMLR';
-var SUBMISSION_ID = '.TMLR/-/Author_Submission';
+var VENUE_ID = '';
+var SHORT_PHRASE = '';
+var SUBMISSION_ID = '';
 var HEADER = {
-  title: 'TMLR Reviewer Console',
+  title: SHORT_PHRASE + ' Reviewer Console',
   instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the TMLR reviewer guidelines.'
 };
-var REVIEWERS_NAME = 'Reviewers';
+var REVIEWERS_NAME = '';
 var REVIEW_NAME = 'Review';
-var ACTION_EDITORS_NAME = 'Action_Editors';
+var ACTION_EDITORS_NAME = '';
 
 
 function main() {
