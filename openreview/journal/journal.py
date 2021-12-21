@@ -358,9 +358,11 @@ class Journal(object):
 
         subject = f'''[{self.short_name}] {formatted_invitation} {action} on submission {forum.content['title']['value']}'''
 
-        formatted_content = ''
+        formatted_content = f'''
+Submission: {forum.content['title']['value']}
+'''
         for field in content_fields:
-            formatted_field = field.replace('_', ' ')
+            formatted_field = field[0].upper() + field.replace('_', ' ')[1:]
             formatted_content = formatted_content + f'{formatted_field}: {note.content.get(field, {}).get("value", "")}' + '\n'
 
         content = f'''{formatted_content}
@@ -370,7 +372,8 @@ To view the {lower_formatted_invitation}, click here: https://openreview.net/for
         ## Notify author of the note
         if action == 'posted':
             message = f'''Hi {{{{fullname}}}},
-Your {lower_formatted_invitation} was {action} on submission {forum.content['title']['value']}
+
+Your {lower_formatted_invitation} on a submission has been {action}
 {content}
             '''
             self.client.post_message(recipients=[edit.tauthor], subject=subject, message=message, replyTo=self.contact_info)
@@ -378,7 +381,8 @@ Your {lower_formatted_invitation} was {action} on submission {forum.content['tit
         ## Notify authors
         if is_public or self.get_authors_id(number=forum.number) in readers:
             message = f'''Hi {{{{fullname}}}},
-{before_invitation} {lower_formatted_invitation} {action} on your submission {forum.content['title']['value']}
+
+{before_invitation} {lower_formatted_invitation} on your submission has been {action}
 {content}
             '''
             self.client.post_message(recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
@@ -394,7 +398,8 @@ Your {lower_formatted_invitation} was {action} on submission {forum.content['tit
                     reviewer_recipients.append(reader)
         if reviewer_recipients:
             message = f'''Hi {{{{fullname}}}},
-{before_invitation} {lower_formatted_invitation} {action} on a submission for which you are serving as reviewer {forum.content['title']['value']}
+
+{before_invitation} {lower_formatted_invitation} on a submission you are a reviewer for has been {action}
 {content}
             '''
             self.client.post_message(recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
@@ -403,7 +408,8 @@ Your {lower_formatted_invitation} was {action} on submission {forum.content['tit
         ## Notify action editors
         if is_public or self.get_action_editors_id(number=forum.number) in readers:
             message = f'''Hi {{{{fullname}}}},
-{before_invitation} {lower_formatted_invitation} {action} on a submission for which you are serving as Action Editor {forum.content['title']['value']}
+
+{before_invitation} {lower_formatted_invitation} on a submission you are an Action Editor for has been {action}
 {content}
             '''
             self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)

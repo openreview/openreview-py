@@ -1825,58 +1825,56 @@ class InvitationBuilder(object):
         paper_authors_id = journal.get_authors_id(number=note.number)
 
         public_comment_invitation_id = journal.get_public_comment_id(number=note.number)
-        public_comment_invitation = openreview.tools.get_invitation(self.client, public_comment_invitation_id)
-
-        if not public_comment_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=Invitation(id=public_comment_invitation_id,
-                    invitees=['everyone'],
-                    noninvitees=[editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
-                    readers=['everyone'],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    edit={
-                        'signatures': { 'values-regex': f'~.*' },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
-                        'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
-                        'note': {
-                            'id': {
-                                'value-invitation': public_comment_invitation_id,
-                                'optional': True
+        invitation=Invitation(id=public_comment_invitation_id,
+            invitees=['everyone'],
+            noninvitees=[editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'values-regex': f'~.*' },
+                'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
+                'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
+                'note': {
+                    'id': {
+                        'value-invitation': public_comment_invitation_id,
+                        'optional': True
+                    },
+                    'forum': { 'value': note.id },
+                    'replyto': { 'with-forum': note.id },
+                    'ddate': {
+                        'int-range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'signatures': { 'values': ['${signatures}'] },
+                    'readers': { 'values': [ 'everyone']},
+                    'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your comment.',
+                            'value': {
+                                'value-regex': '^.{1,500}$'
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$'
                             },
-                            'forum': { 'value': note.id },
-                            'replyto': { 'with-forum': note.id },
-                            'ddate': {
-                                'int-range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
-                            },
-                            'signatures': { 'values': ['${signatures}'] },
-                            'readers': { 'values': [ 'everyone']},
-                            'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
-                            'content': {
-                                'title': {
-                                    'order': 1,
-                                    'description': 'Brief summary of your comment.',
-                                    'value': {
-                                        'value-regex': '^.{1,500}$'
-                                    }
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'value-regex': '^[\\S\\s]{1,5000}$'
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                }
+                            'presentation': {
+                                'markdown': True
                             }
                         }
-                    }))
+                    }
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/public_comment_process.py')
+        )
+
+        self.save_invitation(journal, invitation)
 
         official_comment_invitation_id=journal.get_official_comment_id(number=note.number)
         paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)

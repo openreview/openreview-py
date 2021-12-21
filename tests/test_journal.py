@@ -631,6 +631,22 @@ class TestJournal():
         assert note.content['title']['value'] == 'Comment title'
         assert note.content['comment']['value'] == 'This is an inapropiate comment'
 
+        helpers.await_queue(openreview_client)
+
+        messages = journal.client.get_messages(subject = '[TMLR] Public Comment posted on submission Paper title UPDATED')
+        assert len(messages) == 7
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Public Comment posted on submission Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'joelle@mailseven.com'
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>A public comment on a submission you are an Action Editor for has been posted</p>
+<p>Submission: Paper title UPDATED<br>
+Title: Comment title<br>
+Comment: This is an inapropiate comment</p>
+<p>To view the public comment, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note_id}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note_id}</a></p>
+'''
+
+
         # Moderate a public comment
         moderated_comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Moderation',
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
