@@ -284,7 +284,7 @@ class CommentInvitation(openreview.Invitation):
 
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, reveal_authors, reveal_submission):
+    def __init__(self, conference, reveal_authors, reveal_submission, hide_fields=[]):
 
         signatures = {'values-regex': '~.*'}
         writers = {'values-regex': '.*'}
@@ -302,11 +302,16 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                     'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
                     'required': False,
                     'order': 2
-                }
+                },
             }
             if not reveal_authors:
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
+            for field in hide_fields:
+                content[field] = {
+                    'values-regex': '.*',
+                    'required': False
+                }
         else:
             content = conference.submission_stage.get_content()
 
@@ -332,7 +337,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
 class PaperWithdrawInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
 
         content = invitations.withdraw.copy()
 
@@ -396,6 +401,11 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'REVEAL_SUBMISSIONS_ON_WITHDRAW = False',
                     'REVEAL_SUBMISSIONS_ON_WITHDRAW = True')
+            if hide_fields:
+                file_content = file_content.replace(
+                    'HIDE_FIELDS = []',
+                    str.format('HIDE_FIELDS = {}', hide_fields)
+                )
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
@@ -428,7 +438,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
 class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, reveal_authors, reveal_submission):
+    def __init__(self, conference, reveal_authors, reveal_submission, hide_fields=[]):
 
         signatures = {'values-regex': '~.*'}
         writers = {'values-regex': '.*'}
@@ -452,6 +462,11 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
             if not reveal_authors:
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
+            for field in hide_fields:
+                content[field] = {
+                    'values-regex': '.*',
+                    'required': False
+                }
         else:
             content = conference.submission_stage.get_content()
 
@@ -477,7 +492,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
 class PaperDeskRejectInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, hide_fields=None):
 
         content = invitations.desk_reject.copy()
 
@@ -537,6 +552,11 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'REVEAL_SUBMISSIONS_ON_DESK_REJECT = False',
                     'REVEAL_SUBMISSIONS_ON_DESK_REJECT = True')
+            if hide_fields:
+                file_content = file_content.replace(
+                    'HIDE_FIELDS = []',
+                    str.format('HIDE_FIELDS = {}', hide_fields)
+                )
 
             super(PaperDeskRejectInvitation, self).__init__(
                 id=conference.get_invitation_id('Desk_Reject', note.number),
@@ -1446,27 +1466,27 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission, email_pcs):
+    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
 
         invitations = []
 
-        self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission))
+        self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
 
         notes = list(conference.get_submissions())
         for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs)))
+            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)))
 
         return invitations
 
-    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission):
+    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission, hide_fields=None):
 
         invitations = []
 
-        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, reveal_authors, reveal_submission))
+        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
 
         notes = list(conference.get_submissions())
         for note in tqdm(notes, total=len(notes), desc='set_desk_reject_invitation'):
-            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission)))
+            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission, hide_fields=hide_fields)))
 
         return invitations
 
