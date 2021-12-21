@@ -17,7 +17,7 @@ def process(client, edge, invitation):
         ## - Get profile
         user = edge.tail
         print(f'Get profile for {user}')
-        user_profile=openreview.conference.matching._get_profiles(client, [user])[0]
+        user_profile=openreview.tools.get_profiles(client, [user])[0]
 
         if user_profile:
             if user_profile.id != user:
@@ -60,7 +60,7 @@ def process(client, edge, invitation):
         authorids = submission.content['authorids']
         if submission.details and submission.details.get('original'):
             authorids = submission.details['original']['content']['authorids']
-        author_profiles = openreview.conference.matching._get_profiles(client, authorids)
+        author_profiles = openreview.tools.get_profiles(client, authorids)
         conflicts=openreview.tools.get_conflicts(author_profiles, user_profile)
         if conflicts:
             print('Conflicts detected', conflicts)

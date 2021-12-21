@@ -15,42 +15,26 @@ def process(client, edit, invitation):
 
     recruitment_note = client.get_note(edit.note.id)
 
-    role = recruitment_note.content['invitee_role']['value']
-
-    role_map={
-        'reviewer': 'Reviewers',
-        'action editor': 'Action_Editor',
-    }
-
-    subject = recruitment_note.content['email_subject']['value'].replace('{invitee_role}', role)
-    content = recruitment_note.content['email_content']['value'].replace('{invitee_role}', role)
-
     invitee_details_str = recruitment_note.content['invitee_details']['value']
-    invitee_emails = []
-    invitee_names = []
     if invitee_details_str:
-        invitee_details = invitee_details_str.split('\n')
-        for invitee in invitee_details:
-            if invitee:
-                details = [i.strip() for i in invitee.split(',') if i]
-                if len(details) == 1:
-                    email = details[0]
-                    name = None
-                else:
-                    email = details[0]
-                    name = details[1]
-                invitee_emails.append(email)
-                invitee_names.append(name)
+        invitee_details = invitee_details_str.split(',')
+        if len(invitee_details) == 1:
+            email = invitee_details[0].strip()
+            name = None
+        else:
+            email = invitee_details[0].strip()
+            name = invitee_details[1].strip()
 
-    if role == 'reviewer':
-        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
-    else:
-        status = journal.invite_action_editors(content, subject, invitee_emails, invitee_names)
+    subject = recruitment_note.content['email_subject']['value']
+    message = recruitment_note.content['email_content']['value']
+    message = message.replace('{inviter}', recruitment_note.signatures[0])
 
-    non_invited_status = f'''No recruitment invitation was sent to the following users because they have already been invited as {role}:
+    status = journal.invite_reviewers(message, subject, [email], [name])
+
+    non_invited_status = f'''No recruitment invitation was sent to the following user because they have already been invited as reviewer:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
 
-    already_member_status = f'''No recruitment invitation was sent to the following users because they are already members of the {role} group:
+    already_member_status = f'''No recruitment invitation was sent to the following user because they are already members of the reviewer group:
 {status.get('already_member')}''' if status.get('already_member') else ''
 
     error_status = f'''{len(status.get('errors'))} error(s) in the recruitment process:
@@ -58,12 +42,12 @@ def process(client, edit, invitation):
 {status.get('errors')}''' if status.get('errors') else ''
 
     comment_content = f'''
-Invited: {len(status.get('invited'))} {role}s.
+Invited: {len(status.get('invited'))} reviewers.
 
 {non_invited_status}
 {already_member_status}
 
-Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/{role_map[role]}/Invited
+Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/Reviewers/Invited
 '''
     if status['errors']:
         error_status=f'''{len(status.get('errors'))} error(s) in the recruitment process:
@@ -72,7 +56,7 @@ Please check the invitee group to see more details: https://openreview.net/group
         comment_content += f'''
 Error: {error_status}'''
 
-    comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Recruitment', 'Comment'),
+    comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Reviewer_Recruitment', 'Comment'),
         signatures=[SUPPORT_GROUP],
         note = openreview.api.Note(
             content = {

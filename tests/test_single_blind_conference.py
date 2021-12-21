@@ -669,7 +669,6 @@ class TestSingleBlindConference():
 
         submissions = conference.get_submissions()
         assert len(submissions) == 1
-
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Decision',
             forum = submissions[0].id,
             replyto = submissions[0].id,
