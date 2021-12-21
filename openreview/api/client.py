@@ -11,6 +11,7 @@ import requests
 import pprint
 import os
 import re
+import time
 from openreview import Profile
 from openreview import OpenReviewException
 
@@ -572,7 +573,25 @@ class OpenReviewClient(object):
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None, expired = None):
+    def get_invitations(self,
+        id = None,
+        invitee = None,
+        replytoNote = None,
+        replyForum = None,
+        signature = None,
+        note = None,
+        regex = None,
+        tags = None,
+        limit = None,
+        offset = None,
+        minduedate = None,
+        duedate = None,
+        pastdue = None,
+        replyto = None,
+        details = None,
+        expired = None,
+        type = None
+    ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -638,6 +657,7 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
         params['expired'] = expired
+        params['type'] = type
 
         response = requests.get(self.invitations_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
@@ -1352,7 +1372,9 @@ class OpenReviewClient(object):
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
             return {}
+        print('compute expertise', {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model})
         response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model}, headers = self.headers)
+        print('response json', response.json())
         response = self.__handle_response(response)
 
         return response.json()
@@ -1374,17 +1396,17 @@ class OpenReviewClient(object):
             return { 'results': [] }
 
         if wait_for_complete:
-            status = None
-            status_response = None
             call_count = 0
+            status_response = self.get_expertise_status(job_id, baseurl=base_url)
+            status = status_response.get('status')
             while status not in ['Completed', 'Error'] and call_count < 30:
                 time.sleep(30)
-                status_response = self.client.get_expertise_status(job_id)
+                status_response = self.get_expertise_status(job_id)
                 status = status_response.get('status')
                 call_count += 1
 
             if 'Completed' == status:
-                return self.client.get_expertise_results(job_id)
+                return self.get_expertise_results(job_id, baseurl=base_url)
             if 'Error' == status:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
             if call_count == 30:
