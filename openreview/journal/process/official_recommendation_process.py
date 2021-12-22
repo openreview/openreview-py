@@ -22,10 +22,10 @@ def process(client, edit, invitation):
         ## send email to action editors
         client.post_message(
             recipients=[journal.get_action_editors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for TMLR submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Thank you for overseeing the review process for TMLR submission "{submission.content['title']['value']}".
+Thank you for overseeing the review process for {journal.short_name} submission "{submission.content['title']['value']}".
 
 All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:
 
@@ -43,9 +43,9 @@ Your decision may also include certification(s) recommendations for the submissi
 
 For more details and guidelines on performing your review, visit jmlr.org/tmlr .
 
-We thank you for your essential contribution to TMLR!
+We thank you for your essential contribution to {journal.short_name}!
 
-The TMLR Editors-in-Chief
+The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info
         )
