@@ -399,7 +399,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
         if reviewer_recipients:
             message = f'''Hi {{{{fullname}}}},
 
-{before_invitation} {lower_formatted_invitation} has been {action} on a submission you are a reviewer.
+{before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are a reviewer.
 {content}
             '''
             self.client.post_message(recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
