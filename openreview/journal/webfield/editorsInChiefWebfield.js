@@ -56,7 +56,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status'],
+    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status', 'Editors In Chief Tasks'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -86,11 +86,12 @@ var loadData = function() {
     Webfield2.api.getAll('/edges', {
       regex: VENUE_ID + '/' + ACTION_EDITOR_NAME + '/-/' + RECOMMENDATION_NAME,
       groupBy: 'head'
-    })
+    }),
+    Webfield2.api.getAssignedInvitations(VENUE_ID, EDITORS_IN_CHIEF_NAME),
   );
 };
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById, actionEditorRecommendations) {
+var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitations, invitationsById, actionEditorRecommendations) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   // build the rows
@@ -405,7 +406,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     decisionApprovalStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.decisionApprovalPending; }),
     completeSubmissionStatusRows: paperStatusRows.filter(function(row) { return ![SUBMITTED_STATUS, UNDER_REVIEW_STATUS].includes(row.submission.content.venueid); }),
     reviewerStatusRows: Object.values(reviewerStatusById),
-    actionEditorStatusRows: Object.values(actionEditorStatusById)
+    actionEditorStatusRows: Object.values(actionEditorStatusById),
+    invitations: invitations
   };
 };
 
@@ -538,5 +540,11 @@ var renderData = function(venueStatusData) {
     extraClasses: 'console-table'
   });
 };
+  })
+
+  Webfield2.ui.renderTasks('#editors-in-chief-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)')});
+
+
+}
 
 main();

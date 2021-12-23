@@ -59,5 +59,20 @@ url={https://openreview.net/forum?id='''
 
         assert bibtex == valid_bibtex
 
+        # test accepted paper with editors
+        bibtex = openreview.tools.get_bibtex(posted_note, conference.id, '2020', accepted=True, anonymous=False, baseurl=client.baseurl, editor='A. Beygelzimer and Y. Dauphin and P. Liang and J. Wortman Vaughan' )
+        valid_bibtex = '''@inproceedings{
+user2020paper,
+title={Paper title has {GAN}s and an \^O},
+author={Bibtex User and Peter Te{\\"e}t and Andrew McC},
+booktitle={NIPS.cc/2020/Workshop/MLITS},
+editor={A. Beygelzimer and Y. Dauphin and P. Liang and J. Wortman Vaughan},
+year={2020},
+url={'''
+        valid_bibtex = valid_bibtex+client.baseurl+'/forum?id='+posted_note.forum+'''}
+}'''
+
+        assert bibtex == valid_bibtex
+
 
 

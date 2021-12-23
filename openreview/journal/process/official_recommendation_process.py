@@ -7,6 +7,10 @@ def process(client, edit, invitation):
 
     note = client.get_note(edit.note.id)
 
+    ## On update or delete return
+    if note.tcdate != note.tmdate:
+        return
+
     recommendations = client.get_notes(forum=note.forum, invitation=edit.invitation)
     if len(recommendations) == 3:
 

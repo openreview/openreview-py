@@ -11,9 +11,9 @@ import requests
 import pprint
 import os
 import re
+import time
 from openreview import Profile
 from openreview import OpenReviewException
-from openreview import Group
 
 class OpenReviewClient(object):
     """
@@ -297,76 +297,12 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    @deprecated(version='0.9.20', reason="Use search_profiles instead")
-    def get_profiles(self, email_or_id_list = None, id = None, email = None, first = None, middle = None, last = None):
-        """
-        Gets a list of profiles
-
-        :param email_or_id_list: List of ids or emails
-        :type email_or_id_list: list, optional
-        :param id: OpenReview username id
-        :type id: str, optional
-        :param email: e-mail registered in OpenReview
-        :type email: str, optional
-        :param first: First name of the user
-        :type first: str, optional
-        :param middle: Middle name of the user
-        :type middle: str, optional
-        :param last: Last name of the user
-        :type last: str, optional
-
-        :return: List of profiles
-        :rtype: list[Profile]
-        """
-
-        ## Deprecated, don't use it
-        if email_or_id_list is not None:
-            pure_tilde_ids = all(['~' in i for i in email_or_id_list])
-            pure_emails = all(['@' in i for i in email_or_id_list])
-
-            def get_ids_response(id_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'ids': id_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return [Profile.from_json(p) for p in response.json()['profiles']]
-
-            def get_emails_response(email_list):
-                response = requests.post(self.baseurl + '/user/profiles', json={'emails': email_list}, headers = self.headers)
-                response = self.__handle_response(response)
-                return { p['email'] : Profile.from_json(p['profile'])
-                    for p in response.json()['profiles'] }
-
-            if pure_tilde_ids:
-                get_response = get_ids_response
-                update_result = lambda result, response: result.extend(response)
-                result = []
-            elif pure_emails:
-                get_response = get_emails_response
-                update_result = lambda result, response: result.update(response)
-                result = {}
-            else:
-                raise OpenReviewException('the input argument cannot contain a combination of email addresses and profile IDs.')
-
-            done = False
-            offset = 0
-            limit = 1000
-            while not done:
-                current_batch = email_or_id_list[offset:offset+limit]
-                offset += limit
-                response = get_response(current_batch)
-                update_result(result, response)
-                if len(current_batch) < limit:
-                    done = True
-
-            return result
-
-        response = requests.get(self.profiles_url, params = { 'id': id, 'email': email, 'first': first, 'middle': middle, 'last': last }, headers = self.headers)
-        response = self.__handle_response(response)
-        return [Profile.from_json(p) for p in response.json()['profiles']]
-
-    def search_profiles(self, emails = None, ids = None, term = None, first = None, middle = None, last = None):
+    def search_profiles(self, confirmedEmails = None, emails = None, ids = None, term = None, first = None, middle = None, last = None):
         """
         Gets a list of profiles using either their ids or corresponding emails
 
+        :param confirmedEmails: List of confirmed emails registered in OpenReview
+        :type confirmedEmails: list, optional
         :param emails: List of emails registered in OpenReview
         :type emails: list, optional
         :param ids: List of OpenReview username ids
@@ -380,7 +316,7 @@ class OpenReviewClient(object):
         :param last: Last name of user
         :type last: str, optional
 
-        :return: List of profiles
+        :return: List of profiles, if emails is present then a dictionary of { email: profiles } is returned. If confirmedEmails is present then a dictionary of { email: profile } is returned
         :rtype: list[Profile]
         """
 
@@ -408,7 +344,28 @@ class OpenReviewClient(object):
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
-            return {p['email']: Profile.from_json(p) for p in full_response}
+            profiles_by_email = {}
+            for p in full_response:
+                if p['email'] not in profiles_by_email:
+                    profiles_by_email[p['email']] = []
+                profiles_by_email[p['email']].append(Profile.from_json(p))
+            return profiles_by_email
+
+        if confirmedEmails:
+            full_response = []
+            for email_batch in batches(confirmedEmails):
+                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.__handle_response(response)
+                full_response.extend(response.json()['profiles'])
+
+            profiles_by_email = {}
+            for p in full_response:
+                profile = Profile.from_json(p)
+                if p['email'] in profile.content['emailsConfirmed']:
+                    profiles_by_email[p['email']] = profile
+            return profiles_by_email
+
+
 
         if ids:
             full_response = []
@@ -510,26 +467,6 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         return response.json()['venues']
-
-    @deprecated(version='1.0.3', reason="Use put_attachment instead")
-    def put_pdf(self, fname):
-        """
-        Uploads a pdf to the openreview server
-
-        :param fname: Path to the pdf
-        :type fname: str
-
-        :return: A relative URL for the uploaded pdf
-        :rtype: str
-        """
-        headers = self.headers.copy()
-
-        with open(fname, 'rb') as f:
-            headers['content-type'] = 'application/pdf'
-            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
-
-        response = self.__handle_response(response)
-        return response.json()['url']
 
     def put_attachment(self, file_path, invitation, name):
         """
@@ -636,7 +573,25 @@ class OpenReviewClient(object):
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None, expired = None):
+    def get_invitations(self,
+        id = None,
+        invitee = None,
+        replytoNote = None,
+        replyForum = None,
+        signature = None,
+        note = None,
+        regex = None,
+        tags = None,
+        limit = None,
+        offset = None,
+        minduedate = None,
+        duedate = None,
+        pastdue = None,
+        replyto = None,
+        details = None,
+        expired = None,
+        type = None
+    ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -702,12 +657,28 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
         params['expired'] = expired
+        params['type'] = type
 
         response = requests.get(self.invitations_url, params=params, headers=self.headers)
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         return invitations
+
+    def get_invitation_edit(self, id):
+        """
+        Get a single edit by id if available
+
+        :param id: id of the edit
+        :type id: str
+
+        :return: edit matching the passed id
+        :rtype: Note
+        """
+        response = requests.get(self.invitation_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.__handle_response(response)
+        n = response.json()['edits'][0]
+        return Edit.from_json(n)
 
     def get_notes(self, id = None,
             paperhash = None,
@@ -1188,26 +1159,6 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    @deprecated(version='1.0.6', reason="Use post_message instead")
-    def send_mail(self, subject, recipients, message):
-        """
-        Posts a message to the recipients and consequently sends them emails as well
-
-        :param subject: Subject of the e-mail
-        :type subject: str
-        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
-        :type recipients: list[str]
-        :param message: Message in the e-mail
-        :type message: str
-
-        :return: Contains the message that was sent to each Group
-        :rtype: dict
-        """
-        response = requests.post(self.mail_url, json = {'groups': recipients, 'subject': subject , 'message': message}, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
-
     def add_members_to_group(self, group, members):
         """
         Adds members to a group
@@ -1407,6 +1358,65 @@ class OpenReviewClient(object):
         response = requests.get(self.jobs_status, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
+
+    def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'exclusion_inv': exclusion_inv, 'model': model}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def request_single_paper_expertise(self, name, group_id, paper_id, model=None, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            return {}
+        print('compute expertise', {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model})
+        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model}, headers = self.headers)
+        print('response json', response.json())
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_expertise_status(self, job_id, baseurl=None):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            return { 'status': 'Completed' }
+        response = requests.get(base_url + '/expertise/status', params = {'id': job_id}, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
+
+        base_url = baseurl if baseurl else self.baseurl
+        if base_url.startswith('http://localhost'):
+            return { 'results': [] }
+
+        if wait_for_complete:
+            call_count = 0
+            status_response = self.get_expertise_status(job_id, baseurl=base_url)
+            status = status_response.get('status')
+            while status not in ['Completed', 'Error'] and call_count < 30:
+                time.sleep(30)
+                status_response = self.get_expertise_status(job_id)
+                status = status_response.get('status')
+                call_count += 1
+
+            if 'Completed' == status:
+                return self.get_expertise_results(job_id, baseurl=base_url)
+            if 'Error' == status:
+                raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
+            if call_count == 30:
+                raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
+            raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
+        else:
+            response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
+            response = self.__handle_response(response)
+
+            return response.json()
 
 
 class Edit(object):
@@ -1895,5 +1905,191 @@ class Edge(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+class Group(object):
+    """
+    When a user is created, it is automatically assigned to certain groups that give him different privileges. A username is also a group, therefore, groups can be members of other groups.
+
+    :param id: id of the Group
+    :type id: str
+    :param readers: List of readers in the Group, each reader is a Group id
+    :type readers: list[str]
+    :param writers: List of writers in the Group, each writer is a Group id
+    :type writers: list[str]
+    :param signatories: List of signatories in the Group, each writer is a Group id
+    :type signatories: list[str]
+    :param signatures: List of signatures in the Group, each signature is a Group id
+    :type signatures: list[str]
+    :param cdate: Creation date of the Group
+    :type cdate: int, optional
+    :param ddate: Deletion date of the Group
+    :type ddate: int, optional
+    :param tcdate: true creation date of the Group
+    :type tcdate: int, optional
+    :param tmdate: true modification date of the Group
+    :type tmdate: int, optional
+    :param members: List of members in the Group, each member is a Group id
+    :type members: list[str], optional
+    :param nonreaders: List of nonreaders in the Group, each nonreader is a Group id
+    :type nonreaders: list[str], optional
+    :param web: Path to a file that contains the webfield
+    :type web: optional
+    :param web_string: String containing the webfield for this Group
+    :type web_string: str, optional
+    :param details:
+    :type details: optional
+    """
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+        # post attributes
+        self.id=id
+        self.invitation=invitation
+        self.cdate = cdate
+        self.ddate = ddate
+        self.tcdate = tcdate
+        self.tmdate = tmdate
+        self.writers = writers
+        self.members = [] if members is None else members
+        self.readers = readers
+        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.signatures = signatures
+        self.signatories = signatories
+        self.anonids = anonids
+        self.web=None
+        self.impersonators = impersonators
+        if web is not None:
+            with open(web) as f:
+                self.web = f.read()
+
+        if web_string:
+            self.web = web_string
+
+        self.anonids = anonids
+        self.deanonymizers = deanonymizers
+        self.details = details
+
+    def __repr__(self):
+        content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
+        return 'Group(' + content + ')'
+
+    def __str__(self):
+        pp = pprint.PrettyPrinter()
+        return pp.pformat(vars(self))
+
+
+    def to_json(self):
+        """
+        Converts Group instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.
+
+        :return: Dictionary containing all the parameters of a Group instance
+        :rtype: dict
+        """
+        body = {
+            'id': self.id,
+            'invitation': self.invitation,
+            'cdate': self.cdate,
+            'ddate': self.ddate,
+            'signatures': self.signatures,
+            'writers': self.writers,
+            'members': self.members,
+            'readers': self.readers,
+            'nonreaders': self.nonreaders,
+            'signatories': self.signatories,
+            'impersonators': self.impersonators,
+            'anonids': self.anonids,
+            'deanonymizers': self.deanonymizers,
+            'web': self.web,
+            'details': self.details
+        }
+
+        return body
+
+    @classmethod
+    def from_json(Group,g):
+        """
+        Creates a Group object from a dictionary that contains keys values equivalent to the name of the instance variables of the Group class
+
+        :param g: Dictionary containing key-value pairs, where the keys values are equivalent to the name of the instance variables in the Group class
+        :type g: dict
+
+        :return: Group whose instance variables contain the values from the dictionary
+        :rtype: Group
+        """
+        group = Group(g['id'],
+            invitation=g.get('invitation'),
+            cdate = g.get('cdate'),
+            ddate = g.get('ddate'),
+            tcdate = g.get('tcdate'),
+            tmdate = g.get('tmdate'),
+            writers = g.get('writers'),
+            members = g.get('members'),
+            readers = g.get('readers'),
+            nonreaders = g.get('nonreaders'),
+            signatories = g.get('signatories'),
+            signatures = g.get('signatures'),
+            anonids=g.get('anonids'),
+            deanonymizers=g.get('deanonymizers'),
+            impersonators=g.get('impersonators'),
+            details = g.get('details'))
+        if 'web' in g:
+            group.web = g['web']
+        return group
+
+    def add_member(self, member):
+        """
+        Adds a member to the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
+
+        :param member: Member to add to the group
+        :type member: str
+
+        :return: Group with the new member added
+        :rtype: Group
+        """
+        if type(member) is Group:
+            self.members.append(member.id)
+        else:
+            self.members.append(str(member))
+        return self
+
+    def remove_member(self, member):
+        """
+        Removes a member from the group. This is done only on the object not in OpenReview. Another method like :meth:`~openreview.Group.post` is needed for the change to show in OpenReview
+
+        :param member: Member to remove from the group
+        :type member: str
+
+        :return: Group after the member was removed
+        :rtype: Group
+        """
+        if type(member) is Group:
+            try:
+                self.members.remove(member.id)
+            except(ValueError):
+                pass
+        else:
+            try:
+                self.members.remove(str(member))
+            except(ValueError):
+                pass
+        return self
+
+    def add_webfield(self, web):
+        """
+        Adds a webfield to the group
+
+        :param web: Path to the file that contains the webfield
+        :type web: str
+        """
+        with open(web) as f:
+            self.web = f.read()
+
+    def post(self, client):
+        """
+        Posts a group to OpenReview
+
+        :param client: Client that will post the Group
+        :type client: Client
+        """
+        client.post_group(self)
+
 
 

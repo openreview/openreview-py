@@ -69,6 +69,49 @@ def get_profile(client, value, with_publications=False):
             raise e
     return profile
 
+def get_profiles(client, ids_or_emails, with_publications=False):
+    '''
+    Helper function that repeatedly queries for profiles, given IDs and emails.
+    Useful for getting more Profiles than the server will return by default (1000)
+    '''
+    ids = []
+    emails = []
+    for member in ids_or_emails:
+        if '~' in member:
+            ids.append(member)
+        else:
+            emails.append(member)
+
+    profiles = []
+    profile_by_email = {}
+
+    batch_size = 100
+    for i in range(0, len(ids), batch_size):
+        batch_ids = ids[i:i+batch_size]
+        batch_profiles = client.search_profiles(ids=batch_ids)
+        profiles.extend(batch_profiles)
+
+    for j in range(0, len(emails), batch_size):
+        batch_emails = emails[j:j+batch_size]
+        batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
+        profile_by_email.update(batch_profile_by_email)
+
+    for email in emails:
+        profiles.append(profile_by_email.get(email, openreview.Profile(
+            id=email,
+            content={
+                'emails': [email],
+                'preferredEmail': email,
+                'emailsConfirmed': [email],
+                'names': []
+            })))
+
+    if with_publications:
+        for profile in profiles:
+            profile.content['publications'] = list(iterget_notes(client, content={'authorids': profile.id}))
+
+    return profiles
+
 def get_group(client, id):
     """
     Get a single Group by id if available
@@ -347,7 +390,7 @@ def post_group_parents(client, group, overwrite_parents=False):
 
     return posted_groups
 
-def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net'):
+def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net', editor=None):
     """
     Generates a bibtex field for a given Note.
 
@@ -431,7 +474,12 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         utf8tolatex(first_author_last_name + year + first_word + ','),
         'title={' + bibtex_title + '},',
         'author={' + utf8tolatex(authors) + '},',
-        'booktitle={' + utf8tolatex(venue_fullname) + '},',
+        'booktitle={' + utf8tolatex(venue_fullname) + '},'
+    ]
+    if editor:
+        accepted_bibtex.append('editor={' + utf8tolatex(editor) + '},')
+
+    accepted_bibtex = accepted_bibtex + [
         'year={' + year + '},',
         'url={'+baseurl+'/forum?id=' + forum + '}',
         '}'
@@ -1593,6 +1641,11 @@ def get_profile_info(profile):
     ## Relations section
     relations.update([r['email'] for r in profile.content.get('relations', [])])
 
+    ## TODO:: Parameterize the number of years for publications to consider from
+    ## Publications section: get publications within last n years, default is all publications from previous years
+    for pub in profile.content.get('publications', []):
+        publications.add(pub.id)
+
     ## Filter common domains
     for common_domain in common_domains:
         if common_domain in domains:
@@ -1722,7 +1775,7 @@ def pretty_id(group_id):
 
 def export_committee(client, committee_id, file_name):
     members=client.get_group(committee_id).members
-    profiles=openreview.matching._get_profiles(client, members)
+    profiles=get_profiles(client, members)
     with open(file_name, 'w') as outfile:
         csvwriter = csv.writer(outfile, delimiter=',')
         for profile in tqdm(profiles):
