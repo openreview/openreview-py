@@ -91,7 +91,7 @@ var loadData = function() {
   );
 };
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitations, invitationsById, actionEditorRecommendations) {
+var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById, actionEditorRecommendations, invitations) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   // build the rows
@@ -539,12 +539,10 @@ var renderData = function(venueStatusData) {
     },
     extraClasses: 'console-table'
   });
-};
-  })
 
   Webfield2.ui.renderTasks('#editors-in-chief-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)')});
 
+};
 
-}
 
 main();
