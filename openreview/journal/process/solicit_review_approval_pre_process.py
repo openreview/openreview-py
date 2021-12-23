@@ -13,4 +13,4 @@ def process(client, edit, invitation):
         conflicts = journal.assignment.compute_conflicts(submission, solitic_request.signatures[0])
 
         if conflicts:
-            raise openreview.OpenReviewException('Solicit review not allowed at this time')
+            raise openreview.OpenReviewException(f'Can not approve this solicit review: conflict detected for {solitic_request.signatures[0]}')
