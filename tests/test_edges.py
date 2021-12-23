@@ -74,12 +74,12 @@ class TestEdges:
     
     def test_rename_edges(self, client):
         guest = openreview.Client()
-        to_profile = guest.register_user(email = 'nadia@mail.com', first = 'Nadia', last = 'LBahy', password = '1234')
+        to_profile = guest.register_user(email = 'nadia@mail.com', first = 'Nadia', last = 'L', password = '1234')
         assert to_profile
-        assert to_profile['id'] == '~Nadia_LBahy2'
+        assert to_profile['id'] == '~Nadia_L1'
         super_user_edges = list(openreview.tools.iterget_edges(client, tail="~Super_User1"))
-        client.rename_edges('~Super_User1', '~Nadia_LBahy2')
-        nadias_edges = list(openreview.tools.iterget_edges(client, tail="~Nadia_LBahy2"))
+        client.rename_edges('~Super_User1', '~Nadia_L1')
+        nadias_edges = list(openreview.tools.iterget_edges(client, tail="~Nadia_L1"))
         super_edges_ids = [edge.id for edge in super_user_edges]
         nadia_edges_ids = [edge.id for edge in nadias_edges]
         for edge in super_edges_ids:
@@ -87,7 +87,7 @@ class TestEdges:
         assert len(super_user_edges)==len(nadias_edges)
         super_user_edges = list(openreview.tools.iterget_edges(client, tail="~Super_User1"))
         assert len(super_user_edges) == 0
-        client.rename_edges('~Nadia_LBahy2','~Super_User1')
+        client.rename_edges('~Nadia_L1','~Super_User1')
         
     def test_get_edges(self, client):
         invitation_id = 'NIPS.cc/2020/Workshop/MLITS/-/affinity'
