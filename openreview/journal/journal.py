@@ -382,7 +382,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
         if is_public or self.get_authors_id(number=forum.number) in readers:
             message = f'''Hi {{{{fullname}}}},
 
-{before_invitation} {lower_formatted_invitation} on your submission has been {action}
+{before_invitation} {lower_formatted_invitation} has been {action} on your submission.
 {content}
             '''
             self.client.post_message(recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
@@ -399,7 +399,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
         if reviewer_recipients:
             message = f'''Hi {{{{fullname}}}},
 
-{before_invitation} {lower_formatted_invitation} on a submission you are a reviewer for has been {action}
+{before_invitation} {lower_formatted_invitation} has been {action} on a submission you are a reviewer.
 {content}
             '''
             self.client.post_message(recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
@@ -409,7 +409,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
         if is_public or self.get_action_editors_id(number=forum.number) in readers:
             message = f'''Hi {{{{fullname}}}},
 
-{before_invitation} {lower_formatted_invitation} on a submission you are an Action Editor for has been {action}
+{before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are an Action Editor.
 {content}
             '''
             self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)

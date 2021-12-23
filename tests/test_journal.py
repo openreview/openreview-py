@@ -639,7 +639,7 @@ class TestJournal():
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'joelle@mailseven.com'
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>A public comment on a submission you are an Action Editor for has been posted</p>
+<p>A public comment has been posted on a submission for which you are an Action Editor.</p>
 <p>Submission: Paper title UPDATED<br>
 Title: Comment title<br>
 Comment: This is an inapropiate comment</p>
