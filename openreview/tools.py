@@ -390,7 +390,7 @@ def post_group_parents(client, group, overwrite_parents=False):
 
     return posted_groups
 
-def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net'):
+def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net', editor=None):
     """
     Generates a bibtex field for a given Note.
 
@@ -474,7 +474,12 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         utf8tolatex(first_author_last_name + year + first_word + ','),
         'title={' + bibtex_title + '},',
         'author={' + utf8tolatex(authors) + '},',
-        'booktitle={' + utf8tolatex(venue_fullname) + '},',
+        'booktitle={' + utf8tolatex(venue_fullname) + '},'
+    ]
+    if editor:
+        accepted_bibtex.append('editor={' + utf8tolatex(editor) + '},')
+
+    accepted_bibtex = accepted_bibtex + [
         'year={' + year + '},',
         'url={'+baseurl+'/forum?id=' + forum + '}',
         '}'
