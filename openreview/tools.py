@@ -16,7 +16,7 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
-def concurrent_requests(request_func, params, max_workers=max(6, cpu_count() - 1)):
+def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1)):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -614,7 +614,7 @@ def concurrent_get(client, get_function, **params):
     :return: List of results
     :rtype: list
     """
-    max_workers = max(cpu_count() - 1, 6)
+    max_workers = min(cpu_count() - 1, 6)
 
     params.update({
         'offset': 0,
