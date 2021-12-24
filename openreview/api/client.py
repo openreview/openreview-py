@@ -56,6 +56,8 @@ class OpenReviewClient(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
+        self.limit = 1000
+
         self.token = token
         self.profile = None
         self.headers = {
@@ -537,7 +539,7 @@ class OpenReviewClient(object):
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None):
+    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -571,6 +573,10 @@ class OpenReviewClient(object):
         response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
+
+        if with_count:
+            return groups, response.json()['count']
+
         return groups
 
     def get_invitations(self,
@@ -590,7 +596,8 @@ class OpenReviewClient(object):
         replyto = None,
         details = None,
         expired = None,
-        type = None
+        type = None,
+        with_count=False
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -663,6 +670,10 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
+
+        if with_count:
+            return invitations, response.json()['count']
+
         return invitations
 
     def get_invitation_edit(self, id):
@@ -696,7 +707,9 @@ class OpenReviewClient(object):
             offset = None,
             mintcdate = None,
             details = None,
-            sort = None):
+            sort = None,
+            with_count=False
+            ):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
 
@@ -780,7 +793,12 @@ class OpenReviewClient(object):
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Note.from_json(n) for n in response.json()['notes']]
+        notes = [Note.from_json(n) for n in response.json()['notes']]
+
+        if with_count:
+            return notes, response.json()['count']
+
+        return notes
 
     def get_note_edit(self, id):
         """
@@ -797,7 +815,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, noteId = None):
+    def get_note_edits(self, noteId = None, with_count=False):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -811,9 +829,14 @@ class OpenReviewClient(object):
         response = requests.get(self.note_edits_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Edit.from_json(n) for n in response.json()['edits']]
+        edits = [Edit.from_json(n) for n in response.json()['edits']]
 
-    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
+        if with_count:
+            return edits, response.json()['count']
+
+        return edits
+
+    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -847,9 +870,13 @@ class OpenReviewClient(object):
         response = requests.get(self.tags_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Tag.from_json(t) for t in response.json()['tags']]
+        tags = [Tag.from_json(t) for t in response.json()['tags']]
+        if with_count:
+            return tags, response.json()['count']
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
+        return tags
+
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -872,7 +899,12 @@ class OpenReviewClient(object):
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Edge.from_json(t) for t in response.json()['edges']]
+        edges = [Edge.from_json(e) for e in response.json()['edges']]
+
+        if with_count:
+            return edges, response.json()['count']
+
+        return edges
 
     def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
         """
