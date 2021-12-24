@@ -26,3 +26,9 @@ def process(client, edge, invitation):
         for review in reviews:
             if review.signatures[0] == groups[0].id:
                 raise openreview.OpenReviewException(f'Can not remove assignment, the user {edge.tail} already posted a review.')
+
+    else:
+        ## Check conflicts
+        conflicts = journal.assignment.compute_conflicts(submission, edge.tail)
+        if conflicts:
+           raise openreview.OpenReviewException(f'Can not add assignment, conflict detected for {edge.tail}.')
