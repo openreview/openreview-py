@@ -118,6 +118,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
         name: reviewer.name,
         email: reviewer.email,
         completedReview: completedReview && true,
+        completedRecommendation: status.Recommendation && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
@@ -229,25 +230,39 @@ var renderData = function(venueStatusData) {
                 return {
                   groups: Object.values(row.reviewProgressData.reviewers),
                   forumUrl: 'https://openreview.net/forum?' + $.param({
-                    id: row.submission.forum,
-                    noteId: row.submission.forum,
-                    invitationId: VENUE_ID + '/Paper' + row.submission.number + '/-/Review'
+                    id: row.submission.forum
                   })
                 }
               });
             }
           },
           {
-            id: 'unsubmitted-reviewers',
+            id: 'unsubmitted-reviews',
             name: 'Reviewers with missing reviews',
             getUsers: function() {
               return venueStatusData.rows.map(function(row) {
                 return {
-                  groups: Object.values(row.reviewProgressData.reviewers).filter(function(r) { return !r.completedReview; }),
+                  groups: Object.values(row.reviewProgressData.reviewers).filter(function(r) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedReview; }),
                   forumUrl: 'https://openreview.net/forum?' + $.param({
                     id: row.submission.forum,
                     noteId: row.submission.forum,
-                    invitationId: VENUE_ID + '/Paper' + row.submission.number + '/-/Review'
+                    invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
+                  })
+                }
+              });
+            }
+          },
+          {
+            id: 'unsubmitted-recommendations',
+            name: 'Reviewers with missing official recommendations',
+            getUsers: function() {
+              return venueStatusData.rows.map(function(row) {
+                return {
+                  groups: Object.values(row.reviewProgressData.reviewers).filter(function(r) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedRecommendation; }),
+                  forumUrl: 'https://openreview.net/forum?' + $.param({
+                    id: row.submission.forum,
+                    noteId: row.submission.forum,
+                    invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
                   })
                 }
               });
