@@ -57,7 +57,7 @@ var loadData = function() {
   return Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
   .then(function(assignedGroups) {
     return $.when(
-      Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+      Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
       Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
       Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
       Webfield2.api.get('/edges', { invitation: REVIEWERS_ASSIGNMENT_ID, groupBy: 'head'})
@@ -115,8 +115,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
       }
       reviewerStatus[reviewer.anonId] = {
         id: reviewer.id,
-        name: view.prettyId(reviewer.id),
-        email: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
         completedReview: completedReview && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
