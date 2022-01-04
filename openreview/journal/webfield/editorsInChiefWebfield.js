@@ -39,16 +39,11 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</s
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
-  if (prefix) {
-    return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/' + prefix + '/-/' + name;
-  }
-  return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/-/' + name;
+  return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
 };
 
 var getReplies = function(submission, name) {
-  return submission.details.directReplies.filter(function(reply) {
-    return reply.invitations.indexOf(getInvitationId(submission.number, name)) >= 0;
-  });
+  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
 // Main function is the entry point to the webfield code
