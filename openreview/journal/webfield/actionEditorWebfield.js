@@ -57,7 +57,7 @@ var loadData = function() {
   return Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
   .then(function(assignedGroups) {
     return $.when(
-      Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+      Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
       Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
       Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
       Webfield2.api.get('/edges', { invitation: REVIEWERS_ASSIGNMENT_ID, groupBy: 'head'})
@@ -115,9 +115,10 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
       }
       reviewerStatus[reviewer.anonId] = {
         id: reviewer.id,
-        name: view.prettyId(reviewer.id),
-        email: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
         completedReview: completedReview && true,
+        completedRecommendation: status.Recommendation && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
@@ -219,7 +220,56 @@ var renderData = function(venueStatusData) {
         defaultSubject: SHORT_PHRASE + ' Reminder',
         defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the review page:\n\n{{submit_review_link}}' +
-        '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor'
+        '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
+        menu: [
+          {
+            id: 'all-reviewers',
+            name: 'All Reviewers',
+            getUsers: function() {
+              return venueStatusData.rows.map(function(row) {
+                return {
+                  groups: Object.values(row.reviewProgressData.reviewers),
+                  forumUrl: 'https://openreview.net/forum?' + $.param({
+                    id: row.submission.forum
+                  })
+                }
+              });
+            }
+          },
+          {
+            id: 'unsubmitted-reviews',
+            name: 'Reviewers with missing reviews',
+            getUsers: function() {
+              return venueStatusData.rows.map(function(row) {
+                return {
+                  groups: Object.values(row.reviewProgressData.reviewers).filter(function(r) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedReview; }),
+                  forumUrl: 'https://openreview.net/forum?' + $.param({
+                    id: row.submission.forum,
+                    noteId: row.submission.forum,
+                    invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
+                  })
+                }
+              });
+            }
+          },
+          {
+            id: 'unsubmitted-recommendations',
+            name: 'Reviewers with missing official recommendations',
+            getUsers: function() {
+              return venueStatusData.rows.map(function(row) {
+                return {
+                  groups: Object.values(row.reviewProgressData.reviewers).filter(function(r) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedRecommendation; }),
+                  forumUrl: 'https://openreview.net/forum?' + $.param({
+                    id: row.submission.forum,
+                    noteId: row.submission.forum,
+                    invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
+                  })
+                }
+              });
+            }
+          }
+        ]
+
       },
       extraClasses: 'console-table paper-table',
       postRenderTable: function() {
