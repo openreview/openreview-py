@@ -1291,7 +1291,7 @@ class InvitationBuilder(object):
 
             header = {
                 'title': 'TMLR Action Editor Suggestion',
-                'instructions': '<p class="dark">Recommend a list of at least Action Editors for your paper.</p>\
+                'instructions': '<p class="dark">Recommend a list of at least 3 Action Editors for your paper.</p>\
                     <p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
