@@ -30,8 +30,8 @@ var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
 var SUBMITTED_STATUS = '.TMLR/Submitted';
 var UNDER_REVIEW_STATUS = '.TMLR/Under_Review';
 
-var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
-var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
 
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
@@ -39,16 +39,11 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</s
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
-  if (prefix) {
-    return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/' + prefix + '/-/' + name;
-  }
-  return VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/-/' + name;
+  return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
 };
 
 var getReplies = function(submission, name) {
-  return submission.details.directReplies.filter(function(reply) {
-    return reply.invitations.indexOf(getInvitationId(submission.number, name)) >= 0;
-  });
+  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
 // Main function is the entry point to the webfield code
@@ -56,7 +51,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status'],
+    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -84,13 +79,14 @@ var loadData = function() {
       return _.keyBy(invitations, 'id');
     }),
     Webfield2.api.getAll('/edges', {
-      regex: VENUE_ID + '/' + ACTION_EDITOR_NAME + '/-/' + RECOMMENDATION_NAME,
+      invitation: VENUE_ID + '/' + ACTION_EDITOR_NAME + '/-/' + RECOMMENDATION_NAME,
       groupBy: 'head'
-    })
+    }),
+    Webfield2.api.getAssignedInvitations(VENUE_ID, EDITORS_IN_CHIEF_NAME),
   );
 };
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById, actionEditorRecommendations) {
+var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById, actionEditorRecommendations, invitations) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   // build the rows
@@ -259,6 +255,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         replies: cameraReadyVerificationNotes
       });
     }
+
     var reviews = reviewNotes;
     var recommendations = officialRecommendationNotes;
     var recommendationByReviewer = {};
@@ -405,23 +402,23 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     decisionApprovalStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.decisionApprovalPending; }),
     completeSubmissionStatusRows: paperStatusRows.filter(function(row) { return ![SUBMITTED_STATUS, UNDER_REVIEW_STATUS].includes(row.submission.content.venueid); }),
     reviewerStatusRows: Object.values(reviewerStatusById),
-    actionEditorStatusRows: Object.values(actionEditorStatusById)
+    actionEditorStatusRows: Object.values(actionEditorStatusById),
+    invitations: invitations
   };
 };
 
 // Render functions
 var renderTasks = function(data) {
-  return '<ul class="list-unstyled mt-0 mb-0">' +
-    data.map(function(d) {
-      return (
-        '<li class="note">' +
-          '<h4><a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a></h4>' +
-          '<p><strong class="duedate">Due: ' + view.forumDate(d.duedate) + '</strong>' +
-          '<br>' + (d.complete ? 'Complete' : 'Incomplete') + ', ' + d.replies.length + ' ' + (d.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
-        '</li>'
-      );
-    }).join('\n') +
-  '</ul>';
+  var items = data.map(function(d) {
+    return (
+      '<li class="note">' +
+        '<h4><a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a></h4>' +
+        '<p><strong class="duedate">Due: ' + view.forumDate(d.duedate) + '</strong>' +
+        '<br>' + (d.complete ? 'Complete' : 'Incomplete') + ', ' + d.replies.length + ' ' + (d.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
+      '</li>'
+    );
+  });
+  return '<ul class="list-unstyled mt-0 mb-0">' + items.join('\n') + '</ul>';
 };
 
 var renderTable = function(container, rows) {
@@ -538,6 +535,12 @@ var renderData = function(venueStatusData) {
     },
     extraClasses: 'console-table'
   });
+
+  Webfield2.ui.renderTasks(
+    '#editors-in-chief-tasks',
+    venueStatusData.invitations,
+    { referrer: encodeURIComponent('[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
+  );
 };
 
 main();

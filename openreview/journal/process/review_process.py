@@ -14,15 +14,39 @@ def process(client, edit, invitation):
     edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=profile.id)
     if edges and edges[0].weight > 0:
         pending_review_edge = edges[0]
-        pending_review_edge.weight -= 1
+        if note.ddate:
+            pending_review_edge.weight += 1
+        else:
+            pending_review_edge.weight -= 1
         client.post_edge(pending_review_edge)
+
+    ## On update or delete return
+    if note.tcdate != note.tmdate:
+        print('Review edited, exit')
+        return
 
     review_note=client.get_note(note.id)
     if review_note.readers == ['everyone']:
+        print('Review already public, exit')
         return
 
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
+    print(f'Reviews found {len(reviews)}')
     if len(reviews) == 3:
+        print('Relese review to the public...')
+        ## Change review invitation readers
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=Invitation(id=journal.get_review_id(number=submission.number),
+                signatures=[journal.get_editors_in_chief_id()],
+                edit={
+                    'note': {
+                        'readers': { 'values': [ 'everyone' ] }
+                    }
+                }
+        ))
+
         ## Release the reviews to everyone
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
@@ -93,12 +117,12 @@ def process(client, edit, invitation):
         late_duedate = now + datetime.timedelta(weeks = 4)
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Reviewer responses and discussion for your TMLR submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Reviewer responses and discussion for your TMLR submission''',
             message=f'''Hi {{{{fullname}}}},
 
-Now that 3 reviews have been submitted for your submission, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+Now that 3 reviews have been submitted for your submission  {submission.content['title']['value']}, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
-In 2 weeks ({duedate.strftime("%b %d")}), no later than in 4 weeks ({late_duedate.strftime("%b %d")}), reviewers will be able to submit a formal decision recommendation to the Action Editor in charge of your submission. The reviewers’ goal will be to gather all the information they need to submit their decision recommendation.
+You will have at least 2 weeks to respond to the reviewers. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({duedate.strftime("%b %d")}), and no later than 4 weeks ({late_duedate.strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission.id}
 

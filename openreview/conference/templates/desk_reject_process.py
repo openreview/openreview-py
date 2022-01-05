@@ -12,6 +12,7 @@ def process(client, note, invitation):
     DESK_REJECTED_SUBMISSION_ID = ''
     REVEAL_AUTHORS_ON_DESK_REJECT = False
     REVEAL_SUBMISSIONS_ON_DESK_REJECT = False
+    HIDE_FIELDS = []
 
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
@@ -50,6 +51,9 @@ def process(client, note, invitation):
                 '_bibtex': bibtex}
     else:
         forum_note.content['_bibtex'] = bibtex
+
+    for field in HIDE_FIELDS:
+        forum_note.content[field] = ''
 
     forum_note = client.post_note(forum_note)
 

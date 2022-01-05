@@ -41,7 +41,7 @@ function main() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Your Consoles', 'Accepted Papers', 'Featured Papers', 'Reproducibility Papers', 'Survey Papers', 'Under Review Submissions', 'Rejected Submissions'],
+    tabs: ['Your Consoles', 'Accepted Papers', 'Featured Papers', 'Reproducibility Papers', 'Survey Papers', 'Under Review Submissions', 'All Submissions'],
     referrer: args && args.referrer,
     showBanner: false
   })
@@ -102,8 +102,7 @@ function load() {
     includeCount: true
   });
 
-  var rejectedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': REJECTED_ID,
+  var allNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
@@ -114,7 +113,7 @@ function load() {
     userGroupsP = Webfield2.getAll('/groups', { regex: VENUE_ID + '/.*', member: user.id, web: true });
   }
 
-  return $.when(acceptedNotesP, featuredAcceptedNotesP, reproducibilityAcceptedNotesP, surveyAcceptedNotesP, underReviewNotesP, rejectedNotesP, userGroupsP);
+  return $.when(acceptedNotesP, featuredAcceptedNotesP, reproducibilityAcceptedNotesP, surveyAcceptedNotesP, underReviewNotesP, allNotesP, userGroupsP);
 }
 
 function createConsoleLinks(allGroups) {
@@ -138,7 +137,7 @@ function createConsoleLinks(allGroups) {
 }
 
 // Render functions
-function renderContent(acceptedResponse, featuredResponse, reproducibilityResponse, surveyResponse, underReviewResponse, rejectedResponse, userGroups) {
+function renderContent(acceptedResponse, featuredResponse, reproducibilityResponse, surveyResponse, underReviewResponse, allResponse, userGroups) {
 
   // Your Consoles tab
   if (userGroups.length) {
@@ -175,7 +174,7 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
     Webfield2.ui.renderSubmissionList('#featured-papers', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
     Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
   } else {
-    $('.tabs-container a[href="#features-papers"]').parent().hide();
+    $('.tabs-container a[href="#featured-papers"]').parent().hide();
   }
 
   if (reproducibilityResponse.count > 0) {
@@ -198,10 +197,10 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
     $('.tabs-container a[href="#under-review-submissions"]').parent().hide();
   }
 
-  if (rejectedResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#rejected-submissions', SUBMISSION_ID, rejectedResponse.notes, rejectedResponse.count, Object.assign(options, { query: {'content.venueid': REJECTED_ID } } ));
+  if (allResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#all-submissions', SUBMISSION_ID, allResponse.notes, allResponse.count, options);
   } else {
-    $('.tabs-container a[href="#rejected-submissions"]').parent().hide();
+    $('.tabs-container a[href="#all-submissions"]').parent().hide();
   }
 
   $('#notes .spinner-container').remove();
