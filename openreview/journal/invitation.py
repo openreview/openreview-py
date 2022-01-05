@@ -233,7 +233,7 @@ class InvitationBuilder(object):
 
 
         ## Submission invitation
-        with open(os.path.join(os.path.dirname(__file__), 'process/recruit_process.py')) as process_reader:
+        with open(os.path.join(os.path.dirname(__file__), 'process/author_submission_process.py')) as process_reader:
             process_content = process_reader.read()
             process_content = process_content.replace("VENUE_ID = ''", f"VENUE_ID = '{journal.venue_id}'")
 
