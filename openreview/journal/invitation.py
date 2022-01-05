@@ -233,149 +233,153 @@ class InvitationBuilder(object):
 
 
         ## Submission invitation
-        submission_invitation_id = journal.get_author_submission_id()
-        invitation = Invitation(id=submission_invitation_id,
-            invitees=['~'],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[editor_in_chief_id],
-            edit={
-                'signatures': { 'values-regex': '~.*' },
-                'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                'writers': { 'values': [ venue_id ]},
-                'note': {
-                    'signatures': { 'values': [authors_value] },
+        with open(os.path.join(os.path.dirname(__file__), 'process/recruit_process.py')) as process_reader:
+            process_content = process_reader.read()
+            process_content = process_content.replace("VENUE_ID = ''", f"VENUE_ID = '{journal.venue_id}'")
+
+            submission_invitation_id = journal.get_author_submission_id()
+            invitation = Invitation(id=submission_invitation_id,
+                invitees=['~'],
+                readers=['everyone'],
+                writers=[venue_id],
+                signatures=[editor_in_chief_id],
+                edit={
+                    'signatures': { 'values-regex': '~.*' },
                     'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                    'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                    'content': {
-                    'title': {
-                        'value': {
-                            'value-regex': '^.{1,250}$'
+                    'writers': { 'values': [ venue_id ]},
+                    'note': {
+                        'signatures': { 'values': [authors_value] },
+                        'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
+                        'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
+                        'content': {
+                        'title': {
+                            'value': {
+                                'value-regex': '^.{1,250}$'
+                            },
+                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 1
                         },
-                        'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                        'order': 1
-                    },
-                    'abstract': {
-                        'value': {
-                            'value-regex': '^[\\S\\s]{1,5000}$'
-                        },
-                        'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                        'order': 2,
-                        'presentation': {
-                            'markdown': True
-                        }
-                    },
-                    'authors': {
-                        'value': {
-                            'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
-                        },
-                        'description': 'Comma separated list of author names.',
-                        'order': 3,
-                        'presentation': {
-                            'hidden': True,
-                        },
-                        'readers': {
-                            'values': [ venue_id, action_editors_value, authors_value]
-                        }
-                    },
-                    'authorids': {
-                        'value': {
-                            'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
-                        },
-                        'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                        'order': 4,
-                        'readers': {
-                            'values': [ venue_id, action_editors_value, authors_value]
-                        }
-                    },
-                    'pdf': {
-                        'value': {
-                            'value-file': {
-                                'fileTypes': ['pdf'],
-                                'size': 50
+                        'abstract': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$'
+                            },
+                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 2,
+                            'presentation': {
+                                'markdown': True
                             }
                         },
-                        'description': 'Upload a PDF file that ends with .pdf.',
-                        'order': 5,
-                    },
-                    "supplementary_material": {
-                        'value': {
-                            "value-file": {
-                                "fileTypes": [
-                                    "zip",
-                                    "pdf"
-                                ],
-                                "size": 100
-                            },
-                            "optional": True
-                        },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                        "order": 6,
-                        'readers': {
-                            'values': [ venue_id, action_editors_value, reviewers_value, authors_value]
-                        }
-                    },
-                    'previous_submission_url': {
-                        'value': {
-                            'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                            'optional': True
-                        },
-                        'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from.',
-                        'order': 7,
-                    },
-                    'changes_since_last_submission': {
-                        'value': {
-                            'value-regex': '^[\\S\\s]{1,5000}$',
-                            'optional': True
-                        },
-                        'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                        'order': 8,
-                        'presentation': {
-                            'markdown': True
-                        }
-                    },
-                    'competing_interests': {
-                        'value': {
-                            'value-regex': '^[\\S\\s]{1,5000}$'
-                        },
-                        'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                        'order': 9,
-                        'readers': {
-                            'values': [ venue_id, action_editors_value, authors_value]
-                        }
-                    },
-                    'human_subjects_reporting': {
-                        'value': {
-                            'value-regex': '^[\\S\\s]{1,5000}$'
-                        },
-                        'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                        'order': 10,
-                        'readers': {
-                            'values': [ venue_id, action_editors_value, authors_value]
-                        }
-                    },
-                        'venue': {
+                        'authors': {
                             'value': {
-                                'value': 'Submitted to TMLR',
+                                'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
                             },
+                            'description': 'Comma separated list of author names.',
+                            'order': 3,
                             'presentation': {
                                 'hidden': True,
+                            },
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, authors_value]
                             }
                         },
-                        'venueid': {
+                        'authorids': {
                             'value': {
-                                'value': journal.submitted_venue_id,
+                                'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                             },
+                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                            'order': 4,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, authors_value]
+                            }
+                        },
+                        'pdf': {
+                            'value': {
+                                'value-file': {
+                                    'fileTypes': ['pdf'],
+                                    'size': 50
+                                }
+                            },
+                            'description': 'Upload a PDF file that ends with .pdf.',
+                            'order': 5,
+                        },
+                        "supplementary_material": {
+                            'value': {
+                                "value-file": {
+                                    "fileTypes": [
+                                        "zip",
+                                        "pdf"
+                                    ],
+                                    "size": 100
+                                },
+                                "optional": True
+                            },
+                            "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                            "order": 6,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, reviewers_value, authors_value]
+                            }
+                        },
+                        'previous_submission_url': {
+                            'value': {
+                                'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                'optional': True
+                            },
+                            'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from.',
+                            'order': 7,
+                        },
+                        'changes_since_last_submission': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$',
+                                'optional': True
+                            },
+                            'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 8,
                             'presentation': {
-                                'hidden': True,
+                                'markdown': True
+                            }
+                        },
+                        'competing_interests': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$'
+                            },
+                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
+                            'order': 9,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, authors_value]
+                            }
+                        },
+                        'human_subjects_reporting': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,5000}$'
+                            },
+                            'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
+                            'order': 10,
+                            'readers': {
+                                'values': [ venue_id, action_editors_value, authors_value]
+                            }
+                        },
+                            'venue': {
+                                'value': {
+                                    'value': 'Submitted to TMLR',
+                                },
+                                'presentation': {
+                                    'hidden': True,
+                                }
+                            },
+                            'venueid': {
+                                'value': {
+                                    'value': journal.submitted_venue_id,
+                                },
+                                'presentation': {
+                                    'hidden': True,
+                                }
                             }
                         }
                     }
-                }
-            },
-            process=os.path.join(os.path.dirname(__file__), 'process/author_submission_process.py')
-        )
-        self.save_invitation(journal, invitation)
+                },
+                process_string=process_content
+            )
+            self.save_invitation(journal, invitation)
 
     def set_ae_assignment(self, journal):
         venue_id = journal.venue_id

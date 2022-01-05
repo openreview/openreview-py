@@ -1,5 +1,5 @@
 def process(client, edit, invitation):
-    venue_id = '.TMLR'
+    venue_id = ''
     note = client.get_note(edit.note.id)
 
     journal = openreview.journal.Journal()
