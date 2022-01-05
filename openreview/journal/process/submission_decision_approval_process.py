@@ -15,9 +15,7 @@ def process(client, edit, invitation):
 
     ## Make the decision public
     print('Make decision public')
-    invitation = client.post_invitation_edit(readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
+    invitation = journal.invitation_builder.post_invitation_edit(journal=journal,
         invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
             bulk=True,
             invitees=[venue_id],
@@ -55,9 +53,7 @@ def process(client, edit, invitation):
 
     ## Make submission editable by the authors
     print('Make submission editable by the authors')
-    invitation = client.post_invitation_edit(readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
+    invitation = journal.invitation_builder.post_invitation_edit(journal=journal,
         invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
             #bulk=True,
             invitees=[venue_id],

@@ -80,6 +80,9 @@ class Journal(object):
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
 
+    def get_meta_invitation_id(self):
+        return self.__get_invitation_id(name='Edit')
+
     def get_review_approval_id(self, number=None):
         return self.__get_invitation_id(name='Review_Approval', number=number)
 

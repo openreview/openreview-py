@@ -12,6 +12,7 @@ class InvitationBuilder(object):
         self.client = client
 
     def set_invitations(self, journal):
+        self.set_meta_invitation(journal)
         self.set_ae_recruitment_invitation(journal)
         self.set_reviewer_recruitment_invitation(journal)
         self.set_submission_invitation(journal)
@@ -24,12 +25,18 @@ class InvitationBuilder(object):
         self.set_ae_assignment(journal)
         self.set_reviewer_assignment(journal)
 
+    def post_invitation_edit(self, journal, invitation):
+        return self.client.post_invitation_edit(invitations=journal.get_meta_invitation_id(),
+            readers=[journal.venue_id],
+            writers=[journal.venue_id],
+            signatures=[journal.venue_id],
+            invitation=invitation
+        )
+
     def expire_invitation(self, journal, invitation_id, expdate=None):
         venue_id=journal.venue_id
         invitation = self.client.get_invitation(invitation_id)
-        self.client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
+        self.post_invitation_edit(journal=journal,
             invitation=Invitation(id=invitation.id,
                 expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.utcnow()),
                 signatures=[venue_id]
@@ -60,10 +67,23 @@ class InvitationBuilder(object):
         if invitation.process:
             invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}")')
 
-        return self.client.post_invitation_edit(readers=[venue_id],
+        return self.post_invitation_edit(journal=journal,
+            invitation=invitation
+        )
+
+    def set_meta_invitation(self, journal):
+
+        venue_id=journal.venue_id
+        self.client.post_invitation_edit(invitations=None,
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=invitation
+            invitation=Invitation(id=journal.get_meta_invitation_id(),
+                invitees=[venue_id],
+                readers=[venue_id],
+                signatures=[venue_id],
+                edit=True
+            )
         )
 
     def set_ae_recruitment_invitation(self, journal):
@@ -87,9 +107,7 @@ class InvitationBuilder(object):
                 webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
                 webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(journal.header) + ";")
 
-                invitation=self.client.post_invitation_edit(readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
+                invitation=self.post_invitation_edit(journal=journal,
                     invitation=Invitation(id=journal.get_ae_recruitment_id(),
                         invitees = ['everyone'],
                         readers = ['everyone'],
@@ -163,9 +181,7 @@ class InvitationBuilder(object):
                 webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
                 webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(journal.header) + ";")
 
-                invitation=self.client.post_invitation_edit(readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
+                invitation=self.post_invitation_edit(journal=journal,
                     invitation=Invitation(id=journal.get_reviewer_recruitment_id(),
                         invitees = ['everyone'],
                         readers = ['everyone'],
@@ -1314,9 +1330,7 @@ class InvitationBuilder(object):
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
                 content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
                 invitation.web = content
-                self.client.post_invitation_edit(readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
+                self.post_invitation_edit(journal=journal,
                     invitation=invitation
                 )
 
@@ -1933,9 +1947,7 @@ class InvitationBuilder(object):
         moderation_invitation=openreview.tools.get_invitation(self.client, moderation_invitation_id)
 
         if not moderation_invitation:
-            invitation = self.client.post_invitation_edit(readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
+            invitation = self.post_invitation_edit(journal=journal,
                 invitation=Invitation(id=moderation_invitation_id,
                     invitees=[venue_id, paper_action_editors_id],
                     readers=[venue_id, paper_action_editors_id],
