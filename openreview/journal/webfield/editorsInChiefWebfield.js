@@ -411,16 +411,17 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 
 // Render functions
 var renderTasks = function(data) {
-  var items = data.map(function(d) {
-    return (
-      '<li class="note">' +
-        '<h4><a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a></h4>' +
-        '<p><strong class="duedate">Due: ' + view.forumDate(d.duedate) + '</strong>' +
-        '<br>' + (d.complete ? 'Complete' : 'Incomplete') + ', ' + d.replies.length + ' ' + (d.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
-      '</li>'
-    );
-  });
-  return '<ul class="list-unstyled mt-0 mb-0">' + items.join('\n') + '</ul>';
+  return '<ul class="list-unstyled mt-0 mb-0">' +
+    data.map(function(d) {
+      return (
+        '<li class="note">' +
+          '<h4><a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a></h4>' +
+          '<p><strong class="duedate">Due: ' + view.forumDate(d.duedate) + '</strong>' +
+          '<br>' + (d.complete ? 'Complete' : 'Incomplete') + ', ' + d.replies.length + ' ' + (d.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
+        '</li>'
+      );
+    }).join('\n') +
+  '</ul>';
 };
 
 var renderTable = function(container, rows) {
