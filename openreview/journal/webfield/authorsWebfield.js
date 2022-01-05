@@ -44,7 +44,7 @@ var loadData = function() {
   var notesP = Webfield2.getAll('/notes', {
     'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
-    details: 'directReplies'
+    details: 'replies'
   });
 
   return $.when(
