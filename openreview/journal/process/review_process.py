@@ -99,7 +99,7 @@ def process(client, edit, invitation):
         print('Enable official recommendations')
         cdate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
         duedate = cdate + datetime.timedelta(weeks = 2)
-        journal.invitation_builder.set_official_recommendation_invitation(submission, cdate, duedate)
+        journal.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
 
         ## Send email notifications to authors
         print('Send emails to authors')

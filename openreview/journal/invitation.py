@@ -27,6 +27,7 @@ class InvitationBuilder(object):
         self.set_ae_assignment()
         self.set_reviewer_assignment()
         self.set_super_review_invitation()
+        self.set_official_recommendation_invitation()
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -1533,75 +1534,119 @@ class InvitationBuilder(object):
         )
 
 
-    def set_official_recommendation_invitation(self, note, cdate, duedate):
+    def set_official_recommendation_invitation(self):
         venue_id = self.journal.venue_id
-        paper_reviewers_anon_id = self.journal.get_reviewers_id(number=note.number, anon=True)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_reviewers_anon_id = self.journal.get_reviewers_id(number='${params.noteNumber}', anon=True)
+        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
 
-        invitation = Invitation(id=self.journal.get_reviewer_recommendation_id(number=note.number),
-                cdate=openreview.tools.datetime_millis(cdate),
-                duedate=openreview.tools.datetime_millis(duedate),
-                invitees=[venue_id, paper_reviewers_id], ## should this be reviewers/submitted??
-                noninvitees=[self.journal.get_editors_in_chief_id()],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                maxReplies=1,
-                edit={
-                    'signatures': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                    'nonreaders': { 'values': [ paper_authors_id ] },
-                    'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                    'note': {
-                        'id': {
-                            'value-invitation': self.journal.get_reviewer_recommendation_id(number=note.number),
-                            'optional': True
-                        },
-                        'forum': { 'value': note.id },
-                        'replyto': { 'value': note.id },
-                        'ddate': {
-                            'int-range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'nullable': True
-                        },
-                        'signatures': { 'values': ['${signatures}'] },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                        'nonreaders': { 'values': [ paper_authors_id ] },
-                        'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                        'content': {
-                            'decision_recommendation': {
-                                'order': 1,
-                                'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
+        recommendation_invitation_id = self.journal.get_reviewer_recommendation_id()
+        paper_recommendation_invitation_id = self.journal.get_reviewer_recommendation_id(number='${params.noteNumber}')
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+
+        invitation = Invitation(id=recommendation_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [venue_id] },
+                'writers': { 'values': [venue_id] },
+                'params': {
+                    'noteNumber': { 'value-regex': '.*' },
+                    'noteId': { 'value-regex': '.*' },
+                    'duedate': { 'value-regex': '.*' },
+                    'cdate': { 'value-regex': '.*' }
+                },
+                'invitation': {
+                    'id': { 'value': paper_recommendation_invitation_id },
+                    'signatures': { 'values': [ venue_id ] },
+                    'readers': { 'values': ['everyone'] },
+                    'writers': { 'values': [venue_id] },
+                    'invitees': { 'values': [venue_id, paper_reviewers_id] },
+                    'noninvitees': { 'values': [editors_in_chief_id] },
+                    'maxReplies': { 'value': 1 },
+                    'duedate': { 'value': '${params.duedate}' },
+                    'cdate': { 'value': '${params.cdate}' },
+                    'process': { 'value': paper_process },
+                    'edit': {
+                        'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
+                        'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                        'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
+                        'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                        'note': {
+                            'id': {
                                 'value': {
-                                    'value-radio': [
-                                        'Accept',
-                                        'Leaning Accept',
-                                        'Leaning Reject',
-                                        'Reject'
-                                    ]
+                                    'value-invitation': paper_recommendation_invitation_id,
+                                    'optional': True
                                 }
                             },
-                            'certification_recommendations': {
-                                'order': 2,
-                                'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
-                                'value': {
-                                    'values-dropdown': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True
+                            'forum': { 'value': { 'value': '${params.noteId}' }},
+                            'replyto': { 'value': { 'value': '${params.noteId}' }},
+                            'ddate': { 'value': {
+                                'int-range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'nullable': True
+                            }},
+                            'signatures': { 'value': { 'values': ['\\${signatures}'] }},
+                            'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
+                            'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'content': {
+                                'decision_recommendation': {
+                                    'value': {
+                                        'order': 1,
+                                        'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
+                                        'value': {
+                                            'value-radio': [
+                                                'Accept',
+                                                'Leaning Accept',
+                                                'Leaning Reject',
+                                                'Reject'
+                                            ]
+                                        }
+                                    }
+                                },
+                                'certification_recommendations': {
+                                    'value': {
+                                        'order': 2,
+                                        'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                                        'value': {
+                                            'values-dropdown': [
+                                                'Featured Certification',
+                                                'Reproducibility Certification',
+                                                'Survey Certification'
+                                            ],
+                                            'optional': True
+                                        }
+                                    }
                                 }
                             }
                         }
+
                     }
-                },
-                process=os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')
+                }
+            }
         )
 
         self.save_invitation(invitation)
+
+
+    def set_note_official_recommendation_invitation(self, note, cdate, duedate):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_reviewer_recommendation_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'cdate': openreview.tools.datetime_millis(cdate), 'duedate': openreview.tools.datetime_millis(duedate) },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_solicit_review_invitation(self, note):
         venue_id = self.journal.venue_id
