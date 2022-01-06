@@ -1306,7 +1306,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, invitations, readers, writers, signatures, invitation):
+    def post_invitation_edit(self, invitations, readers, writers, signatures, invitation, params=None):
         """
         """
         edit_json = {
@@ -1318,6 +1318,27 @@ class OpenReviewClient(object):
 
         if invitations is not None:
             edit_json['invitations'] = invitations
+
+        if params is not None:
+            edit_json['params'] = params
+
+        response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def post_invitation_edit_ex(self, invitations, params, signatures, invitationId=None):
+        """
+        """
+        edit_json = {
+            'signatures': signatures,
+            'invitations': invitations,
+            'params': params,
+            'invitation': {
+                'id': invitationId,
+                'duedate': params['duedate']
+            }
+        }
 
         response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
