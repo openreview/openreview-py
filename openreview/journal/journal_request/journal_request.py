@@ -8,8 +8,33 @@ class JournalRequest():
         self.support_group_id = support_group_id
         self.support_group = tools.get_group(client, self.support_group_id)
         self.client = client
+        self.meta_invitation_id = f'{support_group_id}/-/Journal_Request_Edit'
+
+    def post_invitation_edit(self, invitation):
+        return self.client.post_invitation_edit(invitations=self.meta_invitation_id,
+            readers=['~Super_User1'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitation=invitation
+        )
+
+    def set_meta_invitation(self):
+
+        self.client.post_invitation_edit(invitations=None,
+            readers=['~Super_User1'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(id=self.meta_invitation_id,
+                invitees=['~Super_User1'],
+                readers=['~Super_User1'],
+                signatures=['~Super_User1'],
+                edit=True
+            )
+        )
 
     def setup_journal_request(self):
+
+        self.set_meta_invitation()
 
         journal_request_content = {
             'title': {
@@ -98,14 +123,10 @@ class JournalRequest():
             )
 
 
-            self.client.post_invitation_edit(
-                readers = ['~Super_User1'],
-                writers = ['~Super_User1'],
-                signatures = ['~Super_User1'],
-                invitation = invitation
-            )
+            self.post_invitation_edit(invitation = invitation)
+
     def setup_journal_group(self, note_id):
-        
+
         note = self.client.get_note(note_id)
         journal_request_group = self.client.post_group(openreview.Group(
             id = f'{self.support_group_id}/Journal_Request' + str(note.number),
@@ -161,12 +182,7 @@ class JournalRequest():
                 process_string = content
             )
 
-            self.client.post_invitation_edit(
-                        readers = ['~Super_User1'],
-                        writers = ['~Super_User1'],
-                        signatures = ['~Super_User1'],
-                        invitation = invitation
-                    )
+            self.post_invitation_edit(invitation = invitation)
 
     def setup_recruitment_invitation(self, note_id):
 
@@ -253,12 +269,7 @@ Cheers!'''.replace('{short_name}', short_name)
                 process_string = content
             )
 
-            self.client.post_invitation_edit(
-                readers = ['~Super_User1'],
-                writers = ['~Super_User1'],
-                signatures = ['~Super_User1'],
-                invitation = invitation
-            )
+            self.post_invitation_edit(invitation = invitation)
 
     def setup_recruitment_by_action_editors(self, note_id):
 
@@ -333,9 +344,4 @@ Cheers!
                 process_string = content
             )
 
-            self.client.post_invitation_edit(
-                readers = ['~Super_User1'],
-                writers = ['~Super_User1'],
-                signatures = ['~Super_User1'],
-                invitation = invitation
-            )
+            self.post_invitation_edit(invitation = invitation)
