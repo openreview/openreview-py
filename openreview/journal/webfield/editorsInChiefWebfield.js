@@ -30,8 +30,8 @@ var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
 var SUBMITTED_STATUS = '.TMLR/Submitted';
 var UNDER_REVIEW_STATUS = '.TMLR/Under_Review';
 
-var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
-var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
 
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
@@ -79,7 +79,7 @@ var loadData = function() {
       return _.keyBy(invitations, 'id');
     }),
     Webfield2.api.getAll('/edges', {
-      regex: VENUE_ID + '/' + ACTION_EDITOR_NAME + '/-/' + RECOMMENDATION_NAME,
+      invitation: VENUE_ID + '/' + ACTION_EDITOR_NAME + '/-/' + RECOMMENDATION_NAME,
       groupBy: 'head'
     }),
     Webfield2.api.getAssignedInvitations(VENUE_ID, EDITORS_IN_CHIEF_NAME),
