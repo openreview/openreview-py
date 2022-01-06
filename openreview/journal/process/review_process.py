@@ -14,15 +14,39 @@ def process(client, edit, invitation):
     edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=profile.id)
     if edges and edges[0].weight > 0:
         pending_review_edge = edges[0]
-        pending_review_edge.weight -= 1
+        if note.ddate:
+            pending_review_edge.weight += 1
+        else:
+            pending_review_edge.weight -= 1
         client.post_edge(pending_review_edge)
+
+    ## On update or delete return
+    if note.tcdate != note.tmdate:
+        print('Review edited, exit')
+        return
 
     review_note=client.get_note(note.id)
     if review_note.readers == ['everyone']:
+        print('Review already public, exit')
         return
 
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
+    print(f'Reviews found {len(reviews)}')
     if len(reviews) == 3:
+        print('Relese review to the public...')
+        ## Change review invitation readers
+        invitation = client.post_invitation_edit(readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=Invitation(id=journal.get_review_id(number=submission.number),
+                signatures=[journal.get_editors_in_chief_id()],
+                edit={
+                    'note': {
+                        'readers': { 'values': [ 'everyone' ] }
+                    }
+                }
+        ))
+
         ## Release the reviews to everyone
         invitation = client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],

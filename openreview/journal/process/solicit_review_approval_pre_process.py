@@ -1,5 +1,16 @@
 def process(client, edit, invitation):
-    venue_id='.TMLR'
+
+    journal = openreview.journal.Journal()
+
+    venue_id=journal.venue_id
+
     note=edit.note
 
-    ## check conflcits
+    if note.content['decision']['value'] == 'Yes, I approve the solicit review.':
+        ## check conflcits
+        solitic_request = client.get_note(note.replyto)
+        submission = client.get_note(note.forum)
+        conflicts = journal.assignment.compute_conflicts(submission, solitic_request.signatures[0])
+
+        if conflicts:
+            raise openreview.OpenReviewException(f'Can not approve this solicit review: conflict detected for {solitic_request.signatures[0]}')
