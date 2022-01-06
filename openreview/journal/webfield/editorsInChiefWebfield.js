@@ -46,12 +46,25 @@ var getReplies = function(submission, name) {
   return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
+var getDueDateStatus = function(date) {
+  var day = 24 * 60 * 60 * 1000;
+  var diff = Date.now() - date.getTime();
+
+  if (diff > 0) {
+    return 'expired';
+  }
+  if (diff > -3 * day) {
+    return 'warning';
+  }
+  return '';
+};
+
 // Main function is the entry point to the webfield code
 var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
+    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Submission Complete', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -391,7 +404,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         ] : [],
         tableWidth: '100%'
       },
-      tasks: tasks,
+      tasks: { invitations: tasks, forumId: submission.id },
       status: submission.content.venue.value
     });
   });
@@ -408,17 +421,49 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 };
 
 // Render functions
+var renderTask = function(inv) {
+  var referrerStr = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
+  return (
+    '<li class="note ' + (inv.complete ? 'completed' : '') + '">' +
+      '<h4><a href="/forum?id=' + inv.details.forum + (inv.complete ? '' : '&invitationId=' + inv.id) + '&referrer=' + referrerStr + '" target="_blank">' +
+        view.prettyInvitationId(inv.id) +
+      '</a></h4>' +
+      '<p class="mb-1"><span class="duedate ' + inv.dueDateStatus +'">Due: ' + inv.dueDateStr + '</span></p>' +
+      '<p class="mb-0">' + (inv.complete ? 'Complete' : 'Incomplete') + ', ' + inv.replies.length + ' ' + (inv.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
+    '</li>'
+  );
+};
+
 var renderTasks = function(data) {
-  var items = data.map(function(d) {
-    return (
-      '<li class="note">' +
-        '<h4><a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a></h4>' +
-        '<p><strong class="duedate">Due: ' + view.forumDate(d.duedate) + '</strong>' +
-        '<br>' + (d.complete ? 'Complete' : 'Incomplete') + ', ' + d.replies.length + ' ' + (d.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
-      '</li>'
-    );
+  data = data || {};
+  var dateOptions = {
+    hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'
+  };
+
+  // Order by duedate
+  data.invitations.sort(function(a, b) { return a.duedate - b.duedate; });
+
+  var formattedInvitations = data.invitations.map(function(origInv) {
+    var inv = Object.assign({}, origInv);
+    var duedate = new Date(inv.duedate);
+    inv.dueDateStr = duedate.toLocaleDateString('en-GB', dateOptions);
+    inv.dueDateStatus = getDueDateStatus(duedate);
+    inv.groupId = inv.id.split('/-/')[0];
+
+    if (!inv.details) {
+      inv.details = {};
+    }
+
+    inv.details.forum = data.forumId;
+    return inv;
   });
-  return '<ul class="list-unstyled mt-0 mb-0">' + items.join('\n') + '</ul>';
+
+  return (
+    (formattedInvitations.length > 0 ? '<h4>Tasks:</h4>' : '') +
+    '<ul class="list-unstyled submissions-list task-list eic-task-list mt-0 mb-0">' +
+      formattedInvitations.map(renderTask).join('\n') +
+    '</ul>'
+  );
 };
 
 var renderTable = function(container, rows) {
@@ -479,10 +524,10 @@ var renderTable = function(container, rows) {
 };
 
 var renderData = function(venueStatusData) {
-  renderTable('submission-status', venueStatusData.submissionStatusRows);
-  renderTable('under-review-status', venueStatusData.paperStatusRows);
-  renderTable('decision-approval-status', venueStatusData.decisionApprovalStatusRows);
-  renderTable('complete-submission-status', venueStatusData.completeSubmissionStatusRows);
+  renderTable('submitted', venueStatusData.submissionStatusRows);
+  renderTable('under-review', venueStatusData.paperStatusRows);
+  renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
     headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
@@ -539,7 +584,7 @@ var renderData = function(venueStatusData) {
   Webfield2.ui.renderTasks(
     '#editors-in-chief-tasks',
     venueStatusData.invitations,
-    { referrer: encodeURIComponent('[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
+    { referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
   );
 };
 
