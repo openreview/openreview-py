@@ -9,7 +9,7 @@ def process(client, edit, invitation):
 
     ## Enable Camera Ready Verification
     print('Enable Camera Ready Verification')
-    journal.invitation_builder.set_camera_ready_verification_invitation(journal, submission, duedate)
+    journal.invitation_builder.set_camera_ready_verification_invitation(submission, duedate)
 
     ## Send email to AE
     print('Send email to AE')

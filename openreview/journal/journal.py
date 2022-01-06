@@ -1,7 +1,7 @@
 from .. import openreview
 from .. import tools
-from . import invitation
 from . import group
+from .invitation import InvitationBuilder
 from .recruitment import Recruitment
 from .assignment import Assignment
 from openreview.api import Edge
@@ -36,7 +36,7 @@ class Journal(object):
         self.rejected_venue_id = f'{venue_id}/Rejection'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
         self.accepted_venue_id = venue_id
-        self.invitation_builder = invitation.InvitationBuilder(client)
+        self.invitation_builder = InvitationBuilder(self)
         self.group_builder = group.GroupBuilder(client)
         self.header = {
             "title": "Transactions of Machine Learning Research",
@@ -202,7 +202,7 @@ class Journal(object):
 
     def setup(self, support_role, editors=[]):
         self.group_builder.set_groups(self, support_role, editors)
-        self.invitation_builder.set_invitations(self)
+        self.invitation_builder.set_invitations()
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
@@ -245,17 +245,17 @@ class Journal(object):
 
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
-        self.invitation_builder.set_revision_submission(self, note)
-        self.invitation_builder.set_review_approval_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
-        self.invitation_builder.set_withdraw_invitation(self, note)
+        self.invitation_builder.set_revision_submission(note)
+        self.invitation_builder.set_review_approval_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
+        self.invitation_builder.set_withdraw_invitation(note)
         self.setup_ae_assignment(note)
-        self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
+        self.invitation_builder.set_ae_recommendation_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
 
 
     def setup_under_review_submission(self, note):
-        self.invitation_builder.set_review_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)))
-        self.invitation_builder.set_solicit_review_invitation(self, note)
-        self.invitation_builder.set_comment_invitation(self, note)
+        self.invitation_builder.set_review_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)))
+        self.invitation_builder.set_solicit_review_invitation(note)
+        self.invitation_builder.set_comment_invitation(note)
         self.setup_reviewer_assignment(note)
 
     def assign_reviewer(self, note, reviewer, solicit):

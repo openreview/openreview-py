@@ -8,77 +8,75 @@ from .. import tools
 
 class InvitationBuilder(object):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, journal):
+        self.client = journal.client
+        self.journal = journal
+        self.venue_id = journal.venue_id
 
-    def set_invitations(self, journal):
-        self.set_meta_invitation(journal)
-        self.set_ae_recruitment_invitation(journal)
-        self.set_reviewer_recruitment_invitation(journal)
-        self.set_submission_invitation(journal)
-        self.set_under_review_invitation(journal)
-        self.set_desk_rejection_invitation(journal)
-        self.set_rejection_invitation(journal)
-        self.set_withdrawn_invitation(journal)
-        self.set_acceptance_invitation(journal)
-        self.set_authors_release_invitation(journal)
-        self.set_ae_assignment(journal)
-        self.set_reviewer_assignment(journal)
+    def set_invitations(self):
+        self.set_meta_invitation()
+        self.set_ae_recruitment_invitation()
+        self.set_reviewer_recruitment_invitation()
+        self.set_submission_invitation()
+        self.set_under_review_invitation()
+        self.set_desk_rejection_invitation()
+        self.set_rejection_invitation()
+        self.set_withdrawn_invitation()
+        self.set_acceptance_invitation()
+        self.set_authors_release_invitation()
+        self.set_ae_assignment()
+        self.set_reviewer_assignment()
 
-    def post_invitation_edit(self, journal, invitation):
-        return self.client.post_invitation_edit(invitations=journal.get_meta_invitation_id(),
-            readers=[journal.venue_id],
-            writers=[journal.venue_id],
-            signatures=[journal.venue_id],
+    def post_invitation_edit(self, invitation):
+        return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
             invitation=invitation
         )
 
-    def expire_invitation(self, journal, invitation_id, expdate=None):
-        venue_id=journal.venue_id
+    def expire_invitation(self, invitation_id, expdate=None):
         invitation = self.client.get_invitation(invitation_id)
-        self.post_invitation_edit(journal=journal,
-            invitation=Invitation(id=invitation.id,
+        self.post_invitation_edit(invitation=Invitation(id=invitation.id,
                 expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=[self.venue_id]
             )
         )
 
-    def expire_paper_invitations(self, journal, note):
+    def expire_paper_invitations(self, note):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=f'{journal.venue_id}/Paper{note.number}/.*', type='all')
+        invitations = self.client.get_invitations(regex=f'{self.venue_id}/Paper{note.number}/.*', type='all')
         exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
 
         for invitation in invitations:
             if invitation.id.split('/')[-1] not in exceptions:
-                self.expire_invitation(journal, invitation.id, now)
+                self.expire_invitation(invitation.id, now)
 
 
-    def save_invitation(self, journal, invitation):
+    def save_invitation(self, invitation):
 
-        venue_id = journal.venue_id
+        venue_id = self.venue_id
 
         if invitation.preprocess:
             with open(invitation.preprocess) as f:
                 preprocess = f.read()
-                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}")')
+                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
                 invitation.preprocess = preprocess
 
         if invitation.process:
-            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}")')
+            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
-        return self.post_invitation_edit(journal=journal,
-            invitation=invitation
-        )
+        return self.post_invitation_edit(invitation)
 
-    def set_meta_invitation(self, journal):
+    def set_meta_invitation(self):
 
-        venue_id=journal.venue_id
+        venue_id=self.journal.venue_id
         self.client.post_invitation_edit(invitations=None,
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=Invitation(id=journal.get_meta_invitation_id(),
+            invitation=Invitation(id=self.journal.get_meta_invitation_id(),
                 invitees=[venue_id],
                 readers=[venue_id],
                 signatures=[venue_id],
@@ -86,29 +84,28 @@ class InvitationBuilder(object):
             )
         )
 
-    def set_ae_recruitment_invitation(self, journal):
+    def set_ae_recruitment_invitation(self):
 
-        venue_id=journal.venue_id
-        action_editors_id = journal.get_action_editors_id()
+        venue_id=self.journal.venue_id
+        action_editors_id = self.journal.get_action_editors_id()
         action_editors_declined_id = action_editors_id + '/Declined'
         action_editors_invited_id = action_editors_id + '/Invited'
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruit_ae_process.py')) as process_reader:
             process_content = process_reader.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f"SHORT_PHRASE = '{journal.short_name}'")
+            process_content = process_content.replace("SHORT_PHRASE = ''", f"SHORT_PHRASE = '{self.journal.short_name}'")
             process_content = process_content.replace("ACTION_EDITOR_NAME = ''", f"ACTION_EDITOR_NAME = 'Action Editor'")
             process_content = process_content.replace("ACTION_EDITOR_INVITED_ID = ''", f"ACTION_EDITOR_INVITED_ID = '{action_editors_invited_id}'")
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{action_editors_id}'")
             process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{action_editors_declined_id}'")
-            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{journal.secret_key}'")
+            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{self.journal.secret_key}'")
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
                 webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(journal.header) + ";")
+                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.journal.header) + ";")
 
-                invitation=self.post_invitation_edit(journal=journal,
-                    invitation=Invitation(id=journal.get_ae_recruitment_id(),
+                invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_ae_recruitment_id(),
                         invitees = ['everyone'],
                         readers = ['everyone'],
                         writers = [venue_id],
@@ -160,29 +157,28 @@ class InvitationBuilder(object):
                 )
                 return invitation
 
-    def set_reviewer_recruitment_invitation(self, journal):
+    def set_reviewer_recruitment_invitation(self):
 
-        venue_id=journal.venue_id
-        reviewers_id = journal.get_reviewers_id()
+        venue_id=self.journal.venue_id
+        reviewers_id = self.journal.get_reviewers_id()
         reviewers_declined_id = reviewers_id + '/Declined'
         reviewers_invited_id = reviewers_id + '/Invited'
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruit_process.py')) as process_reader:
             process_content = process_reader.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f"SHORT_PHRASE = '{journal.short_name}'")
+            process_content = process_content.replace("SHORT_PHRASE = ''", f"SHORT_PHRASE = '{self.journal.short_name}'")
             process_content = process_content.replace("ACTION_EDITOR_NAME = ''", f"ACTION_EDITOR_NAME = 'Reviewer'")
             process_content = process_content.replace("ACTION_EDITOR_INVITED_ID = ''", f"ACTION_EDITOR_INVITED_ID = '{reviewers_invited_id}'")
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{reviewers_id}'")
             process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{reviewers_declined_id}'")
-            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{journal.secret_key}'")
+            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{self.journal.secret_key}'")
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
                 webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(journal.header) + ";")
+                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.journal.header) + ";")
 
-                invitation=self.post_invitation_edit(journal=journal,
-                    invitation=Invitation(id=journal.get_reviewer_recruitment_id(),
+                invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_reviewer_recruitment_id(),
                         invitees = ['everyone'],
                         readers = ['everyone'],
                         writers = [venue_id],
@@ -235,21 +231,21 @@ class InvitationBuilder(object):
                 print(invitation)
                 return invitation
 
-    def set_submission_invitation(self, journal):
+    def set_submission_invitation(self):
 
-        venue_id=journal.venue_id
-        editor_in_chief_id=journal.get_editors_in_chief_id()
-        action_editors_id=journal.get_action_editors_id()
-        authors_id=journal.get_authors_id()
-        authors_regex=journal.get_authors_id(number='.*')
-        action_editors_value=journal.get_action_editors_id(number='${note.number}')
-        action_editors_regex=journal.get_action_editors_id(number='.*')
-        reviewers_value=journal.get_reviewers_id(number='${note.number}')
-        authors_value=journal.get_authors_id(number='${note.number}')
+        venue_id=self.journal.venue_id
+        editor_in_chief_id=self.journal.get_editors_in_chief_id()
+        action_editors_id=self.journal.get_action_editors_id()
+        authors_id=self.journal.get_authors_id()
+        authors_regex=self.journal.get_authors_id(number='.*')
+        action_editors_value=self.journal.get_action_editors_id(number='${note.number}')
+        action_editors_regex=self.journal.get_action_editors_id(number='.*')
+        reviewers_value=self.journal.get_reviewers_id(number='${note.number}')
+        authors_value=self.journal.get_authors_id(number='${note.number}')
 
 
         ## Submission invitation
-        submission_invitation_id = journal.get_author_submission_id()
+        submission_invitation_id = self.journal.get_author_submission_id()
         invitation = Invitation(id=submission_invitation_id,
             invitees=['~'],
             readers=['everyone'],
@@ -380,7 +376,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': journal.submitted_venue_id,
+                                'value': self.journal.submitted_venue_id,
                             },
                             'presentation': {
                                 'hidden': True,
@@ -391,23 +387,23 @@ class InvitationBuilder(object):
             },
             process=os.path.join(os.path.dirname(__file__), 'process/author_submission_process.py')
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_ae_assignment(self, journal):
-        venue_id = journal.venue_id
-        author_submission_id = journal.get_author_submission_id()
-        editor_in_chief_id = journal.get_editors_in_chief_id()
-        action_editors_id = journal.get_action_editors_id()
-        authors_id = journal.get_authors_id()
-        paper_action_editors_id = journal.get_action_editors_id(number='${{head}.number}')
-        paper_authors_id = journal.get_authors_id(number='${{head}.number}')
+    def set_ae_assignment(self):
+        venue_id = self.journal.venue_id
+        author_submission_id = self.journal.get_author_submission_id()
+        editor_in_chief_id = self.journal.get_editors_in_chief_id()
+        action_editors_id = self.journal.get_action_editors_id()
+        authors_id = self.journal.get_authors_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${{head}.number}')
+        paper_authors_id = self.journal.get_authors_id(number='${{head}.number}')
 
         conflict_ae_invitation_id=f'{action_editors_id}/-/Conflict'
         custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
 
         now = datetime.datetime.utcnow()
         invitation = Invitation(
-            id=journal.get_ae_conflict_id(),
+            id=self.journal.get_ae_conflict_id(),
             invitees=[venue_id],
             readers=[venue_id, authors_id],
             writers=[venue_id],
@@ -445,10 +441,10 @@ class InvitationBuilder(object):
                 }
             }
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
         invitation = Invitation(
-            id=journal.get_ae_affinity_score_id(),
+            id=self.journal.get_ae_affinity_score_id(),
             invitees=[venue_id],
             readers=[venue_id, authors_id],
             writers=[venue_id],
@@ -487,10 +483,10 @@ class InvitationBuilder(object):
             }
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
         invitation = Invitation(
-            id=journal.get_ae_assignment_id(),
+            id=self.journal.get_ae_assignment_id(),
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
@@ -537,10 +533,10 @@ class InvitationBuilder(object):
             preprocess=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_pre_process.py'),
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
         invitation = Invitation(
-            id=journal.get_ae_recommendation_id(),
+            id=self.journal.get_ae_recommendation_id(),
             invitees=[authors_id],
             readers=[venue_id, authors_id],
             writers=[venue_id],
@@ -578,10 +574,10 @@ class InvitationBuilder(object):
                 }
             }
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
         invitation = Invitation(
-            id=journal.get_ae_custom_max_papers_id(),
+            id=self.journal.get_ae_custom_max_papers_id(),
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, editor_in_chief_id],
             writers=[venue_id],
@@ -618,20 +614,20 @@ class InvitationBuilder(object):
                 }
             }
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_reviewer_assignment(self, journal):
-        venue_id = journal.venue_id
-        author_submission_id = journal.get_author_submission_id()
-        editor_in_chief_id = journal.get_editors_in_chief_id()
-        action_editors_id = journal.get_action_editors_id()
-        reviewers_id = journal.get_reviewers_id()
-        authors_id = journal.get_authors_id()
-        paper_action_editors_id = journal.get_action_editors_id(number='${{head}.number}')
-        paper_authors_id = journal.get_authors_id(number='${{head}.number}')
+    def set_reviewer_assignment(self):
+        venue_id = self.journal.venue_id
+        author_submission_id = self.journal.get_author_submission_id()
+        editor_in_chief_id = self.journal.get_editors_in_chief_id()
+        action_editors_id = self.journal.get_action_editors_id()
+        reviewers_id = self.journal.get_reviewers_id()
+        authors_id = self.journal.get_authors_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${{head}.number}')
+        paper_authors_id = self.journal.get_authors_id(number='${{head}.number}')
 
         invitation = Invitation(
-            id=journal.get_reviewer_conflict_id(),
+            id=self.journal.get_reviewer_conflict_id(),
             invitees=[venue_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
@@ -672,10 +668,10 @@ class InvitationBuilder(object):
                 }
             }
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
         invitation = Invitation(
-            id=journal.get_reviewer_affinity_score_id(),
+            id=self.journal.get_reviewer_affinity_score_id(),
             invitees=[venue_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
@@ -717,10 +713,10 @@ class InvitationBuilder(object):
             }
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
         invitation = Invitation(
-            id=journal.get_reviewer_assignment_id(),
+            id=self.journal.get_reviewer_assignment_id(),
             invitees=[venue_id, action_editors_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
@@ -743,7 +739,7 @@ class InvitationBuilder(object):
                     'values': [venue_id, paper_action_editors_id]
                 },
                 'signatures': {
-                    'values-regex': venue_id + '|' + editor_in_chief_id + '|' + journal.get_action_editors_id(number='.*')
+                    'values-regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*')
                 },
                 'head': {
                     'type': 'note',
@@ -768,10 +764,10 @@ class InvitationBuilder(object):
             preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
         invitation = Invitation(
-            id=journal.get_reviewer_custom_max_papers_id(),
+            id=self.journal.get_reviewer_custom_max_papers_id(),
             invitees=[venue_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
@@ -808,10 +804,10 @@ class InvitationBuilder(object):
                 }
             }
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
         invitation = Invitation(
-            id=journal.get_reviewer_pending_review_id(),
+            id=self.journal.get_reviewer_pending_review_id(),
             invitees=[venue_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
@@ -845,19 +841,19 @@ class InvitationBuilder(object):
                 }
             }
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_review_approval_invitation(self, journal, note, duedate):
-        venue_id = journal.venue_id
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_review_approval_invitation(self, note, duedate):
+        venue_id = self.journal.venue_id
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        review_approval_invitation_id=journal.get_review_approval_id(number=note.number)
+        review_approval_invitation_id=self.journal.get_review_approval_id(number=note.number)
 
         invitation = Invitation(id=review_approval_invitation_id,
             duedate=duedate,
             invitees=[venue_id, paper_action_editors_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -896,17 +892,17 @@ class InvitationBuilder(object):
             },
             process=os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py'))
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_withdraw_invitation(self, journal, note):
-        venue_id = journal.venue_id
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_withdraw_invitation(self, note):
+        venue_id = self.journal.venue_id
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        invitation = Invitation(id=journal.get_withdraw_id(number=note.number),
+        invitation = Invitation(id=self.journal.get_withdraw_id(number=note.number),
             invitees=[venue_id, paper_authors_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -947,17 +943,17 @@ class InvitationBuilder(object):
             },
             process=os.path.join(os.path.dirname(__file__), 'process/withdraw_submission_process.py'))
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
 
-    def set_under_review_invitation(self, journal):
-        venue_id = journal.venue_id
+    def set_under_review_invitation(self):
+        venue_id = self.journal.venue_id
 
-        under_review_invitation_id = journal.get_under_review_id()
+        under_review_invitation_id = self.journal.get_under_review_id()
 
         invitation = Invitation(id=under_review_invitation_id,
             invitees=[venue_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -972,7 +968,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ 'everyone']},
                 'writers': { 'values': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': journal.get_author_submission_id() },
+                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
                     'readers': {
                         'values': ['everyone']
                     },
@@ -997,7 +993,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': journal.under_review_venue_id
+                                'value': self.journal.under_review_venue_id
                             }
                         }
                     }
@@ -1006,18 +1002,18 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/under_review_submission_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_desk_rejection_invitation(self, journal):
-        venue_id = journal.venue_id
-        paper_action_editors_id = journal.get_action_editors_id(number='${note.number}')
-        paper_authors_id = journal.get_authors_id(number='${note.number}')
+    def set_desk_rejection_invitation(self):
+        venue_id = self.journal.venue_id
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${note.number}')
+        paper_authors_id = self.journal.get_authors_id(number='${note.number}')
 
-        desk_rejection_invitation_id = journal.get_desk_rejection_id()
+        desk_rejection_invitation_id = self.journal.get_desk_rejection_id()
 
         invitation = Invitation(id=desk_rejection_invitation_id,
             invitees=[venue_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1032,7 +1028,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
                 'writers': { 'values': [ venue_id, paper_action_editors_id]},
                 'note': {
-                    'id': { 'value-invitation': journal.get_author_submission_id()  },
+                    'id': { 'value-invitation': self.journal.get_author_submission_id()  },
                     'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
                     'writers': { 'values': [venue_id, paper_action_editors_id] },
                     'content': {
@@ -1045,7 +1041,7 @@ class InvitationBuilder(object):
                         'venueid': {
                             'order': 3,
                             'value': {
-                                'value': journal.desk_rejected_venue_id
+                                'value': self.journal.desk_rejected_venue_id
                             }
                         }
                     }
@@ -1054,16 +1050,16 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/desk_reject_submission_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_withdrawn_invitation(self, journal):
-        venue_id = journal.venue_id
+    def set_withdrawn_invitation(self):
+        venue_id = self.journal.venue_id
 
-        withdraw_invitation_id = journal.get_withdrawn_id()
+        withdraw_invitation_id = self.journal.get_withdrawn_id()
 
         invitation = Invitation(id=withdraw_invitation_id,
             invitees=[venue_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1072,7 +1068,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ 'everyone' ] },
                 'writers': { 'values': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': journal.get_author_submission_id() },
+                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
                     'content': {
                         'venue': {
                             'value': {
@@ -1090,18 +1086,18 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
 
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_rejection_invitation(self, journal):
+    def set_rejection_invitation(self):
 
-        venue_id = journal.venue_id
+        venue_id = self.journal.venue_id
 
         ## Reject invitation
-        reject_invitation_id = journal.get_rejection_id()
+        reject_invitation_id = self.journal.get_rejection_id()
 
         invitation = Invitation(id=reject_invitation_id,
             invitees=[venue_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1111,7 +1107,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ 'everyone' ] },
                 'writers': { 'values': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': journal.get_author_submission_id() },
+                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
                     'content': {
                         '_bibtex': {
                             'value': {
@@ -1125,7 +1121,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': journal.rejected_venue_id
+                                'value': self.journal.rejected_venue_id
                             }
                         }
                     }
@@ -1134,15 +1130,15 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/rejected_submission_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_acceptance_invitation(self, journal):
-        venue_id = journal.venue_id
+    def set_acceptance_invitation(self):
+        venue_id = self.journal.venue_id
 
-        acceptance_invitation_id = journal.get_acceptance_id()
+        acceptance_invitation_id = self.journal.get_acceptance_id()
         invitation = Invitation(id=acceptance_invitation_id,
             invitees=[venue_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1157,7 +1153,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ 'everyone']},
                 'writers': { 'values': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': journal.get_under_review_id() },
+                    'id': { 'value-invitation': self.journal.get_under_review_id() },
                     'writers': { 'values': [ venue_id ]},
                     'content': {
                         '_bibtex': {
@@ -1173,7 +1169,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': journal.accepted_venue_id
+                                'value': self.journal.accepted_venue_id
                             },
                             'order': 2
                         },
@@ -1211,15 +1207,15 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/acceptance_submission_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_authors_release_invitation(self, journal):
+    def set_authors_release_invitation(self):
 
-        venue_id = journal.venue_id
+        venue_id = self.journal.venue_id
 
-        invitation = Invitation(id=journal.get_authors_release_id(),
+        invitation = Invitation(id=self.journal.get_authors_release_id(),
             invitees=[venue_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1229,7 +1225,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ 'everyone' ] },
                 'writers': { 'values': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': journal.get_rejection_id() },
+                    'id': { 'value-invitation': self.journal.get_rejection_id() },
                     'content': {
                         '_bibtex': {
                             'value': {
@@ -1251,14 +1247,14 @@ class InvitationBuilder(object):
             }
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_ae_recommendation_invitation(self, journal, note, duedate):
-        venue_id = journal.venue_id
-        action_editors_id = journal.get_action_editors_id()
-        authors_id = journal.get_authors_id(number=note.number)
+    def set_ae_recommendation_invitation(self, note, duedate):
+        venue_id = self.journal.venue_id
+        action_editors_id = self.journal.get_action_editors_id()
+        authors_id = self.journal.get_authors_id(number=note.number)
 
-        ae_recommendation_invitation_id=journal.get_ae_recommendation_id(number=note.number)
+        ae_recommendation_invitation_id=self.journal.get_ae_recommendation_id(number=note.number)
         ae_recommendation_invitation=openreview.tools.get_invitation(self.client, ae_recommendation_invitation_id)
 
         if not ae_recommendation_invitation:
@@ -1330,18 +1326,16 @@ class InvitationBuilder(object):
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
                 content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
                 invitation.web = content
-                self.post_invitation_edit(journal=journal,
-                    invitation=invitation
-                )
+                self.post_invitation_edit(invitation)
 
-    def set_reviewer_assignment_invitation(self, journal, note, duedate):
+    def set_reviewer_assignment_invitation(self, note, duedate):
 
-        venue_id = journal.venue_id
-        reviewers_id = journal.get_reviewers_id()
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+        venue_id = self.journal.venue_id
+        reviewers_id = self.journal.get_reviewers_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        reviewer_assignment_invitation_id = journal.get_reviewer_assignment_id(number=note.number)
+        reviewer_assignment_invitation_id = self.journal.get_reviewer_assignment_id(number=note.number)
 
         invitation = Invitation(
             id=reviewer_assignment_invitation_id,
@@ -1386,18 +1380,18 @@ class InvitationBuilder(object):
         )
 
         header = {
-            'title': f'{journal.short_name} Reviewer Assignment',
+            'title': f'{self.journal.short_name} Reviewer Assignment',
             'instructions': f'<p class="dark">Assign reviewers based on their affinity scores.</p>\
                 <p class="dark"><strong>Instructions:</strong></p>\
                 <ul>\
-                    <li>Assign 3 reviewers to the {journal.short_name} submissions you are in charged of.</li>\
+                    <li>Assign 3 reviewers to the {self.journal.short_name} submissions you are in charged of.</li>\
                     <li>Please avoid giving an assignment to a reviewer that already has an uncompleted assignment.</li>\
                 </ul>\
                 <br>'
         }
 
-        edit_param = journal.get_reviewer_assignment_id()
-        score_ids = [journal.get_reviewer_affinity_score_id(), journal.get_reviewer_conflict_id(), journal.get_reviewer_custom_max_papers_id() + ',head:ignore', journal.get_reviewer_pending_review_id() + ',head:ignore']
+        edit_param = self.journal.get_reviewer_assignment_id()
+        score_ids = [self.journal.get_reviewer_affinity_score_id(), self.journal.get_reviewer_conflict_id(), self.journal.get_reviewer_custom_max_papers_id() + ',head:ignore', self.journal.get_reviewer_pending_review_id() + ',head:ignore']
         browse_param = ';'.join(score_ids)
         params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&maxColumns=2&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})'
         with open(os.path.join(os.path.dirname(__file__), 'webfield/assignReviewerWebfield.js')) as f:
@@ -1406,22 +1400,22 @@ class InvitationBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
             invitation.web = content
-            self.save_invitation(journal, invitation)
+            self.save_invitation(invitation)
 
-    def set_review_invitation(self, journal, note, duedate):
-        venue_id = journal.venue_id
-        editors_in_chief_id = journal.get_editors_in_chief_id()
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_review_invitation(self, note, duedate):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_reviewers_anon_id = self.journal.get_reviewers_id(number=note.number, anon=True)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        review_invitation_id=journal.get_review_id(number=note.number)
+        review_invitation_id=self.journal.get_review_id(number=note.number)
 
         invitation = Invitation(id=review_invitation_id,
             duedate=duedate,
             invitees=[venue_id, paper_reviewers_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[editors_in_chief_id],
@@ -1492,20 +1486,20 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/review_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_official_recommendation_invitation(self, journal, note, cdate, duedate):
-        venue_id = journal.venue_id
-        paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_official_recommendation_invitation(self, note, cdate, duedate):
+        venue_id = self.journal.venue_id
+        paper_reviewers_anon_id = self.journal.get_reviewers_id(number=note.number, anon=True)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        invitation = Invitation(id=journal.get_reviewer_recommendation_id(number=note.number),
+        invitation = Invitation(id=self.journal.get_reviewer_recommendation_id(number=note.number),
                 cdate=openreview.tools.datetime_millis(cdate),
                 duedate=openreview.tools.datetime_millis(duedate),
                 invitees=[venue_id, paper_reviewers_id], ## should this be reviewers/submitted??
-                noninvitees=[journal.get_editors_in_chief_id()],
+                noninvitees=[self.journal.get_editors_in_chief_id()],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
@@ -1517,7 +1511,7 @@ class InvitationBuilder(object):
                     'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                     'note': {
                         'id': {
-                            'value-invitation': journal.get_reviewer_recommendation_id(number=note.number),
+                            'value-invitation': self.journal.get_reviewer_recommendation_id(number=note.number),
                             'optional': True
                         },
                         'forum': { 'value': note.id },
@@ -1562,19 +1556,19 @@ class InvitationBuilder(object):
                 process=os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_solicit_review_invitation(self, journal, note):
-        venue_id = journal.venue_id
-        paper_authors_id = journal.get_authors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+    def set_solicit_review_invitation(self, note):
+        venue_id = self.journal.venue_id
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
 
-        solicit_review_invitation_id = journal.get_solicit_review_id(number=note.number)
+        solicit_review_invitation_id = self.journal.get_solicit_review_id(number=note.number)
 
         invitation = Invitation(id=solicit_review_invitation_id,
             invitees=[venue_id, '~'],
-            noninvitees=[journal.get_editors_in_chief_id(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
+            noninvitees=[self.journal.get_editors_in_chief_id(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1628,17 +1622,17 @@ class InvitationBuilder(object):
             preprocess=os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_solicit_review_approval_invitation(self, journal, note, solicit_note, duedate):
+    def set_solicit_review_approval_invitation(self, note, solicit_note, duedate):
 
-        venue_id = journal.venue_id
-        editors_in_chief_id = journal.get_editors_in_chief_id()
-        paper_authors_id = journal.get_authors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
 
-        solicit_review_invitation_approval_id = journal.get_solicit_review_approval_id(number=note.number, signature=solicit_note.signatures[0])
+        solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id(number=note.number, signature=solicit_note.signatures[0])
 
         invitation = Invitation(id=solicit_review_invitation_approval_id,
             invitees=[venue_id, paper_action_editors_id],
@@ -1687,15 +1681,15 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_process.py'),
             preprocess=os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_pre_process.py')
         )
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_revision_submission(self, journal, note):
-        venue_id = journal.venue_id
-        paper_authors_id = journal.get_authors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+    def set_revision_submission(self, note):
+        venue_id = self.journal.venue_id
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
 
-        revision_invitation_id = journal.get_revision_id(number=note.number)
+        revision_invitation_id = self.journal.get_revision_id(number=note.number)
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id, paper_authors_id],
             readers=['everyone'],
@@ -1829,16 +1823,16 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/submission_revision_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_comment_invitation(self, journal, note):
-        venue_id = journal.venue_id
-        editors_in_chief_id = journal.get_editors_in_chief_id()
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_comment_invitation(self, note):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        public_comment_invitation_id = journal.get_public_comment_id(number=note.number)
+        public_comment_invitation_id = self.journal.get_public_comment_id(number=note.number)
         invitation=Invitation(id=public_comment_invitation_id,
             invitees=['everyone'],
             noninvitees=[editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
@@ -1888,10 +1882,10 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/public_comment_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-        official_comment_invitation_id=journal.get_official_comment_id(number=note.number)
-        paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
+        official_comment_invitation_id=self.journal.get_official_comment_id(number=note.number)
+        paper_reviewers_anon_id = self.journal.get_reviewers_id(number=note.number, anon=True)
         invitation=Invitation(id=official_comment_invitation_id,
             invitees=[venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
             readers=['everyone'],
@@ -1941,14 +1935,13 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/official_comment_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-        moderation_invitation_id=journal.get_moderation_id(number=note.number)
+        moderation_invitation_id=self.journal.get_moderation_id(number=note.number)
         moderation_invitation=openreview.tools.get_invitation(self.client, moderation_invitation_id)
 
         if not moderation_invitation:
-            invitation = self.post_invitation_edit(journal=journal,
-                invitation=Invitation(id=moderation_invitation_id,
+            invitation = self.post_invitation_edit(invitation=Invitation(id=moderation_invitation_id,
                     invitees=[venue_id, paper_action_editors_id],
                     readers=[venue_id, paper_action_editors_id],
                     writers=[venue_id],
@@ -1997,17 +1990,17 @@ class InvitationBuilder(object):
                 )
             )
 
-    def set_decision_invitation(self, journal, note, duedate):
-        venue_id = journal.venue_id
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_decision_invitation(self, note, duedate):
+        venue_id = self.journal.venue_id
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        decision_invitation_id = journal.get_ae_decision_id(number=note.number)
+        decision_invitation_id = self.journal.get_ae_decision_id(number=note.number)
 
         invitation = Invitation(id=decision_invitation_id,
             duedate=duedate,
             invitees=[venue_id, paper_action_editors_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -2072,15 +2065,15 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_decision_approval_invitation(self, journal, note, decision, duedate):
-        venue_id = journal.venue_id
-        editors_in_chief_id = journal.get_editors_in_chief_id()
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_decision_approval_invitation(self, note, decision, duedate):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        decision_approval_invitation_id = journal.get_decision_approval_id(number=note.number)
+        decision_approval_invitation_id = self.journal.get_decision_approval_id(number=note.number)
 
         invitation = Invitation(id=decision_approval_invitation_id,
             duedate=duedate,
@@ -2127,26 +2120,26 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_approval_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
 
-    def set_review_rating_invitation(self, journal, note, duedate):
-        venue_id = journal.venue_id
-        reviews = self.client.get_notes(forum=note.forum, invitation=journal.get_review_id(number=note.number))
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number, anon=True)
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_review_rating_invitation(self, note, duedate):
+        venue_id = self.journal.venue_id
+        reviews = self.client.get_notes(forum=note.forum, invitation=self.journal.get_review_id(number=note.number))
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number, anon=True)
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
         for review in reviews:
             signature=review.signatures[0]
             if signature.startswith(paper_reviewers_id):
-                rating_invitation_id = journal.get_review_rating_id(signature=signature)
+                rating_invitation_id = self.journal.get_review_rating_id(signature=signature)
                 rating_invitation=openreview.tools.get_invitation(self.client, rating_invitation_id)
                 if not rating_invitation:
                     invitation = Invitation(id=rating_invitation_id,
                         duedate=duedate,
                         invitees=[venue_id, paper_action_editors_id],
-                        noninvitees=[journal.get_editors_in_chief_id()],
+                        noninvitees=[self.journal.get_editors_in_chief_id()],
                         readers=[venue_id, paper_action_editors_id],
                         writers=[venue_id],
                         signatures=[venue_id],
@@ -2179,14 +2172,14 @@ class InvitationBuilder(object):
                         },
                         process=os.path.join(os.path.dirname(__file__), 'process/review_rating_process.py')
                     )
-                    self.save_invitation(journal, invitation)
+                    self.save_invitation(invitation)
 
-    def set_camera_ready_revision_invitation(self, journal, note, decision, duedate):
-        venue_id = journal.venue_id
-        paper_authors_id = journal.get_authors_id(number=note.number)
-        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        revision_invitation_id = journal.get_camera_ready_revision_id(number=note.number)
+    def set_camera_ready_revision_invitation(self, note, decision, duedate):
+        venue_id = self.journal.venue_id
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        revision_invitation_id = self.journal.get_camera_ready_revision_id(number=note.number)
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[paper_authors_id],
@@ -2324,15 +2317,15 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_revision_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_camera_ready_verification_invitation(self, journal, note, duedate):
-        venue_id = journal.venue_id
-        editors_in_chief_id = journal.get_editors_in_chief_id()
-        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_camera_ready_verification_invitation(self, note, duedate):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        camera_ready_verification_invitation_id = journal.get_camera_ready_verification_id(number=note.number)
+        camera_ready_verification_invitation_id = self.journal.get_camera_ready_verification_id(number=note.number)
         invitation = Invitation(id=camera_ready_verification_invitation_id,
             duedate=duedate,
             invitees=[venue_id, paper_action_editors_id],
@@ -2362,13 +2355,13 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_verification_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
-    def set_authors_deanonymization_invitation(self, journal, note):
-        venue_id = journal.venue_id
-        paper_authors_id = journal.get_authors_id(number=note.number)
+    def set_authors_deanonymization_invitation(self, note):
+        venue_id = self.journal.venue_id
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        authors_deanonymization_invitation_id = journal.get_authors_deanonymization_id(number=note.number)
+        authors_deanonymization_invitation_id = self.journal.get_authors_deanonymization_id(number=note.number)
 
         invitation = Invitation(id=authors_deanonymization_invitation_id,
             invitees=[venue_id, paper_authors_id],
@@ -2399,4 +2392,4 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/authors_deanonimization_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)

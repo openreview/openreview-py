@@ -17,7 +17,7 @@ def process(client, edit, invitation):
         submission = client.get_note(note.forum)
         duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
 
-        journal.invitation_builder.set_review_rating_invitation(journal, submission, openreview.tools.datetime_millis(duedate))
+        journal.invitation_builder.set_review_rating_invitation(submission, openreview.tools.datetime_millis(duedate))
 
         ## send email to action editors
         client.post_message(

@@ -15,8 +15,7 @@ def process(client, edit, invitation):
 
     ## Make the decision public
     print('Make decision public')
-    invitation = journal.invitation_builder.post_invitation_edit(journal=journal,
-        invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
             bulk=True,
             invitees=[venue_id],
             readers=['everyone'],
@@ -53,8 +52,7 @@ def process(client, edit, invitation):
 
     ## Make submission editable by the authors
     print('Make submission editable by the authors')
-    invitation = journal.invitation_builder.post_invitation_edit(journal=journal,
-        invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
             #bulk=True,
             invitees=[venue_id],
             noninvitees=[journal.get_editors_in_chief_id()],
@@ -81,7 +79,7 @@ def process(client, edit, invitation):
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')
-    journal.invitation_builder.set_camera_ready_revision_invitation(journal, submission, decision, duedate)
+    journal.invitation_builder.set_camera_ready_revision_invitation(submission, decision, duedate)
 
     ## Send email to authors
     print('Send email to authors')

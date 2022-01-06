@@ -40,8 +40,7 @@ def process_update(client, edge, invitation, existing_edge):
         duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
 
         ## Update review invitation duedate
-        invitation = journal.invitation_builder.post_invitation_edit(journal=journal,
-            invitation=Invitation(id=journal.get_review_id(number=note.number),
+        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=note.number),
                 signatures=[journal.get_editors_in_chief_id()],
                 duedate=openreview.tools.datetime_millis(duedate)
         ))

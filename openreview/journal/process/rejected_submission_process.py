@@ -27,7 +27,7 @@ The TMLR Editors-in-Chief
         replyTo=journal.contact_info
     )
 
-    journal.invitation_builder.expire_paper_invitations(journal, submission)
+    journal.invitation_builder.expire_paper_invitations(submission)
 
     print('Enable Author deanonymize')
-    journal.invitation_builder.set_authors_deanonymization_invitation(journal, submission)
+    journal.invitation_builder.set_authors_deanonymization_invitation(submission)
