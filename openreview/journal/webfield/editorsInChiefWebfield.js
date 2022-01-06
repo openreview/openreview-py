@@ -46,19 +46,6 @@ var getReplies = function(submission, name) {
   return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
-var getDueDateStatus = function(date) {
-  var day = 24 * 60 * 60 * 1000;
-  var diff = Date.now() - date.getTime();
-
-  if (diff > 0) {
-    return 'expired';
-  }
-  if (diff > -3 * day) {
-    return 'warning';
-  }
-  return '';
-};
-
 // Main function is the entry point to the webfield code
 var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
@@ -421,51 +408,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 };
 
 // Render functions
-var renderTask = function(inv) {
-  var referrerStr = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
-  return (
-    '<li class="note ' + (inv.complete ? 'completed' : '') + '">' +
-      '<h4><a href="/forum?id=' + inv.details.forum + (inv.complete ? '' : '&invitationId=' + inv.id) + '&referrer=' + referrerStr + '" target="_blank">' +
-        view.prettyInvitationId(inv.id) +
-      '</a></h4>' +
-      '<p class="mb-1"><span class="duedate ' + inv.dueDateStatus +'">Due: ' + inv.dueDateStr + '</span></p>' +
-      '<p class="mb-0">' + (inv.complete ? 'Complete' : 'Incomplete') + ', ' + inv.replies.length + ' ' + (inv.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
-    '</li>'
-  );
-};
-
-var renderTasks = function(data) {
-  data = data || {};
-  var dateOptions = {
-    hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'
-  };
-
-  // Order by duedate
-  data.invitations.sort(function(a, b) { return a.duedate - b.duedate; });
-
-  var formattedInvitations = data.invitations.map(function(origInv) {
-    var inv = Object.assign({}, origInv);
-    var duedate = new Date(inv.duedate);
-    inv.dueDateStr = duedate.toLocaleDateString('en-GB', dateOptions);
-    inv.dueDateStatus = getDueDateStatus(duedate);
-    inv.groupId = inv.id.split('/-/')[0];
-
-    if (!inv.details) {
-      inv.details = {};
-    }
-
-    inv.details.forum = data.forumId;
-    return inv;
-  });
-
-  return (
-    (formattedInvitations.length > 0 ? '<h4>Tasks:</h4>' : '') +
-    '<ul class="list-unstyled submissions-list task-list eic-task-list mt-0 mb-0">' +
-      formattedInvitations.map(renderTask).join('\n') +
-    '</ul>'
-  );
-};
-
 var renderTable = function(container, rows) {
   Webfield2.ui.renderTable('#' + container, rows, {
     headings: ['#', 'Paper Summary', 'Review Progress', 'Action Editor Decision', 'Tasks', 'Status'],
@@ -476,7 +418,11 @@ var renderTable = function(container, rows) {
       Handlebars.templates.noteSummary,
       Handlebars.templates.noteReviewers,
       Handlebars.templates.noteAreaChairs,
-      renderTasks,
+      function(data) {
+        return Webfield2.ui.eicTaskList(data.invitations, data.forumId, {
+          referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
+        });
+      },
       function(data) {
         return '<h4>' + data + '</h4>';
       }
