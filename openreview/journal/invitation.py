@@ -1435,15 +1435,13 @@ class InvitationBuilder(object):
                 },
                 'invitation': {
                     'id': { 'value': paper_review_invitation_id },
-                    'id': { 'value-regex': '.*' },
                     'signatures': { 'values': [ editors_in_chief_id ] },
                     'readers': { 'values': ['everyone'] },
                     'writers': { 'values': [venue_id] },
                     'invitees': { 'values': [venue_id, paper_reviewers_id] },
                     'noninvitees': { 'values': [editors_in_chief_id] },
                     'maxReplies': { 'value': 1 },
-                    #'duedate': { 'value': '${params.duedate}' },
-                    'duedate': { 'int-range': [ 0, 9999999999999 ] },
+                    'duedate': { 'value': '${params.duedate}' },
                     'process': { 'value': paper_process },
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
@@ -1527,12 +1525,11 @@ class InvitationBuilder(object):
 
     def set_review_invitation(self, note, duedate):
 
-        self.client.post_invitation_edit(invitations=self.journal.get_review_id(),
+        return self.client.post_invitation_edit(invitations=self.journal.get_review_id(),
             params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': duedate },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id],
-            invitation=Invitation(id=self.journal.get_review_id(number=note.number), duedate=duedate)
+            signatures=[self.journal.venue_id]
         )
 
 
