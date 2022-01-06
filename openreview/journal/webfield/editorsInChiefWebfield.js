@@ -21,6 +21,7 @@ var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var SUBMISSION_GROUP_NAME = 'Paper';
 var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
+var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
 var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
@@ -46,20 +47,16 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
-var SUBMITTED_STATUS = '.TMLR/Submitted';
-var UNDER_REVIEW_STATUS = '.TMLR/Under_Review';
 
-var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
-var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
+'&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+'&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
+'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
 
-// var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
-// '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID +
-// '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + '&' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
-// '&version=2&referrer=[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
-// var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
-// '&edit=' + REVIEWERS_ASSIGNMENT_ID +
-// '&browse=' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
-// '&version=2&referrer=[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
+var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
+'&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+'&browse=' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
+'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
 
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
@@ -389,11 +386,15 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=' + referrerUrl
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + 
+            '&traverse='+ REVIEWERS_ASSIGNMENT_ID + 
+            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' + 
+            '&version=2&referrer=' + referrerUrl
           },
           {
             name: 'Edit Review Invitation',
-            url: '/invitation/edit?id=.TMLR/Paper' + number + '/-/Review'
+            url: '/invitation/edit?id=' + VENUE_ID + '/Paper' + number + '/-/Review'
           }
         ] : []
       },
@@ -413,7 +414,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2'
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + 
+            '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID + 
+            '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+            '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
+            '&version=2'
           }
         ] : [],
         tableWidth: '100%'

@@ -11,7 +11,7 @@ var SHORT_PHRASE = '';
 var SUBMISSION_ID = '';
 var HEADER = {
   title: SHORT_PHRASE + ' Reviewer Console',
-  instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the TMLR reviewer guidelines.'
+  instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the ' + SHORT_PHRASE + ' reviewer guidelines.'
 };
 var REVIEWERS_NAME = '';
 var REVIEW_NAME = 'Review';
