@@ -66,7 +66,7 @@ var main = function() {
 var loadData = function() {
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
-    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
@@ -280,8 +280,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
       paperReviewerStatus[reviewer.anonId] = {
         id: reviewer.id,
-        name: view.prettyId(reviewer.id),
-        email: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
         completedReview: completedReview && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
