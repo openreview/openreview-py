@@ -28,6 +28,7 @@ class InvitationBuilder(object):
         self.set_reviewer_assignment()
         self.set_super_review_invitation()
         self.set_official_recommendation_invitation()
+        self.set_solicit_review_invitation()
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -1648,71 +1649,113 @@ class InvitationBuilder(object):
             signatures=[self.journal.venue_id]
         )
 
-    def set_solicit_review_invitation(self, note):
+    def set_solicit_review_invitation(self):
         venue_id = self.journal.venue_id
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
+        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
 
-        solicit_review_invitation_id = self.journal.get_solicit_review_id(number=note.number)
+        solicit_review_invitation_id = self.journal.get_solicit_review_id()
+        paper_solicit_review_invitation_id = self.journal.get_solicit_review_id(number='${params.noteNumber}')
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')) as f:
+            paper_preprocess = f.read()
+            paper_preprocess = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
 
         invitation = Invitation(id=solicit_review_invitation_id,
-            invitees=[venue_id, '~'],
-            noninvitees=[self.journal.get_editors_in_chief_id(), paper_action_editors_id, paper_reviewers_id, paper_authors_id],
-            readers=['everyone'],
+            invitees=[venue_id],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            maxReplies=1,
             edit={
-                'signatures': { 'values-regex': f'~.*' },
-                'readers': { 'values': [ venue_id, '${signatures}'] },
-                'nonreaders': { 'values': [ paper_authors_id ] },
-                'writers': { 'values': [ venue_id, '${signatures}'] },
-                'note': {
-                    'id': {
-                        'value-invitation': solicit_review_invitation_id,
-                        'optional': True
-                    },
-                    'forum': { 'value': note.id },
-                    'replyto': { 'value': note.id },
-                    'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
-                    'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                    'nonreaders': { 'values': [ paper_authors_id ] },
-                    'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
-                    'content': {
-                        'solicit': {
-                            'order': 1,
-                            'description': '',
-                            'value': {
-                                'value-radio': [
-                                    'I solicit to review this paper.'
-                                ]
-                            }
-                        },
-                        'comment': {
-                            'order': 2,
-                            'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
-                            'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$',
-                                'optional': True
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [venue_id] },
+                'writers': { 'values': [venue_id] },
+                'params': {
+                    'noteNumber': { 'value-regex': '.*' },
+                    'noteId': { 'value-regex': '.*' }
+                },
+                'invitation': {
+                    'id': { 'value': paper_solicit_review_invitation_id },
+                    'signatures': { 'values': [ venue_id ] },
+                    'readers': { 'values': ['everyone'] },
+                    'writers': { 'values': [venue_id] },
+                    'invitees': { 'values': [venue_id, '~'] },
+                    'noninvitees': { 'values': [editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id] },
+                    'maxReplies': { 'value': 1 },
+                    'process': { 'value': paper_process },
+                    'preprocess': { 'value': paper_preprocess },
+                    'edit': {
+                        'signatures': { 'value': { 'values-regex': f'~.*' }},
+                        'readers': { 'value': { 'values': [ venue_id, '\\${signatures}'] }},
+                        'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
+                        'writers': { 'value': { 'values': [ venue_id, '\\${signatures}'] }},
+                        'note': {
+                            'id': {
+                                'value': {
+                                    'value-invitation': paper_solicit_review_invitation_id,
+                                    'optional': True
+                                }
                             },
-                            'presentation': {
-                                'markdown': True
+                            'forum': { 'value': { 'value': '${params.noteId}' }},
+                            'replyto': { 'value': { 'value': '${params.noteId}' }},
+                            'ddate': { 'value': {
+                                'int-range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'nullable': True
+                            }},
+                            'signatures': { 'value': { 'values': ['\\${signatures}'] }},
+                            'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
+                            'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'content': {
+                                'solicit': {
+                                    'value': {
+                                        'order': 1,
+                                        'description': '',
+                                        'value': {
+                                            'value-radio': [
+                                                'I solicit to review this paper.'
+                                            ]
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'value': {
+                                        'order': 2,
+                                        'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
+                                        'value': {
+                                            'value-regex': '^[\\S\\s]{1,200000}$',
+                                            'optional': True
+                                        },
+                                        'presentation': {
+                                            'markdown': True
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            },
-            process=os.path.join(os.path.dirname(__file__), 'process/solicit_review_process.py'),
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')
+            }
         )
 
         self.save_invitation(invitation)
+
+    def set_note_solicit_review_invitation(self, note):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_solicit_review_approval_invitation(self, note, solicit_note, duedate):
 
