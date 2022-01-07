@@ -13,6 +13,11 @@ class Assignment(object):
         self.client = journal.client
         self.journal = journal
 
+    def post_submission_edges(self, edges):
+        ## Remove current edges if they exists
+        self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
+        tools.post_bulk_edges(self.client, edges)
+
 
     def setup_ae_assignment(self, note):
         venue_id=self.journal.venue_id
@@ -41,7 +46,7 @@ class Assignment(object):
                 )
                 affinity_score_edges.append(edge)
 
-        tools.post_bulk_edges(self.client, affinity_score_edges)
+        self.post_submission_edges(affinity_score_edges)
 
         ## Create conflicts
         conflict_edges = []
@@ -61,7 +66,8 @@ class Assignment(object):
                 )
                 conflict_edges.append(edge)
 
-        tools.post_bulk_edges(self.client, conflict_edges)
+        self.post_submission_edges(conflict_edges)
+
 
     def setup_reviewer_assignment(self, note):
         venue_id=self.journal.venue_id
@@ -93,7 +99,7 @@ class Assignment(object):
                 )
                 affinity_score_edges.append(edge)
 
-        tools.post_bulk_edges(self.client, affinity_score_edges)
+        self.post_submission_edges(affinity_score_edges)
 
         ## Create conflicts
         conflict_edges = []
@@ -114,7 +120,7 @@ class Assignment(object):
                 )
                 conflict_edges.append(edge)
 
-        tools.post_bulk_edges(self.client, conflict_edges)
+        self.post_submission_edges(conflict_edges)
 
     def assign_reviewer(self, note, reviewer, solicit=False):
 

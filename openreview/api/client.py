@@ -1024,7 +1024,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1051,6 +1051,7 @@ class OpenReviewClient(object):
             delete_query['tail'] = tail
 
         delete_query['waitToFinish'] = wait_to_finish
+        delete_query['softDelete'] = soft_delete
 
         response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
