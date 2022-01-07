@@ -455,7 +455,7 @@ class InvitationBuilder(object):
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': f'{venue_id}/-/Author_Submission'
+                    'value-invitation': author_submission_id
                 },
                 'tail': {
                     'type': 'profile',
@@ -478,7 +478,7 @@ class InvitationBuilder(object):
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
             minReplies=1,
             type='Edge',
             edit={
@@ -619,7 +619,7 @@ class InvitationBuilder(object):
             invitees=[venue_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editor_in_chief_id], ## to compute conflicts
             type='Edge',
             edit={
                 'ddate': {
@@ -1241,6 +1241,7 @@ class InvitationBuilder(object):
         venue_id = journal.venue_id
         action_editors_id = journal.get_action_editors_id()
         authors_id = journal.get_authors_id(number=note.number)
+        author_submission_id = journal.get_author_submission_id()
 
         ae_recommendation_invitation_id=journal.get_ae_recommendation_id(number=note.number)
         ae_recommendation_invitation=openreview.tools.get_invitation(self.client, ae_recommendation_invitation_id)
@@ -1277,7 +1278,7 @@ class InvitationBuilder(object):
                     'head': {
                         'type': 'note',
                         'value': note.id,
-                        'value-invitation': f'{venue_id}/-/Author_Submission'
+                        'value-invitation': author_submission_id
                     },
                     'tail': {
                         'type': 'profile',
