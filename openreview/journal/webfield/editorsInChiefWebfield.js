@@ -366,7 +366,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           },
           {
             name: 'Edit Review Invitation',
-            url: getInvitationId(number, REVIEW_NAME)
+            url: '/invitation/edit?id=' + getInvitationId(number, REVIEW_NAME)
           }
         ] : []
       },
