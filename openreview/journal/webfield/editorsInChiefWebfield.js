@@ -16,12 +16,6 @@ var ACTION_EDITOR_NAME = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
-var REVIEW_NAME = 'Review';
-var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
-var SUBMISSION_GROUP_NAME = 'Paper';
-var DECISION_NAME = 'Decision';
-var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
-var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
 var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
@@ -47,6 +41,8 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
+var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
+var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
 '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
