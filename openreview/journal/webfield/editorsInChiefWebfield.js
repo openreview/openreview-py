@@ -51,7 +51,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status', 'Editors In Chief Tasks'],
+    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Submission Complete', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -66,7 +66,7 @@ var main = function() {
 var loadData = function() {
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
-    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
@@ -255,6 +255,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         replies: cameraReadyVerificationNotes
       });
     }
+
     var reviews = reviewNotes;
     var recommendations = officialRecommendationNotes;
     var recommendationByReviewer = {};
@@ -279,8 +280,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
       paperReviewerStatus[reviewer.anonId] = {
         id: reviewer.id,
-        name: view.prettyId(reviewer.id),
-        email: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
         completedReview: completedReview && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
@@ -361,11 +362,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         actions: ['.TMLR/Under_Review'].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=' + referrerUrl
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2'
           },
           {
             name: 'Edit Review Invitation',
-            url: '/invitation/edit?id=.TMLR/Paper' + number + '/-/Review'
+            url: '/invitation/edit?id=' + getInvitationId(number, REVIEW_NAME)
           }
         ] : []
       },
@@ -390,7 +391,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         ] : [],
         tableWidth: '100%'
       },
-      tasks: tasks,
+      tasks: { invitations: tasks, forumId: submission.id },
       status: submission.content.venue.value
     });
   });
@@ -407,19 +408,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 };
 
 // Render functions
-var renderTasks = function(data) {
-  var items = data.map(function(d) {
-    return (
-      '<li class="note">' +
-        '<h4><a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a></h4>' +
-        '<p><strong class="duedate">Due: ' + view.forumDate(d.duedate) + '</strong>' +
-        '<br>' + (d.complete ? 'Complete' : 'Incomplete') + ', ' + d.replies.length + ' ' + (d.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
-      '</li>'
-    );
-  });
-  return '<ul class="list-unstyled mt-0 mb-0">' + items.join('\n') + '</ul>';
-};
-
 var renderTable = function(container, rows) {
   Webfield2.ui.renderTable('#' + container, rows, {
     headings: ['#', 'Paper Summary', 'Review Progress', 'Action Editor Decision', 'Tasks', 'Status'],
@@ -430,7 +418,11 @@ var renderTable = function(container, rows) {
       Handlebars.templates.noteSummary,
       Handlebars.templates.noteReviewers,
       Handlebars.templates.noteAreaChairs,
-      renderTasks,
+      function(data) {
+        return Webfield2.ui.eicTaskList(data.invitations, data.forumId, {
+          referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
+        });
+      },
       function(data) {
         return '<h4>' + data + '</h4>';
       }
@@ -478,10 +470,10 @@ var renderTable = function(container, rows) {
 };
 
 var renderData = function(venueStatusData) {
-  renderTable('submission-status', venueStatusData.submissionStatusRows);
-  renderTable('under-review-status', venueStatusData.paperStatusRows);
-  renderTable('decision-approval-status', venueStatusData.decisionApprovalStatusRows);
-  renderTable('complete-submission-status', venueStatusData.completeSubmissionStatusRows);
+  renderTable('submitted', venueStatusData.submissionStatusRows);
+  renderTable('under-review', venueStatusData.paperStatusRows);
+  renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
     headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
@@ -535,9 +527,11 @@ var renderData = function(venueStatusData) {
     extraClasses: 'console-table'
   });
 
-  Webfield2.ui.renderTasks('#editors-in-chief-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)')});
-
+  Webfield2.ui.renderTasks(
+    '#editors-in-chief-tasks',
+    venueStatusData.invitations,
+    { referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
+  );
 };
-
 
 main();
