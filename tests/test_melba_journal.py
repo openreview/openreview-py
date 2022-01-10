@@ -35,7 +35,7 @@ class TestJournal():
         hoel_client = helpers.create_user('hoel@mail.com', 'Hoel', 'Hervadec')
         aasa_client = helpers.create_user('aasa@mail.com', 'Aasa', 'Feragen')
         xukun_client = helpers.create_user('xukun@mail.com', 'Xukun', 'Liu')
-        melisa_client = helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
+        melisa_client = helpers.create_user('ana@mail.com', 'Ana', 'Martinez')
 
         ## Reviewers
         david_client=helpers.create_user('rev1@mailone.com', 'MELBARev', 'One')
@@ -52,9 +52,9 @@ class TestJournal():
         venue_id = '.MELBA'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='editors@melba-journal.org', full_name='The Journal of Machine Learning for Biomedical Imaging', short_name='MELBA', website='melba-journal.org')
 
-        journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mail.com', '~Melisa_Bok1'])
+        journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mail.com', '~Ana_Martinez1'])
         invited_group = openreview_client.get_group(f'{venue_id}/Action_Editors/Invited')
-        assert invited_group.members == ['new_user@mail.com', '~Hoel_Hervadec1', '~Xukun_Liu1', '~Aasa_Feragen1', '~Melisa_Bok1']
+        assert invited_group.members == ['new_user@mail.com', '~Hoel_Hervadec1', '~Xukun_Liu1', '~Aasa_Feragen1', '~Ana_Martinez1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
         assert len(messages) == 5
