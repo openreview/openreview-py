@@ -20,7 +20,7 @@ The action editor might have indicated that they would be willing to consider a 
 
 In any case, your submission will remain publicly available on OpenReview. You may decide to reveal your identity and deanonymize your submission on the OpenReview page. Doing so will however preclude you from submitting any revised version of the manuscript to TMLR.
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the TMLR review process, visit {journal.website}.
 
 The TMLR Editors-in-Chief
 ''',

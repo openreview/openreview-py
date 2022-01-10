@@ -19,7 +19,7 @@ Before the review process starts, you need to submit one or more recommendations
 
 To do so, please follow this link: https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=note.number)} or check your tasks in the Author Console: https://openreview.net/group?id=.TMLR/Authors
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+For more details and guidelines on the TMLR review process, visit {journal.website}.
 
 The TMLR Editors-in-Chief
 ''',

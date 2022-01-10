@@ -126,7 +126,7 @@ You will have at least 2 weeks to respond to the reviewers. The reviewers will b
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission.id}
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the TMLR review process, visit {journal.website}.
 
 The TMLR Editors-in-Chief
 ''',
@@ -146,7 +146,7 @@ Now that 3 reviews have been submitted for the submission, all reviews have been
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the TMLR review process, visit {journal.website}.
 
 We thank you for your essential contribution to TMLR!
 
@@ -166,7 +166,7 @@ Now that 3 reviews have been submitted for submission {submission.content['title
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the TMLR review process, visit {journal.website}.
 
 We thank you for your essential contribution to TMLR!
 
