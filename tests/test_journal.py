@@ -327,7 +327,15 @@ class TestJournal():
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
-        assert note.content.get('_bibtex')
+        assert note.content['_bibtex']['value'] == '''@article{
+anonymouspaper,
+title={Paper title {UPDATED}},
+author={Anonymous},
+journal={Submitted to Transactions of Machine Learning Research},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_1 + '''},
+note={Under review}
+}'''
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
@@ -431,6 +439,15 @@ class TestJournal():
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == '.TMLR/Withdrawn_Submission'
+#         assert note.content['_bibtex']['value'] == '''@article{
+# userpaper,
+# title={Paper title {UPDATED}},
+# author={Test User and Andrew McCallum},
+# journal={Submitted to Transactions of Machine Learning Research},
+# year={2022},
+# url={https://openreview.net/forum?id=''' + note_id_1 + '''},
+# note={Under review}
+# }'''
 
 
         ## Check invitations
@@ -1175,6 +1192,15 @@ Comment: This is an inapropiate comment</p>
         assert note.content['venueid']['value'] == '.TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['_bibtex']['value'] == '''@article{
+userpaper,
+title={Paper title {VERSION} 2},
+author={Test User and Andrew McCallum},
+journal={Transactions of Machine Learning Research},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_1 + '''},
+note={Featured Certification, Reproducibility Certification}
+}'''
 
         ## Check invitations are expired
         invitations = openreview_client.get_invitations(regex=f"{venue_id}/Paper1/.*", type = "all")
@@ -1565,6 +1591,15 @@ Comment: This is an inapropiate comment</p>
         assert note.content['venueid']['value'] == '.TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['_bibtex']['value'] == '''@article{
+anonymouspaper,
+title={Paper title 4},
+author={Anonymous},
+journal={Submitted to Transactions of Machine Learning Research},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_4 + '''},
+note={Rejected}
+}'''
 
         deanonymize_authors_note = test_client.post_note_edit(invitation='.TMLR/Paper4/-/Authors_De-Anonymization',
                             signatures=['.TMLR/Paper4/Authors'],
@@ -1590,6 +1625,15 @@ Comment: This is an inapropiate comment</p>
         assert note.content['venueid']['value'] == '.TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['_bibtex']['value'] == '''@article{
+userpaper,
+title={Paper title 4},
+author={Test User and Melisa Bok},
+journal={Submitted to Transactions of Machine Learning Research},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_4 + '''},
+note={Rejected}
+}'''
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_4)
