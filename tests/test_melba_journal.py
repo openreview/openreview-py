@@ -52,11 +52,11 @@ class TestJournal():
         venue_id = '.MELBA'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='editors@melba-journal.org', full_name='The Journal of Machine Learning for Biomedical Imaging', short_name='MELBA', website='melba-journal.org')
 
-        journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mail.com', '~Ana_Martinez1'])
+        journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='[MELBA] Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mail.com', '~Ana_Martinez1'])
         invited_group = openreview_client.get_group(f'{venue_id}/Action_Editors/Invited')
         assert invited_group.members == ['new_user@mail.com', '~Hoel_Hervadec1', '~Xukun_Liu1', '~Aasa_Feragen1', '~Ana_Martinez1']
 
-        messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
+        messages = openreview_client.get_messages(subject = '[MELBA] Invitation to be an Action Editor')
         assert len(messages) == 5
 
         for message in messages:
@@ -75,11 +75,11 @@ class TestJournal():
         venue_id = '.MELBA'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='editors@melba-journal.org', full_name='The Journal of Machine Learning for Biomedical Imaging', short_name='MELBA', website='melba-journal.org')
 
-        journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be a Reviewer', invitees=['rev1@mailone.com', 'rev4@mailfour.com', 'rev3@mailthree.com', 'rev2@mailtwo.com', 'rev5@mailfive.com'])
+        journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com', 'rev4@mailfour.com', 'rev3@mailthree.com', 'rev2@mailtwo.com', 'rev5@mailfive.com'])
         invited_group = openreview_client.get_group(f'{venue_id}/Reviewers/Invited')
         assert invited_group.members == ['~MELBARev_One1', '~MELBARev_Four1', '~MELBARev_Three1', '~MELBARev_Two1', '~MELBARev_Five1']
 
-        messages = openreview_client.get_messages(subject = 'Invitation to be a Reviewer')
+        messages = openreview_client.get_messages(subject = '[MELBA] Invitation to be a Reviewer')
         assert len(messages) == 5
 
         for message in messages:
@@ -93,8 +93,8 @@ class TestJournal():
         assert len(group.members) == 5
         assert '~MELBARev_One1' in group.members
 
-        status = journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be a Reviewer', invitees=['rev1@mailone.com'])
-        messages = openreview_client.get_messages(to = 'rev1@mailone.com', subject = 'Invitation to be a Reviewer')
+        status = journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com'])
+        messages = openreview_client.get_messages(to = 'rev1@mailone.com', subject = '[MELBA] Invitation to be a Reviewer')
         assert len(messages) == 1
 
         assert status.get('already_member')
