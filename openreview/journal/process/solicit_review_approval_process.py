@@ -21,20 +21,20 @@ def process(client, edit, invitation):
 
         client.post_message(
             recipients=solitic_request.signatures,
-            subject=f'''[{journal.short_name}] Request to review TMLR submission "{submission.content['title']['value']}" has been accepted''',
+            subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" has been accepted''',
             message=f'''Hi {{{{fullname}}}},
 
-This is to inform you that your request to act as a reviewer for TMLR submission {submission.content['title']['value']} has been accepted by the Action Editor (AE).
+This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.content['title']['value']} has been accepted by the Action Editor (AE).
 
 You are required to submit your review within 2 weeks ({duedate.strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
 
-To submit your review, please follow this link: https://openreview.net/forum?id={submission.id} or check your tasks in the Reviewers Console: https://openreview.net/group?id=.TMLR/Reviewers
+To submit your review, please follow this link: https://openreview.net/forum?id={submission.id} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers
 
 Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit jmlr.org/tmlr.
 
-We thank you for your contribution to TMLR!
+We thank you for your contribution to {journal.short_name}!
 
-The TMLR Editors-in-Chief
+The {journal.short_name} Editors-in-Chief
 
 ''',
             replyTo=journal.contact_info

@@ -2,17 +2,17 @@
 // Remove line above if you don't want this page to be overwriten
 
 // Constants
-var VENUE_ID = '.TMLR';
-var SHORT_PHRASE = 'TMLR';
-var SUBMISSION_ID = '.TMLR/-/Author_Submission';
-var ACTION_EDITOR_NAME = 'Action_Editors';
-var REVIEWERS_NAME = 'Reviewers';
-var ACTION_EDITOR_ID = '.TMLR/Action_Editors';
+var VENUE_ID = '';
+var SHORT_PHRASE = '';
+var SUBMISSION_ID = '';
+var ACTION_EDITOR_NAME = '';
+var REVIEWERS_NAME = '';
+var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEW_NAME = 'Review';
 var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var SUBMISSION_GROUP_NAME = 'Paper';
 var DECISION_NAME = 'Decision';
-var UNDER_REVIEW_STATUS = '.TMLR/Under_Review';
+var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -30,7 +30,7 @@ var reviewers_url = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',ta
 
 
 var HEADER = {
-  title: SHORT_PHRASE + 'Action Editor Console',
+  title: SHORT_PHRASE + ' Action Editor Console',
   instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewers_url + "'> Modify Reviewer Assignments</a> </p>"
 };
 
