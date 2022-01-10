@@ -1344,9 +1344,9 @@ Program Chairs
                         recruitment_status['reminded'].append(reviewer_id)
                     except Exception as e:
                         self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
-                        if reviewer_id not in recruitment_status['errors']:
-                            recruitment_status['errors'][reviewer_id] = []
-                        recruitment_status['errors'][reviewer_id].append(e)
+                        if repr(e) not in recruitment_status['errors']:
+                            recruitment_status['errors'][repr(e)] = []
+                        recruitment_status['errors'][repr(e)].append(reviewer_id)
 
         if retry_declined:
             declined_reviewers = reviewers_declined_group.members
@@ -1370,9 +1370,9 @@ Program Chairs
                             verbose = False)
                     except Exception as e:
                         self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
-                        if reviewer_id not in recruitment_status['errors']:
-                            recruitment_status['errors'][reviewer_id] = []
-                        recruitment_status['errors'][reviewer_id].append(e)
+                        if repr(e) not in recruitment_status['errors']:
+                            recruitment_status['errors'][repr(e)] = []
+                        recruitment_status['errors'][repr(e)].append(reviewer_id)
 
         print('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
@@ -1409,9 +1409,9 @@ Program Chairs
                     recruitment_status['invited'].append(email)
                 except Exception as e:
                     self.client.remove_members_from_group(reviewers_invited_group, email)
-                    if email not in recruitment_status['errors']:
-                        recruitment_status['errors'][email] = []
-                    recruitment_status['errors'][email].append(e)
+                    if repr(e) not in recruitment_status['errors']:
+                        recruitment_status['errors'][repr(e)] = []
+                    recruitment_status['errors'][repr(e)].append(email)
         return recruitment_status
 
     ## temporary function, move to somewhere else
