@@ -14,9 +14,10 @@ class Assignment(object):
         self.journal = journal
 
     def post_submission_edges(self, edges):
-        ## Remove current edges if they exists
-        self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
-        tools.post_bulk_edges(self.client, edges)
+        if edges:
+            ## Remove current edges if they exists
+            self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
+            return tools.post_bulk_edges(self.client, edges)
 
 
     def setup_ae_assignment(self, note):
