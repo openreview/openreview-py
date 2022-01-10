@@ -1122,26 +1122,11 @@ class Conference(object):
 
         return self.webfield_builder.set_author_page(self, authors_group)
 
-    def set_impersonators(self, emails = []):
+    def set_impersonators(self, group_ids = []):
         # Only super user can call this
         conference_group = tools.get_group(self.client, self.id)
-        conference_group.impersonators = emails
+        conference_group.impersonators = group_ids
         self.client.post_group(conference_group)
-
-        impersonate_group_id=f'{self.id}/Impersonate'
-        impersonate_group = tools.get_group(self.client, impersonate_group_id)
-
-        if not impersonate_group:
-            impersonate_group = self.client.post_group(openreview.Group(
-                id=impersonate_group_id,
-                readers=[self.id],
-                writers=[],
-                signatures=[],
-                signatories=[self.id],
-                members=[]
-            ))
-
-        return self.webfield_builder.set_impersonate_page(self, impersonate_group)
 
     @deprecated(version='1.0.24', reason="Use setup_committeee_matching() instead")
     def setup_matching(self, committee_id=None, affinity_score_file=None, tpms_score_file=None, elmo_score_file=None, build_conflicts=None, alternate_matching_group=None):
