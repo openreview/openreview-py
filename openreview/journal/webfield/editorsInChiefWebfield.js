@@ -72,7 +72,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status', 'Editors In Chief Tasks'],
+    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Submission Complete', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -87,7 +87,7 @@ var main = function() {
 var loadData = function() {
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
-    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
@@ -276,6 +276,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         replies: cameraReadyVerificationNotes
       });
     }
+
     var reviews = reviewNotes;
     var recommendations = officialRecommendationNotes;
     var recommendationByReviewer = {};
@@ -300,8 +301,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
       paperReviewerStatus[reviewer.anonId] = {
         id: reviewer.id,
-        name: view.prettyId(reviewer.id),
-        email: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
         completedReview: completedReview && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
@@ -386,11 +387,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
             '&traverse='+ REVIEWERS_ASSIGNMENT_ID + 
             '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' + 
-            '&version=2&referrer=' + referrerUrl
+            '&version=2'
           },
           {
             name: 'Edit Review Invitation',
-            url: '/invitation/edit?id=' + VENUE_ID + '/Paper' + number + '/-/Review'
+            url: '/invitation/edit?id=' + getInvitationId(number, REVIEW_NAME)
           }
         ] : []
       },
@@ -419,7 +420,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         ] : [],
         tableWidth: '100%'
       },
-      tasks: tasks,
+      tasks: { invitations: tasks, forumId: submission.id },
       status: submission.content.venue.value
     });
   });
@@ -436,19 +437,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 };
 
 // Render functions
-var renderTasks = function(data) {
-  var items = data.map(function(d) {
-    return (
-      '<li class="note">' +
-        '<h4><a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a></h4>' +
-        '<p><strong class="duedate">Due: ' + view.forumDate(d.duedate) + '</strong>' +
-        '<br>' + (d.complete ? 'Complete' : 'Incomplete') + ', ' + d.replies.length + ' ' + (d.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
-      '</li>'
-    );
-  });
-  return '<ul class="list-unstyled mt-0 mb-0">' + items.join('\n') + '</ul>';
-};
-
 var renderTable = function(container, rows) {
   Webfield2.ui.renderTable('#' + container, rows, {
     headings: ['#', 'Paper Summary', 'Review Progress', 'Action Editor Decision', 'Tasks', 'Status'],
@@ -459,7 +447,11 @@ var renderTable = function(container, rows) {
       Handlebars.templates.noteSummary,
       Handlebars.templates.noteReviewers,
       Handlebars.templates.noteAreaChairs,
-      renderTasks,
+      function(data) {
+        return Webfield2.ui.eicTaskList(data.invitations, data.forumId, {
+          referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
+        });
+      },
       function(data) {
         return '<h4>' + data + '</h4>';
       }
@@ -507,10 +499,10 @@ var renderTable = function(container, rows) {
 };
 
 var renderData = function(venueStatusData) {
-  renderTable('submission-status', venueStatusData.submissionStatusRows);
-  renderTable('under-review-status', venueStatusData.paperStatusRows);
-  renderTable('decision-approval-status', venueStatusData.decisionApprovalStatusRows);
-  renderTable('complete-submission-status', venueStatusData.completeSubmissionStatusRows);
+  renderTable('submitted', venueStatusData.submissionStatusRows);
+  renderTable('under-review', venueStatusData.paperStatusRows);
+  renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
     headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
@@ -564,9 +556,11 @@ var renderData = function(venueStatusData) {
     extraClasses: 'console-table'
   });
 
-  Webfield2.ui.renderTasks('#editors-in-chief-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)')});
-
+  Webfield2.ui.renderTasks(
+    '#editors-in-chief-tasks',
+    venueStatusData.invitations,
+    { referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
+  );
 };
-
 
 main();

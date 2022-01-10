@@ -13,7 +13,8 @@ def process_update(client, edge, invitation, existing_edge):
         client.add_members_to_group(group.id, edge.tail)
 
         recipients=[edge.tail]
-        subject=f'[{journal.short_name}] Assignment to new {journal.short_name} submission'
+        subject=f'[{journal.short_name}] Assignment to new {journal.short_name} submission {note.content["title"]["value"]}'
+
         message=f'''Hi {{{{fullname}}}},
 
 With this email, we request that you manage the review process for a new {journal.short_name} submission titled "{note.content['title']['value']}".
