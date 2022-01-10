@@ -7,15 +7,29 @@
 /* globals Webfield2: false */
 
 // Constants
-var VENUE_ID = '.TMLR';
-var SHORT_PHRASE = 'TMLR';
-var SUBMISSION_ID = '.TMLR/-/Author_Submission';
-var EDITORS_IN_CHIEF_NAME = 'Editors_In_Chief';
-var REVIEWERS_NAME = 'Reviewers';
-var ACTION_EDITOR_NAME = 'Action_Editors';
+var VENUE_ID = '';
+var SHORT_PHRASE = '';
+var SUBMISSION_ID = '';
+var EDITORS_IN_CHIEF_NAME = '';
+var REVIEWERS_NAME = '';
+var ACTION_EDITOR_NAME = '';
+var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
+var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
+
+var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
+var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
+var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
+var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
+var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
+var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
+var ACTION_EDITORS_CONFLICT_ID = ACTION_EDITOR_ID + '/-/Conflict';
+var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
+var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
+var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
+
 var HEADER = {
-  title: 'TMLR Editors-in-Chief Console',
+  title: SHORT_PHRASE + ' Editors-In-Chief Console',
   instructions: ''
 };
 var SUBMISSION_GROUP_NAME = 'Paper';
@@ -27,11 +41,18 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
-var SUBMITTED_STATUS = '.TMLR/Submitted';
-var UNDER_REVIEW_STATUS = '.TMLR/Under_Review';
+var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
+var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 
-var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
-var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
+'&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+'&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
+'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
+
+var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
+'&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+'&browse=' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
+'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
 
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
@@ -358,10 +379,14 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         reviewers: paperReviewerStatus,
         sendReminder: true,
         referrer: referrerUrl,
-        actions: ['.TMLR/Under_Review'].includes(submission.content.venueid.value) ? [
+        actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2'
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + 
+            '&traverse='+ REVIEWERS_ASSIGNMENT_ID + 
+            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' + 
+            '&version=2'
           },
           {
             name: 'Edit Review Invitation',
@@ -382,10 +407,14 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
-        actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
+        actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2'
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + 
+            '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID + 
+            '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+            '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
+            '&version=2'
           }
         ] : [],
         tableWidth: '100%'
