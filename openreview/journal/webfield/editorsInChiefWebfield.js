@@ -150,12 +150,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       tcdate: submission.tcdate,
       tmdate: submission.tmdate,
       showDates: true,
-      content: {
-        title: submission.content.title.value,
-        authors: submission.content.authors.value,
-        authorids: submission.content.authorids.value,
-        venueid: submission.content.venueid.value,
-      }
+      content: Object.keys(submission.content).reduce(function(content, currentValue) {
+        content[currentValue] = submission.content[currentValue].value;
+        return content;
+      }, {}),
+      referrerUrl: referrerUrl
     };
     var paperActionEditors = aeByNumber[number] || [];
     var actionEditor = { id: 'No Action Editor' };

@@ -80,11 +80,11 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
       tcdate: submission.tcdate,
       tmdate: submission.tmdate,
       showDates: true,
-      content: {
-        title: submission.content.title.value,
-        authors: submission.content.authors.value,
-        authorids: submission.content.authorids.value
-      }
+      content: Object.keys(submission.content).reduce(function(content, currentValue) {
+        content[currentValue] = submission.content[currentValue].value;
+        return content;
+      }, {}),
+      referrerUrl: referrerUrl
     };
 
     var reviews = Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
