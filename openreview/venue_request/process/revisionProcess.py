@@ -75,10 +75,20 @@ def process(client, note, invitation):
         }
 
         if content:
+            decision_due_date = forum_note.content.get('decision_deadline').strip()
+            cdate = datetime.datetime.now()
+            if decision_due_date:
+                try:
+                    decision_due_date = datetime.datetime.strptime(decision_due_date, '%Y/%m/%d %H:%M')
+                except ValueError:
+                    decision_due_date = datetime.datetime.strptime(decision_due_date, '%Y/%m/%d')
+                cdate = openreview.tools.datetime_millis(decision_due_date)
+
             client.post_invitation(openreview.Invitation(
                 id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Post_Decision_Stage',
                 super = SUPPORT_GROUP + '/-/Post_Decision_Stage',
                 invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                cdate = cdate,
                 reply = {
                     'forum': forum_note.id,
                     'referent': forum_note.id,
