@@ -40,4 +40,11 @@ Please check the invitee group to see more details: https://openreview.net/group
             '''
         }
     )
+
+    if recruitment_status['errors']:
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {recruitment_status.get('errors') }'''
+
+        comment_note.content['comment'] += f'''\n Error: {error_status}'''
+
     client.post_note(comment_note)
