@@ -101,7 +101,7 @@ To know more about the decision and submit the deanonymized camera ready version
 
 In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
 
-For more details and guidelines on the {journal.short_name} review process, visit jmlr.org/tmlr .
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
 We thank you for your contribution to {journal.short_name} and congratulate you for your successful submission!
 
@@ -125,7 +125,7 @@ The Action Editor responsible for your submission will have provided a descripti
 
 In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
 
-For more details and guidelines on the {journal.short_name} review process, visit jmlr.org/tmlr .
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
 We thank you for your contribution to {journal.short_name} and congratulate you for your successful submission!
 

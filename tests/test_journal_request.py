@@ -28,7 +28,8 @@ class TestJournalRequest():
                     'contact_info': {'value': 'test@venue.org'},
                     'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
-                    'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] }
+                    'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
+                    'website': {'value': 'testjournal.org' }
                 }
             ))
 
@@ -73,7 +74,8 @@ class TestJournalRequest():
                     'contact_info': {'value': 'test@journal.org'},
                     'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
-                    'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] }
+                    'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
+                    'website': {'value': 'testjournal.org' }
                 }
             ))
 
