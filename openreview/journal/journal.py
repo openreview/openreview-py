@@ -17,7 +17,7 @@ from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, Un
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website):
+    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr'):
 
         self.client = client
         self.venue_id = venue_id
