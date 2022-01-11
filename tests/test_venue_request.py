@@ -1015,6 +1015,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
+        #get post_decision invitation
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            post_decision_invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        assert openReviewError.value.args[0].get('name') == 'NotFoundError'
+        
+        invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         author_client = helpers.create_user('venue_author3@mail.com', 'Venue', 'Author')
@@ -1144,6 +1152,10 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             '{}/Area_Chairs'.format(venue['venue_id']),
             '{}/Reviewers'.format(venue['venue_id']),
             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+
+        invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
 
         invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
 
