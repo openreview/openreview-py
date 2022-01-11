@@ -10,8 +10,9 @@ def process(client, edit, invitation):
     short_name = forum.content['abbreviated_venue_name']['value']
     support_role = forum.content['support_role']['value']
     editors = forum.content['editors']['value']
+    website = forum.content['website']['value']
 
-    journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name)
+    journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, website)
 
     journal.setup(support_role, editors)
 

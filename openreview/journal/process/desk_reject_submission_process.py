@@ -16,7 +16,7 @@ Cases of desk rejection include submissions that are not anonymized, submissions
 
 To know more about the decision, please follow this link: https://openreview.net/forum?id={note.forum}
 
-For more details and guidelines on the {journal.short_name} review process, visit jmlr.org/tmlr.
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
 The {journal.short_name} Editors-in-Chief
 ''',

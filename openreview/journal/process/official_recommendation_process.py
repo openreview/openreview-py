@@ -41,7 +41,7 @@ The possible decisions are:
 
 Your decision may also include certification(s) recommendations for the submission (in case of an acceptance).
 
-For more details and guidelines on performing your review, visit jmlr.org/tmlr .
+For more details and guidelines on performing your review, visit {journal.website}.
 
 We thank you for your essential contribution to {journal.short_name}!
 
