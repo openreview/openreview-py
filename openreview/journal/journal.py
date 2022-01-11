@@ -17,7 +17,7 @@ from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, Un
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name):
+    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr'):
 
         self.client = client
         self.venue_id = venue_id
@@ -25,6 +25,7 @@ class Journal(object):
         self.contact_info = contact_info
         self.short_name = short_name
         self.full_name = full_name
+        self.website = website
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
         self.reviewers_name = 'Reviewers'
@@ -39,7 +40,7 @@ class Journal(object):
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.group_builder = group.GroupBuilder(client)
         self.header = {
-            "title": "Transactions of Machine Learning Research",
+            "title": self.full_name,
             "short": self.short_name,
             "subtitle": "To be defined",
             "location": "Everywhere",
