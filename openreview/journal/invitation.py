@@ -459,7 +459,7 @@ class InvitationBuilder(object):
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': f'{venue_id}/-/Author_Submission'
+                    'value-invitation': author_submission_id
                 },
                 'tail': {
                     'type': 'profile',
@@ -482,7 +482,7 @@ class InvitationBuilder(object):
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
             minReplies=1,
             type='Edge',
             edit={
@@ -623,7 +623,7 @@ class InvitationBuilder(object):
             invitees=[venue_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editor_in_chief_id], ## to compute conflicts
             type='Edge',
             edit={
                 'ddate': {
@@ -845,7 +845,6 @@ class InvitationBuilder(object):
         invitation = Invitation(id=review_approval_invitation_id,
             duedate=duedate,
             invitees=[venue_id, paper_action_editors_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -894,7 +893,6 @@ class InvitationBuilder(object):
 
         invitation = Invitation(id=journal.get_withdraw_id(number=note.number),
             invitees=[venue_id, paper_authors_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1245,6 +1243,7 @@ class InvitationBuilder(object):
         venue_id = journal.venue_id
         action_editors_id = journal.get_action_editors_id()
         authors_id = journal.get_authors_id(number=note.number)
+        author_submission_id = journal.get_author_submission_id()
 
         ae_recommendation_invitation_id=journal.get_ae_recommendation_id(number=note.number)
         ae_recommendation_invitation=openreview.tools.get_invitation(self.client, ae_recommendation_invitation_id)
@@ -1281,7 +1280,7 @@ class InvitationBuilder(object):
                     'head': {
                         'type': 'note',
                         'value': note.id,
-                        'value-invitation': f'{venue_id}/-/Author_Submission'
+                        'value-invitation': author_submission_id
                     },
                     'tail': {
                         'type': 'profile',
@@ -1411,7 +1410,6 @@ class InvitationBuilder(object):
         invitation = Invitation(id=review_invitation_id,
             duedate=duedate,
             invitees=[venue_id, paper_reviewers_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[editors_in_chief_id],
@@ -1495,7 +1493,6 @@ class InvitationBuilder(object):
                 cdate=openreview.tools.datetime_millis(cdate),
                 duedate=openreview.tools.datetime_millis(duedate),
                 invitees=[venue_id, paper_reviewers_id], ## should this be reviewers/submitted??
-                noninvitees=[journal.get_editors_in_chief_id()],
                 readers=['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
@@ -1632,7 +1629,6 @@ class InvitationBuilder(object):
 
         invitation = Invitation(id=solicit_review_invitation_approval_id,
             invitees=[venue_id, paper_action_editors_id],
-            noninvitees=[editors_in_chief_id],
             readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
             signatures=[editors_in_chief_id],
@@ -1999,7 +1995,6 @@ class InvitationBuilder(object):
         invitation = Invitation(id=decision_invitation_id,
             duedate=duedate,
             invitees=[venue_id, paper_action_editors_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -2076,7 +2071,7 @@ class InvitationBuilder(object):
 
         invitation = Invitation(id=decision_approval_invitation_id,
             duedate=duedate,
-            invitees=[editors_in_chief_id],
+            invitees=[venue_id, editors_in_chief_id],
             noninvitees=[paper_authors_id],
             readers=['everyone'],
             writers=[venue_id],
@@ -2138,7 +2133,6 @@ class InvitationBuilder(object):
                     invitation = Invitation(id=rating_invitation_id,
                         duedate=duedate,
                         invitees=[venue_id, paper_action_editors_id],
-                        noninvitees=[journal.get_editors_in_chief_id()],
                         readers=[venue_id, paper_action_editors_id],
                         writers=[venue_id],
                         signatures=[venue_id],
