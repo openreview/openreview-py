@@ -64,11 +64,11 @@ class InvitationBuilder(object):
         if invitation.preprocess:
             with open(invitation.preprocess) as f:
                 preprocess = f.read()
-                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}", website="{journal.website}")')
+                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}")')
                 invitation.preprocess = preprocess
 
         if invitation.process:
-            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}", website="{journal.website}")')
+            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}")')
 
         return self.post_invitation_edit(invitation)
 
@@ -1254,7 +1254,7 @@ class InvitationBuilder(object):
         venue_id = self.journal.venue_id
         action_editors_id = self.journal.get_action_editors_id()
         authors_id = self.journal.get_authors_id(number=note.number)
-        author_submission_id = journal.get_author_submission_id()
+        author_submission_id = self.journal.get_author_submission_id()
 
         ae_recommendation_invitation_id=self.journal.get_ae_recommendation_id(number=note.number)
         ae_recommendation_invitation=openreview.tools.get_invitation(self.client, ae_recommendation_invitation_id)
@@ -1663,7 +1663,7 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')) as f:
             paper_preprocess = f.read()
-            paper_preprocess = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+            paper_preprocess = paper_preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
 
         invitation = Invitation(id=solicit_review_invitation_id,
