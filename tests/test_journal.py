@@ -885,7 +885,7 @@ Comment: This is an inapropiate comment</p>
         assert reviews[3].signatures == [hugo_anon_groups[0].id]
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
-        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         raia_client.post_invitation_edit(
             invitations='.TMLR/-/Edit',
