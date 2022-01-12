@@ -1545,6 +1545,7 @@ class InvitationBuilder(object):
         return invitations
 
     def set_decision_invitation(self, conference, notes):
+        self.client.post_invitation(DecisionInvitation(conference))
         def post_invitation(note):
             invitation = self.client.post_invitation(PaperDecisionInvitation(conference, note))
             self.__update_readers(note, invitation)
