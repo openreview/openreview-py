@@ -484,6 +484,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
             minReplies=1,
+            maxReplies=1,
             type='Edge',
             edit={
                 'ddate': {
@@ -714,6 +715,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
+            maxReplies=1,
             type='Edge',
             edit={
                 'ddate': {
