@@ -92,6 +92,12 @@ class JournalRequest():
                 'value': {
                     'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 }
+            },
+            'website': {
+                'order': 9,
+                'value': {
+                    'value-regex': '.*'
+                }
             }
         }
 

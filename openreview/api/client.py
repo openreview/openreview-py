@@ -12,6 +12,7 @@ import pprint
 import os
 import re
 import time
+import jwt
 from openreview import Profile
 from openreview import OpenReviewException
 
@@ -56,7 +57,7 @@ class OpenReviewClient(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
-        self.token = token
+        self.token = token.replace('Bearer ', '') if token else None
         self.profile = None
         self.headers = {
             'User-Agent': self.user_agent,
@@ -64,7 +65,8 @@ class OpenReviewClient(object):
         }
 
         if self.token:
-            self.headers['Authorization'] = self.token
+            self.headers['Authorization'] = 'Bearer ' + self.token
+            self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
             try:
                 self.profile = self.get_profile()
             except:
@@ -87,6 +89,7 @@ class OpenReviewClient(object):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
+        self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
         return response
 
     def __handle_response(self,response):
@@ -1024,7 +1027,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False):
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1051,6 +1054,7 @@ class OpenReviewClient(object):
             delete_query['tail'] = tail
 
         delete_query['waitToFinish'] = wait_to_finish
+        delete_query['softDelete'] = soft_delete
 
         response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)

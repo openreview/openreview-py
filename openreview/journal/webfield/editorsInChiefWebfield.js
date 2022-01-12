@@ -7,15 +7,29 @@
 /* globals Webfield2: false */
 
 // Constants
-var VENUE_ID = '.TMLR';
-var SHORT_PHRASE = 'TMLR';
-var SUBMISSION_ID = '.TMLR/-/Author_Submission';
-var EDITORS_IN_CHIEF_NAME = 'Editors_In_Chief';
-var REVIEWERS_NAME = 'Reviewers';
-var ACTION_EDITOR_NAME = 'Action_Editors';
+var VENUE_ID = '';
+var SHORT_PHRASE = '';
+var SUBMISSION_ID = '';
+var EDITORS_IN_CHIEF_NAME = '';
+var REVIEWERS_NAME = '';
+var ACTION_EDITOR_NAME = '';
+var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
+var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
+
+var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
+var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
+var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
+var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
+var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
+var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
+var ACTION_EDITORS_CONFLICT_ID = ACTION_EDITOR_ID + '/-/Conflict';
+var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
+var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
+var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
+
 var HEADER = {
-  title: 'TMLR Editors-in-Chief Console',
+  title: SHORT_PHRASE + ' Editors-In-Chief Console',
   instructions: ''
 };
 var SUBMISSION_GROUP_NAME = 'Paper';
@@ -27,11 +41,18 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
-var SUBMITTED_STATUS = '.TMLR/Submitted';
-var UNDER_REVIEW_STATUS = '.TMLR/Under_Review';
+var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
+var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 
-var ae_url = '/edges/browse?traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
-var reviewers_url = '/edges/browse?traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=[Editors-in-Chief Console](/group?id=.TMLR/Editors_In_Chief)';
+var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
+'&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+'&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
+'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
+
+var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
+'&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+'&browse=' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
+'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
 
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
@@ -51,7 +72,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submission Status', 'Under Review Status', 'Decision Approval Status','Complete Submission Status', 'Action Editor Status', 'Reviewer Status', 'Editors In Chief Tasks'],
+    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Submission Complete', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -66,7 +87,7 @@ var main = function() {
 var loadData = function() {
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
-    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME),
+    Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
@@ -150,12 +171,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       tcdate: submission.tcdate,
       tmdate: submission.tmdate,
       showDates: true,
-      content: {
-        title: submission.content.title.value,
-        authors: submission.content.authors.value,
-        authorids: submission.content.authorids.value,
-        venueid: submission.content.venueid.value,
-      }
+      content: Object.keys(submission.content).reduce(function(content, currentValue) {
+        content[currentValue] = submission.content[currentValue].value;
+        return content;
+      }, {}),
+      referrerUrl: referrerUrl
     };
     var paperActionEditors = aeByNumber[number] || [];
     var actionEditor = { id: 'No Action Editor' };
@@ -255,6 +275,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         replies: cameraReadyVerificationNotes
       });
     }
+
     var reviews = reviewNotes;
     var recommendations = officialRecommendationNotes;
     var recommendationByReviewer = {};
@@ -279,8 +300,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
       paperReviewerStatus[reviewer.anonId] = {
         id: reviewer.id,
-        name: view.prettyId(reviewer.id),
-        email: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
         completedReview: completedReview && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
@@ -358,14 +379,18 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         reviewers: paperReviewerStatus,
         sendReminder: true,
         referrer: referrerUrl,
-        actions: ['.TMLR/Under_Review'].includes(submission.content.venueid.value) ? [
+        actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Reviewers/-/Assignment&edit=.TMLR/Reviewers/-/Assignment;.TMLR/Reviewers/-/Custom_Max_Papers,head:ignore;&browse=.TMLR/Reviewers/-/Affinity_Score;.TMLR/Reviewers/-/Conflict;.TMLR/Reviewers/-/Pending_Reviews,head:ignore&version=2&referrer=' + referrerUrl
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + 
+            '&traverse='+ REVIEWERS_ASSIGNMENT_ID + 
+            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' + 
+            '&version=2'
           },
           {
             name: 'Edit Review Invitation',
-            url: '/invitation/edit?id=.TMLR/Paper' + number + '/-/Review'
+            url: '/invitation/edit?id=' + getInvitationId(number, REVIEW_NAME)
           }
         ] : []
       },
@@ -382,15 +407,19 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
-        actions: ['.TMLR/Under_Review', '.TMLR/Submitted'].includes(submission.content.venueid.value) ? [
+        actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=.TMLR/Action_Editors/-/Assignment&edit=.TMLR/Action_Editors/-/Assignment;.TMLR/Action_Editors/-/Custom_Max_Papers,head:ignore&browse=.TMLR/Action_Editors/-/Affinity_Score;.TMLR/Action_Editors/-/Recommendation;.TMLR/Action_Editors/-/Conflict&version=2'
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + 
+            '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID + 
+            '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+            '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
+            '&version=2'
           }
         ] : [],
         tableWidth: '100%'
       },
-      tasks: tasks,
+      tasks: { invitations: tasks, forumId: submission.id },
       status: submission.content.venue.value
     });
   });
@@ -407,19 +436,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 };
 
 // Render functions
-var renderTasks = function(data) {
-  var items = data.map(function(d) {
-    return (
-      '<li class="note">' +
-        '<h4><a href="/invitation/edit?id=' + d.id + '" target="_blank" rel="nofollow noreferrer">' + view.prettyInvitationId(d.id) + '</a></h4>' +
-        '<p><strong class="duedate">Due: ' + view.forumDate(d.duedate) + '</strong>' +
-        '<br>' + (d.complete ? 'Complete' : 'Incomplete') + ', ' + d.replies.length + ' ' + (d.replies.length === 1 ? 'Reply' : 'Replies') + '</p>' +
-      '</li>'
-    );
-  });
-  return '<ul class="list-unstyled mt-0 mb-0">' + items.join('\n') + '</ul>';
-};
-
 var renderTable = function(container, rows) {
   Webfield2.ui.renderTable('#' + container, rows, {
     headings: ['#', 'Paper Summary', 'Review Progress', 'Action Editor Decision', 'Tasks', 'Status'],
@@ -430,7 +446,11 @@ var renderTable = function(container, rows) {
       Handlebars.templates.noteSummary,
       Handlebars.templates.noteReviewers,
       Handlebars.templates.noteAreaChairs,
-      renderTasks,
+      function(data) {
+        return Webfield2.ui.eicTaskList(data.invitations, data.forumId, {
+          referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
+        });
+      },
       function(data) {
         return '<h4>' + data + '</h4>';
       }
@@ -478,10 +498,10 @@ var renderTable = function(container, rows) {
 };
 
 var renderData = function(venueStatusData) {
-  renderTable('submission-status', venueStatusData.submissionStatusRows);
-  renderTable('under-review-status', venueStatusData.paperStatusRows);
-  renderTable('decision-approval-status', venueStatusData.decisionApprovalStatusRows);
-  renderTable('complete-submission-status', venueStatusData.completeSubmissionStatusRows);
+  renderTable('submitted', venueStatusData.submissionStatusRows);
+  renderTable('under-review', venueStatusData.paperStatusRows);
+  renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
     headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
@@ -535,9 +555,11 @@ var renderData = function(venueStatusData) {
     extraClasses: 'console-table'
   });
 
-  Webfield2.ui.renderTasks('#editors-in-chief-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Editors In Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)')});
-
+  Webfield2.ui.renderTasks(
+    '#editors-in-chief-tasks',
+    venueStatusData.invitations,
+    { referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
+  );
 };
-
 
 main();
