@@ -2395,15 +2395,17 @@ Thank you,
         ## Need super user permission to add the venue to the active_venues group
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
+        
+        conference.set_impersonators(group_ids=['pc@neurips.cc'])
 
-        conference.set_impersonators(emails=['pc@neurips.cc'])
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        reviewers_id = conference.get_reviewers_id()
+        reviewers = client.get_group(reviewers_id).members
+        assert len(reviewers) > 0
+        result = pc_client.impersonate(reviewers[0])
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Impersonate", pc_client.token)
-        assert "NeurIPS 2021 Conference Impersonate | OpenReview" in selenium.title
-        notes_panel = selenium.find_element_by_id('notes')
-        assert notes_panel
+        assert result.get('token') is not None
+        assert result.get('user', {}).get('id') == reviewers[0]
 
     def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
