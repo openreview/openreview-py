@@ -62,7 +62,7 @@ class Client(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
-        self.token = token
+        self.token = token.replace('Bearer ', '') if token else None
         self.profile = None
         self.user = None
         self.headers = {
@@ -71,8 +71,8 @@ class Client(object):
         }
 
         if self.token:
-            self.headers['Authorization'] = self.token
-            self.user = jwt.decode(self.token.replace('Bearer ', ''), "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
+            self.headers['Authorization'] = 'Bearer ' + self.token
+            self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
             try:
                 self.profile = self.get_profile()
             except:

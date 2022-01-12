@@ -1248,7 +1248,7 @@ class Conference(object):
             'reminded': [],
             'already_invited': {},
             'already_member': {},
-            'errors': []
+            'errors': {}
         }
 
         options = {
@@ -1308,7 +1308,7 @@ Program Chairs
 
         if remind:
             invited_reviewers = reviewers_invited_group.members
-            print ('Sending reminders for recruitment invitations')
+            print('Sending reminders for recruitment invitations')
             for reviewer_id in tqdm(invited_reviewers, desc='remind_reviewers'):
                 memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
                 if reviewers_id not in memberships and reviewers_declined_id not in memberships:
@@ -1327,13 +1327,15 @@ Program Chairs
                             contact_info = contact_info,
                             verbose = False)
                         recruitment_status['reminded'].append(reviewer_id)
-                    except openreview.OpenReviewException as e:
+                    except Exception as e:
                         self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
-                        recruitment_status['errors'].append(e)
+                        if repr(e) not in recruitment_status['errors']:
+                            recruitment_status['errors'][repr(e)] = []
+                        recruitment_status['errors'][repr(e)].append(reviewer_id)
 
         if retry_declined:
             declined_reviewers = reviewers_declined_group.members
-            print ('Sending retry to declined reviewers')
+            print('Sending retry to declined reviewers')
             for reviewer_id in tqdm(declined_reviewers, desc='retry_declined'):
                 memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
                 if reviewers_id not in memberships:
@@ -1351,11 +1353,13 @@ Program Chairs
                             reviewers_invited_id,
                             contact_info = contact_info,
                             verbose = False)
-                    except openreview.OpenReviewException as e:
+                    except Exception as e:
                         self.client.remove_members_from_group(reviewers_invited_group, reviewer_id)
-                        recruitment_status['errors'].append(e)
+                        if repr(e) not in recruitment_status['errors']:
+                            recruitment_status['errors'][repr(e)] = []
+                        recruitment_status['errors'][repr(e)].append(reviewer_id)
 
-        print ('Sending recruitment invitations')
+        print('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
             memberships = [g.id for g in self.client.get_groups(member=email, regex=self.id)] if tools.get_group(self.client, email) else []
             invited_roles = [f'{self.id}/{role}/Invited' for role in committee_roles]
@@ -1388,9 +1392,11 @@ Program Chairs
                         contact_info = contact_info,
                         verbose = False)
                     recruitment_status['invited'].append(email)
-                except openreview.OpenReviewException as e:
+                except Exception as e:
                     self.client.remove_members_from_group(reviewers_invited_group, email)
-                    recruitment_status['errors'].append(e)
+                    if repr(e) not in recruitment_status['errors']:
+                        recruitment_status['errors'][repr(e)] = []
+                    recruitment_status['errors'][repr(e)].append(email)
         return recruitment_status
 
     ## temporary function, move to somewhere else
@@ -1454,7 +1460,7 @@ Program Chairs
                     with open('{folder_path}/Paper{number}.{field_type}'.format(folder_path=folder_path, number=paper_number, field_type=field_type), 'wb') as f:
                         f.write(self.client.get_attachment(submission.id, field_name))
                 except Exception as e:
-                    print ('Error during attachment download for paper number {}, error: {}'.format(submission.number, e))
+                    print('Error during attachment download for paper number {}, error: {}'.format(submission.number, e))
                 return True
             return None
 
