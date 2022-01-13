@@ -2967,13 +2967,12 @@ var buildCSV = function(){
   var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
   var isFiltered = conferenceStatusData.filteredRows ? true : false
   var notes = isFiltered ? conferenceStatusData.filteredRows : conferenceStatusData.blindedNotes
-
+  
+  var noteContentFields = [...new Set(notes.map(p=>Object.keys((isFiltered?p.note?.content:p.content)??{})).flat())]
   var rowData = [];
   rowData.push(['number',
   'forum',
-  'title',
-  'abstract',
-  'authors',
+  ...noteContentFields,
   'num reviewers',
   'num submitted reviewers',
   'missing reviewers',
@@ -3020,9 +3019,14 @@ var buildCSV = function(){
 
     var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
-    var title = paperTableRow.note.content.title.replace(/"/g, '""');
-    var abstract = paperTableRow.note.content.abstract.replace(/"/g, '""');
-    var authors = originalNote.content.authors ? originalNote.content.authors : [];
+    var contents = noteContentFields.map(field=>{
+      const contentValue = paperTableRow.note.content[field]
+      if (!contentValue) return ''
+      if (field === 'authors') return originalNote.content.authors ? originalNote.content.authors.join('|') : ''
+      if(Array.isArray(contentValue)) return contentValue.join('|')
+      return `"${contentValue.replace(/\r?\n|\r/g, " ")}"`
+    })
+
     var reviewersData = _.values(paperTableRow.reviewProgressData.reviewers);
     var allReviewers = [];
     var missingReviewers = [];
@@ -3034,9 +3038,7 @@ var buildCSV = function(){
     });
     rowData.push([noteNumber,
     '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
-    '"' + title + '"',
-    '"' + abstract + '"',
-    '"' + authors.join('|') + '"',
+    ...contents,
     paperTableRow.reviewProgressData.numReviewers,
     paperTableRow.reviewProgressData.numSubmittedReviews,
     '"' + missingReviewers.join('|') + '"',
