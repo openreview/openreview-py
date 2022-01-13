@@ -13,7 +13,6 @@ def process(client, note, invitation):
     try:
         conference.setup_post_submission_stage(force=note.content['force'] == 'Yes', hide_fields=note.content.get('hide_fields', []))
         print('Conference: ', conference.get_id())
-        raise Exception
     except Exception as e:
         error_status = f'''
         Post Submission Process failed due to the following error: \n 
