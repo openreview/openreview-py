@@ -174,7 +174,7 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
     Webfield2.ui.renderSubmissionList('#featured-papers', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
     Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
   } else {
-    $('.tabs-container a[href="#features-papers"]').parent().hide();
+    $('.tabs-container a[href="#featured-papers"]').parent().hide();
   }
 
   if (reproducibilityResponse.count > 0) {

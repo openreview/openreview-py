@@ -43,6 +43,7 @@ class Client(object):
         self.tags_url = self.baseurl + '/tags'
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
+        self.edges_rename = self.baseurl + '/edges/rename'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
@@ -62,8 +63,7 @@ class Client(object):
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.limit = 1000
-
-        self.token = token
+        self.token = token.replace('Bearer ', '') if token else None
         self.profile = None
         self.user = None
         self.headers = {
@@ -72,8 +72,8 @@ class Client(object):
         }
 
         if self.token:
-            self.headers['Authorization'] = self.token
-            self.user = jwt.decode(self.token.replace('Bearer ', ''), "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
+            self.headers['Authorization'] = 'Bearer ' + self.token
+            self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
             try:
                 self.profile = self.get_profile()
             except:
@@ -1019,6 +1019,30 @@ class Client(object):
         response = self.__handle_response(response)
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
+
+    def rename_edges(self, current_id, new_id):
+        """
+        Updates an Edge
+
+        :param profile: Edge object
+        :type edge: Edge
+
+        :return: The new updated Edge
+        :rtype: Edge
+        """
+        response = requests.post(
+            self.edges_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        #print('RESPONSE: ', response.json())
+        received_json_array = response.json()
+        edge_objects = [Edge.from_json(edge) for edge in received_json_array]
+        return edge_objects
 
     def post_institution(self, institution):
         """

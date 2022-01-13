@@ -117,7 +117,7 @@ def process(client, edit, invitation):
         late_duedate = now + datetime.timedelta(weeks = 4)
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Reviewer responses and discussion for your TMLR submission''',
+            subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
             message=f'''Hi {{{{fullname}}}},
 
 Now that 3 reviews have been submitted for your submission  {submission.content['title']['value']}, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
@@ -126,9 +126,9 @@ You will have at least 2 weeks to respond to the reviewers. The reviewers will b
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission.id}
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
-The TMLR Editors-in-Chief
+The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info
         )
@@ -137,20 +137,20 @@ The TMLR Editors-in-Chief
         print('Send emails to reviewers')
         client.post_message(
             recipients=[journal.get_reviewers_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Start of author discussion for TMLR submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Thank you for submitting your review for TMLR submission "{submission.content['title']['value']}".
+Thank you for submitting your review for {journal.short_name} submission "{submission.content['title']['value']}".
 
 Now that 3 reviews have been submitted for the submission, all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
-We thank you for your essential contribution to TMLR!
+We thank you for your essential contribution to {journal.short_name}!
 
-The TMLR Editors-in-Chief
+The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info
         )
@@ -159,18 +159,18 @@ The TMLR Editors-in-Chief
         print('Send emails to action editor')
         client.post_message(
             recipients=[journal.get_action_editors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Start of author discussion for TMLR submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
 Now that 3 reviews have been submitted for submission {submission.content['title']['value']}, all reviews have been made public. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
-We thank you for your essential contribution to TMLR!
+We thank you for your essential contribution to {journal.short_name}!
 
-The TMLR Editors-in-Chief
+The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info
         )

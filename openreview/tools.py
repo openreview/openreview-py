@@ -62,7 +62,21 @@ def get_profile(client, value, with_publications=False):
     try:
         profile = client.get_profile(value)
         if with_publications:
-            profile.content['publications'] = concurrent_get_notes(client, content={'authorids': profile.id})
+            baseurl_v1 = 'http://localhost:3000'
+            baseurl_v2 = 'http://localhost:3001'
+
+            if 'https://devapi' in client.baseurl:
+                baseurl_v1 = 'https://devapi.openreview.net'
+                baseurl_v2 = 'https://devapi2.openreview.net'
+            if 'https://api' in client.baseurl:
+                baseurl_v1 = 'https://api.openreview.net'
+                baseurl_v2 = 'https://api2.openreview.net'
+
+            client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
+            client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+            notes_v1 = list(iterget_notes(client_v1, content={'authorids': profile.id}))
+            notes_v2 = list(iterget_notes(client_v2, content={'authorids': profile.id}))
+            profile.content['publications'] = notes_v1 + notes_v2
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if 'Profile Not Found' not in e.args[0]:
@@ -107,10 +121,29 @@ def get_profiles(client, ids_or_emails, with_publications=False):
             })))
 
     if with_publications:
-        publications = concurrent_requests(lambda profile : concurrent_get_notes(client, content={'authorids': profile.id}), profiles)
+        baseurl_v1 = 'http://localhost:3000'
+        baseurl_v2 = 'http://localhost:3001'
 
-        for idx, publication in enumerate(publications):
-            profiles[idx].content['publications'] = publication
+        if 'https://devapi' in client.baseurl:
+            baseurl_v1 = 'https://devapi.openreview.net'
+            baseurl_v2 = 'https://devapi2.openreview.net'
+        if 'https://api' in client.baseurl:
+            baseurl_v1 = 'https://api.openreview.net'
+            baseurl_v2 = 'https://api2.openreview.net'
+
+        client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
+        client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+
+        notes_v1 = concurrent_requests(lambda profile : list(iterget_notes(client_v1, content={'authorids': profile.id})), profiles)
+        for idx, publications in enumerate(notes_v1):
+            profiles[idx].content['publications'] = publications
+
+        notes_v2 = concurrent_requests(lambda profile : list(iterget_notes(client_v2, content={'authorids': profile.id})), profiles)
+        for idx, publications in enumerate(notes_v2):
+            if profiles[idx].content.get('publications'):
+                profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
+            else:
+                profiles[idx].content['publications'] = publications
 
     return profiles
 
@@ -1790,7 +1823,7 @@ def get_profile_info(profile):
         'publications': publications
     }
 
-def get_neurips_profile_info(profile):
+def get_neurips_profile_info(profile, n_years=3):
 
     domains = set()
     emails=set()
@@ -1798,17 +1831,19 @@ def get_neurips_profile_info(profile):
     publications = set()
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+    curr_year = datetime.datetime.now().year
+    cut_off_year = curr_year - n_years - 1
 
-    ## Institution section, get history within the last three years
+    ## Institution section, get history within the last n years
     for h in profile.content.get('history', []):
-        if h.get('end') is None or int(h.get('end')) > 2017:
+        if h.get('end') is None or int(h.get('end')) > cut_off_year:
             domain = h.get('institution', {}).get('domain', '')
             domains.update(openreview.tools.subdomains(domain))
 
-    ## Relations section, get coauthor/coworker relations within the last three years + all the other relations
+    ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
         if r.get('relation', '') in ['Coauthor','Coworker']:
-            if r.get('end') is None or int(r.get('end')) > 2017:
+            if r.get('end') is None or int(r.get('end')) > cut_off_year:
                 relations.add(r['email'])
         else:
             relations.add(r['email'])
@@ -1821,13 +1856,13 @@ def get_neurips_profile_info(profile):
         for email in profile.content['emails']:
             domains.update(openreview.tools.subdomains(email))
 
-    ## Publications section: get publications within last three years
+    ## Publications section: get publications within last n years
     for pub in profile.content.get('publications', []):
         if pub.cdate:
             year = int(datetime.datetime.fromtimestamp(pub.cdate/1000).year)
         else:
             year = int(datetime.datetime.fromtimestamp(pub.tcdate/1000).year)
-        if year > 2017:
+        if year > cut_off_year:
             publications.add(pub.id)
 
     ## Filter common domains
