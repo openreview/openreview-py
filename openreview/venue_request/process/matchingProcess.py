@@ -20,7 +20,7 @@ def process(client, note, invitation):
 
     try:
         matching_status = conference.setup_committee_matching(matching_group, compute_affinity_scores, compute_conflicts)
-    except openreview.OpenReviewException as e:
+    except Exception as e:
         if 'Submissions not found.' in str(e):
             matching_status['error'] = ['Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.']
         elif 'The match group is empty' in str(e):
