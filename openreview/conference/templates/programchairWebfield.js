@@ -2968,7 +2968,18 @@ var buildCSV = function(){
   var isFiltered = conferenceStatusData.filteredRows ? true : false
   var notes = isFiltered ? conferenceStatusData.filteredRows : conferenceStatusData.blindedNotes
   
-  var noteContentFields = [...new Set(notes.map(p=>Object.keys((isFiltered?p.note?.content:p.content)??{})).flat())]
+  var noteContentFields = [
+    ...new Set(
+      notes
+        .map((p) => {
+          var content = isFiltered ? p.note.content : p.content;
+          if (!content) return []
+          return Object.keys(content);
+        })
+        .flat()
+    )
+  ];
+  
   var rowData = [];
   rowData.push(['number',
   'forum',
