@@ -2967,10 +2967,14 @@ var buildCSV = function(){
   var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
   var isFiltered = conferenceStatusData.filteredRows ? true : false
   var notes = isFiltered ? conferenceStatusData.filteredRows : conferenceStatusData.blindedNotes
+  var originalNotes = notes.map(p => isFiltered
+    ? p.note.details.original || p.note
+    : p.details.original || p
+  )
   
   var noteContentFields = [
     ...new Set(
-      notes
+      originalNotes
         .map((p) => {
           var content = isFiltered ? p.note.content : p.content;
           if (!content) return []
@@ -3031,7 +3035,7 @@ var buildCSV = function(){
     var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
     var contents = noteContentFields.map(field=>{
-      const contentValue = paperTableRow.note.content[field]
+      const contentValue = originalNote.content[field]
       if (!contentValue) return ''
       if (field === 'authors') return originalNote.content.authors ? originalNote.content.authors.join('|') : ''
       if(Array.isArray(contentValue)) return contentValue.join('|')
