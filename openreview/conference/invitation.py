@@ -309,7 +309,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 content['authorids'] = {'values-regex': '.*'}
             for field in hide_fields:
                 content[field] = {
-                    'values-regex': '.*',
+                    'value-regex': '.*',
                     'required': False
                 }
         else:
@@ -464,7 +464,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 content['authorids'] = {'values-regex': '.*'}
             for field in hide_fields:
                 content[field] = {
-                    'values-regex': '.*',
+                    'value-regex': '.*',
                     'required': False
                 }
         else:
@@ -1545,13 +1545,13 @@ class InvitationBuilder(object):
         return invitations
 
     def set_decision_invitation(self, conference, notes):
-
-        invitations = []
         self.client.post_invitation(DecisionInvitation(conference))
-        for note in tqdm(notes, total=len(notes), desc='set_decision_invitation'):
+        def post_invitation(note):
             invitation = self.client.post_invitation(PaperDecisionInvitation(conference, note))
             self.__update_readers(note, invitation)
-            invitations.append(invitation)
+            return invitation
+
+        invitations = tools.concurrent_requests(post_invitation, notes)
 
         return invitations
 

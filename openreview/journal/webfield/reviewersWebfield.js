@@ -55,18 +55,31 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
 
   var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + VENUE_ID + '/' + REVIEWERS_NAME + '#assigned-papers)');
 
-  var submissionsByNumber = _.keyBy(submissions, 'number');
-
   //build the rows
   var rows = [];
 
   submissions.forEach(function(submission) {
 
     var number = submission.number;
+    var formattedSubmission = {
+      id: submission.id,
+      forum: submission.forum,
+      number: number,
+      cdate: submission.cdate,
+      mdate: submission.mdate,
+      tcdate: submission.tcdate,
+      tmdate: submission.tmdate,
+      showDates: true,
+      content: Object.keys(submission.content).reduce(function(content, currentValue) {
+        content[currentValue] = submission.content[currentValue].value;
+        return content;
+      }, {}),
+      referrerUrl: referrerUrl
+    };
     var assignedReviewers = assignedGroups[number];
     var assignedGroup = assignedReviewers.find(function(group) { return group.id ==  user.profile.id && group.anonId;  });
     var reviewInvitationId = VENUE_ID + '/Paper' + number + '/-/' + REVIEW_NAME;
-    var review = assignedGroup ? submission.details.directReplies.find(function(reply) {
+    var review = assignedGroup ? submission.details.replies.find(function(reply) {
       return reply.invitations.indexOf(reviewInvitationId) >= 0 && reply.signatures[0] == (VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Reviewer_' + assignedGroup.anonId);
     }) : null;
     var recommendations = Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME });
@@ -80,7 +93,7 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
 
     rows.push({
       submissionNumber: { number: number},
-      submission: { number: number, forum: submission.forum, content: { title: submission.content.title.value, authors: ['Anonymous']}, referrer: referrerUrl},
+      submission: formattedSubmission,
       reviewStatus: {
         invitationUrl: reviewInvitation && '/forum?id=' + submission.forum + '&noteId=' + submission.forum + '&invitationId=' + reviewInvitation.id + '&referrer=' + referrerUrl,
         review: review,
