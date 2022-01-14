@@ -309,7 +309,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 content['authorids'] = {'values-regex': '.*'}
             for field in hide_fields:
                 content[field] = {
-                    'values-regex': '.*',
+                    'value-regex': '.*',
                     'required': False
                 }
         else:
@@ -464,7 +464,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 content['authorids'] = {'values-regex': '.*'}
             for field in hide_fields:
                 content[field] = {
-                    'values-regex': '.*',
+                    'value-regex': '.*',
                     'required': False
                 }
         else:
