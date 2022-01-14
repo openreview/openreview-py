@@ -160,7 +160,7 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
 
   var options = {
     paperDisplayOptions: paperDisplayOptions,
-    page_size: PAGE_SIZE
+    pageSize: PAGE_SIZE
   }
 
   if (acceptedResponse.count > 0) {
