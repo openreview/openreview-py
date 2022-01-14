@@ -58,6 +58,7 @@ var propertiesAllowed ={
     replyCount:['reviewProgressData.forumReplyCount'],
     decision: ['decision.content.decision'],
 }
+var ENABLE_DESK_REJECTED_WITHDRAWN_SUBMISSION_TAB = true;
 
 // Page State
 var reviewerSummaryMap = {};
@@ -85,8 +86,8 @@ var main = function() {
     getCommitteeMembers(SENIOR_AREA_CHAIRS_ID),
     getGroups(),
     getBlindedNotes(),
-    getWithdrawnNotesCount(),
-    getDeskRejectedNotesCount(),
+    getWithdrawnNotes(),
+    getDeskRejectedNotes(),
     getPcAssignmentTags(),
     getBidCounts(REVIEWERS_ID),
     getBidCounts(AREA_CHAIRS_ID),
@@ -105,8 +106,8 @@ var main = function() {
     seniorAreaChairs,
     groups,
     blindedNotes,
-    withdrawnNotesCount,
-    deskRejectedNotesCount,
+    withdrawnNotes,
+    deskRejectedNotes,
     pcAssignmentTags,
     reviewerBidCounts,
     areaChairBidCounts,
@@ -182,6 +183,7 @@ var main = function() {
       sacByAc: sacByAc,
       acsBySac: acsBySac,
       blindedNotes: blindedNotes,
+      deskRejectedWithdrawnNotes:[...deskRejectedNotes,...withdrawnNotes],
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
       seniorAreaChairGroups: seniorAreaChairGroupMaps,
@@ -197,8 +199,8 @@ var main = function() {
     var finalDecisions = calcDecisions(blindedNotes);
     var conferenceStats = {
       blindSubmissionsCount: blindedNotes.length,
-      withdrawnSubmissionsCount: withdrawnNotesCount,
-      deskRejectedSubmissionsCount: deskRejectedNotesCount,
+      withdrawnSubmissionsCount: withdrawnNotes.length,
+      deskRejectedSubmissionsCount: deskRejectedNotes.length,
       reviewersInvitedCount: reviewersInvitedCount,
       areaChairsInvitedCount: areaChairsInvitedCount,
       seniorAreaChairsInvitedCount: seniorAreaChairsInvitedCount,
@@ -363,25 +365,25 @@ var getBlindedNotes = function() {
   })
 };
 
-var getWithdrawnNotesCount = function() {
+var getWithdrawnNotes = function() {
   if (!WITHDRAWN_SUBMISSION_ID) {
-    return $.Deferred().resolve(0);
+    return $.Deferred().resolve([]);
   }
   return Webfield.get('/notes', {
-    invitation: WITHDRAWN_SUBMISSION_ID, limit: 1, select: 'id'
+    invitation: WITHDRAWN_SUBMISSION_ID, limit: 1, details: 'original'
   }).then(function(result) {
-    return result.count || 0;
+    return result.notes;
   });
 };
 
-var getDeskRejectedNotesCount = function() {
+var getDeskRejectedNotes = function() {
   if (!DESK_REJECTED_SUBMISSION_ID) {
-    return $.Deferred().resolve(0);
+    return $.Deferred().resolve([]);
   }
   return Webfield.get('/notes', {
-    invitation: DESK_REJECTED_SUBMISSION_ID, limit: 1, select: 'id'
+    invitation: DESK_REJECTED_SUBMISSION_ID, limit: 1, details: 'original'
   }).then(function(result) {
-    return result.count || 0;
+    return result.notes;
   });
 };
 
@@ -876,6 +878,15 @@ var renderHeader = function() {
       extraClasses: 'horizontal-scroll'
     }
   ];
+
+  if(ENABLE_DESK_REJECTED_WITHDRAWN_SUBMISSION_TAB) {
+    tabs.push({
+      heading: 'Desk Rejected/Withdrawn Papers',
+      id: 'deskrejectwithdrawn-status',
+      content: loadingMessage,
+      extraClasses: 'horizontal-scroll'
+    });
+  }
 
   if (AREA_CHAIRS_ID) {
     tabs.push({
@@ -1675,6 +1686,156 @@ var displayPaperStatusTable = function() {
   paperStatusNeedsRerender = false;
 
 };
+
+var displayRejectedWithdrawnPaperStatusTable = function () {
+  var container = '#deskrejectwithdrawn-status';
+  var pcAssignmentTagInvitations = conferenceStatusData.pcAssignmentTagInvitations;
+
+  var rowData = conferenceStatusData.deskRejectedWithdrawnNotes;
+  var filteredRows = null;
+  var toNumber = function(value) {
+    return value === 'N/A' ? 0 : value;
+  }
+  var order = 'desc';
+  var sortOptions = {
+    Paper_Number: function(note) { return note.number; },
+    Paper_Title: function(note) { return _.trim(note.content.title).toLowerCase(); },
+    Type: function(note) { return note.invitation; },
+  };
+
+  var sortResults = function(newOption, switchOrder) {
+    if (switchOrder) {
+      order = order === 'asc' ? 'desc' : 'asc';
+    }
+    var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    renderTable(container, rowDataToRender);
+  };
+
+  var searchResults = function(searchText, isQueryMode) {
+    $(container).data('lastPageNum', 1);
+    $(container + ' .form-sort').val('Paper_Number');
+
+    // Currently only searching on note number and note title
+    var filterFunc = function(note) {
+      var search = [
+        note.number,
+        note.content.title,
+        note.content.keywords ? note.content.keywords.join('\n') : null,
+        note.content.authors.join('\n'),
+        note.content.authorids.join('\n')
+      ].join('\n').toLowerCase()
+      return search.indexOf(searchText) !== -1;
+    };
+
+    if (searchText) {
+      if (isQueryMode) {
+        var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id');
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
+        if (queryIsInvalid) $(container + ' .form-search').addClass('invalid-value');
+      } else {
+        filteredRows = _.filter(rowData, filterFunc);
+      }
+
+      filteredRows = _.orderBy(filteredRows, sortOptions['Paper_Number'], 'asc');
+      matchingNoteIds = filteredRows.map(function (note) {
+        return note.id;
+      });
+      order = 'asc'
+    } else {
+      filteredRows = rowData;
+      matchingNoteIds = [];
+    }
+    if (rowData.length !== filteredRows.length) {
+      conferenceStatusData.filteredRows = filteredRows
+    }
+    renderTable(container, filteredRows);
+    $(container + ' .btn-export-data').text(`Export ${filteredRows.length} records`)
+  };
+
+  var renderTable = function(container, data) {
+    var paperNumbers = [];
+    var rowData = _.map(data, function(note) {
+      paperNumbers.push(note.number);
+
+      var numberHtml = '<strong class="note-number">' + note.number + '</strong>';
+      var checked = '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
+        note.id + '" ' + (selectedNotesById[note.id] ? 'checked="checked"' : '') + '></label>';
+      var numberHtml = '<strong class="note-number">' + note.number + '</strong>';
+      var summaryHtml = Handlebars.templates.noteSummary(note.details.original??note);
+      var reason = 'unknown';
+      if(note.invitation === WITHDRAWN_SUBMISSION_ID) reason = 'Withdrawn'
+      if(note.invitation===DESK_REJECTED_SUBMISSION_ID) reason = 'Desk Rejected'
+      var reasonHtml = `<strong class="note-number">${reason}</strong>`
+
+      var rows = [checked, numberHtml, summaryHtml,reasonHtml];
+      return rows;
+    });
+
+    var headings = ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary', 'Reason'];
+
+    var $container = $(container);
+    var tableData = {
+      headings: headings,
+      rows: rowData,
+      extraClasses: 'console-table paper-table'
+    };
+    var pageNum = $container.data('lastPageNum') || 1;
+    renderPaginatedTable($container, tableData, pageNum);
+    postRenderTable(data, pageNum);
+
+    $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
+      paginationOnClick($(this).parent(), $container, tableData);
+
+      var newPageNum = parseInt($(this).parent().data('pageNumber'), 10);
+      postRenderTable(data, newPageNum);
+      return false;
+    });
+  };
+
+  var postRenderTable = function(data, pageNum) {
+    $('.console-table th').eq(0).css('width', '3%');
+    $('.console-table th').eq(1).css('width', '5%');
+    $('.console-table th').eq(2).css('width', '22%');
+    if (AREA_CHAIRS_ID) {
+      $('.console-table th').eq(3).css('width', '30%');
+      $('.console-table th').eq(4).css('width', '28%');
+      $('.console-table th').eq(5).css('width', '12%');
+    } else {
+      $('.console-table th').eq(3).css('width', '45%');
+      $('.console-table th').eq(4).css('width', '25%');
+    }
+
+    var offset = (pageNum - 1) * PAGE_SIZE;
+    var pageData = data.slice(offset, offset + PAGE_SIZE);
+
+    if (ENABLE_REVIEWER_REASSIGNMENT) {
+      pageData.forEach(function(rowData) {
+        updateReviewerContainer(rowData.note.number);
+      });
+    }
+
+    addTagsToPaperSummaryCell(pageData, pcAssignmentTagInvitations);
+
+    $(container + ' .console-table > tbody > tr .select-note-reviewers').each(function() {
+      var noteId = $(this).data('noteId');
+      $(this).prop('checked', selectedNotesById[noteId]);
+    });
+
+    var allSelected = _.every(Object.values(selectedNotesById));
+    $(container + ' .console-table #select-all-papers').prop('checked', allSelected);
+  };
+
+  if (rowData.length) {
+    displaySortPanel(container, sortOptions, sortResults, searchResults, false);
+    $(container).find('form.search-form .pull-left').html('<div class="btn-group"><button class="btn btn-export-data" type="button">Export ' + rowData.length + ' records</button></div>');
+    renderTable(container, rowData);
+  } else {
+    $(container).empty().append('<p class="empty-message">No papers have been desk rejected or withdrawn. ' +
+      'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
+  }
+  paperStatusNeedsRerender = false;
+}
 
 var renderPaginatedTable = function($container, tableData, pageNumber) {
   if (!tableData.rows) {
@@ -2887,6 +3048,8 @@ $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
   var containerId = $(e.target).attr('href');
   if (containerId === '#paper-status') {
     displayPaperStatusTable();
+  } else if (containerId === '#deskrejectwithdrawn-status') {
+    displayRejectedWithdrawnPaperStatusTable();
   } else if (containerId === '#areachair-status') {
     displayAreaChairsStatusTable();
   } else if (containerId === '#seniorareachair-status') {
