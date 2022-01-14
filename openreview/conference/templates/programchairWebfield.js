@@ -1242,9 +1242,9 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   $('#venue-configuration').html(html);
 };
 
-var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery) {
-  var searchType = container.substring(1).split('-')[0] + 's';
-  var placeHolder = enableQuery ? 'Enter search term or type + to start query search' : 'Search all ' + searchType + '...'
+var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery, searchPlaceHolder) {
+  var searchPlaceHolder = searchPlaceHolder ? searchPlaceHolder : 'Search all ' + container.substring(1).split('-')[0] + 's...';
+  var placeHolder = enableQuery ? 'Enter search term or type + to start query search' : searchPlaceHolder
   var searchBarWidth = enableQuery ? '350px' : '300px'
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
@@ -1692,10 +1692,8 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
   var pcAssignmentTagInvitations = conferenceStatusData.pcAssignmentTagInvitations;
 
   var rowData = conferenceStatusData.deskRejectedWithdrawnNotes;
+
   var filteredRows = null;
-  var toNumber = function(value) {
-    return value === 'N/A' ? 0 : value;
-  }
   var order = 'desc';
   var sortOptions = {
     Paper_Number: function(note) { return note.number; },
@@ -1708,6 +1706,7 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
       order = order === 'asc' ? 'desc' : 'asc';
     }
     var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    tableDataInDisplay = rowDataToRender;
     renderTable(container, rowDataToRender);
   };
 
@@ -1749,8 +1748,9 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
     if (rowData.length !== filteredRows.length) {
       conferenceStatusData.filteredRows = filteredRows
     }
+    tableDataInDisplay = filteredRows;
     renderTable(container, filteredRows);
-    $(container + ' .btn-export-data').text(`Export ${filteredRows.length} records`)
+    $(container + ' .btn-export-deskrejected-withdrawn').text(`Export ${filteredRows.length} records`)
   };
 
   var renderTable = function(container, data) {
@@ -1759,20 +1759,17 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
       paperNumbers.push(note.number);
 
       var numberHtml = '<strong class="note-number">' + note.number + '</strong>';
-      var checked = '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
-        note.id + '" ' + (selectedNotesById[note.id] ? 'checked="checked"' : '') + '></label>';
-      var numberHtml = '<strong class="note-number">' + note.number + '</strong>';
       var summaryHtml = Handlebars.templates.noteSummary(note.details.original??note);
       var reason = 'unknown';
       if(note.invitation === WITHDRAWN_SUBMISSION_ID) reason = 'Withdrawn'
       if(note.invitation===DESK_REJECTED_SUBMISSION_ID) reason = 'Desk Rejected'
       var reasonHtml = `<strong class="note-number">${reason}</strong>`
 
-      var rows = [checked, numberHtml, summaryHtml,reasonHtml];
+      var rows = [numberHtml, summaryHtml,reasonHtml];
       return rows;
     });
 
-    var headings = ['<input type="checkbox" id="select-all-papers">', '#', 'Paper Summary', 'Reason'];
+    var headings = ['#', 'Paper Summary', 'Reason'];
 
     var $container = $(container);
     var tableData = {
@@ -1827,13 +1824,14 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
   };
 
   if (rowData.length) {
-    displaySortPanel(container, sortOptions, sortResults, searchResults, false);
-    $(container).find('form.search-form .pull-left').html('<div class="btn-group"><button class="btn btn-export-data" type="button">Export ' + rowData.length + ' records</button></div>');
+    displaySortPanel(container, sortOptions, sortResults, searchResults, false, 'Search desk rejected/withdrawn papers...');
+    $(container).find('form.search-form .pull-left').html('<div class="btn-group"><button class="btn btn-export-deskrejected-withdrawn" type="button">Export ' + rowData.length + ' records</button></div>');
     renderTable(container, rowData);
   } else {
     $(container).empty().append('<p class="empty-message">No papers have been desk rejected or withdrawn. ' +
       'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
   }
+  tableDataInDisplay = rowData;
   paperStatusNeedsRerender = false;
 }
 
@@ -2075,7 +2073,7 @@ var displayAreaChairsStatusTable = function() {
     });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults, false);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false, 'Search all area chairs...');
   $(container).find('form.search-form .pull-left').html(
     '<div class="btn-group message-acs-container" role="group">' +
       '<button type="button" class="message-acs-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
@@ -2183,7 +2181,7 @@ var displaySeniorAreaChairsStatusTable = function() {
     });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false, 'Search all senior area chairs...');
   renderTable(container, rowData);
 };
 
@@ -2371,7 +2369,7 @@ var displayReviewerStatusTable = function() {
     });
   };
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults, false);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false, null);
   $(container).find('form.search-form .pull-left').html(
     '<div class="btn-group message-reviewers-container" role="group">' +
       '<button type="button" class="message-reviewers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
@@ -3314,6 +3312,26 @@ var buildAreaChairsCSV = function(){
   return [rowData.join('')];
 }
 
+var buildDeskrejectedWithdrawnCSV = function(){
+  var columnNames = ['number','forum','title','authors','reason']
+  var rowData = [];
+  rowData.push(columnNames.join(',') + '\n');
+  _.forEach(tableDataInDisplay, function(note) {
+    var originalNote = note.details.original || note
+    var number = originalNote.number;
+    var forum = `https://openreview.net/forum?id=${originalNote.forum}`
+    var title = `"${originalNote.content.title}"`;
+    var authors = originalNote.content.authors.join('|');
+    var reason = 'unknown';
+    if (note.invitation === WITHDRAWN_SUBMISSION_ID) reason = 'Withdrawn'
+    if (note.invitation === DESK_REJECTED_SUBMISSION_ID) reason = 'Desk Rejected'
+
+    rowData.push([number,forum,title,authors,reason].join(',') + '\n');
+  });
+
+  return [rowData.join('')];
+}
+
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/csv'});
   var fileName = conferenceStatusData.filteredNotes ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
@@ -3331,5 +3349,14 @@ $('#group-container').on('click', 'button.btn.btn-export-areachairs', function(e
   var fileName = notFiltered
     ? SHORT_PHRASE.replace(/\s/g, '_') + '_ac_status.csv'
     : SHORT_PHRASE.replace(/\s/g, '_') + '_ac_status(Filtered).csv'
+  saveAs(blob, fileName);
+});
+
+$('#group-container').on('click', 'button.btn.btn-export-deskrejected-withdrawn', function(e) {
+  var notFiltered = conferenceStatusData.deskRejectedWithdrawnNotes.length === (tableDataInDisplay && tableDataInDisplay.length);
+  var blob = new Blob(buildDeskrejectedWithdrawnCSV(), {type: 'text/csv'});
+  var fileName = notFiltered
+    ? SHORT_PHRASE.replace(/\s/g, '_') + '_deskrejected_withdrawn_papers.csv'
+    : SHORT_PHRASE.replace(/\s/g, '_') + '_deskrejected_withdrawn_papers(Filtered).csv'
   saveAs(blob, fileName);
 });
