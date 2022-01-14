@@ -14,6 +14,7 @@ var OFFICIAL_REVIEW_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
+var META_REVIEW_CONTENT_FIELD = 'recommendation'
 var SENIOR_AREA_CHAIRS_ID = '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
@@ -1178,7 +1179,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     ranking: acPaperRanking
   };
   if (metaReview) {
-    cell3.recommendation = metaReview.content.recommendation;
+    // if the field is not present the space will still cause the link to be displayed
+    cell3.recommendation = metaReview.content[META_REVIEW_CONTENT_FIELD] || ' ';
     cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id + '&referrer=' + referrerUrl;
   }
   if (metaReviewInvitation) {
@@ -1532,7 +1534,7 @@ var registerEventHandlers = function() {
       paperTableRow[3]['minConfidence'],
       paperTableRow[3]['maxConfidence'],
       paperTableRow[3]['averageConfidence'],
-      metaReview && metaReview.content.recommendation
+      metaReview && metaReview.content[META_REVIEW_CONTENT_FIELD]
       ].join(',') + '\n');
     });
     return [rowData.join('')];
