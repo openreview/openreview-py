@@ -370,7 +370,7 @@ var getWithdrawnNotes = function() {
     return $.Deferred().resolve([]);
   }
   return Webfield.get('/notes', {
-    invitation: WITHDRAWN_SUBMISSION_ID, limit: 1, details: 'original'
+    invitation: WITHDRAWN_SUBMISSION_ID, details: 'original'
   }).then(function(result) {
     return result.notes;
   });
@@ -381,7 +381,7 @@ var getDeskRejectedNotes = function() {
     return $.Deferred().resolve([]);
   }
   return Webfield.get('/notes', {
-    invitation: DESK_REJECTED_SUBMISSION_ID, limit: 1, details: 'original'
+    invitation: DESK_REJECTED_SUBMISSION_ID, details: 'original'
   }).then(function(result) {
     return result.notes;
   });
@@ -1698,7 +1698,7 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
   var sortOptions = {
     Paper_Number: function(note) { return note.number; },
     Paper_Title: function(note) { return _.trim(note.content.title).toLowerCase(); },
-    Type: function(note) { return note.invitation; },
+    Reason: function(note) { return note.invitation; },
   };
 
   var sortResults = function(newOption, switchOrder) {
