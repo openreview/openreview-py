@@ -1622,7 +1622,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
 
     for profile in author_profiles:
-        author_info = info_function(profile)
+        author_info = info_function(profile, n_years)
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
