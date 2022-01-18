@@ -2395,7 +2395,7 @@ Thank you,
         ## Need super user permission to add the venue to the active_venues group
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
-        
+
         conference.set_impersonators(group_ids=['pc@neurips.cc'])
 
         pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
@@ -2501,3 +2501,19 @@ Thank you,
                 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Program_Chairs']
         assert desk_rejected_submission.content['keywords'] == ''
+
+        desk_reject_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        pc_client.post_note(desk_reject_note)
+
+        helpers.await_queue()
+
+        submission_note = client.get_note(desk_reject_note.forum)
+        assert submission_note.invitation == 'NeurIPS.cc/2021/Conference/-/Blind_Submission'
+        assert submission_note.readers == [
+                'NeurIPS.cc/2021/Conference'
+                'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Authors'
+                ]
+        assert submission_note.content['keywords'] == ''
