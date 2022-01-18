@@ -30,8 +30,8 @@ def process_update(client, note, invitation, existing_note):
             forum_note.invitation = BLIND_SUBMISSION_ID
             if forum_note.original:
                 forum_note.content = {
-                    'authors': forum_note.content['authors'],
-                    'authorids': forum_note.content['authorids'],
+                    'authors': ['Anonymous'],
+                    'authorids':[PAPER_AUTHORS_ID],
                     #'_bibtex': bibtex Solve this later
                 }
                 for field in HIDE_FIELDS:
