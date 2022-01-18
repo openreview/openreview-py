@@ -282,7 +282,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         helpers.await_queue()
 
         submission_note = client.get_note(desk_rejected_notes[0].forum)
-        assert submission_note.invitation == 'eswc-conferences.org/ESWC/2021/Conference/-/Submission'
+        assert submission_note.invitation == 'eswc-conferences.org/ESWC/2021/Conference/-/Special_Submission'
         assert submission_note.readers == ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@umass.edu', '~SomeFirstName_User1', 'eswc-conferences.org/ESWC/2021/Conference/Reviewers']
 
         messages = client.get_messages(subject = '^ESWC 2021: Paper .* unmarked desk rejected by program chairs$')
