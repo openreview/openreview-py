@@ -25,10 +25,12 @@ def process_update(client, note, invitation, existing_note):
 
     if note.ddate:
         ## Undo desk reject
+        print('undo desk rejected')
         forum_note = client.get_note(note.forum)
         if forum_note.invitation == DESK_REJECTED_SUBMISSION_ID:
             forum_note.invitation = BLIND_SUBMISSION_ID
             if forum_note.original:
+                print('is double blind')
                 forum_note.content = {
                     'authors': ['Anonymous'],
                     'authorids':[PAPER_AUTHORS_ID],

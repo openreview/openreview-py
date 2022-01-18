@@ -1744,6 +1744,14 @@ class TestDoubleBlindConference():
         author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
         assert 'AKBC.ws/2019/Conference/Paper2/Authors' in author_group.members
 
+        ## Desk reject again
+        posted_note.ddate = None
+        pc_client.post_note(posted_note)
+
+        helpers.await_queue()
+        submission_note = client.get_note(desk_reject_note.forum)
+        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Desk_Rejected_Submission'
+
     def test_paper_ranking(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
