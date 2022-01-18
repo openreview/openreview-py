@@ -1640,7 +1640,7 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
 
     return list(conflicts)
 
-def get_profile_info(profile):
+def get_profile_info(profile, n_years=3):
     """
     Gets all the domains, emails, relations associated with a Profile
 
