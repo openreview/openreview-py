@@ -45,7 +45,7 @@ var loadData = function() {
     return $.when(
       assignedGroups,
       Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITORS_NAME),
-      Webfield2.api.getAssignedInvitations(VENUE_ID, REVIEWERS_NAME),
+      Webfield2.api.getAssignedInvitations(VENUE_ID, REVIEWERS_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
       Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)})
     );
   })

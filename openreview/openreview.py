@@ -640,7 +640,7 @@ class Client(object):
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
 
-    def get_invitations(self, id = None, invitee = None, replytoNote = None, replyForum = None, signature = None, note = None, regex = None, tags = None, limit = None, offset = None, minduedate = None, duedate = None, pastdue = None, replyto = None, details = None, expired = None):
+    def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -699,6 +699,8 @@ class Client(object):
             params['tags'] = tags
         if minduedate:
             params['minduedate'] = minduedate
+        if super:
+            params['super'] = super
         params['replyto'] = replyto
         params['duedate'] = duedate
         params['pastdue'] = pastdue
