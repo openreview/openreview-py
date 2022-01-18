@@ -25,7 +25,7 @@ jobs:
             sudo apt-get install -y mongodb-org=4.4.5 mongodb-org-server=4.4.5 mongodb-org-shell=4.4.5 mongodb-org-mongos=4.4.5 mongodb-org-tools=4.4.5
             mongo mongodb://localhost:27017 --eval "rs.initiate()"
       - run: sudo pip install ~/openreview-py-repo
-      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
       - run: mkdir ~/openreview/logs
