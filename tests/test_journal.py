@@ -308,6 +308,17 @@ class TestJournal():
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## Try to assign the same AE again and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'The maximum number \(1\) of Edges between .* and ~Joelle_Pineau1 has been reached'):
+            paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+                readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+                writers=[venue_id, editor_in_chief_group_id],
+                signatures=[editor_in_chief_group_id],
+                head=note_id_1,
+                tail='~Joelle_Pineau1',
+                weight=1
+            ))
+
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper1/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
