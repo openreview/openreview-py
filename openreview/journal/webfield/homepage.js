@@ -160,39 +160,40 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
 
   var options = {
     paperDisplayOptions: paperDisplayOptions,
-    page_size: PAGE_SIZE
+    pageSize: PAGE_SIZE
   }
 
   if (acceptedResponse.count > 0) {
     Webfield2.ui.renderSubmissionList('#accepted-papers', SUBMISSION_ID, acceptedResponse.notes, acceptedResponse.count,
-    Object.assign(options, { query: { 'content.venueid': VENUE_ID }}));
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID }}));
   } else {
     $('.tabs-container a[href="#accepted-papers"]').parent().hide();
   }
 
   if (featuredResponse.count > 0) {
     Webfield2.ui.renderSubmissionList('#featured-papers', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
-    Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
   } else {
     $('.tabs-container a[href="#featured-papers"]').parent().hide();
   }
 
   if (reproducibilityResponse.count > 0) {
     Webfield2.ui.renderSubmissionList('#reproducibility-papers', SUBMISSION_ID, reproducibilityResponse.notes, reproducibilityResponse.count,
-    Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Reproducibility Certification' }}));
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Reproducibility Certification' }}));
   } else {
     $('.tabs-container a[href="#reproducibility-papers"]').parent().hide();
   }
 
   if (surveyResponse.count > 0) {
     Webfield2.ui.renderSubmissionList('#survey-papers', SUBMISSION_ID, surveyResponse.notes, surveyResponse.count,
-    Object.assign(options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Survey Certification' }}));
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Survey Certification' }}));
   } else {
     $('.tabs-container a[href="#survey-papers"]').parent().hide();
   }
 
   if (underReviewResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count, Object.assign(options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
+    Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count,
+    Object.assign({}, options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
   } else {
     $('.tabs-container a[href="#under-review-submissions"]').parent().hide();
   }
