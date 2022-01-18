@@ -1677,11 +1677,11 @@ class SubmissionStage(object):
             name = 'Blind_' + name
         return conference.get_invitation_id(name)
 
-    def get_withdrawn_submission_id(self, conference, name = 'Withdrawn_Submission'):
-        return conference.get_invitation_id(name)
+    def get_withdrawn_submission_id(self, conference):
+        return conference.get_invitation_id(f'Withdrawn_{self.name}')
 
-    def get_desk_rejected_submission_id(self, conference, name = 'Desk_Rejected_Submission'):
-        return conference.get_invitation_id(name)
+    def get_desk_rejected_submission_id(self, conference):
+        return conference.get_invitation_id(f'Desk_Rejected_{self.name}')
 
     def get_content(self):
         content = invitations.submission.copy()
