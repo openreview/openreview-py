@@ -73,10 +73,10 @@ def get_profile(client, value, with_publications=False):
                 baseurl_v2 = 'https://api2.openreview.net'
 
             client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
-            client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+            #client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
             notes_v1 = list(iterget_notes(client_v1, content={'authorids': profile.id}))
-            notes_v2 = list(iterget_notes(client_v2, content={'authorids': profile.id}))
-            profile.content['publications'] = notes_v1 + notes_v2
+            #notes_v2 = list(iterget_notes(client_v2, content={'authorids': profile.id}))
+            profile.content['publications'] = notes_v1 #+ notes_v2
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if 'Profile Not Found' not in e.args[0]:

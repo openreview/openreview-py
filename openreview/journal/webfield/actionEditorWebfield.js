@@ -56,7 +56,7 @@ var loadData = function() {
     .then(function(assignedGroups) {
       return $.when(
         Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
-        Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME),
+        Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
         Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
         Webfield2.api.get('/edges', { invitation: REVIEWERS_ASSIGNMENT_ID, groupBy: 'head'})
           .then(function(result) { return result.groupedEdges; })
