@@ -2510,7 +2510,7 @@ Thank you,
         submission_note = client.get_note(desk_reject_note.forum)
         assert submission_note.invitation == 'NeurIPS.cc/2021/Conference/-/Blind_Submission'
         assert submission_note.readers == [
-                'NeurIPS.cc/2021/Conference'
+                'NeurIPS.cc/2021/Conference',
                 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Reviewers',
