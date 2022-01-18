@@ -467,6 +467,37 @@ class TestVenueRequest():
         assert messages[1]['content']['subject'] == 'Reminder: [TestVenue@OR2030] Invitation to serve as reviewer'
         assert messages[1]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.</p>')
 
+    def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        bid_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'bid_start_date': '2021/02/30',
+                'bid_due_date': due_date.strftime('%Y/%m/%d')
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            referent=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert bid_stage_note
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=bid_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
+        assert process_logs[0]['status'] == 'ok'
+
+        comment_invitation = '{}/-/Request{}/Comment'.format(venue['support_group_id'],
+                                                             venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=comment_invitation)[0]
+        error_string = 'Bid_Stage Process failed due to the following error:'
+        assert error_string in last_comment.content['comment']
+
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         reviewer_client = helpers.create_user('venue_reviewer1@mail.com', 'Venue', 'Reviewer')
