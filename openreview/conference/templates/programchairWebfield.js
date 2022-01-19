@@ -1460,9 +1460,7 @@ var displayPaperStatusTable = function() {
       conferenceStatusData.filteredRows = filteredRows
     }
     renderTable(container, filteredRows);
-    $(container + " .btn-export-data").text(
-      "Export ".concat(filteredRows.length, " records")
-    );
+    $(container + " .btn-export-data").text("Export " + filteredRows.length + " records");
   };
 
   // Message modal handler
