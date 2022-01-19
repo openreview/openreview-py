@@ -58,7 +58,6 @@ var propertiesAllowed ={
     replyCount:['reviewProgressData.forumReplyCount'],
     decision: ['decision.content.decision'],
 }
-var ENABLE_DESK_REJECTED_WITHDRAWN_SUBMISSION_TAB = true;
 
 // Page State
 var reviewerSummaryMap = {};
@@ -369,10 +368,8 @@ var getWithdrawnNotes = function() {
   if (!WITHDRAWN_SUBMISSION_ID) {
     return $.Deferred().resolve([]);
   }
-  return Webfield.get('/notes', {
+  return Webfield.getAll('/notes', {
     invitation: WITHDRAWN_SUBMISSION_ID, details: 'original'
-  }).then(function(result) {
-    return result.notes;
   });
 };
 
@@ -380,10 +377,8 @@ var getDeskRejectedNotes = function() {
   if (!DESK_REJECTED_SUBMISSION_ID) {
     return $.Deferred().resolve([]);
   }
-  return Webfield.get('/notes', {
+  return Webfield.getAll('/notes', {
     invitation: DESK_REJECTED_SUBMISSION_ID, details: 'original'
-  }).then(function(result) {
-    return result.notes;
   });
 };
 
@@ -879,15 +874,6 @@ var renderHeader = function() {
     }
   ];
 
-  if(ENABLE_DESK_REJECTED_WITHDRAWN_SUBMISSION_TAB) {
-    tabs.push({
-      heading: 'Desk Rejected/Withdrawn Papers',
-      id: 'deskrejectwithdrawn-status',
-      content: loadingMessage,
-      extraClasses: 'horizontal-scroll'
-    });
-  }
-
   if (AREA_CHAIRS_ID) {
     tabs.push({
       heading: 'Area Chair Status',
@@ -909,6 +895,11 @@ var renderHeader = function() {
   tabs.push({
     heading: 'Reviewer Status',
     id: 'reviewer-status',
+    content: loadingMessage,
+    extraClasses: 'horizontal-scroll'
+  }, {
+    heading: 'Desk Rejected/Withdrawn Papers',
+    id: 'deskrejectwithdrawn-status',
     content: loadingMessage,
     extraClasses: 'horizontal-scroll'
   });
@@ -1779,7 +1770,9 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
     };
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
-    postRenderTable(data, pageNum);
+    $('.console-table th').eq(0).css('width', '20%');
+    $('.console-table th').eq(1).css('width', '50%');
+    $('.console-table th').eq(2).css('width', '30%');
 
     $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
@@ -1788,39 +1781,6 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
       postRenderTable(data, newPageNum);
       return false;
     });
-  };
-
-  var postRenderTable = function(data, pageNum) {
-    $('.console-table th').eq(0).css('width', '3%');
-    $('.console-table th').eq(1).css('width', '5%');
-    $('.console-table th').eq(2).css('width', '22%');
-    if (AREA_CHAIRS_ID) {
-      $('.console-table th').eq(3).css('width', '30%');
-      $('.console-table th').eq(4).css('width', '28%');
-      $('.console-table th').eq(5).css('width', '12%');
-    } else {
-      $('.console-table th').eq(3).css('width', '45%');
-      $('.console-table th').eq(4).css('width', '25%');
-    }
-
-    var offset = (pageNum - 1) * PAGE_SIZE;
-    var pageData = data.slice(offset, offset + PAGE_SIZE);
-
-    if (ENABLE_REVIEWER_REASSIGNMENT) {
-      pageData.forEach(function(rowData) {
-        updateReviewerContainer(rowData.note.number);
-      });
-    }
-
-    addTagsToPaperSummaryCell(pageData, pcAssignmentTagInvitations);
-
-    $(container + ' .console-table > tbody > tr .select-note-reviewers').each(function() {
-      var noteId = $(this).data('noteId');
-      $(this).prop('checked', selectedNotesById[noteId]);
-    });
-
-    var allSelected = _.every(Object.values(selectedNotesById));
-    $(container + ' .console-table #select-all-papers').prop('checked', allSelected);
   };
 
   if (rowData.length) {
@@ -3333,7 +3293,7 @@ var buildDeskrejectedWithdrawnCSV = function(){
 }
 
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
-  var blob = new Blob(buildCSV(), {type: 'text/csv'});
+  var blob = new Blob(buildCSV(), {type: 'text/csv;charset=utf-8'});
   var fileName = conferenceStatusData.filteredNotes ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
   saveAs(blob, fileName);
 });
