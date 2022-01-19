@@ -596,7 +596,7 @@ def replace_members_with_ids(client, group):
     invalid_ids = []
 
     def classify_members(member):
-        if '~' not in member:
+        if '@' in member:
             try:
                 profile = client.get_profile(member.lower())
                 return ('ids', profile.id)

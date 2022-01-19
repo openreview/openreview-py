@@ -224,7 +224,7 @@ class TestTools():
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
             signatories=['~Super_User1'],
-            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1']
+            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'random_member']
         ))
         assert posted_group
 
@@ -246,6 +246,7 @@ class TestTools():
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
         assert replaced_group.members == ['~SomeFirstName_User1']
+        assert 'random_member' not in replaced_group.members
 
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
