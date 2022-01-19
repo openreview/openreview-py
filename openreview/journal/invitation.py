@@ -839,6 +839,7 @@ class InvitationBuilder(object):
 
     def set_review_approval_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_authors_id = journal.get_authors_id(number=note.number)
 
@@ -859,7 +860,7 @@ class InvitationBuilder(object):
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] },
                     'writers': { 'values': [ venue_id ] },
                     'content': {
                         'under_review': {
@@ -1486,6 +1487,7 @@ class InvitationBuilder(object):
 
     def set_official_recommendation_invitation(self, journal, note, cdate, duedate):
         venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_reviewers_anon_id = journal.get_reviewers_id(number=note.number, anon=True)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
@@ -1517,7 +1519,7 @@ class InvitationBuilder(object):
                             'nullable': True
                         },
                         'signatures': { 'values': ['${signatures}'] },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                        'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, '${signatures}'] },
                         'nonreaders': { 'values': [ paper_authors_id ] },
                         'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                         'content': {
@@ -1555,6 +1557,7 @@ class InvitationBuilder(object):
 
     def set_solicit_review_invitation(self, journal, note):
         venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_authors_id = journal.get_authors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
@@ -1586,7 +1589,7 @@ class InvitationBuilder(object):
                         'nullable': True
                     },
                     'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, '${signatures}'] },
                     'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}'] },
                     'content': {
@@ -1989,6 +1992,7 @@ class InvitationBuilder(object):
 
     def set_decision_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_authors_id = journal.get_authors_id(number=note.number)
 
@@ -2018,7 +2022,7 @@ class InvitationBuilder(object):
                         'nullable': True
                     },
                     'signatures': { 'values': [paper_action_editors_id] },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id ] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id ] },
                     'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id, paper_action_editors_id] },
                     'content': {
@@ -2088,7 +2092,7 @@ class InvitationBuilder(object):
                 'note': {
                     'forum': { 'value': note.id },
                     'replyto': { 'value': decision.id },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id] },
                     'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id] },
                     'signatures': { 'values': [editors_in_chief_id] },
@@ -2121,6 +2125,7 @@ class InvitationBuilder(object):
 
     def set_review_rating_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
         reviews = self.client.get_notes(forum=note.forum, invitation=journal.get_review_id(number=note.number))
         paper_reviewers_id = journal.get_reviewers_id(number=note.number, anon=True)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
@@ -2137,7 +2142,7 @@ class InvitationBuilder(object):
                         invitees=[venue_id, paper_action_editors_id],
                         readers=[venue_id, paper_action_editors_id],
                         writers=[venue_id],
-                        signatures=[venue_id],
+                        signatures=[editors_in_chief_id],
                         maxReplies=1,
                         edit={
                             'signatures': { 'values': [paper_action_editors_id] },
@@ -2148,7 +2153,7 @@ class InvitationBuilder(object):
                                 'forum': { 'value': review.forum },
                                 'replyto': { 'value': review.id },
                                 'signatures': { 'values': [paper_action_editors_id] },
-                                'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                                'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id] },
                                 'nonreaders': { 'values': [ paper_authors_id ] },
                                 'writers': { 'values': [ venue_id, paper_action_editors_id] },
                                 'content': {
@@ -2335,7 +2340,7 @@ class InvitationBuilder(object):
                     'signatures': { 'values': [ paper_action_editors_id ] },
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id ] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id ] },
                     'writers': { 'values': [ venue_id, paper_action_editors_id ] },
                     'content': {
                         'verification': {
@@ -2354,6 +2359,7 @@ class InvitationBuilder(object):
 
     def set_authors_deanonymization_invitation(self, journal, note):
         venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_authors_id = journal.get_authors_id(number=note.number)
 
         authors_deanonymization_invitation_id = journal.get_authors_deanonymization_id(number=note.number)
@@ -2372,7 +2378,7 @@ class InvitationBuilder(object):
                     'signatures': { 'values': [ paper_authors_id ] },
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
-                    'readers': { 'values': [ venue_id, paper_authors_id ] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_authors_id ] },
                     'writers': { 'values': [ venue_id ] },
                     'content': {
                         'confirmation': {

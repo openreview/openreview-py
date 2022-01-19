@@ -1078,7 +1078,7 @@ Comment: This is an inapropiate comment</p>
         helpers.await_queue(openreview_client)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
-        assert decision_note.readers == [venue_id, f"{venue_id}/Paper1/Action_Editors"]
+        assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
 
         ## Check invitations
         invitations = raia_client.get_invitations(replyForum=note_id_1)
@@ -1562,7 +1562,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue(openreview_client)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
-        assert decision_note.readers == [venue_id, f"{venue_id}/Paper4/Action_Editors"]
+        assert decision_note.readers == ['.TMLR/Editors_In_Chief', f"{venue_id}/Paper4/Action_Editors"]
 
         ## EIC approves the decision
         approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper4/-/Decision_Approval',
@@ -1882,7 +1882,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
-        assert decision_note.readers == [venue_id, f"{venue_id}/Paper5/Action_Editors"]
+        assert decision_note.readers == ['.TMLR/Editors_In_Chief', f"{venue_id}/Paper5/Action_Editors"]
 
         ## EIC approves the decision
         with pytest.raises(openreview.OpenReviewException, match=r'NotInviteeError'):
