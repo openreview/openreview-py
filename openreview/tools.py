@@ -1725,7 +1725,7 @@ def get_neurips_profile_info(profile, n_years=3):
 
     ## Publications section: get publications within last n years
     for pub in profile.content.get('publications', []):
-        if 'year' in pub.content:
+        if 'year' in pub.content and isinstance(pub.content['year'], str) and len(pub.content['year']) == 4:
             year = int(pub.content['year'])
         elif pub.cdate:
             year = int(datetime.datetime.fromtimestamp(pub.cdate/1000).year)
