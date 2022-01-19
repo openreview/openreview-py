@@ -85,7 +85,7 @@ class Journal(object):
         return self.__get_invitation_id(name='Review_Approval', number=number)
 
     def get_withdraw_id(self, number=None):
-        return self.__get_invitation_id(name='Withdraw', number=number)
+        return self.__get_invitation_id(name='Withdraw_Request', number=number)
 
     def get_under_review_id(self):
         return self.__get_invitation_id(name='Under_Review')
