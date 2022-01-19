@@ -182,7 +182,7 @@ var main = function() {
       sacByAc: sacByAc,
       acsBySac: acsBySac,
       blindedNotes: blindedNotes,
-      deskRejectedWithdrawnNotes:[...deskRejectedNotes,...withdrawnNotes],
+      deskRejectedWithdrawnNotes: _.concat(deskRejectedNotes, withdrawnNotes),
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
       seniorAreaChairGroups: seniorAreaChairGroupMaps,
@@ -1462,7 +1462,7 @@ var displayPaperStatusTable = function() {
       conferenceStatusData.filteredRows = filteredRows
     }
     renderTable(container, filteredRows);
-    $(container + ' .btn-export-data').text(`Export ${filteredRows.length} records`)
+    $(container + ' .btn-export-data').text('Export ' + filteredRows.length + ' records')
   };
 
   // Message modal handler
@@ -1680,8 +1680,6 @@ var displayPaperStatusTable = function() {
 
 var displayRejectedWithdrawnPaperStatusTable = function () {
   var container = '#deskrejectwithdrawn-status';
-  var pcAssignmentTagInvitations = conferenceStatusData.pcAssignmentTagInvitations;
-
   var rowData = conferenceStatusData.deskRejectedWithdrawnNotes;
 
   var filteredRows = null;
@@ -1741,7 +1739,7 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
     }
     tableDataInDisplay = filteredRows;
     renderTable(container, filteredRows);
-    $(container + ' .btn-export-deskrejected-withdrawn').text(`Export ${filteredRows.length} records`)
+    $(container + ' .btn-export-deskrejected-withdrawn').text('Export ' + filteredRows.length + ' records')
   };
 
   var renderTable = function(container, data) {
@@ -1750,11 +1748,11 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
       paperNumbers.push(note.number);
 
       var numberHtml = '<strong class="note-number">' + note.number + '</strong>';
-      var summaryHtml = Handlebars.templates.noteSummary(note.details.original??note);
+      var summaryHtml = Handlebars.templates.noteSummary(note.details.original || note);
       var reason = 'unknown';
       if(note.invitation === WITHDRAWN_SUBMISSION_ID) reason = 'Withdrawn'
       if(note.invitation===DESK_REJECTED_SUBMISSION_ID) reason = 'Desk Rejected'
-      var reasonHtml = `<strong class="note-number">${reason}</strong>`
+      var reasonHtml = '<strong class="note-number">' + reason + '</strong>'
 
       var rows = [numberHtml, summaryHtml,reasonHtml];
       return rows;
@@ -3279,8 +3277,8 @@ var buildDeskrejectedWithdrawnCSV = function(){
   _.forEach(tableDataInDisplay, function(note) {
     var originalNote = note.details.original || note
     var number = originalNote.number;
-    var forum = `https://openreview.net/forum?id=${originalNote.forum}`
-    var title = `"${originalNote.content.title}"`;
+    var forum = 'https://openreview.net/forum?id=' + originalNote.forum;
+    var title = '"' + originalNote.content.title + '"';
     var authors = originalNote.content.authors.join('|');
     var reason = 'unknown';
     if (note.invitation === WITHDRAWN_SUBMISSION_ID) reason = 'Withdrawn'
