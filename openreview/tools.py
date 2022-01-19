@@ -599,18 +599,25 @@ def replace_members_with_ids(client, group):
         if '@' in member:
             try:
                 profile = client.get_profile(member.lower())
-                return ('ids', profile.id)
+                return 'ids', profile.id
             except openreview.OpenReviewException as e:
                 if 'Profile Not Found' in e.args[0]:
-                    return ('emails', member.lower())
+                    return 'emails', member.lower()
                 else:
                     raise e
-        else:
+        elif '~' in member:
             profile = get_profile(client, member)
             if profile:
-                return ('ids', profile.id)
+                return 'ids', profile.id
             else:
-                return ('invalid_ids', member)
+                return 'invalid_ids', member
+        else:
+            _group = get_group(client, member)
+            print(_group)
+            if _group is not None:
+                return 'ids', _group.id
+            else:
+                return 'invalid_ids', member
 
     results = concurrent_requests(classify_members, group.members)
 

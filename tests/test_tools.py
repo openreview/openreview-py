@@ -218,13 +218,22 @@ class TestTools():
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
+        new_group = client.post_group(
+            openreview.Group(
+                id='NewGroup',
+                members=['test_subject_x@mail.com', 'test_subject_y@mail.com', 'test_subject_z@mail.com'],
+                signatures=['~Super_User1'],
+                signatories=['NewGroup'],
+                readers=['everyone'],
+                writers=['NewGroup']
+            ))
 
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
             signatories=['~Super_User1'],
-            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'random_member']
+            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'RandomMember', 'NewGroup']
         ))
         assert posted_group
 
@@ -245,7 +254,7 @@ class TestTools():
 
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
-        assert replaced_group.members == ['~SomeFirstName_User1']
+        assert replaced_group.members == ['~SomeFirstName_User1', 'NewGroup']
         assert 'random_member' not in replaced_group.members
 
         posted_group = client.post_group(openreview.Group(id='test.org',
