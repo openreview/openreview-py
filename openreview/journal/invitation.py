@@ -1499,7 +1499,7 @@ class InvitationBuilder(object):
                 invitees=[venue_id, paper_reviewers_id], ## should this be reviewers/submitted??
                 readers=['everyone'],
                 writers=[venue_id],
-                signatures=[venue_id],
+                signatures=[editors_in_chief_id],
                 maxReplies=1,
                 edit={
                     'signatures': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' },
