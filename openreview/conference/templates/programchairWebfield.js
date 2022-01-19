@@ -1460,7 +1460,9 @@ var displayPaperStatusTable = function() {
       conferenceStatusData.filteredRows = filteredRows
     }
     renderTable(container, filteredRows);
-    $(container + ' .btn-export-data').text(`Export ${filteredRows.length} records`)
+    $(container + " .btn-export-data").text(
+      "Export ".concat(filteredRows.length, " records")
+    );
   };
 
   // Message modal handler
@@ -2967,45 +2969,46 @@ var buildCSV = function(){
   var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
   var isFiltered = conferenceStatusData.filteredRows ? true : false
   var notes = isFiltered ? conferenceStatusData.filteredRows : conferenceStatusData.blindedNotes
-  var originalNotes = notes.map(p => isFiltered
-    ? p.note.details.original || p.note
-    : p.details.original || p
-  )
+  var originalNotes = notes.map(function (p) {
+    return isFiltered
+      ? p.note.details.original || p.note
+      : p.details.original || p;
+  });
   
-  var noteContentFields = [
-    ...new Set(
-      originalNotes
-        .map((p) => {
-          var content = isFiltered ? p.note.content : p.content;
-          if (!content) return []
-          return Object.keys(content);
-        })
-        .flat()
+  var noteContentFields = _.uniq(
+    _.flatten(
+      originalNotes.map(function (p) {
+        if (!p.content) return [];
+        return Object.keys(p.content);
+      })
     )
-  ];
+  );
+  
+  
   
   var rowData = [];
-  rowData.push(['number',
-  'forum',
-  ...noteContentFields,
-  'num reviewers',
-  'num submitted reviewers',
-  'missing reviewers',
-  'min rating',
-  'max rating',
-  'average rating',
-  'min confidence',
-  'max confidence',
-  'average confidence',
-  'ac recommendation',
-  'ac1 profile id',
-  'ac1 name',
-  'ac1 email',
-  'ac2 profile id',
-  'ac2 name',
-  'ac2 email',
-  'ac ranking',
-  'decision'].join(',') + '\n');
+  rowData.push(
+    _.concat(["number", "forum"], noteContentFields, [
+      "num reviewers",
+      "num submitted reviewers",
+      "missing reviewers",
+      "min rating",
+      "max rating",
+      "average rating",
+      "min confidence",
+      "max confidence",
+      "average confidence",
+      "ac recommendation",
+      "ac1 profile id",
+      "ac1 name",
+      "ac1 email",
+      "ac2 profile id",
+      "ac2 name",
+      "ac2 email",
+      "ac ranking",
+      "decision"
+    ]).join(",") + "\n"
+  );
 
   _.forEach(notes, function(noteObj) {
     var paperTableRow = null;
@@ -3034,13 +3037,24 @@ var buildCSV = function(){
 
     var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
-    var contents = noteContentFields.map(field=>{
-      const contentValue = originalNote.content[field]
-      if (!contentValue) return ''
-      if (field === 'authors') return originalNote.content.authors ? originalNote.content.authors.join('|') : ''
-      if(Array.isArray(contentValue)) return contentValue.join('|')
-      return `"${contentValue.replace(/\r?\n|\r/g, " ")}"`
-    })
+    var contents = noteContentFields.map(function (field) {
+      var contentValue = originalNote.content[field];
+      if (!contentValue) return '""';
+      if (Array.isArray(contentValue)) return contentValue.join("|");
+      if (
+        ["+", "-"].some(function (p) {
+          return contentValue.startsWith(p);
+        })
+      )
+        contentValue = contentValue.substring(1);
+      return '"'.concat(
+        contentValue
+          .replace(/\r?\n|\r/g, " ") // remove line break
+          .replace(/"/g, '""'), // escape double quotes
+        '"'
+      );
+    });
+    
 
     var reviewersData = _.values(paperTableRow.reviewProgressData.reviewers);
     var allReviewers = [];
@@ -3051,28 +3065,38 @@ var buildCSV = function(){
         missingReviewers.push(r.id);
       }
     });
-    rowData.push([noteNumber,
-    '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
-    ...contents,
-    paperTableRow.reviewProgressData.numReviewers,
-    paperTableRow.reviewProgressData.numSubmittedReviews,
-    '"' + missingReviewers.join('|') + '"',
-    paperTableRow.reviewProgressData.minRating,
-    paperTableRow.reviewProgressData.maxRating,
-    paperTableRow.reviewProgressData.averageRating,
-    paperTableRow.reviewProgressData.minConfidence,
-    paperTableRow.reviewProgressData.maxConfidence,
-    paperTableRow.reviewProgressData.averageConfidence,
-    paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
-    areachairProfileOne.id,
-    areachairProfileOne.name,
-    areachairProfileOne.email,
-    areachairProfileTwo.id,
-    areachairProfileTwo.name,
-    areachairProfileTwo.email,
-    acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
-    paperTableRow.decision && paperTableRow.decision.content && paperTableRow.decision.content.decision
-    ].join(',') + '\n');
+    rowData.push(
+      _.concat(
+        [
+          noteNumber,
+          '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"'
+        ],
+        contents,
+        [
+          paperTableRow.reviewProgressData.numReviewers,
+          paperTableRow.reviewProgressData.numSubmittedReviews,
+          '"' + missingReviewers.join('|') + '"',
+          paperTableRow.reviewProgressData.minRating,
+          paperTableRow.reviewProgressData.maxRating,
+          paperTableRow.reviewProgressData.averageRating,
+          paperTableRow.reviewProgressData.minConfidence,
+          paperTableRow.reviewProgressData.maxConfidence,
+          paperTableRow.reviewProgressData.averageConfidence,
+          paperTableRow.areachairProgressData.metaReview &&
+          paperTableRow.areachairProgressData.metaReview.content.recommendation,
+          areachairProfileOne.id,
+          areachairProfileOne.name,
+          areachairProfileOne.email,
+          areachairProfileTwo.id,
+          areachairProfileTwo.name,
+          areachairProfileTwo.email,
+          acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
+          paperTableRow.decision &&
+          paperTableRow.decision.content &&
+          paperTableRow.decision.content.decision
+        ]
+      ).join(',') + '\n'
+    );    
   });
 
   return [rowData.join('')];
