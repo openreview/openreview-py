@@ -904,7 +904,7 @@ Comment: This is an inapropiate comment</p>
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=['.TMLR/Editors_In_Chief']
             )
         )
 
@@ -1483,7 +1483,7 @@ note={Featured Certification, Reproducibility Certification}
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper4/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=['.TMLR/Editors_In_Chief']
             )
         )
 
@@ -1815,7 +1815,7 @@ note={Rejected}
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=['.TMLR/Editors_In_Chief']
             )
         )
 
@@ -2078,7 +2078,7 @@ note={Rejected}
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper6/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=['.TMLR/Editors_In_Chief']
             )
         )
 
