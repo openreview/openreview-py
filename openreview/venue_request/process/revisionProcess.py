@@ -125,10 +125,12 @@ def process(client, note, invitation):
         print('Conference: ', conference.get_id())
     except Exception as e:
         error_status = f'''
-                {invitation_type} Process failed due to the following error: \n 
-                {repr(e)} \n 
-                {traceback.format_exc()}
-                '''
+{invitation_type.replace("_", " ")} Process failed due to the following error: {repr(e)}
+
+To check references for the note: https://api.openreview.net/references?id={note.id} '''
+        print("Following error in the process function was posted as a comment:")
+        print(traceback.format_exc())
+
         comment_note = openreview.Note(
             invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
             forum=forum_note.id,
@@ -137,7 +139,7 @@ def process(client, note, invitation):
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
             content={
-                'title': '{invitation} Status'.format(invitation=invitation_type),
+                'title': '{invitation} Status [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
                 'comment': error_status
             }
         )

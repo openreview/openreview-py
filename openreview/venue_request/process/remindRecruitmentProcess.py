@@ -32,7 +32,7 @@ def process(client, note, invitation):
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Remind Recruitment Status',
+            'title': f'Remind Recruitment Status',
             'comment': f'''
 Reminded: {len(recruitment_status.get('reminded', []))} users.
 
@@ -45,6 +45,12 @@ Please check the invitee group to see more details: https://openreview.net/group
         error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
         {recruitment_status.get('errors') }'''
 
-        comment_note.content['comment'] += f'''\n Error: {error_status}'''
+        comment_note.content['comment'] += f'''
+Error: {error_status}
+'''
+        comment_note.content['comment'] += f'''
+        
+To check references for the note: https://api.openreview.net/references?id={note.id}
+'''
 
     client.post_note(comment_note)

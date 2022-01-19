@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import time
 import datetime
 import re
+import traceback
 from enum import Enum
 from tqdm import tqdm
 import os
@@ -1332,6 +1333,7 @@ Program Chairs
                         if repr(e) not in recruitment_status['errors']:
                             recruitment_status['errors'][repr(e)] = []
                         recruitment_status['errors'][repr(e)].append(reviewer_id)
+                        print(traceback.format_exc())
 
         if retry_declined:
             declined_reviewers = reviewers_declined_group.members
@@ -1358,6 +1360,7 @@ Program Chairs
                         if repr(e) not in recruitment_status['errors']:
                             recruitment_status['errors'][repr(e)] = []
                         recruitment_status['errors'][repr(e)].append(reviewer_id)
+                        print(traceback.format_exc())
 
         print('Sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
@@ -1397,6 +1400,7 @@ Program Chairs
                     if repr(e) not in recruitment_status['errors']:
                         recruitment_status['errors'][repr(e)] = []
                     recruitment_status['errors'][repr(e)].append(email)
+                    print(traceback.format_exc())
         return recruitment_status
 
     ## temporary function, move to somewhere else
