@@ -817,7 +817,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, noteId = None, with_count=False):
+    def get_note_edits(self, noteId = None, invitation = None, with_count=False):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -827,6 +827,8 @@ class OpenReviewClient(object):
         params = {}
         if noteId:
             params['note.id'] = noteId
+        if invitation:
+            params['invitation'] = invitation
 
         response = requests.get(self.note_edits_url, params = params, headers = self.headers)
         response = self.__handle_response(response)

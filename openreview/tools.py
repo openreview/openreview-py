@@ -73,10 +73,10 @@ def get_profile(client, value, with_publications=False):
                 baseurl_v2 = 'https://api2.openreview.net'
 
             client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
-            client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+            #client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
             notes_v1 = list(iterget_notes(client_v1, content={'authorids': profile.id}))
-            notes_v2 = list(iterget_notes(client_v2, content={'authorids': profile.id}))
-            profile.content['publications'] = notes_v1 + notes_v2
+            #notes_v2 = list(iterget_notes(client_v2, content={'authorids': profile.id}))
+            profile.content['publications'] = notes_v1 #+ notes_v2
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if 'Profile Not Found' not in e.args[0]:
@@ -1035,7 +1035,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None, expired = None):
+def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -1101,6 +1101,8 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
         params['note'] = note
     if replyto is not None:
         params['replyto'] = replyto
+    if super is not None:
+        params['super'] = super
     params['expired'] = expired
 
     return iterget(client.get_invitations, **params)
@@ -1738,7 +1740,7 @@ def fill_template(template, paper):
 
     return new_template
 
-def get_conflicts(author_profiles, user_profile, policy='default'):
+def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
 
@@ -1757,13 +1759,13 @@ def get_conflicts(author_profiles, user_profile, policy='default'):
     info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
 
     for profile in author_profiles:
-        author_info = info_function(profile)
+        author_info = info_function(profile, n_years)
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
         author_publications.update(author_info['publications'])
 
-    user_info = info_function(user_profile)
+    user_info = info_function(user_profile, n_years)
 
     conflicts = set()
     conflicts.update(author_domains.intersection(user_info['domains']))
@@ -1775,7 +1777,7 @@ def get_conflicts(author_profiles, user_profile, policy='default'):
 
     return list(conflicts)
 
-def get_profile_info(profile):
+def get_profile_info(profile, n_years=3):
     """
     Gets all the domains, emails, relations associated with a Profile
 
