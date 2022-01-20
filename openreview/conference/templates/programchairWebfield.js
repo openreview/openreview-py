@@ -3101,8 +3101,6 @@ var buildCSV = function(){
     )
   );
   
-  
-  
   var rowData = [];
   rowData.push(
     _.concat(["number", "forum"], noteContentFields, [
@@ -3157,22 +3155,20 @@ var buildCSV = function(){
     var contents = noteContentFields.map(function (field) {
       var contentValue = originalNote.content[field];
       if (!contentValue) return '""';
-      if (Array.isArray(contentValue)) return contentValue.join("|");
+      if (Array.isArray(contentValue)) return '"' + contentValue.join("|") + '"';
       if (
         ["+", "-"].some(function (p) {
           return contentValue.startsWith(p);
         })
       )
         contentValue = contentValue.substring(1);
-      return '"'.concat(
+      return '"' +
         contentValue
           .replace(/\r?\n|\r/g, " ") // remove line break
-          .replace(/"/g, '""'), // escape double quotes
-        '"'
-      );
+          .replace(/"/g, '""') // escape double quotes
+        + '"';
     });
     
-
     var reviewersData = _.values(paperTableRow.reviewProgressData.reviewers);
     var allReviewers = [];
     var missingReviewers = [];
