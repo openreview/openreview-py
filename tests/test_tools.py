@@ -233,7 +233,7 @@ class TestTools():
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
             signatories=['~Super_User1'],
-            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'RandomMember', 'NewGroup']
+            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'NewGroup']
         ))
         assert posted_group
 
