@@ -86,9 +86,5 @@ Please check the invitee group to see more details: https://openreview.net/group
         comment_note.content['comment'] += f'''
 Error: {error_status}
 '''
-        comment_note.content['comment'] += f'''
-        
-To check references for the note: https://api.openreview.net/references?id={note.id}
-'''
 
     client.post_note(comment_note)

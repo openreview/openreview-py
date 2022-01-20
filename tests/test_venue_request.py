@@ -495,7 +495,7 @@ class TestVenueRequest():
         comment_invitation = '{}/-/Request{}/Comment'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'Bid Stage Process failed due to the following error:'
+        error_string = 'Bid Stage Process failed due to the following error: ValueError(\'day is out of range for month\')'
         assert error_string in last_comment.content['comment']
 
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
