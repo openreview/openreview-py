@@ -49,6 +49,11 @@ class TestJournal():
         andrew_client = helpers.create_user('andrewmc@mailfour.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mailsix.com', 'Hugo', 'Larochelle')
 
+        ## Authors
+        melisa_client = helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
+        celeste_client = helpers.create_user('celeste@mail.com', 'Celeste', 'Martinez')
+
+
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
@@ -137,7 +142,7 @@ class TestJournal():
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -163,7 +168,7 @@ class TestJournal():
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melisa_Bok1']
         assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
@@ -173,7 +178,7 @@ class TestJournal():
         assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Bok1']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
 
@@ -196,7 +201,7 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title UPDATED' },
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mailfour.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
@@ -215,12 +220,12 @@ class TestJournal():
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert note.content['authorids']['readers'] == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert author_group.members == ['~SomeFirstName_User1', '~Andrew_McCallum1']
 
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
@@ -230,7 +235,7 @@ class TestJournal():
                                             'title': { 'value': 'Paper title 2' },
                                             'abstract': { 'value': 'Paper abstract 2' },
                                             'authors': { 'value': ['Test User', 'Celeste Martinez']},
-                                            'authorids': { 'value': ['~SomeFirstName_User1', 'celeste@mail.com']},
+                                            'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
                                             'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
@@ -245,7 +250,7 @@ class TestJournal():
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper2/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', 'celeste@mail.com']
+        assert author_group.members == ['~SomeFirstName_User1', '~Celeste_Martinez1']
         assert openreview_client.get_group(f"{venue_id}/Paper2/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper2/Action_Editors")
 
@@ -257,7 +262,7 @@ class TestJournal():
                                             'title': { 'value': 'Paper title 3' },
                                             'abstract': { 'value': 'Paper abstract 3' },
                                             'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                                            'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mailfour.com']},
+                                            'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
                                             'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
@@ -272,7 +277,7 @@ class TestJournal():
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper3/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert author_group.members == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert openreview_client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper3/Action_Editors")
 
@@ -334,7 +339,7 @@ class TestJournal():
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
@@ -393,7 +398,7 @@ note={Under review}
         assert note.readers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper2/Action_Editors']
         assert note.signatures == ['.TMLR/Paper2/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'celeste@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Celeste_Martinez1']
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Desk_Rejection'
 
@@ -447,7 +452,7 @@ note={Under review}
         assert note.readers == ['.TMLR', '.TMLR/Paper3/Action_Editors', '.TMLR/Paper3/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper3/Action_Editors', '.TMLR/Paper3/Authors']
         assert note.signatures == ['.TMLR/Paper3/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == '.TMLR/Withdrawn_Submission'
 #         assert note.content['_bibtex']['value'] == '''@article{
@@ -1125,7 +1130,7 @@ Comment: This is an inapropiate comment</p>
                     'title': { 'value': 'Paper title VERSION 2' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mailfour.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1145,7 +1150,7 @@ Comment: This is an inapropiate comment</p>
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         # TODO: check this with Carlos
         #assert note.content['authorids'].get('readers') == None
         #assert note.content['authors'].get('readers') == None
@@ -1195,7 +1200,7 @@ Comment: This is an inapropiate comment</p>
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -1251,7 +1256,7 @@ note={Featured Certification, Reproducibility Certification}
                     'title': { 'value': 'Paper title 4' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1597,7 +1602,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper4/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Bok1']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
@@ -1629,7 +1634,7 @@ note={Rejected}
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper4/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Bok1']
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
@@ -1684,7 +1689,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 5' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok', 'Raia Hadsell']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com', '~Raia_Hadsell1']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1', '~Raia_Hadsell1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1947,7 +1952,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 6' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -2149,7 +2154,7 @@ note={Rejected}
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper6/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Bok1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == '.TMLR/Withdrawn_Submission'
 
@@ -2182,7 +2187,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 7' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
