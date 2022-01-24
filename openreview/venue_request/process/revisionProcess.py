@@ -4,13 +4,13 @@ def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
 
-    conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
-    forum_note = client.get_note(note.forum)
-
-    comment_readers = forum_note.content.get('Contact Emails', []) + forum_note.content.get('program_chair_emails', []) + [SUPPORT_GROUP]
     invitation_type = invitation.id.split('/')[-1]
 
     try:
+        conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
+        forum_note = client.get_note(note.forum)
+        comment_readers = forum_note.content.get('Contact Emails', []) + forum_note.content.get('program_chair_emails',[]) + [SUPPORT_GROUP]
+
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
             conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
@@ -130,6 +130,9 @@ def process(client, note, invitation):
 To check references for the note: https://api.openreview.net/references?id={note.id} '''
         print("Following error in the process function was posted as a comment:")
         print(traceback.format_exc())
+
+        forum_note = client.get_note(note.forum)
+        comment_readers = forum_note.content.get('Contact Emails', []) + forum_note.content.get('program_chair_emails',[]) + [SUPPORT_GROUP]
 
         comment_note = openreview.Note(
             invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
