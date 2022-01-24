@@ -612,11 +612,8 @@ def replace_members_with_ids(client, group):
             else:
                 return 'invalid_ids', member
         else:
-            _group = get_group(client, member)
-            if _group is not None:
-                return 'ids', _group.id
-            else:
-                return 'invalid_ids', member
+            _group = client.get_group(member)
+            return 'ids', _group.id
 
     results = concurrent_requests(classify_members, group.members)
 
