@@ -36,6 +36,7 @@ class Journal(object):
         self.under_review_venue_id = f'{venue_id}/Under_Review'
         self.rejected_venue_id = f'{venue_id}/Rejection'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
+        self.withdrawn_venue_id = f'{venue_id}/Withdrawn'
         self.accepted_venue_id = venue_id
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.group_builder = group.GroupBuilder(client)
@@ -85,7 +86,10 @@ class Journal(object):
         return self.__get_invitation_id(name='Review_Approval', number=number)
 
     def get_withdraw_id(self, number=None):
-        return self.__get_invitation_id(name='Withdraw_Request', number=number)
+        return self.__get_invitation_id(name='Withdrawal', number=number)
+
+    def get_retraction_id(self, number=None):
+        return self.__get_invitation_id(name='Retraction', number=number)
 
     def get_under_review_id(self):
         return self.__get_invitation_id(name='Under_Review')
@@ -293,6 +297,26 @@ class Journal(object):
                 '}'
             ]
             return '\n'.join(bibtex)
+
+        if new_venue_id == self.withdrawn_venue_id:
+
+            first_author_last_name = 'anonymous'
+            authors = 'Anonymous'
+            year = datetime.datetime.fromtimestamp(note.cdate/1000).year
+
+            bibtex = [
+                '@article{',
+                utf8tolatex(first_author_last_name + first_word + ','),
+                'title={' + bibtex_title + '},',
+                'author={' + utf8tolatex(authors) + '},',
+                'journal={Submitted to ' + self.full_name + '},',
+                'year={' + str(year) + '},',
+                'url={https://openreview.net/forum?id=' + note.forum + '},',
+                'note={Withdrawn}',
+                '}'
+            ]
+            return '\n'.join(bibtex)
+
 
         if new_venue_id == self.rejected_venue_id:
 

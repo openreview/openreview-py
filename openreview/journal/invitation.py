@@ -908,7 +908,7 @@ class InvitationBuilder(object):
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
                     'signatures': { 'values': [paper_authors_id] },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] },
+                    'readers': { 'values': [ 'everyone' ] },
                     'writers': { 'values': [ venue_id ] },
                     'content': {
                         'withdrawal_confirmation': {
@@ -1063,6 +1063,11 @@ class InvitationBuilder(object):
                 'note': {
                     'id': { 'value-invitation': journal.get_author_submission_id() },
                     'content': {
+                        '_bibtex': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$'
+                            }
+                        },
                         'venue': {
                             'value': {
                                 'value': 'Withdrawn by Authors'
