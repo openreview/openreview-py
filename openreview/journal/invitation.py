@@ -41,7 +41,7 @@ class InvitationBuilder(object):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         invitations = self.client.get_invitations(regex=f'{journal.venue_id}/Paper{note.number}/.*', type='all')
-        exceptions = ['Public_Comment', 'Official_Comment', 'Moderation', 'Retraction']
+        exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
 
         for invitation in invitations:
             if invitation.id.split('/')[-1] not in exceptions:
