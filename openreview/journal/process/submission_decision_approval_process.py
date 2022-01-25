@@ -87,6 +87,9 @@ def process(client, edit, invitation):
     print('Enable Camera Ready Revision')
     journal.invitation_builder.set_camera_ready_revision_invitation(journal, submission, decision, duedate)
 
+    ## Enable Retract invitation
+    journal.invitation_builder.set_retract_invitation(journal, submission)
+
     ## Send email to authors
     print('Send email to authors')
     if decision.content['recommendation']['value'] == 'Accept as is':

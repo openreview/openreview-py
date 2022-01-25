@@ -36,7 +36,8 @@ class Journal(object):
         self.under_review_venue_id = f'{venue_id}/Under_Review'
         self.rejected_venue_id = f'{venue_id}/Rejection'
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
-        self.withdrawn_venue_id = f'{venue_id}/Withdrawn'
+        self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
+        self.retracted_venue_id = f'{venue_id}/Retracted_Acceptance'
         self.accepted_venue_id = venue_id
         self.invitation_builder = invitation.InvitationBuilder(client)
         self.group_builder = group.GroupBuilder(client)
@@ -90,6 +91,12 @@ class Journal(object):
 
     def get_retraction_id(self, number=None):
         return self.__get_invitation_id(name='Retraction', number=number)
+
+    def get_retraction_approval_id(self, number=None):
+        return self.__get_invitation_id(name='Retraction_Approval', number=number)
+
+    def get_retracted_id(self):
+        return self.__get_invitation_id(name='Retracted')
 
     def get_under_review_id(self):
         return self.__get_invitation_id(name='Under_Review')
@@ -361,6 +368,31 @@ class Journal(object):
                 '}'
             ]
             return '\n'.join(bibtex)
+
+        if new_venue_id == self.retracted_venue_id:
+
+            if anonymous:
+                first_author_last_name = 'anonymous'
+                authors = 'Anonymous'
+            else:
+                first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
+                first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
+                authors = ' and '.join(note.content['authors']['value'])
+            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
+
+            bibtex = [
+                '@article{',
+                utf8tolatex(first_author_last_name + first_word + ','),
+                'title={' + bibtex_title + '},',
+                'author={' + utf8tolatex(authors) + '},',
+                'journal={Submitted to ' + self.full_name + '},',
+                'year={' + str(year) + '},',
+                'url={https://openreview.net/forum?id=' + note.forum + '},',
+                'note={Retracted after acceptance}',
+                '}'
+            ]
+            return '\n'.join(bibtex)
+
 
     def notify_readers(self, edit, content_fields=[]):
 

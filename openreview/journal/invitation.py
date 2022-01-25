@@ -20,6 +20,7 @@ class InvitationBuilder(object):
         self.set_rejection_invitation(journal)
         self.set_withdrawn_invitation(journal)
         self.set_acceptance_invitation(journal)
+        self.set_retraction_invitation(journal)
         self.set_authors_release_invitation(journal)
         self.set_ae_assignment(journal)
         self.set_reviewer_assignment(journal)
@@ -40,7 +41,7 @@ class InvitationBuilder(object):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         invitations = self.client.get_invitations(regex=f'{journal.venue_id}/Paper{note.number}/.*', type='all')
-        exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
+        exceptions = ['Public_Comment', 'Official_Comment', 'Moderation', 'Retraction']
 
         for invitation in invitations:
             if invitation.id.split('/')[-1] not in exceptions:
@@ -938,6 +939,108 @@ class InvitationBuilder(object):
 
         self.save_invitation(journal, invitation)
 
+    def set_retract_invitation(self, journal, note):
+        venue_id = journal.venue_id
+        editors_in_chief = journal.get_editors_in_chief_id()
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = journal.get_reviewers_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
+
+        invitation = Invitation(id=journal.get_retraction_id(number=note.number),
+            invitees=[venue_id, paper_authors_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            maxReplies=1,
+            edit={
+                'signatures': { 'values-regex': paper_authors_id },
+                'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id ] },
+                'writers': { 'values': [ venue_id, paper_authors_id] },
+                'note': {
+                    'forum': { 'value': note.id },
+                    'replyto': { 'value': note.id },
+                    'signatures': { 'values': [paper_authors_id] },
+                    'readers': { 'values': [ editors_in_chief, paper_action_editors_id, paper_authors_id ] },
+                    'writers': { 'values': [ venue_id ] },
+                    'content': {
+                        'retraction_confirmation': {
+                            'value': {
+                                'value-radio': [
+                                    'I have read and agree with the venue\'s retraction policy on behalf of myself and my co-authors.'
+                                ]
+                            },
+                            'description': 'Please confirm to retract.',
+                            'order': 1
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$',
+                                'optional': True
+                            },
+                            'presentation': {
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/retract_submission_process.py'))
+
+        self.save_invitation(journal, invitation)
+
+    def set_retraction_approval_invitation(self, journal, note, retraction):
+        venue_id = journal.venue_id
+        editors_in_chief_id = journal.get_editors_in_chief_id()
+        paper_action_editors_id = journal.get_action_editors_id(number=note.number)
+        paper_authors_id = journal.get_authors_id(number=note.number)
+
+        invitation = Invitation(id=journal.get_retraction_approval_id(number=note.number),
+            invitees=[venue_id, editors_in_chief_id],
+            noninvitees=[paper_authors_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            edit={
+                'signatures': { 'values': [editors_in_chief_id] },
+                'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                'nonreaders': { 'values': [ paper_authors_id ] },
+                'writers': { 'values': [ venue_id] },
+                'note': {
+                    'forum': { 'value': note.id },
+                    'replyto': { 'value': retraction.id },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] },
+                    'writers': { 'values': [ venue_id] },
+                    'signatures': { 'values': [editors_in_chief_id] },
+                    'content': {
+                        'approval': {
+                            'order': 1,
+                            'value': {
+                                'value-checkbox': 'I approve the Author\'s retraction.'
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Optionally add any additional notes that might be useful for the Authors.',
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$',
+                                'optional': True
+                            },
+                            'presentation': {
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/retraction_approval_process.py')
+        )
+
+        self.save_invitation(journal, invitation)
+
 
     def set_under_review_invitation(self, journal):
         venue_id = journal.venue_id
@@ -1082,6 +1185,45 @@ class InvitationBuilder(object):
                 }
             },
             process=os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
+
+        )
+        self.save_invitation(journal, invitation)
+
+    def set_retraction_invitation(self, journal):
+        venue_id = journal.venue_id
+
+        invitation = Invitation(id=journal.get_retracted_id(),
+            invitees=[venue_id],
+            noninvitees=[journal.get_editors_in_chief_id()],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [ 'everyone' ] },
+                'writers': { 'values': [ venue_id ]},
+                'note': {
+                    'id': { 'value-invitation': journal.get_author_submission_id() },
+                    'content': {
+                        '_bibtex': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$'
+                            }
+                        },
+                        'venue': {
+                            'value': {
+                                'value': 'Retracted by Authors'
+                            }
+                        },
+                        'venueid': {
+                            'value': {
+                                'value': '.TMLR/Retracted_Acceptance'
+                            }
+                        }
+                    }
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/retracted_submission_process.py')
 
         )
         self.save_invitation(journal, invitation)
