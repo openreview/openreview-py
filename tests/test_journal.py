@@ -15,15 +15,15 @@ class TestJournal():
 
     @pytest.fixture(scope="class")
     def journal(self):
-        venue_id = '.TMLR'
+        venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
-        fabian_client.impersonate('.TMLR/Editors_In_Chief')
+        fabian_client.impersonate('TMLR/Editors_In_Chief')
         journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
         return journal
 
     def test_setup(self, openreview_client, helpers):
 
-        venue_id = '.TMLR'
+        venue_id = 'TMLR'
 
         ## Support Role
         helpers.create_user('fabian@mail.com', 'Fabian', 'Pedregosa')
@@ -54,11 +54,11 @@ class TestJournal():
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
-        venue_id = '.TMLR'
+        venue_id = 'TMLR'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
 
         journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['user@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
-        invited_group = openreview_client.get_group('.TMLR/Action_Editors/Invited')
+        invited_group = openreview_client.get_group('TMLR/Action_Editors/Invited')
         assert invited_group.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
@@ -71,17 +71,17 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
-        group = openreview_client.get_group('.TMLR/Action_Editors')
+        group = openreview_client.get_group('TMLR/Action_Editors')
         assert len(group.members) == 9
         assert '~Joelle_Pineau1' in group.members
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
-        venue_id = '.TMLR'
+        venue_id = 'TMLR'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
 
         journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
-        invited_group = openreview_client.get_group('.TMLR/Reviewers/Invited')
+        invited_group = openreview_client.get_group('TMLR/Reviewers/Invited')
         assert invited_group.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer')
@@ -94,7 +94,7 @@ class TestJournal():
 
         helpers.await_queue(openreview_client)
 
-        group = openreview_client.get_group('.TMLR/Reviewers')
+        group = openreview_client.get_group('TMLR/Reviewers')
         assert len(group.members) == 6
         assert '~Javier_Burroni1' in group.members
 
@@ -130,7 +130,7 @@ class TestJournal():
         now = datetime.datetime.utcnow()
 
         ## Post the submission 1
-        submission_note_1 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+        submission_note_1 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={
@@ -156,7 +156,7 @@ class TestJournal():
         assert messages[0]['content']['text'] == '''<p>Hi SomeFirstName User,</p>
 <p>Thank you for submitting your work titled &quot;Paper title&quot; to TMLR.</p>
 <p>Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.</p>
-<p>To do so, please follow this link: <a href=\"https://openreview.net/invitation?id=.TMLR/Paper1/Action_Editors/-/Recommendation\">https://openreview.net/invitation?id=.TMLR/Paper1/Action_Editors/-/Recommendation</a> or check your tasks in the Author Console: <a href=\"https://openreview.net/group?id=.TMLR/Authors\">https://openreview.net/group?id=.TMLR/Authors</a></p>
+<p>To do so, please follow this link: <a href=\"https://openreview.net/invitation?id=TMLR/Paper1/Action_Editors/-/Recommendation\">https://openreview.net/invitation?id=TMLR/Paper1/Action_Editors/-/Recommendation</a> or check your tasks in the Author Console: <a href=\"https://openreview.net/group?id=TMLR/Authors\">https://openreview.net/group?id=TMLR/Authors</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
@@ -169,13 +169,13 @@ class TestJournal():
 
         note = openreview_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission']
-        assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
-        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.invitations == ['TMLR/-/Author_Submission']
+        assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
+        assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
-        assert note.content['venueid']['value'] == '.TMLR/Submitted'
+        assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 7
@@ -189,8 +189,8 @@ class TestJournal():
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
 
         ## Update submission 1
-        updated_submission_note_1 = test_client.post_note_edit(invitation='.TMLR/Paper1/-/Revision',
-            signatures=['.TMLR/Paper1/Authors'],
+        updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
+            signatures=['TMLR/Paper1/Authors'],
             note=Note(
                 id=note_id_1,
                 content={
@@ -207,23 +207,23 @@ class TestJournal():
 
         note = openreview_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision']
-        assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
-        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision']
+        assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
+        assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['title']['value'] == 'Paper title UPDATED'
         assert note.content['venue']['value'] == 'Submitted to TMLR'
-        assert note.content['venueid']['value'] == '.TMLR/Submitted'
+        assert note.content['venueid']['value'] == 'TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
-        assert note.content['authorids']['readers'] == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
+        assert note.content['authorids']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
         assert author_group.members == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
 
         ## Post the submission 2
-        submission_note_2 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+        submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
                                     signatures=['~SomeFirstName_User1'],
                                     note=Note(
                                         content={
@@ -250,7 +250,7 @@ class TestJournal():
         assert openreview_client.get_group(f"{venue_id}/Paper2/Action_Editors")
 
         ## Post the submission 3
-        submission_note_3 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+        submission_note_3 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
                                     signatures=['~SomeFirstName_User1'],
                                     note=Note(
                                         content={
@@ -280,7 +280,7 @@ class TestJournal():
         action_editors_id=f'{venue_id}/Action_Editors'
 
         # Assign Action Editor
-        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
@@ -310,7 +310,7 @@ class TestJournal():
 
         ## Try to assign the same AE again and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'The maximum number \(1\) of Edges between .* and ~Joelle_Pineau1 has been reached'):
-            paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+            paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
                 readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
                 writers=[venue_id, editor_in_chief_group_id],
                 signatures=[editor_in_chief_group_id],
@@ -320,7 +320,7 @@ class TestJournal():
             ))
 
         ## Accept the submission 1
-        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper1/-/Review_Approval',
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper1/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
@@ -330,13 +330,13 @@ class TestJournal():
 
         note = joelle_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR']
-        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.writers == ['TMLR']
+        assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
         assert note.content['venue']['value'] == 'Under review for TMLR'
-        assert note.content['venueid']['value'] == '.TMLR/Under_Review'
+        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
         assert note.content['_bibtex']['value'] == '''@article{
 anonymouspaper,
@@ -351,7 +351,7 @@ note={Under review}
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>With this email, we request that you assign 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;. The assignments must be completed <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/group?id=.TMLR/Action_Editors\">https://openreview.net/group?id=.TMLR/Action_Editors</a></p>
+<p>With this email, we request that you assign 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;. The assignments must be completed <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors\">https://openreview.net/group?id=TMLR/Action_Editors</a></p>
 <p>As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.</p>
 <p>We thank you for your essential contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -368,7 +368,7 @@ note={Under review}
         raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
 
         ## Desk reject the submission 2
-        desk_reject_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper2/-/Review_Approval',
+        desk_reject_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper2/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper2/Action_Editors'],
                                     note=Note(content={
                                         'under_review': { 'value': 'Desk Reject' },
@@ -389,13 +389,13 @@ note={Under review}
 
         note = joelle_client.get_note(note_id_2)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Desk_Rejection']
-        assert note.readers == ['.TMLR', '.TMLR/Paper2/Action_Editors', '.TMLR/Paper2/Authors']
-        assert note.writers == ['.TMLR', '.TMLR/Paper2/Action_Editors']
-        assert note.signatures == ['.TMLR/Paper2/Authors']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Desk_Rejection']
+        assert note.readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper2/Action_Editors']
+        assert note.signatures == ['TMLR/Paper2/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'celeste@mail.com']
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
-        assert note.content['venueid']['value'] == '.TMLR/Desk_Rejection'
+        assert note.content['venueid']['value'] == 'TMLR/Desk_Rejection'
 
         ## Check invitations as an author
         invitations = test_client.get_invitations(replyForum=note_id_2)
@@ -410,7 +410,7 @@ note={Under review}
 
         ## Check assignment invitations
         with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission'):
-            paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+            paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
                 readers=[venue_id, editor_in_chief_group_id, '~Ryan_Adams1'],
                 writers=[venue_id, editor_in_chief_group_id],
                 signatures=[editor_in_chief_group_id],
@@ -419,8 +419,8 @@ note={Under review}
                 weight=1
             ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission: .TMLR/Desk_Rejection'):
-            paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission: TMLR/Desk_Rejection'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
                 readers=[venue_id, f"{venue_id}/Paper2/Action_Editors", '~David_Belanger1'],
                 nonreaders=[f"{venue_id}/Paper2/Authors"],
                 writers=[venue_id, f"{venue_id}/Paper2/Action_Editors"],
@@ -431,7 +431,7 @@ note={Under review}
             ))
 
         ## Withdraw the submission 3
-        withdraw_note = test_client.post_note_edit(invitation='.TMLR/Paper3/-/Withdraw',
+        withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper3/-/Withdraw',
                                     signatures=[f'{venue_id}/Paper3/Authors'],
                                     note=Note(
                                         content={
@@ -443,13 +443,13 @@ note={Under review}
 
         note = test_client.get_note(note_id_3)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Withdrawn']
-        assert note.readers == ['.TMLR', '.TMLR/Paper3/Action_Editors', '.TMLR/Paper3/Authors']
-        assert note.writers == ['.TMLR', '.TMLR/Paper3/Action_Editors', '.TMLR/Paper3/Authors']
-        assert note.signatures == ['.TMLR/Paper3/Authors']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Withdrawn']
+        assert note.readers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
+        assert note.signatures == ['TMLR/Paper3/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
-        assert note.content['venueid']['value'] == '.TMLR/Withdrawn_Submission'
+        assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
 #         assert note.content['_bibtex']['value'] == '''@article{
 # userpaper,
 # title={Paper title {UPDATED}},
@@ -474,7 +474,7 @@ note={Under review}
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
 
         ## David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
@@ -494,12 +494,12 @@ note={Under review}
         assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
         ## Carlos Mondragon
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Carlos_Mondragon1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
@@ -519,12 +519,12 @@ note={Under review}
         assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
         ## Javier Burroni
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Javier_Burroni1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
@@ -544,7 +544,7 @@ note={Under review}
         assert messages[0]['content']['text'] == f'''<p>Hi Javier Burroni,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=.TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
@@ -588,7 +588,7 @@ note={Under review}
             signatures=[f"{venue_id}/Paper1/Authors"],
             note=Note(
                 signatures=[f"{venue_id}/Paper1/Authors"],
-                readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
+                readers=['TMLR/Editors_In_Chief', 'TMLR/Paper1/Action_Editors', david_anon_groups[0].id, 'TMLR/Paper1/Authors'],
                 forum=note_id_1,
                 replyto=david_review_note['note']['id'],
                 content={
@@ -608,7 +608,7 @@ note={Under review}
             signatures=[david_anon_groups[0].id],
             note=Note(
                 signatures=[david_anon_groups[0].id],
-                readers=['.TMLR/Editors_In_Chief', '.TMLR/Paper1/Action_Editors', david_anon_groups[0].id, '.TMLR/Paper1/Authors'],
+                readers=['TMLR/Editors_In_Chief', 'TMLR/Paper1/Action_Editors', david_anon_groups[0].id, 'TMLR/Paper1/Authors'],
                 forum=note_id_1,
                 replyto=comment_note['note']['id'],
                 content={
@@ -624,7 +624,7 @@ note={Under review}
                 signatures=[david_anon_groups[0].id],
                 note=Note(
                     signatures=[david_anon_groups[0].id],
-                    readers=['.TMLR/Paper1/Action_Editors', david_anon_groups[0].id],
+                    readers=['TMLR/Paper1/Action_Editors', david_anon_groups[0].id],
                     forum=note_id_1,
                     replyto=note_id_1,
                     content={
@@ -652,9 +652,9 @@ note={Under review}
         comment_note_id=comment_note['note']['id']
         note = guest_client.get_note(comment_note_id)
         assert note
-        assert note.invitations == ['.TMLR/Paper1/-/Public_Comment']
+        assert note.invitations == ['TMLR/Paper1/-/Public_Comment']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '~Peter_Snow1']
+        assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors', '~Peter_Snow1']
         assert note.signatures == ['~Peter_Snow1']
         assert note.content['title']['value'] == 'Comment title'
         assert note.content['comment']['value'] == 'This is an inapropiate comment'
@@ -689,9 +689,9 @@ Comment: This is an inapropiate comment</p>
 
         note = guest_client.get_note(comment_note_id)
         assert note
-        assert note.invitations == ['.TMLR/Paper1/-/Public_Comment', '.TMLR/Paper1/-/Moderation']
+        assert note.invitations == ['TMLR/Paper1/-/Public_Comment', 'TMLR/Paper1/-/Moderation']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors']
+        assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors']
         assert note.signatures == ['~Peter_Snow1']
         assert note.content.get('title') is None
         assert note.content.get('comment') is None
@@ -854,7 +854,7 @@ Comment: This is an inapropiate comment</p>
 
 
         ## Assign reviewer 4
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Hugo_Larochelle1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
             writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
@@ -1085,8 +1085,8 @@ Comment: This is an inapropiate comment</p>
         assert f"{venue_id}/Paper1/-/Decision_Approval"  in [i.id for i in invitations]
 
         ## EIC approves the decision
-        approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper1/-/Decision_Approval',
-                            signatures=['.TMLR/Editors_In_Chief'],
+        approval_note = raia_client.post_note_edit(invitation='TMLR/Paper1/-/Decision_Approval',
+                            signatures=['TMLR/Editors_In_Chief'],
                             note=Note(
                                 content= {
                                     'approval': { 'value': 'I approve the AE\'s decision.' },
@@ -1141,16 +1141,16 @@ Comment: This is an inapropiate comment</p>
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR', '.TMLR/Paper1/Authors']
-        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
+        assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
         # TODO: check this with Carlos
         #assert note.content['authorids'].get('readers') == None
         #assert note.content['authors'].get('readers') == None
         assert note.content['venue']['value'] == 'Under review for TMLR'
-        assert note.content['venueid']['value'] == '.TMLR/Under_Review'
+        assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
 
@@ -1166,7 +1166,7 @@ Comment: This is an inapropiate comment</p>
 '''
 
         ## AE verifies the camera ready revision
-        verification_note = joelle_client.post_note_edit(invitation='.TMLR/Paper1/-/Camera_Ready_Verification',
+        verification_note = joelle_client.post_note_edit(invitation='TMLR/Paper1/-/Camera_Ready_Verification',
                             signatures=[f"{venue_id}/Paper1/Action_Editors"],
                             note=Note(
                                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
@@ -1191,16 +1191,16 @@ Comment: This is an inapropiate comment</p>
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/Paper1/-/Revision', '.TMLR/-/Under_Review', '.TMLR/Paper1/-/Submission_Editable', '.TMLR/Paper1/-/Camera_Ready_Revision', '.TMLR/-/Acceptance']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Acceptance']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR']
-        assert note.signatures == ['.TMLR/Paper1/Authors']
+        assert note.writers == ['TMLR']
+        assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'TMLR'
-        assert note.content['venueid']['value'] == '.TMLR'
+        assert note.content['venueid']['value'] == 'TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
@@ -1244,7 +1244,7 @@ note={Featured Certification, Reproducibility Certification}
         now = datetime.datetime.utcnow()
 
         ## Post the submission 4
-        submission_note_4 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+        submission_note_4 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={
@@ -1263,7 +1263,7 @@ note={Featured Certification, Reproducibility Certification}
         note_id_4=submission_note_4['note']['id']
 
         # Assign Action Editor
-        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
@@ -1275,7 +1275,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue(openreview_client)
 
         ## Accept the submission 4
-        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper4/-/Review_Approval',
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper4/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper4/Action_Editors'],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
@@ -1284,7 +1284,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue(openreview_client)
 
         ## Assign David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper4/Action_Editors", '~David_Belanger1'],
             nonreaders=[f"{venue_id}/Paper4/Authors"],
             writers=[venue_id, f"{venue_id}/Paper4/Action_Editors"],
@@ -1297,7 +1297,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue(openreview_client)
 
         ## Assign Carlos Mondragon
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper4/Action_Editors", '~Carlos_Mondragon1'],
             nonreaders=[f"{venue_id}/Paper4/Authors"],
             writers=[venue_id, f"{venue_id}/Paper4/Action_Editors"],
@@ -1310,7 +1310,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue(openreview_client)
 
         ## Assign Javier Burroni
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper4/Action_Editors", '~Javier_Burroni1'],
             nonreaders=[f"{venue_id}/Paper4/Authors"],
             writers=[venue_id, f"{venue_id}/Paper4/Action_Editors"],
@@ -1323,7 +1323,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue(openreview_client)
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='.TMLR/Reviewers/-/Pending_Reviews')
+        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert len(edges) == 4
 
         ## Ask solitic review with a conflict
@@ -1404,7 +1404,7 @@ note={Featured Certification, Reproducibility Certification}
         assert messages[0]['content']['text'] == f'''<p>Hi Peter Snow,</p>
 <p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 4 has been accepted by the Action Editor (AE).</p>
 <p>You are required to submit your review within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}\">https://openreview.net/forum?id={note_id_4}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=.TMLR/Reviewers\">https://openreview.net/group?id=.TMLR/Reviewers</a></p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}\">https://openreview.net/forum?id={note_id_4}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers\">https://openreview.net/group?id=TMLR/Reviewers</a></p>
 <p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -1466,7 +1466,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue(openreview_client)
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='.TMLR/Reviewers/-/Pending_Reviews')
+        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert len(edges) == 5
         assert edges[0].weight == 0
         assert edges[1].weight == 0
@@ -1565,8 +1565,8 @@ note={Featured Certification, Reproducibility Certification}
         assert decision_note.readers == [venue_id, f"{venue_id}/Paper4/Action_Editors"]
 
         ## EIC approves the decision
-        approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper4/-/Decision_Approval',
-                            signatures=['.TMLR/Editors_In_Chief'],
+        approval_note = raia_client.post_note_edit(invitation='TMLR/Paper4/-/Decision_Approval',
+                            signatures=['TMLR/Editors_In_Chief'],
                             note=Note(
                             content= {
                                 'approval': { 'value': 'I approve the AE\'s decision.' },
@@ -1593,13 +1593,13 @@ note={Featured Certification, Reproducibility Certification}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review', '.TMLR/-/Rejection']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR']
-        assert note.signatures == ['.TMLR/Paper4/Authors']
+        assert note.writers == ['TMLR']
+        assert note.signatures == ['TMLR/Paper4/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
-        assert note.content['venueid']['value'] == '.TMLR/Rejection'
+        assert note.content['venueid']['value'] == 'TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
@@ -1612,8 +1612,8 @@ url={https://openreview.net/forum?id=''' + note_id_4 + '''},
 note={Rejected}
 }'''
 
-        deanonymize_authors_note = test_client.post_note_edit(invitation='.TMLR/Paper4/-/Authors_De-Anonymization',
-                            signatures=['.TMLR/Paper4/Authors'],
+        deanonymize_authors_note = test_client.post_note_edit(invitation='TMLR/Paper4/-/Authors_De-Anonymization',
+                            signatures=['TMLR/Paper4/Authors'],
                             note=Note(
                             content= {
                                 'confirmation': { 'value': 'I want to reveal all author names on behalf of myself and my co-authors.' }
@@ -1625,15 +1625,15 @@ note={Rejected}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review', '.TMLR/-/Rejection', '.TMLR/-/Authors_Release']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR']
-        assert note.signatures == ['.TMLR/Paper4/Authors']
+        assert note.writers == ['TMLR']
+        assert note.signatures == ['TMLR/Paper4/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
-        assert note.content['venueid']['value'] == '.TMLR/Rejection'
+        assert note.content['venueid']['value'] == 'TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
@@ -1677,7 +1677,7 @@ note={Rejected}
         now = datetime.datetime.utcnow()
 
         ## Post the submission 5
-        submission_note_5 = raia_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+        submission_note_5 = raia_client.post_note_edit(invitation='TMLR/-/Author_Submission',
             signatures=['~Raia_Hadsell1'],
             note=Note(
                 content={
@@ -1696,7 +1696,7 @@ note={Rejected}
         note_id_5=submission_note_5['note']['id']
 
         # Assign Action Editor
-        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
@@ -1708,7 +1708,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         ## Accept the submission 5
-        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper5/-/Review_Approval',
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper5/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper5/Action_Editors'],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
@@ -1717,7 +1717,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         ## Assign David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper5/Action_Editors", '~David_Belanger1'],
             nonreaders=[f"{venue_id}/Paper5/Authors"],
             writers=[venue_id, f"{venue_id}/Paper5/Action_Editors"],
@@ -1730,7 +1730,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         ## Assign Carlos Mondragon
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper5/Action_Editors", '~Carlos_Mondragon1'],
             nonreaders=[f"{venue_id}/Paper5/Authors"],
             writers=[venue_id, f"{venue_id}/Paper5/Action_Editors"],
@@ -1743,7 +1743,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         ## Assign Javier Burroni
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper5/Action_Editors", '~Javier_Burroni1'],
             nonreaders=[f"{venue_id}/Paper5/Authors"],
             writers=[venue_id, f"{venue_id}/Paper5/Action_Editors"],
@@ -1886,16 +1886,16 @@ note={Rejected}
 
         ## EIC approves the decision
         with pytest.raises(openreview.OpenReviewException, match=r'NotInviteeError'):
-            approval_note = raia_client.post_note_edit(invitation='.TMLR/Paper5/-/Decision_Approval',
-                                signatures=['.TMLR/Editors_In_Chief'],
+            approval_note = raia_client.post_note_edit(invitation='TMLR/Paper5/-/Decision_Approval',
+                                signatures=['TMLR/Editors_In_Chief'],
                                 note=Note(
                                 content= {
                                     'approval': { 'value': 'I approve the AE\'s decision.' },
                                     'comment_to_the_AE': { 'value': 'I agree with the AE' }
                                 }))
 
-        approval_note = cho_client.post_note_edit(invitation='.TMLR/Paper5/-/Decision_Approval',
-                            signatures=['.TMLR/Editors_In_Chief'],
+        approval_note = cho_client.post_note_edit(invitation='TMLR/Paper5/-/Decision_Approval',
+                            signatures=['TMLR/Editors_In_Chief'],
                             note=Note(
                             content= {
                                 'approval': { 'value': 'I approve the AE\'s decision.' },
@@ -1940,7 +1940,7 @@ note={Rejected}
         now = datetime.datetime.utcnow()
 
         ## Post the submission 6
-        submission_note_6 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+        submission_note_6 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={
@@ -1959,7 +1959,7 @@ note={Rejected}
         note_id_6=submission_note_6['note']['id']
 
         # Assign Action Editor
-        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='.TMLR/Action_Editors/-/Assignment',
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
             signatures=[editor_in_chief_group_id],
@@ -1971,7 +1971,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         ## Accept the submission 6
-        under_review_note = joelle_client.post_note_edit(invitation= '.TMLR/Paper6/-/Review_Approval',
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper6/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper6/Action_Editors'],
                                     note=Note(content={
                                         'under_review': { 'value': 'Appropriate for Review' }
@@ -1980,7 +1980,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         ## Assign David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper6/Action_Editors", '~David_Belanger1'],
             nonreaders=[f"{venue_id}/Paper6/Authors"],
             writers=[venue_id, f"{venue_id}/Paper6/Action_Editors"],
@@ -1993,7 +1993,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         ## Assign Carlos Mondragon
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper6/Action_Editors", '~Carlos_Mondragon1'],
             nonreaders=[f"{venue_id}/Paper6/Authors"],
             writers=[venue_id, f"{venue_id}/Paper6/Action_Editors"],
@@ -2006,7 +2006,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         ## Assign Javier Burroni
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='.TMLR/Reviewers/-/Assignment',
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper6/Action_Editors", '~Javier_Burroni1'],
             nonreaders=[f"{venue_id}/Paper6/Authors"],
             writers=[venue_id, f"{venue_id}/Paper6/Action_Editors"],
@@ -2133,7 +2133,7 @@ note={Rejected}
             helpers.await_queue(openreview_client)
 
         ## Withdraw the submission 6
-        withdraw_note = test_client.post_note_edit(invitation='.TMLR/Paper6/-/Withdraw',
+        withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper6/-/Withdraw',
                                     signatures=[f'{venue_id}/Paper6/Authors'],
                                     note=Note(
                                         content={
@@ -2145,13 +2145,13 @@ note={Rejected}
 
         note = test_client.get_note(note_id_6)
         assert note
-        assert note.invitations == ['.TMLR/-/Author_Submission', '.TMLR/-/Under_Review', '.TMLR/-/Withdrawn']
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn']
         assert note.readers == ['everyone']
-        assert note.writers == ['.TMLR']
-        assert note.signatures == ['.TMLR/Paper6/Authors']
+        assert note.writers == ['TMLR']
+        assert note.signatures == ['TMLR/Paper6/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
-        assert note.content['venueid']['value'] == '.TMLR/Withdrawn_Submission'
+        assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_6)
@@ -2175,7 +2175,7 @@ note={Rejected}
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
 
         ## Post the submission 7
-        submission_note_7 = test_client.post_note_edit(invitation='.TMLR/-/Author_Submission',
+        submission_note_7 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={
