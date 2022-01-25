@@ -50,7 +50,7 @@ class TestJournal():
         hugo_client = helpers.create_user('hugo@mailsix.com', 'Hugo', 'Larochelle')
 
         ## Authors
-        melisa_client = helpers.create_user('melisa@mail.com', 'Melisa', 'Bok')
+        melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
         celeste_client = helpers.create_user('celeste@mail.com', 'Celeste', 'Martinez')
 
 
@@ -142,7 +142,7 @@ class TestJournal():
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -168,7 +168,7 @@ class TestJournal():
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', '~Melisa_Bok1']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
@@ -178,7 +178,7 @@ class TestJournal():
         assert note.readers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.writers == ['.TMLR', '.TMLR/Paper1/Action_Editors', '.TMLR/Paper1/Authors']
         assert note.signatures == ['.TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Submitted'
 
@@ -1313,7 +1313,7 @@ note={Retracted after acceptance}
                     'title': { 'value': 'Paper title 4' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1659,7 +1659,7 @@ note={Retracted after acceptance}
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper4/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
         assert note.content['venueid']['value'] == '.TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
@@ -1691,7 +1691,7 @@ note={Rejected}
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper4/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
@@ -1747,7 +1747,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 5' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok', 'Raia Hadsell']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1', '~Raia_Hadsell1']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1', '~Raia_Hadsell1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -2010,7 +2010,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 6' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -2212,7 +2212,7 @@ note={Rejected}
         assert note.readers == ['everyone']
         assert note.writers == ['.TMLR']
         assert note.signatures == ['.TMLR/Paper6/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == '.TMLR/Withdrawn_Submission'
 
@@ -2245,7 +2245,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 7' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Bok1']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
