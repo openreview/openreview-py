@@ -1178,7 +1178,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': '.TMLR/Withdrawn_Submission'
+                                'value': journal.withdrawn_venue_id
                             }
                         }
                     }
@@ -1217,7 +1217,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': '.TMLR/Retracted_Acceptance'
+                                'value': journal.retracted_id
                             }
                         }
                     }
