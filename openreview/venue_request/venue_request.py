@@ -983,6 +983,9 @@ class VenueRequest():
 
         with open(os.path.join(os.path.dirname(__file__), 'process/postSubmissionProcess.py'), 'r') as f:
             file_content = f.read()
+            file_content = file_content.replace(
+                "GROUP_PREFIX = ''",
+                "GROUP_PREFIX = '" + self.super_user + "'")
 
             self.post_submission_content = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Post_Submission',
