@@ -67,7 +67,7 @@ def process(client, note, invitation):
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Recruitment Status',
+            'title': f'Recruitment Status [{note.id}]',
             'comment': f'''
 Invited: {len(recruitment_status.get('invited', []))} users.
 \n
@@ -83,6 +83,8 @@ Please check the invitee group to see more details: https://openreview.net/group
         error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
         {recruitment_status.get('errors') }'''
 
-        comment_note.content['comment'] += f'''\n Error: {error_status}'''
+        comment_note.content['comment'] += f'''
+Error: {error_status}
+'''
 
     client.post_note(comment_note)
