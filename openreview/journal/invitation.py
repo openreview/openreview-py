@@ -1069,7 +1069,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': '.TMLR/Withdrawn_Submission'
+                                'value': f'{venue_id}/Withdrawn_Submission'
                             }
                         }
                     }
