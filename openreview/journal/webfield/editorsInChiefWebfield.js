@@ -536,7 +536,7 @@ var renderTable = function(container, rows) {
       }, {
         id: 'unsubmitted-recommendations',
         name: 'Reviewers with missing official recommendations',
-        getUsers: function() {
+        getUsers: function(selectedIds) {
           selectedIds = selectedIds || [];
           return rows.map(function(row) {
             return {
