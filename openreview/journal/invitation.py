@@ -564,7 +564,7 @@ class InvitationBuilder(object):
                     'member-of' : action_editors_id
                 },
                 'weight': {
-                    'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                    'value-dropdown': ['Yes', 'No']
                 }
             }
         )
@@ -1437,18 +1437,17 @@ class InvitationBuilder(object):
                         'member-of' : action_editors_id
                     },
                     'weight': {
-                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                        'value-dropdown': ['Yes', 'No']
                     }
                 }
             )
 
             header = {
                 'title': 'TMLR Action Editor Suggestion',
-                'instructions': '<p class="dark">Recommend a list of at least 3 Action Editors for your paper.</p>\
+                'instructions': '<p class="dark">Select at least 3 Action Editors by choosing "Yes" for their recommendation.</p>\
                     <p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
-                        <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
                         <li>AEs who have conflicts with the selected paper are not shown.</li>\
                         <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
                         <li>To get started click the button below.</li>\
