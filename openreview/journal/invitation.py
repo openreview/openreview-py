@@ -1217,7 +1217,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': journal.retracted_id
+                                'value': journal.retracted_venue_id
                             }
                         }
                     }
@@ -1365,7 +1365,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ 'everyone' ] },
                 'writers': { 'values': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': journal.get_rejection_id() },
+                    'id': { 'value-invitation': journal.get_author_submission_id() },
                     'content': {
                         '_bibtex': {
                             'value': {
