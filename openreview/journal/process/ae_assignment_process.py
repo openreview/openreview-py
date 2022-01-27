@@ -6,6 +6,23 @@ def process_update(client, edge, invitation, existing_edge):
     group=client.get_group(journal.get_action_editors_id(number=note.number))
     if edge.ddate and edge.tail in group.members:
         print(f'Remove member {edge.tail} from {group.id}')
+
+        recipients=[edge.tail]
+        subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.content["title"]["value"]}'
+
+        message=f'''Hi {{{{fullname}}}},
+
+We recently informed you that your help was requested to manage the review process for a new TMLR submission titled "{note.content['title']['value']}".
+
+However, we’ve just determined that your help was no longer needed for this submission and have unassigned you as the AE for it.
+
+Apologies for the change and thank you for your continued involvement with TMLR!
+
+The {journal.short_name} Editors-in-Chief
+'''
+
+        client.post_message(subject, recipients, message, parentGroup=group.id)
+
         return client.remove_members_from_group(group.id, edge.tail)
 
     if not edge.ddate and edge.tail not in group.members:
@@ -36,3 +53,5 @@ The {journal.short_name} Editors-in-Chief
 
         ## expire AE recommendation
         journal.invitation_builder.expire_invitation(journal, journal.get_ae_recommendation_id(number=note.number))
+
+        return

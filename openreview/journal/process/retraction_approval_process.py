@@ -6,12 +6,12 @@ def process(client, edit, invitation):
 
     submission = client.get_note(edit.note.forum)
 
-    return client.post_note_edit(invitation= journal.get_withdrawn_id(),
+    return client.post_note_edit(invitation= journal.get_retracted_id(),
                             signatures=[venue_id],
                             note=openreview.api.Note(id=submission.id,
                             content= {
                                 '_bibtex': {
-                                    'value': journal.get_bibtex(submission, journal.withdrawn_venue_id, anonymous=True)
+                                    'value': journal.get_bibtex(submission, journal.retracted_venue_id, anonymous=submission.content['authors'].get('readers', []) != ['everyone'])
                                 }
                             }
     ))
