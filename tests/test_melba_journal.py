@@ -36,6 +36,7 @@ class TestJournal():
         aasa_client = helpers.create_user('aasa@mail.com', 'Aasa', 'Feragen')
         xukun_client = helpers.create_user('xukun@mail.com', 'Xukun', 'Liu')
         melisa_client = helpers.create_user('ana@mail.com', 'Ana', 'Martinez')
+        celeste_client = helpers.create_user('celesste@mail.com', 'Celeste', 'Martinez')
 
         ## Reviewers
         david_client=helpers.create_user('rev1@mailone.com', 'MELBARev', 'One')
@@ -113,7 +114,7 @@ class TestJournal():
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Celeste Martinez']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'celeste@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Martinez1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'}

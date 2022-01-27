@@ -49,6 +49,11 @@ class TestJournal():
         andrew_client = helpers.create_user('andrewmc@mailfour.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mailsix.com', 'Hugo', 'Larochelle')
 
+        ## Authors
+        melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
+        celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
+
+
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
@@ -137,7 +142,7 @@ class TestJournal():
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -163,7 +168,7 @@ class TestJournal():
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert openreview_client.get_group(f"{venue_id}/Paper1/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper1/Action_Editors")
 
@@ -173,20 +178,22 @@ class TestJournal():
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 7
+        assert len(invitations) == 9
         assert f"{venue_id}/-/Author_Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejection" in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Retracted" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Authors_Release" in [i.id for i in invitations]
 
         ## Update submission 1
         updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
@@ -196,7 +203,7 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title UPDATED' },
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mailfour.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
@@ -215,12 +222,12 @@ class TestJournal():
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert note.content['authorids']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert author_group.members == ['~SomeFirstName_User1', '~Andrew_McCallum1']
 
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
@@ -230,7 +237,7 @@ class TestJournal():
                                             'title': { 'value': 'Paper title 2' },
                                             'abstract': { 'value': 'Paper abstract 2' },
                                             'authors': { 'value': ['Test User', 'Celeste Martinez']},
-                                            'authorids': { 'value': ['~SomeFirstName_User1', 'celeste@mail.com']},
+                                            'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
                                             'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
@@ -245,7 +252,7 @@ class TestJournal():
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper2/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', 'celeste@mail.com']
+        assert author_group.members == ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
         assert openreview_client.get_group(f"{venue_id}/Paper2/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper2/Action_Editors")
 
@@ -257,7 +264,7 @@ class TestJournal():
                                             'title': { 'value': 'Paper title 3' },
                                             'abstract': { 'value': 'Paper abstract 3' },
                                             'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                                            'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mailfour.com']},
+                                            'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
                                             'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
@@ -272,7 +279,7 @@ class TestJournal():
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper3/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert author_group.members == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert openreview_client.get_group(f"{venue_id}/Paper3/Reviewers")
         assert openreview_client.get_group(f"{venue_id}/Paper3/Action_Editors")
 
@@ -334,7 +341,7 @@ class TestJournal():
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
@@ -393,7 +400,7 @@ note={Under review}
         assert note.readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper2/Action_Editors']
         assert note.signatures == ['TMLR/Paper2/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'celeste@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Desk_Rejection'
 
@@ -431,7 +438,7 @@ note={Under review}
             ))
 
         ## Withdraw the submission 3
-        withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper3/-/Withdraw',
+        withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper3/-/Withdrawal',
                                     signatures=[f'{venue_id}/Paper3/Authors'],
                                     note=Note(
                                         content={
@@ -447,24 +454,23 @@ note={Under review}
         assert note.readers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
         assert note.signatures == ['TMLR/Paper3/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
-#         assert note.content['_bibtex']['value'] == '''@article{
-# userpaper,
-# title={Paper title {UPDATED}},
-# author={Test User and Andrew McCallum},
-# journal={Submitted to Transactions of Machine Learning Research},
-# year={2022},
-# url={https://openreview.net/forum?id=''' + note_id_1 + '''},
-# note={Under review}
-# }'''
-
+        assert note.content['_bibtex']['value'] == '''@article{
+anonymouspaper,
+title={Paper title 3},
+author={Anonymous},
+journal={Submitted to Transactions of Machine Learning Research},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_3 + '''},
+note={Withdrawn}
+}'''
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 12
-        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert len(invitations) == 14
+        assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]
         #assert reject_invitation_id in [i.id for i in invitations]
@@ -574,9 +580,9 @@ note={Under review}
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 12
+        assert len(invitations) == 14
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -720,9 +726,9 @@ Comment: This is an inapropiate comment</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 12
+        assert len(invitations) == 14
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -771,14 +777,14 @@ Comment: This is an inapropiate comment</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 15
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Withdraw" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdrawal" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -904,7 +910,7 @@ Comment: This is an inapropiate comment</p>
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=['TMLR/Editors_In_Chief']
             )
         )
 
@@ -924,9 +930,9 @@ Comment: This is an inapropiate comment</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 15
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -948,9 +954,9 @@ Comment: This is an inapropiate comment</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 13
+        assert len(invitations) == 15
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -972,9 +978,9 @@ Comment: This is an inapropiate comment</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 17
+        assert len(invitations) == 19
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Withdraw"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -1078,7 +1084,7 @@ Comment: This is an inapropiate comment</p>
         helpers.await_queue(openreview_client)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
-        assert decision_note.readers == [venue_id, f"{venue_id}/Paper1/Action_Editors"]
+        assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
 
         ## Check invitations
         invitations = raia_client.get_invitations(replyForum=note_id_1)
@@ -1125,7 +1131,7 @@ Comment: This is an inapropiate comment</p>
                     'title': { 'value': 'Paper title VERSION 2' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'andrewmc@mailfour.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1145,7 +1151,7 @@ Comment: This is an inapropiate comment</p>
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         # TODO: check this with Carlos
         #assert note.content['authorids'].get('readers') == None
         #assert note.content['authors'].get('readers') == None
@@ -1195,7 +1201,7 @@ Comment: This is an inapropiate comment</p>
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'andrewmc@mailfour.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -1215,10 +1221,67 @@ note={Featured Certification, Reproducibility Certification}
 
         ## Check invitations are expired
         invitations = openreview_client.get_invitations(regex=f"{venue_id}/Paper1/.*", type = "all")
-        assert len(invitations) == 3
+        assert len(invitations) == 4
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Retraction" in [i.id for i in invitations]
+
+
+        ## Retract the paper
+        retraction_note = test_client.post_note_edit(invitation='TMLR/Paper1/-/Retraction',
+                            signatures=[f"{venue_id}/Paper1/Authors"],
+                            note=Note(
+                                signatures=[f"{venue_id}/Paper1/Authors"],
+                                forum=note_id_1,
+                                replyto=note_id_1,
+                                content= {
+                                    'retraction_confirmation': { 'value': 'I have read and agree with the venue\'s retraction policy on behalf of myself and my co-authors.' }
+                                 }
+                            ))
+
+        helpers.await_queue(openreview_client)
+
+        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Retraction_Approval")
+
+        approval_note = raia_client.post_note_edit(invitation='TMLR/Paper1/-/Retraction_Approval',
+                            signatures=[f"{venue_id}/Editors_In_Chief"],
+                            note=Note(
+                                signatures=[f"{venue_id}/Editors_In_Chief"],
+                                forum=note_id_1,
+                                replyto=retraction_note['note']['id'],
+                                content= {
+                                    'approval': { 'value': 'I approve the Author\'s retraction.' }
+                                 }
+                            ))
+
+        helpers.await_queue(openreview_client)
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Acceptance', 'TMLR/-/Retracted']
+        assert note.readers == ['everyone']
+        assert note.writers == ['TMLR']
+        assert note.signatures == ['TMLR/Paper1/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        # Check with cArlos
+        assert note.content['authorids'].get('readers') == ['everyone']
+        assert note.content['authors'].get('readers') == ['everyone']
+        assert note.content['venue']['value'] == 'Retracted by Authors'
+        assert note.content['venueid']['value'] == 'TMLR/Retracted_Acceptance'
+        assert note.content['title']['value'] == 'Paper title VERSION 2'
+        assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['_bibtex']['value'] == '''@article{
+userpaper,
+title={Paper title {VERSION} 2},
+author={Test User and Andrew McCallum},
+journal={Submitted to Transactions of Machine Learning Research},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_1 + '''},
+note={Retracted after acceptance}
+}'''
 
 
     def test_rejected_submission(self, journal, openreview_client, test_client, helpers):
@@ -1251,7 +1314,7 @@ note={Featured Certification, Reproducibility Certification}
                     'title': { 'value': 'Paper title 4' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1483,7 +1546,7 @@ note={Featured Certification, Reproducibility Certification}
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper4/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=['TMLR/Editors_In_Chief']
             )
         )
 
@@ -1562,7 +1625,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue(openreview_client)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
-        assert decision_note.readers == [venue_id, f"{venue_id}/Paper4/Action_Editors"]
+        assert decision_note.readers == ['TMLR/Editors_In_Chief', f"{venue_id}/Paper4/Action_Editors"]
 
         ## EIC approves the decision
         approval_note = raia_client.post_note_edit(invitation='TMLR/Paper4/-/Decision_Approval',
@@ -1597,7 +1660,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper4/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Rejection'
         assert note.content['title']['value'] == 'Paper title 4'
@@ -1629,7 +1692,7 @@ note={Rejected}
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper4/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
@@ -1648,11 +1711,12 @@ note={Rejected}
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_4)
-        assert len(invitations) == 8
+        assert len(invitations) == 10
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Retracted" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Moderation" in [i.id for i in invitations]
@@ -1684,7 +1748,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 5' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok', 'Raia Hadsell']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com', '~Raia_Hadsell1']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1', '~Raia_Hadsell1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1815,7 +1879,7 @@ note={Rejected}
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=['TMLR/Editors_In_Chief']
             )
         )
 
@@ -1882,7 +1946,7 @@ note={Rejected}
         helpers.await_queue(openreview_client)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
-        assert decision_note.readers == [venue_id, f"{venue_id}/Paper5/Action_Editors"]
+        assert decision_note.readers == ['TMLR/Editors_In_Chief', f"{venue_id}/Paper5/Action_Editors"]
 
         ## EIC approves the decision
         with pytest.raises(openreview.OpenReviewException, match=r'NotInviteeError'):
@@ -1947,7 +2011,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 6' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -2078,7 +2142,7 @@ note={Rejected}
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper6/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[venue_id]
+                signatures=['TMLR/Editors_In_Chief']
             )
         )
 
@@ -2133,7 +2197,7 @@ note={Rejected}
             helpers.await_queue(openreview_client)
 
         ## Withdraw the submission 6
-        withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper6/-/Withdraw',
+        withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper6/-/Withdrawal',
                                     signatures=[f'{venue_id}/Paper6/Authors'],
                                     note=Note(
                                         content={
@@ -2149,13 +2213,13 @@ note={Rejected}
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper6/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', 'melisa@mail.com']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_6)
-        assert len(invitations) == 7
+        assert len(invitations) == 10
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
@@ -2167,7 +2231,39 @@ note={Rejected}
         messages = journal.client.get_messages(subject = '[TMLR] Authors have withdrawn TMLR submission Paper title 6')
         assert len(messages) == 4
 
+        deanonymize_authors_note = test_client.post_note_edit(invitation='TMLR/Paper6/-/Authors_De-Anonymization',
+                            signatures=['TMLR/Paper6/Authors'],
+                            note=Note(
+                            content= {
+                                'confirmation': { 'value': 'I want to reveal all author names on behalf of myself and my co-authors.' }
+                            }))
 
+        helpers.await_queue(openreview_client)
+
+        note = openreview_client.get_note(note_id_6)
+        assert note
+        assert note.forum == note_id_6
+        assert note.replyto is None
+        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn', 'TMLR/-/Authors_Release']
+        assert note.readers == ['everyone']
+        assert note.writers == ['TMLR']
+        assert note.signatures == ['TMLR/Paper6/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids'].get('readers') == ['everyone']
+        assert note.content['authors'].get('readers') == ['everyone']
+        assert note.content['venue']['value'] == 'Withdrawn by Authors'
+        assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
+        assert note.content['title']['value'] == 'Paper title 6'
+        assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['_bibtex']['value'] == '''@article{
+userpaper,
+title={Paper title 6},
+author={Test User and Melisa Bok},
+journal={Submitted to Transactions of Machine Learning Research},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_6 + '''},
+note={Withdrawn}
+}'''
 
 
     def test_submitted_submission(self, journal, openreview_client, helpers):
@@ -2182,7 +2278,7 @@ note={Rejected}
                     'title': { 'value': 'Paper title 7' },
                     'abstract': { 'value': 'Paper abstract' },
                     'authors': { 'value': ['Test User', 'Melisa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'melisa@mail.com']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
