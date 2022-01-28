@@ -22,7 +22,7 @@ var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
 var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
 
-var reviewers_url = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
+var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID +
   '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
@@ -31,7 +31,7 @@ var reviewers_url = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',ta
 
 var HEADER = {
   title: SHORT_PHRASE + ' Action Editor Console',
-  instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewers_url + "'> Modify Reviewer Assignments</a> </p>"
+  instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewersUrl + "'> Modify Reviewer Assignments</a>"
 };
 
 // Main function is the entry point to the webfield code
