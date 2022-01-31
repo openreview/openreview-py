@@ -24,7 +24,7 @@ class TestJournalRequest():
                 content = {
                     'official_venue_name': {'value': 'Test Journal 2022'},
                     'abbreviated_venue_name' : {'value': 'TJ22'},
-                    'venue_id': {'value': '.TJ22'},
+                    'venue_id': {'value': 'TJ22'},
                     'contact_info': {'value': 'test@venue.org'},
                     'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
@@ -70,7 +70,7 @@ class TestJournalRequest():
                 content = {
                     'official_venue_name': {'value': 'Test Journal 2040'},
                     'abbreviated_venue_name' : {'value': 'TJ40'},
-                    'venue_id': {'value': '.TJ40'},
+                    'venue_id': {'value': 'TJ40'},
                     'contact_info': {'value': 'test@journal.org'},
                     'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
