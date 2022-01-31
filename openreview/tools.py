@@ -650,8 +650,8 @@ def concurrent_get(client, get_function, **params):
     max_workers = min(cpu_count() - 1, 6)
 
     params.update({
-        'offset': 0,
-        'limit': min(params.get('limit', client.limit), client.limit),
+        'offset': params.get('offset') or 0,
+        'limit': min(params.get('limit') or client.limit, client.limit),
         'with_count': True
     })
 
