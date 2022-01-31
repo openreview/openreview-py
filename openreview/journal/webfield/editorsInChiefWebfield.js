@@ -289,9 +289,10 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 
     paperReviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
+      var reviewerRecommendation = null;
       var status = {};
       if (completedReview) {
-        var reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
+        reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
@@ -303,6 +304,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         name: reviewer.name,
         email: reviewer.email,
         completedReview: completedReview && true,
+        completedRecommendation: reviewerRecommendation && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
@@ -388,10 +390,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
             '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
             '&version=2'
-          },
-          {
-            name: 'Edit Review Invitation',
-            url: '/invitation/edit?id=' + getInvitationId(number, REVIEW_NAME)
           }
         ] : []
       },
@@ -495,7 +493,7 @@ var renderTable = function(container, rows) {
       container: 'a.send-reminder-link',
       defaultSubject: SHORT_PHRASE + ' Reminder',
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
-        'Click on the link below to go to the review page:\n\n{{submit_review_link}}\n\n' +
+        'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
       menu: [{
         id: 'all-reviewers',
@@ -512,8 +510,30 @@ var renderTable = function(container, rows) {
               })
             }
           });
-        }
-      }, {
+        },
+        messageBody: 'This is the message body'
+      },
+      {
+        id: 'all-action-editors',
+        name: 'All action editors of selected papers',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? [row.actionEditorProgressData.actionEditor]
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum
+              })
+            }
+          });
+        },
+        messageBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your decision for ' + SHORT_PHRASE + '.\n\n' +
+        'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
+        'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief'
+      }
+      , {
         id: 'unsubmitted-reviews',
         name: 'Reviewers with missing reviews',
         getUsers: function(selectedIds) {

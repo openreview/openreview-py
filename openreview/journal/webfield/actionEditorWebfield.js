@@ -217,7 +217,7 @@ var renderData = function(venueStatusData) {
       container: 'a.send-reminder-link',
       defaultSubject: SHORT_PHRASE + ' Reminder',
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
-        'Click on the link below to go to the review page:\n\n{{submit_review_link}}' +
+        'Click on the link below to go to the review page:\n\n{{forumUrl}}' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
       menu: [{
         id: 'all-reviewers',
