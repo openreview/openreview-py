@@ -1700,6 +1700,7 @@ def get_neurips_profile_info(profile, n_years=3):
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
     curr_year = datetime.datetime.now().year
     cut_off_year = curr_year - n_years - 1
+    print('cut_off_year', cut_off_year)
 
     ## Institution section, get history within the last n years
     for h in profile.content.get('history', []):
@@ -1725,12 +1726,17 @@ def get_neurips_profile_info(profile, n_years=3):
 
     ## Publications section: get publications within last n years
     for pub in profile.content.get('publications', []):
-        if 'year' in pub.content and isinstance(pub.content['year'], str) and len(pub.content['year']) == 4:
-            year = int(pub.content['year'])
-        elif pub.cdate:
-            year = int(datetime.datetime.fromtimestamp(pub.cdate/1000).year)
-        else:
-            year = int(datetime.datetime.fromtimestamp(pub.tcdate/1000).year)
+        year = None
+        if 'year' in pub.content and isinstance(pub.content['year'], str):
+            try:
+                converted_year = int(pub.content['year'])
+                if converted_year <= curr_year:
+                    year = converted_year
+            except Exception as e:
+                year = None
+        if not year:
+            timtestamp = pub.cdate if pub.cdate else pub.tcdate
+            year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
         if year > cut_off_year:
             publications.add(pub.id)
 
