@@ -1,4 +1,5 @@
 def process(client, note, invitation):
+    import traceback
 
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
@@ -20,7 +21,7 @@ def process(client, note, invitation):
 
     try:
         matching_status = conference.setup_committee_matching(matching_group, compute_affinity_scores, compute_conflicts)
-    except openreview.OpenReviewException as e:
+    except Exception as e:
         if 'Submissions not found.' in str(e):
             matching_status['error'] = ['Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.']
         elif 'The match group is empty' in str(e):
@@ -31,6 +32,9 @@ def process(client, note, invitation):
         else:
             matching_status['error'] = [str(e)]
 
+    print("Following error in the process function was posted as a comment:")
+    print(traceback.format_exc())
+
     comment_note = openreview.Note(
         invitation = note.invitation.replace('Paper_Matching_Setup', 'Comment'),
         forum = note.forum,
@@ -39,16 +43,18 @@ def process(client, note, invitation):
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Matching Status',
+            'title': 'Matching Status [{note_id}]'.format(note_id=note.id),
             'comment': ''
         }
     )
 
     if matching_status.get('error'):
-        error_status=f'''{len(matching_status.get('error'))} error(s): {matching_status.get('error')}'''
+        error_status = f'''{len(matching_status.get('error'))} error(s): {matching_status.get('error')}'''
+        comment_note.content['comment'] += error_status
         comment_note.content['comment'] += f'''
 
-{error_status}'''
+To check references for the note: https://api.openreview.net/references?id={note.id}
+'''
 
     else:
         no_profiles_status = matching_status.get('no_profiles')
