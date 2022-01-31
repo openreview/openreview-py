@@ -13,13 +13,13 @@ def process_update(client, note, invitation, existing_note):
     
     # Check if the content of the existing note is the same as the updated note
     if existing_note:
-      equal = True
-      for key in existing_note.content:
-        if note.content[key] and (existing_note.content[key] != note.content[key]):
-          equal = False
+      if (EMAIL_AUTHORS and ('everyone' in note.readers or AUTHORS_ID in note.readers)):
+        equal = True
+        for key in existing_note.content:
+          if note.content.get(key) and (existing_note.content[key] != note.content.get(key)):
+            equal = False
       # If the content is not equal, want to send emails 
-      if(not equal):
-        if (EMAIL_AUTHORS and ('everyone' in note.readers or AUTHORS_ID in note.readers)):
+        if(not equal):
           groups = [AUTHORS_ID]
           subject = '[{SHORT_PHRASE}] Decision updated for your submission - Paper number: {paper_number}, Paper title: "{paper_title}"'.format(
             SHORT_PHRASE = SHORT_PHRASE,
