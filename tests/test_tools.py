@@ -5,6 +5,7 @@ import types
 import sys
 import os
 
+from openreview import OpenReviewException
 from openreview.tools import concurrent_requests
 
 class TestTools():
@@ -257,14 +258,15 @@ class TestTools():
         assert replaced_group
         assert replaced_group.members == ['~Super_User1', '~SomeFirstName_User1', 'noprofile@mail.com']
 
-        # Test to assert that member is removed while running replace members on a group has a member that is an invalid profile
+        # Test to assert that an exception is raised while running replace members on a group has a member that is an invalid profile
         invalid_member_group = client.add_members_to_group(replaced_group, '~Invalid_Profile1')
         assert len(invalid_member_group.members) == 4
         assert '~Invalid_Profile1' in invalid_member_group.members
 
-        replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
-        assert len(replaced_group.members) == 3
-        assert '~Invalid_Profile1' not in invalid_member_group.members
+        with pytest.raises(OpenReviewException) as ex:
+            replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
+
+        assert 'Profile Not Found' in ex.value.args[0]
 
         ## Replace emails with only profile with confirmed emails
         posted_group = client.post_group(openreview.Group(id='test.org',
