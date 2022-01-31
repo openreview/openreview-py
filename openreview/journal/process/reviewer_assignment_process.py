@@ -14,6 +14,24 @@ def process_update(client, edge, invitation, existing_edge):
         print(f'Remove member {edge.tail} from {group.id}')
         client.remove_members_from_group(group.id, edge.tail)
 
+        recipients=[edge.tail]
+        subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.content["title"]["value"]}'
+
+        message=f'''Hi {{{{fullname}}}},
+
+We recently informed you that your help was requested to review a TMLR submission titled "{note.content['title']['value']}".
+
+However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
+
+If you have any questions, don’t hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
+
+Apologies for the change and thank you for your continued involvement with TMLR!
+
+The {journal.short_name} Editors-in-Chief
+'''
+
+        client.post_message(subject, recipients, message)
+
         if pending_review_edge and pending_review_edge.weight > 0:
             pending_review_edge.weight -= 1
             client.post_edge(pending_review_edge)

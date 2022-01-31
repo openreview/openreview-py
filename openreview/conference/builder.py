@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import time
 import datetime
 import re
+import traceback
 from enum import Enum
 from tqdm import tqdm
 import os
@@ -990,9 +991,7 @@ class Conference(object):
 
     def set_program_chairs(self, emails = []):
         pcs = self.__create_group(self.get_program_chairs_id(), self.id, emails)
-        # if first time, add PC console
-        if not pcs.web:
-            self.webfield_builder.set_program_chair_page(self, pcs)
+        self.webfield_builder.set_program_chair_page(self, pcs)
         ## Give program chairs admin permissions
         self.__create_group(self.id, '~Super_User1', [self.get_program_chairs_id()])
         return pcs

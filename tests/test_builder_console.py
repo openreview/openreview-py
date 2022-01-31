@@ -43,6 +43,9 @@ class TestBuilderConsoles():
         # update web manually
         pc_group.web = pc_group.web.replace("PC Console TEST Conf 2020",
                                             "PC Console TEST Conf YEAR")
+        # we make manual change so we don't want it overwritten
+        pc_group.web = pc_group.web.replace("// webfield_template",
+                                            "")
         pc_group = client.post_group(pc_group)
         customized_web = pc_group.web
 
