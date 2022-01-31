@@ -208,10 +208,10 @@ class TestClient():
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
 
-        notes = openreview.tools.concurrent_get_notes(client, content = { 'title': 'Paper title'})
+        notes = client.get_all_notes(content = { 'title': 'Paper title'})
         assert len(notes) == 4
 
-        notes = openreview.tools.concurrent_get_notes(client, content = { 'title': 'Paper title333'})
+        notes = client.get_all_notes(content = { 'title': 'Paper title333'})
         assert len(notes) == 0
 
     def test_merge_profile(self, client):
