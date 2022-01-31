@@ -539,24 +539,6 @@ class WebfieldBuilder(object):
                 content = content.replace("var REQUEST_FORM_ID = '';", "var REQUEST_FORM_ID = '" + conference.request_form_id + "';")
             return self.__update_group(group, content)
 
-    def set_impersonate_page(self, conference, group):
-
-        program_chairs_name = conference.program_chairs_name
-
-        instruction_str = f'''<p class="dark">Only authors and program committee members of {conference.short_name} can be impersonated.
-        No modification actions are allowed during the impersonation.</p>'''
-
-        header = {
-            'title': f'Impersonate {conference.short_name} users',
-            'instructions': instruction_str
-        }
-
-        with open(os.path.join(os.path.dirname(__file__), f'templates/impersonateWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            return self.__update_group(group, content)
-
 
     def edit_web_value(self, group, global_name, new_value):
         # replaces a value (ex. true)

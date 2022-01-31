@@ -67,23 +67,24 @@ def process(client, note, invitation):
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Recruitment Status',
+            'title': f'Recruitment Status [{note.id}]',
             'comment': f'''
 Invited: {len(recruitment_status.get('invited', []))} users.
-
+\n
 {non_invited_status}
-
+\n
 {already_member_status}
-
+\n
 Please check the invitee group to see more details: https://openreview.net/group?id={conference.id}/{role_name}/Invited
             '''
         }
     )
     if recruitment_status['errors']:
-        error_status=f'''{len(recruitment_status.get('errors'))} error(s) in the recruitment process:
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {recruitment_status.get('errors') }'''
 
-{recruitment_status.get('errors')}'''
         comment_note.content['comment'] += f'''
-Error: {error_status}'''
+Error: {error_status}
+'''
 
     client.post_note(comment_note)

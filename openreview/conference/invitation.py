@@ -309,7 +309,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 content['authorids'] = {'values-regex': '.*'}
             for field in hide_fields:
                 content[field] = {
-                    'values-regex': '.*',
+                    'value-regex': '.*',
                     'required': False
                 }
         else:
@@ -464,7 +464,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
                 content['authorids'] = {'values-regex': '.*'}
             for field in hide_fields:
                 content[field] = {
-                    'values-regex': '.*',
+                    'value-regex': '.*',
                     'required': False
                 }
         else:
@@ -544,6 +544,13 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
+            file_content = file_content.replace(
+                'BLIND_SUBMISSION_ID = \'\'',
+                'BLIND_SUBMISSION_ID = \'' + conference.get_blind_submission_id() + '\'')
+            file_content = file_content.replace(
+                'SUBMISSION_READERS = []',
+                str.format('SUBMISSION_READERS = {}', note.readers)
+            )
             if reveal_authors:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_DESK_REJECT = False',
@@ -1545,13 +1552,13 @@ class InvitationBuilder(object):
         return invitations
 
     def set_decision_invitation(self, conference, notes):
-
-        invitations = []
         self.client.post_invitation(DecisionInvitation(conference))
-        for note in tqdm(notes, total=len(notes), desc='set_decision_invitation'):
+        def post_invitation(note):
             invitation = self.client.post_invitation(PaperDecisionInvitation(conference, note))
             self.__update_readers(note, invitation)
-            invitations.append(invitation)
+            return invitation
+
+        invitations = tools.concurrent_requests(post_invitation, notes)
 
         return invitations
 

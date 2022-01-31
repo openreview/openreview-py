@@ -2396,14 +2396,16 @@ Thank you,
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
-        conference.set_impersonators(emails=['pc@neurips.cc'])
+        conference.set_impersonators(group_ids=['pc@neurips.cc'])
 
-        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        reviewers_id = conference.get_reviewers_id()
+        reviewers = client.get_group(reviewers_id).members
+        assert len(reviewers) > 0
+        result = pc_client.impersonate(reviewers[0])
 
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Impersonate", pc_client.token)
-        assert "NeurIPS 2021 Conference Impersonate | OpenReview" in selenium.title
-        notes_panel = selenium.find_element_by_id('notes')
-        assert notes_panel
+        assert result.get('token') is not None
+        assert result.get('user', {}).get('id') == reviewers[0]
 
     def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
@@ -2499,3 +2501,19 @@ Thank you,
                 'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Program_Chairs']
         assert desk_rejected_submission.content['keywords'] == ''
+
+        desk_reject_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        pc_client.post_note(desk_reject_note)
+
+        helpers.await_queue()
+
+        submission_note = client.get_note(desk_reject_note.forum)
+        assert submission_note.invitation == 'NeurIPS.cc/2021/Conference/-/Blind_Submission'
+        assert submission_note.readers == [
+                'NeurIPS.cc/2021/Conference',
+                'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Authors'
+                ]
+        assert submission_note.content['keywords'] == ''

@@ -92,20 +92,20 @@ def process(client, edit, invitation):
     if decision.content['recommendation']['value'] == 'Accept as is':
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Decision for your TMLR submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title "{submission.content['title']['value']}" is accepted as is.
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission title "{submission.content['title']['value']}" is accepted as is.
 
 To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={submission.id}
 
 In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
-We thank you for your contribution to TMLR and congratulate you for your successful submission!
+We thank you for your contribution to {journal.short_name} and congratulate you for your successful submission!
 
-The TMLR Editors-in-Chief
+The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info
         )
@@ -114,10 +114,10 @@ The TMLR Editors-in-Chief
     if decision.content['recommendation']['value'] == 'Accept with minor revision':
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
-            subject=f'''[{journal.short_name}] Decision for your TMLR submission {submission.content['title']['value']}''',
+            subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title "{submission.content['title']['value']}" is accepted with minor revision.
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {journal.short_name} submission title "{submission.content['title']['value']}" is accepted with minor revision.
 
 To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={submission.id}
 
@@ -125,11 +125,11 @@ The Action Editor responsible for your submission will have provided a descripti
 
 In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
 
-For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr .
+For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
-We thank you for your contribution to TMLR and congratulate you for your successful submission!
+We thank you for your contribution to {journal.short_name} and congratulate you for your successful submission!
 
-The TMLR Editors-in-Chief
+The {journal.short_name} Editors-in-Chief
 ''',
             replyTo=journal.contact_info
         )

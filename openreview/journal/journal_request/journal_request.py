@@ -37,10 +37,10 @@ class JournalRequest():
                 }
             },
             'venue_id': {
-                'description': 'Journal venue id should start with a period.',
+                'description': 'Journal venue id',
                 'order': 4,
                 'value' : {
-                    'value-regex': '[.].+'
+                    'value-regex': '.*'
                 }
             },
             'contact_info': {
@@ -66,6 +66,12 @@ class JournalRequest():
                 'order': 8,
                 'value': {
                     'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                }
+            },
+            'website': {
+                'order': 9,
+                'value': {
+                    'value-regex': '.*'
                 }
             }
         }

@@ -427,7 +427,8 @@ class VenueStages():
             'decision_deadline': {
                 'description': 'By when should all the decisions be in the system? Please use the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 15
+                'order': 15,
+                'required': True
             },
             'decision_options': {
                 'description': 'What are the decision options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Leave empty for default options - "Accept (Oral)", "Accept (Poster)", "Reject"',
@@ -982,6 +983,9 @@ class VenueRequest():
 
         with open(os.path.join(os.path.dirname(__file__), 'process/postSubmissionProcess.py'), 'r') as f:
             file_content = f.read()
+            file_content = file_content.replace(
+                "GROUP_PREFIX = ''",
+                "GROUP_PREFIX = '" + self.super_user + "'")
 
             self.post_submission_content = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Post_Submission',
