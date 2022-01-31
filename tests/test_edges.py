@@ -44,12 +44,12 @@ class TestEdges:
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = [conference.id],
             writers = [conference.id],
-            signatures = ['~Test_User1'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com'],
-                'authors': ['Test User'],
+                'authors': ['SomeFirstName User'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
@@ -71,7 +71,24 @@ class TestEdges:
         openreview.tools.post_bulk_edges(client, edges)
         posted_edges = list(openreview.tools.iterget_edges(client, invitation=inv1.id))
         assert len(edges) == len(posted_edges)
-
+    
+    def test_rename_edges(self, client):
+        guest = openreview.Client()
+        to_profile = guest.register_user(email = 'nadia@mail.com', first = 'Nadia', last = 'L', password = '1234')
+        assert to_profile
+        assert to_profile['id'] == '~Nadia_L1'
+        super_user_edges = list(openreview.tools.iterget_edges(client, tail="~Super_User1"))
+        client.rename_edges('~Super_User1', '~Nadia_L1')
+        nadias_edges = list(openreview.tools.iterget_edges(client, tail="~Nadia_L1"))
+        super_edges_ids = [edge.id for edge in super_user_edges]
+        nadia_edges_ids = [edge.id for edge in nadias_edges]
+        for edge in super_edges_ids:
+            assert edge in nadia_edges_ids
+        assert len(super_user_edges)==len(nadias_edges)
+        super_user_edges = list(openreview.tools.iterget_edges(client, tail="~Super_User1"))
+        assert len(super_user_edges) == 0
+        client.rename_edges('~Nadia_L1','~Super_User1')
+        
     def test_get_edges(self, client):
         invitation_id = 'NIPS.cc/2020/Workshop/MLITS/-/affinity'
         all_edges = client.get_edges(invitation=invitation_id)
@@ -85,7 +102,7 @@ class TestEdges:
         invitation_id = 'NIPS.cc/2020/Workshop/MLITS/-/affinity'
         count = client.get_edges_count(invitation=invitation_id)
         assert count == 2000
-
+    
     def test_delete_edges(self, client):
         edges_before = list(openreview.tools.iterget_edges(client, invitation='NIPS.cc/2020/Workshop/MLITS/-/affinity', label='High'))
         assert len(edges_before) == 1000
@@ -98,4 +115,6 @@ class TestEdges:
         time.sleep(0.5)
         edges_after2 = list(openreview.tools.iterget_edges(client, invitation='NIPS.cc/2020/Workshop/MLITS/-/affinity'))
         assert len(edges_after2) == 0
-
+    
+    
+        

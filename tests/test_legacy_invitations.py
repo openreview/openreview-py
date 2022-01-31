@@ -39,14 +39,14 @@ class TestLegacyInvitations():
         conference = builder.get_result()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            writers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
             }
         )
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')

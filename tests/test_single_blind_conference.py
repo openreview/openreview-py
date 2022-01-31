@@ -174,14 +174,14 @@ class TestSingleBlindConference():
         assert not content.get('archival_status')
 
         note = openreview.Note(invitation = invitation.id,
-            readers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter Test', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
             }
         )
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
@@ -303,7 +303,7 @@ class TestSingleBlindConference():
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         assert 'New paper title' == notes[0].content['title']
-        assert '~Test_User1' in notes[0].writers
+        assert '~SomeFirstName_User1' in notes[0].writers
         assert 'peter@mail.com' in notes[0].writers
         assert 'andrew@mail.com' in notes[0].writers
 
@@ -356,14 +356,14 @@ class TestSingleBlindConference():
         now = datetime.datetime.utcnow()
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000')
         assert reviewer_client is not None, "Client is none"
-        res = reviewer_client.register_user(email = 'reviewer@mail.com', first = 'Reviewer', last = 'Test', password = '1234')
+        res = reviewer_client.register_user(email = 'reviewer@mail.com', first = 'Reviewer', last = 'SomeLastName', password = '1234')
         assert res, "Res i none"
         res = reviewer_client.activate_user('reviewer@mail.com', {
             'names': [
                     {
                         'first': 'Reviewer',
-                        'last': 'Test',
-                        'username': '~Reviewer_Test1'
+                        'last': 'SomeLastName',
+                        'username': '~Reviewer_SomeLastName1'
                     }
                 ],
             'emails': ['reviewer@mail.com'],
@@ -372,7 +372,7 @@ class TestSingleBlindConference():
         assert res, "Res i none"
         group = reviewer_client.get_group(id = 'reviewer@mail.com')
         assert group
-        assert group.members == ['~Reviewer_Test1']
+        assert group.members == ['~Reviewer_SomeLastName1']
 
         builder = openreview.conference.ConferenceBuilder(client)
         assert builder, 'builder is None'
@@ -635,7 +635,7 @@ class TestSingleBlindConference():
         assert headers[0].text == '2 of 2 Reviews Submitted'
 
         #Program chair user
-        pc_client = helpers.create_user('pc2@mail.com', 'ProgramChair', 'Test')
+        pc_client = helpers.create_user('pc2@mail.com', 'ProgramChair', 'SomeLastName')
 
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", pc_client.token)
         notes_panel = selenium.find_element_by_id('notes')
@@ -669,7 +669,6 @@ class TestSingleBlindConference():
 
         submissions = conference.get_submissions()
         assert len(submissions) == 1
-
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Decision',
             forum = submissions[0].id,
             replyto = submissions[0].id,
@@ -691,7 +690,7 @@ class TestSingleBlindConference():
         valid_bibtex = '''@inproceedings{
 user2018new,
 title={New paper title},
-author={Test User and Peter Test and Andrew Mc},
+author={SomeFirstName User and Peter SomeLastName and Andrew Mc},
 booktitle={NIPS Workshop MLITS},
 year={2018},
 url={https://openreview.net/forum?id='''
@@ -729,7 +728,7 @@ url={https://openreview.net/forum?id='''
                 'title': 'New paper title Version 2',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com', 'melisa@mail.com'],
-                'authors': ['Test User', 'Peter Test', 'Andrew Mc', 'Melisa Bok'],
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc', 'Melisa Bok'],
                 'pdf': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf'
             }
         )
@@ -751,7 +750,7 @@ url={https://openreview.net/forum?id='''
         valid_bibtex = '''@inproceedings{
 user2018new,
 title={New paper title Version 2},
-author={Test User and Peter Test and Andrew Mc and Melisa Bok},
+author={SomeFirstName User and Peter SomeLastName and Andrew Mc and Melisa Bok},
 booktitle={NIPS Workshop MLITS},
 year={2018},
 url={https://openreview.net/forum?id='''

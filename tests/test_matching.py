@@ -6,6 +6,8 @@ import datetime
 import time
 import os
 import re
+import csv
+import random
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -21,7 +23,7 @@ class TestMatching():
 
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
-        pc_client = helpers.create_user('pc1@mail.com', 'TestPC', 'UAI')
+        pc_client = helpers.create_user('pc1@mail.com', 'PCFirstName', 'UAI')
         builder = openreview.conference.ConferenceBuilder(client)
         builder.set_conference_id('auai.org/UAI/2019/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
@@ -79,6 +81,14 @@ class TestMatching():
 
     def test_setup_matching(self, conference, pc_client, test_client, helpers):
 
+        ## setup matching with no reviewers
+        with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
+            conference.setup_committee_matching(committee_id=conference.get_reviewers_id(), compute_conflicts=True)
+
+        ## setup matching with no area chairs
+        with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
+            conference.setup_committee_matching(committee_id=conference.get_area_chairs_id(), compute_conflicts=True)
+
         ## Set committee
         conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
         conference.set_reviewers(['r1@mit.edu', 'r2@google.com', 'r3@fb.com'])
@@ -88,14 +98,14 @@ class TestMatching():
 
         ## Paper 1
         note_1 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a1@cmu.edu'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a1@cmu.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a1@cmu.edu'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 1',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a1@cmu.edu'],
-                'authors': ['Test User', 'Author 1'],
+                'authors': ['SomeFirstName User', 'Author 1'],
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Belief Propagation'
@@ -108,14 +118,14 @@ class TestMatching():
 
         ## Paper 2
         note_2 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a2@mit.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a2@mit.edu'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a2@mit.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a2@mit.edu'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 2',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a2@mit.edu'],
-                'authors': ['Test User', 'Author 2'],
+                'authors': ['SomeFirstName User', 'Author 2'],
                 'subject_areas': [
                     'Algorithms: Approximate Inference',
                     'Algorithms: Exact Inference'
@@ -128,14 +138,14 @@ class TestMatching():
 
         ## Paper 3
         note_3 = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'test@mail.com', 'a3@umass.edu'],
-            writers = [conference.id, '~Test_User1', 'test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'test@mail.com', 'a3@umass.edu'],
+            writers = [conference.id, '~SomeFirstName_User1', 'test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title 3',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'a3@umass.edu', 'pc3@mail.com'],
-                'authors': ['Test User', 'Author 3', 'PC author'],
+                'authors': ['SomeFirstName User', 'Author 3', 'PC author'],
                 'subject_areas': [
                     'Algorithms: Distributed and Parallel',
                     'Algorithms: Exact Inference'
@@ -145,6 +155,10 @@ class TestMatching():
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_3.content['pdf'] = url
         note_3 = test_client.post_note(note_3)
+
+        ## setup matching with no submissions
+        with pytest.raises(openreview.OpenReviewException, match=r'Submissions not found'):
+            conference.setup_committee_matching(committee_id=conference.get_reviewers_id(), compute_conflicts=True)
 
         ## Create blind submissions
         conference.setup_post_submission_stage(force=True)
@@ -1213,3 +1227,35 @@ class TestMatching():
         assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Senior_Program_Committee').members == []
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
             assert pc_client.get_group('auai.org/UAI/2019/Conference/Paper1/Area_Chair1')
+
+
+    def test_setup_matching_with_mentors(self, conference, pc_client, helpers):
+
+        mentors=pc_client.post_group(openreview.Group(id=conference.id + '/Reviewers_Mentors',
+            readers = [conference.id],
+            writers = [conference.id],
+            signatures = [conference.id],
+            signatories = [conference.id],
+            members = ['ac1@cmu.edu', 'ac2@umass.edu']
+        ))
+
+        mentees=pc_client.post_group(openreview.Group(id=conference.id + '/Reviewers_Mentees',
+            readers = [conference.id],
+            writers = [conference.id],
+            signatures = [conference.id],
+            signatories = [conference.id],
+            members = ['~Reviewer_One1', 'r2@google.com', 'r3@fb.com']
+        ))
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/mentors_affinity_scores.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for mentor in mentors.members:
+                for mentee in mentees.members:
+                    writer.writerow([mentee, mentor, round(random.random(), 2)])
+
+        conference.setup_matching(committee_id=conference.id + '/Reviewers_Mentors',
+        affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/mentors_affinity_scores.csv'),
+        alternate_matching_group=conference.id + '/Reviewers_Mentees')
+
+        affinity_scores = pc_client.get_edges(invitation=conference.id + '/Reviewers_Mentors/-/Affinity_Score')
+        assert len(affinity_scores) == 6

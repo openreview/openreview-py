@@ -5,9 +5,7 @@ def process(client, note, invitation):
     conference = openreview.helpers.get_conference(client, note.forum)
     print('Conference: ', conference.get_id())
 
-    reduced_load=note.content.get('invitee_reduced_load')
-    if reduced_load:
-        conference.reduced_load_on_decline=reduced_load
+    reduced_load=note.content.get('invitee_reduced_load', None)
 
     note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
     note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
@@ -48,12 +46,18 @@ def process(client, note, invitation):
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
         message = note.content['invitation_email_content'].strip(),
-        contact_info = contact_info
+        reduced_load_on_decline = reduced_load,
+        contact_info = contact_info,
+        allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No')
     )
 
     non_invited_status=f'''No recruitment invitation was sent to the following users because they have already been invited:
 
 {recruitment_status.get('already_invited', {})}''' if recruitment_status.get('already_invited') else ''
+
+    already_member_status=f'''No recruitment invitation was sent to the following users because they are already members of the group:
+
+{recruitment_status.get('already_member', '')}''' if recruitment_status.get('already_member') else ''
 
     comment_note = openreview.Note(
         invitation = note.invitation.replace('Recruitment', 'Comment'),
@@ -63,21 +67,24 @@ def process(client, note, invitation):
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Recruitment Status',
+            'title': f'Recruitment Status [{note.id}]',
             'comment': f'''
 Invited: {len(recruitment_status.get('invited', []))} users.
-
+\n
 {non_invited_status}
-
+\n
+{already_member_status}
+\n
 Please check the invitee group to see more details: https://openreview.net/group?id={conference.id}/{role_name}/Invited
             '''
         }
     )
     if recruitment_status['errors']:
-        error_status=f'''{len(recruitment_status.get('errors'))} error(s) in the recruitment process:
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {recruitment_status.get('errors') }'''
 
-{recruitment_status.get('errors')}'''
         comment_note.content['comment'] += f'''
-Error: {error_status}'''
+Error: {error_status}
+'''
 
     client.post_note(comment_note)

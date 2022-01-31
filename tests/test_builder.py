@@ -88,16 +88,16 @@ class TestBuilder():
         conference.set_program_chairs()
         conference.set_reviewers(emails = ['reviewer_test1@mail.com'])
 
-        author_client = helpers.create_user('author_test1@mail.com', 'Test', 'Author')
+        author_client = helpers.create_user('author_test1@mail.com', 'SomeFirstName', 'Author')
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_Author1', 'drew@mail.com', 'test.org/2019/Conference'],
-            writers = [conference.id, '~Test_Author1', 'drew@mail.com'],
-            signatures = ['~Test_Author1'],
+            readers = ['~SomeFirstName_Author1', 'drew@mail.com', 'test.org/2019/Conference'],
+            writers = [conference.id, '~SomeFirstName_Author1', 'drew@mail.com'],
+            signatures = ['~SomeFirstName_Author1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['author_test1@mail.com', 'drew@mail.com'],
-                'authors': ['Test Author', 'Drew Barrymore']
+                'authors': ['SomeFirstName Author', 'Drew Barrymore']
             }
         )
         url = author_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
@@ -115,7 +115,7 @@ class TestBuilder():
 
         conference.set_review_stage(conference.review_stage)
 
-        reviewer_client = helpers.create_user('reviewer_test1@mail.com', 'Test', 'ReviewerOne')
+        reviewer_client = helpers.create_user('reviewer_test1@mail.com', 'SomeFirstName', 'ReviewerOne')
 
         conference.set_assignment('reviewer_test1@mail.com', blind_submissions[0].number)
 
@@ -194,14 +194,14 @@ class TestBuilder():
         author_client = openreview.Client(username='author_test1@mail.com', password='1234')
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_Author1', 'drew@mail.com', 'sortTest.org/2019/Conference'],
-            writers = [conference.id, '~Test_Author1', 'drew@mail.com'],
-            signatures = ['~Test_Author1'],
+            readers = ['~SomeFirstName_Author1', 'drew@mail.com', 'sortTest.org/2019/Conference'],
+            writers = [conference.id, '~SomeFirstName_Author1', 'drew@mail.com'],
+            signatures = ['~SomeFirstName_Author1'],
             content = {
                 'title': 'Paper title Sort Conference',
                 'abstract': 'This is an abstract',
                 'authorids': ['author_test1@mail.com', 'drew@mail.com'],
-                'authors': ['Test Author', 'Drew Barrymore']
+                'authors': ['SomeFirstName Author', 'Drew Barrymore']
             }
         )
         url = author_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
@@ -213,7 +213,7 @@ class TestBuilder():
 
         conference.create_blind_submissions()
 
-        pc_client = helpers.create_user('pc_testconsole1@mail.com', 'Test', 'PCConsole')
+        pc_client = helpers.create_user('pc_testconsole1@mail.com', 'SomeFirstName', 'PCConsole')
         request_page(selenium, 'http://localhost:3030/group?id=' + conference.get_program_chairs_id() + '#paper-status', pc_client.token, wait_for_element='venue-configuration')
 
         assert selenium.find_element_by_xpath('//a[@href="#paper-status"]')

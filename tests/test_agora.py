@@ -64,7 +64,9 @@ class TestAgora():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
-        assert messages[0]['content']['text'] == 'Your submission to Agora COVID-19 has been posted.\n\nTitle: Paper title\nYour submission will be examined by the Editor-in-Chief of the venue and you will receive an email with their response shortly.\nTo your submission can be viewed on OpenReview here: https://openreview.net/forum?id=' + posted_note.id
+        text = messages[0]['content']['text']
+        assert 'Your submission to Agora COVID-19 has been posted.' in text
+        assert 'Title: Paper title<br>\nYour submission will be examined by the Editor-in-Chief of the venue and you will receive an email with their response shortly.<br>\nTo your submission can be viewed on OpenReview here:' in text
 
         messages = client.get_messages(subject = 'Agora COVID-19 has received a submission titled "Paper title"')
         assert len(messages) == 1
@@ -106,7 +108,7 @@ class TestAgora():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
-        assert messages[0]['content']['text'] == 'Congratulations, your submission titled "Paper title" has been accepted by ~Editor_One1, the Editor-in-Chief of this venue.\nYour article is now visible to the public and an editor will be assigned soon based on your suggestions.\n\nThe article can be viewed on OpenReview here: https://openreview.net/forum?id=' + submissions[0].id
+        assert messages[0]['content']['text'] == f'<p>Congratulations, your submission titled &quot;Paper title&quot; has been accepted by ~Editor_One1, the Editor-in-Chief of this venue.<br>\nYour article is now visible to the public and an editor will be assigned soon based on your suggestions.</p>\n<p>The article can be viewed on OpenReview here: <a href=\"https://openreview.net/forum?id={submissions[0].id}\">https://openreview.net/forum?id={submissions[0].id}</a></p>\n'
 
 
     def test_assign_editor(self, client, helpers):
@@ -523,4 +525,6 @@ class TestAgora():
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'author@agora.net' in recipients
-        assert messages[0]['content']['text'] == 'Unfortunately your submission has been desk-rejected by the Editor-in-Chief of this venue.\n\nFor more information, see their comment on the OpenReview submission forum here: https://openreview.net/forum?id=' + submissions[0].id + '&noteId=' + posted_note.id
+        text = messages[0]['content']['text']
+        assert 'Unfortunately your submission has been desk-rejected by the Editor-in-Chief of this venue.' in text
+        assert 'For more information, see their comment on the OpenReview submission forum here:' in text

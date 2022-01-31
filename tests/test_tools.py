@@ -5,10 +5,33 @@ import types
 import sys
 import os
 
-def do_work(value):
-    return value.id
+from openreview.tools import concurrent_requests
 
 class TestTools():
+    def test_concurrent_requests(self, client):
+        def post_random_group(number):
+            return client.post_group(
+                openreview.Group(
+                    id = f'NewGroup{number}',
+                    members = [],
+                    signatures = ['~Super_User1'],
+                    signatories = ['NewGroup'],
+                    readers = ['everyone'],
+                    writers =['NewGroup']
+                ))
+        
+        params = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        results = openreview.tools.concurrent_requests(post_random_group, params)
+        assert len(results) == len(params)
+
+        def get_random_group(number):
+            return client.get_group(f'NewGroup{number}')
+
+        groups = openreview.tools.concurrent_requests(get_random_group, params)
+        assert len(groups) == len(params)
+
+        for number, group in enumerate(groups):
+            assert group.id == f'NewGroup{number}'
 
     def test_get_submission_invitations(self, client):
         invitations = openreview.tools.get_submission_invitations(client)
@@ -155,11 +178,6 @@ class TestTools():
         assert preferred_name, "preferred name not found"
         assert preferred_name == 'Super User'
 
-    def test_parallel_exec(self, client):
-        values = client.get_groups(limit=10)
-        results = openreview.tools.parallel_exec(values, do_work)
-        assert len(results) == len(values)
-
     def test_create_authorid_profiles(self, client):
         authors = [
             'Ada Lovelace',
@@ -206,13 +224,13 @@ class TestTools():
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
             signatories=['~Super_User1'],
-            members=['test@mail.com', '~Test_User1', '~Another_Name1']
+            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1']
         ))
         assert posted_group
 
         client.post_profile(openreview.Profile(
-            referent='~Test_User1',
-            signatures = ['~Test_User1'],
+            referent='~SomeFirstName_User1',
+            signatures = ['~SomeFirstName_User1'],
             content={
                 'names': [
                     {
@@ -227,7 +245,7 @@ class TestTools():
 
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
-        assert replaced_group.members == ['~Test_User1']
+        assert replaced_group.members == ['~SomeFirstName_User1']
 
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
@@ -238,7 +256,7 @@ class TestTools():
         ))
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
-        assert replaced_group.members == ['~Super_User1', '~Test_User1', 'noprofile@mail.com']
+        assert replaced_group.members == ['~Super_User1', '~SomeFirstName_User1', 'noprofile@mail.com']
 
         # Test to assert that member is removed while running replace members on a group has a member that is an invalid profile
         invalid_member_group = client.add_members_to_group(replaced_group, '~Invalid_Profile1')
@@ -332,6 +350,7 @@ class TestTools():
         os.environ["OPENREVIEW_PASSWORD"] = ""
         guest_client = openreview.Client()
 
-        with pytest.raises(openreview.OpenReviewException, match=r'forbidden'):
-            assert openreview.tools.get_group(guest_client, '~Super_User1')
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            openreview.tools.get_group(guest_client, '~Super_User1')
+        assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 

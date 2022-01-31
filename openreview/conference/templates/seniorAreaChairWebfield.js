@@ -14,7 +14,7 @@ var HEADER = {};
 var SENIOR_AREA_CHAIR_NAME = '';
 var AREA_CHAIRS_ID = '';
 var REVIEWERS_ID = '';
-var ASSIGNMENT_INVITATION = 'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Proposed_Assignment';
+var ASSIGNMENT_INVITATION = CONFERENCE_ID + '/' + SENIOR_AREA_CHAIR_NAME + '/-/Assignment';
 var ASSIGNMENT_LABEL = null;
 var EMAIL_SENDER = null;
 
@@ -551,7 +551,7 @@ var renderPaginatedTable = function($container, tableData, pageNumber) {
 
   var paginationHtml = null;
   if (tableData.rows.length > PAGE_SIZE) {
-    paginationHtml = view.paginationLinks(tableData.rows.length, PAGE_SIZE, pageNumber);
+    paginationHtml = view.paginationLinks(tableData.rows.length, PAGE_SIZE, pageNumber, null, { showCount: true });
   }
 
   $container.append(tableHtml, paginationHtml);
@@ -621,7 +621,7 @@ var postReviewerEmails = function(postData) {
 
 var buildSPCTableRow = function(areaChair, papers) {
 
-  var acTableeferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairss#areachair-status)');
+  var acTableeferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairs#areachair-status)');
 
   var summary = {
     id: areaChair.id,
@@ -883,7 +883,7 @@ var displayAreaChairsStatusTable = function() {
 
 var buildPaperTableRow = function(note) {
 
-  var paperTableReferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairss#paper-status)');
+  var paperTableReferrerUrl = encodeURIComponent('[Senior Area Chair Console](/group?id=' + CONFERENCE_ID + '/Senior_Area_Chairs#paper-status)');
 
   var reviewerIds = note.details.reviewers;
   var areachairIds = note.details.areaChairs;
@@ -1027,9 +1027,11 @@ var displayPaperStatusTable = function() {
     Average_Rating: function(row) { return toNumber(row.reviewProgressData.averageRating); },
     Max_Rating: function(row) { return toNumber(row.reviewProgressData.maxRating); },
     Min_Rating: function(row) { return toNumber(row.reviewProgressData.minRating); },
+    Rating_Range: function(row) { return toNumber(row.reviewProgressData.maxRating) - toNumber(row.reviewProgressData.minRating); },
     Average_Confidence: function(row) { return toNumber(row.reviewProgressData.averageConfidence); },
     Max_Confidence: function(row) { return toNumber(row.reviewProgressData.maxConfidence); },
     Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
+    Confidence_Range: function(row) { return toNumber(row.reviewProgressData.maxConfidence) - toNumber(row.reviewProgressData.minConfidence); },
     Reviewers_Assigned: function(row) { return row.reviewProgressData.numReviewers; },
     Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
     Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },

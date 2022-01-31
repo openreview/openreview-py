@@ -80,14 +80,14 @@ class TestWorkshop():
     def test_post_submissions(self, client, conference, test_client, peter_client, selenium, request_page):
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
+            writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc']
             }
         )
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
@@ -175,14 +175,14 @@ class TestWorkshop():
         assert len(blind_submissions) == 1
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
+            writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc']
             }
         )
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
@@ -200,14 +200,14 @@ class TestWorkshop():
         ]
 
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
-            writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@mail.com'],
-            signatures = ['~Test_User1'],
+            readers = ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP'],
+            writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
+            signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'Paper title',
                 'abstract': 'This is an abstract',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@mail.com'],
-                'authors': ['Test User', 'Peter User', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter User', 'Andrew Mc']
             }
         )
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
@@ -223,6 +223,7 @@ class TestWorkshop():
 
     def test_setup_matching(self, client, conference):
 
+        conference.set_reviewers(emails = ['reviewer4@mail.com'])
         conference.setup_matching()
 
         invitation = client.get_invitation('icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Reviewers/-/Assignment_Configuration')
@@ -254,8 +255,6 @@ class TestWorkshop():
         assert len(group.members) == 3
 
     def test_open_reviews(self, client, conference, test_client, selenium, request_page, helpers):
-
-        conference.set_reviewers(emails = ['reviewer4@mail.com'])
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
         submission = notes[2]
@@ -449,6 +448,7 @@ class TestWorkshop():
             forum = submission.id,
             replyto = submission.id,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
+            nonreaders = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
             writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
             content = {

@@ -10,6 +10,8 @@ def process(client, edge, invitation):
     INVITED_LABEL = ''
     INVITE_LABEL = ''
     EMAIL_TEMPLATE = ''
+    IS_REVIEWER = 'Reviewers' in ASSIGNMENT_INVITATION_ID
+    ACTION_STRING = 'to review' if IS_REVIEWER else 'to serve as area chair for'
     print(edge.id)
 
     if edge.ddate is None and edge.label == INVITE_LABEL:
@@ -50,10 +52,11 @@ def process(client, edge, invitation):
         decline_url = url + "No"
 
         # format the message defined above
-        subject=f'[{SHORT_PHRASE}] Invitation to review paper titled {submission.content["title"]}'
+        subject=f'[{SHORT_PHRASE}] Invitation {ACTION_STRING} paper titled {submission.content["title"]}'
         if EMAIL_TEMPLATE:
             message=EMAIL_TEMPLATE.format(
                 title=submission.content['title'],
+                number=submission.number,
                 abstract=submission.content['abstract'],
                 accept_url=accept_url,
                 decline_url=decline_url,
@@ -63,7 +66,7 @@ def process(client, edge, invitation):
             )
         else:
             message=f'''Hi {preferred_name},
-You were invited to review the paper number: {submission.number}, title: {submission.content['title']}.
+You were invited {ACTION_STRING} the paper number: {submission.number}, title: {submission.content['title']}.
 Abstract: {submission.content['abstract']}
 
 Please accept the invitation clicking:

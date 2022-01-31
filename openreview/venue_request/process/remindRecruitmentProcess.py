@@ -5,9 +5,7 @@ def process(client, note, invitation):
     conference = openreview.helpers.get_conference(client, note.forum)
     print('Conference: ', conference.get_id())
 
-    reduced_load=note.content.get('invitee_reduced_load')
-    if reduced_load:
-        conference.reduced_load_on_decline=reduced_load
+    reduced_load=note.content.get('invitee_reduced_load', None)
 
     note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
     note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
@@ -22,7 +20,8 @@ def process(client, note, invitation):
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
         message = note.content['invitation_email_content'].strip(),
-        remind=True
+        remind=True,
+        reduced_load_on_decline = reduced_load
     )
 
     comment_note = openreview.Note(
@@ -33,7 +32,7 @@ def process(client, note, invitation):
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Remind Recruitment Status',
+            'title': f'Remind Recruitment Status',
             'comment': f'''
 Reminded: {len(recruitment_status.get('reminded', []))} users.
 
@@ -41,4 +40,13 @@ Please check the invitee group to see more details: https://openreview.net/group
             '''
         }
     )
+
+    if recruitment_status['errors']:
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {recruitment_status.get('errors') }'''
+
+        comment_note.content['comment'] += f'''
+Error: {error_status}
+'''
+
     client.post_note(comment_note)

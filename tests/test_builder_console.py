@@ -43,6 +43,9 @@ class TestBuilderConsoles():
         # update web manually
         pc_group.web = pc_group.web.replace("PC Console TEST Conf 2020",
                                             "PC Console TEST Conf YEAR")
+        # we make manual change so we don't want it overwritten
+        pc_group.web = pc_group.web.replace("// webfield_template",
+                                            "")
         pc_group = client.post_group(pc_group)
         customized_web = pc_group.web
 
@@ -54,16 +57,16 @@ class TestBuilderConsoles():
         assert pc_group.web == customized_web, "Error customized PC Console overwritten"
 
         # need a paper to be able to check if reassign reviewers is activated
-        author_client=helpers.create_user('author_test2@mail.com', 'Test', 'AuthorTwo')
+        author_client=helpers.create_user('author_test2@mail.com', 'SomeFirstName', 'AuthorTwo')
         note = openreview.Note(invitation = conference.get_submission_id(),
-            readers = ['~Test_AuthorTwo1', 'drew@mail.com', conference.get_id()],
-            writers = [conference.id, '~Test_AuthorTwo1', 'drew@mail.com'],
-            signatures = ['~Test_AuthorTwo1'],
+            readers = ['~SomeFirstName_AuthorTwo1', 'drew@mail.com', conference.get_id()],
+            writers = [conference.id, '~SomeFirstName_AuthorTwo1', 'drew@mail.com'],
+            signatures = ['~SomeFirstName_AuthorTwo1'],
             content = {
                 'title': 'Paper title PC Console Conference',
                 'abstract': 'This is an abstract',
                 'authorids': ['author_test2@mail.com', 'drew@mail.com'],
-                'authors': ['Test AuthorTwo', 'Drew Barrymore']
+                'authors': ['SomeFirstName AuthorTwo', 'Drew Barrymore']
             }
         )
         url = author_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')

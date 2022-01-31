@@ -54,7 +54,9 @@ If you would like to change your decision, please click the Accept link in the p
 '''.format(REVIEWER_NAME, SHORT_PHRASE)
 
             if (REDUCED_LOAD_INVITATION_NAME):
-                message += 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: https://openreview.net/invitation?id={}/-/{}&user={}&key={}'.format(CONFERENCE_NAME, REDUCED_LOAD_INVITATION_NAME, user, note.content['key'])
+                role = REVIEWER_NAME.replace(' ', '_') + 's'
+                REDUCED_LOAD_INVITATION_ID = f'{CONFERENCE_NAME}/{role}/-/{REDUCED_LOAD_INVITATION_NAME}'
+                message += 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: https://openreview.net/invitation?id={}&user={}&key={}'.format(REDUCED_LOAD_INVITATION_ID, user, note.content['key'])
 
             client.post_message(subject, [user], message, parentGroup=REVIEWERS_DECLINED_ID)
 

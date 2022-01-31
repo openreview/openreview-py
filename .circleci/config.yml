@@ -8,20 +8,34 @@ jobs:
       - image: circleci/python:3.7-node
       - image: circleci/redis:6.0.0
       - image: circleci/mongo:4.4.5
+        command: [--replSet,rs0]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
           xpack.security.enabled: false
           transport.host: localhost
     steps:
       - checkout
-      - run: sudo apt-get update
+      - run:
+          name: Initialize Replica Set
+          command: |
+            wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+            sudo touch /etc/apt/sources.list.d/mongodb-org-4.4.list
+            echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+            sudo apt-get update
+            sudo apt-get install -y mongodb-org=4.4.5 mongodb-org-server=4.4.5 mongodb-org-shell=4.4.5 mongodb-org-mongos=4.4.5 mongodb-org-tools=4.4.5
+            mongo mongodb://localhost:27017 --eval "rs.initiate()"
       - run: sudo pip install ~/openreview-py-repo
-      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview.git ~/openreview
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
       - run: mkdir ~/openreview/logs
       - run: mkdir ~/openreview/files
       - run: mkdir ~/openreview/files/attachments
       - run: mkdir ~/openreview/files/pdfs
+      - run: mkdir ~/openreview-v2/logs
+      - run: mkdir ~/openreview-v2/files
+      - run: mkdir ~/openreview-v2/files/attachments
+      - run: mkdir ~/openreview-v2/files/pdfs
       - run: mkdir ~/openreview-py-repo/coverage
       - run:
           name: install api
@@ -44,7 +58,7 @@ jobs:
           command: |
             cd ~/openreview-web
             npm install
-            cp .env.sample .env
+            cp .env.example .env
             SUPER_USER=openreview.net npm run build
       - run:
           name: run web-app
@@ -59,12 +73,28 @@ jobs:
             wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 10 http://localhost:3030
             :
       - run:
+          name: install api-v2
+          command: |
+            cd ~/openreview-v2
+            npm install
+      - run:
+          name: run api-v2
+          command: |
+            cd ~/openreview-v2
+            NODE_ENV=circleci node scripts/setup_app.js
+          background: true
+      - run:
+          shell: /bin/sh
+          command: |
+            wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 http://localhost:3001
+            :
+      - run:
           name: install firefox driver
           command: |
             sudo apt-get update
             sudo apt-get install firefox-esr
             cd ~/openreview-py-repo/tests/drivers
-            wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
       - run:

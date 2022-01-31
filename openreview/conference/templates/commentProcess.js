@@ -6,8 +6,10 @@ function(){
     var AUTHORS_NAME = '';
     var REVIEWERS_NAME = '';
     var AREA_CHAIRS_NAME = '';
+    var SENIOR_AREA_CHAIRS_NAME = '';
     var PROGRAM_CHAIRS_ID = '';
     var USE_AREA_CHAIRS = false;
+    var EMAIL_PCs = false;
 
     or3client.or3request(or3client.notesUrl + '?id=' + note.forum, {}, 'GET', token)
     .then(function(result) {
@@ -17,6 +19,7 @@ function(){
       //TODO: use the variable instead, when we have anonymous groups integrated
       var REVIEWERS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Reviewers';
       var AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Area_Chairs';
+      var SENIOR_AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + forumNote.number + '/Senior_Area_Chairs';
       var ignoreGroups = note.nonreaders || [];
       var signature = note.signatures[0].split('/').slice(-1)[0];
       var prettySignature = signature.startsWith('~') ? signature.replace(/~|\d+/g, '').replace(/_/g, ' ') : signature.replace(/_/g, ' ')
@@ -24,15 +27,15 @@ function(){
       ignoreGroups.push(note.tauthor);
       var content = `
 
-      Paper Number: ${forumNote.number}
+Paper Number: ${forumNote.number}
 
-      Paper Title: "${forumNote.content.title}"
+Paper Title: "${forumNote.content.title}"
 
-      Comment title: ${note.content.title}
+Comment title: ${note.content.title}
 
-      Comment: ${note.content.comment}
+Comment: ${note.content.comment}
 
-      To view the comment, click here: ${baseUrl}/forum?id=${note.forum}&noteId=${note.id}`
+To view the comment, click here: ${baseUrl}/forum?id=${note.forum}&noteId=${note.id}`
 
       var ac_mail = {
         groups: [AREA_CHAIRS_ID],
@@ -96,7 +99,18 @@ function(){
         promises.push(or3client.or3request(or3client.mailUrl, ac_mail, 'POST', token));
       }
 
-      if(PROGRAM_CHAIRS_ID && (note.readers.includes(PROGRAM_CHAIRS_ID) || note.readers.includes('everyone'))){
+      var email_SAC = note.readers.length==3 && note.readers.includes(SENIOR_AREA_CHAIRS_ID) && note.readers.includes(PROGRAM_CHAIRS_ID)
+      if(SENIOR_AREA_CHAIRS_NAME && email_SAC){
+        var SAC_mail = {
+          groups: [SENIOR_AREA_CHAIRS_ID],
+          ignoreGroups: ignoreGroups,
+          subject: `[${SHORT_PHRASE}] ${prettySignature} commented on a paper in your area. Paper Number: ${forumNote.number}, Paper Title: "${forumNote.content.title}"`,
+          message: `${prettySignature} commented on a paper for which you are serving as Senior Area Chair.${content}`
+        };
+        promises.push(or3client.or3request( or3client.mailUrl, SAC_mail, 'POST', token ));
+      }
+
+      if(EMAIL_PCs && (note.readers.includes(PROGRAM_CHAIRS_ID) || note.readers.includes('everyone'))){
 
         var pc_mail = {
           groups: [PROGRAM_CHAIRS_ID],

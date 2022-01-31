@@ -14,22 +14,23 @@ function processUpdate() {
   var noteAbstract = (note.content.abstract ? `\n\nAbstract: ${note.content.abstract}` : '');
   var action = note.ddate ? 'deleted' : (existingNote ? 'updated' : 'posted');
   var authorMessage = `Your submission to ${SHORT_PHRASE} has been ${action}.\n\nSubmission Number: ${note.number} \n\nTitle: ${note.content.title} ${noteAbstract} \n\nTo view your submission, click here: ${baseUrl}/forum?id=${note.forum}`;
+  var messages = [];
 
-  var authorMail = {
+  messages.push({
     groups: [note.tauthor],
     subject: authorSubject,
     message: authorMessage
-  };
+  });
 
-  authorMessage += `\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ${note.tauthor}`;
-
-  var otherAuthorsMail = {
-    groups: note.content.authorids,
-    ignoreGroups: [note.tauthor],
-    subject: authorSubject,
-    message: authorMessage
-  };
-
+  if (note.content.authorids && note.content.authorids.length) {
+    authorMessage += `\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ${note.tauthor}`;
+    messages.push({
+      groups: note.content.authorids,
+      ignoreGroups: [note.tauthor],
+      subject: authorSubject,
+      message: authorMessage
+    })
+  }
 
   let createGroups = async function() {
     if (CREATE_GROUPS && action == 'posted') {
@@ -120,10 +121,7 @@ function processUpdate() {
   }
 
   let sendEmails = function() {
-    var promises = [
-      or3client.or3request(or3client.mailUrl, authorMail, 'POST', token),
-      or3client.or3request(or3client.mailUrl, otherAuthorsMail, 'POST', token)
-    ];
+    var promises = messages.map(mailBody => or3client.or3request(or3client.mailUrl, mailBody, 'POST', token));
 
     if (PROGRAM_CHAIRS_ID && action == 'posted') {
       var pcsMail = {

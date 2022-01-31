@@ -26,8 +26,8 @@ class TestECCVConference():
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
         builder.set_conference_short_name('ECCV 2020')
+        builder.set_default_reviewers_load(7)
         builder.has_area_chairs(True)
-        builder.set_recruitment_reduced_load(['4','5','6','7'], 7)
         builder.set_homepage_header({
             'title': '2020 European Conference on Computer Vision',
             'subtitle': 'ECCV 2020',
@@ -301,7 +301,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_recruit_reviewer(self, conference, client, helpers, selenium, request_page):
 
-        result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'])
+        result = conference.recruit_reviewers(['test_reviewer_eccv@mail.com', 'mohit+1@mail.com'],
+                                              reduced_load_on_decline = ['4','5','6','7'],
+                                              default_load = 7)
         assert result
         assert len(result['invited']) == 2
         assert 'test_reviewer_eccv@mail.com' in result['invited']
@@ -313,8 +315,9 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as reviewer' in text
 
         # Test to check that a user is not able to accept/decline if they are not a part of the invited group
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
 
         # Removing reviewer from the invited group
         invited_group = client.remove_members_from_group('thecvf.com/ECCV/2020/Conference/Reviewers/Invited', 'mohit+1@mail.com')
@@ -352,7 +355,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to='mohit+1@mail.com', subject='[ECCV 2020] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'].startswith('You have declined the invitation to become a Reviewer for ECCV 2020.\n\nIf you would like to change your decision, please click the Accept link in the previous invitation email.\n\nIn case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
+        text = messages[0]['content']['text']
+        assert 'You have declined the invitation to become a Reviewer for ECCV 2020.' in text
+        assert 'If you would like to change your decision, please click the Accept link in the previous invitation email.' in text
+        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:' in text
 
         ## Reduce the load of Mohit
         notes = client.get_notes(invitation='thecvf.com/ECCV/2020/Conference/-/Recruit_Reviewers', content={'user': 'mohit+1@mail.com'})
@@ -360,7 +366,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert len(notes) == 1
 
         client.post_note(openreview.Note(
-            invitation='thecvf.com/ECCV/2020/Conference/-/Reduced_Load',
+            invitation='thecvf.com/ECCV/2020/Conference/Reviewers/-/Reduced_Load',
             readers=['thecvf.com/ECCV/2020/Conference', 'mohit+1@mail.com'],
             writers=['thecvf.com/ECCV/2020/Conference'],
             signatures=['(anonymous)'],
@@ -375,7 +381,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
         request_page(selenium, accept_url, alert=True)
 
         group = client.get_group(conference.get_reviewers_id())
@@ -386,7 +393,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_expertise_selection(self, conference, helpers, selenium, request_page):
 
-        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'Testreviewer', 'Eccv')
+        reviewer_client = helpers.create_user('test_reviewer_eccv@mail.com', 'ReviewerFirstName', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3030/group?id=' + conference.get_reviewers_id() + '#reviewer-tasks'
         request_page(selenium, reviewer_tasks_url, reviewer_client.token)
 
@@ -435,15 +442,15 @@ Please contact info@openreview.net with any questions or concerns about this int
                     'emergency_review_count': '0'
                 },
                 signatures = [
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ],
                 readers = [
                     conference.get_id(),
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ],
                 writers = [
                     conference.get_id(),
-                    '~Testreviewer_Eccv1'
+                    '~ReviewerFirstName_Eccv1'
                 ]
             ))
         assert registration_note
@@ -468,7 +475,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         #Area Chairs
         conference.set_area_chairs(['test_ac_eccv@mail.com'])
-        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'Testareachair', 'Eccv')
+        ac_client = helpers.create_user('test_ac_eccv@mail.com', 'AreachairFirstName', 'Eccv')
         reviewer_tasks_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs#areachair-tasks'
         request_page(selenium, reviewer_tasks_url, ac_client.token)
 
@@ -479,14 +486,14 @@ Please contact info@openreview.net with any questions or concerns about this int
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
             note = openreview.Note(invitation = conference.get_submission_id(),
-                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~Test_User1'],
-                writers = [conference.id, '~Test_User1', 'peter@mail.com', 'andrew@' + domains[i]],
-                signatures = ['~Test_User1'],
+                readers = ['thecvf.com/ECCV/2020/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
+                writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
+                signatures = ['~SomeFirstName_User1'],
                 content = {
                     'title': 'Paper title ' + str(i) ,
                     'abstract': 'This is an abstract ' + str(i),
                     'authorids': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]],
-                    'authors': ['Test User', 'Peter Test', 'Andrew Mc'],
+                    'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'],
                     'author_agreement': 'All authors agree with the author guidelines of ECCV 2020.',
                     'TPMS_agreement': 'All authors agree that the manuscript can be processed by TPMS for paper matching.'
                 }
@@ -529,11 +536,17 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         tauthor_message = [msg for msg in messages if msg['content']['to'] == note.tauthor][0]
         assert tauthor_message
-        assert tauthor_message['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3030/forum?id=' + note.id
+        text = tauthor_message['content']['text']
+        assert 'Your submission to ECCV 2020 has been updated.' in text
+        assert 'Submission Number: ' + str(note.number) in text
+        assert 'Title: ' + note.content['title'] in text
+        assert 'Abstract: ' + note.content['abstract'] in text
+        assert 'To view your submission, click here:' in text
 
         other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
         assert len(other_author_messages) == 2
-        assert other_author_messages[0]['content']['text'] == 'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: ' + str(note.number) + ' \n\nTitle: ' + note.content['title'] + ' \n\nAbstract: ' + note.content['abstract'] + ' \n\nTo view your submission, click here: http://localhost:3030/forum?id=' + note.id + '\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at ' + note.tauthor
+        text = other_author_messages[0]['content']['text']
+        assert text == f'<p>Your submission to ECCV 2020 has been updated.</p>\n<p>Submission Number: 5</p>\n<p>Title: I have been updated</p>\n<p>Abstract: This is an abstract 5</p>\n<p>To view your submission, click here: <a href=\"http://localhost:3030/forum?id={note.id}\">http://localhost:3030/forum?id={note.id}</a></p>\n<p>If you are not an author of this submission and would like to be removed, please contact the author who added you at <a href=\"mailto:test@mail.com\">test@mail.com</a></p>\n'
 
     def test_revise_additional_files(self, conference, client, test_client):
 
@@ -597,7 +610,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         note = openreview.Note(invitation = 'thecvf.com/ECCV/2020/Conference/Paper5/-/Supplementary_Material',
             readers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
             writers = note.writers + ['thecvf.com/ECCV/2020/Conference/Paper5/Authors'],
-            signatures = ['~Test_User1'],
+            signatures = ['~SomeFirstName_User1'],
             referent = note.original,
             forum = note.original,
             content = {}
@@ -1003,7 +1016,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_withdraw_submission(self, conference, client, test_client, selenium, request_page, helpers):
 
-        conference.setup_post_submission_stage(force=True)
+        conference.setup_post_submission_stage(force=True, hide_fields=['_bibtex'])
 
         blinded_notes = conference.get_submissions()
         assert len(blinded_notes) == 4
@@ -1048,6 +1061,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
             'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
             'thecvf.com/ECCV/2020/Conference/Program_Chairs']
+        assert withdrawn_notes[0].content['_bibtex'] == ''
 
         author_group = client.get_group('thecvf.com/ECCV/2020/Conference/Authors')
         assert author_group
@@ -1071,6 +1085,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         conference.set_assignment('~Reviewer_ECCV_One1', 2)
         conference.set_assignment('~Reviewer_ECCV_Two1', 1)
         conference.set_assignment('~Reviewer_ECCV_Two1', 2)
+        conference.set_assignment('~ReviewerFirstName_Eccv1', 1)
 
         now = datetime.datetime.utcnow()
 
@@ -1224,6 +1239,32 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert not client.get_messages(subject = '[ECCV 2020] A review has been received on Paper number: 1, Paper title: "Paper title 1"')
         ## Authors
         assert not client.get_messages(subject = '[ECCV 2020] Review posted to your submission - Paper number: 1, Paper title: "Paper title 1"')
+
+    def test_decline_after_assignment(self, conference, client, test_client, selenium, request_page, helpers):
+
+        messages = client.get_messages(to='test_reviewer_eccv@mail.com', subject='[ECCV 2020] Reviewer Invitation accepted')
+        assert messages
+        assert len(messages)
+        text = messages[0]['content']['text']
+        assert 'Thank you for accepting the invitation to be a Reviewer for ECCV 2020.' in text
+
+        reviewer_group = client.get_group(id='thecvf.com/ECCV/2020/Conference/Reviewers')
+        assert '~ReviewerFirstName_Eccv1' in reviewer_group.members
+
+        paper_reviewer_group = client.get_group(id='thecvf.com/ECCV/2020/Conference/Paper1/Reviewers')
+        assert '~ReviewerFirstName_Eccv1' in paper_reviewer_group.members
+
+        messages = client.get_messages(to = 'mohit+1@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
+        text = messages[0]['content']['text']
+        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        #Assert reviewer is still in reviewer group
+        request_page(selenium, reject_url, alert=True)
+        reviewer_group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers')
+        assert '~ReviewerFirstName_Eccv1' in reviewer_group.members
+
+        paper_reviewer_group = client.get_group('thecvf.com/ECCV/2020/Conference/Paper1/Reviewers')
+        assert '~ReviewerFirstName_Eccv1' in paper_reviewer_group.members
 
     def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
@@ -1418,13 +1459,14 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             signatures = [signatory])
         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'.*tooMany.*'):
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
             reviewer2_client.post_tag(openreview.Tag(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Paper_Ranking',
                 forum = blinded_notes[-1].id,
                 tag = '1 of 2',
                 readers = ['thecvf.com/ECCV/2020/Conference', 'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs', signatory],
                 signatures = [signatory])
             )
+        assert  openReviewError.value.args[0].get('name') == 'TooManyError'
 
     def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
@@ -1607,7 +1649,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             replyto=reviews[1].id,
             invitation=reviews[1].signatures[0] + '/-/Review_Rating',
             readers=['thecvf.com/ECCV/2020/Conference/Program_Chairs',
-            'thecvf.com/ECCV/2020/Conference/Paper1/Area_Chairs'],
+            signatory],
             writers=[signatory],
             signatures=[signatory],
             content={
@@ -1678,7 +1720,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
             due_date_list[2] = due_date_list[2][:-1]
             due_date_list.pop()
             date_obj = datetime.datetime(year=int(due_date_list[2]),
-                                         month=mnt_to_idx[due_date_list[1]],
+                                         month=mnt_to_idx[due_date_list[1].replace('sept','sep')],
                                          day=int(due_date_list[0]),
                                          hour=int(due_date_list[3].split(':')[0]),
                                          minute=int(due_date_list[3].split(':')[1]))
@@ -1701,4 +1743,4 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         for date_idx in range(1, len(retrieved_dates)):
             curr_date = retrieved_dates[date_idx]
             prev_date = retrieved_dates[date_idx - 1]
-            assert curr_date > prev_date
+            assert curr_date >= prev_date

@@ -14,8 +14,8 @@ var OFFICIAL_REVIEW_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var OFFICIAL_META_REVIEW_NAME = '';
+var META_REVIEW_CONTENT_FIELD = 'recommendation'
 var SENIOR_AREA_CHAIRS_ID = '';
-var ASSIGNMENT_LABEL = '';
 var ENABLE_REVIEWER_REASSIGNMENT = false;
 var ENABLE_REVIEWER_REASSIGNMENT_TO_OUTSIDE_REVIEWERS = false;
 
@@ -24,6 +24,30 @@ var REVIEWER_GROUP = CONFERENCE_ID + '/' + REVIEWER_NAME;
 var REVIEWER_GROUP_WITH_CONFLICT = REVIEWER_GROUP+'/-/Conflict';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME + '/-/Paper_Ranking';
 var REVIEWER_PAPER_RANKING_ID = REVIEWER_GROUP + '/-/Paper_Ranking';
+var AREA_CHAIRS_ID = CONFERENCE_ID + '/' + AREA_CHAIR_NAME;
+var ENABLE_EDIT_REVIEWER_ASSIGNMENTS = false;
+var REVIEWER_ASSIGNMENT_TITLE = '';
+var EDGE_BROWSER_PROPOSED_URL = '/edges/browse?start=' + AREA_CHAIRS_ID + '/-/Assignment,tail:' + user.profile.id + '&' +
+'traverse=' + REVIEWER_GROUP + '/-/Proposed_Assignment,label:' + REVIEWER_ASSIGNMENT_TITLE  + '&' +
+'edit=' + REVIEWER_GROUP + '/-/Proposed_Assignment,label:' + REVIEWER_ASSIGNMENT_TITLE  + '&' +
+'browse=' + REVIEWER_GROUP + '/-/Aggregate_Score,label:' + REVIEWER_ASSIGNMENT_TITLE  + ';' +
+            REVIEWER_GROUP + '/-/Affinity_Score;' +
+            REVIEWER_GROUP + '/-/Custom_Max_Papers,head:ignore&' +
+'hide=' + REVIEWER_GROUP + '/-/Conflict&' +
+'maxColumns=2&' +
+'referrer=[AC Console](/group?id=' + AREA_CHAIRS_ID + ')';
+
+var EDGE_BROWSER_DEPLOYED_URL = '/edges/browse?start=' + AREA_CHAIRS_ID + '/-/Assignment,tail:' + user.profile.id + '&' +
+'traverse=' + REVIEWER_GROUP + '/-/Assignment&' +
+'edit=' + REVIEWER_GROUP + '/-/Invite_Assignment&' +
+'browse=' + REVIEWER_GROUP + '/-/Affinity_Score;' +
+            REVIEWER_GROUP + '/-/Custom_Max_Papers,head:ignore&' +
+'hide=' + REVIEWER_GROUP + '/-/Conflict&' +
+'maxColumns=2&' +
+'referrer=[AC Console](/group?id=' + AREA_CHAIRS_ID + ')';
+
+var EDGE_BROWSER_URL = REVIEWER_ASSIGNMENT_TITLE ? EDGE_BROWSER_PROPOSED_URL : EDGE_BROWSER_DEPLOYED_URL;
+
 
 var filterOperators = ['!=','>=','<=','>','<','=']; // sequence matters
 var propertiesAllowed ={
@@ -231,7 +255,7 @@ var loadData = function(paperNums) {
   });
 
   if (SENIOR_AREA_CHAIRS_ID) {
-    assignedSACP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Proposed_Assignment', label: ASSIGNMENT_LABEL, head: user.profile.id })
+    assignedSACP = Webfield.get('/edges', { invitation: SENIOR_AREA_CHAIRS_ID + '/-/Assignment', head: user.profile.id })
     .then(function(result) {
       if (result && result.edges.length) {
         return result.edges[0].tail;
@@ -425,6 +449,11 @@ var getUserProfiles = function(userIds) {
 // Render functions
 var renderHeader = function() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);
+
+  if (ENABLE_EDIT_REVIEWER_ASSIGNMENTS) {
+    HEADER.instructions += '<p><strong>Edge Browser: </strong><a id="edge_browser_url" href="' + EDGE_BROWSER_URL + '" target="_blank" rel="nofollow">Modify Reviewer Assignments</a></p>';
+  }
+
   Webfield.ui.header(HEADER.title, HEADER.instructions);
 
   var loadingMessage = '<p class="empty-message">Loading...</p>';
@@ -485,6 +514,9 @@ var renderStatusTable = function(conferenceStatusData, container) {
   });
 
   var filteredRows = null;
+  var toNumber = function(value) {
+    return value === 'N/A' ? 0 : value;
+  }
 
   // Sort form handler
   var order = 'desc';
@@ -495,12 +527,14 @@ var renderStatusTable = function(conferenceStatusData, container) {
     Number_of_Forum_Replies: function(row) { return row.reviewProgressData.forumReplyCount; },
     Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
     Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
-    Average_Rating: function(row) { return row.reviewProgressData.averageRating === 'N/A' ? 0 : row.reviewProgressData.averageRating; },
-    Max_Rating: function(row) { return row.reviewProgressData.maxRating === 'N/A' ? 0 : row.reviewProgressData.maxRating; },
-    Min_Rating: function(row) { return row.reviewProgressData.minRating === 'N/A' ? 0 : row.reviewProgressData.minRating; },
-    Average_Confidence: function(row) { return row.reviewProgressData.averageConfidence === 'N/A' ? 0 : row.reviewProgressData.averageConfidence; },
-    Max_Confidence: function(row) { return row.reviewProgressData.maxConfidence === 'N/A' ? 0 : row.reviewProgressData.maxConfidence; },
-    Min_Confidence: function(row) { return row.reviewProgressData.minConfidence === 'N/A' ? 0 : row.reviewProgressData.minConfidence; },
+    Average_Rating: function(row) { return toNumber(row.reviewProgressData.averageRating); },
+    Max_Rating: function(row) { return toNumber(row.reviewProgressData.maxRating); },
+    Min_Rating: function(row) { return toNumber(row.reviewProgressData.minRating); },
+    Rating_Range: function(row) { return toNumber(row.reviewProgressData.maxRating) - toNumber(row.reviewProgressData.minRating); },
+    Average_Confidence: function(row) { return toNumber(row.reviewProgressData.averageConfidence); },
+    Max_Confidence: function(row) { return toNumber(row.reviewProgressData.maxConfidence); },
+    Min_Confidence: function(row) { return toNumber(row.reviewProgressData.minConfidence); },
+    Confidence_Range: function(row) { return toNumber(row.reviewProgressData.maxConfidence) - toNumber(row.reviewProgressData.minConfidence); },
     Meta_Review_Recommendation: function(row) { return row.metaReviewData.recommendation; }
   };
 
@@ -1145,7 +1179,8 @@ var buildTableRow = function(note, reviewerIds, completedReviews, metaReview, me
     ranking: acPaperRanking
   };
   if (metaReview) {
-    cell3.recommendation = metaReview.content.recommendation;
+    // if the field is not present the space will still cause the link to be displayed
+    cell3.recommendation = metaReview.content[META_REVIEW_CONTENT_FIELD] || ' ';
     cell3.editUrl = '/forum?id=' + note.forum + '&noteId=' + metaReview.id + '&referrer=' + referrerUrl;
   }
   if (metaReviewInvitation) {
@@ -1499,7 +1534,7 @@ var registerEventHandlers = function() {
       paperTableRow[3]['minConfidence'],
       paperTableRow[3]['maxConfidence'],
       paperTableRow[3]['averageConfidence'],
-      metaReview && metaReview.content.recommendation
+      metaReview && metaReview.content[META_REVIEW_CONTENT_FIELD]
       ].join(',') + '\n');
     });
     return [rowData.join('')];

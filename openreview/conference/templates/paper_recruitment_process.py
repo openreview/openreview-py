@@ -88,7 +88,7 @@ OpenReview Team'''
             return
 
         ## Check if there is already an accepted edge for that profile id
-        accepted_edges = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Invite_Assignment', label='Accepted', head=submission.id, tail=user_profile.id)
+        accepted_edges = client.get_edges(invitation=INVITE_ASSIGNMENT_INVITATION_ID, label='Accepted', head=submission.id, tail=user_profile.id)
         if accepted_edges:
             print("User already accepted with another invitation edge", submission.id, user_profile.id)
             return
@@ -97,9 +97,9 @@ OpenReview Team'''
         authorids = submission.content['authorids']
         if submission.details and submission.details.get('original'):
             authorids = submission.details['original']['content']['authorids']
-        author_profiles = openreview.conference.matching._get_profiles(client, authorids, with_publications=True)
-        profiles=openreview.conference.matching._get_profiles(client, [edge.tail], with_publications=True)
-        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0], policy='neurips')
+        author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True)
+        profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True)
+        conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0])
         if conflicts:
             print('Conflicts detected', conflicts)
             edge.label='Conflict Detected'
@@ -114,7 +114,7 @@ You have accepted the invitation to review the paper number: {submission.number}
 
 A conflict was detected between you and the submission authors and the assignment can not be done.
 
-If you have any questions, please contact us as neurips@openreview.net.
+If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
             response = client.post_message(subject, [edge.tail], message)
@@ -124,12 +124,13 @@ OpenReview Team'''
             message =f'''Hi {{{{fullname}}}},
 A conflict was detected between {preferred_name}({user_profile.get_preferred_email()}) and the paper {submission.number} and the assignment can not be done.
 
-If you have any questions, please contact us as neurips@openreview.net.
+If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
 
             ## - Send email
             response = client.post_message(subject, edge.signatures, message)
+            return
 
         edge.label=ACCEPTED_LABEL
         edge.readers=[r if r != edge.tail else user_profile.id for r in edge.readers]
