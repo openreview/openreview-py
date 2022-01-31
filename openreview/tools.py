@@ -1700,7 +1700,6 @@ def get_neurips_profile_info(profile, n_years=3):
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
     curr_year = datetime.datetime.now().year
     cut_off_year = curr_year - n_years - 1
-    print('cut_off_year', cut_off_year)
 
     ## Institution section, get history within the last n years
     for h in profile.content.get('history', []):
