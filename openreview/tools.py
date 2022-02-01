@@ -593,24 +593,23 @@ def replace_members_with_ids(client, group):
     """
     ids = []
     emails = []
-    invalid_ids = []
 
     def classify_members(member):
-        if '~' not in member:
+        if '@' in member:
             try:
                 profile = client.get_profile(member.lower())
-                return ('ids', profile.id)
+                return 'ids', profile.id
             except openreview.OpenReviewException as e:
                 if 'Profile Not Found' in e.args[0]:
-                    return ('emails', member.lower())
+                    return 'emails', member.lower()
                 else:
                     raise e
+        elif '~' in member:
+            profile = client.get_profile(member)
+            return 'ids', profile.id
         else:
-            profile = get_profile(client, member)
-            if profile:
-                return ('ids', profile.id)
-            else:
-                return ('invalid_ids', member)
+            _group = client.get_group(member)
+            return 'ids', _group.id
 
     results = concurrent_requests(classify_members, group.members)
 
@@ -619,11 +618,7 @@ def replace_members_with_ids(client, group):
             ids.append(member)
         elif key == 'emails':
             emails.append(member)
-        elif key == 'invalid_ids':
-            invalid_ids.append(member)
 
-    if invalid_ids:
-        print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
     group.members = ids + emails
 
     return client.post_group(group)
@@ -1636,7 +1631,6 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     conflicts.update(author_domains.intersection(user_info['domains']))
     conflicts.update(author_relations.intersection(user_info['emails']))
     conflicts.update(author_emails.intersection(user_info['relations']))
-    conflicts.update(author_emails.intersection(user_info['emails']))
     conflicts.update(author_emails.intersection(user_info['emails']))
     conflicts.update(author_publications.intersection(user_info['publications']))
 
