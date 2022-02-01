@@ -211,7 +211,8 @@ var renderData = function(venueStatusData) {
       numReviewersAssigned: ['reviewProgressData.numReviewers'],
       numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
       recommendation: ['actionEditorData.recommendation'],
-      status: ['status']
+      status: ['status'],
+      default: ['submissionNumber.number', 'submission.content.title']
     },
     reminderOptions: {
       container: 'a.send-reminder-link',
