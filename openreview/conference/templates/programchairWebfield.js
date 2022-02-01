@@ -296,7 +296,7 @@ var getRegistrationForms = function() {
   var prefixes = [ REVIEWERS_ID, AREA_CHAIRS_ID ];
   var promises = _.map(prefixes, function(prefix) {
     return Webfield.getAll('/notes', {
-      invitation: prefix + '/-/Form'
+      invitation: prefix + '/-/.*Form'
     });
   });
 
@@ -3091,7 +3091,7 @@ var buildCSV = function(){
       ? p.note.details.original || p.note
       : p.details.original || p;
   });
-  
+
   var noteContentFields = _.uniq(
     _.flatten(
       originalNotes.map(function (p) {
@@ -3100,7 +3100,7 @@ var buildCSV = function(){
       })
     )
   );
-  
+
   var rowData = [];
   rowData.push(
     _.concat(["number", "forum"], noteContentFields, [
@@ -3168,7 +3168,7 @@ var buildCSV = function(){
           .replace(/"/g, '""') // escape double quotes
         + '"';
     });
-    
+
     var reviewersData = _.values(paperTableRow.reviewProgressData.reviewers);
     var allReviewers = [];
     var missingReviewers = [];
@@ -3209,7 +3209,7 @@ var buildCSV = function(){
           paperTableRow.decision.content.decision
         ]
       ).join(',') + '\n'
-    );    
+    );
   });
 
   return [rowData.join('')];
