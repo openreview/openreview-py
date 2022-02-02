@@ -561,7 +561,8 @@ class InvitationBuilder(object):
                 },
                 'tail': {
                     'type': 'profile',
-                    'member-of' : action_editors_id
+                    'member-of' : action_editors_id,
+                    'description': 'select at least 3 AEs to recommend. AEs who have conflicts with your submission are not shown.'
                 },
                 'weight': {
                     'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
@@ -1447,7 +1448,7 @@ class InvitationBuilder(object):
                 'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
-                        <li>AEs who have conflicts with the selected paper are not shown.</li>\
+                        <li>AEs who have conflicts with your submission are not shown.</li>\
                         <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
                         <li>To get started click the button below.</li>\
                     </ul>\
@@ -1783,6 +1784,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[editors_in_chief_id],
             duedate=openreview.tools.datetime_millis(duedate),
+            maxReplies=1,
             edit={
                 'signatures': { 'values': [ paper_action_editors_id ] },
                 'readers': { 'values': [ venue_id, paper_action_editors_id ] },
