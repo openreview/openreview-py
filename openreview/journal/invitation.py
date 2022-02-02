@@ -564,7 +564,7 @@ class InvitationBuilder(object):
                     'member-of' : action_editors_id
                 },
                 'weight': {
-                    'value-dropdown': ['Yes', 'No']
+                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
                 }
             }
         )
@@ -1019,7 +1019,7 @@ class InvitationBuilder(object):
                         'approval': {
                             'order': 1,
                             'value': {
-                                'value-checkbox': 'I approve the Author\'s retraction.'
+                                'value-radio': ['Yes', 'No']
                             }
                         },
                         'comment': {
@@ -1437,15 +1437,14 @@ class InvitationBuilder(object):
                         'member-of' : action_editors_id
                     },
                     'weight': {
-                        'value-dropdown': ['Yes', 'No']
+                        'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
                     }
                 }
             )
 
             header = {
                 'title': 'TMLR Action Editor Suggestion',
-                'instructions': '<p class="dark">Select at least 3 Action Editors by choosing "Yes" for their recommendation.</p>\
-                    <p class="dark"><strong>Instructions:</strong></p>\
+                'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
                         <li>AEs who have conflicts with the selected paper are not shown.</li>\
@@ -1459,7 +1458,7 @@ class InvitationBuilder(object):
             score_ids = [f'{action_editors_id}/-/Affinity_Score']
             edit_param = f'{action_editors_id}/-/Recommendation'
             browse_param = ';'.join(score_ids)
-            params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Return Instructions](/invitation?id={invitation.id})&maxColumns=2&version=2'
+            params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Instructions](/invitation?id={invitation.id})&maxColumns=2&showCounter=false&version=2'
             with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
                 content = f.read()
                 content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
