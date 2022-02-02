@@ -289,9 +289,10 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 
     paperReviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
+      var reviewerRecommendation = null;
       var status = {};
       if (completedReview) {
-        var reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
+        reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
@@ -303,6 +304,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         name: reviewer.name,
         email: reviewer.email,
         completedReview: completedReview && true,
+        completedRecommendation: reviewerRecommendation && true,
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
@@ -369,7 +371,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     }
 
     paperStatusRows.push({
-      submissionNumber: { number: parseInt(number)},
+      checked: { noteId: submission.id, checked: false },
+      submissionNumber: { number: parseInt(number, 10) },
       submission: formattedSubmission,
       reviewProgressData: {
         noteId: submission.id,
@@ -382,15 +385,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + 
-            '&traverse='+ REVIEWERS_ASSIGNMENT_ID + 
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
+            '&traverse='+ REVIEWERS_ASSIGNMENT_ID +
             '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
-            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' + 
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
             '&version=2'
-          },
-          {
-            name: 'Edit Review Invitation',
-            url: '/invitation/edit?id=' + getInvitationId(number, REVIEW_NAME)
           }
         ] : []
       },
@@ -410,8 +409,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
           {
             name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + 
-            '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID + 
+            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
+            '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
             '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
             '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
             '&version=2'
@@ -438,8 +437,20 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 // Render functions
 var renderTable = function(container, rows) {
   Webfield2.ui.renderTable('#' + container, rows, {
-    headings: ['#', 'Paper Summary', 'Review Progress', 'Action Editor Decision', 'Tasks', 'Status'],
+    headings: [
+      '<input type="checkbox" class="select-all-papers">',
+      '#',
+      'Paper Summary',
+      'Review Progress',
+      'Action Editor Decision',
+      'Tasks',
+      'Status'
+    ],
     renders: [
+      function(data) {
+        return '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
+          data.noteId + '" ' + (data.checked ? 'checked="checked"' : '') + '></label>';
+      },
       function(data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
@@ -482,17 +493,97 @@ var renderTable = function(container, rows) {
       container: 'a.send-reminder-link',
       defaultSubject: SHORT_PHRASE + ' Reminder',
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
-        'Click on the link below to go to the review page:\n\n{{submit_review_link}}\n\n' +
+        'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
+        'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
+      menu: [{
+        id: 'all-reviewers',
+        name: 'All reviewers of selected papers',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? Object.values(row.reviewProgressData.reviewers)
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum
+              })
+            }
+          });
+        },
+        messageBody: 'This is the message body'
+      },
+      {
+        id: 'all-action-editors',
+        name: 'All action editors of selected papers',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? [row.actionEditorProgressData.actionEditor]
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum
+              })
+            }
+          });
+        },
+        messageBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your decision for ' + SHORT_PHRASE + '.\n\n' +
+        'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief'
+      }
+      , {
+        id: 'unsubmitted-reviews',
+        name: 'Reviewers with missing reviews',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
+                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedReview;
+                  })
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum,
+                noteId: row.submission.forum,
+                invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
+              })
+            }
+          });
+        }
+      }, {
+        id: 'unsubmitted-recommendations',
+        name: 'Reviewers with missing official recommendations',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
+                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedRecommendation;
+                  })
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum,
+                noteId: row.submission.forum,
+                invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
+              })
+            }
+          });
+        }
+      }]
     },
     extraClasses: 'console-table paper-table',
     postRenderTable: function() {
-      $('#' + container + ' .console-table th').eq(0).css('width', '3%');  // #
-      $('#' + container + ' .console-table th').eq(1).css('width', '21%'); // Paper Summary
-      $('#' + container + ' .console-table th').eq(2).css('width', '22%'); // Review Progress
-      $('#' + container + ' .console-table th').eq(3).css('width', '22%'); // Action Editor Decision
-      $('#' + container + ' .console-table th').eq(4).css('width', '20%'); // Tasks
-      $('#' + container + ' .console-table th').eq(5).css('width', '12%'); // Status
+      $('#' + container + ' .console-table th').eq(0).css('width', '2%');  // [ ]
+      $('#' + container + ' .console-table th').eq(1).css('width', '3%');  // #
+      $('#' + container + ' .console-table th').eq(2).css('width', '20%'); // Paper Summary
+      $('#' + container + ' .console-table th').eq(3).css('width', '22%'); // Review Progress
+      $('#' + container + ' .console-table th').eq(4).css('width', '22%'); // Action Editor Decision
+      $('#' + container + ' .console-table th').eq(5).css('width', '20%'); // Tasks
+      $('#' + container + ' .console-table th').eq(6).css('width', '11%'); // Status
     }
   });
 };
