@@ -79,7 +79,7 @@ class TestJournalRequest():
                 }
             ))
 
-        assert request_form
+        helpers.await_queue(openreview_client)
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
 
         process_logs = openreview_client.get_process_logs(invitation = support_group_id + '/-/Journal_Request')
