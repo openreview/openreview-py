@@ -22,16 +22,16 @@ var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
 var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
 
-var reviewers_url = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
+var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID +
   '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
-  '&maxColumns=2&version=2&referrer=[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')';
+  '&maxColumns=2&version=2&referrer=' + encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')');
 
 
 var HEADER = {
   title: SHORT_PHRASE + ' Action Editor Console',
-  instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewers_url + "'> Modify Reviewer Assignments</a> </p>"
+  instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewersUrl + "'> Modify Reviewer Assignments</a>"
 };
 
 // Main function is the entry point to the webfield code
@@ -128,6 +128,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     });
 
     rows.push({
+      checked: { noteId: submission.id, checked: false },
       submissionNumber: { number: parseInt(number)},
       submission: formattedSubmission,
       reviewProgressData: {
@@ -174,12 +175,14 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
 
 // Render functions
 var renderData = function(venueStatusData) {
-
-  Webfield2.ui.renderTasks('#action-editor-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#action-editor-tasks)')});
-
+  // Assigned Papers Tab
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
-    headings: ['#', 'Paper Summary', 'Review Progress', 'Decision Status', 'Status'],
+    headings: ['<input type="checkbox" class="select-all-papers">', '#', 'Paper Summary', 'Review Progress', 'Decision Status', 'Status'],
     renders: [
+      function(data) {
+        return '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
+          data.noteId + '" ' + (data.checked ? 'checked="checked"' : '') + '></label>';
+      },
       function(data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
@@ -208,73 +211,88 @@ var renderData = function(venueStatusData) {
       numReviewersAssigned: ['reviewProgressData.numReviewers'],
       numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
       recommendation: ['actionEditorData.recommendation'],
-      status: ['status']
+      status: ['status'],
+      default: ['submissionNumber.number', 'submission.content.title']
     },
     reminderOptions: {
       container: 'a.send-reminder-link',
       defaultSubject: SHORT_PHRASE + ' Reminder',
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
-        'Click on the link below to go to the review page:\n\n{{submit_review_link}}' +
+        'Click on the link below to go to the review page:\n\n{{forumUrl}}' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
-      menu: [
-        {
-          id: 'all-reviewers',
-          name: 'All Reviewers',
-          getUsers: function() {
-            return venueStatusData.rows.map(function(row) {
-              return {
-                groups: Object.values(row.reviewProgressData.reviewers),
-                forumUrl: 'https://openreview.net/forum?' + $.param({
-                  id: row.submission.forum
-                })
-              }
-            });
-          }
-        },
-        {
-          id: 'unsubmitted-reviews',
-          name: 'Reviewers with missing reviews',
-          getUsers: function() {
-            return venueStatusData.rows.map(function(row) {
-              return {
-                groups: Object.values(row.reviewProgressData.reviewers).filter(function(r) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedReview; }),
-                forumUrl: 'https://openreview.net/forum?' + $.param({
-                  id: row.submission.forum,
-                  noteId: row.submission.forum,
-                  invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-                })
-              }
-            });
-          }
-        },
-        {
-          id: 'unsubmitted-recommendations',
-          name: 'Reviewers with missing official recommendations',
-          getUsers: function() {
-            return venueStatusData.rows.map(function(row) {
-              return {
-                groups: Object.values(row.reviewProgressData.reviewers).filter(function(r) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedRecommendation; }),
-                forumUrl: 'https://openreview.net/forum?' + $.param({
-                  id: row.submission.forum,
-                  noteId: row.submission.forum,
-                  invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-                })
-              }
-            });
-          }
+      menu: [{
+        id: 'all-reviewers',
+        name: 'All reviewers of selected papers',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return venueStatusData.rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? Object.values(row.reviewProgressData.reviewers)
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum
+              })
+            }
+          });
         }
-      ]
+      }, {
+        id: 'unsubmitted-reviews',
+        name: 'Reviewers with missing reviews',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return venueStatusData.rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
+                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedReview;
+                  })
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum,
+                noteId: row.submission.forum,
+                invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
+              })
+            }
+          });
+        }
+      }, {
+        id: 'unsubmitted-recommendations',
+        name: 'Reviewers with missing official recommendations',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return venueStatusData.rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
+                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedRecommendation;
+                  })
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum,
+                noteId: row.submission.forum,
+                invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
+              })
+            }
+          });
+        }
+      }]
     },
     extraClasses: 'console-table paper-table',
     postRenderTable: function() {
-      $('.console-table th').eq(0).css('width', '5%');
-      $('.console-table th').eq(1).css('width', '25%');
-      $('.console-table th').eq(2).css('width', '30%');
-      $('.console-table th').eq(3).css('width', '28%');
-      $('.console-table th').eq(4).css('width', '12%');
+      $('.console-table th').eq(0).css('width', '3%');
+      $('.console-table th').eq(1).css('width', '5%');
+      $('.console-table th').eq(2).css('width', '25%');
+      $('.console-table th').eq(3).css('width', '30%');
+      $('.console-table th').eq(4).css('width', '25%');
+      $('.console-table th').eq(5).css('width', '12%');
     }
   });
 
+  // Action Editor Tasks Tab
+  Webfield2.ui.renderTasks('#action-editor-tasks', venueStatusData.invitations, {
+    referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#action-editor-tasks)')
+  });
 };
 
 main();

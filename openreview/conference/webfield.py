@@ -133,7 +133,7 @@ class WebfieldBuilder(object):
                         <b>By default, we consider all of these papers to formulate your expertise. Please click on \"Exclude\" for papers that you do  NOT want to be used to represent your expertise.</b>
                         <br>
                         <br>
-                        Your previously authored papers from selected conferences were imported automatically from <a href=https://dblp.org>DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your <a href=/profile?mode=edit>OpenReview profile</a> and then clicking on 'Add DBLP Papers to Profile'.
+                        Your previously authored papers from selected conferences were imported automatically from <a href="https://dblp.org">DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your <a href="/profile/edit">OpenReview profile</a> and then clicking on 'Add DBLP Papers to Profile'.
                 </p>
                 <br>
                     Papers not automatically included as part of this import process can be uploaded by using the <b>Upload</b> button. Make sure that your email is part of the "authorids" field of the upload form. Otherwise the paper will not appear in the list, though it will be included in the recommendations process. Only upload papers co-authored by you.

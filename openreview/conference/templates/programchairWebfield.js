@@ -948,7 +948,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
     var invitation = invitationMap[id];
 
     if (invitation) {
-      return '<li><a href="/invitation?id=' + invitation.id + '&mode=edit&referrer=' + referrerUrl + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
+      return '<li><a href="/invitation/edit?id=' + invitation.id + '&referrer=' + referrerUrl + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
     };
     return '';
   };
