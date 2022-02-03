@@ -17,9 +17,6 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 import json
 
-with open('duplicate_domains.json') as f:
-    duplicate_domains = json.load(f)
-
 def concurrent_requests(request_func, params, max_workers=6):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
@@ -552,9 +549,12 @@ def subdomains(domain):
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
     valid_domains = [d for d in domains if not tld.is_tld(d)]
 
+    with open('duplicate_domains.json') as f:
+        duplicate_domains = json.load(f)
+
     for d in valid_domains:
-        if d in duplicate_domains:
-            valid_domains.append(duplicate_domains[domain])
+        if d in duplicate_domains and duplicate_domains[d] not in valid_domains:
+            valid_domains.append(duplicate_domains[d])
 
     return valid_domains
 
