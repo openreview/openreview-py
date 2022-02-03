@@ -46,6 +46,7 @@ class TestVenueRequest():
                     'tom@mail.com'],
                 'contact_email': 'test@mail.com',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
+                'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -65,7 +66,7 @@ class TestVenueRequest():
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
             request_form_note=test_client.post_note(request_form_note)
 
-        request_form_note.content['reviewer_identity'] = ['Program Chairs', 'Assigned Area Chair']
+        request_form_note.content['reviewer_identity'] = ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair']
         request_form_note=test_client.post_note(request_form_note)
 
         helpers.await_queue()
