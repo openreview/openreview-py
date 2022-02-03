@@ -7,4 +7,4 @@ include openreview/venue_request/process/*.py
 include openreview/agora/webfield/*.js
 include openreview/agora/process/*.js
 include openreview/agora/process/*.py
-include openreview/conflicting_domains.json
+include openreview/duplicate_domains.json
