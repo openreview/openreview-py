@@ -340,6 +340,62 @@ class TestTools():
         assert len(conflicts) == 1
         assert conflicts[0] == 'facebook.com'
 
+        profile1 = openreview.Profile(
+            id='Test_Conflict1',
+            content={
+                'emails': ['user@cs.abdn.ac.uk'],
+                'history': [{
+                    'institution': {
+                        'domain': 'user@cs.abdn.ac.uk'
+                    }
+                }]
+            }
+        )
+
+        profile2 = openreview.Profile(
+            id='Test_Conflict2',
+            content={
+                'emails': ['user2@cs.aberdeen.ac.uk'],
+                'history': [{
+                    'institution': {
+                        'domain': 'user2@cs.aberdeen.ac.uk'
+                    }
+                }]
+            }
+        )
+
+        conflicts = openreview.tools.get_conflicts([profile1], profile2)
+        assert len(conflicts) == 1
+        assert conflicts[0] == 'abdn.ac.uk'
+
+        profile1 = openreview.Profile(
+            id='Test_Conflict1',
+            content={
+                'emails': ['user@johnshopkins.edu'],
+                'history': [{
+                    'institution': {
+                        'domain': 'user@jh.edu'
+                    }
+                }]
+            }
+        )
+
+        profile2 = openreview.Profile(
+            id='Test_Conflict2',
+            content={
+                'emails': ['user2@jhu.edu'],
+                'history': [{
+                    'institution': {
+                        'domain': 'user2@jh.edu'
+                    }
+                }]
+            }
+        )
+
+        conflicts = openreview.tools.get_conflicts([profile1], profile2)
+        assert len(conflicts) == 1
+        assert conflicts[0] == 'jh.edu'
+
     def test_add_assignments(self, client):
 
         groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')

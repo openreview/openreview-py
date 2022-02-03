@@ -16,6 +16,12 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 import json
+import os
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+with open(os.path.join(dir_path, 'duplicate_domains.json')) as f:
+    duplicate_domains = json.load(f)
+
 
 def concurrent_requests(request_func, params, max_workers=6):
     """
@@ -548,9 +554,6 @@ def subdomains(domain):
     domain_components = [c for c in full_domain.split('.') if c and not c.isspace()]
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
     valid_domains = [d for d in domains if not tld.is_tld(d)]
-
-    with open('openreview/duplicate_domains.json') as f:
-        duplicate_domains = json.load(f)
 
     for d in valid_domains:
         if d in duplicate_domains and duplicate_domains[d] not in valid_domains:
