@@ -330,6 +330,16 @@ class TestTools():
         assert len(conflicts) == 1
         assert conflicts[0] == 'cmu.edu'
 
+        helpers.create_user('user@facebook.com', 'FirstA', 'Last')
+        user_profile = client.get_profile(email_or_id='user@facebook.com')
+
+        helpers.create_user('user2@fb.com', 'FirstB', 'Last')
+        user2_profile = client.get_profile(email_or_id='user2@fb.com')
+
+        conflicts = openreview.tools.get_conflicts([user_profile], user2_profile)
+        assert len(conflicts) == 1
+        assert conflicts[0] == 'facebook.com'
+
     def test_add_assignments(self, client):
 
         groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')

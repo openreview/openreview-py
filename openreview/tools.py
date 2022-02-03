@@ -549,7 +549,7 @@ def subdomains(domain):
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
     valid_domains = [d for d in domains if not tld.is_tld(d)]
 
-    with open('duplicate_domains.json') as f:
+    with open('openreview/duplicate_domains.json') as f:
         duplicate_domains = json.load(f)
 
     for d in valid_domains:
