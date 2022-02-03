@@ -107,7 +107,7 @@ class TestJournal():
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
 
         ## Post the submission 1
-        submission_note_1 = test_client.post_note_edit(invitation=f'{venue_id}/-/Submission',
+        submission_note_1 = test_client.post_note_edit(invitation=f'{venue_id}/-/Author_Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={

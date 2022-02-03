@@ -55,11 +55,11 @@ class InvitationBuilder(object):
         if invitation.preprocess:
             with open(invitation.preprocess) as f:
                 preprocess = f.read()
-                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}", website="{journal.website}")')
+                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}", website="{journal.website}", submission_name="{journal.submission_name}")')
                 invitation.preprocess = preprocess
 
         if invitation.process:
-            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}", website="{journal.website}")')
+            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{journal.secret_key}", contact_info="{journal.contact_info}", full_name="{journal.full_name}", short_name="{journal.short_name}", website="{journal.website}", submission_name="{journal.submission_name}")')
 
         return self.client.post_invitation_edit(readers=[venue_id],
             writers=[venue_id],
