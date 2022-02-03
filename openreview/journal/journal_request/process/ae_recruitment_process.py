@@ -57,7 +57,7 @@ Please check the invitee group to see more details: https://openreview.net/group
         comment_content += f'''
 Error: {error_status}'''
 
-    comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Reviewer_Recruitment', 'Comment'),
+    comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Reviewer_Recruitment_by_AE', 'Comment'),
         signatures=[SUPPORT_GROUP],
         note = openreview.api.Note(
             content = {
