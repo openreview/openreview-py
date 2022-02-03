@@ -125,12 +125,18 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 If you don't have a TPMS account yet, you can create one here: http://torontopapermatching.org/webapp/profileBrowser/register/
 Ensure that the email you use for your TPMS profile is listed as one of the emails in your OpenReview profile.
         '''
-        builder.set_registration_stage(name='Profile_Confirmation',
-        additional_fields = reviewer_registration_tasks,
-        due_date = now + datetime.timedelta(minutes = 40),
-        ac_additional_fields=ac_registration_tasks,
-        instructions=reviewer_instructions,
-        ac_instructions=ac_instructions)
+        builder.set_registration_stage(committee_id='thecvf.com/ECCV/2020/Conference/Reviewers',
+            name='Profile_Confirmation',
+            additional_fields = reviewer_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40),
+            instructions=reviewer_instructions
+        )
+        builder.set_registration_stage(committee_id='thecvf.com/ECCV/2020/Conference/Area_Chairs',
+            name='Profile_Confirmation',
+            additional_fields = ac_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40),
+            instructions=ac_instructions
+        )
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
             public = False,
@@ -423,7 +429,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         assert selenium.find_element_by_link_text('Reviewer Profile Confirmation')
 
-        registration_notes = reviewer_client.get_notes(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Form')
+        registration_notes = reviewer_client.get_notes(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Profile_Confirmation_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 

@@ -118,11 +118,16 @@ If you don't have a TPMS account yet, you can create one here: http://torontopap
 Ensure that the email you use for your TPMS profile is listed as one of the emails in your OpenReview profile.
         '''
         builder.set_registration_stage(
-        additional_fields = reviewer_registration_tasks,
-        due_date = now + datetime.timedelta(minutes = 40),
-        ac_additional_fields=ac_registration_tasks,
-        instructions=reviewer_instructions,
-        ac_instructions=ac_instructions
+            committee_id = 'ICLR.cc/2021/Conference/Reviewers',
+            additional_fields = reviewer_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40),
+            instructions=reviewer_instructions
+        )
+        builder.set_registration_stage(
+            committee_id = 'ICLR.cc/2021/Conference/Area_Chairs',
+            additional_fields = ac_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40),
+            instructions=ac_instructions
         )
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
@@ -298,7 +303,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert selenium.find_element_by_link_text('Reviewer Registration')
         assert selenium.find_element_by_link_text('Expertise Selection')
 
-        registration_notes = reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Form')
+        registration_notes = reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Registration_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 
@@ -378,11 +383,11 @@ ICLR2021 Programme Chairs,
 Naila, Katja, Alice, and Ivan
         '''
 
-        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
+        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers', 'ICLR.cc/2021/Conference/Reviewers/-/Registration')
         assert reminders
         assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com', 'iclr2021_six@mail.com']
 
-        registration_notes = six_reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Form')
+        registration_notes = six_reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Registration_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 
@@ -413,7 +418,7 @@ Naila, Katja, Alice, and Ivan
                 ]
             ))
 
-        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
+        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers', 'ICLR.cc/2021/Conference/Reviewers/-/Registration')
         assert reminders
         assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com']
 
