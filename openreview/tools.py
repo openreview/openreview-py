@@ -15,6 +15,10 @@ import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+import json
+
+with open('duplicate_domains.json') as f:
+    duplicate_domains = json.load(f)
 
 def concurrent_requests(request_func, params, max_workers=6):
     """
@@ -547,6 +551,11 @@ def subdomains(domain):
     domain_components = [c for c in full_domain.split('.') if c and not c.isspace()]
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
     valid_domains = [d for d in domains if not tld.is_tld(d)]
+
+    for d in valid_domains:
+        if d in duplicate_domains:
+            valid_domains.append(duplicate_domains[domain])
+
     return valid_domains
 
 def get_paperhash(first_author, title):
