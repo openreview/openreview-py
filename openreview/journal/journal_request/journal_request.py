@@ -220,17 +220,17 @@ class JournalRequest():
         #setup ae recruitment
         recruitment_email_template = '''Hi {name},
 
-The Transactions on Machine Learning Research is a journal for ML research that:
+The [Transactions on Machine Learning Research](https://jmlr.org/tmlr/) is a journal for ML research that:
 - Uses OpenReview
 - Focuses on conference-length publications
 - Has no submission deadlines
 - Aims for a fast turnaround
 - Has acceptance based on matched claims and evidence, not potential impact
-You can learn more about TMLR in our founding blog post and on jmlr.org/tmlr. 
+You can learn more about TMLR in [our founding blog post](https://medium.com/@hugo_larochelle_65309/announcing-the-transactions-on-machine-learning-research-3ea6101c936f) and on [jmlr.org/tmlr](https://jmlr.org/tmlr/). 
 
 We are reaching out to you as we'd like to invite you to serve as an Action Editor (AE) for the journal. 
 
-In terms of workload, we will be capping the number of assigned submissions to 12 per year. Note also that we are aiming for a short review period, of about 2 months, with most of your direct involvement being needed in the first week to assign reviewers and in the last two weeks for submitting a decision. We also hope to spread that workload across the year, so that you only have 2 or 3 active submissions at any given time. Within these limits, we otherwise expect AEs to handle all papers assigned to then, so as to have the fastest turnaround possible. You can learn more about the AE role at jmlr.org/tmlr/ae-guide.html. 
+In terms of workload, we will be capping the number of assigned submissions to 12 per year. Note also that we are aiming for a short review period, of about 2 months, with most of your direct involvement being needed in the first week to assign reviewers and in the last two weeks for submitting a decision. We also hope to spread that workload across the year, so that you only have 2 or 3 active submissions at any given time. Within these limits, we otherwise expect AEs to handle all papers assigned to then, so as to have the fastest turnaround possible. You can learn more about the AE role at [jmlr.org/tmlr/ae-guide.html](https://jmlr.org/tmlr/ae-guide.html). 
 
 AEs will play a crucial role in building the credibility of TMLR. For example, much like for JMLR, the identity of the AE in charge of each submission will be made visible during and after the review process. Hence, TMLR will only be successful if experts such as yourself are willing to give their support and their time. 
 
@@ -286,19 +286,19 @@ The TMLR Editors-in-Chief
         #setup rev recruitment
         recruitment_email_template = '''Hi {name},
 
-The Transactions on Machine Learning Research is a journal for ML research that:
+The [Transactions on Machine Learning Research](https://jmlr.org/tmlr/) is a journal for ML research that:
 - Uses OpenReview
 - Focuses on conference-length publications
 - Has no submission deadlines
 - Aims for a fast turnaround
 - Has acceptance based on matched claims and evidence, not potential impact
-You can learn more about TMLR in our founding blog post and on jmlr.org/tmlr. 
+You can learn more about TMLR in [our founding blog post](https://medium.com/@hugo_larochelle_65309/announcing-the-transactions-on-machine-learning-research-3ea6101c936f) and on [jmlr.org/tmlr](https://jmlr.org/tmlr/). 
 
 We are reaching out to you as we'd like to invite you to serve as a reviewer for the journal. For each paper, we are aiming for a short review period, of about 2 months. The TMLR review process works as follows. 
 - After receiving an assignment, an initial review must be submitted within 2 weeks. Exceptions on this deadline can be made for submissions longer than twelve pages of main content. 
 - Then, two weeks after all reviewers have submitted their initial review (and no later than 1 month after), each reviewer is asked to submit a final decision recommendation to the Action Editor in charge of the submission, based on their discussion with the authors since the initial review. 
 
-In terms of workload, we are capping the number of assigned submissions to 6 per year. We also aim to spread workload across the year, so that you only have to review 1 active submission at any given time. Within these limits, we otherwise expect reviewers to handle all papers assigned to then, so as to have the fastest turnaround possible. You can learn more about the reviewer role at jmlr.org/tmlr/reviewer-guide.html . 
+In terms of workload, we are capping the number of assigned submissions to 6 per year. We also aim to spread workload across the year, so that you only have to review 1 active submission at any given time. Within these limits, we otherwise expect reviewers to handle all papers assigned to then, so as to have the fastest turnaround possible. You can learn more about the reviewer role at [jmlr.org/tmlr/reviewer-guide.html](https://jmlr.org/tmlr/reviewer-guide.html). 
 
 To ACCEPT the invitation, please click on the following link:
 
