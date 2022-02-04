@@ -339,6 +339,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         email: reviewer.email,
         completedReview: completedReview && true,
         completedRecommendation: reviewerRecommendation && true,
+        hasRecommendationStarted: officialRecommendationInvitation && officialRecommendationInvitation.cdate < Date.now(),
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
@@ -600,7 +601,7 @@ var renderTable = function(container, rows) {
             return {
               groups: selectedIds.includes(row.submission.id)
                 ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
-                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedRecommendation;
+                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && r.hasRecommendationStarted && !r.completedRecommendation;
                   })
                 : [],
               forumUrl: 'https://openreview.net/forum?' + $.param({
