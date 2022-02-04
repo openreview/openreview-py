@@ -59,8 +59,8 @@ class TestVenueRequest():
                 'Expected Submissions': '100',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'reviewer_identity': ['Program Chairs'],
-                'area_chair_identity': ['Program Chairs'],
-                'senior_area_chair_identity': ['Program Chairs']
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair']
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -900,7 +900,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
-        assert reviewer_group and len(reviewer_group.members) == 2
+        assert reviewer_group and len(reviewer_group.members) == 3
 
         reviewer_page_url = 'http://localhost:3030/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
         request_page(selenium, reviewer_page_url, token=reviewer_client.token)
@@ -1022,7 +1022,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'confidence' not in meta_review_invitations[0].reply['content']
         assert 'suggestions' in meta_review_invitations[0].reply['content']
         assert 'Accept' in meta_review_invitations[0].reply['content']['recommendation']['value-dropdown']
-        assert len(meta_review_invitations[0].reply['readers']['values']) == 3
+        assert len(meta_review_invitations[0].reply['readers']['values']) == 4
 
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -1073,7 +1073,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 conference.get_program_chairs_id(),
                 conference.get_area_chairs_id(number=1),
                 conference.get_id() + '/Paper1/Authors',
-                conference.get_id() + '/Paper1/Reviewers'
+                conference.get_id() + '/Paper1/Reviewers',
+                conference.get_senior_area_chairs_id(number=1)
             ],
             writers=[
                 conference.get_id() + '/Paper1/Authors',
@@ -1144,10 +1145,11 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         # Post a decision note using pc test_client
         program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
         area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
+        senior_area_chairs = '{}/Paper{}/Senior_Area_Chairs'.format(venue['venue_id'], submission.number)
         decision_note = test_client.post_note(openreview.Note(
             invitation='{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number),
             writers=[program_chairs],
-            readers=[program_chairs, area_chairs],
+            readers=[program_chairs, senior_area_chairs, area_chairs],
             nonreaders=['{}/Paper{}/Authors'.format(venue['venue_id'], submission.number)],
             signatures=[program_chairs],
             content={
@@ -1170,7 +1172,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         with pytest.raises(openreview.OpenReviewException) as openReviewError:
             post_decision_invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
         assert openReviewError.value.args[0].get('name') == 'NotFoundError'
-        
+
         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
@@ -1292,14 +1294,17 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         # Assert that submissions are private
         assert blind_submissions[0].readers == [venue['venue_id'],
+            '{}/Senior_Area_Chairs'.format(venue['venue_id']),
             '{}/Area_Chairs'.format(venue['venue_id']),
             '{}/Reviewers'.format(venue['venue_id']),
             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
         assert blind_submissions[1].readers == [venue['venue_id'],
+            '{}/Senior_Area_Chairs'.format(venue['venue_id']),
             '{}/Area_Chairs'.format(venue['venue_id']),
             '{}/Reviewers'.format(venue['venue_id']),
             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
         assert blind_submissions[2].readers == [venue['venue_id'],
+            '{}/Senior_Area_Chairs'.format(venue['venue_id']),
             '{}/Area_Chairs'.format(venue['venue_id']),
             '{}/Reviewers'.format(venue['venue_id']),
             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
