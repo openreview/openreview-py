@@ -900,7 +900,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
-        assert reviewer_group and len(reviewer_group.members) == 3
+        assert reviewer_group and len(reviewer_group.members) == 2
 
         reviewer_page_url = 'http://localhost:3030/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
         request_page(selenium, reviewer_page_url, token=reviewer_client.token)
