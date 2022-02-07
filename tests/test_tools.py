@@ -211,9 +211,9 @@ class TestTools():
     def test_subdomains(self):
         # ensure that two part top-level domains are handled appropriately
         # e.g. "edu.cn", "ac.uk"
-        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['tsinghua.edu']
-        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['oxford.ac.uk']
-        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['oxford.ac.uk']
+        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu']
+        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['oxford.ac.uk', 'robots.ox.ac.uk']
+        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'oxford.ac.uk']
         assert openreview.tools.subdomains('michael@ground.ai') == ['ground.ai']
         assert openreview.tools.subdomains('michael@cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
         assert openreview.tools.subdomains('   ') == []
@@ -329,72 +329,6 @@ class TestTools():
         conflicts = openreview.tools.get_conflicts([profile1], profile2)
         assert len(conflicts) == 1
         assert conflicts[0] == 'cmu.edu'
-
-        helpers.create_user('user@facebook.com', 'FirstA', 'Last')
-        user_profile = client.get_profile(email_or_id='user@facebook.com')
-
-        helpers.create_user('user2@fb.com', 'FirstB', 'Last')
-        user2_profile = client.get_profile(email_or_id='user2@fb.com')
-
-        conflicts = openreview.tools.get_conflicts([user_profile], user2_profile)
-        assert len(conflicts) == 1
-        assert conflicts[0] == 'facebook.com'
-
-        profile1 = openreview.Profile(
-            id='Test_Conflict1',
-            content={
-                'emails': ['user@cs.abdn.ac.uk'],
-                'history': [{
-                    'institution': {
-                        'domain': 'user@cs.abdn.ac.uk'
-                    }
-                }]
-            }
-        )
-
-        profile2 = openreview.Profile(
-            id='Test_Conflict2',
-            content={
-                'emails': ['user2@cs.aberdeen.ac.uk'],
-                'history': [{
-                    'institution': {
-                        'domain': 'user2@cs.aberdeen.ac.uk'
-                    }
-                }]
-            }
-        )
-
-        conflicts = openreview.tools.get_conflicts([profile1], profile2)
-        assert len(conflicts) == 1
-        assert conflicts[0] == 'abdn.ac.uk'
-
-        profile1 = openreview.Profile(
-            id='Test_Conflict1',
-            content={
-                'emails': ['user@johnshopkins.edu'],
-                'history': [{
-                    'institution': {
-                        'domain': 'user@jh.edu'
-                    }
-                }]
-            }
-        )
-
-        profile2 = openreview.Profile(
-            id='Test_Conflict2',
-            content={
-                'emails': ['user2@jhu.edu'],
-                'history': [{
-                    'institution': {
-                        'domain': 'user2@jh.edu'
-                    }
-                }]
-            }
-        )
-
-        conflicts = openreview.tools.get_conflicts([profile1], profile2)
-        assert len(conflicts) == 1
-        assert conflicts[0] == 'jh.edu'
 
     def test_add_assignments(self, client):
 
