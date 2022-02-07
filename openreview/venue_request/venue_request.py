@@ -814,8 +814,8 @@ class VenueRequest():
                     'Assigned Senior Area Chair',
                     'All Area Chairs',
                     'Assigned Area Chair',
-                    # 'All Reviewers',
-                    # 'Assigned Reviewers'
+                    'All Reviewers',
+                    'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'order': 31,
@@ -828,15 +828,14 @@ class VenueRequest():
                     'Program Chairs',
                     'All Senior Area Chairs',
                     'Assigned Senior Area Chair',
-                    # 'All Area Chairs',
-                    # 'Assigned Area Chair',
-                    # 'All Reviewers',
-                    # 'Assigned Reviewers'
+                    'All Area Chairs',
+                    'Assigned Area Chair',
+                    'All Reviewers',
+                    'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs'],
                 'order': 31,
                 'required': False,
-                # 'hidden': True
             },
             'submission_name':{
                 'value-regex': '\S*',
