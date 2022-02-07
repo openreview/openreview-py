@@ -107,7 +107,7 @@ class TestJournalRequest():
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
         assert reply_row
         buttons = reply_row.find_elements_by_class_name('btn-xs')
-        assert [btn for btn in buttons if btn.text == 'Recruitment']
+        assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment']
 
         helpers.create_user('reviewer_journal2@mail.com', 'Second', 'Reviewer')
 
@@ -116,15 +116,14 @@ class TestJournalRequest():
 
         reviewer_details = { 'value': '''reviewer_journal1@mail.com, First Reviewer\n~Second_Reviewer1\nreviewer_journal3@mail.com'''}
         recruitment_note = test_client.post_note_edit(
-            invitation = '{}/Journal_Request{}/-/Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
+            invitation = '{}/Journal_Request{}/-/Reviewer_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
             signatures = ['~Support_Role1'],
             note = Note(
                 content = {
                     'title': { 'value': 'Recruitment' },
-                    'invitee_role': { 'value': 'reviewer' },
                     'invitee_details': reviewer_details,
-                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as {invitee_role}' },
-                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22 to serve as {invitee_role}.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!'}
+                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as Reviewer for ' +  journal['journal_request_note']['content']['abbreviated_venue_name']['value']},
+                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!'}
                 },
                 forum = journal['journal_request_note']['forum'],
                 replyto = journal['journal_request_note']['forum'],
@@ -136,7 +135,7 @@ class TestJournalRequest():
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
+        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
 
         invited_group = openreview_client.get_group('{}/Reviewers/Invited'.format(journal['journal_request_note']['content']['venue_id']['value']))
         assert invited_group
@@ -145,11 +144,11 @@ class TestJournalRequest():
         assert '~Second_Reviewer1' in invited_group.members
         assert 'reviewer_journal3@mail.com' in invited_group.members
 
-        messages = openreview_client.get_messages(to = 'reviewer_journal1@mail.com', subject = '[TJ22] Invitation to serve as reviewer')
+        messages = openreview_client.get_messages(to = 'reviewer_journal1@mail.com', subject = '[TJ22] Invitation to serve as Reviewer for TJ22')
         assert len(messages) == 1
         assert messages[0]['content']['text'].startswith('<p>Dear First Reviewer,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as reviewer.</p>')
 
-        messages = openreview_client.get_messages(to = 'reviewer_journal2@mail.com', subject = '[TJ22] Invitation to serve as reviewer')
+        messages = openreview_client.get_messages(to = 'reviewer_journal2@mail.com', subject = '[TJ22] Invitation to serve as Reviewer for TJ22')
         assert len(messages) == 1
         assert messages[0]['content']['text'].startswith('<p>Dear Second Reviewer,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as reviewer.</p>')
 
@@ -161,7 +160,7 @@ class TestJournalRequest():
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert 'Invited: 2 reviewers.' in recruitment_status[0].content['comment']['value']
+        assert 'Invited: 2 Reviewer(s).' in recruitment_status[0].content['comment']['value']
 
     def test_journal_action_editor_recruitment(self, openreview_client, selenium, request_page, helpers, journal):
 
@@ -175,15 +174,14 @@ class TestJournalRequest():
 
         ae_details = { 'value': '''ae_journal1@mail.com, First AE\nae_journal2@mail.com, Second AE\nae_journal3@mail.com, Third AE\nalready_actioneditor@mail.com, Action Editor'''}
         recruitment_note = test_client.post_note_edit(
-            invitation = '{}/Journal_Request{}/-/Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
+            invitation = '{}/Journal_Request{}/-/Action_Editor_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
             signatures = ['~Support_Role1'],
             note = Note(
                 content = {
                     'title': { 'value': 'Recruitment' },
-                    'invitee_role': { 'value': 'action editor' },
                     'invitee_details': ae_details,
-                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as {invitee_role}' },
-                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22 to serve as {invitee_role}.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!'}
+                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as Action Editor for ' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] },
+                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22 to serve as action editor.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!'}
                 },
                 forum = journal['journal_request_note']['forum'],
                 replyto = journal['journal_request_note']['forum'],
@@ -195,7 +193,7 @@ class TestJournalRequest():
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
+        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Action_Editor_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
 
         messages = openreview_client.get_messages(to = 'ae_journal1@mail.com')
         assert len(messages) == 0
@@ -203,11 +201,11 @@ class TestJournalRequest():
         messages = openreview_client.get_messages(to = 'already_actioneditor@mail.com')
         assert len(messages) == 0
 
-        messages = openreview_client.get_messages(to = 'ae_journal2@mail.com', subject = '[TJ22] Invitation to serve as action editor')
+        messages = openreview_client.get_messages(to = 'ae_journal2@mail.com', subject = '[TJ22] Invitation to serve as Action Editor for TJ22')
         assert len(messages) == 1
         assert messages[0]['content']['text'].startswith('<p>Dear Second AE,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as action editor.</p>')
 
-        messages = openreview_client.get_messages(to = 'ae_journal3@mail.com', subject = '[TJ22] Invitation to serve as action editor')
+        messages = openreview_client.get_messages(to = 'ae_journal3@mail.com', subject = '[TJ22] Invitation to serve as Action Editor for TJ22')
         assert len(messages) == 1
         assert messages[0]['content']['text'].startswith('<p>Dear Third AE,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as action editor.</p>')
 
@@ -216,8 +214,8 @@ class TestJournalRequest():
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert 'Invited: 2 action editors.' in recruitment_status[0].content['comment']['value']
-        assert 'No recruitment invitation was sent to the following users because they are already members of the action editor group:'
+        assert 'Invited: 2 Action Editor(s).' in recruitment_status[0].content['comment']['value']
+        assert 'No recruitment invitation was sent to the following users because they are already members of the Action Editor group:'
 
     def test_journal_reviewer_recruitment_by_ae(self, openreview_client, selenium, request_page, helpers, journal):
 
@@ -233,11 +231,11 @@ class TestJournalRequest():
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
         assert reply_row
         buttons = reply_row.find_elements_by_class_name('btn-xs')
-        assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment']
+        assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment by AE']
 
         reviewer_details = { 'value': '''new_reviewer@mail.com, New Reviewer'''}
         recruitment_note = ae_client.post_note_edit(
-            invitation = '{}/Journal_Request{}/-/Reviewer_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
+            invitation = '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
             signatures = ['~First_AE1'],
             note = Note(
                 content = {
@@ -255,7 +253,7 @@ class TestJournalRequest():
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
+        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
 
         messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to serve as reviewer')
         assert len(messages) == 1
