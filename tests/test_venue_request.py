@@ -928,10 +928,17 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'TEST.cc/2030/Conference' in ac_groups[0].readers
         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].readers
 
         assert 'TEST.cc/2030/Conference' in ac_groups[0].deanonymizers
         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
+        assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
+
+        sac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Senior_Area_Chairs$')
+        assert len(sac_groups) == 2
+        assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
+        assert 'TEST.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
 
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
