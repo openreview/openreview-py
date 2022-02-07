@@ -81,6 +81,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             invitation=Invitation(id=self.journal.get_meta_invitation_id(),
+                domain = venue_id,
                 invitees=[venue_id],
                 readers=[venue_id],
                 signatures=[venue_id],

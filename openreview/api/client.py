@@ -1678,6 +1678,7 @@ class Invitation(object):
     """
     def __init__(self,
         id = None,
+        domain = None,
         readers = None,
         writers = None,
         invitees = None,
@@ -1705,6 +1706,7 @@ class Invitation(object):
         details = None):
 
         self.id = id
+        self.domain = domain
         self.cdate = cdate
         self.ddate = ddate
         self.duedate = duedate
@@ -1760,6 +1762,9 @@ class Invitation(object):
         body = {
             'id': self.id
         }
+
+        if self.domain:
+            body['domain'] = self.domain
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -1825,6 +1830,7 @@ class Invitation(object):
         :rtype: Invitation
         """
         invitation = Invitation(i['id'],
+            domain = i.get('domain'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
             tcdate = i.get('tcdate'),
