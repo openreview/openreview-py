@@ -905,7 +905,7 @@ Comment: This is an inapropiate comment</p>
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         raia_client.post_invitation_edit(
-            invitations='.TMLR/-/Edit',
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1542,7 +1542,7 @@ note={Retracted after acceptance}
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         raia_client.post_invitation_edit(
-            invitations='.TMLR/-/Edit',
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1876,7 +1876,7 @@ note={Rejected}
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         cho_client.post_invitation_edit(
-            invitations='.TMLR/-/Edit',
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -2140,7 +2140,7 @@ note={Rejected}
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         cho_client.post_invitation_edit(
-            invitations='.TMLR/-/Edit',
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],

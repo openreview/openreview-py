@@ -23,6 +23,7 @@ class InvitationBuilder(object):
         self.set_rejection_invitation()
         self.set_withdrawn_invitation()
         self.set_acceptance_invitation()
+        self.set_retraction_invitation()
         self.set_authors_release_invitation()
         self.set_ae_assignment()
         self.set_reviewer_assignment()
@@ -998,7 +999,7 @@ class InvitationBuilder(object):
             },
             process=os.path.join(os.path.dirname(__file__), 'process/retract_submission_process.py'))
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
     def set_retraction_approval_invitation(self, note, retraction):
         venue_id = self.journal.venue_id
@@ -1049,7 +1050,7 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/retraction_approval_process.py')
         )
 
-        self.save_invitation(journal, invitation)
+        self.save_invitation(invitation)
 
 
     def set_under_review_invitation(self):
@@ -1188,7 +1189,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': journal.withdrawn_venue_id
+                                'value': self.journal.withdrawn_venue_id
                             }
                         }
                     }
@@ -1236,7 +1237,7 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/retracted_submission_process.py')
 
         )
-        self.save_invitation(self.journal, invitation)
+        self.save_invitation(invitation)
 
     def set_rejection_invitation(self):
 
@@ -1375,7 +1376,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ 'everyone' ] },
                 'writers': { 'values': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': journal.get_author_submission_id() },
+                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
                     'content': {
                         '_bibtex': {
                             'value': {

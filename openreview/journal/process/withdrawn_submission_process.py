@@ -23,4 +23,4 @@ The {journal.short_name} Editors-in-Chief
     )
 
     print('Enable Author deanonymize')
-    journal.invitation_builder.set_authors_deanonymization_invitation(journal, note)
+    journal.invitation_builder.set_authors_deanonymization_invitation(note)
