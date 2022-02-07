@@ -15,12 +15,6 @@ import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
-import json
-import os
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-with open(os.path.join(dir_path, 'duplicate_domains.json')) as f:
-    duplicate_domains = json.load(f)
 
 
 def concurrent_requests(request_func, params, max_workers=6):
@@ -547,6 +541,7 @@ def subdomains(domain):
     [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
     """
 
+    from .common import duplicate_domains
     if '@' in domain:
         full_domain = domain.split('@')[1]
     else:
