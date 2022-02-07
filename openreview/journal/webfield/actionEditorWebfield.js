@@ -22,6 +22,18 @@ var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
 var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
 
+var SUBMISSION_GROUP_NAME = 'Paper';
+var RECOMMENDATION_NAME = 'Recommendation';
+var REVIEW_APPROVAL_NAME = 'Review_Approval';
+var REVIEW_NAME = 'Review';
+var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
+var DECISION_NAME = 'Decision';
+var DECISION_APPROVAL_NAME = 'Decision_Approval';
+var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
+var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
+var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
+var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
+
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID +
@@ -33,6 +45,37 @@ var HEADER = {
   title: SHORT_PHRASE + ' Action Editor Console',
   instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewersUrl + "'> Modify Reviewer Assignments</a>"
 };
+
+// Helpers
+var getInvitationId = function(number, name, prefix) {
+  return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
+};
+
+var getReplies = function(submission, name) {
+  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
+};
+
+var getRatingInvitations = function(invitationsById, number) {
+  var invitations = [];
+  Object.keys(invitationsById).forEach(function(invitationId) {
+    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '.*/-/Rating')) {
+      invitations.push(invitationsById[invitationId]);
+    }
+  })
+  return invitations;
+}
+
+var getRatingReplies = function(submission, ratingInvitations) {
+  var replies = [];
+  ratingInvitations.forEach(function(invitation) {
+    var ratingReplies = submission.details.replies.filter(function(reply) {
+      return reply.invitations.includes(invitation.id);
+    });
+    replies = replies.concat(ratingReplies);
+  })
+  return replies;
+}
+
 
 // Main function is the entry point to the webfield code
 var main = function() {
@@ -59,12 +102,20 @@ var loadData = function() {
         Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
         Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
         Webfield2.api.get('/edges', { invitation: REVIEWERS_ASSIGNMENT_ID, groupBy: 'head'})
-          .then(function(result) { return result.groupedEdges; })
+          .then(function(result) { return result.groupedEdges; }),
+        Webfield2.api.getAll('/invitations', {
+          regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
+          type: 'all',
+          select: 'id,cdate,duedate,expdate',
+          // expired: true
+        }).then(function(invitations) {
+          return _.keyBy(invitations, 'id');
+        }),
       );
     });
 };
 
-var formatData = function(reviewersByNumber, invitations, submissions, assignmentEdges) {
+var formatData = function(reviewersByNumber, invitations, submissions, assignmentEdges, invitationsById) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
 
   // build the rows
@@ -99,6 +150,113 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     var reviewers = reviewersByNumber[number] || [];
     var reviewerStatus = {};
 
+    // Build array of tasks
+    var tasks = [];
+    // Review approval by AE
+    var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
+    var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
+    // Reviews by Reviewers
+    var reviewInvitation = invitationsById[getInvitationId(number, REVIEW_NAME)];
+    var reviewNotes = getReplies(submission, REVIEW_NAME);
+    // Official Recommendations by Reviewers
+    var officialRecommendationInvitation = invitationsById[getInvitationId(number, OFFICIAL_RECOMMENDATION_NAME)];
+    var officialRecommendationNotes = getReplies(submission, OFFICIAL_RECOMMENDATION_NAME);
+    // Reviewer Rating by AE
+    var reviewerRatingInvitations = getRatingInvitations(invitationsById, number);
+    var reviewerRatingReplies = getRatingReplies(submission, reviewerRatingInvitations);
+    // Decision by AE
+    var decisionInvitation = invitationsById[getInvitationId(number, DECISION_NAME)];
+    var decisionNotes = getReplies(submission, DECISION_NAME);
+    // Decision Approval by EIC
+    var decisionApprovalInvitation = invitationsById[getInvitationId(number, DECISION_APPROVAL_NAME)];
+    var decisionApprovalNotes = getReplies(submission, DECISION_APPROVAL_NAME);
+    // Camera Ready Revision by Authors
+    var cameraReadyRevisionInvitation = invitationsById[getInvitationId(number, CAMERA_READY_REVISION_NAME)];
+    // Camera Ready Verification by AE
+    var cameraReadyVerificationInvitation = invitationsById[getInvitationId(number, CAMERA_READY_VERIFICATION_NAME)];
+    var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
+
+    if (reviewApprovalInvitation) {
+      tasks.push({
+        id: reviewApprovalInvitation.id,
+        startdate: reviewApprovalInvitation.cdate,
+        duedate: reviewApprovalInvitation.duedate,
+        complete: reviewApprovalNotes.length > 0,
+        replies: reviewApprovalNotes
+      });
+    }
+
+    if (reviewInvitation) {
+      tasks.push({
+        id: reviewInvitation.id,
+        startdate: reviewInvitation.cdate,
+        duedate: reviewInvitation.duedate,
+        complete: reviewNotes.length >= 3,
+        replies: reviewNotes
+      });
+    }
+
+    if (officialRecommendationInvitation) {
+      tasks.push({
+        id: officialRecommendationInvitation.id,
+        startdate: officialRecommendationInvitation.cdate,
+        duedate: officialRecommendationInvitation.duedate,
+        complete: officialRecommendationNotes.length >= 3,
+        replies: officialRecommendationNotes
+      });
+    }
+
+    if (reviewerRatingInvitations.length) {
+      tasks.push({
+        id: getInvitationId(number, 'Reviewer_Rating'),
+        startdate: reviewerRatingInvitations[0].cdate,
+        duedate: reviewerRatingInvitations[0].duedate,
+        complete: reviewerRatingReplies.length == reviewNotes.length,
+        replies: reviewerRatingReplies
+      });
+    }
+
+    if (decisionInvitation) {
+      tasks.push({
+        id: decisionInvitation.id,
+        startdate: decisionInvitation.cdate,
+        duedate: decisionInvitation.duedate,
+        complete: decisionNotes.length > 0,
+        replies: decisionNotes
+      });
+    }
+
+    if (decisionApprovalInvitation) {
+      tasks.push({
+        id: decisionApprovalInvitation.id,
+        startdate: decisionApprovalInvitation.cdate,
+        duedate: decisionApprovalInvitation.duedate,
+        complete: decisionApprovalNotes.length > 0,
+        replies: decisionApprovalNotes
+      });
+    }
+
+    if (cameraReadyRevisionInvitation) {
+      tasks.push({
+        id: cameraReadyRevisionInvitation.id,
+        startdate: cameraReadyRevisionInvitation.cdate,
+        duedate: cameraReadyRevisionInvitation.duedate,
+        complete: submission.invitations.includes(cameraReadyRevisionInvitation.id),
+        replies: []
+      });
+    }
+
+    if (cameraReadyVerificationInvitation) {
+      tasks.push({
+        id: cameraReadyVerificationInvitation.id,
+        startdate: cameraReadyVerificationInvitation.cdate,
+        duedate: cameraReadyVerificationInvitation.duedate,
+        complete: cameraReadyVerificationNotes.length > 0,
+        replies: cameraReadyVerificationNotes
+      });
+    }
+
+
     reviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
       var status = {};
@@ -116,6 +274,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
         email: reviewer.email,
         completedReview: completedReview && true,
         completedRecommendation: status.Recommendation && true,
+        hasRecommendationStarted: officialRecommendationInvitation && officialRecommendationInvitation.cdate < Date.now(),
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
@@ -154,6 +313,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
         recommendation: decision && decision.content.recommendation.value,
         editUrl: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
       },
+      tasks: { invitations: tasks, forumId: submission.id },
       status: submission.content.venue.value
     });
 
@@ -177,7 +337,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
 var renderData = function(venueStatusData) {
   // Assigned Papers Tab
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
-    headings: ['<input type="checkbox" class="select-all-papers">', '#', 'Paper Summary', 'Review Progress', 'Decision Status', 'Status'],
+    headings: ['<input type="checkbox" class="select-all-papers">', '#', 'Paper Summary', 'Review Progress', 'Decision Status', 'Tasks', 'Status'],
     renders: [
       function(data) {
         return '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
@@ -189,6 +349,11 @@ var renderData = function(venueStatusData) {
       Handlebars.templates.noteSummary,
       Handlebars.templates.noteReviewers,
       Handlebars.templates.noteMetaReviewStatus,
+      function(data) {
+        return Webfield2.ui.eicTaskList(data.invitations, data.forumId, {
+          referrer: encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')')
+        });
+      },
       function(data) {
         return '<h4>' + data + '</h4>';
       }
@@ -265,7 +430,7 @@ var renderData = function(venueStatusData) {
             return {
               groups: selectedIds.includes(row.submission.id)
                 ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
-                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedRecommendation;
+                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && r.hasRecommendationStarted && !r.completedRecommendation;
                   })
                 : [],
               forumUrl: 'https://openreview.net/forum?' + $.param({
@@ -280,12 +445,13 @@ var renderData = function(venueStatusData) {
     },
     extraClasses: 'console-table paper-table',
     postRenderTable: function() {
-      $('.console-table th').eq(0).css('width', '3%');
-      $('.console-table th').eq(1).css('width', '5%');
-      $('.console-table th').eq(2).css('width', '25%');
-      $('.console-table th').eq(3).css('width', '30%');
-      $('.console-table th').eq(4).css('width', '25%');
-      $('.console-table th').eq(5).css('width', '12%');
+      $('.console-table th').eq(0).css('width', '2%');  // [ ]
+      $('.console-table th').eq(1).css('width', '3%');  // #
+      $('.console-table th').eq(2).css('width', '20%'); // Paper Summary
+      $('.console-table th').eq(3).css('width', '22%'); // Review Progress
+      $('.console-table th').eq(4).css('width', '22%'); // Action Editor Decision
+      $('.console-table th').eq(5).css('width', '20%'); // Tasks
+      $('.console-table th').eq(6).css('width', '11%'); // Status
     }
   });
 
