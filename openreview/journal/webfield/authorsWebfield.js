@@ -9,12 +9,13 @@
 
 var VENUE_ID = '';
 var SHORT_PHRASE = '';
+var WEBSITE = '';
 var SUBMISSION_ID = '';
 var SUBMISSION_GROUP_NAME = 'Paper';
 
 var HEADER = {
   title: SHORT_PHRASE + ' Author Console',
-  instructions: 'Visit <a href="https://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a> for the ' + SHORT_PHRASE + ' author guidelines.'
+  instructions: 'Visit <a href="https://' + WEBSITE + '" target="_blank" rel="nofollow">' + WEBSITE + '</a> for the ' + SHORT_PHRASE + ' author guidelines.'
 };
 var AUTHOR_NAME = 'Authors';
 var ACTION_EDITORS_NAME = 'Action_Editors';

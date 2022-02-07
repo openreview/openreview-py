@@ -67,6 +67,27 @@ var getReplies = function(submission, name) {
   return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
+var getRatingInvitations = function(invitationsById, number) {
+  var invitations = [];
+  Object.keys(invitationsById).forEach(function(invitationId) {
+    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '.*/-/Rating')) {
+      invitations.push(invitationsById[invitationId]);
+    }
+  })
+  return invitations;
+}
+
+var getRatingReplies = function(submission, ratingInvitations) {
+  var replies = [];
+  ratingInvitations.forEach(function(invitation) {
+    var ratingReplies = submission.details.replies.filter(function(reply) {
+      return reply.invitations.includes(invitation.id);
+    });
+    replies = replies.concat(ratingReplies);
+  })
+  return replies;
+}
+
 // Main function is the entry point to the webfield code
 var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
@@ -194,6 +215,9 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     // Official Recommendations by Reviewers
     var officialRecommendationInvitation = invitationsById[getInvitationId(number, OFFICIAL_RECOMMENDATION_NAME)];
     var officialRecommendationNotes = getReplies(submission, OFFICIAL_RECOMMENDATION_NAME);
+    // Reviewer Rating by AE
+    var reviewerRatingInvitations = getRatingInvitations(invitationsById, number);
+    var reviewerRatingReplies = getRatingReplies(submission, reviewerRatingInvitations);
     // Decision by AE
     var decisionInvitation = invitationsById[getInvitationId(number, DECISION_NAME)];
     var decisionNotes = getReplies(submission, DECISION_NAME);
@@ -233,6 +257,16 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         duedate: officialRecommendationInvitation.duedate,
         complete: officialRecommendationNotes.length >= 3,
         replies: officialRecommendationNotes
+      });
+    }
+
+    if (reviewerRatingInvitations.length) {
+      tasks.push({
+        id: getInvitationId(number, 'Reviewer_Rating'),
+        startdate: reviewerRatingInvitations[0].cdate,
+        duedate: reviewerRatingInvitations[0].duedate,
+        complete: reviewerRatingReplies.length == reviewNotes.length,
+        replies: reviewerRatingReplies
       });
     }
 
@@ -305,6 +339,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         email: reviewer.email,
         completedReview: completedReview && true,
         completedRecommendation: reviewerRecommendation && true,
+        hasRecommendationStarted: officialRecommendationInvitation && officialRecommendationInvitation.cdate < Date.now(),
         forum: submission.id,
         note: completedReview && completedReview.id,
         status: status,
@@ -378,6 +413,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         noteId: submission.id,
         paperNumber: number,
         numSubmittedReviews: reviews.length,
+        numSubmittedRecommendations: recommendations.length,
         numReviewers: paperReviewers.length,
         reviewers: paperReviewerStatus,
         sendReminder: true,
@@ -472,6 +508,8 @@ var renderTable = function(container, rows) {
       Paper_Submission_Date: function(row) { return row.submission.cdate; },
       Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
       Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
+      Number_of_Recommendations_Submitted: function(row) { return row.reviewProgressData.numSubmittedRecommendations; },
+      Number_of_Recommendations_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedRecommendations; },
       Decision: function(row) { return row.actionEditorProgressData.recommendation; },
       Status: function(row) { return row.status; }
     },
@@ -485,6 +523,7 @@ var renderTable = function(container, rows) {
       reviewer: ['reviewProgressData.reviewers'],
       numReviewersAssigned: ['reviewProgressData.numReviewers'],
       numReviewsDone: ['reviewProgressData.numSubmittedReviews'],
+      numRecommendationsDone: ['reviewProgressData.numSubmittedRecommendations'],
       decision: ['actionEditorProgressData.recommendation'],
       status: ['status'],
       default: ['submissionNumber.number', 'submission.content.title']
@@ -562,7 +601,7 @@ var renderTable = function(container, rows) {
             return {
               groups: selectedIds.includes(row.submission.id)
                 ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
-                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedRecommendation;
+                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && r.hasRecommendationStarted && !r.completedRecommendation;
                   })
                 : [],
               forumUrl: 'https://openreview.net/forum?' + $.param({
