@@ -174,14 +174,15 @@ class JournalRequest():
                         invitation = invitation
                     )
 
-    def setup_recruitment_invitation(self, note_id):
+    def setup_recruitment_invitations(self, note_id, ae_template=None, reviewer_template=None):
 
         note = self.client.get_note(note_id)
         short_name = note.content['abbreviated_venue_name']['value']
         venue_id = note.content['venue_id']['value']
-        recruitment_email_template = '''Dear {name},
 
-You have been nominated by the program chair committee of {short_name} to serve as {invitee_role}.
+        default_recruitment_template = '''Dear {name},
+
+You have been nominated by the program chair committee of {short_name} to serve as {role}.
 
 ACCEPT LINK:
 {accept_url}
@@ -198,13 +199,6 @@ Cheers!'''.replace('{short_name}', short_name)
                     'value': 'Recruitment'
                 }
             },
-            'invitee_role': {
-                'description': 'Please select the role of the invitees in the journal,',
-                'order': 2,
-                'value' : {
-                    'value-radio': ['action editor', 'reviewer']
-                }
-            },
             'invitee_details': {
                 'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
                 'order': 3,
@@ -219,7 +213,7 @@ Cheers!'''.replace('{short_name}', short_name)
                     'value-regex': '.*'
                 },
                 'presentation': {
-                    'default': '[{short_name}] Invitation to serve as {invitee_role}'.replace('{short_name}', short_name)
+                    'default': '[{short_name}] Invitation to serve as {role} for {short_name}'.replace('{short_name}', short_name)
                 }
             },
             'email_content': {
@@ -229,16 +223,57 @@ Cheers!'''.replace('{short_name}', short_name)
                     'value-regex': '[\\S\\s]{1,10000}'
                 },
                 'presentation': {
-                    'default': recruitment_email_template
+                    'default': default_recruitment_template,
+                    'markdown': True
                 }
             }
         }
+
+        #setup ae recruitment
+        if ae_template:
+            recruitment_content['email_content']['presentation']['default'] = ae_template
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as f:
             content = f.read()
             content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
             invitation = openreview.api.Invitation(
-                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Recruitment',
+                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Action_Editor_Recruitment',
+                invitees = [venue_id],
+                readers = ['everyone'],
+                writers = [],
+                signatures = ['~Super_User1'],
+                edit = {
+                    'signatures': { 'values-regex': f'~.*|{self.support_group_id}' },
+                    'writers': { 'values': [self.support_group_id, venue_id] },
+                    'readers': { 'values': [self.support_group_id, venue_id] },
+                    'note': {
+                        'forum': { 'value': note.id },
+                        'replyto': {'value': note.id },
+                        'signatures': { 'values': ['${signatures}'] },
+                        'readers': { 'values': [self.support_group_id, venue_id] },
+                        'writers': { 'values': [self.support_group_id, venue_id]},
+                        'content': recruitment_content
+                    }
+                },
+                process_string = content
+            )
+
+            self.client.post_invitation_edit(
+                readers = ['~Super_User1'],
+                writers = ['~Super_User1'],
+                signatures = ['~Super_User1'],
+                invitation = invitation
+            )
+
+        #setup rev recruitment
+        if reviewer_template:
+            recruitment_content['email_content']['presentation']['default'] = reviewer_template
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as f:
+            content = f.read()
+            content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
+            invitation = openreview.api.Invitation(
+                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Reviewer_Recruitment',
                 invitees = [venue_id],
                 readers = ['everyone'],
                 writers = [],
@@ -299,7 +334,7 @@ Cheers!
                     'value-regex': '.*'
                 },
                 'presentation': {
-                    'default': '[{short_name}] Invitation to serve as reviewer'
+                    'default': f'[{short_name}] Invitation to serve as reviewer'
                 }
             },
             'email_content': {
@@ -318,7 +353,7 @@ Cheers!
             content = f.read()
             content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
             invitation = openreview.api.Invitation(
-                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Reviewer_Recruitment',
+                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Reviewer_Recruitment_by_AE',
                 invitees = [venue_id, f'{venue_id}/Action_Editors'],
                 readers = ['everyone'],
                 writers = [],
