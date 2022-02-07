@@ -223,6 +223,7 @@ class InvitationBuilder(object):
     def set_submission_invitation(self, journal):
 
         venue_id=journal.venue_id
+        short_name = journal.short_name
         editor_in_chief_id=journal.get_editors_in_chief_id()
         action_editors_id=journal.get_action_editors_id()
         authors_id=journal.get_authors_id()
@@ -325,7 +326,7 @@ class InvitationBuilder(object):
                                 'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
-                            'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from.',
+                            'description': f'Link to OpenReview page of a previously rejected {short_name} submission that this submission is derived from.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
@@ -333,7 +334,7 @@ class InvitationBuilder(object):
                                 'value-regex': '^[\\S\\s]{1,5000}$',
                                 'optional': True
                             },
-                            'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 8,
                             'presentation': {
                                 'markdown': True
@@ -361,7 +362,7 @@ class InvitationBuilder(object):
                         },
                             'venue': {
                                 'value': {
-                                    'value': 'Submitted to TMLR',
+                                    'value': f'Submitted to {short_name}',
                                 },
                                 'presentation': {
                                     'hidden': True,
@@ -841,6 +842,7 @@ class InvitationBuilder(object):
 
     def set_review_approval_invitation(self, journal, note, duedate):
         venue_id = journal.venue_id
+        short_name = journal.short_name
         editors_in_chief_id = journal.get_editors_in_chief_id()
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
         paper_authors_id = journal.get_authors_id(number=note.number)
@@ -867,7 +869,7 @@ class InvitationBuilder(object):
                     'content': {
                         'under_review': {
                             'order': 1,
-                            'description': 'Determine whether this submission is appropriate for review at JMLR or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
+                            'description': f'Determine whether this submission is appropriate for review at JMLR or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
                             'value': {
                                 'value-radio': ['Appropriate for Review', 'Desk Reject']
                             }
@@ -1085,7 +1087,7 @@ class InvitationBuilder(object):
                         },
                         'venue': {
                             'value': {
-                                'value': 'Under review for TMLR'
+                                'value': f'Under review for {journal.short_name}'
                             }
                         },
                         'venueid': {
@@ -1132,7 +1134,7 @@ class InvitationBuilder(object):
                         'venue': {
                             'order': 2,
                             'value': {
-                                'value': 'Desk rejected by TMLR'
+                                'value': f'Desk rejected by {journal.short_name}'
                             }
                         },
                         'venueid': {
@@ -1257,7 +1259,7 @@ class InvitationBuilder(object):
                         },
                         'venue': {
                             'value': {
-                                'value': 'Rejected by TMLR'
+                                'value': f'Rejected by {journal.short_name}'
                             }
                         },
                         'venueid': {
@@ -1304,7 +1306,7 @@ class InvitationBuilder(object):
                         },
                         'venue': {
                             'value': {
-                                'value': 'TMLR'
+                                'value': journal.short_name
                             },
                             'order': 1
                         },
@@ -1444,7 +1446,7 @@ class InvitationBuilder(object):
             )
 
             header = {
-                'title': 'TMLR Action Editor Suggestion',
+                'title': f'{journal.short_name} Action Editor Suggestion',
                 'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
@@ -1829,6 +1831,7 @@ class InvitationBuilder(object):
 
     def set_revision_submission(self, journal, note):
         venue_id = journal.venue_id
+        short_name = journal.short_name
         paper_authors_id = journal.get_authors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
@@ -1927,7 +1930,7 @@ class InvitationBuilder(object):
                                 'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
-                            'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from.',
+                            'description': f'Link to OpenReview page of a previously rejected {short_name} submission that this submission is derived from.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
@@ -1935,7 +1938,7 @@ class InvitationBuilder(object):
                                 'value-regex': '^[\\S\\s]{1,5000}$',
                                 'optional': True
                             },
-                            'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 8,
                             'presentation': {
                                 'markdown': True
@@ -2195,7 +2198,7 @@ class InvitationBuilder(object):
                         },
                         'certifications': {
                             'order': 3,
-                            'description': 'Optionally and if appropriate, recommend a certification for this submission. See https://jmlr.org/tmlr for information about certifications.',
+                            'description': f'Optionally and if appropriate, recommend a certification for this submission. See {journal.website} for information about certifications.',
                             'value': {
                                 'values-dropdown': [
                                     'Featured Certification',
@@ -2323,6 +2326,7 @@ class InvitationBuilder(object):
 
     def set_camera_ready_revision_invitation(self, journal, note, decision, duedate):
         venue_id = journal.venue_id
+        short_name = journal.short_name
         paper_authors_id = journal.get_authors_id(number=note.number)
         paper_reviewers_id = journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = journal.get_action_editors_id(number=note.number)
@@ -2408,7 +2412,7 @@ class InvitationBuilder(object):
                                 'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
-                            'description': 'Link to OpenReview page of a previously rejected TMLR submission that this submission is derived from.',
+                            'description': f'Link to OpenReview page of a previously rejected {short_name} submission that this submission is derived from.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
@@ -2416,7 +2420,7 @@ class InvitationBuilder(object):
                                 'value-regex': '^[\\S\\s]{1,5000}$',
                                 'optional': True
                             },
-                            'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 8,
                             'presentation': {
                                 'markdown': True
@@ -2493,7 +2497,7 @@ class InvitationBuilder(object):
                         'verification': {
                             'order': 1,
                             'value': {
-                                'value-checkbox': 'I confirm that camera ready manuscript complies with the TMLR stylefile and, if appropriate, includes the minor revisions that were requested.'
+                                'value-checkbox': f'I confirm that camera ready manuscript complies with the {journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.'
                             }
                         }
                     }
