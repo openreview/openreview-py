@@ -869,7 +869,7 @@ class InvitationBuilder(object):
                     'content': {
                         'under_review': {
                             'order': 1,
-                            'description': f'Determine whether this submission is appropriate for review at JMLR or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
+                            'description': f'Determine whether this submission is appropriate for review at {short_name} or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
                             'value': {
                                 'value-radio': ['Appropriate for Review', 'Desk Reject']
                             }
