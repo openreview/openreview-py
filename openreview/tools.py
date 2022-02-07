@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+import json
+import os
+
 from deprecated.sphinx import deprecated
 import sys
 import openreview
@@ -15,6 +19,20 @@ import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+
+
+def run_once(f):
+    """
+    Decorator to run a function only once and return its output for any subsequent call to the function without running
+    it again
+    """
+    def wrapper(*args, **kwargs):
+        if not wrapper.has_run:
+            wrapper.has_run = True
+            wrapper.to_return = f(*args, **kwargs)
+        return wrapper.to_return
+    wrapper.has_run = False
+    return wrapper
 
 
 def concurrent_requests(request_func, params, max_workers=6):
@@ -525,6 +543,17 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     return '\n'.join(bibtex)
 
+
+@run_once
+def load_duplicate_domains():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(dir_path, 'duplicate_domains.json')) as f:
+        duplicate_domains = json.load(f)
+
+    f.close()
+    return duplicate_domains
+
+
 def subdomains(domain):
     """
     Given an email address, returns a list with the domains and subdomains.
@@ -541,7 +570,7 @@ def subdomains(domain):
     [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
     """
 
-    from .common import duplicate_domains
+    duplicate_domains = load_duplicate_domains()
     if '@' in domain:
         full_domain = domain.split('@')[1]
     else:
