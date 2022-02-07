@@ -85,8 +85,8 @@ var main = function() {
     getCommitteeMembers(SENIOR_AREA_CHAIRS_ID),
     getGroups(),
     getBlindedNotes(),
-    getWithdrawnNotesCount(),
-    getDeskRejectedNotesCount(),
+    getWithdrawnNotes(),
+    getDeskRejectedNotes(),
     getPcAssignmentTags(),
     getBidCounts(REVIEWERS_ID),
     getBidCounts(AREA_CHAIRS_ID),
@@ -105,8 +105,8 @@ var main = function() {
     seniorAreaChairs,
     groups,
     blindedNotes,
-    withdrawnNotesCount,
-    deskRejectedNotesCount,
+    withdrawnNotes,
+    deskRejectedNotes,
     pcAssignmentTags,
     reviewerBidCounts,
     areaChairBidCounts,
@@ -182,6 +182,7 @@ var main = function() {
       sacByAc: sacByAc,
       acsBySac: acsBySac,
       blindedNotes: blindedNotes,
+      deskRejectedWithdrawnNotes: _.concat(deskRejectedNotes, withdrawnNotes),
       reviewerGroups: reviewerGroupMaps,
       areaChairGroups: areaChairGroupMaps,
       seniorAreaChairGroups: seniorAreaChairGroupMaps,
@@ -197,8 +198,8 @@ var main = function() {
     var finalDecisions = calcDecisions(blindedNotes);
     var conferenceStats = {
       blindSubmissionsCount: blindedNotes.length,
-      withdrawnSubmissionsCount: withdrawnNotesCount,
-      deskRejectedSubmissionsCount: deskRejectedNotesCount,
+      withdrawnSubmissionsCount: withdrawnNotes.length,
+      deskRejectedSubmissionsCount: deskRejectedNotes.length,
       reviewersInvitedCount: reviewersInvitedCount,
       areaChairsInvitedCount: areaChairsInvitedCount,
       seniorAreaChairsInvitedCount: seniorAreaChairsInvitedCount,
@@ -295,7 +296,7 @@ var getRegistrationForms = function() {
   var prefixes = [ REVIEWERS_ID, AREA_CHAIRS_ID ];
   var promises = _.map(prefixes, function(prefix) {
     return Webfield.getAll('/notes', {
-      invitation: prefix + '/-/Form'
+      invitation: prefix + '/-/.*Form'
     });
   });
 
@@ -363,25 +364,21 @@ var getBlindedNotes = function() {
   })
 };
 
-var getWithdrawnNotesCount = function() {
+var getWithdrawnNotes = function() {
   if (!WITHDRAWN_SUBMISSION_ID) {
-    return $.Deferred().resolve(0);
+    return $.Deferred().resolve([]);
   }
-  return Webfield.get('/notes', {
-    invitation: WITHDRAWN_SUBMISSION_ID, limit: 1, select: 'id'
-  }).then(function(result) {
-    return result.count || 0;
+  return Webfield.getAll('/notes', {
+    invitation: WITHDRAWN_SUBMISSION_ID, details: 'original'
   });
 };
 
-var getDeskRejectedNotesCount = function() {
+var getDeskRejectedNotes = function() {
   if (!DESK_REJECTED_SUBMISSION_ID) {
-    return $.Deferred().resolve(0);
+    return $.Deferred().resolve([]);
   }
-  return Webfield.get('/notes', {
-    invitation: DESK_REJECTED_SUBMISSION_ID, limit: 1, select: 'id'
-  }).then(function(result) {
-    return result.count || 0;
+  return Webfield.getAll('/notes', {
+    invitation: DESK_REJECTED_SUBMISSION_ID, details: 'original'
   });
 };
 
@@ -900,6 +897,11 @@ var renderHeader = function() {
     id: 'reviewer-status',
     content: loadingMessage,
     extraClasses: 'horizontal-scroll'
+  }, {
+    heading: 'Desk Rejected/Withdrawn Papers',
+    id: 'deskrejectwithdrawn-status',
+    content: loadingMessage,
+    extraClasses: 'horizontal-scroll'
   });
 
   Webfield.ui.tabPanel(tabs);
@@ -946,7 +948,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
     var invitation = invitationMap[id];
 
     if (invitation) {
-      return '<li><a href="/invitation?id=' + invitation.id + '&mode=edit&referrer=' + referrerUrl + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
+      return '<li><a href="/invitation/edit?id=' + invitation.id + '&referrer=' + referrerUrl + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
     };
     return '';
   };
@@ -1231,9 +1233,9 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   $('#venue-configuration').html(html);
 };
 
-var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery) {
-  var searchType = container.substring(1).split('-')[0] + 's';
-  var placeHolder = enableQuery ? 'Enter search term or type + to start query search' : 'Search all ' + searchType + '...'
+var displaySortPanel = function(container, sortOptions, sortResults, searchResults, enableQuery, searchPlaceHolder) {
+  var searchPlaceHolder = searchPlaceHolder ? searchPlaceHolder : 'Search all ' + container.substring(1).split('-')[0] + 's...';
+  var placeHolder = enableQuery ? 'Enter search term or type + to start query search' : searchPlaceHolder
   var searchBarWidth = enableQuery ? '350px' : '300px'
   var searchBarHtml = _.isFunction(searchResults) ?
     '<strong style="vertical-align: middle;">Search:</strong> ' +
@@ -1460,7 +1462,7 @@ var displayPaperStatusTable = function() {
       conferenceStatusData.filteredRows = filteredRows
     }
     renderTable(container, filteredRows);
-    $(container + ' .btn-export-data').text(`Export ${filteredRows.length} records`)
+    $(container + " .btn-export-data").text("Export " + filteredRows.length + " records");
   };
 
   // Message modal handler
@@ -1675,6 +1677,121 @@ var displayPaperStatusTable = function() {
   paperStatusNeedsRerender = false;
 
 };
+
+var displayRejectedWithdrawnPaperStatusTable = function () {
+  var container = '#deskrejectwithdrawn-status';
+  var rowData = conferenceStatusData.deskRejectedWithdrawnNotes;
+
+  var filteredRows = null;
+  var order = 'desc';
+  var sortOptions = {
+    Paper_Number: function(note) { return note.number; },
+    Paper_Title: function(note) { return _.trim(note.content.title).toLowerCase(); },
+    Reason: function(note) { return note.invitation; },
+  };
+
+  var sortResults = function(newOption, switchOrder) {
+    if (switchOrder) {
+      order = order === 'asc' ? 'desc' : 'asc';
+    }
+    var rowDataToRender = _.orderBy(filteredRows === null ? rowData : filteredRows, sortOptions[newOption], order);
+    tableDataInDisplay = rowDataToRender;
+    renderTable(container, rowDataToRender);
+  };
+
+  var searchResults = function(searchText, isQueryMode) {
+    $(container).data('lastPageNum', 1);
+    $(container + ' .form-sort').val('Paper_Number');
+
+    // Currently only searching on note number and note title
+    var filterFunc = function(note) {
+      var search = [
+        note.number,
+        note.content.title,
+        note.content.keywords ? note.content.keywords.join('\n') : null,
+        note.content.authors.join('\n'),
+        note.content.authorids.join('\n')
+      ].join('\n').toLowerCase()
+      return search.indexOf(searchText) !== -1;
+    };
+
+    if (searchText) {
+      if (isQueryMode) {
+        var filterResult = Webfield.filterCollections(rowData, searchText.slice(1), filterOperators, propertiesAllowed, 'note.id');
+        filteredRows = filterResult.filteredRows;
+        queryIsInvalid = filterResult.queryIsInvalid;
+        if (queryIsInvalid) $(container + ' .form-search').addClass('invalid-value');
+      } else {
+        filteredRows = _.filter(rowData, filterFunc);
+      }
+
+      filteredRows = _.orderBy(filteredRows, sortOptions['Paper_Number'], 'asc');
+      matchingNoteIds = filteredRows.map(function (note) {
+        return note.id;
+      });
+      order = 'asc'
+    } else {
+      filteredRows = rowData;
+      matchingNoteIds = [];
+    }
+    if (rowData.length !== filteredRows.length) {
+      conferenceStatusData.filteredRows = filteredRows
+    }
+    tableDataInDisplay = filteredRows;
+    renderTable(container, filteredRows);
+    $(container + ' .btn-export-deskrejected-withdrawn').text('Export ' + filteredRows.length + ' records')
+  };
+
+  var renderTable = function(container, data) {
+    var paperNumbers = [];
+    var rowData = _.map(data, function(note) {
+      paperNumbers.push(note.number);
+
+      var numberHtml = '<strong class="note-number">' + note.number + '</strong>';
+      var summaryHtml = Handlebars.templates.noteSummary(note.details.original || note);
+      var reason = 'unknown';
+      if(note.invitation === WITHDRAWN_SUBMISSION_ID) reason = 'Withdrawn'
+      if(note.invitation===DESK_REJECTED_SUBMISSION_ID) reason = 'Desk Rejected'
+      var reasonHtml = '<strong class="note-number">' + reason + '</strong>'
+
+      var rows = [numberHtml, summaryHtml,reasonHtml];
+      return rows;
+    });
+
+    var headings = ['#', 'Paper Summary', 'Reason'];
+
+    var $container = $(container);
+    var tableData = {
+      headings: headings,
+      rows: rowData,
+      extraClasses: 'console-table paper-table'
+    };
+    var pageNum = $container.data('lastPageNum') || 1;
+    renderPaginatedTable($container, tableData, pageNum);
+    $('.console-table th').eq(0).css('width', '20%');
+    $('.console-table th').eq(1).css('width', '50%');
+    $('.console-table th').eq(2).css('width', '30%');
+
+    $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
+      paginationOnClick($(this).parent(), $container, tableData);
+
+      var newPageNum = parseInt($(this).parent().data('pageNumber'), 10);
+      postRenderTable(data, newPageNum);
+      return false;
+    });
+  };
+
+  if (rowData.length) {
+    displaySortPanel(container, sortOptions, sortResults, searchResults, false, 'Search desk rejected/withdrawn papers...');
+    $(container).find('form.search-form .pull-left').html('<div class="btn-group"><button class="btn btn-export-deskrejected-withdrawn" type="button">Export ' + rowData.length + ' records</button></div>');
+    renderTable(container, rowData);
+  } else {
+    $(container).empty().append('<p class="empty-message">No papers have been desk rejected or withdrawn. ' +
+      'Check back later or contact info@openreview.net if you believe this to be an error.</p>');
+  }
+  tableDataInDisplay = rowData;
+  paperStatusNeedsRerender = false;
+}
 
 var renderPaginatedTable = function($container, tableData, pageNumber) {
   if (!tableData.rows) {
@@ -1914,7 +2031,7 @@ var displayAreaChairsStatusTable = function() {
     });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults, false);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false, 'Search all area chairs...');
   $(container).find('form.search-form .pull-left').html(
     '<div class="btn-group message-acs-container" role="group">' +
       '<button type="button" class="message-acs-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
@@ -2022,7 +2139,7 @@ var displaySeniorAreaChairsStatusTable = function() {
     });
   }
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false, 'Search all senior area chairs...');
   renderTable(container, rowData);
 };
 
@@ -2210,7 +2327,7 @@ var displayReviewerStatusTable = function() {
     });
   };
 
-  displaySortPanel(container, sortOptions, sortResults, searchResults, false);
+  displaySortPanel(container, sortOptions, sortResults, searchResults, false, null);
   $(container).find('form.search-form .pull-left').html(
     '<div class="btn-group message-reviewers-container" role="group">' +
       '<button type="button" class="message-reviewers-btn btn btn-icon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
@@ -2887,6 +3004,8 @@ $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
   var containerId = $(e.target).attr('href');
   if (containerId === '#paper-status') {
     displayPaperStatusTable();
+  } else if (containerId === '#deskrejectwithdrawn-status') {
+    displayRejectedWithdrawnPaperStatusTable();
   } else if (containerId === '#areachair-status') {
     displayAreaChairsStatusTable();
   } else if (containerId === '#seniorareachair-status') {
@@ -2967,31 +3086,44 @@ var buildCSV = function(){
   var areachairIds = conferenceStatusData.areaChairGroups.byNotes;
   var isFiltered = conferenceStatusData.filteredRows ? true : false
   var notes = isFiltered ? conferenceStatusData.filteredRows : conferenceStatusData.blindedNotes
+  var originalNotes = notes.map(function (p) {
+    return isFiltered
+      ? p.note.details.original || p.note
+      : p.details.original || p;
+  });
+
+  var noteContentFields = _.uniq(
+    _.flatten(
+      originalNotes.map(function (p) {
+        if (!p.content) return [];
+        return Object.keys(p.content);
+      })
+    )
+  );
 
   var rowData = [];
-  rowData.push(['number',
-  'forum',
-  'title',
-  'abstract',
-  'authors',
-  'num reviewers',
-  'num submitted reviewers',
-  'missing reviewers',
-  'min rating',
-  'max rating',
-  'average rating',
-  'min confidence',
-  'max confidence',
-  'average confidence',
-  'ac recommendation',
-  'ac1 profile id',
-  'ac1 name',
-  'ac1 email',
-  'ac2 profile id',
-  'ac2 name',
-  'ac2 email',
-  'ac ranking',
-  'decision'].join(',') + '\n');
+  rowData.push(
+    _.concat(["number", "forum"], noteContentFields, [
+      "num reviewers",
+      "num submitted reviewers",
+      "missing reviewers",
+      "min rating",
+      "max rating",
+      "average rating",
+      "min confidence",
+      "max confidence",
+      "average confidence",
+      "ac recommendation",
+      "ac1 profile id",
+      "ac1 name",
+      "ac1 email",
+      "ac2 profile id",
+      "ac2 name",
+      "ac2 email",
+      "ac ranking",
+      "decision"
+    ]).join(",") + "\n"
+  );
 
   _.forEach(notes, function(noteObj) {
     var paperTableRow = null;
@@ -3020,9 +3152,23 @@ var buildCSV = function(){
 
     var originalNote = paperTableRow.note.details.original || paperTableRow.note;
 
-    var title = paperTableRow.note.content.title.replace(/"/g, '""');
-    var abstract = paperTableRow.note.content.abstract.replace(/"/g, '""');
-    var authors = originalNote.content.authors ? originalNote.content.authors : [];
+    var contents = noteContentFields.map(function (field) {
+      var contentValue = originalNote.content[field];
+      if (!contentValue) return '""';
+      if (Array.isArray(contentValue)) return '"' + contentValue.join("|") + '"';
+      if (
+        ["+", "-"].some(function (p) {
+          return contentValue.startsWith(p);
+        })
+      )
+        contentValue = contentValue.substring(1);
+      return '"' +
+        contentValue
+          .replace(/\r?\n|\r/g, " ") // remove line break
+          .replace(/"/g, '""') // escape double quotes
+        + '"';
+    });
+
     var reviewersData = _.values(paperTableRow.reviewProgressData.reviewers);
     var allReviewers = [];
     var missingReviewers = [];
@@ -3032,30 +3178,38 @@ var buildCSV = function(){
         missingReviewers.push(r.id);
       }
     });
-    rowData.push([noteNumber,
-    '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"',
-    '"' + title + '"',
-    '"' + abstract + '"',
-    '"' + authors.join('|') + '"',
-    paperTableRow.reviewProgressData.numReviewers,
-    paperTableRow.reviewProgressData.numSubmittedReviews,
-    '"' + missingReviewers.join('|') + '"',
-    paperTableRow.reviewProgressData.minRating,
-    paperTableRow.reviewProgressData.maxRating,
-    paperTableRow.reviewProgressData.averageRating,
-    paperTableRow.reviewProgressData.minConfidence,
-    paperTableRow.reviewProgressData.maxConfidence,
-    paperTableRow.reviewProgressData.averageConfidence,
-    paperTableRow.areachairProgressData.metaReview && paperTableRow.areachairProgressData.metaReview.content.recommendation,
-    areachairProfileOne.id,
-    areachairProfileOne.name,
-    areachairProfileOne.email,
-    areachairProfileTwo.id,
-    areachairProfileTwo.name,
-    areachairProfileTwo.email,
-    acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
-    paperTableRow.decision && paperTableRow.decision.content && paperTableRow.decision.content.decision
-    ].join(',') + '\n');
+    rowData.push(
+      _.concat(
+        [
+          noteNumber,
+          '"https://openreview.net/forum?id=' + paperTableRow.note.id + '"'
+        ],
+        contents,
+        [
+          paperTableRow.reviewProgressData.numReviewers,
+          paperTableRow.reviewProgressData.numSubmittedReviews,
+          '"' + missingReviewers.join('|') + '"',
+          paperTableRow.reviewProgressData.minRating,
+          paperTableRow.reviewProgressData.maxRating,
+          paperTableRow.reviewProgressData.averageRating,
+          paperTableRow.reviewProgressData.minConfidence,
+          paperTableRow.reviewProgressData.maxConfidence,
+          paperTableRow.reviewProgressData.averageConfidence,
+          paperTableRow.areachairProgressData.metaReview &&
+          paperTableRow.areachairProgressData.metaReview.content.recommendation,
+          areachairProfileOne.id,
+          areachairProfileOne.name,
+          areachairProfileOne.email,
+          areachairProfileTwo.id,
+          areachairProfileTwo.name,
+          areachairProfileTwo.email,
+          acRankingByPaper[noteForum] && acRankingByPaper[noteForum].tag,
+          paperTableRow.decision &&
+          paperTableRow.decision.content &&
+          paperTableRow.decision.content.decision
+        ]
+      ).join(',') + '\n'
+    );
   });
 
   return [rowData.join('')];
@@ -3151,8 +3305,28 @@ var buildAreaChairsCSV = function(){
   return [rowData.join('')];
 }
 
+var buildDeskrejectedWithdrawnCSV = function(){
+  var columnNames = ['number','forum','title','authors','reason']
+  var rowData = [];
+  rowData.push(columnNames.join(',') + '\n');
+  _.forEach(tableDataInDisplay, function(note) {
+    var originalNote = note.details.original || note
+    var number = originalNote.number;
+    var forum = 'https://openreview.net/forum?id=' + originalNote.forum;
+    var title = '"' + originalNote.content.title + '"';
+    var authors = originalNote.content.authors.join('|');
+    var reason = 'unknown';
+    if (note.invitation === WITHDRAWN_SUBMISSION_ID) reason = 'Withdrawn'
+    if (note.invitation === DESK_REJECTED_SUBMISSION_ID) reason = 'Desk Rejected'
+
+    rowData.push([number,forum,title,authors,reason].join(',') + '\n');
+  });
+
+  return [rowData.join('')];
+}
+
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
-  var blob = new Blob(buildCSV(), {type: 'text/csv'});
+  var blob = new Blob(buildCSV(), {type: 'text/csv;charset=utf-8'});
   var fileName = conferenceStatusData.filteredNotes ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
   saveAs(blob, fileName);
 });
@@ -3168,5 +3342,14 @@ $('#group-container').on('click', 'button.btn.btn-export-areachairs', function(e
   var fileName = notFiltered
     ? SHORT_PHRASE.replace(/\s/g, '_') + '_ac_status.csv'
     : SHORT_PHRASE.replace(/\s/g, '_') + '_ac_status(Filtered).csv'
+  saveAs(blob, fileName);
+});
+
+$('#group-container').on('click', 'button.btn.btn-export-deskrejected-withdrawn', function(e) {
+  var notFiltered = conferenceStatusData.deskRejectedWithdrawnNotes.length === (tableDataInDisplay && tableDataInDisplay.length);
+  var blob = new Blob(buildDeskrejectedWithdrawnCSV(), {type: 'text/csv'});
+  var fileName = notFiltered
+    ? SHORT_PHRASE.replace(/\s/g, '_') + '_deskrejected_withdrawn_papers.csv'
+    : SHORT_PHRASE.replace(/\s/g, '_') + '_deskrejected_withdrawn_papers(Filtered).csv'
   saveAs(blob, fileName);
 });

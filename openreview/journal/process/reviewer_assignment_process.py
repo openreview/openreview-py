@@ -14,6 +14,24 @@ def process_update(client, edge, invitation, existing_edge):
         print(f'Remove member {edge.tail} from {group.id}')
         client.remove_members_from_group(group.id, edge.tail)
 
+        recipients=[edge.tail]
+        subject=f'[{journal.short_name}] You have been unassigned from {journal.short_name} submission {note.content["title"]["value"]}'
+
+        message=f'''Hi {{{{fullname}}}},
+
+We recently informed you that your help was requested to review a TMLR submission titled "{note.content['title']['value']}".
+
+However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
+
+If you have any questions, don’t hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
+
+Apologies for the change and thank you for your continued involvement with TMLR!
+
+The {journal.short_name} Editors-in-Chief
+'''
+
+        client.post_message(subject, recipients, message)
+
         if pending_review_edge and pending_review_edge.weight > 0:
             pending_review_edge.weight -= 1
             client.post_edge(pending_review_edge)
@@ -52,7 +70,7 @@ def process_update(client, edge, invitation, existing_edge):
 
 With this email, we request that you submit, within 2 weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
-As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another {journal.short_name} submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (who is in Cc on this email).
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another {journal.short_name} submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
 
 To submit your review, please follow this link: https://openreview.net/forum?id={note.id} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers#reviewer-tasks
 

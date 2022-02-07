@@ -16,7 +16,7 @@ def process(client, edit, invitation):
                         note=openreview.api.Note(id=submission.id,
                             content={
                                 '_bibtex': {
-                                    'value': journal.get_bibtex(submission, journal.rejected_venue_id, anonymous=False)
+                                    'value': journal.get_bibtex(submission, submission.content.get('venueid', {}).get('value'), anonymous=False)
                                 }
                             }
                         )

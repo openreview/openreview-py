@@ -295,7 +295,7 @@ class InvitationBuilder(object):
                         },
                         'authorids': {
                             'value': {
-                                'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                                'values-regex': r'~.*'
                             },
                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                             'order': 4,
@@ -495,6 +495,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[editor_in_chief_id], ## EIC have permission to check conflicts
             minReplies=1,
+            maxReplies=1,
             type='Edge',
             edit={
                 'ddate': {
@@ -573,7 +574,7 @@ class InvitationBuilder(object):
                     'member-of' : action_editors_id
                 },
                 'weight': {
-                    'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                    'value-dropdown': ['Yes', 'No']
                 }
             }
         )
@@ -610,7 +611,7 @@ class InvitationBuilder(object):
                     'member-of': action_editors_id
                 },
                 'weight': {
-                    'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
+                    'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                     'presentation': {
                         'default': 12
                     }
@@ -725,6 +726,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
+            maxReplies=1,
             type='Edge',
             edit={
                 'ddate': {
@@ -848,6 +850,7 @@ class InvitationBuilder(object):
 
     def set_review_approval_invitation(self, note, duedate):
         venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
         paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
         paper_authors_id = self.journal.get_authors_id(number=note.number)
 
@@ -868,7 +871,7 @@ class InvitationBuilder(object):
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
                     'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] },
                     'writers': { 'values': [ venue_id ] },
                     'content': {
                         'under_review': {
@@ -916,7 +919,7 @@ class InvitationBuilder(object):
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
                     'signatures': { 'values': [paper_authors_id] },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] },
+                    'readers': { 'values': [ 'everyone' ] },
                     'writers': { 'values': [ venue_id ] },
                     'content': {
                         'withdrawal_confirmation': {
@@ -945,6 +948,108 @@ class InvitationBuilder(object):
             process=os.path.join(os.path.dirname(__file__), 'process/withdraw_submission_process.py'))
 
         self.save_invitation(invitation)
+
+    def set_retract_invitation(self, note):
+        venue_id = self.journal.venue_id
+        editors_in_chief = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
+
+        invitation = Invitation(id=self.journal.get_retraction_id(number=note.number),
+            invitees=[venue_id, paper_authors_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            maxReplies=1,
+            edit={
+                'signatures': { 'values-regex': paper_authors_id },
+                'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id ] },
+                'writers': { 'values': [ venue_id, paper_authors_id] },
+                'note': {
+                    'forum': { 'value': note.id },
+                    'replyto': { 'value': note.id },
+                    'signatures': { 'values': [paper_authors_id] },
+                    'readers': { 'values': [ editors_in_chief, paper_action_editors_id, paper_authors_id ] },
+                    'writers': { 'values': [ venue_id ] },
+                    'content': {
+                        'retraction_confirmation': {
+                            'value': {
+                                'value-radio': [
+                                    'I have read and agree with the venue\'s retraction policy on behalf of myself and my co-authors.'
+                                ]
+                            },
+                            'description': 'Please confirm to retract.',
+                            'order': 1
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$',
+                                'optional': True
+                            },
+                            'presentation': {
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/retract_submission_process.py'))
+
+        self.save_invitation(journal, invitation)
+
+    def set_retraction_approval_invitation(self, note, retraction):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number=note.number)
+
+        invitation = Invitation(id=self.journal.get_retraction_approval_id(number=note.number),
+            invitees=[venue_id, editors_in_chief_id],
+            noninvitees=[paper_authors_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            edit={
+                'signatures': { 'values': [editors_in_chief_id] },
+                'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                'nonreaders': { 'values': [ paper_authors_id ] },
+                'writers': { 'values': [ venue_id] },
+                'note': {
+                    'forum': { 'value': note.id },
+                    'replyto': { 'value': retraction.id },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] },
+                    'writers': { 'values': [ venue_id] },
+                    'signatures': { 'values': [editors_in_chief_id] },
+                    'content': {
+                        'approval': {
+                            'order': 1,
+                            'value': {
+                                'value-checkbox': 'I approve the Author\'s retraction.'
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Optionally add any additional notes that might be useful for the Authors.',
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$',
+                                'optional': True
+                            },
+                            'presentation': {
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/retraction_approval_process.py')
+        )
+
+        self.save_invitation(journal, invitation)
 
 
     def set_under_review_invitation(self):
@@ -1071,6 +1176,11 @@ class InvitationBuilder(object):
                 'note': {
                     'id': { 'value-invitation': self.journal.get_author_submission_id() },
                     'content': {
+                        '_bibtex': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$'
+                            }
+                        },
                         'venue': {
                             'value': {
                                 'value': 'Withdrawn by Authors'
@@ -1078,7 +1188,7 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': '.TMLR/Withdrawn_Submission'
+                                'value': journal.withdrawn_venue_id
                             }
                         }
                     }
@@ -1088,6 +1198,45 @@ class InvitationBuilder(object):
 
         )
         self.save_invitation(invitation)
+
+    def set_retraction_invitation(self):
+        venue_id = self.journal.venue_id
+
+        invitation = Invitation(id=self.journal.get_retracted_id(),
+            invitees=[venue_id],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [ 'everyone' ] },
+                'writers': { 'values': [ venue_id ]},
+                'note': {
+                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
+                    'content': {
+                        '_bibtex': {
+                            'value': {
+                                'value-regex': '^[\\S\\s]{1,200000}$'
+                            }
+                        },
+                        'venue': {
+                            'value': {
+                                'value': 'Retracted by Authors'
+                            }
+                        },
+                        'venueid': {
+                            'value': {
+                                'value': self.journal.retracted_venue_id
+                            }
+                        }
+                    }
+                }
+            },
+            process=os.path.join(os.path.dirname(__file__), 'process/retracted_submission_process.py')
+
+        )
+        self.save_invitation(self.journal, invitation)
 
     def set_rejection_invitation(self):
 
@@ -1226,7 +1375,7 @@ class InvitationBuilder(object):
                 'readers': { 'values': [ 'everyone' ] },
                 'writers': { 'values': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': self.journal.get_rejection_id() },
+                    'id': { 'value-invitation': journal.get_author_submission_id() },
                     'content': {
                         '_bibtex': {
                             'value': {
@@ -1298,18 +1447,17 @@ class InvitationBuilder(object):
                         'member-of' : action_editors_id
                     },
                     'weight': {
-                        'value-dropdown': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                        'value-dropdown': ['Yes', 'No']
                     }
                 }
             )
 
             header = {
                 'title': 'TMLR Action Editor Suggestion',
-                'instructions': '<p class="dark">Recommend a list of at least 3 Action Editors for your paper.</p>\
+                'instructions': '<p class="dark">Select at least 3 Action Editors by choosing "Yes" for their recommendation.</p>\
                     <p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
-                        <li>Recommendations should each be assigned a number from 10 to 1, with 10 being the strongest recommendation and 1 the weakest.</li>\
                         <li>AEs who have conflicts with the selected paper are not shown.</li>\
                         <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
                         <li>To get started click the button below.</li>\
@@ -1595,7 +1743,7 @@ class InvitationBuilder(object):
                                 'nullable': True
                             }},
                             'signatures': { 'value': { 'values': ['\\${signatures}'] }},
-                            'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'readers': { 'value': { 'values': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}'] }},
                             'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
                             'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                             'content': {
@@ -1691,9 +1839,9 @@ class InvitationBuilder(object):
                     'preprocess': { 'value': paper_preprocess },
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'~.*' }},
-                        'readers': { 'value': { 'values': [ venue_id, '\\${signatures}'] }},
+                        'readers': { 'value': { 'values': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}'] }},
                         'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
-                        'writers': { 'value': { 'values': [ venue_id, '\\${signatures}'] }},
+                        'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                         'note': {
                             'id': {
                                 'value': {
@@ -1872,7 +2020,7 @@ class InvitationBuilder(object):
                         },
                         'authorids': {
                             'value': {
-                                'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                                'values-regex': r'~.*',
                                 'optional': True
                             },
                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
@@ -2122,6 +2270,7 @@ class InvitationBuilder(object):
 
     def set_decision_invitation(self, note, duedate):
         venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
         paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
         paper_authors_id = self.journal.get_authors_id(number=note.number)
 
@@ -2151,7 +2300,7 @@ class InvitationBuilder(object):
                         'nullable': True
                     },
                     'signatures': { 'values': [paper_action_editors_id] },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id ] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id ] },
                     'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id, paper_action_editors_id] },
                     'content': {
@@ -2221,7 +2370,7 @@ class InvitationBuilder(object):
                 'note': {
                     'forum': { 'value': note.id },
                     'replyto': { 'value': decision.id },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id] },
                     'nonreaders': { 'values': [ paper_authors_id ] },
                     'writers': { 'values': [ venue_id] },
                     'signatures': { 'values': [editors_in_chief_id] },
@@ -2254,6 +2403,7 @@ class InvitationBuilder(object):
 
     def set_review_rating_invitation(self, note, duedate):
         venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
         reviews = self.client.get_notes(forum=note.forum, invitation=self.journal.get_review_id(number=note.number))
         paper_reviewers_id = self.journal.get_reviewers_id(number=note.number, anon=True)
         paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
@@ -2270,7 +2420,7 @@ class InvitationBuilder(object):
                         invitees=[venue_id, paper_action_editors_id],
                         readers=[venue_id, paper_action_editors_id],
                         writers=[venue_id],
-                        signatures=[venue_id],
+                        signatures=[editors_in_chief_id],
                         maxReplies=1,
                         edit={
                             'signatures': { 'values': [paper_action_editors_id] },
@@ -2281,7 +2431,7 @@ class InvitationBuilder(object):
                                 'forum': { 'value': review.forum },
                                 'replyto': { 'value': review.id },
                                 'signatures': { 'values': [paper_action_editors_id] },
-                                'readers': { 'values': [ venue_id, paper_action_editors_id] },
+                                'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id] },
                                 'nonreaders': { 'values': [ paper_authors_id ] },
                                 'writers': { 'values': [ venue_id, paper_action_editors_id] },
                                 'content': {
@@ -2352,7 +2502,7 @@ class InvitationBuilder(object):
                         },
                         'authorids': {
                             'value': {
-                                'values-regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                                'values-regex': r'~.*'
                             },
                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                             'order': 4
@@ -2468,7 +2618,7 @@ class InvitationBuilder(object):
                     'signatures': { 'values': [ paper_action_editors_id ] },
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id ] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id ] },
                     'writers': { 'values': [ venue_id, paper_action_editors_id ] },
                     'content': {
                         'verification': {
@@ -2487,6 +2637,7 @@ class InvitationBuilder(object):
 
     def set_authors_deanonymization_invitation(self, note):
         venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
         paper_authors_id = self.journal.get_authors_id(number=note.number)
 
         authors_deanonymization_invitation_id = self.journal.get_authors_deanonymization_id(number=note.number)
@@ -2505,7 +2656,7 @@ class InvitationBuilder(object):
                     'signatures': { 'values': [ paper_authors_id ] },
                     'forum': { 'value': note.id },
                     'replyto': { 'value': note.id },
-                    'readers': { 'values': [ venue_id, paper_authors_id ] },
+                    'readers': { 'values': [ editors_in_chief_id, paper_authors_id ] },
                     'writers': { 'values': [ venue_id ] },
                     'content': {
                         'confirmation': {
