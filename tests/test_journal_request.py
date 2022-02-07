@@ -257,13 +257,13 @@ TJ22 Editors-in-Chief
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment by AE']
 
-        reviewer_details = { 'value': '''new_reviewer@mail.com, New Reviewer'''}
         recruitment_note = ae_client.post_note_edit(
             invitation = '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
             signatures = ['~First_AE1'],
             note = Note(
                 content = {
-                    'invitee_details': reviewer_details,
+                    'invitee_name': { 'value': 'New Reviewer'},
+                    'invitee_email': { 'value': 'new_reviewer@mail.com'},
                     'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as reviewer' },
                     'email_content': {'value': 'Dear {name},\n\nYou have been nominated to serve as reviewer for TJ22.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!\n{inviter}'}
                 },
