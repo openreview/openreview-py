@@ -274,12 +274,7 @@ Cheers!'''.replace('{short_name}', short_name)
                 process_string = content
             )
 
-            self.client.post_invitation_edit(
-                readers = ['~Super_User1'],
-                writers = ['~Super_User1'],
-                signatures = ['~Super_User1'],
-                invitation = invitation
-            )
+            self.post_invitation_edit(invitation = invitation)
 
         #setup rev recruitment
         if reviewer_template:
