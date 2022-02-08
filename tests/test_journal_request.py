@@ -204,7 +204,7 @@ TJ22 Editors-in-Chief
                 content = {
                     'title': { 'value': 'Recruitment' },
                     'invitee_details': ae_details,
-                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as Action Editor for ' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] },
+                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as {role} for ' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] },
                     'email_content': {'value': 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22 to serve as action editor.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!'}
                 },
                 forum = journal['journal_request_note']['forum'],
