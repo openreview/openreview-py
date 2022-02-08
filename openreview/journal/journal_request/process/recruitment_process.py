@@ -41,11 +41,11 @@ def process(client, edit, invitation):
     content = recruitment_note.content['email_content']['value']
     if 'Action_Editor' in invitation.id:
         role = 'Action Editor'
-        subject.replace('{role}', role)
+        subject = subject.replace('{role}', role)
         status = journal.invite_action_editors(content, subject, invitee_emails, invitee_names)
     else:
         role = 'Reviewer'
-        subject.replace('{role}', role)
+        subject = subject.replace('{role}', role)
         status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
 
     non_invited_status = f'''No recruitment invitation was sent to the following users because they have already been invited as {role}:
@@ -67,11 +67,10 @@ Invited: {len(status.get('invited'))} {role}(s).
 Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/{role_map[role]}/Invited
 '''
     if status['errors']:
-        error_status=f'''{len(status.get('errors'))} error(s) in the recruitment process:
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {status.get('errors') }'''
 
-{status.get('errors')}'''
-        comment_content += f'''
-Error: {error_status}'''
+        comment_content += f'''\nError: {error_status}'''
 
     invitation = recruitment_note.invitations[0].split('/-/')[0]
     comment_note = client.post_note_edit(invitation=invitation + '/-/Comment',

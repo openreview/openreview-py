@@ -19,13 +19,13 @@ def process_update(client, edge, invitation, existing_edge):
 
         message=f'''Hi {{{{fullname}}}},
 
-We recently informed you that your help was requested to review a TMLR submission titled "{note.content['title']['value']}".
+We recently informed you that your help was requested to review a {journal.short_name} submission titled "{note.content['title']['value']}".
 
 However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
 
 If you have any questions, don’t hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
 
-Apologies for the change and thank you for your continued involvement with TMLR!
+Apologies for the change and thank you for your continued involvement with {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 '''

@@ -5,10 +5,11 @@ def process(client, edit, invitation):
 
     duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4))
 
+    decision_approval = client.get_note(edit.note.id)
     decision = client.get_note(edit.note.replyto)
 
     ## On update or delete return
-    if decision.tcdate != decision.tmdate:
+    if decision_approval.tcdate != decision_approval.tmdate:
         return
 
     submission = client.get_note(decision.forum)

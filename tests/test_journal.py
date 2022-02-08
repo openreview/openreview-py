@@ -18,7 +18,7 @@ class TestJournal():
         venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
         fabian_client.impersonate('TMLR/Editors_In_Chief')
-        journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
+        journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
         return journal
 
     def test_setup(self, openreview_client, helpers):
@@ -54,13 +54,13 @@ class TestJournal():
         celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
 
 
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
 
         journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['user@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
         invited_group = openreview_client.get_group('TMLR/Action_Editors/Invited')
@@ -83,7 +83,7 @@ class TestJournal():
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR')
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
 
         journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
         invited_group = openreview_client.get_group('TMLR/Reviewers/Invited')
@@ -135,7 +135,7 @@ class TestJournal():
         now = datetime.datetime.utcnow()
 
         ## Post the submission 1
-        submission_note_1 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
+        submission_note_1 = test_client.post_note_edit(invitation='TMLR/-/Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={
@@ -174,7 +174,7 @@ class TestJournal():
 
         note = openreview_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['TMLR/-/Author_Submission']
+        assert note.invitations == ['TMLR/-/Submission']
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -184,7 +184,7 @@ class TestJournal():
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 9
-        assert f"{venue_id}/-/Author_Submission" not in [i.id for i in invitations]
+        assert f"{venue_id}/-/Submission" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
@@ -214,7 +214,7 @@ class TestJournal():
 
         note = openreview_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision']
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -230,7 +230,7 @@ class TestJournal():
         assert author_group.members == ['~SomeFirstName_User1', '~Andrew_McCallum1']
 
         ## Post the submission 2
-        submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
+        submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Submission',
                                     signatures=['~SomeFirstName_User1'],
                                     note=Note(
                                         content={
@@ -257,7 +257,7 @@ class TestJournal():
         assert openreview_client.get_group(f"{venue_id}/Paper2/Action_Editors")
 
         ## Post the submission 3
-        submission_note_3 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
+        submission_note_3 = test_client.post_note_edit(invitation='TMLR/-/Submission',
                                     signatures=['~SomeFirstName_User1'],
                                     note=Note(
                                         content={
@@ -337,7 +337,7 @@ class TestJournal():
 
         note = joelle_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -396,7 +396,7 @@ note={Under review}
 
         note = joelle_client.get_note(note_id_2)
         assert note
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Desk_Rejection']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Desk_Rejection']
         assert note.readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper2/Action_Editors']
         assert note.signatures == ['TMLR/Paper2/Authors']
@@ -450,7 +450,7 @@ note={Under review}
 
         note = test_client.get_note(note_id_3)
         assert note
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Withdrawn']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Withdrawn']
         assert note.readers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
         assert note.signatures == ['TMLR/Paper3/Authors']
@@ -1148,7 +1148,7 @@ Comment: This is an inapropiate comment</p>
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1198,7 +1198,7 @@ Comment: This is an inapropiate comment</p>
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Acceptance']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Acceptance']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1243,6 +1243,13 @@ note={Featured Certification, Reproducibility Certification}
 
         helpers.await_queue(openreview_client)
 
+        messages = journal.client.get_messages(subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
+        assert len(messages) == 2
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
+        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
+<p>The authors of paper Paper title VERSION 2 are requesting to retract the paper. An EIC must confirm and accept the retraction: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>OpenReview Team</p>
+'''
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Retraction_Approval")
 
         approval_note = raia_client.post_note_edit(invitation='TMLR/Paper1/-/Retraction_Approval',
@@ -1252,17 +1259,26 @@ note={Featured Certification, Reproducibility Certification}
                                 forum=note_id_1,
                                 replyto=retraction_note['note']['id'],
                                 content= {
-                                    'approval': { 'value': 'I approve the Author\'s retraction.' }
+                                    'approval': { 'value': 'Yes' }
                                  }
                             ))
 
         helpers.await_queue(openreview_client)
 
+        messages = journal.client.get_messages(subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
+        assert len(messages) == 2
+        messages = journal.client.get_messages(to='test@mail.com', subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
+        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
+<p>As TMLR Editors-in-Chief, we have submitted our decision on your request to retract your accepted paper at TMLR titled &quot;Paper title VERSION 2&quot;.</p>
+<p>To view our decision, follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={approval_note['note']['id']}</a></p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Acceptance', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Acceptance', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1308,7 +1324,7 @@ note={Retracted after acceptance}
         now = datetime.datetime.utcnow()
 
         ## Post the submission 4
-        submission_note_4 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
+        submission_note_4 = test_client.post_note_edit(invitation='TMLR/-/Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={
@@ -1658,7 +1674,7 @@ note={Retracted after acceptance}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper4/Authors']
@@ -1690,7 +1706,7 @@ note={Rejected}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection', 'TMLR/-/Authors_Release']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper4/Authors']
@@ -1743,7 +1759,7 @@ note={Rejected}
         now = datetime.datetime.utcnow()
 
         ## Post the submission 5
-        submission_note_5 = raia_client.post_note_edit(invitation='TMLR/-/Author_Submission',
+        submission_note_5 = raia_client.post_note_edit(invitation='TMLR/-/Submission',
             signatures=['~Raia_Hadsell1'],
             note=Note(
                 content={
@@ -2007,7 +2023,7 @@ note={Rejected}
         now = datetime.datetime.utcnow()
 
         ## Post the submission 6
-        submission_note_6 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
+        submission_note_6 = test_client.post_note_edit(invitation='TMLR/-/Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={
@@ -2213,7 +2229,7 @@ note={Rejected}
 
         note = test_client.get_note(note_id_6)
         assert note
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper6/Authors']
@@ -2248,7 +2264,7 @@ note={Rejected}
         assert note
         assert note.forum == note_id_6
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Author_Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn', 'TMLR/-/Authors_Release']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper6/Authors']
@@ -2275,7 +2291,7 @@ note={Withdrawn}
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
 
         ## Post the submission 7
-        submission_note_7 = test_client.post_note_edit(invitation='TMLR/-/Author_Submission',
+        submission_note_7 = test_client.post_note_edit(invitation='TMLR/-/Submission',
             signatures=['~SomeFirstName_User1'],
             note=Note(
                 content={
