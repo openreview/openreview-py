@@ -1098,7 +1098,7 @@ class InvitationBuilder(object):
                         },
                         'venue': {
                             'value': {
-                                'value': f'Under review for {journal.short_name}'
+                                'value': f'Under review for {self.journal.short_name}'
                             }
                         },
                         'venueid': {
@@ -1145,7 +1145,7 @@ class InvitationBuilder(object):
                         'venue': {
                             'order': 2,
                             'value': {
-                                'value': f'Desk rejected by {journal.short_name}'
+                                'value': f'Desk rejected by {self.journal.short_name}'
                             }
                         },
                         'venueid': {
@@ -1270,7 +1270,7 @@ class InvitationBuilder(object):
                         },
                         'venue': {
                             'value': {
-                                'value': f'Rejected by {journal.short_name}'
+                                'value': f'Rejected by {self.journal.short_name}'
                             }
                         },
                         'venueid': {
@@ -1317,7 +1317,7 @@ class InvitationBuilder(object):
                         },
                         'venue': {
                             'value': {
-                                'value': journal.short_name
+                                'value': self.journal.short_name
                             },
                             'order': 1
                         },
@@ -1457,7 +1457,7 @@ class InvitationBuilder(object):
             )
 
             header = {
-                'title': f'{journal.short_name} Action Editor Suggestion',
+                'title': f'{self.journal.short_name} Action Editor Suggestion',
                 'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
                     <ul>\
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
@@ -2331,7 +2331,7 @@ class InvitationBuilder(object):
                         },
                         'certifications': {
                             'order': 3,
-                            'description': f'Optionally and if appropriate, recommend a certification for this submission. See {journal.website} for information about certifications.',
+                            'description': f'Optionally and if appropriate, recommend a certification for this submission. See {self.journal.website} for information about certifications.',
                             'value': {
                                 'values-dropdown': [
                                     'Featured Certification',
@@ -2630,7 +2630,7 @@ class InvitationBuilder(object):
                         'verification': {
                             'order': 1,
                             'value': {
-                                'value-checkbox': f'I confirm that camera ready manuscript complies with the {journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.'
+                                'value-checkbox': f'I confirm that camera ready manuscript complies with the {self.journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.'
                             }
                         }
                     }
