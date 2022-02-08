@@ -30,7 +30,7 @@ You are required to submit your review within 2 weeks ({duedate.strftime("%b %d"
 
 To submit your review, please follow this link: https://openreview.net/forum?id={submission.id} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers
 
-Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit jmlr.org/tmlr.
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit {journal.website}.
 
 We thank you for your contribution to {journal.short_name}!
 
