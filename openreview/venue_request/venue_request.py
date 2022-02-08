@@ -833,7 +833,7 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
-                'default': ['Program Chairs'],
+                'default': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'order': 31,
                 'required': False,
             },
