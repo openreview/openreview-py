@@ -67,11 +67,10 @@ Invited: {len(status.get('invited'))} {role}(s).
 Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/{role_map[role]}/Invited
 '''
     if status['errors']:
-        error_status=f'''{len(status.get('errors'))} error(s) in the recruitment process:
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {status.get('errors') }'''
 
-{status.get('errors')}'''
-        comment_content += f'''
-Error: {error_status}'''
+        comment_content += f'''\nError: {error_status}'''
 
     invitation = recruitment_note.invitations[0].split('/-/')[0]
     comment_note = client.post_note_edit(invitation=invitation + '/-/Comment',

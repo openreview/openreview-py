@@ -320,11 +320,18 @@ Cheers!
 {inviter}'''.replace('{short_name}', short_name)
 
         recruitment_content = {
-            'invitee_details': {
-                'description': 'Enter a tilde ID or email,name pair. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
+            'invitee_name': {
+                'description': 'Enter the name of the user you would like to invite.',
                 'order': 2,
                 'value' : {
-                    'value-regex': '.{1,100}'
+                    'value-regex': '^[^,\n]+$'
+                }
+            },
+            'invitee_email': {
+                'description': 'Enter the email or OpenReview profile ID of the user you would like to invite.',
+                'order': 2,
+                'value' : {
+                    'value-regex': '^[^,\n]+$'
                 }
             },
             'email_subject': {
@@ -354,7 +361,7 @@ Cheers!
             content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
             invitation = openreview.api.Invitation(
                 id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Reviewer_Recruitment_by_AE',
-                invitees = [venue_id, f'{venue_id}/Action_Editors'],
+                invitees = [f'{venue_id}/Action_Editors'],
                 readers = ['everyone'],
                 writers = [],
                 signatures = ['~Super_User1'],

@@ -16,15 +16,8 @@ def process(client, edit, invitation):
 
     recruitment_note = client.get_note(edit.note.id)
 
-    invitee_details_str = recruitment_note.content['invitee_details']['value']
-    if invitee_details_str:
-        invitee_details = invitee_details_str.split(',')
-        if len(invitee_details) == 1:
-            email = invitee_details[0].strip()
-            name = None
-        else:
-            email = invitee_details[0].strip()
-            name = invitee_details[1].strip()
+    name = recruitment_note.content['invitee_name']['value'].strip()
+    email = recruitment_note.content['invitee_email']['value'].strip()
 
     subject = recruitment_note.content['email_subject']['value']
     message = recruitment_note.content['email_content']['value']
@@ -51,11 +44,10 @@ Invited: {len(status.get('invited'))} reviewers.
 Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/Reviewers/Invited
 '''
     if status['errors']:
-        error_status=f'''{len(status.get('errors'))} error(s) in the recruitment process:
-
-{status.get('errors')}'''
-        comment_content += f'''
-Error: {error_status}'''
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {status.get('errors') }'''
+        
+        comment_content += f'''\nError: {error_status}'''
 
     comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Reviewer_Recruitment_by_AE', 'Comment'),
         signatures=[SUPPORT_GROUP],
