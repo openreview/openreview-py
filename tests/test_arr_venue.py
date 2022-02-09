@@ -287,6 +287,91 @@ class TestNeurIPSConference():
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
 
 
+    def test_registration_tasks(self, client):
+
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+
+        fields = {}
+        instructions = 'Test instructions for profile registration'
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_reviewers_id(),
+                additional_fields = fields,
+                instructions = instructions,
+                name = 'Registration',
+                title = 'Reviewers Registration Form',
+                start_date = None,
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10)
+            )
+        )
+
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_area_chairs_id(),
+                additional_fields = fields,
+                instructions = instructions,
+                name = 'Registration',
+                title = 'Action Editors Registration Form',
+                start_date = None,
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10)
+            )
+        )
+
+
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+
+        notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
+        assert len(notes) == 1
+        assert notes[0].content['instructions'] == 'Test instructions for profile registration'
+
+        notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+        assert len(notes) == 1
+        assert notes[0].content['instructions'] == 'Test instructions for profile registration'
+
+        fields = {
+            'agreement': {
+                'description': "By selecting 'I agree' below you confirm that you agree to this license agreement.",
+                'order': 8,
+                'required': True,
+                'value-radio': ["I agree", "I do not agree"]
+            }
+        }
+        instructions = 'Test instructions for license agreement'
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_reviewers_id(),
+                additional_fields = fields,
+                remove_fields = ['profile_confirmed', 'expertise_confirmed'],
+                instructions = instructions,
+                name = 'License_Agreement',
+                title = 'Reviewers License Agreement',
+                start_date = None,
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10)
+            )
+        )
+
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/License_Agreement')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement was not found'):
+            assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement')
+
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/License_Agreement_Form')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement_Form was not found'):
+            assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement_Form')
+
+        notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/License_Agreement_Form')
+        assert len(notes) == 1
+        assert notes[0].content['instructions'] == 'Test instructions for license agreement'
+
 
     def test_submit_papers(self, test_client, client, helpers):
 

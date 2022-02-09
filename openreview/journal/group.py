@@ -30,7 +30,7 @@ class GroupBuilder(object):
         if not editor_in_chief_group:
             editor_in_chief_group=self.client.post_group(Group(id=editor_in_chief_id,
                             readers=['everyone'],
-                            writers=[editor_in_chief_id],
+                            writers=[venue_id, editor_in_chief_id],
                             signatures=[venue_id],
                             signatories=[editor_in_chief_id, venue_id],
                             members=editors

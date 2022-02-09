@@ -291,7 +291,7 @@ class Client(object):
         return: Edge object with its information
         :rtype: Edge
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.edges_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
         edges = response.json()['edges']
         if edges:

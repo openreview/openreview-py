@@ -21,7 +21,7 @@ class Recruitment(object):
             'invited': [],
             'already_invited': [],
             'already_member' : [],
-            'errors': []
+            'errors': {}
         }
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
@@ -45,9 +45,11 @@ class Recruitment(object):
                         action_editors_invited_id,
                         verbose = False)
                     recruitment_status['invited'].append(invitee)
-                except openreview.OpenReviewException as e:
+                except Exception as e:
                     self.client.remove_members_from_group(action_editors_invited_id, invitee)
-                    recruitment_status['errors'].append(e)
+                    if repr(e) not in recruitment_status['errors']:
+                        recruitment_status['errors'][repr(e)] = []
+                    recruitment_status['errors'][repr(e)].append(invitee)
 
         return recruitment_status
 
@@ -62,7 +64,7 @@ class Recruitment(object):
             'invited': [],
             'already_invited': [],
             'already_member' : [],
-            'errors': []
+            'errors': {}
         }
 
         invited_members = self.client.get_group(reviewers_invited_id).members
@@ -88,8 +90,10 @@ class Recruitment(object):
                         reviewers_invited_id,
                         verbose = False)
                     recruitment_status['invited'].append(invitee)
-                except openreview.OpenReviewException as e:
+                except Exception as e:
                     self.client.remove_members_from_group(reviewers_invited_id, invitee)
-                    recruitment_status['errors'].append(e)
+                    if repr(e) not in recruitment_status['errors']:
+                        recruitment_status['errors'][repr(e)] = []
+                    recruitment_status['errors'][repr(e)].append(invitee)
 
         return recruitment_status
