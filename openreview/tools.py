@@ -153,11 +153,11 @@ def get_profiles(client, ids_or_emails, with_publications=False):
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
 
-        notes_v1 = concurrent_requests(lambda profile : list(iterget_notes(client_v1, content={'authorids': profile.id})), profiles)
+        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles)
         for idx, publications in enumerate(notes_v1):
             profiles[idx].content['publications'] = publications
 
-        notes_v2 = concurrent_requests(lambda profile : list(iterget_notes(client_v2, content={'authorids': profile.id})), profiles)
+        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles)
         for idx, publications in enumerate(notes_v2):
             if profiles[idx].content.get('publications'):
                 profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
