@@ -953,7 +953,7 @@ class InvitationBuilder(object):
             invitees=[venue_id, paper_authors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editors_in_chief],
             maxReplies=1,
             edit={
                 'signatures': { 'values-regex': paper_authors_id },
