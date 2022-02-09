@@ -664,8 +664,13 @@ class TestSingleBlindConference():
         builder.set_conference_year(2018)
         builder.set_conference_name('NIPS Workshop MLITS')
         conference = builder.get_result()
-
-        conference.set_decision_stage(openreview.DecisionStage(public=True))
+        decision_additional_fields = {
+            "comment test": {
+                'order': 4,
+                'value-regex': '.*'
+            }
+        }
+        conference.set_decision_stage(openreview.DecisionStage(public=True, additional_fields=decision_additional_fields))
 
         submissions = conference.get_submissions()
         assert len(submissions) == 1
@@ -677,7 +682,8 @@ class TestSingleBlindConference():
             signatures = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs'],
             content = {
                 'title': 'Paper Decision',
-                'decision': 'Accept (Oral)'
+                'decision': 'Accept (Oral)',
+                'comment test': 'Accepted',
             }
         )
         note = client.post_note(note)

@@ -2062,7 +2062,7 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -2074,6 +2074,7 @@ class DecisionStage(object):
         self.release_to_reviewers = release_to_reviewers
         self.release_to_area_chairs = release_to_area_chairs
         self.email_authors = email_authors
+        self.additional_fields = additional_fields
 
     def get_readers(self, conference, number):
 

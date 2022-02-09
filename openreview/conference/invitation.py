@@ -1185,6 +1185,7 @@ class DecisionInvitation(openreview.Invitation):
         decision_stage = conference.decision_stage
         start_date = decision_stage.start_date
         due_date = decision_stage.due_date
+        additional_fields = decision_stage.additional_fields
         content = {
             'title': {
                 'order': 1,
@@ -1204,6 +1205,9 @@ class DecisionInvitation(openreview.Invitation):
                 'description': ''
             }
         }
+
+        for key in additional_fields:
+            content[key] = additional_fields[key]
 
         file_content = None
         decision_process_file = 'templates/decision_process.py'
