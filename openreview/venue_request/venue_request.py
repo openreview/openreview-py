@@ -817,10 +817,9 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
-                'default': ['Program Chairs'],
+                'default': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'order': 31,
                 'required': False,
-                'hidden': True
             },
             'senior_area_chair_identity': {
                 'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the senior area chair\' real identities.',
@@ -833,10 +832,9 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
-                'default': ['Program Chairs'],
+                'default': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'order': 31,
                 'required': False,
-                'hidden': True
             },
             'submission_name':{
                 'value-regex': '\S*',
