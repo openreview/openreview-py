@@ -31,6 +31,7 @@ class InvitationBuilder(object):
         self.set_super_review_invitation()
         self.set_official_recommendation_invitation()
         self.set_solicit_review_invitation()
+        self.set_withdrawal_invitation()
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -936,55 +937,87 @@ class InvitationBuilder(object):
             signatures=[self.journal.venue_id]
         )
 
-    def set_withdraw_invitation(self, note):
+    def set_withdrawal_invitation(self):
         venue_id = self.journal.venue_id
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
 
-        invitation = Invitation(id=self.journal.get_withdraw_id(number=note.number),
-            invitees=[venue_id, paper_authors_id],
-            readers=['everyone'],
+        withdrawl_invitation_id = self.journal.get_withdrawal_id()
+        paper_withdrawl_invitation_id = self.journal.get_withdrawal_id(number='${params.noteNumber}')
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/withdrawal_submission_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+        invitation = Invitation(id=withdrawl_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            maxReplies=1,
             edit={
-                'signatures': { 'values-regex': paper_authors_id },
-                'readers': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] },
-                'writers': { 'values': [ venue_id, paper_authors_id] },
-                'note': {
-                    'forum': { 'value': note.id },
-                    'replyto': { 'value': note.id },
-                    'signatures': { 'values': [paper_authors_id] },
-                    'readers': { 'values': [ 'everyone' ] },
-                    'writers': { 'values': [ venue_id ] },
-                    'content': {
-                        'withdrawal_confirmation': {
-                            'value': {
-                                'value-radio': [
-                                    'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-                                ]
-                            },
-                            'description': 'Please confirm to withdraw.',
-                            'order': 1
-                        },
-                        'comment': {
-                            'order': 2,
-                            'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                            'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$',
-                                'optional': True
-                            },
-                            'presentation': {
-                                'markdown': True
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [venue_id] },
+                'writers': { 'values': [venue_id] },
+                'params': {
+                    'noteNumber': { 'value-regex': '.*' },
+                    'noteId': { 'value-regex': '.*' }
+                },
+                'invitation': {
+                    'id': { 'value': paper_withdrawl_invitation_id },
+                    'invitees': { 'values': [venue_id, paper_authors_id] },
+                    'readers': { 'values': ['everyone'] },
+                    'writers': { 'values': [venue_id] },
+                    'signatures': { 'values': [venue_id] },
+                    'maxReplies': { 'value': 1 },
+                    'process': { 'value': paper_process },
+                    'edit': {
+                        'signatures': { 'value': { 'values-regex': paper_authors_id }},
+                        'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
+                        'writers': { 'value': { 'values': [ venue_id, paper_authors_id] }},
+                        'note': {
+                            'forum': { 'value': { 'value': '${params.noteId}' }},
+                            'replyto': { 'value': { 'value': '${params.noteId}' }},
+                            'signatures': { 'value': { 'values': [paper_authors_id] }},
+                            'readers': { 'value': { 'values': [ 'everyone' ] }},
+                            'writers': { 'value': { 'values': [ venue_id ] }},
+                            'content': {
+                                'withdrawal_confirmation': { 'value': {
+                                    'value': {
+                                        'value-radio': [
+                                            'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                                        ]
+                                    },
+                                    'description': 'Please confirm to withdraw.',
+                                    'order': 1
+                                }},
+                                'comment': { 'value': {
+                                    'order': 2,
+                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'value-regex': '^[\\S\\s]{1,200000}$',
+                                        'optional': True
+                                    },
+                                    'presentation': {
+                                        'markdown': True
+                                    }
+                                }}
                             }
                         }
                     }
                 }
-            },
-            process=os.path.join(os.path.dirname(__file__), 'process/withdraw_submission_process.py'))
+            }
+        )
 
         self.save_invitation(invitation)
+
+    def set_note_withdrawal_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_withdrawal_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_retract_invitation(self, note):
         venue_id = self.journal.venue_id
