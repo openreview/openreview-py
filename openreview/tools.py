@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+import json
+import os
+
 from deprecated.sphinx import deprecated
 import sys
 import openreview
@@ -15,6 +19,21 @@ import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+
+
+def run_once(f):
+    """
+    Decorator to run a function only once and return its output for any subsequent call to the function without running
+    it again
+    """
+    def wrapper(*args, **kwargs):
+        if not wrapper.has_run:
+            wrapper.has_run = True
+            wrapper.to_return = f(*args, **kwargs)
+        return wrapper.to_return
+    wrapper.has_run = False
+    return wrapper
+
 
 def concurrent_requests(request_func, params, max_workers=6):
     """
@@ -524,6 +543,17 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     return '\n'.join(bibtex)
 
+
+@run_once
+def load_duplicate_domains():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(dir_path, 'duplicate_domains.json')) as f:
+        duplicate_domains = json.load(f)
+
+    f.close()
+    return duplicate_domains
+
+
 def subdomains(domain):
     """
     Given an email address, returns a list with the domains and subdomains.
@@ -540,14 +570,19 @@ def subdomains(domain):
     [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
     """
 
+    duplicate_domains: dict = load_duplicate_domains()
     if '@' in domain:
         full_domain = domain.split('@')[1]
     else:
         full_domain = domain
     domain_components = [c for c in full_domain.split('.') if c and not c.isspace()]
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
-    valid_domains = [d for d in domains if not tld.is_tld(d)]
-    return valid_domains
+    valid_domains = set()
+    for d in domains:
+        if not tld.is_tld(d):
+            valid_domains.add(duplicate_domains.get(d, d))
+
+    return sorted(valid_domains)
 
 def get_paperhash(first_author, title):
     """
@@ -1719,10 +1754,17 @@ def get_neurips_profile_info(profile, n_years=3):
 
     ## Publications section: get publications within last n years
     for pub in profile.content.get('publications', []):
-        if pub.cdate:
-            year = int(datetime.datetime.fromtimestamp(pub.cdate/1000).year)
-        else:
-            year = int(datetime.datetime.fromtimestamp(pub.tcdate/1000).year)
+        year = None
+        if 'year' in pub.content and isinstance(pub.content['year'], str):
+            try:
+                converted_year = int(pub.content['year'])
+                if converted_year <= curr_year:
+                    year = converted_year
+            except Exception as e:
+                year = None
+        if not year:
+            timtestamp = pub.cdate if pub.cdate else pub.tcdate
+            year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
         if year > cut_off_year:
             publications.add(pub.id)
 
