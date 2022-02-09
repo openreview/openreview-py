@@ -96,6 +96,9 @@ class Journal(object):
     def get_retraction_approval_id(self, number=None):
         return self.__get_invitation_id(name='Retraction_Approval', number=number)
 
+    def get_retraction_release_id(self, number=None):
+        return self.__get_invitation_id(name='Retraction_Release', number=number)
+
     def get_retracted_id(self):
         return self.__get_invitation_id(name='Retracted')
 

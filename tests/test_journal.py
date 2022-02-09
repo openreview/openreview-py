@@ -1273,6 +1273,10 @@ note={Featured Certification, Reproducibility Certification}
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        note = openreview_client.get_note(retraction_note['note']['id'])
+        assert note.readers == ['everyone']
+        assert note.nonreaders == []
+
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.forum == note_id_1
