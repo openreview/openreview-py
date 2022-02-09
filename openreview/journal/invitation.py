@@ -18,6 +18,7 @@ class InvitationBuilder(object):
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
         self.set_submission_invitation()
+        self.set_review_approval_invitation()
         self.set_under_review_invitation()
         self.set_desk_rejection_invitation()
         self.set_rejection_invitation()
@@ -851,57 +852,89 @@ class InvitationBuilder(object):
         )
         self.save_invitation(invitation)
 
-    def set_review_approval_invitation(self, note, duedate):
+    def set_review_approval_invitation(self):
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
 
-        review_approval_invitation_id=self.journal.get_review_approval_id(number=note.number)
+        review_approval_invitation_id=self.journal.get_review_approval_id()
+        paper_review_approval_invitation_id=self.journal.get_review_approval_id(number='${params.noteNumber}')
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
 
         invitation = Invitation(id=review_approval_invitation_id,
-            duedate=duedate,
-            invitees=[venue_id, paper_action_editors_id],
-            readers=['everyone'],
+            invitees=[venue_id],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            maxReplies=1,
             edit={
-                'signatures': { 'values-regex': paper_action_editors_id },
-                'readers': { 'values': [ venue_id, paper_action_editors_id] },
-                'writers': { 'values': [ venue_id, paper_action_editors_id] },
-                'note': {
-                    'forum': { 'value': note.id },
-                    'replyto': { 'value': note.id },
-                    'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] },
-                    'writers': { 'values': [ venue_id ] },
-                    'content': {
-                        'under_review': {
-                            'order': 1,
-                            'description': f'Determine whether this submission is appropriate for review at {short_name} or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
-                            'value': {
-                                'value-radio': ['Appropriate for Review', 'Desk Reject']
-                            }
-                        },
-                        'comment': {
-                            'order': 2,
-                            'description': 'Enter a reason if the decision is Desk Reject. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                            'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$',
-                                'optional': True
-                            },
-                            'presentation': {
-                                'markdown': True
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [venue_id] },
+                'writers': { 'values': [venue_id] },
+                'params': {
+                    'noteNumber': { 'value-regex': '.*' },
+                    'noteId': { 'value-regex': '.*' },
+                    'duedate': { 'value-regex': '.*' }
+                },
+                'invitation': {
+                    'id': { 'value': paper_review_approval_invitation_id },
+                    'invitees': { 'values': [venue_id, paper_action_editors_id] },
+                    'readers': { 'values': ['everyone'] },
+                    'writers': { 'values': [venue_id] },
+                    'signatures': { 'values': [venue_id] },
+                    'maxReplies': { 'value': 1},
+                    'duedate': { 'value': '${params.duedate}' },
+                    'process': { 'value': paper_process },
+                    'edit': {
+                        'signatures': { 'value': { 'values-regex': paper_action_editors_id }},
+                        'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id] }},
+                        'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id] }},
+                        'note': {
+                            'forum': { 'value': { 'value': '${params.noteId}' }},
+                            'replyto': { 'value': { 'value': '${params.noteId}' }},
+                            'signatures': { 'value': { 'values': ['\\${signatures}'] }},
+                            'readers': { 'value': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] }},
+                            'writers': { 'value': { 'values': [ venue_id ] }},
+                            'content': {
+                                'under_review': { 'value':  {
+                                    'order': 1,
+                                    'description': f'Determine whether this submission is appropriate for review at {short_name} or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
+                                    'value': {
+                                        'value-radio': ['Appropriate for Review', 'Desk Reject']
+                                    }
+                                }},
+                                'comment': { 'value': {
+                                    'order': 2,
+                                    'description': 'Enter a reason if the decision is Desk Reject. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'value-regex': '^[\\S\\s]{1,200000}$',
+                                        'optional': True
+                                    },
+                                    'presentation': {
+                                        'markdown': True
+                                    }
+                                }}
                             }
                         }
                     }
                 }
-            },
-            process=os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py'))
+            }
+        )
 
         self.save_invitation(invitation)
+
+    def set_note_review_approval_invitation(self, note, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_review_approval_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': duedate },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_withdraw_invitation(self, note):
         venue_id = self.journal.venue_id

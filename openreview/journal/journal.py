@@ -259,7 +259,7 @@ class Journal(object):
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
         self.invitation_builder.set_revision_submission(note)
-        self.invitation_builder.set_review_approval_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
+        self.invitation_builder.set_note_review_approval_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_withdraw_invitation(note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
