@@ -6,6 +6,6 @@ def process(client, edit, invitation):
 
     journal.invitation_builder.expire_paper_invitations(note)
 
-    journal.invitation_builder.set_retract_invitation(note)
+    journal.invitation_builder.set_note_retraction_invitation(note)
 
 
