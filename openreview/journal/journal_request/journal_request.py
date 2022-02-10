@@ -301,14 +301,14 @@ Cheers!'''.replace('{short_name}', short_name)
                 invitation = invitation
             )
 
-    def setup_recruitment_by_action_editors(self, note_id):
+    def setup_recruitment_by_action_editors(self, note_id, template=None):
 
         note = self.client.get_note(note_id)
         short_name = note.content['abbreviated_venue_name']['value']
         venue_id = note.content['venue_id']['value']
         recruitment_email_template = '''Dear {name},
 
-You have been nominated to serve as a reviewer for {short_name}.
+You have been nominated to serve as a reviewer for {short_name} by {inviter}.
 
 ACCEPT LINK:
 {accept_url}
@@ -318,6 +318,9 @@ DECLINE LINK:
 
 Cheers!
 {inviter}'''.replace('{short_name}', short_name)
+
+        if template:
+            recruitment_email_template = template
 
         recruitment_content = {
             'invitee_name': {
@@ -341,7 +344,7 @@ Cheers!
                     'value-regex': '.*'
                 },
                 'presentation': {
-                    'default': f'[{short_name}] Invitation to serve as reviewer'
+                    'default': f'[{short_name}] Invitation to act as Reviewer for {short_name}'
                 }
             },
             'email_content': {

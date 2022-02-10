@@ -250,8 +250,8 @@ class Journal(object):
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
         return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None):
-        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names)
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo)
 
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
