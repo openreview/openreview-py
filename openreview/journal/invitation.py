@@ -33,6 +33,7 @@ class InvitationBuilder(object):
         self.set_solicit_review_invitation()
         self.set_withdrawal_invitation()
         self.set_retraction_invitation()
+        self.set_retraction_approval_invitation()
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -1103,58 +1104,88 @@ class InvitationBuilder(object):
             signatures=[self.journal.venue_id]
         )
 
-
-    def set_retraction_approval_invitation(self, note, retraction):
+    def set_retraction_approval_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
 
-        invitation = Invitation(id=self.journal.get_retraction_approval_id(number=note.number),
-            invitees=[venue_id, editors_in_chief_id],
-            noninvitees=[paper_authors_id],
-            readers=['everyone'],
+        retraction_approval_invitation_id=self.journal.get_retraction_approval_id()
+        paper_retraction_approval_invitation_id=self.journal.get_retraction_approval_id(number='${params.noteNumber}')
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/retraction_approval_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+
+        invitation = Invitation(id=retraction_approval_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            minReplies=1,
-            maxReplies=1,
             edit={
-                'signatures': { 'values': [editors_in_chief_id] },
-                'readers': { 'values': [ venue_id, paper_action_editors_id] },
-                'nonreaders': { 'values': [ paper_authors_id ] },
-                'writers': { 'values': [ venue_id] },
-                'note': {
-                    'forum': { 'value': note.id },
-                    'replyto': { 'value': retraction.id },
-                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] },
-                    'writers': { 'values': [ venue_id] },
-                    'signatures': { 'values': [editors_in_chief_id] },
-                    'content': {
-                        'approval': {
-                            'order': 1,
-                            'value': {
-                                'value-radio': ['Yes', 'No']
-                            }
-                        },
-                        'comment': {
-                            'order': 2,
-                            'description': 'Optionally add any additional notes that might be useful for the Authors.',
-                            'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$',
-                                'optional': True
-                            },
-                            'presentation': {
-                                'markdown': True
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [venue_id] },
+                'writers': { 'values': [venue_id] },
+                'params': {
+                    'noteNumber': { 'value-regex': '.*' },
+                    'noteId': { 'value-regex': '.*' },
+                    'replytoId': { 'value-regex': '.*' }
+                },
+                'invitation': {
+                    'id': { 'value': paper_retraction_approval_invitation_id },
+                    'invitees': { 'values': [venue_id, editors_in_chief_id] },
+                    'readers': { 'values': ['everyone'] },
+                    'writers': { 'values': [venue_id] },
+                    'signatures': { 'values': [venue_id] },
+                    'minReplies': { 'value': 1},
+                    'maxReplies': { 'value': 1},
+                    'process': { 'value': paper_process },
+                    'edit': {
+                        'signatures': { 'value': { 'values': [editors_in_chief_id] }},
+                        'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id] }},
+                        'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
+                        'writers': { 'value': { 'values': [ venue_id] }},
+                        'note': {
+                            'forum': { 'value': { 'value': '${params.noteId}' }},
+                            'replyto': { 'value': { 'value': '${params.replytoId}' }},
+                            'readers': { 'value': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] }},
+                            'writers': { 'value': { 'values': [ venue_id] }},
+                            'signatures': { 'value': { 'values': [editors_in_chief_id] }},
+                            'content': {
+                                'approval': { 'value': {
+                                    'order': 1,
+                                    'value': {
+                                        'value-radio': ['Yes', 'No']
+                                    }
+                                }},
+                                'comment': { 'value': {
+                                    'order': 2,
+                                    'description': 'Optionally add any additional notes that might be useful for the Authors.',
+                                    'value': {
+                                        'value-regex': '^[\\S\\s]{1,200000}$',
+                                        'optional': True
+                                    },
+                                    'presentation': {
+                                        'markdown': True
+                                    }
+                                }}
                             }
                         }
                     }
                 }
-            },
-            process=os.path.join(os.path.dirname(__file__), 'process/retraction_approval_process.py')
+            }
         )
 
         self.save_invitation(invitation)
 
+    def set_note_retraction_approval_invitation(self, note, retraction):
+        return self.client.post_invitation_edit(invitations=self.journal.get_retraction_approval_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'replytoId': retraction.id },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_under_review_invitation(self):
         venue_id = self.journal.venue_id
@@ -1784,7 +1815,6 @@ class InvitationBuilder(object):
             signatures=[self.journal.venue_id]
         )
 
-
     def set_official_recommendation_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
@@ -1887,7 +1917,6 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation)
-
 
     def set_note_official_recommendation_invitation(self, note, cdate, duedate):
 
