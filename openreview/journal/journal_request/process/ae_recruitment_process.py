@@ -21,9 +21,16 @@ def process(client, edit, invitation):
 
     subject = recruitment_note.content['email_subject']['value']
     message = recruitment_note.content['email_content']['value']
-    message = message.replace('{inviter}', recruitment_note.signatures[0])
 
-    status = journal.invite_reviewers(message, subject, [email], [name])
+    inviter_profile = client.get_profile(recruitment_note.signatures[0])
+    inviter_name = openreview.tools.get_preferred_name(inviter_profile)
+    message = message.replace('{inviter}', inviter_name)
+
+    inviter_email = inviter_profile.content.get('preferredEmail')
+    if not inviter_email:
+        inviter_email = inviter_profile.content.get('emails')[0]
+
+    status = journal.invite_reviewers(message, subject, [email], [name], replyTo=inviter_email)
 
     non_invited_status = f'''No recruitment invitation was sent to the following user because they have already been invited as reviewer:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
