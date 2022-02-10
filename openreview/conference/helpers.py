@@ -312,6 +312,7 @@ def get_decision_stage(client, request_forum):
         decision_due_date = None
 
     decision_options = request_forum.content.get('decision_options', '').strip()
+    decision_form_additional_options = request_forum.content.get('additional_decision_form_options', {})
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
         return openreview.DecisionStage(
@@ -322,7 +323,9 @@ def get_decision_stage(client, request_forum):
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
             release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
-            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
+            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'),
+            additional_fields=decision_form_additional_options
+        )
     else:
         return openreview.DecisionStage(
             start_date = decision_start_date,
@@ -331,7 +334,9 @@ def get_decision_stage(client, request_forum):
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
             release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
-            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
+            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'),
+            additional_fields=decision_form_additional_options
+        )
 
 def get_submission_revision_stage(client, request_forum):
     revision_name = request_forum.content.get('submission_revision_name', '').strip()
