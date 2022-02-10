@@ -1128,7 +1128,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-                'notify_authors': 'No, I will send the emails to the authors'
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'value-regex': '[\\S\\s]{1,5000}',
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'required': False,
+                    }
+                },
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1162,13 +1169,15 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             content={
                 'title': 'Paper Decision',
                 'decision': 'Accept',
-                'comment':  'Good paper. I like!'
+                'comment':  'Good paper. I like!',
+                'suggestions': 'Add more results for camera ready.'
             },
             forum=submission.forum,
             replyto=submission.forum
         ))
 
         assert decision_note
+        assert 'suggestions' in decision_note.content
         helpers.await_queue()
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)

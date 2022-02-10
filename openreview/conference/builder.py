@@ -2062,7 +2062,7 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -2074,6 +2074,7 @@ class DecisionStage(object):
         self.release_to_reviewers = release_to_reviewers
         self.release_to_area_chairs = release_to_area_chairs
         self.email_authors = email_authors
+        self.additional_fields = additional_fields
 
     def get_readers(self, conference, number):
 
@@ -2294,8 +2295,8 @@ class ConferenceBuilder(object):
     def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = MetaReviewStage.Readers.NO_REVIEWERS, additional_fields = {}, remove_fields = [], process = None):
         self.meta_review_stage = MetaReviewStage(name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields, remove_fields, process)
 
-    def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs=False, email_authors = False):
-        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, release_to_area_chairs, email_authors)
+    def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs=False, email_authors = False, additional_fields={}):
+        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, release_to_area_chairs, email_authors, additional_fields=additional_fields)
 
     def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, allow_author_reorder=False):
         self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted, allow_author_reorder)
