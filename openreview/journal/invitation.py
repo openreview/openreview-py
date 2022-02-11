@@ -31,6 +31,7 @@ class InvitationBuilder(object):
         self.set_super_review_invitation()
         self.set_official_recommendation_invitation()
         self.set_solicit_review_invitation()
+        self.set_solicit_review_approval_invitation()
         self.set_withdrawal_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
@@ -2035,64 +2036,101 @@ class InvitationBuilder(object):
             signatures=[self.journal.venue_id]
         )
 
-    def set_solicit_review_approval_invitation(self, note, solicit_note, duedate):
+    def set_solicit_review_approval_invitation(self):
 
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
+        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
 
-        solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id(number=note.number, signature=solicit_note.signatures[0])
+        solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id()
+        paper_solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id(number='${params.noteNumber}', signature='${params.signature}')
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_pre_process.py')) as f:
+            paper_preprocess = f.read()
+            paper_preprocess = paper_preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
         invitation = Invitation(id=solicit_review_invitation_approval_id,
-            invitees=[venue_id, paper_action_editors_id],
-            readers=[venue_id, paper_action_editors_id],
+            invitees=[venue_id],
+            readers=[venue_id],
             writers=[venue_id],
-            signatures=[editors_in_chief_id],
-            duedate=openreview.tools.datetime_millis(duedate),
-            maxReplies=1,
+            signatures=[venue_id],
             edit={
-                'signatures': { 'values': [ paper_action_editors_id ] },
-                'readers': { 'values': [ venue_id, paper_action_editors_id ] },
-                'nonreaders': { 'values': [ paper_authors_id ] },
-                'writers': { 'values': [ venue_id ] },
-                'note': {
-                    'forum': { 'value': note.id },
-                    'replyto': { 'value': solicit_note.id },
-                    'signatures': { 'values': [ paper_action_editors_id ] },
-                    'readers': { 'values': [ '${{note.replyto}.readers}' ] },
-                    'nonreaders': { 'values': [ paper_authors_id ] },
-                    'writers': { 'values': [ venue_id ] },
-                    'content': {
-                        'decision': {
-                            'order': 1,
-                            'description': 'Select you decision about approving the solicit review.',
-                            'value': {
-                                'value-radio': [
-                                    'Yes, I approve the solicit review.',
-                                    'No, I decline the solitic review.'
-                                ]
-                            }
-                        },
-                        'comment': {
-                            'order': 2,
-                            'description': '',
-                            'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$',
-                                'optional': True
-                            },
-                            'presentation': {
-                                'markdown': True
+                'signatures': { 'values': [venue_id] },
+                'readers': { 'values': [venue_id] },
+                'writers': { 'values': [venue_id] },
+                'params': {
+                    'noteNumber': { 'value-regex': '.*' },
+                    'noteId': { 'value-regex': '.*' },
+                    'replytoId': { 'value-regex': '.*' },
+                    'signature': { 'value-regex': '.*' },
+                    'duedate': { 'value-regex': '.*' }
+                },
+                'invitation': {
+                    'id': { 'value': paper_solicit_review_invitation_approval_id },
+                    'invitees': { 'values': [venue_id, paper_action_editors_id]},
+                    'readers': { 'values': [venue_id, paper_action_editors_id]},
+                    'writers': { 'values': [venue_id]},
+                    'signatures': { 'values': [editors_in_chief_id]},
+                    'duedate': { 'value': '${params.duedate}'},
+                    'maxReplies': { 'value': 1},
+                    'process': { 'value': paper_process },
+                    'preprocess': { 'value': paper_preprocess },
+                    'edit': {
+                        'signatures': { 'value': { 'values': [ paper_action_editors_id ] }},
+                        'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id ] }},
+                        'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
+                        'writers': { 'value': { 'values': [ venue_id ] }},
+                        'note': {
+                            'forum': { 'value': { 'value': '${params.noteId}' }},
+                            'replyto': { 'value': { 'value': '${params.replytoId}' }},
+                            'signatures': { 'value': { 'values': [ paper_action_editors_id ] }},
+                            'readers': { 'value': { 'values': [ '\\${{note.replyto}.readers}' ] }},
+                            'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
+                            'writers': { 'value': { 'values': [ venue_id ] }},
+                            'content': {
+                                'decision': { 'value': {
+                                    'order': 1,
+                                    'description': 'Select you decision about approving the solicit review.',
+                                    'value': {
+                                        'value-radio': [
+                                            'Yes, I approve the solicit review.',
+                                            'No, I decline the solitic review.'
+                                        ]
+                                    }
+                                }},
+                                'comment': { 'value': {
+                                    'order': 2,
+                                    'description': '',
+                                    'value': {
+                                        'value-regex': '^[\\S\\s]{1,200000}$',
+                                        'optional': True
+                                    },
+                                    'presentation': {
+                                        'markdown': True
+                                    }
+                                }}
                             }
                         }
                     }
                 }
-            },
-            process=os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_process.py'),
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_pre_process.py')
+            }
         )
         self.save_invitation(invitation)
+
+    def set_note_solicit_review_approval_invitation(self, note, solicit_note, duedate):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_approval_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate), 'replytoId': solicit_note.id, 'signature': solicit_note.signatures[0] },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_revision_submission(self, note):
         venue_id = self.journal.venue_id
