@@ -191,8 +191,44 @@ class TestMultipleRoles():
 
     def test_setup_matching(self, conference, client, helpers):
 
-        conference.setup_matching(committee_id='lifelong-ml.cc/CoLLAs/2022/Conference/Program_Committee', build_conflicts=True)
-        conference.setup_matching(committee_id='lifelong-ml.cc/CoLLAs/2022/Conference/Senior_Program_Committee', build_conflicts=True)
+        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        ## Setup Matching for Program Committee
+        matching_setup_note = client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'lifelong-ml.cc/CoLLAs/2022/Conference/Program_Committee',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'No'
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['lifelong-ml.cc/CoLLAs/2022/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CoLLAsChair1'],
+            writers=[]
+        ))
+        assert matching_setup_note
+        helpers.await_queue()
+
+        ## Setup Matching for Senior Program Committee
+        matching_setup_note = client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'lifelong-ml.cc/CoLLAs/2022/Conference/Senior_Program_Committee',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'No'
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['lifelong-ml.cc/CoLLAs/2022/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CoLLAsChair1'],
+            writers=[]
+        ))
+        assert matching_setup_note
+        helpers.await_queue()
 
         submissions=conference.get_submissions()
 
