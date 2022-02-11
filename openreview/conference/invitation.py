@@ -1824,7 +1824,6 @@ class InvitationBuilder(object):
 
     def __set_registration_invitation(self, conference, name, start_date, due_date, additional_fields, remove_fields, instructions, title, committee_id, committee_name):
 
-        invitees = [committee_id, conference.support_user]
         readers = [conference.id, committee_id]
 
         # Create super invitation with a webfield
@@ -1833,7 +1832,7 @@ class InvitationBuilder(object):
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = invitees,
+            invitees = [conference.get_id(), conference.support_user],
             reply = {
                 'forum': None,
                 'replyto': None,
@@ -1905,7 +1904,7 @@ class InvitationBuilder(object):
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = invitees,
+            invitees = [committee_id, conference.support_user],
             reply = {
                 'forum': registration_parent.id,
                 'replyto': registration_parent.id,
