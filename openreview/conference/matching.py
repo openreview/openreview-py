@@ -68,7 +68,7 @@ def _get_profiles(client, ids_or_emails, with_publications=False):
 
     if with_publications:
         for profile in profiles:
-            profile.content['publications'] = list(tools.iterget_notes(client, content={'authorids': profile.id}))
+            profile.content['publications'] = client.get_all_notes(content={'authorids': profile.id})
 
     return profiles
 
@@ -274,10 +274,9 @@ class Matching(object):
         user_profiles_info = [get_profile_info(p) for p in user_profiles]
 
         # Re-setup information that would have been initialized in setup()
-        submissions = list(openreview.tools.iterget_notes(
-            self.conference.client,
+        submissions = self.conference.client.get_all_notes(
             invitation=self.conference.get_blind_submission_id(),
-            details='original'))
+            details='original')
 
         # Fetch conflict invitation
         try:
@@ -584,9 +583,7 @@ class Matching(object):
         invitation = self._create_edge_invitation(self._get_edge_invitation_id('Subject_Areas_Score'))
 
         edges = []
-        user_subject_areas = list(openreview.tools.iterget_notes(
-            self.client,
-            invitation=self.conference.get_registration_id(self.match_group.id)))
+        user_subject_areas = self.client.get_all_notes(invitation=self.conference.get_registration_id(self.match_group.id))
 
         for note in tqdm(submissions, total=len(submissions), desc='_build_subject_area_scores'):
             note_subject_areas = note.content['subject_areas']
@@ -655,7 +652,7 @@ class Matching(object):
         current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail', select=None)}
 
         reduced_loads = {}
-        reduced_load_notes = openreview.tools.iterget_notes(self.client, invitation=self.conference.get_invitation_id('Reduced_Load', prefix = self.match_group.id), sort='tcdate:asc')
+        reduced_load_notes = self.client.get_all_notes(invitation=self.conference.get_invitation_id('Reduced_Load', prefix = self.match_group.id), sort='tcdate:asc')
 
         for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
             reduced_loads[note.content['user']] = note
@@ -935,10 +932,7 @@ class Matching(object):
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 
-        submissions = list(openreview.tools.iterget_notes(
-            self.conference.client,
-            invitation=self.conference.get_blind_submission_id(),
-            details='original'))
+        submissions = self.conference.client.get_all_notes(invitation=self.conference.get_blind_submission_id(), details='original')
 
         if not self.match_group.members:
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
@@ -1087,7 +1081,7 @@ class Matching(object):
 
     def deploy_acs(self, assignment_title, overwrite):
 
-        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id())
         reviews = self.client.get_notes(invitation=self.conference.get_invitation_id('Meta_Review', '.*'))
         assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select='tail')}
@@ -1143,7 +1137,7 @@ class Matching(object):
 
     def deploy_reviewers(self, assignment_title, overwrite):
 
-        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id())
         reviews = self.client.get_notes(invitation=self.conference.get_invitation_id('Official_Review', '.*'))
         assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select='tail')}
@@ -1208,7 +1202,7 @@ class Matching(object):
         review_name = 'Meta_Review' if self.is_area_chair else 'Official_Review'
         reviewer_name = self.conference.area_chairs_name if self.is_area_chair else self.conference.reviewers_name
 
-        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id())
         reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, number='.*'), limit=1)
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
@@ -1253,7 +1247,7 @@ class Matching(object):
 
     def invite_proposed_assignments(self, assignment_title):
 
-        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id())
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         invite_assignment_edges = []
@@ -1287,14 +1281,14 @@ class Matching(object):
 
         print('deploy_sac_assignments', assignment_title)
 
-        papers = list(openreview.tools.iterget_notes(self.client, invitation=self.conference.get_blind_submission_id()))
+        papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id())
 
         proposed_assignment_edges =  { g['id']['head']: g['values'] for g in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_edges = []
         assignment_invitation_id = self.conference.get_paper_assignment_id(self.match_group.id, deployed=True)
 
-        ac_groups = {g.id:g for g in openreview.tools.iterget_groups(self.client, regex=self.conference.get_area_chairs_id('.*'))}
+        ac_groups = {g.id:g for g in self.client.get_all_groups(regex=self.conference.get_area_chairs_id('.*'))}
 
         if not papers:
             raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
