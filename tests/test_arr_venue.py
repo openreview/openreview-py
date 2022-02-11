@@ -289,8 +289,9 @@ class TestNeurIPSConference():
 
     def test_registration_tasks(self, client):
 
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        conference=openreview.helpers.get_conference(client, request_form.id)
+        conference=openreview.helpers.get_conference(pc_client, request_form.id)
 
         fields = {}
         instructions = 'Test instructions for profile registration'
