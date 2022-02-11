@@ -148,6 +148,9 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         papers: [],
         referrer: referrerUrl
       },
+      ratingData: {
+        ratings:[],
+      },
       reviewerStatusData: {
         numCompletedReviews: 0,
         numPapers: 0,
@@ -325,12 +328,23 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
       var reviewerRecommendation = null;
       var status = {};
+      var reviewerStatus = reviewerStatusById[reviewer.id];
+
       if (completedReview) {
         reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
+        }
+        var reviewerRating = reviewerRatingReplies.find(function (p) {
+          return p.replyto === completedReview.id;
+        });
+        if(reviewerRating){
+          status.Rating = reviewerRating.content.rating.value
+          if(reviewerStatus){
+            reviewerStatus.ratingData.ratings.push(reviewerRating.content.rating.value)
+          }
         }
       }
       paperReviewerStatus[reviewer.anonId] = {
@@ -349,7 +363,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           invitationId: getInvitationId(submission.number, REVIEW_NAME)
         })
       }
-      var reviewerStatus = reviewerStatusById[reviewer.id];
+      
       if (reviewerStatus) {
         reviewerStatus.reviewerProgressData.numPapers += 1;
         reviewerStatus.reviewerStatusData.numPapers += 1;
@@ -634,13 +648,30 @@ var renderData = function(venueStatusData) {
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
-    headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
+    headings: ['#', 'Reviewer', 'Review Progress', 'Rating', 'Status'],
     renders: [
       function(data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
       Handlebars.templates.committeeSummary,
       Handlebars.templates.notesReviewerProgress,
+      function(data) {
+        var ratingsMap = data.ratings.reduce(function (prev, curr) {
+          if (prev[curr]) prev[curr]++;
+          else prev[curr] = 1;
+          return prev;
+        }, {});
+        return '<table class="table table-condensed table-minimal"><tbody>'.concat(
+          Object.entries(ratingsMap)
+            .map(function (rating) {
+              return "<tr><td><strong>"
+                .concat(rating[0], ":</strong> ")
+                .concat(rating[1], "</td></tr>");
+            })
+            .join(""),
+          "</tbody></table>"
+        );
+      },
       Handlebars.templates.notesReviewerStatus
     ],
     sortOptions: {
@@ -656,7 +687,7 @@ var renderData = function(venueStatusData) {
       papersAssigned: ['reviewerProgressData.numPapers'],
       default: ['summary.name']
     },
-    extraClasses: 'console-table'
+    extraClasses: 'eic-console-table'
   });
 
   Webfield2.ui.renderTable('#action-editor-status', venueStatusData.actionEditorStatusRows, {
