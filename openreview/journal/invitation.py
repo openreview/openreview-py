@@ -2045,7 +2045,7 @@ class InvitationBuilder(object):
         paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
 
         solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id()
-        paper_solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id(number='${params.noteNumber}', signature='${params.signature}')
+        paper_solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id(number='${params.noteNumber}', signature='${params.soliciter}')
 
         with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_process.py')) as f:
             paper_process = f.read()
@@ -2068,7 +2068,7 @@ class InvitationBuilder(object):
                     'noteNumber': { 'value-regex': '.*' },
                     'noteId': { 'value-regex': '.*' },
                     'replytoId': { 'value-regex': '.*' },
-                    'signature': { 'value-regex': '.*' },
+                    'soliciter': { 'value-regex': '.*' },
                     'duedate': { 'value-regex': '.*' }
                 },
                 'invitation': {
@@ -2126,7 +2126,7 @@ class InvitationBuilder(object):
     def set_note_solicit_review_approval_invitation(self, note, solicit_note, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate), 'replytoId': solicit_note.id, 'signature': solicit_note.signatures[0] },
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate), 'replytoId': solicit_note.id, 'soliciter': solicit_note.signatures[0] },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
