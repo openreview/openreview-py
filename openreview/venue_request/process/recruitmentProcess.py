@@ -7,8 +7,8 @@ def process(client, note, invitation):
 
     reduced_load=note.content.get('invitee_reduced_load', None)
 
-    note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
-    note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
+    note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'Reviewers'))
+    note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'Reviewers'))
 
     invitee_details_str = note.content.get('invitee_details', None)
     invitee_emails = []
@@ -27,11 +27,6 @@ def process(client, note, invitation):
                 invitee_emails.append(email)
                 invitee_names.append(name)
 
-    roles={
-        'reviewer': 'Reviewers',
-        'area chair': 'Area_Chairs',
-        'senior area chair': 'Senior_Area_Chairs'
-    }
 
     # Fetch contact info
     contact_info = request_form.content.get('contact_email', None)
@@ -39,7 +34,7 @@ def process(client, note, invitation):
     if not contact_info:
         raise openreview.OpenReviewException(f'Unable to retrieve field contact_email from the request form')
 
-    role_name=roles[note.content['invitee_role'].strip()]
+    role_name=note.content['invitee_role'].strip()
     recruitment_status=conference.recruit_reviewers(
         invitees = invitee_emails,
         invitee_names = invitee_names,

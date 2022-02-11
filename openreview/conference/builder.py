@@ -69,6 +69,7 @@ class Conference(object):
         self.webfield_builder = webfield.WebfieldBuilder(client)
         self.authors_name = 'Authors'
         self.reviewers_name = 'Reviewers'
+        self.reviewer_roles = ['Reviewers']
         self.area_chairs_name = 'Area_Chairs'
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.secondary_area_chairs_name = 'Secondary_Area_Chair'
@@ -2179,6 +2180,9 @@ class ConferenceBuilder(object):
 
     def set_conference_reviewers_name(self, name):
         self.conference.set_reviewers_name(name)
+
+    def set_reviewer_roles(self, roles):
+        self.conference.reviewer_roles = roles
 
     def set_conference_area_chairs_name(self, name):
         self.conference.has_area_chairs(True)

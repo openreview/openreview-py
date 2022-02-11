@@ -1199,8 +1199,13 @@ class Matching(object):
     def deploy_assignments(self, assignment_title, overwrite):
 
         committee_id=self.match_group.id
-        review_name = 'Meta_Review' if self.is_area_chair else 'Official_Review'
-        reviewer_name = self.conference.area_chairs_name if self.is_area_chair else self.conference.reviewers_name
+        role_name = committee_id.split('/')[-1]
+        if role_name in self.conference.reviewer_roles:
+            reviewer_name = self.conference.reviewers_name
+            review_name = 'Official_Review'
+        else:
+            reviewer_name = self.conference.area_chairs_name
+            review_name = 'Meta_Review'
 
         papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id())
         reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, number='.*'), limit=1)

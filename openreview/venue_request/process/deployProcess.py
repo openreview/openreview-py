@@ -116,8 +116,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees in the venue.',
-                    'value-radio': ['reviewer'],
-                    'default': 'reviewer',
+                    'value-radio': conference.reviewer_roles,
+                    'default': conference.reviewer_roles[0],
                     'required': True,
                     'order': 2
                 },
@@ -172,8 +172,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees you would like to remind.',
-                    'value-radio': ['reviewer'],
-                    'default': 'reviewer',
+                    'value-radio': conference.reviewer_roles,
+                    'default': conference.reviewer_roles[0],
                     'required': True,
                     'order': 2
                 },
@@ -204,11 +204,11 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     )
 
     if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
-        recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
-        remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
+        recruitment_invitation.reply['content']['invitee_role']['value-radio'] = conference.reviewer_roles + ['Area_Chairs']
+        remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = conference.reviewer_roles + ['Area_Chairs']
         if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
-            recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
-            remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
+            recruitment_invitation.reply['content']['invitee_role']['value-radio'] = conference.reviewer_roles + ['Area_Chairs', 'Senior_Area_Chairs']
+            remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = conference.reviewer_roles + ['Area_Chairs', 'Senior_Area_Chairs']
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
             'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
             'value-radio': ['Yes', 'No'],
