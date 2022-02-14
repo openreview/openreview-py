@@ -116,7 +116,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees in the venue.',
-                    'value-radio': conference.reviewer_roles,
+                    'value-dropdown': conference.reviewer_roles,
                     'default': conference.reviewer_roles[0],
                     'required': True,
                     'order': 2
