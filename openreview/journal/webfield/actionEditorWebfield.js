@@ -296,6 +296,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
         numSubmittedReviews: reviews.length,
         numReviewers: reviewers.length,
         reviewers: reviewerStatus,
+        expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
         actions: submission.content.venueid.value == UNDER_REVIEW_STATUS ? [

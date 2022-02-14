@@ -435,6 +435,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         numSubmittedRecommendations: recommendations.length,
         numReviewers: paperReviewers.length,
         reviewers: paperReviewerStatus,
+        expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
         actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
