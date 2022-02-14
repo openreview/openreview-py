@@ -54,7 +54,7 @@ class Helpers:
             jobs = super_client.get_jobs_status()
             jobCount = 0
             for jobName, job in jobs.items():
-                jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
+                jobCount += job.get('waiting', 0) + job.get('active', 0)
 
             if jobCount == 0:
                 break

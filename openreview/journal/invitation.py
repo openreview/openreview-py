@@ -1831,6 +1831,11 @@ class InvitationBuilder(object):
             paper_process = f.read()
             paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
+        cdate_process = None
+        with open(os.path.join(os.path.dirname(__file__), 'process/official_recommendation_cdate_process.py')) as f:
+            cdate_process = f.read()
+            cdate_process = cdate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+
 
         invitation = Invitation(id=recommendation_invitation_id,
             invitees=[venue_id],
@@ -1857,6 +1862,10 @@ class InvitationBuilder(object):
                     'duedate': { 'value': '${params.duedate}' },
                     'cdate': { 'value': '${params.cdate}' },
                     'process': { 'value': paper_process },
+                    'dateprocesses': { 'values': [{
+                        'dates': [ "${invitation.cdate} + 1000" ],
+                        'process': cdate_process
+                    }]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -1911,7 +1920,6 @@ class InvitationBuilder(object):
                                 }
                             }
                         }
-
                     }
                 }
             }

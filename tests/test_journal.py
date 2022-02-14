@@ -904,17 +904,31 @@ Comment: This is an inapropiate comment</p>
         invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
-        raia_client.post_invitation_edit(
-            invitations='TMLR/-/Edit',
+        # raia_client.post_invitation_edit(
+        #     invitations='TMLR/-/Official_Recommendation',
+        #     readers=[venue_id],
+        #     writers=[venue_id],
+        #     signatures=[venue_id],
+        #     invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
+        #         cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 5000,
+        #         signatures=['TMLR/Editors_In_Chief']
+        #     )
+        # )
+
+        raia_client.post_invitation_edit(invitations='TMLR/-/Official_Recommendation',
+            params={ 'noteId': note_id_1, 'noteNumber': 1, 'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 5000, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 50000 },
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=['TMLR/Editors_In_Chief']
-            )
+            signatures=[venue_id]
         )
 
+        helpers.await_queue(openreview_client)
+
+        ## Check emails being sent to Reviewers and AE
+        messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
+        assert len(messages) == 3
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
+        assert len(messages) == 1
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',

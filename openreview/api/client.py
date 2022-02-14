@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
+from datetime import date
 from deprecated.sphinx import deprecated
 import sys
 if sys.version_info[0] < 3:
@@ -576,6 +577,42 @@ class OpenReviewClient(object):
         groups = [Group.from_json(g) for g in response.json()['groups']]
         return groups
 
+    def get_all_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+        """
+        Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
+
+        :param id: id of the Group
+        :type id: str, optional
+        :param regex: Regex that matches several Group ids
+        :type regex: str, optional
+        :param member: Groups that contain this member
+        :type member: str, optional
+        :param signatory: Groups that contain this signatory
+        :type signatory: str, optional
+        :param web: Groups that contain a web field value
+        :type web: bool, optional
+        :param limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
+        :type limit: int, optional
+        :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
+
+        :return: List of Groups
+        :rtype: list[Group]
+        """
+
+        params = {
+            'id': id,
+            'regex': regex,
+            'member': member,
+            'signatory': signatory,
+            'web': web,
+            'limit': limit,
+            'offset': offset,
+            'with_count': with_count
+        }
+
+        return tools.concurrent_get(self, self.get_groups, **params)
+
     def get_invitations(self,
         id = None,
         invitee = None,
@@ -667,6 +704,89 @@ class OpenReviewClient(object):
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
         return invitations
+
+    def get_all_invitations(self,
+        id = None,
+        invitee = None,
+        replytoNote = None,
+        replyForum = None,
+        signature = None,
+        note = None,
+        regex = None,
+        tags = None,
+        limit = None,
+        offset = None,
+        minduedate = None,
+        duedate = None,
+        pastdue = None,
+        replyto = None,
+        details = None,
+        expired = None,
+        type = None,
+        with_count=False
+    ):
+        """
+        Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
+
+        :param id: id of the Invitation
+        :type id: str, optional
+        :param invitee: Invitations that contain this invitee
+        :type invitee: str, optional
+        :param replytoNote: Invitations that contain this replytoNote
+        :type replytoNote: str, optional
+        :param replyForum: Invitations that contain this replyForum
+        :type replyForum: str, optional
+        :param signature: Invitations that contain this signature
+        :type signature: optional
+        :param note: Invitations that contain this note
+        :type note: str, optional
+        :param regex: Invitation ids that match this regex
+        :type regex: str, optional
+        :param tags: Invitations that contain these tags
+        :type tags: Tag, optional
+        :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
+        :type limit: int, optional
+        :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
+        :param minduedate: Invitations that have at least this value as due date
+        :type minduedate: int, optional
+        :param duedate: Invitations that contain this due date
+        :type duedate: int, optional
+        :param pastdue: Invitaions that are past due
+        :type pastdue: bool, optional
+        :param replyto: Invitations that contain this replyto
+        :type replyto: optional
+        :param details: TODO: What is a valid value for this field?
+        :type details: dict, optional
+        :param expired: If true, retrieves the Invitations that have expired, otherwise, the ones that have not expired
+        :type expired: bool, optional
+
+        :return: List of Invitations
+        :rtype: list[Invitation]
+        """
+
+        params = {
+            'id': id,
+            'invitee': invitee,
+            'replytoNote': replytoNote,
+            'replyForum': replyForum,
+            'signature': signature,
+            'note': note,
+            'regex': regex,
+            'tags': tags,
+            'limit': limit,
+            'offset': offset,
+            'minduedate': minduedate,
+            'duedate': duedate,
+            'pastdue': pastdue,
+            'replyto': replyto,
+            'details': details,
+            'expired': expired,
+            'type': type,
+            'with_count': with_count
+        }
+
+        return tools.concurrent_get(self, self.get_invitations, **params)
 
     def get_invitation_edit(self, id):
         """
@@ -1692,6 +1812,7 @@ class Invitation(object):
         process = None,
         process_string = None,
         preprocess = None,
+        date_processes = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -1729,6 +1850,7 @@ class Invitation(object):
         self.web = None
         self.process = None
         self.preprocess = preprocess
+        self.date_processes = date_processes
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -1809,6 +1931,8 @@ class Invitation(object):
             body['process']=self.process
         if  self.preprocess:
             body['preprocess']=self.preprocess
+        if  self.date_processes:
+            body['dateprocesses']=self.date_processes
         if self.edit is not None:
             if self.type == 'Note':
                 body['edit']=self.edit
@@ -1858,6 +1982,8 @@ class Invitation(object):
             invitation.transform = i['transform']
         if 'preprocess' in i:
             invitation.preprocess = i['preprocess']
+        if 'dateprocesses' in i:
+            invitation.date_processes = i['dateprocesses']
         if 'edge' in i:
             invitation.edit = i['edge']
             invitation.type = 'Edge'
