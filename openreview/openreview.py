@@ -1444,10 +1444,40 @@ class Client(object):
         return response.json()
 
 
-    def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
+    def request_expertise(self, name, group_id, paper_invitation, alternate_match_group = None, exclusion_inv=None, model=None, baseurl=None):
+    
+        # Build entityA from group_id
+        entityA = {
+            'type': 'Group',
+            'memberOf': group_id
+        }
+        if exclusion_inv:
+            expertise = {'exclusion': { 'invitation': exclusion_inv }}
+            entityA['expertise'] = expertise
+        
+        # Build entityB from alternate_match_group or paper_invitation
+        if alternate_match_group:
+            entityB = {
+                'type': 'Group',
+                'memberOf': alternate_match_group
+            }
+        else:
+            entityB = {
+                'type': 'Note',
+                'invitation': paper_invitation
+            }
+
+        expertise_request = {
+            'name': name,
+            'entityA': entityA,
+            'entityB': entityB,
+            'model': {
+                'name': model
+            }
+        }
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'exclusion_inv': exclusion_inv, 'model': model}, headers = self.headers)
+        response = requests.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()

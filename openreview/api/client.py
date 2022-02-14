@@ -1366,20 +1366,65 @@ class OpenReviewClient(object):
         return response.json()
 
     def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
+        
+        # Build entityA from group_id
+        entityA = {
+            'type': 'Group',
+            'memberOf': group_id
+        }
+        if exclusion_inv:
+            expertise = {'exclusion': { 'invitation': exclusion_inv }}
+            entityA['expertise'] = expertise
+        
+        # Build entityB from paper_invitation
+        entityB = {
+            'type': 'Note',
+            'invitation': paper_invitation
+        }
+
+        expertise_request = {
+            'name': name,
+            'entityA': entityA,
+            'entityB': entityB,
+            'model': {
+                'name': model
+            }
+        }
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'exclusion_inv': exclusion_inv, 'model': model}, headers = self.headers)
+        response = requests.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
 
     def request_single_paper_expertise(self, name, group_id, paper_id, model=None, baseurl=None):
+        
+        # Build entityA from group_id
+        entityA = {
+            'type': 'Group',
+            'memberOf': group_id
+        }
+
+        # Build entityB from paper_id
+        entityB = {
+            'type': 'Note',
+            'id': paper_id
+        }
+
+        expertise_request = {
+            'name': name,
+            'entityA': entityA,
+            'entityB': entityB,
+            'model': {
+                'name': model
+            }
+        }
 
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
             return {}
         print('compute expertise', {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model})
-        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model}, headers = self.headers)
+        response = requests.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
         print('response json', response.json())
         response = self.__handle_response(response)
 
