@@ -45,7 +45,7 @@ class Helpers:
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
     @staticmethod
-    def await_queue(super_client=None):
+    def await_queue(super_client=None, wait_for_delayed=False):
         if super_client is None:
             super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
             assert super_client is not None, 'Super Client is none'
@@ -55,6 +55,8 @@ class Helpers:
             jobCount = 0
             for jobName, job in jobs.items():
                 jobCount += job.get('waiting', 0) + job.get('active', 0)
+                if wait_for_delayed:
+                    jobCount += job.get('delayed', 0)
 
             if jobCount == 0:
                 break

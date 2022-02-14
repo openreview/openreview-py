@@ -1854,7 +1854,7 @@ class InvitationBuilder(object):
                 },
                 'invitation': {
                     'id': { 'value': paper_recommendation_invitation_id },
-                    'signatures': { 'values': [ venue_id ] },
+                    'signatures': { 'values': [ editors_in_chief_id ] },
                     'readers': { 'values': ['everyone'] },
                     'writers': { 'values': [venue_id] },
                     'invitees': { 'values': [venue_id, paper_reviewers_id] },

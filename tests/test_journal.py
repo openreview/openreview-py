@@ -922,11 +922,11 @@ Comment: This is an inapropiate comment</p>
             signatures=[venue_id]
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=True)
 
         ## Check emails being sent to Reviewers and AE
         messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
-        assert len(messages) == 3
+        assert len(messages) == 4
         messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
 

@@ -11,15 +11,19 @@ def process(client, edit, invitation):
     if note.tcdate != note.tmdate:
         return
 
+    print(f'find recommendations by forum={note.forum} and invitation={edit.invitation}')
     recommendations = client.get_notes(forum=note.forum, invitation=edit.invitation)
+    print('# recommendations', len(recommendations))
     if len(recommendations) == 3:
 
         submission = client.get_note(note.forum)
         duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
 
+        print('Enable review rating')
         journal.invitation_builder.set_review_rating_invitation(submission, openreview.tools.datetime_millis(duedate))
 
         ## send email to action editors
+        print('Send email to AEs')
         client.post_message(
             recipients=[journal.get_action_editors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Evaluate reviewers and submit decision for {journal.short_name} submission {submission.content['title']['value']}''',
