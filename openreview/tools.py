@@ -13,7 +13,7 @@ import datetime
 import time
 from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 from Crypto.Hash import HMAC, SHA256
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 import tld
 import urllib.parse as urlparse
@@ -35,7 +35,7 @@ def run_once(f):
     return wrapper
 
 
-def concurrent_requests(request_func, params, max_workers=6):
+def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1)):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -140,7 +140,6 @@ def get_profiles(client, ids_or_emails, with_publications=False):
             })))
 
     if with_publications:
-
         baseurl_v1 = 'http://localhost:3000'
         baseurl_v2 = 'http://localhost:3001'
 
@@ -152,11 +151,18 @@ def get_profiles(client, ids_or_emails, with_publications=False):
             baseurl_v2 = 'https://api2.openreview.net'
 
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
-        #client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
-        for profile in profiles:
-            notes_v1 = list(iterget_notes(client_v1, content={'authorids': profile.id}))
-            #notes_v2 = list(iterget_notes(client_v2, content={'authorids': profile.id}))
-            profile.content['publications'] = notes_v1 #+ notes_v2
+        client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+
+        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles)
+        for idx, publications in enumerate(notes_v1):
+            profiles[idx].content['publications'] = publications
+
+        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles)
+        for idx, publications in enumerate(notes_v2):
+            if profiles[idx].content.get('publications'):
+                profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
+            else:
+                profiles[idx].content['publications'] = publications
 
     return profiles
 
@@ -657,6 +663,51 @@ def replace_members_with_ids(client, group):
     group.members = ids + emails
 
     return client.post_group(group)
+
+def concurrent_get(client, get_function, **params):
+    """
+    Given a function that takes a single parameter, returns a list of results.
+
+    :param client: Client used to make requests
+    :param get_function: Function that takes a that performs the request
+    :type get_function: function
+    :param params: Parameters to pass to the get_function
+    :type params: dict
+
+    :return: List of results
+    :rtype: list
+    """
+    max_workers = min(cpu_count() - 1, 6)
+
+    params.update({
+        'offset': params.get('offset') or 0,
+        'limit': min(params.get('limit') or client.limit, client.limit),
+        'with_count': True
+    })
+
+    docs, count = get_function(**params)
+    if count <= params['limit']:
+        return docs
+
+    params['with_count'] = False
+
+    offset_list = list(range(params['limit'], count, params['limit']))
+
+    futures = []
+    gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for offset in offset_list:
+            params['offset'] = offset
+            futures.append(executor.submit(get_function, **params))
+
+        for future in futures:
+            gathering_responses.update(1)
+            docs.extend(future.result())
+
+        gathering_responses.close()
+
+        return docs
 
 class iterget:
     """
@@ -1419,7 +1470,8 @@ def recruit_reviewer(client, user, first,
     recruit_message_subj,
     reviewers_invited_id,
     contact_info='info@openreview.net',
-    verbose=True):
+    verbose=True,
+    replyTo=None):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1472,7 +1524,7 @@ def recruit_reviewer(client, user, first,
     client.add_members_to_group(reviewers_invited_id, [user])
 
     # send the email through openreview
-    response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id)
+    response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
 
     if verbose:
         print("Sent to the following: ", response)

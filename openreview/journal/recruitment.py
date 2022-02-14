@@ -53,7 +53,7 @@ class Recruitment(object):
 
         return recruitment_status
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None):
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
 
         reviewers_id = self.journal.get_reviewers_id()
         reviewers_declined_id = reviewers_id + '/Declined'
@@ -88,7 +88,8 @@ class Recruitment(object):
                         message,
                         subject,
                         reviewers_invited_id,
-                        verbose = False)
+                        verbose = False,
+                        replyTo = replyTo)
                     recruitment_status['invited'].append(invitee)
                 except Exception as e:
                     self.client.remove_members_from_group(reviewers_invited_id, invitee)
