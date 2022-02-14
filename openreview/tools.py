@@ -20,8 +20,6 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
-from openreview import OpenReviewException
-
 
 def run_once(f):
     """
@@ -1745,7 +1743,7 @@ def get_profile_info(profile, n_years=3):
     ## Emails section
     for email in profile.content['emails']:
         if email.startswith("****@"):
-            raise OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
+            raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         domains.update(openreview.tools.subdomains(email))
         emails.add(email)
 
@@ -1803,7 +1801,7 @@ def get_neurips_profile_info(profile, n_years=3):
     ## Emails section
     for email in profile.content['emails']:
         if email.startswith("****@"):
-            raise OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
+            raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         emails.add(email)
         domains.update(openreview.tools.subdomains(email))
     # ## if institution section is empty, add email domains
