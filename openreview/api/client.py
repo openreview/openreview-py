@@ -1312,14 +1312,40 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, readers, writers, signatures, invitation):
+    def post_invitation_edit(self, invitations, readers, writers, signatures, invitation=None, params=None):
         """
         """
         edit_json = {
             'readers': readers,
             'writers': writers,
+            'signatures': signatures
+        }
+
+        if invitations is not None:
+            edit_json['invitations'] = invitations
+
+        if params is not None:
+            edit_json['params'] = params
+
+        if invitation is not None:
+            edit_json['invitation'] = invitation.to_json()
+
+        response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def post_invitation_edit_ex(self, invitations, params, signatures, invitationId=None):
+        """
+        """
+        edit_json = {
             'signatures': signatures,
-            'invitation': invitation.to_json()
+            'invitations': invitations,
+            'params': params,
+            'invitation': {
+                'id': invitationId,
+                'duedate': params['duedate']
+            }
         }
 
         response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
@@ -1652,6 +1678,7 @@ class Invitation(object):
     """
     def __init__(self,
         id = None,
+        domain = None,
         readers = None,
         writers = None,
         invitees = None,
@@ -1679,6 +1706,7 @@ class Invitation(object):
         details = None):
 
         self.id = id
+        self.domain = domain
         self.cdate = cdate
         self.ddate = ddate
         self.duedate = duedate
@@ -1734,6 +1762,9 @@ class Invitation(object):
         body = {
             'id': self.id
         }
+
+        if self.domain:
+            body['domain'] = self.domain
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -1799,6 +1830,7 @@ class Invitation(object):
         :rtype: Invitation
         """
         invitation = Invitation(i['id'],
+            domain = i.get('domain'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
             tcdate = i.get('tcdate'),
@@ -2096,6 +2128,3 @@ class Group(object):
         :type client: Client
         """
         client.post_group(self)
-
-
-
