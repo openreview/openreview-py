@@ -16,6 +16,7 @@ import time
 import jwt
 from openreview import Profile
 from openreview import OpenReviewException
+from .. import tools
 
 class OpenReviewClient(object):
     """
@@ -58,6 +59,7 @@ class OpenReviewClient(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
+        self.limit = 1000
         self.token = token.replace('Bearer ', '') if token else None
         self.profile = None
         self.headers = {
@@ -541,7 +543,7 @@ class OpenReviewClient(object):
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None):
+    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -575,6 +577,10 @@ class OpenReviewClient(object):
         response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
+
+        if with_count:
+            return groups, response.json()['count']
+
         return groups
 
     def get_all_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
@@ -599,7 +605,6 @@ class OpenReviewClient(object):
         :return: List of Groups
         :rtype: list[Group]
         """
-
         params = {
             'id': id,
             'regex': regex,
@@ -630,7 +635,8 @@ class OpenReviewClient(object):
         replyto = None,
         details = None,
         expired = None,
-        type = None
+        type = None,
+        with_count=False
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -703,6 +709,10 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
+
+        if with_count:
+            return invitations, response.json()['count']
+
         return invitations
 
     def get_all_invitations(self,
@@ -764,7 +774,6 @@ class OpenReviewClient(object):
         :return: List of Invitations
         :rtype: list[Invitation]
         """
-
         params = {
             'id': id,
             'invitee': invitee,
@@ -819,7 +828,9 @@ class OpenReviewClient(object):
             offset = None,
             mintcdate = None,
             details = None,
-            sort = None):
+            sort = None,
+            with_count=False
+            ):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
 
@@ -903,7 +914,100 @@ class OpenReviewClient(object):
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Note.from_json(n) for n in response.json()['notes']]
+        notes = [Note.from_json(n) for n in response.json()['notes']]
+
+        if with_count:
+            return notes, response.json()['count']
+
+        return notes
+
+    def get_all_notes(self, id = None,
+            paperhash = None,
+            forum = None,
+            original = None,
+            invitation = None,
+            replyto = None,
+            tauthor = None,
+            signature = None,
+            writer = None,
+            trash = None,
+            number = None,
+            content = None,
+            limit = None,
+            offset = None,
+            mintcdate = None,
+            details = None,
+            sort = None,
+            with_count=False
+            ):
+        """
+        Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
+
+        :param id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+        :type id: str, optional
+        :param paperhash: A "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
+            (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely
+            identify the Note)
+        :type paperhash: str, optional
+        :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
+        :type forum: str, optional
+        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
+        :type original: str, optional
+        :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
+        :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
+        :type replyto: str, optional
+        :param tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
+        :type tauthor: str, optional
+        :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+        :type signature: str, optional
+        :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+        :type writer: str, optional
+        :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
+            current date)
+        :type trash: bool, optional
+        :param number: If present, includes Notes whose number field equals the given integer.
+        :type number: int, optional
+        :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
+        :type content: dict, optional
+        :param limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
+        :type limit: int, optional
+        :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
+        :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
+            whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+        :type mintcdate: int, optional
+        :param details: TODO: What is a valid value for this field?
+        :type details: optional
+        :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
+        :type sort: str, optional
+
+        :return: List of Notes
+        :rtype: list[Note]
+        """
+
+        params = {
+            'id': id,
+            'paperhash': paperhash,
+            'forum': forum,
+            'original': original,
+            'invitation': invitation,
+            'replyto': replyto,
+            'tauthor': tauthor,
+            'signature': signature,
+            'writer': writer,
+            'trash': trash,
+            'number': number,
+            'content': content,
+            'limit': limit,
+            'offset': offset,
+            'mintcdate': mintcdate,
+            'details': details,
+            'sort': sort,
+            'with_count': with_count
+        }
+
+        return tools.concurrent_get(self, self.get_notes, **params)
 
     def get_note_edit(self, id):
         """
@@ -920,7 +1024,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, noteId = None, invitation = None):
+    def get_note_edits(self, noteId = None, invitation = None, with_count=False):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -936,9 +1040,14 @@ class OpenReviewClient(object):
         response = requests.get(self.note_edits_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Edit.from_json(n) for n in response.json()['edits']]
+        edits = [Edit.from_json(n) for n in response.json()['edits']]
 
-    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
+        if with_count:
+            return edits, response.json()['count']
+
+        return edits
+
+    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -972,9 +1081,40 @@ class OpenReviewClient(object):
         response = requests.get(self.tags_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Tag.from_json(t) for t in response.json()['tags']]
+        tags = [Tag.from_json(t) for t in response.json()['tags']]
+        if with_count:
+            return tags, response.json()['count']
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None):
+        return tags
+
+    def get_all_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
+        """
+        Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
+
+        :param id: A Tag ID. If provided, returns Tags whose ID matches the given ID.
+        :type id: str, optional
+        :param forum: A Note ID. If provided, returns Tags whose forum matches the given ID.
+        :type forum: str, optional
+        :param invitation: An Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
+
+        :return: List of tags
+        :rtype: list[Tag]
+        """
+        params = {
+            'id': id,
+            'invitation': invitation,
+            'forum': forum,
+            'signature': signature,
+            'tag': tag,
+            'limit': limit,
+            'offset': offset,
+            'with_count': with_count
+        }
+
+        return tools.concurrent_get(self, self.get_tags, **params)
+
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -997,7 +1137,35 @@ class OpenReviewClient(object):
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Edge.from_json(t) for t in response.json()['edges']]
+        edges = [Edge.from_json(e) for e in response.json()['edges']]
+
+        if with_count:
+            return edges, response.json()['count']
+
+        return edges
+
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False):
+        """
+        Returns a list of Edge objects based on the filters provided.
+
+        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
+        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
+        :arg tail: Note ID of the Note that is connected to the Profile ID in head
+        :arg label: Label ID of the match
+        """
+        params = {
+            'id': id,
+            'invitation': invitation,
+            'head': head,
+            'tail': tail,
+            'label': label,
+            'limit': limit,
+            'offset': offset,
+            'with_count': with_count
+        }
+
+        return tools.concurrent_get(self, self.get_edges, **params)
 
     def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
         """
