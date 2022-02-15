@@ -27,7 +27,7 @@ jobs:
       - run: sudo pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
-      - run: git clone -b feature/one-invitation-to-rule-them-all https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
+      - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
       - run: mkdir ~/openreview/logs
       - run: mkdir ~/openreview/files
       - run: mkdir ~/openreview/files/attachments
