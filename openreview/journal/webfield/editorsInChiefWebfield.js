@@ -687,7 +687,14 @@ var renderData = function(venueStatusData) {
       papersAssigned: ['reviewerProgressData.numPapers'],
       default: ['summary.name']
     },
-    extraClasses: 'eic-console-table'
+    extraClasses: 'console-table',
+    postRenderTable: function() {
+      $('#reviewer-status .console-table th').eq(0).css('width', '4%');  // #
+      $('#reviewer-status .console-table th').eq(1).css('width', '23%');  // reviewer
+      $('#reviewer-status .console-table th').eq(2).css('width', '36%'); // review progress
+      $('#reviewer-status .console-table th').eq(3).css('width', '10%'); // rating
+      $('#reviewer-status .console-table th').eq(4).css('width', '27%'); // status
+    }
   });
 
   Webfield2.ui.renderTable('#action-editor-status', venueStatusData.actionEditorStatusRows, {
