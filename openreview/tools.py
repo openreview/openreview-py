@@ -1716,10 +1716,14 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
 
     conflicts = set()
     conflicts.update(author_domains.intersection(user_info['domains']))
-    conflicts.update(author_relations.intersection(user_info['emails']))
-    conflicts.update(author_emails.intersection(user_info['relations']))
-    # conflicts.update(author_emails.intersection(user_info['emails']))
-    conflicts.update(author_publications.intersection(user_info['publications']))
+    if not conflicts:
+        conflicts.update(author_relations.intersection(user_info['emails']))
+    if not conflicts:
+        conflicts.update(author_emails.intersection(user_info['relations']))
+    if not conflicts:
+        conflicts.update(author_emails.intersection(user_info['emails']))
+    if not conflicts:
+        conflicts.update(author_publications.intersection(user_info['publications']))
 
     return list(conflicts)
 
@@ -1804,10 +1808,6 @@ def get_neurips_profile_info(profile, n_years=3):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         emails.add(email)
         domains.update(openreview.tools.subdomains(email))
-    # ## if institution section is empty, add email domains
-    # if not domains:
-    #     for email in profile.content['emails']:
-
 
     ## Publications section: get publications within last n years
     for pub in profile.content.get('publications', []):
