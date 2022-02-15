@@ -1697,11 +1697,16 @@ class InvitationBuilder(object):
 
         review_invitation_id = self.journal.get_review_id()
         paper_review_invitation_id = self.journal.get_review_id(number='${params.noteNumber}')
+        day = 1000 * 60 * 60 * 24
+        seven_days = day * 7
 
         with open(os.path.join(os.path.dirname(__file__), 'process/review_process.py')) as f:
             paper_process = f.read()
             paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
+        with open(os.path.join(os.path.dirname(__file__), 'process/review_reminder_process.py')) as f:
+            duedate_process = f.read()
+            duedate_process = duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -1727,6 +1732,10 @@ class InvitationBuilder(object):
                     'maxReplies': { 'value': 1 },
                     'duedate': { 'value': '${params.duedate}' },
                     'process': { 'value': paper_process },
+                    'dateprocesses': { 'values': [{
+                        'dates': ["${invitation.duedate} + " + str(day), "${invitation.duedate} + " + str(seven_days)],
+                        'process': duedate_process
+                    }]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
