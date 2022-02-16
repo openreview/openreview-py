@@ -18,23 +18,23 @@ class InvitationBuilder(object):
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
         self.set_submission_invitation()
-        # self.set_review_approval_invitation()
-        # self.set_under_review_invitation()
-        # self.set_desk_rejection_invitation()
-        # self.set_rejection_invitation()
-        # self.set_withdrawn_invitation()
-        # self.set_acceptance_invitation()
-        # self.set_retracted_invitation()
-        # self.set_authors_release_invitation()
-        # self.set_ae_assignment()
-        # self.set_reviewer_assignment()
-        # self.set_super_review_invitation()
-        # self.set_official_recommendation_invitation()
-        # self.set_solicit_review_invitation()
-        # self.set_solicit_review_approval_invitation()
-        # self.set_withdrawal_invitation()
-        # self.set_retraction_invitation()
-        # self.set_retraction_approval_invitation()
+        self.set_review_approval_invitation()
+        self.set_under_review_invitation()
+        self.set_desk_rejection_invitation()
+        self.set_rejection_invitation()
+        self.set_withdrawn_invitation()
+        self.set_acceptance_invitation()
+        self.set_retracted_invitation()
+        self.set_authors_release_invitation()
+        self.set_ae_assignment()
+        self.set_reviewer_assignment()
+        self.set_super_review_invitation()
+        self.set_official_recommendation_invitation()
+        self.set_solicit_review_invitation()
+        self.set_solicit_review_approval_invitation()
+        self.set_withdrawal_invitation()
+        self.set_retraction_invitation()
+        self.set_retraction_approval_invitation()
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -440,18 +440,19 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_authors_id]
+                    'const': [venue_id, paper_authors_id]
                 },
                 'writers': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'signatures': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'head': {
                     'type': 'note',
@@ -462,10 +463,10 @@ class InvitationBuilder(object):
                     'member-of' : action_editors_id
                 },
                 'weight': {
-                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 },
                 'label': {
-                    'value-regex': '.*',
+                    'regex': '.*',
                     'optional': True
                 }
             }
@@ -481,7 +482,8 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
@@ -525,7 +527,8 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
@@ -574,7 +577,8 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
@@ -616,7 +620,8 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
@@ -666,7 +671,8 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
@@ -896,46 +902,48 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [venue_id] },
-                'writers': { 'values': [venue_id] },
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'value-regex': '.*' },
-                    'noteId': { 'value-regex': '.*' },
-                    'duedate': { 'value-regex': '.*' }
+                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteId': { 'regex': '.*', 'type': 'string' },
+                    'duedate': { 'regex': '.*', 'type': 'integer' }
                 },
                 'invitation': {
-                    'id': { 'value': paper_review_approval_invitation_id },
-                    'invitees': { 'values': [venue_id, paper_action_editors_id] },
-                    'readers': { 'values': ['everyone'] },
-                    'writers': { 'values': [venue_id] },
-                    'signatures': { 'values': [venue_id] },
-                    'maxReplies': { 'value': 1},
-                    'duedate': { 'value': '${params.duedate}' },
-                    'process': { 'value': paper_process },
+                    'id': { 'const': paper_review_approval_invitation_id },
+                    'invitees': { 'const': [venue_id, paper_action_editors_id] },
+                    'readers': { 'const': ['everyone'] },
+                    'writers': { 'const': [venue_id] },
+                    'signatures': { 'const': [venue_id] },
+                    'maxReplies': { 'const': 1},
+                    'duedate': { 'const': '${params.duedate}' },
+                    'process': { 'const': paper_process },
                     'edit': {
-                        'signatures': { 'value': { 'values-regex': paper_action_editors_id }},
-                        'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id] }},
-                        'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id] }},
+                        'signatures': { 'const': { 'regex': paper_action_editors_id, 'type': 'group[]' }},
+                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
+                        'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
                         'note': {
-                            'forum': { 'value': { 'value': '${params.noteId}' }},
-                            'replyto': { 'value': { 'value': '${params.noteId}' }},
-                            'signatures': { 'value': { 'values': ['\\${signatures}'] }},
-                            'readers': { 'value': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] }},
-                            'writers': { 'value': { 'values': [ venue_id ] }},
+                            'forum': { 'const': { 'const': '${params.noteId}' }},
+                            'replyto': { 'const': { 'const': '${params.noteId}' }},
+                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] }},
+                            'writers': { 'const': { 'const': [ venue_id ] }},
                             'content': {
-                                'under_review': { 'value':  {
+                                'under_review': { 'const':  {
                                     'order': 1,
                                     'description': f'Determine whether this submission is appropriate for review at {short_name} or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
                                     'value': {
-                                        'value-radio': ['Appropriate for Review', 'Desk Reject']
+                                        'type': 'string',
+                                        'enum': ['Appropriate for Review', 'Desk Reject']
                                     }
                                 }},
-                                'comment': { 'value': {
+                                'comment': { 'const': {
                                     'order': 2,
                                     'description': 'Enter a reason if the decision is Desk Reject. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                     'value': {
-                                        'value-regex': '^[\\S\\s]{1,200000}$',
+                                        'type': 'string',
+                                        'regex': '^[\\S\\s]{1,200000}$',
                                         'optional': True
                                     },
                                     'presentation': {
@@ -1221,40 +1229,45 @@ class InvitationBuilder(object):
             maxReplies=1,
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
-                'signatures': { 'values': [ venue_id ] },
-                'readers': { 'values': [ 'everyone']},
-                'writers': { 'values': [ venue_id ]},
+                'signatures': { 'const': [ venue_id ] },
+                'readers': { 'const': [ 'everyone']},
+                'writers': { 'const': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
+                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
                     'readers': {
-                        'values': ['everyone']
+                        'const': ['everyone']
                     },
                     'writers': {
-                        'values': [venue_id]
+                        'const': [venue_id]
                     },
                     'content': {
                         'assigned_action_editor': {
                             'value': {
-                                'value-regex': '.*'
+                                'type': 'string',
+                                'regex': '.*'
                             }
                         },
                         '_bibtex': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$'
                             }
                         },
                         'venue': {
                             'value': {
-                                'value': f'Under review for {self.journal.short_name}'
+                                'type': 'string',
+                                'const': f'Under review for {self.journal.short_name}'
                             }
                         },
                         'venueid': {
                             'value': {
-                                'value': self.journal.under_review_venue_id
+                                'type': 'string',
+                                'const': self.journal.under_review_venue_id
                             }
                         }
                     }
@@ -1281,28 +1294,31 @@ class InvitationBuilder(object):
             maxReplies=1,
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id]},
-                'writers': { 'values': [ venue_id, paper_action_editors_id]},
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_authors_id]},
+                'writers': { 'const': [ venue_id, paper_action_editors_id]},
                 'note': {
-                    'id': { 'value-invitation': self.journal.get_author_submission_id()  },
-                    'readers': { 'values': [ venue_id, paper_action_editors_id, paper_authors_id] },
-                    'writers': { 'values': [venue_id, paper_action_editors_id] },
+                    'id': { 'withInvitation': self.journal.get_author_submission_id()  },
+                    'readers': { 'const': [ venue_id, paper_action_editors_id, paper_authors_id] },
+                    'writers': { 'const': [venue_id, paper_action_editors_id] },
                     'content': {
                         'venue': {
                             'order': 2,
                             'value': {
-                                'value': f'Desk rejected by {self.journal.short_name}'
+                                'type': 'string',
+                                'const': f'Desk rejected by {self.journal.short_name}'
                             }
                         },
                         'venueid': {
                             'order': 3,
                             'value': {
-                                'value': self.journal.desk_rejected_venue_id
+                                'type': 'string',
+                                'const': self.journal.desk_rejected_venue_id
                             }
                         }
                     }
@@ -1325,25 +1341,28 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [ 'everyone' ] },
-                'writers': { 'values': [ venue_id ]},
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [ 'everyone' ] },
+                'writers': { 'const': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
+                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$'
                             }
                         },
                         'venue': {
                             'value': {
-                                'value': 'Withdrawn by Authors'
+                                'type': 'string',
+                                'const': 'Withdrawn by Authors'
                             }
                         },
                         'venueid': {
                             'value': {
-                                'value': self.journal.withdrawn_venue_id
+                                'type': 'string',
+                                'const': self.journal.withdrawn_venue_id
                             }
                         }
                     }
@@ -1364,25 +1383,28 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [ 'everyone' ] },
-                'writers': { 'values': [ venue_id ]},
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [ 'everyone' ] },
+                'writers': { 'const': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
+                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$'
                             }
                         },
                         'venue': {
                             'value': {
-                                'value': 'Retracted by Authors'
+                                'type': 'string',
+                                'const': 'Retracted by Authors'
                             }
                         },
                         'venueid': {
                             'value': {
-                                'value': self.journal.retracted_venue_id
+                                'type': 'string',
+                                'const': self.journal.retracted_venue_id
                             }
                         }
                     }
@@ -1408,25 +1430,28 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             maxReplies=1,
             edit={
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [ 'everyone' ] },
-                'writers': { 'values': [ venue_id ]},
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [ 'everyone' ] },
+                'writers': { 'const': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
+                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$'
                             }
                         },
                         'venue': {
                             'value': {
-                                'value': f'Rejected by {self.journal.short_name}'
+                                'type': 'string',
+                                'const': f'Rejected by {self.journal.short_name}'
                             }
                         },
                         'venueid': {
                             'value': {
-                                'value': self.journal.rejected_venue_id
+                                'type': 'string',
+                                'const': self.journal.rejected_venue_id
                             }
                         }
                     }
@@ -1450,31 +1475,35 @@ class InvitationBuilder(object):
             maxReplies=1,
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [ 'everyone']},
-                'writers': { 'values': [ venue_id ]},
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [ 'everyone']},
+                'writers': { 'const': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': self.journal.get_under_review_id() },
-                    'writers': { 'values': [ venue_id ]},
+                    'id': { 'withInvitation': self.journal.get_under_review_id() },
+                    'writers': { 'const': [ venue_id ]},
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$'
                             }
                         },
                         'venue': {
                             'value': {
-                                'value': self.journal.short_name
+                                'type': 'string',
+                                'const': self.journal.short_name
                             },
                             'order': 1
                         },
                         'venueid': {
                             'value': {
-                                'value': self.journal.accepted_venue_id
+                                'type': 'string',
+                                'const': self.journal.accepted_venue_id
                             },
                             'order': 2
                         },
@@ -1482,7 +1511,8 @@ class InvitationBuilder(object):
                             'order': 3,
                             'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
                             'value': {
-                                'values-dropdown': [
+                                'type': 'string[]',
+                                'enum': [
                                     'Featured Certification',
                                     'Reproducibility Certification',
                                     'Survey Certification'
@@ -1492,18 +1522,21 @@ class InvitationBuilder(object):
                         },
                         'license': {
                             'value': {
-                                'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)'
+                                'type': 'string',
+                                'const': 'Creative Commons Attribution 4.0 International (CC BY 4.0)'
                             },
                             'order': 4
                         },
                         'authors': {
                             'readers': {
-                                'values': ['everyone']
+                                'type': 'group[]',
+                                'const': ['everyone']
                             }
                         },
                         'authorids': {
                             'readers': {
-                                'values': ['everyone']
+                                'type': 'group[]',
+                                'const': ['everyone']
                             }
                         }
                     }
@@ -1526,25 +1559,26 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             maxReplies=1,
             edit={
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [ 'everyone' ] },
-                'writers': { 'values': [ venue_id ]},
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [ 'everyone' ] },
+                'writers': { 'const': [ venue_id ]},
                 'note': {
-                    'id': { 'value-invitation': self.journal.get_author_submission_id() },
+                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$'
                             }
                         },
                         'authors': {
                             'readers': {
-                                'values': ['everyone']
+                                'const': ['everyone']
                             }
                         },
                         'authorids': {
                             'readers': {
-                                'values': ['everyone']
+                                'const': ['everyone']
                             }
                         }
                     }
