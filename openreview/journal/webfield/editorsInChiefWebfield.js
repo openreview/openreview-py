@@ -388,6 +388,22 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
     });
 
+    // calculate reviewer rating data
+    Object.entries(reviewerStatusById).forEach(function (reviewerStatus) {
+      var ratingsMap =
+        reviewerStatus[1].ratingData.ratings.reduce(function (prev, curr) {
+          if (prev[curr]) prev[curr]++;
+          else prev[curr] = 1;
+          return prev;
+        }, {});
+      reviewerStatus[1].ratingData.ratingsMap = ratingsMap;
+      var totalRating = Object.entries(ratingsMap).reduce(function (prev, curr) {
+        return prev + REVIEWER_RATING_MAP[curr[0]] * curr[1];
+      }, 0);
+      reviewerStatus[1].ratingData.averageRating =
+        totalRating / reviewerStatus[1].ratingData.ratings.length;
+    });
+
     paperActionEditors.forEach(function(actionEditor, number) {
       var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
       var actionEditorStatus = actionEditorStatusById[actionEditor.id];
@@ -662,24 +678,15 @@ var renderData = function(venueStatusData) {
       Handlebars.templates.committeeSummary,
       Handlebars.templates.notesReviewerProgress,
       function (data) {
-        var ratingsMap = data.ratings.reduce(function (prev, curr) {
-          if (prev[curr]) prev[curr]++;
-          else prev[curr] = 1;
-          return prev;
-        }, {});
-        var totalRating = Object.entries(ratingsMap).reduce(function (prev, curr) {
-          return prev + REVIEWER_RATING_MAP[curr[0]] * curr[1];
-        }, 0);
-        var averageRating = (totalRating / data.ratings.length);
         return '<table class="table table-condensed table-minimal">'
           .concat(
-            Number.isNaN(averageRating)
+            Number.isNaN(data.averageRating)
               ? ""
-              : "<h4>Average: ".concat(averageRating.toFixed(2), "</h4>"),
+              : "<h4>Average: ".concat(data.averageRating.toFixed(2), "</h4>"),
             "<tbody>"
           )
           .concat(
-            Object.entries(ratingsMap)
+            Object.entries(data.ratingsMap)
               .map(function (rating) {
                 return "<tr><td class='rating'><strong>"
                   .concat(rating[0], ":</strong> ")
@@ -697,12 +704,14 @@ var renderData = function(venueStatusData) {
       Papers_with_Reviews_Missing: function(row) { return row.reviewerProgressData.numPapers - row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Reviews_Submitted: function(row) { return row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Completed_Reviews_Missing: function(row) { return row.reviewerStatusData.numPapers - row.reviewerStatusData.numCompletedReviews; },
-      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; }
+      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; },
+      Average_Rating: function(row) { return row.ratingData.averageRating; }
     },
     searchProperties: {
       name: ['summary.name'],
       papersAssigned: ['reviewerProgressData.numPapers'],
-      default: ['summary.name']
+      rating:['ratingData.averageRating'],
+      default: ['summary.name'],
     },
     extraClasses: 'console-table',
     postRenderTable: function() {
