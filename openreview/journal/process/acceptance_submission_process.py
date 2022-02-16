@@ -4,8 +4,8 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    journal.invitation_builder.expire_paper_invitations(journal, note)
+    journal.invitation_builder.expire_paper_invitations(note)
 
-    journal.invitation_builder.set_retract_invitation(journal, note)
+    journal.invitation_builder.set_note_retraction_invitation(note)
 
 
