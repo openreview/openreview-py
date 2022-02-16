@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
+from datetime import date
 from deprecated.sphinx import deprecated
 import sys
 if sys.version_info[0] < 3:
@@ -604,7 +605,6 @@ class OpenReviewClient(object):
         :return: List of Groups
         :rtype: list[Group]
         """
-        
         params = {
             'id': id,
             'regex': regex,
@@ -774,7 +774,6 @@ class OpenReviewClient(object):
         :return: List of Invitations
         :rtype: list[Invitation]
         """
-        
         params = {
             'id': id,
             'invitee': invitee,
@@ -1601,14 +1600,40 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, readers, writers, signatures, invitation):
+    def post_invitation_edit(self, invitations, readers, writers, signatures, invitation=None, params=None):
         """
         """
         edit_json = {
             'readers': readers,
             'writers': writers,
+            'signatures': signatures
+        }
+
+        if invitations is not None:
+            edit_json['invitations'] = invitations
+
+        if params is not None:
+            edit_json['params'] = params
+
+        if invitation is not None:
+            edit_json['invitation'] = invitation.to_json()
+
+        response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+
+    def post_invitation_edit_ex(self, invitations, params, signatures, invitationId=None):
+        """
+        """
+        edit_json = {
             'signatures': signatures,
-            'invitation': invitation.to_json()
+            'invitations': invitations,
+            'params': params,
+            'invitation': {
+                'id': invitationId,
+                'duedate': params['duedate']
+            }
         }
 
         response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
@@ -1986,6 +2011,7 @@ class Invitation(object):
     """
     def __init__(self,
         id = None,
+        domain = None,
         readers = None,
         writers = None,
         invitees = None,
@@ -1999,6 +2025,7 @@ class Invitation(object):
         process = None,
         process_string = None,
         preprocess = None,
+        date_processes = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -2013,6 +2040,7 @@ class Invitation(object):
         details = None):
 
         self.id = id
+        self.domain = domain
         self.cdate = cdate
         self.ddate = ddate
         self.duedate = duedate
@@ -2035,6 +2063,7 @@ class Invitation(object):
         self.web = None
         self.process = None
         self.preprocess = preprocess
+        self.date_processes = date_processes
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -2068,6 +2097,9 @@ class Invitation(object):
         body = {
             'id': self.id
         }
+
+        if self.domain:
+            body['domain'] = self.domain
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -2112,6 +2144,8 @@ class Invitation(object):
             body['process']=self.process
         if  self.preprocess:
             body['preprocess']=self.preprocess
+        if  self.date_processes:
+            body['dateprocesses']=self.date_processes
         if self.edit is not None:
             if self.type == 'Note':
                 body['edit']=self.edit
@@ -2133,6 +2167,7 @@ class Invitation(object):
         :rtype: Invitation
         """
         invitation = Invitation(i['id'],
+            domain = i.get('domain'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
             tcdate = i.get('tcdate'),
@@ -2160,6 +2195,8 @@ class Invitation(object):
             invitation.transform = i['transform']
         if 'preprocess' in i:
             invitation.preprocess = i['preprocess']
+        if 'dateprocesses' in i:
+            invitation.date_processes = i['dateprocesses']
         if 'edge' in i:
             invitation.edit = i['edge']
             invitation.type = 'Edge'
