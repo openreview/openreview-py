@@ -6,7 +6,7 @@ def process(client, edit, invitation):
 
     submission = client.get_note(edit.note.forum)
 
-    journal.invitation_builder.set_retraction_approval_invitation(journal, submission, note)
+    journal.invitation_builder.set_note_retraction_approval_invitation(submission, note)
 
     ## Send email to EICs
     print('Send email to EICs')
