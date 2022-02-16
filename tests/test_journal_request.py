@@ -14,7 +14,7 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue()
+        helpers.await_queue(wait_for_delayed=False)
 
         #post journal request form
         request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
@@ -152,7 +152,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -186,7 +186,7 @@ TJ22 Editors-in-Chief
     def test_journal_action_editor_recruitment(self, openreview_client, selenium, request_page, helpers, journal):
 
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
-        
+
         invitation = test_client.get_invitation(id='{}/Journal_Request{}/-/Action_Editor_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']))
         assert 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['presentation']['default']
 
@@ -213,7 +213,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -273,7 +273,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
