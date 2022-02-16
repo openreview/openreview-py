@@ -18,23 +18,23 @@ class InvitationBuilder(object):
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
         self.set_submission_invitation()
-        self.set_review_approval_invitation()
-        self.set_under_review_invitation()
-        self.set_desk_rejection_invitation()
-        self.set_rejection_invitation()
-        self.set_withdrawn_invitation()
-        self.set_acceptance_invitation()
-        self.set_retracted_invitation()
-        self.set_authors_release_invitation()
-        self.set_ae_assignment()
-        self.set_reviewer_assignment()
-        self.set_super_review_invitation()
-        self.set_official_recommendation_invitation()
-        self.set_solicit_review_invitation()
-        self.set_solicit_review_approval_invitation()
-        self.set_withdrawal_invitation()
-        self.set_retraction_invitation()
-        self.set_retraction_approval_invitation()
+        # self.set_review_approval_invitation()
+        # self.set_under_review_invitation()
+        # self.set_desk_rejection_invitation()
+        # self.set_rejection_invitation()
+        # self.set_withdrawn_invitation()
+        # self.set_acceptance_invitation()
+        # self.set_retracted_invitation()
+        # self.set_authors_release_invitation()
+        # self.set_ae_assignment()
+        # self.set_reviewer_assignment()
+        # self.set_super_review_invitation()
+        # self.set_official_recommendation_invitation()
+        # self.set_solicit_review_invitation()
+        # self.set_solicit_review_approval_invitation()
+        # self.set_withdrawal_invitation()
+        # self.set_retraction_invitation()
+        # self.set_retraction_approval_invitation()
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -120,42 +120,49 @@ class InvitationBuilder(object):
                         writers = [venue_id],
                         signatures = [venue_id],
                         edit = {
-                            'signatures': { 'values': ['(anonymous)'] },
+                            'signatures': { 'const': ['(anonymous)'] },
                             #'readers': { 'values': [venue_id, '${note.content.user.value}'] }, remove the user for now
-                            'readers': { 'values': [venue_id] },
+                            'readers': { 'const': [venue_id] },
                             'note': {
                                 #'signatures': { 'values': ['${note.content.user.value}'] },
-                                'signatures': { 'values': ['${signatures}'] },
+                                'signatures': { 'const': ['${signatures}'] },
                                 # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
-                                'readers': { 'values': [venue_id] },
-                                'writers': { 'values': [venue_id] },
+                                'readers': { 'const': [venue_id] },
+                                'writers': { 'const': [venue_id] },
                                 'content': {
                                     'title': {
                                         'order': 1,
                                         'value': {
-                                            'value': 'Recruit response'
+                                            'type': "string",
+                                            'const': 'Recruit response'
                                         }
                                     },
                                     'user': {
                                         'description': 'email address',
                                         'order': 2,
                                         'value': {
-                                            'value-regex': '.*'
+                                            'type': "string",
+                                            'regex': '.*'
                                         }
                                     },
                                     'key': {
                                         'description': 'Email key hash',
                                         'order': 3,
                                         'value': {
-                                            'value-regex': '.{0,100}'
+                                            'type': "string",
+                                            'regex': '.{0,100}'
                                         }
                                     },
                                     'response': {
                                         'description': 'Invitation response',
                                         'order': 4,
                                         'value': {
-                                            'value-radio': ['Yes', 'No']
-                                        }
+                                            'type': "string",
+                                            'enum': ['Yes', 'No']
+                                        },
+                                        # 'presentation': {
+                                        #     'checkbox': True
+                                        # }
                                     }
                                 }
                             }
@@ -193,42 +200,49 @@ class InvitationBuilder(object):
                         writers = [venue_id],
                         signatures = [venue_id],
                         edit = {
-                            'signatures': { 'values': ['(anonymous)'] },
+                            'signatures': { 'const': ['(anonymous)'] },
                             #'readers': { 'values': [venue_id, '${note.content.user.value}'] }, remove the user for now
-                            'readers': { 'values': [venue_id] },
+                            'readers': { 'const': [venue_id] },
                             'note': {
                                 #'signatures': { 'values': ['${note.content.user.value}'] },
-                                'signatures': { 'values': ['${signatures}'] },
+                                'signatures': { 'const': ['${signatures}'] },
                                 # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
-                                'readers': { 'values': [venue_id] },
-                                'writers': { 'values': [venue_id] },
+                                'readers': { 'const': [venue_id] },
+                                'writers': { 'const': [venue_id] },
                                 'content': {
                                     'title': {
                                         'order': 1,
                                         'value': {
-                                            'value': 'Recruit response'
+                                            'type': "string",
+                                            'const': 'Recruit response'
                                         }
                                     },
                                     'user': {
                                         'description': 'email address',
                                         'order': 2,
                                         'value': {
-                                            'value-regex': '.*'
+                                            'type': "string",
+                                            'regex': '.*'
                                         }
                                     },
                                     'key': {
                                         'description': 'Email key hash',
                                         'order': 3,
                                         'value': {
-                                            'value-regex': '.{0,100}'
+                                            'type': "string",
+                                            'regex': '.{0,100}'
                                         }
                                     },
                                     'response': {
                                         'description': 'Invitation response',
                                         'order': 4,
                                         'value': {
-                                            'value-radio': ['Yes', 'No']
-                                        }
+                                            'type': "string",
+                                            'enum': ['Yes', 'No']
+                                        },
+                                        # 'presentation': {
+                                        #     'checkbox': True
+                                        # }
                                     }
                                 }
                             }
@@ -262,24 +276,26 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[editor_in_chief_id],
             edit={
-                'signatures': { 'values-regex': '~.*' },
-                'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                'writers': { 'values': [ venue_id ]},
+                'signatures': { 'type': 'group[]', 'regex': '~.*' },
+                'readers': { 'const': [ venue_id, action_editors_value, authors_value]},
+                'writers': { 'const': [ venue_id ]},
                 'note': {
-                    'signatures': { 'values': [authors_value] },
-                    'readers': { 'values': [ venue_id, action_editors_value, authors_value]},
-                    'writers': { 'values': [ venue_id, action_editors_value, authors_value]},
+                    'signatures': { 'const': [authors_value] },
+                    'readers': { 'const': [ venue_id, action_editors_value, authors_value]},
+                    'writers': { 'const': [ venue_id, action_editors_value, authors_value]},
                     'content': {
                         'title': {
                             'value': {
-                                'value-regex': '^.{1,250}$'
+                                'type': "string",
+                                'regex': '^.{1,250}$'
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 1
                         },
                         'abstract': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$'
+                                'type': "string",
+                                'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2,
@@ -289,7 +305,8 @@ class InvitationBuilder(object):
                         },
                         'authors': {
                             'value': {
-                                'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                'type': "string[]",
+                                'regex': '[^;,\\n]+(,[^,\\n]+)*'
                             },
                             'description': 'Comma separated list of author names.',
                             'order': 3,
@@ -297,49 +314,46 @@ class InvitationBuilder(object):
                                 'hidden': True,
                             },
                             'readers': {
-                                'values': [ venue_id, action_editors_value, authors_value]
+                                'const': [ venue_id, action_editors_value, authors_value]
                             }
                         },
                         'authorids': {
                             'value': {
-                                'values-regex': r'~.*'
+                                'type': "group[]",
+                                'regex': r'~.*'
                             },
                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                             'order': 4,
                             'readers': {
-                                'values': [ venue_id, action_editors_value, authors_value]
+                                'const': [ venue_id, action_editors_value, authors_value]
                             }
                         },
                         'pdf': {
                             'value': {
-                                'value-file': {
-                                    'fileTypes': ['pdf'],
-                                    'size': 50
-                                }
+                                'type': 'file',
+                                'extensions': ['pdf'],
+                                'maxSize': 50
                             },
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
                         "supplementary_material": {
                             'value': {
-                                "value-file": {
-                                    "fileTypes": [
-                                        "zip",
-                                        "pdf"
-                                    ],
-                                    "size": 100
-                                },
+                                'type': 'file',
+                                'extensions': ['zip', 'pdf'],
+                                'maxSize': 100,
                                 "optional": True
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                             "order": 6,
                             'readers': {
-                                'values': [ venue_id, action_editors_value, reviewers_value, authors_value]
+                                'const': [ venue_id, action_editors_value, reviewers_value, authors_value]
                             }
                         },
                         'previous_submission_url': {
                             'value': {
-                                'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                'type': "string",
+                                'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
                             'description': f'Link to OpenReview page of a previously rejected {short_name} submission that this submission is derived from.',
@@ -347,7 +361,8 @@ class InvitationBuilder(object):
                         },
                         'changes_since_last_submission': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$',
+                                'type': "string",
+                                'regex': '^[\\S\\s]{1,5000}$',
                                 'optional': True
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
@@ -358,27 +373,30 @@ class InvitationBuilder(object):
                         },
                         'competing_interests': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$'
+                                'type': "string",
+                                'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
                             'order': 9,
                             'readers': {
-                                'values': [ venue_id, action_editors_value, authors_value]
+                                'const': [ venue_id, action_editors_value, authors_value]
                             }
                         },
                         'human_subjects_reporting': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$'
+                                'type': "string",
+                                'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                             'order': 10,
                             'readers': {
-                                'values': [ venue_id, action_editors_value, authors_value]
+                                'const': [ venue_id, action_editors_value, authors_value]
                             }
                         },
                         'venue': {
                             'value': {
-                                'value': f'Submitted to {short_name}',
+                                'type': "string",
+                                'const': f'Submitted to {short_name}',
                             },
                             'presentation': {
                                 'hidden': True,
@@ -386,7 +404,8 @@ class InvitationBuilder(object):
                         },
                         'venueid': {
                             'value': {
-                                'value': self.journal.submitted_venue_id,
+                                'type': "string",
+                                'const': self.journal.submitted_venue_id,
                             },
                             'presentation': {
                                 'hidden': True,
