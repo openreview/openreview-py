@@ -664,7 +664,7 @@ var renderData = function(venueStatusData) {
         return '<table class="table table-condensed table-minimal"><tbody>'.concat(
           Object.entries(ratingsMap)
             .map(function (rating) {
-              return "<tr><td><strong>"
+              return "<tr><td class='rating'><strong>"
                 .concat(rating[0], ":</strong> ")
                 .concat(rating[1], "</td></tr>");
             })
@@ -691,9 +691,10 @@ var renderData = function(venueStatusData) {
     postRenderTable: function() {
       $('#reviewer-status .console-table th').eq(0).css('width', '4%');  // #
       $('#reviewer-status .console-table th').eq(1).css('width', '23%');  // reviewer
-      $('#reviewer-status .console-table th').eq(2).css('width', '36%'); // review progress
-      $('#reviewer-status .console-table th').eq(3).css('width', '10%'); // rating
-      $('#reviewer-status .console-table th').eq(4).css('width', '27%'); // status
+      $('#reviewer-status .console-table th').eq(2).css('width', '33%'); // review progress
+      $('#reviewer-status .console-table th').eq(3).css('width', '15%'); // rating
+      $('#reviewer-status .console-table th').eq(4).css('width', '25%'); // status
+      $('#reviewer-status td.rating').css('white-space', 'nowrap'); // rating no wrap
     }
   });
 
