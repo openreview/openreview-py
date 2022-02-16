@@ -8,10 +8,7 @@ def process(client, edit, invitation):
 
     ## Make the retraction public
     print('Make retraction public')
-    invitation = client.post_invitation_edit(readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=Invitation(id=journal.get_retraction_release_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(Invitation(id=journal.get_retraction_release_id(number=submission.number),
             bulk=True,
             invitees=[venue_id],
             readers=['everyone'],
