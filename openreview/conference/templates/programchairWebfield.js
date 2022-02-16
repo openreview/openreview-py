@@ -1748,7 +1748,7 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
       paperNumbers.push(note.number);
 
       var numberHtml = '<strong class="note-number">' + note.number + '</strong>';
-      var summaryHtml = Handlebars.templates.noteSummary(note.details.original || note);
+      var summaryHtml = Handlebars.templates.noteSummary(note.details ? note.details.original || note : note);
       var reason = 'unknown';
       if(note.invitation === WITHDRAWN_SUBMISSION_ID) reason = 'Withdrawn'
       if(note.invitation===DESK_REJECTED_SUBMISSION_ID) reason = 'Desk Rejected'
@@ -3310,7 +3310,7 @@ var buildDeskrejectedWithdrawnCSV = function(){
   var rowData = [];
   rowData.push(columnNames.join(',') + '\n');
   _.forEach(tableDataInDisplay, function(note) {
-    var originalNote = note.details.original || note
+    var originalNote = note.details? note.details.original || note : note
     var number = originalNote.number;
     var forum = 'https://openreview.net/forum?id=' + originalNote.forum;
     var title = '"' + originalNote.content.title + '"';
