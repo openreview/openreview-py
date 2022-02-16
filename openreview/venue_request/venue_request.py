@@ -1030,8 +1030,8 @@ class VenueRequest():
             },
             'invitee_role': {
                 'description': 'Please select the role of the invitees in the venue.',
-                'value-radio': ['reviewer', 'area chair'],
-                'default': 'reviewer',
+                'value-dropdown': ['Reviewers', 'Area_Chairs'],
+                'default': 'Reviewers',
                 'required': True,
                 'order': 2
             },
@@ -1131,8 +1131,8 @@ class VenueRequest():
             },
             'invitee_role': {
                 'description': 'Please select the role of the invitees you would like to remind.',
-                'value-radio': ['reviewer', 'area chair'],
-                'default': 'reviewer',
+                'value-dropdown': ['Reviewers', 'Area_Chairs'],
+                'default': 'Reviewers',
                 'required': True,
                 'order': 2
             },

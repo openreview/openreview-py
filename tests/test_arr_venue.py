@@ -103,7 +103,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'area chair',
+                'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -131,7 +131,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'reviewer',
+                'invitee_role': 'Reviewers',
                 'invitee_details': reviewer_details,
                 'allow_role_overlap': 'Yes',
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -159,7 +159,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'area chair',
+                'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -183,7 +183,7 @@ class TestNeurIPSConference():
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
 
         ## Accept to be a reviewer
-        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as reviewer')
+        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -198,7 +198,7 @@ class TestNeurIPSConference():
         assert client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Reviewer Invitation accepted')
 
         ## Accept to be an AC
-        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as area chair')
+        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as Area Chair')
         text = messages[0]['content']['text']
         # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -237,7 +237,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'area chair',
+                'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -264,7 +264,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'reviewer',
+                'invitee_role': 'Reviewers',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
