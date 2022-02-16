@@ -1716,14 +1716,10 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
 
     conflicts = set()
     conflicts.update(author_domains.intersection(user_info['domains']))
-    if not conflicts:
-        conflicts.update(author_relations.intersection(user_info['emails']))
-    if not conflicts:
-        conflicts.update(author_emails.intersection(user_info['relations']))
-    if not conflicts:
-        conflicts.update(author_emails.intersection(user_info['emails']))
-    if not conflicts:
-        conflicts.update(author_publications.intersection(user_info['publications']))
+    conflicts.update(author_relations.intersection(user_info['emails']))
+    conflicts.update(author_emails.intersection(user_info['relations']))
+    conflicts.update(author_emails.intersection(user_info['emails']))
+    conflicts.update(author_publications.intersection(user_info['publications']))
 
     return list(conflicts)
 
