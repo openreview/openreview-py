@@ -483,7 +483,13 @@ class VenueStages():
                 'required': True,
                 'default': 'No, I will send the emails to the authors',
                 'order': 35
-            }
+            },
+            'additional_decision_form_options': {
+                'order': 36,
+                'value-dict': {},
+                'required': False,
+                'description': 'Configure additional options in the decision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+            },
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
@@ -817,10 +823,9 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
-                'default': ['Program Chairs'],
+                'default': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'order': 31,
                 'required': False,
-                'hidden': True
             },
             'senior_area_chair_identity': {
                 'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the senior area chair\' real identities.',
@@ -833,10 +838,9 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
-                'default': ['Program Chairs'],
+                'default': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'order': 31,
                 'required': False,
-                'hidden': True
             },
             'submission_name':{
                 'value-regex': '\S*',

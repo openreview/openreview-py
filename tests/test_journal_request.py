@@ -264,8 +264,8 @@ TJ22 Editors-in-Chief
                 content = {
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com'},
-                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as reviewer' },
-                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated to serve as reviewer for TJ22.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!\n{inviter}'}
+                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to act as Reviewer for ' + journal['journal_request_note']['content']['abbreviated_venue_name']['value']},
+                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated to serve as reviewer for TJ22 by {inviter}.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!\n{inviter}'}
                 },
                 forum = journal['journal_request_note']['forum'],
                 replyto = journal['journal_request_note']['forum'],
@@ -279,9 +279,10 @@ TJ22 Editors-in-Chief
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
 
-        messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to serve as reviewer')
+        messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22.</p>')
+        assert messages[0]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22 by First AE.</p>')
+        assert messages[0]['content']['replyTo'] == 'ae_journal1@mail.com'
 
         inv = '{}/Journal_Request{}/-/Comment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
         recruitment_status = ae_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])

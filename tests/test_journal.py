@@ -754,6 +754,30 @@ Comment: This is an inapropiate comment</p>
         assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id, f"{venue_id}/Paper1/Authors"]
         assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id, f"{venue_id}/Paper1/Authors"]
 
+        ## Check review reminders
+#         raia_client.post_invitation_edit(invitations='TMLR/-/Review',
+#             params={ 'noteId': note_id_1, 'noteNumber': 1, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000 },
+#             readers=[venue_id],
+#             writers=[venue_id],
+#             signatures=[venue_id]
+#         )
+
+#         time.sleep(5) ## wait until the process function runs
+
+#         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+#         assert len(messages) == 1
+#         assert messages[0]['content']['to'] == 'carlos@mailthree.com'
+#         assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
+# <p>Our records show that you are late on the current reviewing task:</p>
+# <p>Task: Review<br>
+# Submission: Paper title UPDATED<br>
+# Number of days late: 1<br>
+# Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/forum?id={note_id_1}</a></p>
+# <p>Please follow the provided link and complete your task ASAP.</p>
+# <p>We thank you for your cooperation.</p>
+# <p>The TMLR Editors-in-Chief</p>
+# '''
+
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
 
@@ -889,7 +913,7 @@ Comment: This is an inapropiate comment</p>
 
         helpers.await_queue(openreview_client)
 
-        ## All the reviewes should be public now
+        ## All the reviews should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         assert len(reviews) == 4
         assert reviews[0].readers == ['everyone']
@@ -904,16 +928,33 @@ Comment: This is an inapropiate comment</p>
         invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
-        raia_client.post_invitation_edit(
+        # raia_client.post_invitation_edit(
+        #     invitations='TMLR/-/Official_Recommendation',
+        #     readers=[venue_id],
+        #     writers=[venue_id],
+        #     signatures=[venue_id],
+        #     invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
+        #         cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 5000,
+        #         signatures=['TMLR/Editors_In_Chief']
+        #     )
+        # )
+
+        raia_client.post_invitation_edit(invitations='TMLR/-/Official_Recommendation',
+            params={ 'noteId': note_id_1, 'noteNumber': 1, 'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 50000 },
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=['TMLR/Editors_In_Chief']
-            )
+            signatures=[venue_id]
         )
 
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
+
+        time.sleep(5) ## wait until the process function runs
+
+        ## Check emails being sent to Reviewers and AE
+        messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
+        assert len(messages) == 4
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
+        assert len(messages) == 1
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
@@ -1558,9 +1599,10 @@ note={Retracted after acceptance}
         assert edges[4].weight == 1
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper4/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1891,9 +1933,10 @@ note={Rejected}
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper5/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         cho_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -2154,9 +2197,10 @@ note={Rejected}
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper6/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         cho_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],

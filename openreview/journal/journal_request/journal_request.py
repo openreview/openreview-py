@@ -8,8 +8,33 @@ class JournalRequest():
         self.support_group_id = support_group_id
         self.support_group = tools.get_group(client, self.support_group_id)
         self.client = client
+        self.meta_invitation_id = f'{support_group_id}/-/Journal_Request_Edit'
+
+    def post_invitation_edit(self, invitation):
+        return self.client.post_invitation_edit(invitations=self.meta_invitation_id,
+            readers=['~Super_User1'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitation=invitation
+        )
+
+    def set_meta_invitation(self):
+
+        self.client.post_invitation_edit(invitations=None,
+            readers=['~Super_User1'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(id=self.meta_invitation_id,
+                invitees=['~Super_User1'],
+                readers=['~Super_User1'],
+                signatures=['~Super_User1'],
+                edit=True
+            )
+        )
 
     def setup_journal_request(self):
+
+        self.set_meta_invitation()
 
         journal_request_content = {
             'title': {
@@ -104,14 +129,10 @@ class JournalRequest():
             )
 
 
-            self.client.post_invitation_edit(
-                readers = ['~Super_User1'],
-                writers = ['~Super_User1'],
-                signatures = ['~Super_User1'],
-                invitation = invitation
-            )
+            self.post_invitation_edit(invitation = invitation)
+
     def setup_journal_group(self, note_id):
-        
+
         note = self.client.get_note(note_id)
         journal_request_group = self.client.post_group(openreview.Group(
             id = f'{self.support_group_id}/Journal_Request' + str(note.number),
@@ -167,12 +188,7 @@ class JournalRequest():
                 process_string = content
             )
 
-            self.client.post_invitation_edit(
-                        readers = ['~Super_User1'],
-                        writers = ['~Super_User1'],
-                        signatures = ['~Super_User1'],
-                        invitation = invitation
-                    )
+            self.post_invitation_edit(invitation = invitation)
 
     def setup_recruitment_invitations(self, note_id, ae_template=None, reviewer_template=None):
 
@@ -258,12 +274,7 @@ Cheers!'''.replace('{short_name}', short_name)
                 process_string = content
             )
 
-            self.client.post_invitation_edit(
-                readers = ['~Super_User1'],
-                writers = ['~Super_User1'],
-                signatures = ['~Super_User1'],
-                invitation = invitation
-            )
+            self.post_invitation_edit(invitation = invitation)
 
         #setup rev recruitment
         if reviewer_template:
@@ -294,21 +305,16 @@ Cheers!'''.replace('{short_name}', short_name)
                 process_string = content
             )
 
-            self.client.post_invitation_edit(
-                readers = ['~Super_User1'],
-                writers = ['~Super_User1'],
-                signatures = ['~Super_User1'],
-                invitation = invitation
-            )
+            self.post_invitation_edit(invitation = invitation)
 
-    def setup_recruitment_by_action_editors(self, note_id):
+    def setup_recruitment_by_action_editors(self, note_id, template=None):
 
         note = self.client.get_note(note_id)
         short_name = note.content['abbreviated_venue_name']['value']
         venue_id = note.content['venue_id']['value']
         recruitment_email_template = '''Dear {name},
 
-You have been nominated to serve as a reviewer for {short_name}.
+You have been nominated to serve as a reviewer for {short_name} by {inviter}.
 
 ACCEPT LINK:
 {accept_url}
@@ -318,6 +324,9 @@ DECLINE LINK:
 
 Cheers!
 {inviter}'''.replace('{short_name}', short_name)
+
+        if template:
+            recruitment_email_template = template
 
         recruitment_content = {
             'invitee_name': {
@@ -341,7 +350,7 @@ Cheers!
                     'value-regex': '.*'
                 },
                 'presentation': {
-                    'default': f'[{short_name}] Invitation to serve as reviewer'
+                    'default': f'[{short_name}] Invitation to act as Reviewer for {short_name}'
                 }
             },
             'email_content': {
@@ -381,9 +390,4 @@ Cheers!
                 process_string = content
             )
 
-            self.client.post_invitation_edit(
-                readers = ['~Super_User1'],
-                writers = ['~Super_User1'],
-                signatures = ['~Super_User1'],
-                invitation = invitation
-            )
+            self.post_invitation_edit(invitation = invitation)

@@ -4,7 +4,7 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    journal.invitation_builder.expire_paper_invitations(journal, note)
+    journal.invitation_builder.expire_paper_invitations(note)
 
     print('Send email to AE and Reviewers')
     client.post_message(
@@ -23,4 +23,4 @@ The {journal.short_name} Editors-in-Chief
     )
 
     print('Enable Author deanonymize')
-    journal.invitation_builder.set_authors_deanonymization_invitation(journal, note)
+    journal.invitation_builder.set_authors_deanonymization_invitation(note)
