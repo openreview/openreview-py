@@ -456,16 +456,18 @@ class InvitationBuilder(object):
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': author_submission_id
+                    'withInvitation': author_submission_id
                 },
                 'tail': {
                     'type': 'profile',
-                    'member-of' : action_editors_id
+                    'inGroup' : action_editors_id
                 },
                 'weight': {
+                    'type': 'float',
                     'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 },
                 'label': {
+                    'type': 'string',
                     'regex': '.*',
                     'optional': True
                 }
@@ -488,27 +490,29 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_authors_id, '${tail}']
+                    'const': [venue_id, paper_authors_id, '${tail}']
                 },
                 'writers': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'signatures': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': author_submission_id
+                    'withInvitation': author_submission_id
                 },
                 'tail': {
                     'type': 'profile',
-                    'member-of' : action_editors_id
+                    'inGroup' : action_editors_id
                 },
                 'weight': {
-                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'type': 'float',
+                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 },
                 'label': {
-                    'value-regex': '.*',
+                    'type': 'string',
+                    'regex': '.*',
                     'optional': True
                 }
             }
@@ -533,32 +537,34 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, editor_in_chief_id, '${tail}']
+                    'const': [venue_id, editor_in_chief_id, '${tail}']
                 },
                 'nonreaders': {
-                    'values': [],
+                    'const': [],
                     'optional': True,
                     'nullable': True # make it compatible with the UI
                 },
                 'writers': {
-                    'values': [venue_id, editor_in_chief_id]
+                    'const': [venue_id, editor_in_chief_id]
                 },
                 'signatures': {
-                    'values': [editor_in_chief_id]
+                    'const': [editor_in_chief_id]
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': author_submission_id ## keep this to make the edge browser work
+                    'withInvitation': author_submission_id ## keep this to make the edge browser work
                 },
                 'tail': {
                     'type': 'profile',
-                    'member-of' : action_editors_id
+                    'inGroup' : action_editors_id
                 },
                 'weight': {
-                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'type': 'float',
+                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 },
                 'label': {
-                    'value-regex': '.*',
+                    'type': 'string',
+                    'regex': '.*',
                     'optional': True
                 }
             },
@@ -583,29 +589,30 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_authors_id]
+                    'const': [venue_id, paper_authors_id]
                 },
                 'nonreaders': {
-                    'values': [],
+                    'const': [],
                     'optional': True
                 },
                 'writers': {
-                    'values': [venue_id, paper_authors_id]
+                    'const': [venue_id, paper_authors_id]
                 },
                 'signatures': {
-                    'values': [paper_authors_id]
+                    'const': [paper_authors_id]
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': author_submission_id
+                    'withInvitation': author_submission_id
                 },
                 'tail': {
                     'type': 'profile',
-                    'member-of' : action_editors_id,
+                    'inGroup' : action_editors_id,
                     'description': 'select at least 3 AEs to recommend. AEs who have conflicts with your submission are not shown.'
                 },
                 'weight': {
-                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'type': 'float',
+                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 }
             }
         )
@@ -626,26 +633,28 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, '${tail}']
+                    'const': [venue_id, '${tail}']
                 },
                 'writers': {
-                    'values': [venue_id, '${tail}']
+                    'const': [venue_id, '${tail}']
                 },
                 'signatures': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'head': {
                     'type': 'group',
-                    'value': action_editors_id
+                    'const': action_editors_id
                 },
                 'tail': {
                     'type': 'profile',
-                    'member-of': action_editors_id
+                    'inGroup': action_editors_id
                 },
                 'weight': {
-                    'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                    'type': 'integer',
+                    'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                     'presentation': {
-                        'default': 12
+                        'default': 12,
+                        #'input': 'select'
                     }
                 }
             }
@@ -677,30 +686,31 @@ class InvitationBuilder(object):
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_action_editors_id]
+                    'const': [venue_id, paper_action_editors_id]
                 },
                 'nonreaders': {
-                    'values': [paper_authors_id]
+                    'const': [paper_authors_id]
                 },
                 'writers': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'signatures': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': author_submission_id
+                    'withInvitation': author_submission_id
                 },
                 'tail': {
-                    'type': 'profile',
-                    #'member-of' : reviewers_id
+                    'type': 'profile'
                 },
                 'weight': {
-                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'type': 'float',
+                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 },
                 'label': {
-                    'value-regex': '.*',
+                    'type': 'string',
+                    'regex': '.*',
                     'optional': True
                 }
             }
@@ -716,35 +726,38 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_action_editors_id, '${tail}']
+                    'const': [venue_id, paper_action_editors_id, '${tail}']
                 },
                 'nonreaders': {
-                    'values': [paper_authors_id]
+                    'const': [paper_authors_id]
                 },
                 'writers': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'signatures': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': author_submission_id
+                    'withInvitation': author_submission_id
                 },
                 'tail': {
                     'type': 'profile',
                     #'member-of' : reviewers_id
                 },
                 'weight': {
-                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'type': 'float',
+                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 },
                 'label': {
-                    'value-regex': '.*',
+                    'type': 'string',
+                    'regex': '.*',
                     'optional': True
                 }
             }
@@ -763,25 +776,27 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, paper_action_editors_id, '${tail}']
+                    'const': [venue_id, paper_action_editors_id, '${tail}']
                 },
                 'nonreaders': {
-                    'values': [paper_authors_id]
+                    'const': [paper_authors_id]
                 },
                 'writers': {
-                    'values': [venue_id, paper_action_editors_id]
+                    'const': [venue_id, paper_action_editors_id]
                 },
                 'signatures': {
-                    'values-regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*')
+                    'type': 'group[]',
+                    'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*')
                 },
                 'head': {
                     'type': 'note',
-                    'value-invitation': author_submission_id ## keep this to make the edge browser work
+                    'withInvitation': author_submission_id ## keep this to make the edge browser work
                 },
                 'tail': {
                     'type': 'profile',
@@ -791,10 +806,12 @@ class InvitationBuilder(object):
                     }
                 },
                 'weight': {
-                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'type': 'float',
+                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 },
                 'label': {
-                    'value-regex': '.*',
+                    'type': 'string',
+                    'regex': '.*',
                     'optional': True
                 }
             },
@@ -813,29 +830,31 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, '${tail}']
+                    'const': [venue_id, '${tail}']
                 },
                 'writers': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'signatures': {
-                    'values': [editor_in_chief_id]
+                    'const': [editor_in_chief_id]
                 },
                 'head': {
                     'type': 'group',
-                    'value': reviewers_id
+                    'const': reviewers_id
                 },
                 'tail': {
                     'type': 'profile',
-                    'member-of': reviewers_id
+                    'inGroup': reviewers_id
                 },
                 'weight': {
-                    'value-dropdown': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
+                    'type': 'integer',
+                    'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
                     'presentation': {
                         'default': 6
                     }
@@ -853,29 +872,30 @@ class InvitationBuilder(object):
             type='Edge',
             edit={
                 'ddate': {
-                    'int-range': [ 0, 9999999999999 ],
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
                     'optional': True,
                     'nullable': True
                 },
                 'readers': {
-                    'values': [venue_id, action_editors_id, '${tail}']
+                    'const': [venue_id, action_editors_id, '${tail}']
                 },
                 'writers': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'signatures': {
-                    'values': [venue_id]
+                    'const': [venue_id]
                 },
                 'head': {
                     'type': 'group',
-                    'value': reviewers_id
+                    'const': reviewers_id
                 },
                 'tail': {
-                    'type': 'profile',
-                    #'member-of': reviewers_id
+                    'type': 'profile'
                 },
                 'weight': {
-                    'value-regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'type': 'float',
+                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
                 }
             }
         )
