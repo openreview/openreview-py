@@ -1803,7 +1803,11 @@ def get_neurips_profile_info(profile, n_years=3):
         if email.startswith("****@"):
             raise openreview.OpenReviewException("You do not have the required permissions as some emails are obfuscated. Please login with the correct account or contact support.")
         emails.add(email)
-        domains.update(openreview.tools.subdomains(email))
+
+    ## if institution section is empty, add email domains
+    if not domains:
+        for email in profile.content['emails']:
+            domains.update(openreview.tools.subdomains(email))
 
     ## Publications section: get publications within last n years
     for pub in profile.content.get('publications', []):
