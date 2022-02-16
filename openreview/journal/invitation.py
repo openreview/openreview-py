@@ -1040,6 +1040,7 @@ class InvitationBuilder(object):
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
+            signatures=[venue_id],
             edit={
                 'signatures': { 'values': [venue_id] },
                 'readers': { 'values': [venue_id] },
