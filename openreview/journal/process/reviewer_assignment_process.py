@@ -58,10 +58,7 @@ The {journal.short_name} Editors-in-Chief
         duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
 
         ## Update review invitation duedate
-        invitation = client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=journal.get_review_id(number=note.number),
+        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=note.number),
                 signatures=[journal.get_editors_in_chief_id()],
                 duedate=openreview.tools.datetime_millis(duedate)
         ))

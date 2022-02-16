@@ -8,7 +8,7 @@ def process(client, edit, invitation):
 
     duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
 
-    journal.invitation_builder.set_reviewer_assignment_invitation(journal, note, duedate)
+    journal.invitation_builder.set_reviewer_assignment_invitation(note, duedate)
 
     client.post_message(
         recipients=[journal.get_action_editors_id(number=note.number)],
