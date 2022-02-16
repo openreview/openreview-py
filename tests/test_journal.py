@@ -74,7 +74,7 @@ class TestJournal():
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         group = openreview_client.get_group('TMLR/Action_Editors')
         assert len(group.members) == 9
@@ -97,7 +97,7 @@ class TestJournal():
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         group = openreview_client.get_group('TMLR/Reviewers')
         assert len(group.members) == 6
@@ -150,7 +150,7 @@ class TestJournal():
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         note_id_1=submission_note_1['note']['id']
         process_logs = openreview_client.get_process_logs(id = submission_note_1['id'])
         assert len(process_logs) == 1
@@ -210,7 +210,7 @@ class TestJournal():
                     'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
                 }
             ))
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -244,7 +244,7 @@ class TestJournal():
                                         }
                                     ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         note_id_2=submission_note_2['note']['id']
         process_logs = openreview_client.get_process_logs(id = submission_note_2['id'])
         assert len(process_logs) == 1
@@ -271,7 +271,7 @@ class TestJournal():
                                         }
                                     ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         note_id_3=submission_note_3['note']['id']
         process_logs = openreview_client.get_process_logs(id = submission_note_3['id'])
         assert len(process_logs) == 1
@@ -296,7 +296,7 @@ class TestJournal():
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -333,7 +333,7 @@ class TestJournal():
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         note = joelle_client.get_note(note_id_1)
         assert note
@@ -382,7 +382,7 @@ note={Under review}
                                         'comment': { 'value': 'missing PDF' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
         assert len(messages) == 1
@@ -446,7 +446,7 @@ note={Under review}
                                         }
                                     ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         note = test_client.get_note(note_id_3)
         assert note
@@ -490,7 +490,7 @@ note={Withdrawn}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -515,7 +515,7 @@ note={Withdrawn}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -540,7 +540,7 @@ note={Withdrawn}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -573,7 +573,7 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         process_logs = openreview_client.get_process_logs(id = david_review_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -604,7 +604,7 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
         assert len(messages) == 4
@@ -640,7 +640,7 @@ note={Withdrawn}
                 )
             )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
@@ -665,7 +665,7 @@ note={Withdrawn}
         assert note.content['title']['value'] == 'Comment title'
         assert note.content['comment']['value'] == 'This is an inapropiate comment'
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(subject = '[TMLR] Public Comment posted on submission Paper title UPDATED')
         assert len(messages) == 7
@@ -718,7 +718,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         review_2=review_note['note']['id']
         process_logs = openreview_client.get_process_logs(id = review_note['id'])
         assert len(process_logs) == 1
@@ -793,7 +793,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         review_3=review_note['note']['id']
         process_logs = openreview_client.get_process_logs(id = review_note['id'])
         assert len(process_logs) == 1
@@ -877,7 +877,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1
@@ -894,7 +894,7 @@ Comment: This is an inapropiate comment</p>
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         hugo_anon_groups=hugo_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Hugo_Larochelle1')
         assert len(hugo_anon_groups) == 1
@@ -911,7 +911,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## All the reviews should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
@@ -967,7 +967,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -991,7 +991,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -1015,7 +1015,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -1067,7 +1067,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
@@ -1106,7 +1106,7 @@ Comment: This is an inapropiate comment</p>
                     }
                 )
             )
-            helpers.await_queue(openreview_client)
+            helpers.await_queue(openreview_client, wait_for_delayed=False)
             process_logs = openreview_client.get_process_logs(id = rating_note['id'])
             assert len(process_logs) == 1
             assert process_logs[0]['status'] == 'ok'
@@ -1122,7 +1122,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
@@ -1141,7 +1141,7 @@ Comment: This is an inapropiate comment</p>
                                 }
                             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
 
         decision_note = raia_client.get_note(decision_note.id)
@@ -1182,7 +1182,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -1224,7 +1224,7 @@ Comment: This is an inapropiate comment</p>
                                  }
                             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Camera ready version accepted for your TMLR submission Paper title VERSION 2')
         assert len(messages) == 1
@@ -1281,7 +1281,7 @@ note={Featured Certification, Reproducibility Certification}
                                  }
                             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
         assert len(messages) == 2
@@ -1303,7 +1303,7 @@ note={Featured Certification, Reproducibility Certification}
                                  }
                             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
         assert len(messages) == 2
@@ -1383,7 +1383,7 @@ note={Retracted after acceptance}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         note_id_4=submission_note_4['note']['id']
 
         # Assign Action Editor
@@ -1396,7 +1396,7 @@ note={Retracted after acceptance}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Accept the submission 4
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper4/-/Review_Approval',
@@ -1405,7 +1405,7 @@ note={Retracted after acceptance}
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1418,7 +1418,7 @@ note={Retracted after acceptance}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1431,7 +1431,7 @@ note={Retracted after acceptance}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign Javier Burroni
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1444,7 +1444,7 @@ note={Retracted after acceptance}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
@@ -1461,7 +1461,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been submitted')
         assert len(messages) == 1
@@ -1499,7 +1499,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         invitations = joelle_client.get_invitations(replyForum=note_id_4)
         assert f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval' in [i.id for i in invitations]
@@ -1517,7 +1517,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         assert '~Peter_Snow1' in solitic_review_approval_note['note']['readers']
 
@@ -1553,7 +1553,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         messages = journal.client.get_messages(subject = '[TMLR] Review posted on TMLR submission Paper title 4')
 
@@ -1571,7 +1571,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Carlos_Mondragon1')
@@ -1587,7 +1587,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
@@ -1622,7 +1622,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review recommendation
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Official_Recommendation',
@@ -1634,7 +1634,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review recommendation
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Official_Recommendation',
@@ -1646,7 +1646,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         reviews=openreview_client.get_notes(forum=note_id_4, invitation=f'{venue_id}/Paper4/-/Review', sort= 'number:asc')
 
@@ -1660,7 +1660,7 @@ note={Retracted after acceptance}
                     }
                 )
             )
-            helpers.await_queue(openreview_client)
+            helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         with pytest.raises(openreview.OpenReviewException, match=r'Decision Reject can not have certifications'):
             decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Decision',
@@ -1684,7 +1684,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == ['TMLR/Editors_In_Chief', f"{venue_id}/Paper4/Action_Editors"]
@@ -1698,7 +1698,7 @@ note={Retracted after acceptance}
                                 'comment_to_the_AE': { 'value': 'I agree with the AE' }
                             }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
@@ -1744,7 +1744,7 @@ note={Rejected}
                                 'confirmation': { 'value': 'I want to reveal all author names on behalf of myself and my co-authors.' }
                             }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         note = openreview_client.get_note(note_id_4)
         assert note
@@ -1818,7 +1818,7 @@ note={Rejected}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         note_id_5=submission_note_5['note']['id']
 
         # Assign Action Editor
@@ -1831,7 +1831,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Accept the submission 5
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper5/-/Review_Approval',
@@ -1840,7 +1840,7 @@ note={Rejected}
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1853,7 +1853,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1866,7 +1866,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign Javier Burroni
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1879,7 +1879,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')
@@ -1897,7 +1897,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Javier_Burroni1')
@@ -1913,7 +1913,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Carlos_Mondragon1')
@@ -1929,7 +1929,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper5/-/Official_Recommendation')
@@ -1956,7 +1956,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review recommendation
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Official_Recommendation',
@@ -1968,7 +1968,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review recommendation
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Official_Recommendation',
@@ -1980,7 +1980,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         reviews=openreview_client.get_notes(forum=note_id_5, invitation=f'{venue_id}/Paper5/-/Review', sort= 'number:asc')
 
@@ -1994,7 +1994,7 @@ note={Rejected}
                     }
                 )
             )
-            helpers.await_queue(openreview_client)
+            helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Decision',
             signatures=[f"{venue_id}/Paper5/Action_Editors"],
@@ -2006,7 +2006,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == ['TMLR/Editors_In_Chief', f"{venue_id}/Paper5/Action_Editors"]
@@ -2029,7 +2029,7 @@ note={Rejected}
                                 'comment_to_the_AE': { 'value': 'I agree with the AE' }
                             }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
@@ -2082,7 +2082,7 @@ note={Rejected}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
         note_id_6=submission_note_6['note']['id']
 
         # Assign Action Editor
@@ -2095,7 +2095,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Accept the submission 6
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper6/-/Review_Approval',
@@ -2104,7 +2104,7 @@ note={Rejected}
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -2117,7 +2117,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -2130,7 +2130,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Assign Javier Burroni
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -2143,7 +2143,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~David_Belanger1')
@@ -2161,7 +2161,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Javier_Burroni1')
@@ -2177,7 +2177,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Carlos_Mondragon1')
@@ -2193,7 +2193,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper6/-/Official_Recommendation')
@@ -2220,7 +2220,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review recommendation
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Official_Recommendation',
@@ -2232,7 +2232,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Post a review recommendation
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Official_Recommendation',
@@ -2244,7 +2244,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         reviews=openreview_client.get_notes(forum=note_id_6, invitation=f'{venue_id}/Paper6/-/Review', sort= 'number:asc')
 
@@ -2258,7 +2258,7 @@ note={Rejected}
                     }
                 )
             )
-            helpers.await_queue(openreview_client)
+            helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         ## Withdraw the submission 6
         withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper6/-/Withdrawal',
@@ -2269,7 +2269,7 @@ note={Rejected}
                                         }
                                     ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         note = test_client.get_note(note_id_6)
         assert note
@@ -2302,7 +2302,7 @@ note={Rejected}
                                 'confirmation': { 'value': 'I want to reveal all author names on behalf of myself and my co-authors.' }
                             }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
         note = openreview_client.get_note(note_id_6)
         assert note
@@ -2350,7 +2350,7 @@ note={Withdrawn}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue(openreview_client, wait_for_delayed=False)
 
 
 
