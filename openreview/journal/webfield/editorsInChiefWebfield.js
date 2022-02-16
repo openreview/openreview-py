@@ -28,6 +28,12 @@ var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
 
+var REVIEWER_RATING_MAP = {
+  "Exceeds expectations": 3,
+  "Meets expectations": 2,
+  "Falls below expectations": 1
+}
+
 var HEADER = {
   title: SHORT_PHRASE + ' Editors-In-Chief Console',
   instructions: ''
@@ -648,29 +654,40 @@ var renderData = function(venueStatusData) {
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
-    headings: ['#', 'Reviewer', 'Review Progress', 'Rating', 'Status'],
+    headings: ['#', 'Reviewer', 'Review Progress', 'Rating <span id="rating-info" class="glyphicon glyphicon-info-sign"></span>', 'Status'],
     renders: [
-      function(data) {
+      function (data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
       Handlebars.templates.committeeSummary,
       Handlebars.templates.notesReviewerProgress,
-      function(data) {
+      function (data) {
         var ratingsMap = data.ratings.reduce(function (prev, curr) {
           if (prev[curr]) prev[curr]++;
           else prev[curr] = 1;
           return prev;
         }, {});
-        return '<table class="table table-condensed table-minimal"><tbody>'.concat(
-          Object.entries(ratingsMap)
-            .map(function (rating) {
-              return "<tr><td class='rating'><strong>"
-                .concat(rating[0], ":</strong> ")
-                .concat(rating[1], "</td></tr>");
-            })
-            .join(""),
-          "</tbody></table>"
-        );
+        var totalRating = Object.entries(ratingsMap).reduce(function (prev, curr) {
+          return prev + REVIEWER_RATING_MAP[curr[0]] * curr[1];
+        }, 0);
+        var averageRating = (totalRating / data.ratings.length);
+        return '<table class="table table-condensed table-minimal">'
+          .concat(
+            Number.isNaN(averageRating)
+              ? ""
+              : "<h4>Average: ".concat(averageRating.toFixed(2), "</h4>"),
+            "<tbody>"
+          )
+          .concat(
+            Object.entries(ratingsMap)
+              .map(function (rating) {
+                return "<tr><td class='rating'><strong>"
+                  .concat(rating[0], ":</strong> ")
+                  .concat(rating[1], "</td></tr>");
+              })
+              .join(""),
+            "</tbody></table>"
+          );
       },
       Handlebars.templates.notesReviewerStatus
     ],
@@ -695,6 +712,21 @@ var renderData = function(venueStatusData) {
       $('#reviewer-status .console-table th').eq(3).css('width', '15%'); // rating
       $('#reviewer-status .console-table th').eq(4).css('width', '25%'); // status
       $('#reviewer-status td.rating').css('white-space', 'nowrap'); // rating no wrap
+      $("#rating-info").on("mouseenter", function (e) {
+        $(e.target).tooltip({
+          title: '<strong class="tooltip-title">Rating map</strong><br/>'.concat(
+            Object.entries(REVIEWER_RATING_MAP || {})
+              .map(function (item) {
+                return "<span>"
+                  .concat(item[0], " = ")
+                  .concat(item[1], "</span><br/>");
+              })
+              .join("")
+          ),
+          html: true,
+          placement: "bottom"
+        });
+      });
     }
   });
 
