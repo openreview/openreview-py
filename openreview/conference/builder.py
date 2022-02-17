@@ -70,6 +70,8 @@ class Conference(object):
         self.authors_name = 'Authors'
         self.reviewers_name = 'Reviewers'
         self.reviewer_roles = ['Reviewers']
+        self.area_chair_roles = ['Area_Chairs']
+        self.senior_area_chair_roles = ['Senior_Area_Chairs']
         self.area_chairs_name = 'Area_Chairs'
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.secondary_area_chairs_name = 'Secondary_Area_Chair'
@@ -399,7 +401,6 @@ class Conference(object):
     def get_area_chairs_id(self, number = None):
         return self.get_committee_id(self.area_chairs_name, number)
 
-
     def get_senior_area_chairs_id(self, number = None):
         return self.get_committee_id(self.senior_area_chairs_name, number)
 
@@ -454,6 +455,14 @@ class Conference(object):
             if name.endswith('s'):
                 return name[:-1]
         return name
+
+    def get_roles(self):
+        roles = self.reviewer_roles
+        if self.use_area_chairs:
+            roles = self.reviewer_roles + self.area_chair_roles
+        if self.use_senior_area_chairs:
+            roles = roles + self.senior_area_chair_roles
+        return roles
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
@@ -2188,6 +2197,12 @@ class ConferenceBuilder(object):
     def set_conference_area_chairs_name(self, name):
         self.conference.has_area_chairs(True)
         self.conference.set_area_chairs_name(name)
+
+    def set_area_chair_roles(self, roles):
+        self.conference.area_chair_roles = roles
+
+    def set_senior_area_chair_roles(self, roles):
+        self.conference.senior_area_chair_roles = roles
 
     def set_conference_program_chairs_name(self, name):
         self.conference.set_program_chairs_name(name)

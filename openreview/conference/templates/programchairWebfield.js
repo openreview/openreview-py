@@ -1192,10 +1192,12 @@ var displayStatsAndConfiguration = function(conferenceStats) {
       '<a href="/group/edit?id=' + AREA_CHAIRS_ID + '/Invited">Invited</a>, ' +
       '<a href="/group/edit?id=' + AREA_CHAIRS_ID + '/Declined">Declined</a>)</li>';
   }
-  html += '<li><a href="/group/edit?id=' + REVIEWERS_ID + '">Reviewers</a> (' +
-    '<a href="/group/edit?id=' + REVIEWERS_ID + '/Invited">Invited</a>, ' +
-    '<a href="/group/edit?id=' + REVIEWERS_ID + '/Declined">Declined</a>)</li>' +
-    '<li><a href="/group/edit?id=' + AUTHORS_ID + '">Authors</a> (' +
+  requestForm.content['reviewer_roles'].forEach(function(role) {
+    html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
+      '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
+      '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
+  })
+  html += '<li><a href="/group/edit?id=' + AUTHORS_ID + '">Authors</a> (' +
     '<a href="/group/edit?id=' + AUTHORS_ID + '/Accepted">Accepted</a>)</li></ul>';
   html += '</div>';
 

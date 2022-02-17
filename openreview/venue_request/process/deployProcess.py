@@ -116,8 +116,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees in the venue.',
-                    'value-dropdown': conference.reviewer_roles,
-                    'default': conference.reviewer_roles[0],
+                    'value-dropdown': conference.get_roles(),
+                    'default': conference.get_roles()[0],
                     'required': True,
                     'order': 2
                 },
@@ -172,8 +172,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees you would like to remind.',
-                    'value-dropdown': conference.reviewer_roles,
-                    'default': conference.reviewer_roles[0],
+                    'value-dropdown': conference.get_roles(),
+                    'default': conference.get_roles()[0],
                     'required': True,
                     'order': 2
                 },
@@ -203,12 +203,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
-    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
-        recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.reviewer_roles + ['Area_Chairs']
-        remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.reviewer_roles + ['Area_Chairs']
-        if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
-            recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.reviewer_roles + ['Area_Chairs', 'Senior_Area_Chairs']
-            remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.reviewer_roles + ['Area_Chairs', 'Senior_Area_Chairs']
+    if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
             'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
             'value-radio': ['Yes', 'No'],
