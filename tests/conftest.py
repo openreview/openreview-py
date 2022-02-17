@@ -45,7 +45,7 @@ class Helpers:
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
     @staticmethod
-    def await_queue(super_client=None, wait_for_delayed=False):
+    def await_queue(super_client=None, wait_for_delayed=True):
         if super_client is None:
             super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
             assert super_client is not None, 'Super Client is none'

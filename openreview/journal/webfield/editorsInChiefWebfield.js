@@ -99,7 +99,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Submission Complete', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
+    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Camera Ready', 'Submission Complete', 'Action Editor Status', 'Reviewer Status'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -238,6 +238,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     // Camera Ready Verification by AE
     var cameraReadyVerificationInvitation = invitationsById[getInvitationId(number, CAMERA_READY_VERIFICATION_NAME)];
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
+    var cameraReadyTask = null;
+    var cameraReadyVerificationTask = null;
 
     if (reviewApprovalInvitation) {
       tasks.push({
@@ -300,23 +302,26 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     }
 
     if (cameraReadyRevisionInvitation) {
-      tasks.push({
+      var complete = submission.invitations.includes(cameraReadyRevisionInvitation.id);
+      cameraReadyTask = {
         id: cameraReadyRevisionInvitation.id,
         startdate: cameraReadyRevisionInvitation.cdate,
         duedate: cameraReadyRevisionInvitation.duedate,
-        complete: submission.invitations.includes(cameraReadyRevisionInvitation.id),
-        replies: []
-      });
+        complete: complete,
+        replies: complete ? [1] : []
+      };
+      tasks.push(cameraReadyTask);
     }
 
     if (cameraReadyVerificationInvitation) {
-      tasks.push({
+      cameraReadyVerificationTask = {
         id: cameraReadyVerificationInvitation.id,
         startdate: cameraReadyVerificationInvitation.cdate,
         duedate: cameraReadyVerificationInvitation.duedate,
         complete: cameraReadyVerificationNotes.length > 0,
         replies: cameraReadyVerificationNotes
-      });
+      };
+      tasks.push(cameraReadyVerificationTask);
     }
 
     var reviews = reviewNotes;
@@ -452,6 +457,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         numSubmittedRecommendations: recommendations.length,
         numReviewers: paperReviewers.length,
         reviewers: paperReviewerStatus,
+        expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
         actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
@@ -476,6 +482,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         metaReview: metaReview,
         referrer: referrerUrl,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
+        cameraReadyPending: (cameraReadyTask && !cameraReadyTask.complete) || (cameraReadyVerificationTask && !cameraReadyVerificationTask.complete),
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
         actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
@@ -497,8 +504,9 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 
   return {
     submissionStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === SUBMITTED_STATUS; }),
-    paperStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS; }),
+    paperStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !row.actionEditorProgressData.decisionApprovalPending && !row.actionEditorProgressData.cameraReadyPending;  }),
     decisionApprovalStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.decisionApprovalPending; }),
+    cameraReadyStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.cameraReadyPending; }),
     completeSubmissionStatusRows: paperStatusRows.filter(function(row) { return ![SUBMITTED_STATUS, UNDER_REVIEW_STATUS].includes(row.submission.content.venueid); }),
     reviewerStatusRows: Object.values(reviewerStatusById),
     actionEditorStatusRows: Object.values(actionEditorStatusById),
@@ -607,8 +615,28 @@ var renderTable = function(container, rows) {
         messageBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your decision for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief'
-      }
-      , {
+      },
+      {
+        id: 'all-authors',
+        name: 'All authors of selected papers',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? row.submission.content.authorids.map(function(authorId) { return { id: authorId, name: view.prettyId(authorId), email: authorId };})
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum
+              })
+            }
+          });
+        },
+        messageBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your camera ready revision for ' + SHORT_PHRASE + '.\n\n' +
+        'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
+        'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
+      },
+      {
         id: 'unsubmitted-reviews',
         name: 'Reviewers with missing reviews',
         getUsers: function(selectedIds) {
@@ -667,6 +695,7 @@ var renderData = function(venueStatusData) {
   renderTable('submitted', venueStatusData.submissionStatusRows);
   renderTable('under-review', venueStatusData.paperStatusRows);
   renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
@@ -765,11 +794,6 @@ var renderData = function(venueStatusData) {
     extraClasses: 'console-table'
   });
 
-  Webfield2.ui.renderTasks(
-    '#editors-in-chief-tasks',
-    venueStatusData.invitations,
-    { referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
-  );
 };
 
 main();
