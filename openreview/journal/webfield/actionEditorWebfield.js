@@ -294,8 +294,10 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
         noteId: submission.id,
         paperNumber: number,
         numSubmittedReviews: reviews.length,
+        numSubmittedRecommendations: recommendations.length,
         numReviewers: reviewers.length,
         reviewers: reviewerStatus,
+        expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
         actions: submission.content.venueid.value == UNDER_REVIEW_STATUS ? [
