@@ -294,6 +294,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
         noteId: submission.id,
         paperNumber: number,
         numSubmittedReviews: reviews.length,
+        numSubmittedRecommendations: recommendations.length,
         numReviewers: reviewers.length,
         reviewers: reviewerStatus,
         expandReviewerList: true,
