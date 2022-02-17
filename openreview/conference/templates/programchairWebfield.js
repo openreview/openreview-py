@@ -1120,6 +1120,10 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   // Config
   var requestForm = conferenceStatusData.requestForm;
+  var senior_area_chair_roles = requestForm && requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs']
+  var area_chair_roles = requestForm && requestForm.content['area_chair_roles'] || ['Area_Chairs']
+  var reviewer_roles = requestForm && requestForm.content['reviewer_roles'] || ['Reviewers']
+
   html += '<div class="row" style="margin-top: .5rem;">';
   if (requestForm) {
     html += '<div class="col-md-4 col-xs-12">'
@@ -1154,7 +1158,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   if (SENIOR_AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding');
-    (requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs']).forEach(function(role) {
+    senior_area_chair_roles.forEach(function(role) {
       if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
         notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
       }
@@ -1163,13 +1167,13 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   if (AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding');
     pushToDatedArrays(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation');
-    (requestForm.content['area_chair_roles'] || ['Area_Chairs']).forEach(function(role) {
+    area_chair_roles.forEach(function(role) {
       if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
         notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
       }
     })
   }
-  (requestForm.content['reviewer_roles'] || ['Reviewers']).forEach(function(role) {
+  reviewer_roles.forEach(function(role) {
     if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
       notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
     }
@@ -1195,20 +1199,20 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
     '<li><a href="/group/edit?id=' + PROGRAM_CHAIRS_ID + '">Program Chairs</a></li>';
   if (SENIOR_AREA_CHAIRS_ID) {
-    (requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs']).forEach(function(role) {
+    senior_area_chair_roles.forEach(function(role) {
       html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
     })
   }
   if (AREA_CHAIRS_ID) {
-    (requestForm.content['area_chair_roles'] || ['Area_Chairs']).forEach(function(role) {
+    area_chair_roles.forEach(function(role) {
       html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
     })
   }
-  (requestForm.content['reviewer_roles'] || ['Reviewers']).forEach(function(role) {
+  reviewer_roles.forEach(function(role) {
     html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
       '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
       '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
