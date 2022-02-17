@@ -940,21 +940,21 @@ Comment: This is an inapropiate comment</p>
         # )
 
         raia_client.post_invitation_edit(invitations='TMLR/-/Official_Recommendation',
-            params={ 'noteId': note_id_1, 'noteNumber': 1, 'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 50000 },
+            params={ 'noteId': note_id_1, 'noteNumber': 1, 'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()), 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) },
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id]
         )
 
-        helpers.await_queue(openreview_client, wait_for_delayed=False)
+        helpers.await_queue(openreview_client)
 
-        time.sleep(5) ## wait until the process function runs
+        # time.sleep(5) ## wait until the process function runs
 
-        ## Check emails being sent to Reviewers and AE
-        messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
-        assert len(messages) == 4
-        messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
-        assert len(messages) == 1
+        # ## Check emails being sent to Reviewers and AE
+        # messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
+        # assert len(messages) == 4
+        # messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
+        # assert len(messages) == 1
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
@@ -1313,6 +1313,10 @@ note={Featured Certification, Reproducibility Certification}
 <p>To view our decision, follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={approval_note['note']['id']}</a></p>
 <p>The TMLR Editors-in-Chief</p>
 '''
+
+        note = openreview_client.get_note(retraction_note['note']['id'])
+        assert note.readers == ['everyone']
+        assert note.nonreaders == []
 
         note = openreview_client.get_note(note_id_1)
         assert note
