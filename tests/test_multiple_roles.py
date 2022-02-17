@@ -355,8 +355,8 @@ class TestMultipleRoles():
             weight = 0.94
         ))
 
-        conference.set_assignments('program-committee-matching', 'lifelong-ml.cc/CoLLAs/2022/Conference/Program_Committee', enable_reviewer_reassignment=False, overwrite=False)
-        conference.set_assignments('senior-program-committee-matching', 'lifelong-ml.cc/CoLLAs/2022/Conference/Senior_Program_Committee', enable_reviewer_reassignment=False, overwrite=False)
+        conference.set_assignments('program-committee-matching', 'lifelong-ml.cc/CoLLAs/2022/Conference/Program_Committee', enable_reviewer_reassignment=True, overwrite=True)
+        conference.set_assignments('senior-program-committee-matching', 'lifelong-ml.cc/CoLLAs/2022/Conference/Senior_Program_Committee', enable_reviewer_reassignment=True, overwrite=True)
 
         reviewers = client.get_group('lifelong-ml.cc/CoLLAs/2022/Conference/Paper1/Reviewers')
         assert '~Reviewer_CoLLAsMIT1' in reviewers.members

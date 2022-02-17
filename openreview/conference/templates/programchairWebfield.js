@@ -337,9 +337,15 @@ var getInvitationMap = function() {
     });
   }
 
-  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP)
-  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations) {
-    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations);
+  var assignmentInvitationsP = Webfield.getAll('/invitations', {
+    regex: CONFERENCE_ID + '.*/-/Assignment_Configuration',
+    expired: true,
+    type: 'notes'
+  });
+
+  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP, assignmentInvitationsP)
+  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations, assignmentInvitations) {
+    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations).concat(assignmentInvitations);
     return _.keyBy(allInvitations, 'id');
   });
 };
@@ -1148,20 +1154,26 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   if (SENIOR_AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding');
-    if (invitationMap[SENIOR_AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
-      notDatedElements.push('<li><a href="/assignments?group=' + SENIOR_AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Senior Area Chairs Paper Assignment</a> open until Reviewing starts</li>');
-    }
+    (requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs']).forEach(function(role) {
+      if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
+        notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
+      }
+    })
   }
   if (AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding');
     pushToDatedArrays(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation');
-    if (invitationMap[AREA_CHAIRS_ID + '/-/Assignment_Configuration']) {
-      notDatedElements.push('<li><a href="/assignments?group=' + AREA_CHAIRS_ID + '&referrer=' + referrerUrl + '">Area Chairs Paper Assignment</a> open until Reviewing starts</li>');
+    (requestForm.content['area_chair_roles'] || ['Area_Chairs']).forEach(function(role) {
+      if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
+        notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
+      }
+    })
+  }
+  (requestForm.content['reviewer_roles'] || ['Reviewers']).forEach(function(role) {
+    if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
+      notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
     }
-  }
-  if (invitationMap[REVIEWERS_ID + '/-/Assignment_Configuration']) {
-    notDatedElements.push('<li><a href="/assignments?group=' + REVIEWERS_ID + '&referrer=' + referrerUrl + '">Reviewers Paper Assignment</a> open until Reviewing starts</li>');
-  }
+  })
   pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing');
   pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting');
   pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_META_REVIEW_NAME, 'Meta Reviews');
@@ -1182,17 +1194,21 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<div class="col-md-4 col-xs-6">'
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
     '<li><a href="/group/edit?id=' + PROGRAM_CHAIRS_ID + '">Program Chairs</a></li>';
-  requestForm.content['senior_area_chair_roles'].forEach(function(role) {
-    html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
-      '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
-      '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
-  })
-  requestForm.content['area_chair_roles'].forEach(function(role) {
-    html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
-      '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
-      '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
-  })
-  requestForm.content['reviewer_roles'].forEach(function(role) {
+  if (SENIOR_AREA_CHAIRS_ID) {
+    (requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs']).forEach(function(role) {
+      html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
+        '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
+        '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
+    })
+  }
+  if (AREA_CHAIRS_ID) {
+    (requestForm.content['area_chair_roles'] || ['Area_Chairs']).forEach(function(role) {
+      html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
+        '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
+        '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
+    })
+  }
+  (requestForm.content['reviewer_roles'] || ['Reviewers']).forEach(function(role) {
     html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
       '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
       '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
