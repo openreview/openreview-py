@@ -116,8 +116,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees in the venue.',
-                    'value-radio': ['reviewer'],
-                    'default': 'reviewer',
+                    'value-dropdown': conference.get_roles(),
+                    'default': conference.get_roles()[0],
                     'required': True,
                     'order': 2
                 },
@@ -172,8 +172,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees you would like to remind.',
-                    'value-radio': ['reviewer'],
-                    'default': 'reviewer',
+                    'value-dropdown': conference.get_roles(),
+                    'default': conference.get_roles()[0],
                     'required': True,
                     'order': 2
                 },
@@ -203,12 +203,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
-    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
-        recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
-        remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
-        if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
-            recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
-            remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
+    if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
             'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
             'value-radio': ['Yes', 'No'],
@@ -336,6 +331,11 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             activation_date = datetime.strptime(activation_date, '%Y/%m/%d %H:%M')
         except ValueError:
             activation_date = datetime.strptime(activation_date, '%Y/%m/%d')
+        matching_group_ids = [conference.get_committee_id(r) for r in conference.reviewer_roles]
+        if conference.use_area_chairs:
+            matching_group_ids.append(conference.get_area_chairs_id())
+        if conference.use_senior_area_chairs:
+            matching_group_ids.append(conference.get_senior_area_chairs_id())
         matching_invitation = openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Paper_Matching_Setup',
             super = SUPPORT_GROUP + '/-/Paper_Matching_Setup',
@@ -359,7 +359,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     },
                     'matching_group': {
                         'description': 'Please select the group you want to set up matching for.',
-                        'value-dropdown' : [conference.get_id() + '/Reviewers', conference.get_id() + '/Area_Chairs'] if forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs" else [conference.get_id() + '/Reviewers'],
+                        'value-dropdown' : matching_group_ids,
                         'required': True,
                         'order': 2
                     },
@@ -389,8 +389,5 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             },
             signatures = ['~Super_User1']
         )
-
-        if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs"):
-            matching_invitation.reply['content']['matching_group']['value-dropdown'] = [conference.get_id() + '/Reviewers', conference.get_id() + '/Area_Chairs', conference.get_id() + '/Senior_Area_Chairs']
 
         client.post_invitation(matching_invitation)

@@ -318,7 +318,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'mohit+1@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as Reviewer' in text
 
         # Test to check that a user is not able to accept/decline if they are not a part of the invited group
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
