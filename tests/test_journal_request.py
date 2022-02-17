@@ -186,7 +186,7 @@ TJ22 Editors-in-Chief
     def test_journal_action_editor_recruitment(self, openreview_client, selenium, request_page, helpers, journal):
 
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
-        
+
         invitation = test_client.get_invitation(id='{}/Journal_Request{}/-/Action_Editor_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']))
         assert 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['presentation']['default']
 
