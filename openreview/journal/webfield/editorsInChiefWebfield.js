@@ -374,7 +374,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           invitationId: getInvitationId(submission.number, REVIEW_NAME)
         })
       }
-      
+
       if (reviewerStatus) {
         reviewerStatus.reviewerProgressData.numPapers += 1;
         reviewerStatus.reviewerStatusData.numPapers += 1;
@@ -711,7 +711,7 @@ var renderData = function(venueStatusData) {
           .concat(
             Number.isNaN(data.averageRating)
               ? ""
-              : "<h4>Average: ".concat(data.averageRating.toFixed(2), "</h4>"),
+              : "<h4>Average Rating: ".concat(data.averageRating.toFixed(2), "</h4>"),
             "<tbody>"
           )
           .concat(
@@ -739,7 +739,7 @@ var renderData = function(venueStatusData) {
     searchProperties: {
       name: ['summary.name'],
       papersAssigned: ['reviewerProgressData.numPapers'],
-      rating:['ratingData.averageRating'],
+      averageRating:['ratingData.averageRating'],
       default: ['summary.name'],
     },
     extraClasses: 'console-table',
