@@ -156,6 +156,12 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       },
       ratingData: {
         ratings:[],
+        ratingsMap: {
+          "Exceeds expectations": 0,
+          "Meets expectations": 0,
+          "Falls below expectations": 0
+        },
+        averageRating: 0
       },
       reviewerStatusData: {
         numCompletedReviews: 0,
@@ -354,7 +360,16 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         if(reviewerRating){
           status.Rating = reviewerRating.content.rating.value
           if(reviewerStatus){
-            reviewerStatus.ratingData.ratings.push(reviewerRating.content.rating.value)
+            var rating = reviewerRating.content.rating.value;
+            var ratingValue = REVIEWER_RATING_MAP[rating];
+            reviewerStatus.ratingData.ratings.push(rating);
+            reviewerStatus.ratingData.ratingsMap[rating] += 1;
+            var count = reviewerStatus.ratingData.ratings.length;
+            if (count > 1) {
+              reviewerStatus.ratingData.averageRating = (reviewerStatus.ratingData.averageRating * (count - 1) + ratingValue) / count;
+            } else {
+              reviewerStatus.ratingData.averageRating = ratingValue;
+            }
           }
         }
       }
@@ -393,21 +408,6 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
     });
 
-    // calculate reviewer rating data
-    Object.entries(reviewerStatusById).forEach(function (reviewerStatus) {
-      var ratingsMap =
-        reviewerStatus[1].ratingData.ratings.reduce(function (prev, curr) {
-          if (prev[curr]) prev[curr]++;
-          else prev[curr] = 1;
-          return prev;
-        }, {});
-      reviewerStatus[1].ratingData.ratingsMap = ratingsMap;
-      var totalRating = Object.entries(ratingsMap).reduce(function (prev, curr) {
-        return prev + REVIEWER_RATING_MAP[curr[0]] * curr[1];
-      }, 0);
-      reviewerStatus[1].ratingData.averageRating =
-        totalRating / reviewerStatus[1].ratingData.ratings.length;
-    });
 
     paperActionEditors.forEach(function(actionEditor, number) {
       var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
@@ -709,9 +709,7 @@ var renderData = function(venueStatusData) {
       function (data) {
         return '<table class="table table-condensed table-minimal">'
           .concat(
-            Number.isNaN(data.averageRating)
-              ? ""
-              : "<h4>Average Rating: ".concat(data.averageRating.toFixed(2), "</h4>"),
+            "<h4>Average Rating: ".concat(data.averageRating.toFixed(2), "</h4>"),
             "<tbody>"
           )
           .concat(
