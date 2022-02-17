@@ -1200,6 +1200,8 @@ class Matching(object):
 
         committee_id=self.match_group.id
         role_name = committee_id.split('/')[-1]
+        review_name = 'Official_Review'
+        reviewer_name = self.conference.reviewers_name
         if role_name in self.conference.reviewer_roles:
             reviewer_name = self.conference.reviewers_name
             review_name = 'Official_Review'
@@ -1224,7 +1226,7 @@ class Matching(object):
                     paper_committee_id = self.conference.get_committee_id(name=reviewer_name, number=paper.number)
                     current_edges=current_assignment_edges[paper.id]
                     for current_edge in current_edges:
-                        self.client.add_remove_members_from_group(paper_committee_id, current_edge['tail'])
+                        self.client.remove_members_from_group(paper_committee_id, current_edge['tail'])
                 else:
                     print('assignment not found', paper.id)
             ## Delete current assignment edges with a ddate in case we need to do rollback
