@@ -14,7 +14,7 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue(wait_for_delayed=False)
+        helpers.await_queue()
 
         #post journal request form
         request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
@@ -33,7 +33,7 @@ class TestJournalRequest():
                 }
             ))
 
-        helpers.await_queue(wait_for_delayed=False)
+        helpers.await_queue()
 
         #return journal details
         journal_details = {
@@ -60,7 +60,7 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue(wait_for_delayed=False)
+        helpers.await_queue()
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), openreview_client.token)
 
         request_form = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request',
@@ -79,7 +79,7 @@ class TestJournalRequest():
                 }
             ))
 
-        helpers.await_queue(openreview_client, wait_for_delayed=False)
+        helpers.await_queue(openreview_client)
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
 
         process_logs = openreview_client.get_process_logs(invitation = support_group_id + '/-/Journal_Request')
@@ -152,7 +152,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client, wait_for_delayed=False)
+        helpers.await_queue(openreview_client)
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -213,7 +213,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client, wait_for_delayed=False)
+        helpers.await_queue(openreview_client)
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -273,7 +273,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client, wait_for_delayed=False)
+        helpers.await_queue(openreview_client)
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
