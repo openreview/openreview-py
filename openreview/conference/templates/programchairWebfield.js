@@ -1361,9 +1361,10 @@ var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
 var sendReviewerReminderEmailsStep2 = function(e) {
   var reviewerMessages = localStorage.getItem('reviewerMessages');
   var messageCount = localStorage.getItem('messageCount');
-  if (!reviewerMessages || !messageCount) {
+  if (!reviewerMessages || !parseInt(messageCount)) {
     $('#message-reviewers-modal').modal('hide');
     promptError('Could not send emails at this time. Please refresh the page and try again.');
+    return
   }
   JSON.parse(reviewerMessages).forEach(postReviewerEmails);
 
@@ -1592,6 +1593,7 @@ var displayPaperStatusTable = function() {
     });
 
     $('.message-papers-container li > a', container).off('click').on('click', function(e) {
+      $('.message-papers-container .dropdown-toggle').dropdown('toggle')
       var filter = $(this).attr('class');
       $('#message-reviewers-modal').remove();
 
@@ -2005,6 +2007,7 @@ var displayAreaChairsStatusTable = function() {
     });
 
     $('.message-acs-container li > a', container).off('click').on('click', function(e) {
+      $('.message-acs-container .dropdown-toggle').dropdown('toggle')
       var filter = $(this).attr('class');
       $('#message-reviewers-modal').remove();
 
@@ -2301,6 +2304,7 @@ var displayReviewerStatusTable = function() {
     });
 
     $('.message-reviewers-container li > a', container).off('click').on('click', function(e) {
+      $('.message-reviewers-container .dropdown-toggle').dropdown('toggle')
       var filter = $(this).attr('class');
       $('#message-reviewers-modal').remove();
 
