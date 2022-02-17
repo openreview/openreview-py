@@ -156,11 +156,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       },
       ratingData: {
         ratings:[],
-        ratingsMap: {
-          "Exceeds expectations": 0,
-          "Meets expectations": 0,
-          "Falls below expectations": 0
-        },
+        ratingsMap: Object.keys(REVIEWER_RATING_MAP).reduce((o, key) => Object.assign(o, {[key]: 0}), {}),
         averageRating: 0
       },
       reviewerStatusData: {
