@@ -1262,7 +1262,8 @@ class Conference(object):
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
         invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reduced_load_id'])
 
-        role = 'reviewer' if reviewers_name == 'Reviewers' else 'area chair'
+        role = reviewers_name.replace('_', ' ')
+        role = role[:-1] if role.endswith('s') else role
         recruit_message = f'''Dear {{name}},
 
 You have been nominated by the program chair committee of {self.get_short_name()} to serve as {role}. As a respected researcher in the area, we hope you will accept and help us make {self.get_short_name()} a success.
