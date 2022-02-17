@@ -157,7 +157,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       ratingData: {
         ratings:[],
         ratingsMap: Object.keys(REVIEWER_RATING_MAP).reduce((o, key) => Object.assign(o, {[key]: 0}), {}),
-        averageRating: 0
+        averageRating: '-'
       },
       reviewerStatusData: {
         numCompletedReviews: 0,
@@ -362,7 +362,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
             reviewerStatus.ratingData.ratingsMap[rating] += 1;
             var count = reviewerStatus.ratingData.ratings.length;
             if (count > 1) {
-              reviewerStatus.ratingData.averageRating = (reviewerStatus.ratingData.averageRating * (count - 1) + ratingValue) / count;
+              reviewerStatus.ratingData.averageRating = ((reviewerStatus.ratingData.averageRating * (count - 1) + ratingValue) / count).toFixed(2);
             } else {
               reviewerStatus.ratingData.averageRating = ratingValue;
             }
@@ -705,7 +705,7 @@ var renderData = function(venueStatusData) {
       function (data) {
         return '<table class="table table-condensed table-minimal">'
           .concat(
-            "<h4>Average Rating: ".concat(data.averageRating.toFixed(2), "</h4>"),
+            "<h4>Average Rating: ".concat(data.averageRating, "</h4>"),
             "<tbody>"
           )
           .concat(
