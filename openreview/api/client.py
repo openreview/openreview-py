@@ -1749,7 +1749,7 @@ class OpenReviewClient(object):
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
             return { 'status': 'Completed' }
-        response = requests.get(base_url + '/expertise/status', params = {'id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/status', params = {'job_id': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1778,7 +1778,7 @@ class OpenReviewClient(object):
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
-            response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
+            response = requests.get(base_url + '/expertise/results', params = {'job_id': job_id}, headers = self.headers)
             response = self.__handle_response(response)
 
             return response.json()
