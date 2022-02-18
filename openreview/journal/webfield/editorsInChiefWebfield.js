@@ -28,6 +28,12 @@ var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
 
+var REVIEWER_RATING_MAP = {
+  "Exceeds expectations": 3,
+  "Meets expectations": 2,
+  "Falls below expectations": 1
+}
+
 var HEADER = {
   title: SHORT_PHRASE + ' Editors-In-Chief Console',
   instructions: ''
@@ -93,7 +99,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Submission Complete', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
+    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Camera Ready', 'Submission Complete', 'Action Editor Status', 'Reviewer Status'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -147,6 +153,11 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         numPapers: 0,
         papers: [],
         referrer: referrerUrl
+      },
+      ratingData: {
+        ratings:[],
+        ratingsMap: Object.keys(REVIEWER_RATING_MAP).reduce((o, key) => Object.assign(o, {[key]: 0}), {}),
+        averageRating: 0
       },
       reviewerStatusData: {
         numCompletedReviews: 0,
@@ -229,6 +240,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     // Camera Ready Verification by AE
     var cameraReadyVerificationInvitation = invitationsById[getInvitationId(number, CAMERA_READY_VERIFICATION_NAME)];
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
+    var cameraReadyTask = null;
+    var cameraReadyVerificationTask = null;
 
     if (reviewApprovalInvitation) {
       tasks.push({
@@ -291,23 +304,26 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     }
 
     if (cameraReadyRevisionInvitation) {
-      tasks.push({
+      var complete = submission.invitations.includes(cameraReadyRevisionInvitation.id);
+      cameraReadyTask = {
         id: cameraReadyRevisionInvitation.id,
         startdate: cameraReadyRevisionInvitation.cdate,
         duedate: cameraReadyRevisionInvitation.duedate,
-        complete: submission.invitations.includes(cameraReadyRevisionInvitation.id),
-        replies: []
-      });
+        complete: complete,
+        replies: complete ? [1] : []
+      };
+      tasks.push(cameraReadyTask);
     }
 
     if (cameraReadyVerificationInvitation) {
-      tasks.push({
+      cameraReadyVerificationTask = {
         id: cameraReadyVerificationInvitation.id,
         startdate: cameraReadyVerificationInvitation.cdate,
         duedate: cameraReadyVerificationInvitation.duedate,
         complete: cameraReadyVerificationNotes.length > 0,
         replies: cameraReadyVerificationNotes
-      });
+      };
+      tasks.push(cameraReadyVerificationTask);
     }
 
     var reviews = reviewNotes;
@@ -325,12 +341,32 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
       var reviewerRecommendation = null;
       var status = {};
+      var reviewerStatus = reviewerStatusById[reviewer.id];
+
       if (completedReview) {
         reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
         status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
+        }
+        var reviewerRating = reviewerRatingReplies.find(function (p) {
+          return p.replyto === completedReview.id;
+        });
+        if(reviewerRating){
+          status.Rating = reviewerRating.content.rating.value
+          if(reviewerStatus){
+            var rating = reviewerRating.content.rating.value;
+            var ratingValue = REVIEWER_RATING_MAP[rating];
+            reviewerStatus.ratingData.ratings.push(rating);
+            reviewerStatus.ratingData.ratingsMap[rating] += 1;
+            var count = reviewerStatus.ratingData.ratings.length;
+            if (count > 1) {
+              reviewerStatus.ratingData.averageRating = ((reviewerStatus.ratingData.averageRating * (count - 1) + ratingValue) / count);
+            } else {
+              reviewerStatus.ratingData.averageRating = ratingValue;
+            }
+          }
         }
       }
       paperReviewerStatus[reviewer.anonId] = {
@@ -349,7 +385,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           invitationId: getInvitationId(submission.number, REVIEW_NAME)
         })
       }
-      var reviewerStatus = reviewerStatusById[reviewer.id];
+
       if (reviewerStatus) {
         reviewerStatus.reviewerProgressData.numPapers += 1;
         reviewerStatus.reviewerStatusData.numPapers += 1;
@@ -367,6 +403,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         }
       }
     });
+
 
     paperActionEditors.forEach(function(actionEditor, number) {
       var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
@@ -416,6 +453,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         numSubmittedRecommendations: recommendations.length,
         numReviewers: paperReviewers.length,
         reviewers: paperReviewerStatus,
+        expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
         actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
@@ -440,6 +478,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         metaReview: metaReview,
         referrer: referrerUrl,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
+        cameraReadyPending: (cameraReadyTask && !cameraReadyTask.complete) || (cameraReadyVerificationTask && !cameraReadyVerificationTask.complete),
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
         actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
@@ -461,8 +500,9 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 
   return {
     submissionStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === SUBMITTED_STATUS; }),
-    paperStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS; }),
+    paperStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !row.actionEditorProgressData.decisionApprovalPending && !row.actionEditorProgressData.cameraReadyPending;  }),
     decisionApprovalStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.decisionApprovalPending; }),
+    cameraReadyStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.cameraReadyPending; }),
     completeSubmissionStatusRows: paperStatusRows.filter(function(row) { return ![SUBMITTED_STATUS, UNDER_REVIEW_STATUS].includes(row.submission.content.venueid); }),
     reviewerStatusRows: Object.values(reviewerStatusById),
     actionEditorStatusRows: Object.values(actionEditorStatusById),
@@ -571,8 +611,28 @@ var renderTable = function(container, rows) {
         messageBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your decision for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief'
-      }
-      , {
+      },
+      {
+        id: 'all-authors',
+        name: 'All authors of selected papers',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? row.submission.content.authorids.map(function(authorId) { return { id: authorId, name: view.prettyId(authorId), email: authorId };})
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum
+              })
+            }
+          });
+        },
+        messageBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your camera ready revision for ' + SHORT_PHRASE + '.\n\n' +
+        'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
+        'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
+      },
+      {
         id: 'unsubmitted-reviews',
         name: 'Reviewers with missing reviews',
         getUsers: function(selectedIds) {
@@ -631,16 +691,34 @@ var renderData = function(venueStatusData) {
   renderTable('submitted', venueStatusData.submissionStatusRows);
   renderTable('under-review', venueStatusData.paperStatusRows);
   renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
-    headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
+    headings: ['#', 'Reviewer', 'Review Progress', 'Rating <span id="rating-info" class="glyphicon glyphicon-info-sign"></span>', 'Status'],
     renders: [
-      function(data) {
+      function (data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
       Handlebars.templates.committeeSummary,
       Handlebars.templates.notesReviewerProgress,
+      function (data) {
+        return '<table class="table table-condensed table-minimal">'
+          .concat(
+            "<h4>Average Rating: ".concat(data.averageRating ? data.averageRating.toFixed(2) : '-', "</h4>"),
+            "<tbody>"
+          )
+          .concat(
+            Object.entries(data.ratingsMap)
+              .map(function (rating) {
+                return "<tr><td class='rating'><strong>"
+                  .concat(rating[0], ":</strong> ")
+                  .concat(rating[1], "</td></tr>");
+              })
+              .join(""),
+            "</tbody></table>"
+          );
+      },
       Handlebars.templates.notesReviewerStatus
     ],
     sortOptions: {
@@ -649,14 +727,39 @@ var renderData = function(venueStatusData) {
       Papers_with_Reviews_Missing: function(row) { return row.reviewerProgressData.numPapers - row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Reviews_Submitted: function(row) { return row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Completed_Reviews_Missing: function(row) { return row.reviewerStatusData.numPapers - row.reviewerStatusData.numCompletedReviews; },
-      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; }
+      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; },
+      Average_Rating: function(row) { return row.ratingData.averageRating; }
     },
     searchProperties: {
       name: ['summary.name'],
       papersAssigned: ['reviewerProgressData.numPapers'],
-      default: ['summary.name']
+      averageRating:['ratingData.averageRating'],
+      default: ['summary.name'],
     },
-    extraClasses: 'console-table'
+    extraClasses: 'console-table',
+    postRenderTable: function() {
+      $('#reviewer-status .console-table th').eq(0).css('width', '4%');  // #
+      $('#reviewer-status .console-table th').eq(1).css('width', '23%');  // reviewer
+      $('#reviewer-status .console-table th').eq(2).css('width', '33%'); // review progress
+      $('#reviewer-status .console-table th').eq(3).css('width', '15%'); // rating
+      $('#reviewer-status .console-table th').eq(4).css('width', '25%'); // status
+      $('#reviewer-status td.rating').css('white-space', 'nowrap'); // rating no wrap
+      $("#rating-info").on("mouseenter", function (e) {
+        $(e.target).tooltip({
+          title: '<strong class="tooltip-title">Rating map</strong><br/>'.concat(
+            Object.entries(REVIEWER_RATING_MAP || {})
+              .map(function (item) {
+                return "<span>"
+                  .concat(item[0], " = ")
+                  .concat(item[1], "</span><br/>");
+              })
+              .join("")
+          ),
+          html: true,
+          placement: "bottom"
+        });
+      });
+    }
   });
 
   Webfield2.ui.renderTable('#action-editor-status', venueStatusData.actionEditorStatusRows, {
@@ -685,11 +788,6 @@ var renderData = function(venueStatusData) {
     extraClasses: 'console-table'
   });
 
-  Webfield2.ui.renderTasks(
-    '#editors-in-chief-tasks',
-    venueStatusData.invitations,
-    { referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
-  );
 };
 
 main();

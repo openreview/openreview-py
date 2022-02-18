@@ -170,6 +170,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_reviewer_identity_readers([readers_map[r] for r in note.content.get('reviewer_identity', [])])
     builder.set_area_chair_identity_readers([readers_map[r] for r in note.content.get('area_chair_identity', [])])
     builder.set_senior_area_chair_identity_readers([readers_map[r] for r in note.content.get('senior_area_chair_identity', [])])
+    builder.set_reviewer_roles(note.content.get('reviewer_roles', ['Reviewers']))
+    builder.set_area_chair_roles(note.content.get('area_chair_roles', ['Area_Chairs']))
+    builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
 
     return builder
 
