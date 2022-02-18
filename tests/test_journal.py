@@ -325,6 +325,11 @@ class TestJournal():
                 weight=1
             ))
 
+        ## Check action editor recommendation is expired
+        invitation = openreview_client.get_invitation(id='TMLR/Paper1/Action_Editors/-/Recommendation')
+        assert invitation.expdate is not None
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper1/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
