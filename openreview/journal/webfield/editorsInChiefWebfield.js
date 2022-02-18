@@ -157,7 +157,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       ratingData: {
         ratings:[],
         ratingsMap: Object.keys(REVIEWER_RATING_MAP).reduce((o, key) => Object.assign(o, {[key]: 0}), {}),
-        averageRating: null
+        averageRating: 0
       },
       reviewerStatusData: {
         numCompletedReviews: 0,
