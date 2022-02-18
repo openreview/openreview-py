@@ -1787,56 +1787,58 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [venue_id] },
-                'writers': { 'values': [venue_id] },
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'value-regex': '.*' },
-                    'noteId': { 'value-regex': '.*' },
-                    'duedate': { 'value-regex': '.*' }
+                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteId': { 'regex': '.*', 'type': 'string' },
+                    'duedate': { 'regex': '.*', 'type': 'integer' }
                 },
                 'invitation': {
-                    'id': { 'value': paper_review_invitation_id },
-                    'signatures': { 'values': [ editors_in_chief_id ] },
-                    'readers': { 'values': ['everyone'] },
-                    'writers': { 'values': [venue_id] },
-                    'invitees': { 'values': [venue_id, paper_reviewers_id] },
-                    'noninvitees': { 'values': [editors_in_chief_id] },
-                    'maxReplies': { 'value': 1 },
-                    'duedate': { 'value': '${params.duedate}' },
-                    'process': { 'value': paper_process },
-                    'dateprocesses': { 'values': [{
+                    'id': { 'const': paper_review_invitation_id },
+                    'signatures': { 'const': [ editors_in_chief_id ] },
+                    'readers': { 'const': ['everyone'] },
+                    'writers': { 'const': [venue_id] },
+                    'invitees': { 'const': [venue_id, paper_reviewers_id] },
+                    'noninvitees': { 'const': [editors_in_chief_id] },
+                    'maxReplies': { 'const': 1 },
+                    'duedate': { 'const': '${params.duedate}' },
+                    'process': { 'const': paper_process },
+                    'dateprocesses': { 'const': [{
                         'dates': ["${invitation.duedate} + " + str(day), "${invitation.duedate} + " + str(seven_days)],
                         'process': duedate_process
                     }]},
                     'edit': {
-                        'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
-                        'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                        'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                        'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
+                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                        'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                         'note': {
                             'id': {
-                                'value': {
-                                    'value-invitation': paper_review_invitation_id,
+                                'const': {
+                                    'withInvitation': paper_review_invitation_id,
                                     'optional': True
                                 }
                             },
-                            'forum': { 'value': { 'value': '${params.noteId}' }},
-                            'replyto': { 'value': { 'value': '${params.noteId}' }},
-                            'ddate': { 'value': {
-                                'int-range': [ 0, 9999999999999 ],
+                            'forum': { 'const': { 'const': '${params.noteId}' }},
+                            'replyto': { 'const': { 'const': '${params.noteId}' }},
+                            'ddate': { 'const': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'nullable': True
                             }},
-                            'signatures': { 'value': { 'values': ['\\${signatures}'] }},
-                            'readers': { 'value': { 'values': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}', paper_authors_id] }},
-                            'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}', paper_authors_id] }},
+                            'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                             'content': {
                                 'summary_of_contributions': {
-                                    'value': {
+                                    'const': {
                                         'order': 1,
                                         'description': 'Brief description, in the reviewer’s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                         'value': {
-                                            'value-regex': '^[\\S\\s]{1,200000}$'
+                                            'regex': '^[\\S\\s]{1,200000}$',
+                                            'type': 'string'
                                         },
                                         'presentation': {
                                             'markdown': True
@@ -1844,11 +1846,12 @@ class InvitationBuilder(object):
                                     }
                                 },
                                 'strengths_and_weaknesses': {
-                                    'value': {
+                                    'const': {
                                         'order': 2,
                                         'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                         'value': {
-                                            'value-regex': '^[\\S\\s]{1,200000}$'
+                                            'regex': '^[\\S\\s]{1,200000}$',
+                                            'type': 'string'
                                         },
                                         'presentation': {
                                             'markdown': True
@@ -1856,11 +1859,12 @@ class InvitationBuilder(object):
                                     }
                                 },
                                 'requested_changes': {
-                                    'value': {
+                                    'const': {
                                         'order': 3,
                                         'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                         'value': {
-                                            'value-regex': '^[\\S\\s]{1,200000}$'
+                                            'regex': '^[\\S\\s]{1,200000}$',
+                                            'type': 'string'
                                         },
                                         'presentation': {
                                             'markdown': True
@@ -1868,11 +1872,12 @@ class InvitationBuilder(object):
                                     }
                                 },
                                 'broader_impact_concerns': {
-                                    'value': {
+                                    'const': {
                                         'order': 4,
                                         'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                         'value': {
-                                            'value-regex': '^[\\S\\s]{1,200000}$'
+                                            'regex': '^[\\S\\s]{1,200000}$',
+                                            'type': 'string'
                                         },
                                         'presentation': {
                                             'markdown': True
@@ -1925,79 +1930,88 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [venue_id] },
-                'readers': { 'values': [venue_id] },
-                'writers': { 'values': [venue_id] },
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'value-regex': '.*' },
-                    'noteId': { 'value-regex': '.*' },
-                    'duedate': { 'value-regex': '.*' },
-                    'cdate': { 'value-regex': '.*' }
+                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteId': { 'regex': '.*', 'type': 'string' },
+                    'duedate': { 'regex': '.*', 'type': 'date' },
+                    'cdate': { 'regex': '.*', 'type': 'date' }
                 },
                 'invitation': {
-                    'id': { 'value': paper_recommendation_invitation_id },
-                    'signatures': { 'values': [ editors_in_chief_id ] },
-                    'readers': { 'values': ['everyone'] },
-                    'writers': { 'values': [venue_id] },
-                    'invitees': { 'values': [venue_id, paper_reviewers_id] },
-                    'maxReplies': { 'value': 1 },
-                    'duedate': { 'value': '${params.duedate}' },
-                    'cdate': { 'value': '${params.cdate}' },
-                    'process': { 'value': paper_process },
-                    'dateprocesses': { 'values': [{
+                    'id': { 'const': paper_recommendation_invitation_id },
+                    'signatures': { 'const': [ editors_in_chief_id ] },
+                    'readers': { 'const': ['everyone'] },
+                    'writers': { 'const': [venue_id] },
+                    'invitees': { 'const': [venue_id, paper_reviewers_id] },
+                    'maxReplies': { 'const': 1 },
+                    'duedate': { 'const': '${params.duedate}' },
+                    'cdate': { 'const': '${params.cdate}' },
+                    'process': { 'const': paper_process },
+                    'dateprocesses': { 'const': [{
                         'dates': [ "${invitation.cdate} + 1000" ],
                         'process': cdate_process
                     }]},
                     'edit': {
-                        'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
-                        'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                        'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
-                        'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                        'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
+                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                        'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
+                        'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                         'note': {
                             'id': {
-                                'value': {
-                                    'value-invitation': paper_recommendation_invitation_id,
+                                'const': {
+                                    'withInvitation': paper_recommendation_invitation_id,
                                     'optional': True
                                 }
                             },
-                            'forum': { 'value': { 'value': '${params.noteId}' }},
-                            'replyto': { 'value': { 'value': '${params.noteId}' }},
-                            'ddate': { 'value': {
-                                'int-range': [ 0, 9999999999999 ],
+                            'forum': { 'const': { 'const': '${params.noteId}' }},
+                            'replyto': { 'const': { 'const': '${params.noteId}' }},
+                            'ddate': { 'const': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'nullable': True
                             }},
-                            'signatures': { 'value': { 'values': ['\\${signatures}'] }},
-                            'readers': { 'value': { 'values': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}'] }},
-                            'nonreaders': { 'value': { 'values': [ paper_authors_id ] }},
-                            'writers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
+                            'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                             'content': {
                                 'decision_recommendation': {
-                                    'value': {
+                                    'const': {
                                         'order': 1,
                                         'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
                                         'value': {
-                                            'value-radio': [
+                                            'type': 'string',
+                                            'enum': [
                                                 'Accept',
                                                 'Leaning Accept',
                                                 'Leaning Reject',
                                                 'Reject'
                                             ]
-                                        }
+                                        },
+                                        # 'presentation': {
+                                        #     'input': 'radio'
+                                        # }
                                     }
                                 },
                                 'certification_recommendations': {
-                                    'value': {
+                                    'const': {
                                         'order': 2,
                                         'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
                                         'value': {
-                                            'values-dropdown': [
+                                            'type': 'string[]',
+                                            'enum': [
                                                 'Featured Certification',
                                                 'Reproducibility Certification',
                                                 'Survey Certification'
                                             ],
                                             'optional': True
-                                        }
+                                        },
+                                        # 'presentation': {
+                                        #     'input': 'select'
+                                        # }
                                     }
                                 }
                             }
