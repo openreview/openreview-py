@@ -1126,6 +1126,20 @@ Comment: This is an inapropiate comment</p>
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
 
+
+        ## Second decision note and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number 1 of replies for this Invitation'):
+            decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                note=Note(
+                    content={
+                        'recommendation': { 'value': 'Accept as is' },
+                        'comment': { 'value': 'This is a nice paper!' },
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
+                    }
+                )
+            )
+
         ## Check invitations
         invitations = raia_client.get_invitations(replyForum=note_id_1)
         assert f"{venue_id}/Paper1/-/Decision_Approval"  in [i.id for i in invitations]

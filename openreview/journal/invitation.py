@@ -2471,6 +2471,8 @@ class InvitationBuilder(object):
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
+            maxReplies=1,
+            minReplies=1,
             edit={
                 'signatures': { 'values': [paper_action_editors_id] },
                 'readers': { 'values': [ venue_id, paper_action_editors_id] },
