@@ -1106,7 +1106,7 @@ class InvitationBuilder(object):
                     'invitees': { 'const': [venue_id, paper_authors_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
+                    'signatures': { 'const': [editors_in_chief] },
                     'maxReplies': { 'const': 1 },
                     'process': { 'const': paper_process },
                     'edit': {
@@ -1824,10 +1824,10 @@ class InvitationBuilder(object):
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
                     'process': { 'const': paper_process },
-                    'dateprocesses': { 'const': [{
-                        'dates': ["${invitation.duedate} + " + str(day), "${invitation.duedate} + " + str(seven_days)],
-                        'process': duedate_process
-                    }]},
+                    # 'dateprocesses': { 'const': [{
+                    #     'dates': ["${invitation.duedate} + " + str(day), "${invitation.duedate} + " + str(seven_days)],
+                    #     'process': duedate_process
+                    # }]},
                     'edit': {
                         'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
                         'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -1968,10 +1968,10 @@ class InvitationBuilder(object):
                     'duedate': { 'const': '${params.duedate}' },
                     'cdate': { 'const': '${params.cdate}' },
                     'process': { 'const': paper_process },
-                    'dateprocesses': { 'const': [{
-                        'dates': [ "${invitation.cdate} + 1000" ],
-                        'process': cdate_process
-                    }]},
+                    #'dateprocesses': { 'const': [{
+                    #    'dates': [ "${invitation.cdate} + 1000" ],
+                    #    'process': cdate_process
+                    #}]},
                     'edit': {
                         'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
                         'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},

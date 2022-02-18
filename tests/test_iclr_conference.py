@@ -229,7 +229,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -251,7 +251,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_two@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -265,7 +265,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_four@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
