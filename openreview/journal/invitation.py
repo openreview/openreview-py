@@ -926,7 +926,7 @@ class InvitationBuilder(object):
                 'readers': { 'const': [venue_id] },
                 'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
                     'noteId': { 'regex': '.*', 'type': 'string' },
                     'duedate': { 'regex': '.*', 'type': 'integer' }
                 },
@@ -1010,7 +1010,7 @@ class InvitationBuilder(object):
                 'readers': { 'const': [venue_id] },
                 'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
                     'noteId': { 'regex': '.*', 'type': 'string'  }
                 },
                 'invitation': {
@@ -1098,7 +1098,7 @@ class InvitationBuilder(object):
                 'readers': { 'const': [venue_id] },
                 'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
                     'noteId': { 'regex': '.*', 'type': 'string' }
                 },
                 'invitation': {
@@ -1186,7 +1186,7 @@ class InvitationBuilder(object):
                 'readers': { 'const': [venue_id] },
                 'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
                     'noteId': { 'regex': '.*', 'type': 'string' },
                     'replytoId': { 'regex': '.*', 'type': 'string' }
                 },
@@ -1810,7 +1810,7 @@ class InvitationBuilder(object):
                 'readers': { 'const': [venue_id] },
                 'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
                     'noteId': { 'regex': '.*', 'type': 'string' },
                     'duedate': { 'regex': '.*', 'type': 'integer' }
                 },
@@ -1953,7 +1953,7 @@ class InvitationBuilder(object):
                 'readers': { 'const': [venue_id] },
                 'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
                     'noteId': { 'regex': '.*', 'type': 'string' },
                     'duedate': { 'regex': '.*', 'type': 'date' },
                     'cdate': { 'regex': '.*', 'type': 'date' }
@@ -2080,7 +2080,7 @@ class InvitationBuilder(object):
                 'readers': { 'const': [venue_id] },
                 'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
                     'noteId': { 'regex': '.*', 'type': 'string' }
                 },
                 'invitation': {
@@ -2194,7 +2194,7 @@ class InvitationBuilder(object):
                 'readers': { 'const': [venue_id] },
                 'writers': { 'const': [venue_id] },
                 'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
                     'noteId': { 'regex': '.*', 'type': 'string' },
                     'replytoId': { 'regex': '.*', 'type': 'string' },
                     'soliciter': { 'regex': '.*', 'type': 'string' },
@@ -2315,7 +2315,7 @@ class InvitationBuilder(object):
                         },
                         'authors': {
                             'value': {
-                                'type': 'string',
+                                'type': 'string[]',
                                 'regex': '[^;,\\n]+(,[^,\\n]+)*',
                                 'optional': True
                             },
@@ -2330,7 +2330,7 @@ class InvitationBuilder(object):
                         },
                         'authorids': {
                             'value': {
-                                'type': 'string',
+                                'type': 'string[]',
                                 'regex': r'~.*',
                                 'optional': True
                             },
@@ -2428,37 +2428,40 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'~.*' },
-                'readers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
-                'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
+                'signatures': { 'regex': f'~.*', 'type': 'group[]' },
+                'readers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
+                'writers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
                 'note': {
                     'id': {
-                        'value-invitation': public_comment_invitation_id,
+                        'withInvitation': public_comment_invitation_id,
                         'optional': True
                     },
-                    'forum': { 'value': note.id },
-                    'replyto': { 'with-forum': note.id },
+                    'forum': { 'const': note.id },
+                    'replyto': { 'withForum': note.id },
                     'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
                         'optional': True,
                         'nullable': True
                     },
-                    'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values': [ 'everyone']},
-                    'writers': { 'values': [ venue_id, paper_action_editors_id, '${signatures}']},
+                    'signatures': { 'const': ['${signatures}'] },
+                    'readers': { 'const': [ 'everyone']},
+                    'writers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
                     'content': {
                         'title': {
                             'order': 1,
                             'description': 'Brief summary of your comment.',
                             'value': {
-                                'value-regex': '^.{1,500}$'
+                                'type': 'string',
+                                'regex': '^.{1,500}$'
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -2480,37 +2483,46 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values-regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}' },
-                'readers': { 'values': [ venue_id, '${signatures}' ] },
-                'writers': { 'values': [ venue_id, '${signatures}' ] },
+                'signatures': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}', 'type': 'group[]' },
+                'readers': { 'const': [ venue_id, '${signatures}' ] },
+                'writers': { 'const': [ venue_id, '${signatures}' ] },
                 'note': {
                     'id': {
-                        'value-invitation': official_comment_invitation_id,
+                        'withInvitation': official_comment_invitation_id,
                         'optional': True
                     },
-                    'forum': { 'value': note.id },
-                    'replyto': { 'with-forum': note.id },
+                    'forum': { 'const': note.id },
+                    'replyto': { 'withForum': note.id },
                     'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
                         'optional': True,
                         'nullable': True
                     },
-                    'signatures': { 'values': ['${signatures}'] },
-                    'readers': { 'values-dropdown': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id]},
-                    'writers': { 'values': ['${writers}'] },
+                    'signatures': { 'const': ['${signatures}'] },
+                    'readers': {
+                       'type': 'group[]',
+                       'enum': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id],
+                    #    'presentation': {
+                    #        'input': 'select'
+                    #    }
+                    },
+                    'writers': { 'const': ['${writers}'] },
                     'content': {
                         'title': {
                             'order': 1,
                             'description': 'Brief summary of your comment.',
                             'value': {
-                                'value-regex': '^.{1,500}$'
+                                'type': 'string',
+                                'regex': '^.{1,500}$'
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -2535,41 +2547,43 @@ class InvitationBuilder(object):
                     writers=[venue_id],
                     signatures=[venue_id],
                     edit={
-                        'signatures': { 'values-regex': f'{editors_in_chief_id}|{paper_action_editors_id}' },
-                        'readers': { 'values': [ venue_id, paper_action_editors_id]},
-                        'writers': { 'values': [ venue_id, paper_action_editors_id]},
+                        'signatures': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}', 'type': 'group[]' },
+                        'readers': { 'const': [ venue_id, paper_action_editors_id]},
+                        'writers': { 'const': [ venue_id, paper_action_editors_id]},
                         'note': {
-                            'id': { 'value-invitation': public_comment_invitation_id },
-                            'forum': { 'value': note.id },
+                            'id': { 'withInvitation': public_comment_invitation_id },
+                            'forum': { 'const': note.id },
                             'readers': {
-                                'values': ['everyone']
+                                'const': ['everyone']
                             },
                             'writers': {
-                                'values': [venue_id, paper_action_editors_id]
+                                'const': [venue_id, paper_action_editors_id]
                             },
-                            'signatures': { 'values-regex': '~.*', 'optional': True },
+                            'signatures': { 'regex': '~.*', 'optional': True, 'type': 'group[]' },
                             'content': {
                                 'title': {
                                     'order': 1,
                                     'description': 'Brief summary of your comment.',
                                     'value': {
-                                        'value-regex': '^.{1,500}$'
+                                        'type': 'string',
+                                        'regex': '^.{1,500}$'
                                     },
                                     'readers': {
-                                        'values': [ venue_id, paper_action_editors_id, '${signatures}']
+                                        'const': [ venue_id, paper_action_editors_id, '${signatures}']
                                     }
                                 },
                                 'comment': {
                                     'order': 2,
                                     'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                     'value': {
-                                        'value-regex': '^[\\S\\s]{1,5000}$'
+                                        'type': 'string',
+                                        'regex': '^[\\S\\s]{1,5000}$'
                                     },
                                     'presentation': {
                                         'markdown': True
                                     },
                                     'readers': {
-                                        'values': [ venue_id, paper_action_editors_id, '${signatures}']
+                                        'const': [ venue_id, paper_action_editors_id, '${signatures}']
                                     }
                                 }
                             }
@@ -2593,42 +2607,48 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [paper_action_editors_id] },
-                'readers': { 'values': [ venue_id, paper_action_editors_id] },
-                'nonreaders': { 'values': [ paper_authors_id ] },
-                'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                'signatures': { 'const': [paper_action_editors_id] },
+                'readers': { 'const': [ venue_id, paper_action_editors_id] },
+                'nonreaders': { 'const': [ paper_authors_id ] },
+                'writers': { 'const': [ venue_id, paper_action_editors_id] },
                 'note': {
                     'id': {
-                        'value-invitation': decision_invitation_id,
+                        'withInvitation': decision_invitation_id,
                         'optional': True
                     },
-                    'forum': { 'value': note.forum },
-                    'replyto': { 'value': note.forum },
+                    'forum': { 'const': note.forum },
+                    'replyto': { 'const': note.forum },
                     'ddate': {
-                        'int-range': [ 0, 9999999999999 ],
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
                         'optional': True,
                         'nullable': True
                     },
-                    'signatures': { 'values': [paper_action_editors_id] },
-                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id ] },
-                    'nonreaders': { 'values': [ paper_authors_id ] },
-                    'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                    'signatures': { 'const': [paper_action_editors_id] },
+                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id ] },
+                    'nonreaders': { 'const': [ paper_authors_id ] },
+                    'writers': { 'const': [ venue_id, paper_action_editors_id] },
                     'content': {
                         'recommendation': {
                             'order': 1,
                             'value': {
-                                'value-radio': [
+                                'type': 'string',
+                                'enum': [
                                     'Accept as is',
                                     'Accept with minor revision',
                                     'Reject'
                                 ]
+                            },
+                            'presentation': {
+                                'input': 'radio'
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$'
                             },
                             'presentation': {
                                 'markdown': True
@@ -2638,12 +2658,16 @@ class InvitationBuilder(object):
                             'order': 3,
                             'description': f'Optionally and if appropriate, recommend a certification for this submission. See {self.journal.website} for information about certifications.',
                             'value': {
-                                'values-dropdown': [
+                                'type': 'string[]',
+                                'enum': [
                                     'Featured Certification',
                                     'Reproducibility Certification',
                                     'Survey Certification'
                                 ],
                                 'optional': True
+                            },
+                            'presentation': {
+                                'input': 'select'
                             }
                         }
                     }
@@ -2673,29 +2697,34 @@ class InvitationBuilder(object):
             minReplies=1,
             maxReplies=1,
             edit={
-                'signatures': { 'values': [editors_in_chief_id] },
-                'readers': { 'values': [ venue_id, paper_action_editors_id] },
-                'nonreaders': { 'values': [ paper_authors_id ] },
-                'writers': { 'values': [ venue_id] },
+                'signatures': { 'const': [editors_in_chief_id] },
+                'readers': { 'const': [ venue_id, paper_action_editors_id] },
+                'nonreaders': { 'const': [ paper_authors_id ] },
+                'writers': { 'const': [ venue_id] },
                 'note': {
-                    'forum': { 'value': note.id },
-                    'replyto': { 'value': decision.id },
-                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id] },
-                    'nonreaders': { 'values': [ paper_authors_id ] },
-                    'writers': { 'values': [ venue_id] },
-                    'signatures': { 'values': [editors_in_chief_id] },
+                    'forum': { 'const': note.id },
+                    'replyto': { 'const': decision.id },
+                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id] },
+                    'nonreaders': { 'const': [ paper_authors_id ] },
+                    'writers': { 'const': [ venue_id] },
+                    'signatures': { 'const': [editors_in_chief_id] },
                     'content': {
                         'approval': {
                             'order': 1,
                             'value': {
-                                'value-checkbox': 'I approve the AE\'s decision.'
+                                'type': 'string',
+                                'enum': ['I approve the AE\'s decision.']
+                            },
+                            'presention': {
+                                'input': 'checkbox'
                             }
                         },
                         'comment_to_the_AE': {
                             'order': 2,
                             'description': 'Optionally add any additional notes that might be useful for the AE.',
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,200000}$',
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$',
                                 'optional': True
                             },
                             'presentation': {
@@ -2733,26 +2762,30 @@ class InvitationBuilder(object):
                         signatures=[editors_in_chief_id],
                         maxReplies=1,
                         edit={
-                            'signatures': { 'values': [paper_action_editors_id] },
-                            'readers': { 'values': [ venue_id, paper_action_editors_id] },
-                            'nonreaders': { 'values': [ paper_authors_id ] },
-                            'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                            'signatures': { 'const': [paper_action_editors_id] },
+                            'readers': { 'const': [ venue_id, paper_action_editors_id] },
+                            'nonreaders': { 'const': [ paper_authors_id ] },
+                            'writers': { 'const': [ venue_id, paper_action_editors_id] },
                             'note': {
-                                'forum': { 'value': review.forum },
-                                'replyto': { 'value': review.id },
-                                'signatures': { 'values': [paper_action_editors_id] },
-                                'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id] },
-                                'nonreaders': { 'values': [ paper_authors_id ] },
-                                'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                                'forum': { 'const': review.forum },
+                                'replyto': { 'const': review.id },
+                                'signatures': { 'const': [paper_action_editors_id] },
+                                'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id] },
+                                'nonreaders': { 'const': [ paper_authors_id ] },
+                                'writers': { 'const': [ venue_id, paper_action_editors_id] },
                                 'content': {
                                     'rating': {
                                         'order': 1,
                                         'value': {
-                                            'value-radio': [
+                                            'type': 'string',
+                                            'enum': [
                                                 "Exceeds expectations",
                                                 "Meets expectations",
                                                 "Falls below expectations"
                                             ]
+                                        },
+                                        'presentation': {
+                                            'input': 'radio'
                                         }
                                     }
                                 }
@@ -2777,23 +2810,25 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             duedate=duedate,
             edit={
-                'signatures': { 'values': [paper_authors_id] },
-                'readers': { 'values': ['everyone']},
-                'writers': { 'values': [ venue_id, paper_authors_id]},
+                'signatures': { 'const': [paper_authors_id] },
+                'readers': { 'const': ['everyone']},
+                'writers': { 'const': [ venue_id, paper_authors_id]},
                 'note': {
-                    'id': { 'value': note.forum },
-                    'forum': { 'value': note.forum },
+                    'id': { 'const': note.forum },
+                    'forum': { 'const': note.forum },
                     'content': {
                         'title': {
                             'value': {
-                                'value-regex': '^.{1,250}$'
+                                'type': 'string',
+                                'regex': '^.{1,250}$'
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 1
                         },
                         'abstract': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2,
@@ -2803,7 +2838,8 @@ class InvitationBuilder(object):
                         },
                         'authors': {
                             'value': {
-                                'values-regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                'type': 'string',
+                                'regex': '[^;,\\n]+(,[^,\\n]+)*'
                             },
                             'description': 'Comma separated list of author names.',
                             'order': 3,
@@ -2813,41 +2849,38 @@ class InvitationBuilder(object):
                         },
                         'authorids': {
                             'value': {
-                                'values-regex': r'~.*'
+                                'type': 'string',
+                                'regex': r'~.*'
                             },
                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
                             'order': 4
                         },
                         'pdf': {
                             'value': {
-                                'value-file': {
-                                    'fileTypes': ['pdf'],
-                                    'size': 50
-                                }
+                                'type': 'file',
+                                'extensions': ['pdf'],
+                                'maxSize': 50
                             },
                             'description': 'Upload a PDF file that ends with .pdf',
                             'order': 5,
                         },
                         "supplementary_material": {
                             'value': {
-                                "value-file": {
-                                    "fileTypes": [
-                                        "zip",
-                                        "pdf"
-                                    ],
-                                    "size": 100
-                                },
+                                'type': 'file',
+                                'extensions': ['zip', 'pdf'],
+                                'maxSize': 100,
                                 "optional": True
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                             "order": 6,
                             'readers': {
-                                'values': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
+                                'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                             }
                         },
                         'previous_submission_url': {
                             'value': {
-                                'value-regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                'type': 'string',
+                                'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
                             'description': f'Link to OpenReview page of a previously rejected {short_name} submission that this submission is derived from.',
@@ -2855,7 +2888,8 @@ class InvitationBuilder(object):
                         },
                         'changes_since_last_submission': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$',
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,5000}$',
                                 'optional': True
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
@@ -2866,29 +2900,32 @@ class InvitationBuilder(object):
                         },
                         'competing_interests': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
                             'order': 9,
                             'readers': {
-                                'values': [ venue_id, paper_action_editors_id, paper_authors_id]
+                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
                             }
                         },
                         'human_subjects_reporting': {
                             'value': {
-                                'value-regex': '^[\\S\\s]{1,5000}$'
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                             'order': 10,
                             'readers': {
-                                'values': [ venue_id, paper_action_editors_id, paper_authors_id]
+                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
                             }
                         },
                         "video": {
                             "order": 11,
                             "description": "Optionally, you may submit a link to a video summarizing your work.",
                             'value': {
-                                "value-regex": 'https?://.+',
+                                'type': 'string',
+                                "regex": 'https?://.+',
                                 'optional': True
                             }
                         },
@@ -2896,7 +2933,8 @@ class InvitationBuilder(object):
                             "order": 12,
                             "description": "Optionally, you may submit a link to code for your work.",
                             'value': {
-                                "value-regex": 'https?://.+',
+                                'type': 'string',
+                                "regex": 'https?://.+',
                                 'optional': True
                             }
                         }
@@ -2922,20 +2960,24 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [ paper_action_editors_id ] },
-                'readers': { 'values': [ venue_id, paper_action_editors_id ] },
-                'writers': { 'values': [ venue_id, paper_action_editors_id] },
+                'signatures': { 'const': [ paper_action_editors_id ] },
+                'readers': { 'const': [ venue_id, paper_action_editors_id ] },
+                'writers': { 'const': [ venue_id, paper_action_editors_id] },
                 'note': {
-                    'signatures': { 'values': [ paper_action_editors_id ] },
-                    'forum': { 'value': note.id },
-                    'replyto': { 'value': note.id },
-                    'readers': { 'values': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id ] },
-                    'writers': { 'values': [ venue_id, paper_action_editors_id ] },
+                    'signatures': { 'const': [ paper_action_editors_id ] },
+                    'forum': { 'const': note.id },
+                    'replyto': { 'const': note.id },
+                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id ] },
+                    'writers': { 'const': [ venue_id, paper_action_editors_id ] },
                     'content': {
                         'verification': {
                             'order': 1,
                             'value': {
-                                'value-checkbox': f'I confirm that camera ready manuscript complies with the {self.journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.'
+                                'type': 'string',
+                                'enum': [f'I confirm that camera ready manuscript complies with the {self.journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.']
+                            },
+                            'presentation': {
+                                'input': 'checkbox'
                             }
                         }
                     }
@@ -2960,20 +3002,24 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             maxReplies=1,
             edit={
-                'signatures': { 'values': [ paper_authors_id ] },
-                'readers': { 'values': [ venue_id, paper_authors_id ] },
-                'writers': { 'values': [ venue_id ] },
+                'signatures': { 'const': [ paper_authors_id ] },
+                'readers': { 'const': [ venue_id, paper_authors_id ] },
+                'writers': { 'const': [ venue_id ] },
                 'note': {
-                    'signatures': { 'values': [ paper_authors_id ] },
-                    'forum': { 'value': note.id },
-                    'replyto': { 'value': note.id },
-                    'readers': { 'values': [ editors_in_chief_id, paper_authors_id ] },
-                    'writers': { 'values': [ venue_id ] },
+                    'signatures': { 'const': [ paper_authors_id ] },
+                    'forum': { 'const': note.id },
+                    'replyto': { 'const': note.id },
+                    'readers': { 'const': [ editors_in_chief_id, paper_authors_id ] },
+                    'writers': { 'const': [ venue_id ] },
                     'content': {
                         'confirmation': {
                             'order': 1,
                             'value': {
-                                'value-checkbox': 'I want to reveal all author names on behalf of myself and my co-authors.'
+                                'type': 'string',
+                                'enum': ['I want to reveal all author names on behalf of myself and my co-authors.']
+                            },
+                            'presentation': {
+                                'input': 'checkbox'
                             }
                         }
                     }

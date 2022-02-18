@@ -79,6 +79,8 @@ class TestJournal():
         group = openreview_client.get_group('TMLR/Action_Editors')
         # assert len(group.members) == 9
         # assert '~Joelle_Pineau1' in group.members
+        group.members = ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
+        openreview_client.post_group(group)
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -102,6 +104,8 @@ class TestJournal():
         group = openreview_client.get_group('TMLR/Reviewers')
         # assert len(group.members) == 6
         # assert '~Javier_Burroni1' in group.members
+        group.members = ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
+        openreview_client.post_group(group)
 
         status = journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['javier@mailtwo.com'])
         messages = openreview_client.get_messages(to = 'javier@mailtwo.com', subject = 'Invitation to be an Reviewer')
