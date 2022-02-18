@@ -1199,8 +1199,15 @@ class Matching(object):
     def deploy_assignments(self, assignment_title, overwrite):
 
         committee_id=self.match_group.id
-        review_name = 'Meta_Review' if self.is_area_chair else 'Official_Review'
-        reviewer_name = self.conference.area_chairs_name if self.is_area_chair else self.conference.reviewers_name
+        role_name = committee_id.split('/')[-1]
+        review_name = 'Official_Review'
+        reviewer_name = self.conference.reviewers_name
+        if role_name in self.conference.reviewer_roles:
+            reviewer_name = self.conference.reviewers_name
+            review_name = 'Official_Review'
+        elif role_name in self.conference.area_chair_roles:
+            reviewer_name = self.conference.area_chairs_name
+            review_name = 'Meta_Review'
 
         papers = self.client.get_all_notes(invitation=self.conference.get_blind_submission_id())
         reviews = self.client.get_notes(invitation=self.conference.get_invitation_id(review_name, number='.*'), limit=1)
@@ -1213,19 +1220,25 @@ class Matching(object):
         if overwrite:
             if reviews:
                 raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
+            ## Remove the members from the groups based on the current assignments
+            for paper in tqdm(papers, total=len(papers)):
+                if paper.id in current_assignment_edges:
+                    paper_committee_id = self.conference.get_committee_id(name=reviewer_name, number=paper.number)
+                    current_edges=current_assignment_edges[paper.id]
+                    for current_edge in current_edges:
+                        self.client.remove_members_from_group(paper_committee_id, current_edge['tail'])
+                else:
+                    print('assignment not found', paper.id)
             ## Delete current assignment edges with a ddate in case we need to do rollback
             self.client.delete_edges(invitation=assignment_invitation_id, wait_to_finish=True, soft_delete=True)
 
+
         for paper in tqdm(papers, total=len(papers)):
-
-            paper_group = self.client.get_group(self.conference.get_committee_id(name=reviewer_name, number=paper.number))
-
-            if overwrite:
-                paper_group.members = []
             if paper.id in proposed_assignment_edges:
+                paper_committee_id = self.conference.get_committee_id(name=reviewer_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
                 for proposed_edge in proposed_edges:
-                    paper_group.members.append(proposed_edge['tail'])
+                    self.client.add_members_to_group(paper_committee_id, proposed_edge['tail'])
                     assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
@@ -1236,11 +1249,8 @@ class Matching(object):
                         signatures=proposed_edge['signatures'],
                         weight=proposed_edge.get('weight')
                     ))
-
             else:
                 print('assignment not found', paper.id)
-
-            self.client.post_group(paper_group)
 
         print('POsting assignments edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=self.client, edges=assignment_edges)
