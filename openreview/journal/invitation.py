@@ -770,7 +770,7 @@ class InvitationBuilder(object):
             invitees=[venue_id, action_editors_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[self.journal.get_editors_in_chief_id()],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -1260,7 +1260,7 @@ class InvitationBuilder(object):
             noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[self.journal.get_editors_in_chief_id()],
             maxReplies=1,
             edit={
                 'ddate': {
