@@ -28,6 +28,12 @@ var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
 
+var REVIEWER_RATING_MAP = {
+  "Exceeds expectations": 3,
+  "Meets expectations": 2,
+  "Falls below expectations": 1
+}
+
 var HEADER = {
   title: SHORT_PHRASE + ' Editors-In-Chief Console',
   instructions: ''
@@ -150,6 +156,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       },
       ratingData: {
         ratings:[],
+        ratingsMap: Object.keys(REVIEWER_RATING_MAP).reduce((o, key) => Object.assign(o, {[key]: 0}), {}),
+        averageRating: 0
       },
       reviewerStatusData: {
         numCompletedReviews: 0,
@@ -348,7 +356,16 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         if(reviewerRating){
           status.Rating = reviewerRating.content.rating.value
           if(reviewerStatus){
-            reviewerStatus.ratingData.ratings.push(reviewerRating.content.rating.value)
+            var rating = reviewerRating.content.rating.value;
+            var ratingValue = REVIEWER_RATING_MAP[rating];
+            reviewerStatus.ratingData.ratings.push(rating);
+            reviewerStatus.ratingData.ratingsMap[rating] += 1;
+            var count = reviewerStatus.ratingData.ratings.length;
+            if (count > 1) {
+              reviewerStatus.ratingData.averageRating = ((reviewerStatus.ratingData.averageRating * (count - 1) + ratingValue) / count);
+            } else {
+              reviewerStatus.ratingData.averageRating = ratingValue;
+            }
           }
         }
       }
@@ -368,7 +385,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           invitationId: getInvitationId(submission.number, REVIEW_NAME)
         })
       }
-      
+
       if (reviewerStatus) {
         reviewerStatus.reviewerProgressData.numPapers += 1;
         reviewerStatus.reviewerStatusData.numPapers += 1;
@@ -386,6 +403,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         }
       }
     });
+
 
     paperActionEditors.forEach(function(actionEditor, number) {
       var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
@@ -677,29 +695,29 @@ var renderData = function(venueStatusData) {
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
-    headings: ['#', 'Reviewer', 'Review Progress', 'Rating', 'Status'],
+    headings: ['#', 'Reviewer', 'Review Progress', 'Rating <span id="rating-info" class="glyphicon glyphicon-info-sign"></span>', 'Status'],
     renders: [
-      function(data) {
+      function (data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
       Handlebars.templates.committeeSummary,
       Handlebars.templates.notesReviewerProgress,
-      function(data) {
-        var ratingsMap = data.ratings.reduce(function (prev, curr) {
-          if (prev[curr]) prev[curr]++;
-          else prev[curr] = 1;
-          return prev;
-        }, {});
-        return '<table class="table table-condensed table-minimal"><tbody>'.concat(
-          Object.entries(ratingsMap)
-            .map(function (rating) {
-              return "<tr><td><strong>"
-                .concat(rating[0], ":</strong> ")
-                .concat(rating[1], "</td></tr>");
-            })
-            .join(""),
-          "</tbody></table>"
-        );
+      function (data) {
+        return '<table class="table table-condensed table-minimal">'
+          .concat(
+            "<h4>Average Rating: ".concat(data.averageRating ? data.averageRating.toFixed(2) : '-', "</h4>"),
+            "<tbody>"
+          )
+          .concat(
+            Object.entries(data.ratingsMap)
+              .map(function (rating) {
+                return "<tr><td class='rating'><strong>"
+                  .concat(rating[0], ":</strong> ")
+                  .concat(rating[1], "</td></tr>");
+              })
+              .join(""),
+            "</tbody></table>"
+          );
       },
       Handlebars.templates.notesReviewerStatus
     ],
@@ -709,20 +727,38 @@ var renderData = function(venueStatusData) {
       Papers_with_Reviews_Missing: function(row) { return row.reviewerProgressData.numPapers - row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Reviews_Submitted: function(row) { return row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Completed_Reviews_Missing: function(row) { return row.reviewerStatusData.numPapers - row.reviewerStatusData.numCompletedReviews; },
-      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; }
+      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; },
+      Average_Rating: function(row) { return row.ratingData.averageRating; }
     },
     searchProperties: {
       name: ['summary.name'],
       papersAssigned: ['reviewerProgressData.numPapers'],
-      default: ['summary.name']
+      averageRating:['ratingData.averageRating'],
+      default: ['summary.name'],
     },
     extraClasses: 'console-table',
     postRenderTable: function() {
       $('#reviewer-status .console-table th').eq(0).css('width', '4%');  // #
       $('#reviewer-status .console-table th').eq(1).css('width', '23%');  // reviewer
-      $('#reviewer-status .console-table th').eq(2).css('width', '36%'); // review progress
-      $('#reviewer-status .console-table th').eq(3).css('width', '10%'); // rating
-      $('#reviewer-status .console-table th').eq(4).css('width', '27%'); // status
+      $('#reviewer-status .console-table th').eq(2).css('width', '33%'); // review progress
+      $('#reviewer-status .console-table th').eq(3).css('width', '15%'); // rating
+      $('#reviewer-status .console-table th').eq(4).css('width', '25%'); // status
+      $('#reviewer-status td.rating').css('white-space', 'nowrap'); // rating no wrap
+      $("#rating-info").on("mouseenter", function (e) {
+        $(e.target).tooltip({
+          title: '<strong class="tooltip-title">Rating map</strong><br/>'.concat(
+            Object.entries(REVIEWER_RATING_MAP || {})
+              .map(function (item) {
+                return "<span>"
+                  .concat(item[0], " = ")
+                  .concat(item[1], "</span><br/>");
+              })
+              .join("")
+          ),
+          html: true,
+          placement: "bottom"
+        });
+      });
     }
   });
 
