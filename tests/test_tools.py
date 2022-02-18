@@ -5,6 +5,7 @@ import types
 import sys
 import os
 
+from openreview import OpenReviewException
 from openreview.tools import concurrent_requests
 
 class TestTools():
@@ -210,21 +211,20 @@ class TestTools():
     def test_subdomains(self):
         # ensure that two part top-level domains are handled appropriately
         # e.g. "edu.cn", "ac.uk"
-        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu.cn']
-        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['robots.ox.ac.uk', 'ox.ac.uk']
-        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'ox.ac.uk']
+        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu']
+        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['oxford.ac.uk', 'robots.ox.ac.uk']
+        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'oxford.ac.uk']
         assert openreview.tools.subdomains('michael@ground.ai') == ['ground.ai']
         assert openreview.tools.subdomains('michael@cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
-
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
             signatories=['~Super_User1'],
-            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1']
+            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'NewGroup']
         ))
         assert posted_group
 
@@ -245,7 +245,7 @@ class TestTools():
 
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
-        assert replaced_group.members == ['~SomeFirstName_User1']
+        assert replaced_group.members == ['~SomeFirstName_User1', 'NewGroup']
 
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
@@ -258,14 +258,15 @@ class TestTools():
         assert replaced_group
         assert replaced_group.members == ['~Super_User1', '~SomeFirstName_User1', 'noprofile@mail.com']
 
-        # Test to assert that member is removed while running replace members on a group has a member that is an invalid profile
+        # Test to assert that an exception is raised while running replace members on a group has a member that is an invalid profile
         invalid_member_group = client.add_members_to_group(replaced_group, '~Invalid_Profile1')
         assert len(invalid_member_group.members) == 4
         assert '~Invalid_Profile1' in invalid_member_group.members
 
-        replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
-        assert len(replaced_group.members) == 3
-        assert '~Invalid_Profile1' not in invalid_member_group.members
+        with pytest.raises(OpenReviewException) as ex:
+            replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
+
+        assert 'Profile Not Found' in ex.value.args[0]
 
         ## Replace emails with only profile with confirmed emails
         posted_group = client.post_group(openreview.Group(id='test.org',

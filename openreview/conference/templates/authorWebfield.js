@@ -15,6 +15,7 @@ var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var HEADER = {};
 var AUTHOR_NAME = 'Authors';
+var AUTHOR_SUBMISSION_FIELD = '';
 var PAPER_RANKING_ID = CONFERENCE_ID + '/' + AUTHOR_NAME + '/-/Paper_Ranking';
 var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 
@@ -43,11 +44,12 @@ function main() {
 
 // Load makes all the API calls needed to get the data to render the page
 function load() {
-  var notesP = Webfield.get('/notes', {
-    'content.authorids': user.profile.id,
+  var query = {
     invitation: SUBMISSION_ID,
     details: 'invitation,overwriting,directReplies'
-  }).then(function(result) {
+  }
+  query[AUTHOR_SUBMISSION_FIELD] = user.profile.id;
+  var notesP = Webfield.get('/notes', query).then(function(result) {
     //Get the blind submissions to have backward compatibility with the paper number
     var originalNotes = result.notes;
     blindNoteIds = [];

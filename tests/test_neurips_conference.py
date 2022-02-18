@@ -128,7 +128,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'senior area chair',
+                'invitee_role': 'Senior_Area_Chairs',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
                 'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
@@ -148,17 +148,17 @@ class TestNeurIPSConference():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number)
 
-        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
-        assert messages[0]['content']['text'].startswith('<p>Dear SAC One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
+        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
+        assert messages[0]['content']['text'].startswith('<p>Dear SAC One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
-        messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
+        messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2021] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
-        assert messages[0]['content']['text'].startswith('<p>Dear SAC Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
+        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
+        assert messages[0]['content']['text'].startswith('<p>Dear SAC Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
@@ -193,7 +193,7 @@ class TestNeurIPSConference():
         messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2021]: Invitation to serve as Area Chair')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of NeurIPS 2021 to serve as area chair' in text
+        assert 'You have been nominated by the program chair committee of NeurIPS 2021 to serve as Area Chair' in text
 
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -430,7 +430,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'reviewer',
+                'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
@@ -456,10 +456,10 @@ class TestNeurIPSConference():
         assert 'No recruitment invitation was sent to the following users because they have already been invited' in recruitment_status_notes[0].content['comment']
         assert "{'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/Invited': ['sac1@google.com', 'sac2@gmail.com']}" in recruitment_status_notes[0].content['comment']
 
-        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Invitation to serve as reviewer')
+        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Invitation to serve as Reviewer')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as reviewer'
-        assert messages[0]['content']['text'].startswith('<p>Dear Reviewer UMass,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Reviewer'
+        assert messages[0]['content']['text'].startswith('<p>Dear Reviewer UMass,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
         assert 'pc@neurips.cc' in messages[0]['content']['text']
         reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
@@ -510,7 +510,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Remind Recruitment',
-                'invitee_role': 'reviewer',
+                'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
                 'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
@@ -525,10 +525,10 @@ class TestNeurIPSConference():
 
         helpers.await_queue()
 
-        messages = client.get_messages(to='reviewer2@mit.edu', subject='Reminder: [NeurIPS 2021] Invitation to serve as reviewer')
+        messages = client.get_messages(to='reviewer2@mit.edu', subject='Reminder: [NeurIPS 2021] Invitation to serve as Reviewer')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == 'Reminder: [NeurIPS 2021] Invitation to serve as reviewer'
-        assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+        assert messages[0]['content']['subject'] == 'Reminder: [NeurIPS 2021] Invitation to serve as Reviewer'
+        assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
         reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, reject_url, alert=True)
 
@@ -2396,68 +2396,124 @@ Thank you,
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
-        conference.set_impersonators(emails=['pc@neurips.cc'])
+        conference.set_impersonators(group_ids=['pc@neurips.cc'])
+
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        reviewers_id = conference.get_reviewers_id()
+        reviewers = client.get_group(reviewers_id).members
+        assert len(reviewers) > 0
+        result = pc_client.impersonate(reviewers[0])
+
+        assert result.get('token') is not None
+        assert result.get('user', {}).get('id') == reviewers[0]
+
+    def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
+
+        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        assert len(submissions) == 5
+
+        withdrawn_note = test_client.post_note(openreview.Note(
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            invitation=f'NeurIPS.cc/2021/Conference/Paper5/-/Withdraw',
+            readers = [
+                'NeurIPS.cc/2021/Conference',
+                'NeurIPS.cc/2021/Conference/Paper5/Authors',
+                'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Program_Chairs'],
+            writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        ))
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=withdrawn_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        withdrawn_submission=client.get_note(submissions[0].id)
+        assert withdrawn_submission.invitation == 'NeurIPS.cc/2021/Conference/-/Withdrawn_Submission'
+        assert withdrawn_submission.readers == [
+                'NeurIPS.cc/2021/Conference/Paper5/Authors',
+                'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Program_Chairs']
+        assert withdrawn_submission.content['keywords'] == ''
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Impersonate", pc_client.token)
-        assert "NeurIPS 2021 Conference Impersonate | OpenReview" in selenium.title
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token)
+        assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        assert tabs.find_element_by_id('venue-configuration')
+        assert tabs.find_element_by_id('paper-status')
+        assert tabs.find_element_by_id('reviewer-status')
+        assert tabs.find_element_by_id('areachair-status')
 
-    # def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
+        assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
+        assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
+        assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
+        assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
+        assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
 
-    #     submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
-    #     assert len(submissions) == 5
+    def test_desk_reject_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
-    #     withdrawn_note = test_client.post_note(openreview.Note(
-    #         forum=submissions[0].id,
-    #         replyto=submissions[0].id,
-    #         invitation=f'NeurIPS.cc/2021/Conference/Paper5/-/Withdraw',
-    #         readers = [
-    #             'NeurIPS.cc/2021/Conference',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Authors',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
-    #             'NeurIPS.cc/2021/Conference/Program_Chairs'],
-    #         writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
-    #         signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
-    #         content = {
-    #             'title': 'Submission Withdrawn by the Authors',
-    #             'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-    #         }
-    #     ))
-    #     helpers.await_queue()
+        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        assert len(submissions) == 4
 
-    #     process_logs = client.get_process_logs(id=withdrawn_note.id)
-    #     assert len(process_logs) == 1
-    #     assert process_logs[0]['status'] == 'ok'
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-    #     withdrawn_submission=client.get_note(submissions[0].id)
-    #     assert withdrawn_submission.invitation == 'NeurIPS.cc/2021/Conference/-/Withdrawn_Submission'
-    #     assert withdrawn_submission.readers == [
-    #             'NeurIPS.cc/2021/Conference/Paper5/Authors',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Reviewers',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
-    #             'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
-    #             'NeurIPS.cc/2021/Conference/Program_Chairs']
+        desk_reject_note = pc_client.post_note(openreview.Note(
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            invitation=f'NeurIPS.cc/2021/Conference/Paper4/-/Desk_Reject',
+            readers = [
+                'NeurIPS.cc/2021/Conference',
+                'NeurIPS.cc/2021/Conference/Paper4/Authors',
+                'NeurIPS.cc/2021/Conference/Paper4/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Program_Chairs'],
+            writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Program_Chairs'],
+            signatures = ['NeurIPS.cc/2021/Conference/Program_Chairs'],
+            content = {
+                'title': 'Submission Desk Rejected by Program Chairs',
+                'desk_reject_comments': 'Wrong PDF.'
+            }
+        ))
+        helpers.await_queue()
 
-    #     pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        desk_rejected_submission=client.get_note(submissions[0].id)
+        assert desk_rejected_submission.invitation == 'NeurIPS.cc/2021/Conference/-/Desk_Rejected_Submission'
+        assert desk_rejected_submission.readers == [
+                'NeurIPS.cc/2021/Conference/Paper4/Authors',
+                'NeurIPS.cc/2021/Conference/Paper4/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Program_Chairs']
+        assert desk_rejected_submission.content['keywords'] == ''
 
-    #     request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token)
-    #     assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
-    #     notes_panel = selenium.find_element_by_id('notes')
-    #     assert notes_panel
-    #     tabs = notes_panel.find_element_by_class_name('tabs-container')
-    #     assert tabs
-    #     assert tabs.find_element_by_id('venue-configuration')
-    #     assert tabs.find_element_by_id('paper-status')
-    #     assert tabs.find_element_by_id('reviewer-status')
-    #     assert tabs.find_element_by_id('areachair-status')
+        desk_reject_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        pc_client.post_note(desk_reject_note)
 
-    #     assert '#' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-1').text
-    #     assert 'Paper Summary' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-2').text
-    #     assert 'Review Progress' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-3').text
-    #     assert 'Status' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-4').text
-    #     assert 'Decision' == tabs.find_element_by_id('paper-status').find_element_by_class_name('row-5').text
+        helpers.await_queue()
+
+        submission_note = client.get_note(desk_reject_note.forum)
+        assert submission_note.invitation == 'NeurIPS.cc/2021/Conference/-/Blind_Submission'
+        assert submission_note.readers == [
+                'NeurIPS.cc/2021/Conference',
+                'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Authors'
+                ]
+        assert submission_note.content['keywords'] == ''

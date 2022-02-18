@@ -35,7 +35,7 @@ function render() {
       $response.append([
         '<div>',
           '<p>If you do not already have an OpenReview account, please sign up <a href="/signup" target="_blank" rel="nofollow">here</a>.</p>',
-          '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a href="/profile?mode=edit" target="_blank" rel="nofollow">profile page</a> and has been confirmed.</p>',
+          '<p>If you have an existing OpenReview account, please ensure that the email address that received this invitation is linked to your <a href="/profile/edit" target="_blank" rel="nofollow">profile page</a> and has been confirmed.</p>',
         '</div>',
       ].join('\n'));
     } else if (declined) {

@@ -14,13 +14,14 @@ class Helpers:
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
         res = client.register_user(email = email, first = first, last = last, password = '1234')
+        username = res.get('id')
         assert res, "Res i none"
         profile_content={
             'names': [
                     {
                         'first': first,
                         'last': last,
-                        'username': '~' + first + '_' + last + '1'
+                        'username': username
                     }
                 ],
             'emails': [email] + alternates,
@@ -44,15 +45,18 @@ class Helpers:
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
     @staticmethod
-    def await_queue():
-        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
-        assert super_client is not None, 'Super Client is none'
+    def await_queue(super_client=None, wait_for_delayed=True):
+        if super_client is None:
+            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
+            assert super_client is not None, 'Super Client is none'
 
         while True:
             jobs = super_client.get_jobs_status()
             jobCount = 0
             for jobName, job in jobs.items():
-                jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
+                jobCount += job.get('waiting', 0) + job.get('active', 0)
+                if wait_for_delayed:
+                    jobCount += job.get('delayed', 0)
 
             if jobCount == 0:
                 break
@@ -85,6 +89,10 @@ def helpers():
 @pytest.fixture(scope="session")
 def client():
     yield openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
+
+@pytest.fixture(scope="session")
+def openreview_client():
+    yield openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password='1234')
 
 @pytest.fixture(scope="session")
 def test_client():

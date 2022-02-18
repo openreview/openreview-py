@@ -6,16 +6,13 @@ def process(client, note, invitation):
     print('Conference: ', conference.get_id())
 
     reduced_load=note.content.get('invitee_reduced_load', None)
+    role_name=note.content['invitee_role'].strip()
+    pretty_role = role_name.replace('_', ' ')
+    pretty_role = pretty_role[:-1] if pretty_role.endswith('s') else pretty_role
 
-    note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
-    note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
+    note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', pretty_role)
+    note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', pretty_role)
 
-    roles={
-        'reviewer': 'Reviewers',
-        'area chair': 'Area_Chairs',
-        'senior area chair': 'Senior_Area_Chairs'
-    }
-    role_name=roles[note.content['invitee_role'].strip()]
     recruitment_status=conference.recruit_reviewers(
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
@@ -32,7 +29,7 @@ def process(client, note, invitation):
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Remind Recruitment Status',
+            'title': f'Remind Recruitment Status',
             'comment': f'''
 Reminded: {len(recruitment_status.get('reminded', []))} users.
 
@@ -40,4 +37,13 @@ Please check the invitee group to see more details: https://openreview.net/group
             '''
         }
     )
+
+    if recruitment_status['errors']:
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {recruitment_status.get('errors') }'''
+
+        comment_note.content['comment'] += f'''
+Error: {error_status}
+'''
+
     client.post_note(comment_note)

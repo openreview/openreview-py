@@ -18,7 +18,6 @@ class TestClient():
         assert 'openreview.net' in group_names
         assert 'active_venues' in group_names
         assert 'host' in group_names
-        assert 'test.org/2019/Conference/Reviewers/Declined' in group_names
 
     def test_create_client(self, client, test_client):
 
@@ -59,25 +58,20 @@ class TestClient():
         assert '~SomeFirstName_User1' == client.profile.id
 
     def test_login_user(self):
-        try:
-            guest = openreview.Client()
+
+        guest = openreview.Client()
+
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Email is missing.*'):
             guest.login_user()
-        except openreview.OpenReviewException as e:
-            assert "Email is missing" in e.args[0].get('message'), "guest log in did not produce correct error"
 
-        try:
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Password is missing.*'):
             guest.login_user(username = "openreview.net")
-        except openreview.OpenReviewException as e:
-            assert "Password is missing" in e.args[0].get('message'), "super user log in did not produce correct error"
 
-        try:
+        with pytest.raises(openreview.OpenReviewException, match=r'.*Invalid username or password.*'):
             guest.login_user(username = "openreview.net", password = "1111")
-        except openreview.OpenReviewException as e:
-            assert "Invalid username or password" in e.args[0].get('message'), "super user log in did not produce correct error"
 
         response = guest.login_user(username = "openreview.net", password = "1234")
         assert response
-        print(response)
 
     def test_get_notes_with_details(self, client):
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
@@ -214,6 +208,12 @@ class TestClient():
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
 
+        notes = client.get_all_notes(content = { 'title': 'Paper title'})
+        assert len(notes) == 4
+
+        notes = client.get_all_notes(content = { 'title': 'Paper title333'})
+        assert len(notes) == 0
+
     def test_merge_profile(self, client):
         guest = openreview.Client()
         from_profile = guest.register_user(email = 'celeste@mail.com', first = 'Celeste', last = 'Bok', password = '1234')
@@ -225,16 +225,37 @@ class TestClient():
         assert to_profile['id'] == '~Melissa_Bok1'
 
         profile = client.merge_profiles('~Melissa_Bok1', '~Celeste_Bok1')
-
         assert profile, 'Could not merge the profiles'
         assert profile.id == '~Melissa_Bok1'
         usernames = [name['username'] for name in profile.content['names']]
         assert '~Melissa_Bok1' in usernames
         assert '~Celeste_Bok1' in usernames
-
         merged_profile = client.get_profile(email_or_id = '~Celeste_Bok1')
         merged_profile.id == '~Melissa_Bok1'
 
+        
+
+    def test_rename_profile(self, client):
+        guest = openreview.Client()
+        from_profile = guest.register_user(email = 'lbahy@mail.com', first = 'Nadia', last = 'LBahy', password = '1234')
+        assert from_profile
+        to_profile = guest.register_user(email = 'steph@mail.com', first = 'David', last = 'Steph', password = '5678')
+        assert to_profile
+
+        assert from_profile['id'] == '~Nadia_LBahy1'
+        assert to_profile['id'] == '~David_Steph1'
+
+        profile = client.merge_profiles('~David_Steph1', '~Nadia_LBahy1')
+        assert profile, 'Could not merge the profiles'
+        assert profile.id == '~David_Steph1'
+        usernames = [name['username'] for name in profile.content['names']]
+        assert '~Nadia_LBahy1' in usernames
+        assert '~David_Steph1' in usernames
+
+        # Test rename profile 
+        assert profile.id == '~David_Steph1'
+        profile = client.rename_profile('~David_Steph1', '~Nadia_LBahy1')
+        assert profile.id == '~Nadia_LBahy1'
 
     @pytest.mark.xfail
     def test_post_venue(self, client):

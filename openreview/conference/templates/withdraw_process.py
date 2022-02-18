@@ -13,6 +13,7 @@ def process(client, note, invitation):
     REVEAL_AUTHORS_ON_WITHDRAW = False
     REVEAL_SUBMISSIONS_ON_WITHDRAW = False
     EMAIL_PROGRAM_CHAIRS = False
+    HIDE_FIELDS = []
 
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
@@ -61,12 +62,14 @@ def process(client, note, invitation):
         forum_note.content['venue'] = ''
         forum_note.content['venueid'] = ''
 
+    for field in HIDE_FIELDS:
+        forum_note.content[field] = ''
 
     forum_note = client.post_note(forum_note)
 
     # Expire review, meta-review and decision invitations
     invitation_regex = CONFERENCE_ID + '/Paper' + str(forum_note.number) + '/-/(Official_Review|Meta_Review|Decision|Revision|Withdraw|Supplementary_Material|Official_Comment|Public_Comment)$'
-    all_paper_invitations = openreview.tools.iterget_invitations(client, regex=invitation_regex)
+    all_paper_invitations = client.get_all_invitations(regex=invitation_regex)
     now = openreview.tools.datetime_millis(datetime.utcnow())
     for invitation in all_paper_invitations:
         invitation.expdate = now

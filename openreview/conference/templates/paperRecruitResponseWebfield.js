@@ -41,7 +41,7 @@ function render() {
           '<h4>Please complete the following steps now:</h4>',
           '<ol>',
             '<li><p>Log in to your OpenReview account. If you do not already have an account, you can sign up <a style="font-weight:bold;" href="/signup" target="_blank" rel="nofollow">here</a>.</p></li>',
-            '<li><p>Ensure that the email address ' + email + ' that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit" target="_blank" rel="nofollow">profile page</a> and has been confirmed.</p></li>',
+            '<li><p>Ensure that the email address ' + email + ' that received this invitation is linked to your <a style="font-weight:bold;" href="/profile/edit" target="_blank" rel="nofollow">profile page</a> and has been confirmed.</p></li>',
             '<li><p>Complete your pending <a style="font-weight:bold;" href="/tasks" target="_blank" rel="nofollow">tasks</a> (if any) for ' + HEADER.subtitle + '.</p></li>',
           '</ol>',
         '</div>',

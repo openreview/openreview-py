@@ -1294,7 +1294,7 @@ class TestDoubleBlindConference():
                 'confidence': '4: The area chair is confident but not absolutely certain'
             }
         )
-        with pytest.raises(openreview.OpenReviewException, match=r'missing'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Required Error|missing'):
             meta_review_note = ac_client.post_note(note)
 
     def test_open_meta_reviews_remove_fields(self, client, test_client, selenium, request_page, helpers):
@@ -1360,7 +1360,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
-        builder.set_decision_stage(release_to_area_chairs=True)
+        builder.set_decision_stage(release_to_area_chairs=True, email_authors=True, release_to_authors=True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         conference = builder.get_result()
@@ -1375,12 +1375,12 @@ class TestDoubleBlindConference():
 
         notes = pc_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[2]
-
+        print(submission.readers)
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
             forum = submission.id,
             replyto = submission.id,
-            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
-            nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
+            readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs','AKBC.ws/2019/Conference/Paper1/Authors'],
+            nonreaders = [],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs'],
             signatures = ['AKBC.ws/2019/Conference/Program_Chairs'],
             content = {
@@ -1394,19 +1394,26 @@ class TestDoubleBlindConference():
         assert decision_note
         helpers.await_queue()
 
+        # Check that message was sent
+        messages = client.get_messages(subject = '[AKBC 2019] Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 3
+
         accepted_author_group = client.get_group(conference.get_accepted_authors_id())
         assert accepted_author_group
         assert len(accepted_author_group.members) == 1
         assert accepted_author_group.members == [conference.id + '/Paper{}/Authors'.format(submission.number)]
 
-        builder.set_decision_stage(public=True)
+        # Change readership of decision and make sure no emails are sent
+        builder.set_decision_stage(public=True,email_authors=True)
         conference = builder.get_result()
 
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
         assert decisions
         assert decisions[0].readers == ['everyone']
+        messages = client.get_messages(subject = '[AKBC 2019] Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 3
 
-        builder.set_decision_stage(release_to_authors=True, release_to_area_chairs=True)
+        builder.set_decision_stage(release_to_authors=True, release_to_area_chairs=True,email_authors=True)
         conference = builder.get_result()
 
         decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
@@ -1415,6 +1422,48 @@ class TestDoubleBlindConference():
 
         notes = conference.get_submissions(accepted=True)
         assert notes
+
+        # Reverting acceptance decision
+
+        notes = list(client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision'))
+        note = notes[0]
+        note.content['decision'] = 'Reject'
+        note.content['comment'] = 'Never mind!'
+        note.readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs','AKBC.ws/2019/Conference/Paper1/Authors']
+        decision_note = client.post_note(note)
+
+        assert decision_note
+        helpers.await_queue()
+
+        # Check that email was sent
+        messages = client.get_messages(subject = '[AKBC 2019] Decision updated for your submission - Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 3
+
+        accepted_author_group = client.get_group(conference.get_accepted_authors_id())
+        assert accepted_author_group
+        assert len(accepted_author_group.members) == 0
+        assert accepted_author_group.members == []
+
+        # Re-accepting
+        notes = list(client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision'))
+        note = notes[0]
+        note.content['decision'] = 'Accept (Oral)'
+        note.content['comment'] = 'Actually okay'
+        note.readers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs','AKBC.ws/2019/Conference/Paper1/Authors']
+
+        decision_note = client.post_note(note)
+
+        assert decision_note
+        helpers.await_queue()
+
+        # Check that email was sent
+        messages = client.get_messages(subject = '[AKBC 2019] Decision updated for your submission - Paper number: 1, Paper title: "New paper title"')
+        assert len(messages) == 6
+
+        accepted_author_group = client.get_group(conference.get_accepted_authors_id())
+        assert accepted_author_group
+        assert len(accepted_author_group.members) == 1
+        assert accepted_author_group.members == [conference.id + '/Paper{}/Authors'.format(submission.number)]
 
     def test_consoles(self, client, test_client, selenium, request_page):
 
@@ -1683,6 +1732,26 @@ class TestDoubleBlindConference():
         assert len(author_group.members) == 1
         assert 'AKBC.ws/2019/Conference/Paper2/Authors' not in author_group.members
 
+        posted_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        pc_client.post_note(posted_note)
+
+        helpers.await_queue()
+
+        submission_note = client.get_note(desk_reject_note.forum)
+        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Blind_Submission'
+        assert submission_note.readers == ['everyone']
+
+        author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
+        assert 'AKBC.ws/2019/Conference/Paper2/Authors' in author_group.members
+
+        ## Desk reject again
+        posted_note.ddate = None
+        pc_client.post_note(posted_note)
+
+        helpers.await_queue()
+        submission_note = client.get_note(desk_reject_note.forum)
+        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Desk_Rejected_Submission'
+
     def test_paper_ranking(self, client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client)
@@ -1915,6 +1984,67 @@ url={'''
         assert note.content['_bibtex'] == valid_bibtex
         assert 'venue' in note.content and not note.content['venue']
         assert 'venueid' in note.content and not note.content['venueid']
+
+    def test_release_accepted_notes_without_revealing_authors(self, client, request_page, selenium):
+        builder = openreview.conference.ConferenceBuilder(client)
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind=True, public=True)
+        builder.set_conference_short_name('AKBC 2019')
+        builder.set_conference_name('Automated Knowledge Base Construction Conference')
+        builder.set_conference_year(2019)
+        builder.has_area_chairs(True)
+        builder.set_conference_year(2019)
+        builder.set_decision_stage(public=True)
+        conference = builder.get_result()
+
+        conference.post_decision_stage(reveal_authors_accepted=False,
+                                       decision_heading_map={'Accept (Poster)': 'Accepted poster papers',
+                                                             'Accept (Oral)': 'Accepted oral papers',
+                                                             'Reject': 'Reject'})
+
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
+        assert "AKBC 2019 Conference | OpenReview" in selenium.title
+        header = selenium.find_element_by_id('header')
+        assert header
+        assert "AKBC.ws/2019/Conference" == header.find_element_by_tag_name("h1").text
+        invitation_panel = selenium.find_element_by_id('invitation')
+        assert invitation_panel
+        assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        with pytest.raises(NoSuchElementException):
+            notes_panel.find_element_by_class_name('spinner-container')
+        assert tabs.find_element_by_id('accepted-poster-papers')
+        assert tabs.find_element_by_id('accepted-oral-papers')
+        assert tabs.find_element_by_id('reject')
+
+        notes = conference.get_submissions()
+        assert notes
+        assert len(notes) == 1
+        note = notes[0]
+
+        valid_bibtex = r'''@inproceedings{
+anonymous2019paper,
+title={Paper title {REVISED} {PART} 2},
+author={Anonymous},
+booktitle={Automated Knowledge Base Construction Conference},
+year={2019},
+url={'''
+        valid_bibtex = valid_bibtex + 'https://openreview.net/forum?id=' + note.forum + '''}
+}'''
+        assert note.content['_bibtex'] == valid_bibtex
+        assert note.content['venue'] == 'AKBC 2019 Oral'
+        assert note.content['venueid'] == 'AKBC.ws/2019/Conference'
+        assert note.content['authors'] == ['Anonymous']
+        assert note.content['authorids'] == ['AKBC.ws/2019/Conference/Paper1/Authors']
+
+        accepted_authors = client.get_group('AKBC.ws/2019/Conference/Authors/Accepted')
+        assert accepted_authors
+        assert accepted_authors.members == ['AKBC.ws/2019/Conference/Paper1/Authors']
 
     def test_release_accepted_notes(self, client, request_page, selenium):
 

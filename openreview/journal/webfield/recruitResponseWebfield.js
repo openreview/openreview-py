@@ -39,8 +39,8 @@ function render() {
           '<h4>Please complete the following steps now:</h4>',
           '<ol>',
             '<li><p>Log in to your OpenReview account. If you do not already have an account, you can sign up <a style="font-weight:bold;" href="/signup">here</a>.</p></li>',
-            '<li><p>Ensure that the email address ' + email + ' that received this invitation is linked to your <a style="font-weight:bold;" href="/profile?mode=edit">profile page</a> and has been confirmed.</p></li>',
-            '<li><p>Complete your pending <a style="font-weight:bold;" href="/tasks">tasks</a> (if any) for ' + HEADER.subtitle + '.</p></li>',
+            '<li><p>Ensure that the email address ' + email + ' that received this invitation is linked to your <a style="font-weight:bold;" href="/profile/edit">profile page</a> and has been confirmed.</p></li>',
+            '<li><p>Complete your pending <a style="font-weight:bold;" href="/tasks">tasks</a> (if any) for ' + HEADER.short + '.</p></li>',
           '</ol>',
         '</div>',
       ].join('\n'));

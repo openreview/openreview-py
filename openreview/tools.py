@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+import json
+import os
+
 from deprecated.sphinx import deprecated
 import sys
 import openreview
@@ -9,14 +13,29 @@ import datetime
 import time
 from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 from Crypto.Hash import HMAC, SHA256
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
-def concurrent_requests(request_func, params, max_workers=6):
+
+def run_once(f):
+    """
+    Decorator to run a function only once and return its output for any subsequent call to the function without running
+    it again
+    """
+    def wrapper(*args, **kwargs):
+        if not wrapper.has_run:
+            wrapper.has_run = True
+            wrapper.to_return = f(*args, **kwargs)
+        return wrapper.to_return
+    wrapper.has_run = False
+    return wrapper
+
+
+def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1)):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -62,12 +81,90 @@ def get_profile(client, value, with_publications=False):
     try:
         profile = client.get_profile(value)
         if with_publications:
-            profile.content['publications'] = list(iterget_notes(client, content={'authorids': profile.id}))
+            baseurl_v1 = 'http://localhost:3000'
+            baseurl_v2 = 'http://localhost:3001'
+
+            if 'https://devapi' in client.baseurl:
+                baseurl_v1 = 'https://devapi.openreview.net'
+                baseurl_v2 = 'https://devapi2.openreview.net'
+            if 'https://api' in client.baseurl:
+                baseurl_v1 = 'https://api.openreview.net'
+                baseurl_v2 = 'https://api2.openreview.net'
+
+            client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
+            #client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+            notes_v1 = list(iterget_notes(client_v1, content={'authorids': profile.id}))
+            #notes_v2 = list(iterget_notes(client_v2, content={'authorids': profile.id}))
+            profile.content['publications'] = notes_v1 #+ notes_v2
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
         if 'Profile Not Found' not in e.args[0]:
             raise e
     return profile
+
+def get_profiles(client, ids_or_emails, with_publications=False):
+    '''
+    Helper function that repeatedly queries for profiles, given IDs and emails.
+    Useful for getting more Profiles than the server will return by default (1000)
+    '''
+    ids = []
+    emails = []
+    for member in ids_or_emails:
+        if '~' in member:
+            ids.append(member)
+        else:
+            emails.append(member)
+
+    profiles = []
+    profile_by_email = {}
+
+    batch_size = 100
+    for i in range(0, len(ids), batch_size):
+        batch_ids = ids[i:i+batch_size]
+        batch_profiles = client.search_profiles(ids=batch_ids)
+        profiles.extend(batch_profiles)
+
+    for j in range(0, len(emails), batch_size):
+        batch_emails = emails[j:j+batch_size]
+        batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
+        profile_by_email.update(batch_profile_by_email)
+
+    for email in emails:
+        profiles.append(profile_by_email.get(email, openreview.Profile(
+            id=email,
+            content={
+                'emails': [email],
+                'preferredEmail': email,
+                'emailsConfirmed': [email],
+                'names': []
+            })))
+
+    if with_publications:
+        baseurl_v1 = 'http://localhost:3000'
+        baseurl_v2 = 'http://localhost:3001'
+
+        if 'https://devapi' in client.baseurl:
+            baseurl_v1 = 'https://devapi.openreview.net'
+            baseurl_v2 = 'https://devapi2.openreview.net'
+        if 'https://api' in client.baseurl:
+            baseurl_v1 = 'https://api.openreview.net'
+            baseurl_v2 = 'https://api2.openreview.net'
+
+        client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
+        client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+
+        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles)
+        for idx, publications in enumerate(notes_v1):
+            profiles[idx].content['publications'] = publications
+
+        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles)
+        for idx, publications in enumerate(notes_v2):
+            if profiles[idx].content.get('publications'):
+                profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
+            else:
+                profiles[idx].content['publications'] = publications
+
+    return profiles
 
 def get_group(client, id):
     """
@@ -86,8 +183,8 @@ def get_group(client, id):
         group = client.get_group(id = id)
     except openreview.OpenReviewException as e:
         # throw an error if it is something other than "not found"
-        error =  e.args[0].get('message')
-        if isinstance(error, str) and error.startswith('Group Not Found'):
+        error =  e.args[0]
+        if error.get('name') == 'NotFoundError' or error.get('message').startswith('Group Not Found'):
             return None
         else:
             raise e
@@ -250,7 +347,7 @@ def create_authorid_profiles(client, note, print=print):
 
     return created_profiles
 
-def get_preferred_name(profile):
+def get_preferred_name(profile, last_name_only=False):
     """
     Accepts openreview.Profile object
 
@@ -267,6 +364,9 @@ def get_preferred_name(profile):
         primary_preferred_name = preferred_names[0]
     else:
         primary_preferred_name = names[0]
+
+    if last_name_only:
+        return primary_preferred_name['last']
 
     name_parts = []
     if primary_preferred_name.get('first'):
@@ -344,7 +444,7 @@ def post_group_parents(client, group, overwrite_parents=False):
 
     return posted_groups
 
-def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net'):
+def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net', editor=None):
     """
     Generates a bibtex field for a given Note.
 
@@ -428,7 +528,12 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
         utf8tolatex(first_author_last_name + year + first_word + ','),
         'title={' + bibtex_title + '},',
         'author={' + utf8tolatex(authors) + '},',
-        'booktitle={' + utf8tolatex(venue_fullname) + '},',
+        'booktitle={' + utf8tolatex(venue_fullname) + '},'
+    ]
+    if editor:
+        accepted_bibtex.append('editor={' + utf8tolatex(editor) + '},')
+
+    accepted_bibtex = accepted_bibtex + [
         'year={' + year + '},',
         'url={'+baseurl+'/forum?id=' + forum + '}',
         '}'
@@ -443,6 +548,17 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
             bibtex = under_review_bibtex
 
     return '\n'.join(bibtex)
+
+
+@run_once
+def load_duplicate_domains():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(dir_path, 'duplicate_domains.json')) as f:
+        duplicate_domains = json.load(f)
+
+    f.close()
+    return duplicate_domains
+
 
 def subdomains(domain):
     """
@@ -460,14 +576,19 @@ def subdomains(domain):
     [u'iesl.cs.umass.edu', u'cs.umass.edu', u'umass.edu']
     """
 
+    duplicate_domains: dict = load_duplicate_domains()
     if '@' in domain:
         full_domain = domain.split('@')[1]
     else:
         full_domain = domain
     domain_components = [c for c in full_domain.split('.') if c and not c.isspace()]
     domains = ['.'.join(domain_components[index:len(domain_components)]) for index, path in enumerate(domain_components)]
-    valid_domains = [d for d in domains if not tld.is_tld(d)]
-    return valid_domains
+    valid_domains = set()
+    for d in domains:
+        if not tld.is_tld(d):
+            valid_domains.add(duplicate_domains.get(d, d))
+
+    return sorted(valid_domains)
 
 def get_paperhash(first_author, title):
     """
@@ -513,24 +634,23 @@ def replace_members_with_ids(client, group):
     """
     ids = []
     emails = []
-    invalid_ids = []
 
     def classify_members(member):
-        if '~' not in member:
+        if '@' in member:
             try:
                 profile = client.get_profile(member.lower())
-                return ('ids', profile.id)
+                return 'ids', profile.id
             except openreview.OpenReviewException as e:
                 if 'Profile Not Found' in e.args[0]:
-                    return ('emails', member.lower())
+                    return 'emails', member.lower()
                 else:
                     raise e
+        elif '~' in member:
+            profile = client.get_profile(member)
+            return 'ids', profile.id
         else:
-            profile = get_profile(client, member)
-            if profile:
-                return ('ids', profile.id)
-            else:
-                return ('invalid_ids', member)
+            _group = client.get_group(member)
+            return 'ids', _group.id
 
     results = concurrent_requests(classify_members, group.members)
 
@@ -539,14 +659,55 @@ def replace_members_with_ids(client, group):
             ids.append(member)
         elif key == 'emails':
             emails.append(member)
-        elif key == 'invalid_ids':
-            invalid_ids.append(member)
 
-    if invalid_ids:
-        print('Invalid profile id in group {} : {}'.format(group.id, ', '.join(invalid_ids)))
     group.members = ids + emails
 
     return client.post_group(group)
+
+def concurrent_get(client, get_function, **params):
+    """
+    Given a function that takes a single parameter, returns a list of results.
+
+    :param client: Client used to make requests
+    :param get_function: Function that takes a that performs the request
+    :type get_function: function
+    :param params: Parameters to pass to the get_function
+    :type params: dict
+
+    :return: List of results
+    :rtype: list
+    """
+    max_workers = min(cpu_count() - 1, 6)
+
+    params.update({
+        'offset': params.get('offset') or 0,
+        'limit': min(params.get('limit') or client.limit, client.limit),
+        'with_count': True
+    })
+
+    docs, count = get_function(**params)
+    if count <= params['limit']:
+        return docs
+
+    params['with_count'] = False
+
+    offset_list = list(range(params['limit'], count, params['limit']))
+
+    futures = []
+    gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for offset in offset_list:
+            params['offset'] = offset
+            futures.append(executor.submit(get_function, **params))
+
+        for future in futures:
+            gathering_responses.update(1)
+            docs.extend(future.result())
+
+        gathering_responses.close()
+
+        return docs
 
 class iterget:
     """
@@ -820,7 +981,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id = None, invitee = None, regex = None, tags = None, minduedate = None, duedate = None, pastdue = None, replytoNote = None, replyForum = None, signature = None, note = None, replyto = None, details = None, expired = None):
+def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -886,6 +1047,8 @@ def iterget_invitations(client, id = None, invitee = None, regex = None, tags = 
         params['note'] = note
     if replyto is not None:
         params['replyto'] = replyto
+    if super is not None:
+        params['super'] = super
     params['expired'] = expired
 
     return iterget(client.get_invitations, **params)
@@ -1307,7 +1470,8 @@ def recruit_reviewer(client, user, first,
     recruit_message_subj,
     reviewers_invited_id,
     contact_info='info@openreview.net',
-    verbose=True):
+    verbose=True,
+    replyTo=None):
     """
     Recruit a reviewer. Sends an email to the reviewer with a link to accept or
     reject the recruitment invitation.
@@ -1360,7 +1524,7 @@ def recruit_reviewer(client, user, first,
     client.add_members_to_group(reviewers_invited_id, [user])
 
     # send the email through openreview
-    response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id)
+    response = client.post_message(recruit_message_subj, [user], personalized_message, parentGroup=reviewers_invited_id, replyTo=replyTo)
 
     if verbose:
         print("Sent to the following: ", response)
@@ -1523,7 +1687,7 @@ def fill_template(template, paper):
 
     return new_template
 
-def get_conflicts(author_profiles, user_profile, policy='default'):
+def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     """
     Finds conflicts between the passed user Profile and the author Profiles passed as arguments
 
@@ -1542,25 +1706,24 @@ def get_conflicts(author_profiles, user_profile, policy='default'):
     info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
 
     for profile in author_profiles:
-        author_info = info_function(profile)
+        author_info = info_function(profile, n_years)
         author_domains.update(author_info['domains'])
         author_emails.update(author_info['emails'])
         author_relations.update(author_info['relations'])
         author_publications.update(author_info['publications'])
 
-    user_info = info_function(user_profile)
+    user_info = info_function(user_profile, n_years)
 
     conflicts = set()
     conflicts.update(author_domains.intersection(user_info['domains']))
     conflicts.update(author_relations.intersection(user_info['emails']))
     conflicts.update(author_emails.intersection(user_info['relations']))
     conflicts.update(author_emails.intersection(user_info['emails']))
-    conflicts.update(author_emails.intersection(user_info['emails']))
     conflicts.update(author_publications.intersection(user_info['publications']))
 
     return list(conflicts)
 
-def get_profile_info(profile):
+def get_profile_info(profile, n_years=3):
     """
     Gets all the domains, emails, relations associated with a Profile
 
@@ -1590,6 +1753,11 @@ def get_profile_info(profile):
     ## Relations section
     relations.update([r['email'] for r in profile.content.get('relations', [])])
 
+    ## TODO:: Parameterize the number of years for publications to consider from
+    ## Publications section: get publications within last n years, default is all publications from previous years
+    for pub in profile.content.get('publications', []):
+        publications.add(pub.id)
+
     ## Filter common domains
     for common_domain in common_domains:
         if common_domain in domains:
@@ -1603,7 +1771,7 @@ def get_profile_info(profile):
         'publications': publications
     }
 
-def get_neurips_profile_info(profile):
+def get_neurips_profile_info(profile, n_years=3):
 
     domains = set()
     emails=set()
@@ -1611,17 +1779,19 @@ def get_neurips_profile_info(profile):
     publications = set()
     common_domains = ['gmail.com', 'qq.com', '126.com', '163.com',
                       'outlook.com', 'hotmail.com', 'yahoo.com', 'foxmail.com', 'aol.com', 'msn.com', 'ymail.com', 'googlemail.com', 'live.com']
+    curr_year = datetime.datetime.now().year
+    cut_off_year = curr_year - n_years - 1
 
-    ## Institution section, get history within the last three years
+    ## Institution section, get history within the last n years
     for h in profile.content.get('history', []):
-        if h.get('end') is None or int(h.get('end')) > 2017:
+        if h.get('end') is None or int(h.get('end')) > cut_off_year:
             domain = h.get('institution', {}).get('domain', '')
             domains.update(openreview.tools.subdomains(domain))
 
-    ## Relations section, get coauthor/coworker relations within the last three years + all the other relations
+    ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
         if r.get('relation', '') in ['Coauthor','Coworker']:
-            if r.get('end') is None or int(r.get('end')) > 2017:
+            if r.get('end') is None or int(r.get('end')) > cut_off_year:
                 relations.add(r['email'])
         else:
             relations.add(r['email'])
@@ -1634,13 +1804,20 @@ def get_neurips_profile_info(profile):
         for email in profile.content['emails']:
             domains.update(openreview.tools.subdomains(email))
 
-    ## Publications section: get publications within last three years
+    ## Publications section: get publications within last n years
     for pub in profile.content.get('publications', []):
-        if pub.cdate:
-            year = int(datetime.datetime.fromtimestamp(pub.cdate/1000).year)
-        else:
-            year = int(datetime.datetime.fromtimestamp(pub.tcdate/1000).year)
-        if year > 2017:
+        year = None
+        if 'year' in pub.content and isinstance(pub.content['year'], str):
+            try:
+                converted_year = int(pub.content['year'])
+                if converted_year <= curr_year:
+                    year = converted_year
+            except Exception as e:
+                year = None
+        if not year:
+            timtestamp = pub.cdate if pub.cdate else pub.tcdate
+            year = int(datetime.datetime.fromtimestamp(timtestamp/1000).year)
+        if year > cut_off_year:
             publications.add(pub.id)
 
     ## Filter common domains
@@ -1719,7 +1896,7 @@ def pretty_id(group_id):
 
 def export_committee(client, committee_id, file_name):
     members=client.get_group(committee_id).members
-    profiles=openreview.matching._get_profiles(client, members)
+    profiles=get_profiles(client, members)
     with open(file_name, 'w') as outfile:
         csvwriter = csv.writer(outfile, delimiter=',')
         for profile in tqdm(profiles):
