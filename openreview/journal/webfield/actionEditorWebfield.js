@@ -43,7 +43,7 @@ var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tai
 
 var HEADER = {
   title: SHORT_PHRASE + ' Action Editor Console',
-  instructions: "<strong>Edge Browser:</strong><br><a href='" + reviewersUrl + "'> Modify Reviewer Assignments</a>"
+  instructions: "<a href='" + reviewersUrl + "'> Modify Reviewer Assignments</a>"
 };
 
 // Helpers
