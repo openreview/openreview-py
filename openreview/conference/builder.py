@@ -689,7 +689,7 @@ class Conference(object):
 
         return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission, hide_fields=hide_fields)
 
-    def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False):
+    def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False, overwrite=False):
 
         notes_iterator = self.get_submissions(sort='number:asc', details='original')
         author_group_ids = []
@@ -723,7 +723,7 @@ class Conference(object):
                 else:
                     reviewers_id=self.get_reviewers_id(number=n.number)
                     group = tools.get_group(self.client, id = reviewers_id)
-                    if not group:
+                    if not group or (overwrite and not group.members):
                         self.client.post_group(openreview.Group(id=reviewers_id,
                             invitation=paper_reviewer_group_invitation.id,
                             readers=self.get_reviewer_paper_group_readers(n.number),
@@ -749,7 +749,7 @@ class Conference(object):
                 else:
                     area_chairs_id=self.get_area_chairs_id(number=n.number)
                     group = tools.get_group(self.client, id = area_chairs_id)
-                    if not group:
+                    if not group or (overwrite and not group.members):
                         self.client.post_group(openreview.Group(id=area_chairs_id,
                             invitation=paper_area_chair_group_invitation.id,
                             readers=self.get_area_chair_paper_group_readers(n.number),
@@ -766,7 +766,7 @@ class Conference(object):
             if self.use_senior_area_chairs:
                 senior_area_chairs_id=self.get_senior_area_chairs_id(number=n.number)
                 group = tools.get_group(self.client, id = senior_area_chairs_id)
-                if not group:
+                if not group or (overwrite and not group.members):
                     self.client.post_group(openreview.Group(id=senior_area_chairs_id,
                         readers=self.get_senior_area_chair_identity_readers(n.number),
                         nonreaders=[self.get_authors_id(n.number)],
