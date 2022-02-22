@@ -19,7 +19,6 @@ var BID_OPTIONS = [];
 // In the SUPER* algorithm, we will map only positive bids to a bid, and treat
 // not positive bids as no bids in the algorithm. The following variables enforce this.
 var POSITIVE_BIDS = [];
-var BID_VALUES = [ 1 ];
 // The following parameter will dictate how much the algorithm optimizes for
 // showing relevant papers to reviewers versus optimizing for each paper getting
 // a sufficient number of bids. Specifically as the TRADE_OFF parameter goes up, 
@@ -27,7 +26,7 @@ var BID_VALUES = [ 1 ];
 // the relevance scores, and as the TRADE_OFF parameter goes down, the ordering
 // will get closer to showing the papers in increasing order of the number of bids.
 // The value of 1 is a relatively higher choice.
-var TRADE_OFF = 1;
+var TRADE_OFF = 0.5;
 
 // Bid status data
 var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
@@ -114,13 +113,10 @@ function getPaperScores(affinityScores, bidsCount) {
   var paperScores = [];
   var noteIds = Object.keys(affinityScores);
   for (var i = 0; i < noteIds.length; i++) {
-    var partialScore = 0;
     var noteId = noteIds[i];
     var affinityScore = affinityScores[noteId];
-    if (bidsCount[noteId] === undefined) {
-      var numberOfBids = 0;
-    } else {
-      var numberOfBids = 0;
+    var numberOfBids = 0;
+    if (bidsCount[noteId] !== undefined) {
       for (var key in bidsCount[noteId]) {
         if (_.includes(POSITIVE_BIDS, key)) {
           var value = bidsCount[noteId][key];
@@ -128,13 +124,10 @@ function getPaperScores(affinityScores, bidsCount) {
         }
       }
     }
-    for (var j = 0; j < BID_VALUES.length; j++) {
-      var bidValue = BID_VALUES[j];
-      partialScore = partialScore + paperScoringFunction(numberOfBids + bidValue) - paperScoringFunction(numberOfBids);
-    }
+    var partialScore = paperScoringFunction(numberOfBids + 1) - paperScoringFunction(numberOfBids);
     paperScores.push({
       id: noteId,
-      score: -1 * (partialScore * affinityScore / BID_VALUES.length + TRADE_OFF * (Math.pow(2, affinityScore) - 1))
+      score: -1 * (partialScore * affinityScore + TRADE_OFF * (Math.pow(2, affinityScore) - 1))
     });
   }
   return _.sortBy(paperScores, [ 'score' ]);
