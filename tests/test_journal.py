@@ -53,7 +53,6 @@ class TestJournal():
         melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
         celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
 
-
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
