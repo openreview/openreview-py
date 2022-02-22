@@ -1024,7 +1024,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, noteId = None, invitation = None, with_count=False):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=False):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1032,8 +1032,8 @@ class OpenReviewClient(object):
         :rtype: list[Edit]
         """
         params = {}
-        if noteId:
-            params['note.id'] = noteId
+        if note_id:
+            params['note.id'] = note_id
         if invitation:
             params['invitation'] = invitation
 
@@ -1680,7 +1680,7 @@ class OpenReviewClient(object):
         return response.json()
 
     def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
-        
+
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
@@ -1689,7 +1689,7 @@ class OpenReviewClient(object):
         if exclusion_inv:
             expertise = {'exclusion': { 'invitation': exclusion_inv }}
             entityA['expertise'] = expertise
-        
+
         # Build entityB from paper_invitation
         entityB = {
             'type': 'Note',
@@ -1712,7 +1712,7 @@ class OpenReviewClient(object):
         return response.json()
 
     def request_single_paper_expertise(self, name, group_id, paper_id, model=None, baseurl=None):
-        
+
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
