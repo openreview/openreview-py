@@ -2715,7 +2715,7 @@ class InvitationBuilder(object):
                                 'type': 'string',
                                 'enum': ['I approve the AE\'s decision.']
                             },
-                            'presention': {
+                            'presentation': {
                                 'input': 'checkbox'
                             }
                         },
@@ -2838,7 +2838,7 @@ class InvitationBuilder(object):
                         },
                         'authors': {
                             'value': {
-                                'type': 'string',
+                                'type': 'string[]',
                                 'regex': '[^;,\\n]+(,[^,\\n]+)*'
                             },
                             'description': 'Comma separated list of author names.',
@@ -2849,7 +2849,7 @@ class InvitationBuilder(object):
                         },
                         'authorids': {
                             'value': {
-                                'type': 'string',
+                                'type': 'string[]',
                                 'regex': r'~.*'
                             },
                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
