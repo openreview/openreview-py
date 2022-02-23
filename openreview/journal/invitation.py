@@ -160,9 +160,9 @@ class InvitationBuilder(object):
                                             'type': "string",
                                             'enum': ['Yes', 'No']
                                         },
-                                        # 'presentation': {
-                                        #     'checkbox': True
-                                        # }
+                                        'presentation': {
+                                            'input': 'radio'
+                                        }
                                     }
                                 }
                             }
@@ -240,9 +240,9 @@ class InvitationBuilder(object):
                                             'type': "string",
                                             'enum': ['Yes', 'No']
                                         },
-                                        # 'presentation': {
-                                        #     'checkbox': True
-                                        # }
+                                        'presentation': {
+                                            'input': 'radio'
+                                        }
                                     }
                                 }
                             }
@@ -956,6 +956,9 @@ class InvitationBuilder(object):
                                     'value': {
                                         'type': 'string',
                                         'enum': ['Appropriate for Review', 'Desk Reject']
+                                    },
+                                    'presentation': {
+                                        'input': 'radio'
                                     }
                                 }},
                                 'comment': { 'const': {
@@ -1040,7 +1043,7 @@ class InvitationBuilder(object):
                                         ]
                                     },
                                     'presentation': {
-                                        'input': 'radio'
+                                        'input': 'checkbox'
                                     },
                                     'description': 'Please confirm to withdraw.',
                                     'order': 1
@@ -1128,7 +1131,7 @@ class InvitationBuilder(object):
                                         ]
                                     },
                                     'presentation': {
-                                        'input': 'radio'
+                                        'input': 'checkbox'
                                     },
                                     'description': 'Please confirm to retract.',
                                     'order': 1
@@ -1553,6 +1556,9 @@ class InvitationBuilder(object):
                                     'Survey Certification'
                                 ],
                                 'optional': True
+                            },
+                            'presentation': {
+                                'input': 'select'
                             }
                         },
                         'license': {
