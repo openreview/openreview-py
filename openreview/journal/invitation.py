@@ -732,7 +732,7 @@ class InvitationBuilder(object):
             invitees=[venue_id, action_editors_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[self.journal.get_editors_in_chief_id()],
             minReplies=1,
             maxReplies=1,
             type='Edge',
@@ -1198,7 +1198,7 @@ class InvitationBuilder(object):
             noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[self.journal.get_editors_in_chief_id()],
             maxReplies=1,
             edit={
                 'ddate': {
@@ -1732,10 +1732,10 @@ class InvitationBuilder(object):
                     'maxReplies': { 'value': 1 },
                     'duedate': { 'value': '${params.duedate}' },
                     'process': { 'value': paper_process },
-                    # 'dateprocesses': { 'values': [{
-                    #     'dates': ["${invitation.duedate} + " + str(day), "${invitation.duedate} + " + str(seven_days)],
-                    #     'process': duedate_process
-                    # }]},
+                    'dateprocesses': { 'values': [{
+                        'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+                        'process': duedate_process
+                    }]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -1871,10 +1871,10 @@ class InvitationBuilder(object):
                     'duedate': { 'value': '${params.duedate}' },
                     'cdate': { 'value': '${params.cdate}' },
                     'process': { 'value': paper_process },
-                    # 'dateprocesses': { 'values': [{
-                    #     'dates': [ "${invitation.cdate} + 1000" ],
-                    #     'process': cdate_process
-                    # }]},
+                    'dateprocesses': { 'values': [{
+                        'dates': [ "#{cdate} + 1000" ],
+                        'process': cdate_process
+                    }]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -2471,6 +2471,8 @@ class InvitationBuilder(object):
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
+            maxReplies=1,
+            minReplies=1,
             edit={
                 'signatures': { 'values': [paper_action_editors_id] },
                 'readers': { 'values': [ venue_id, paper_action_editors_id] },
