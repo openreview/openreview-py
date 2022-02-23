@@ -2039,6 +2039,17 @@ note={Rejected}
 <p>We thank you for your contribution to TMLR and congratulate you for your successful submission!</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
+        ## Expire review invitations to the jobs are cancelled
+        cho_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Review',
+                expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
 
 
     def test_withdraw_submission(self, journal, openreview_client, helpers):
