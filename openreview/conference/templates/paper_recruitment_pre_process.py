@@ -18,7 +18,7 @@ def process(client, note, invitation):
         raise openreview.OpenReviewException('User not in invited group, please accept the invitation using the email address you were invited with')
 
     if 'Desk_Rejected_Submission' in submission.invitation or 'Withdrawn_Submission' in submission.invitation:
-        raise openreview.OpenReviewException('This submission is no longer under consideration. Please contact the paper area chair or program chairs to be unassigned.')
+        raise openreview.OpenReviewException('This submission is no longer under review. No action is required from your end.')
 
     if note.content['response'] == 'No' and CHECK_DECLINE:
         memberships = client.get_groups(regex=REVIEWERS_REGEX, member=user)

@@ -797,4 +797,4 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         request_page(selenium, accept_url, alert=True)
 
         error_message = selenium.find_element_by_class_name('important_message')
-        assert 'This submission is no longer under consideration. Please contact the paper area chair or program chairs to be unassigned.' == error_message.text
+        assert 'This submission is no longer under review. No action is required from your end.' == error_message.text
