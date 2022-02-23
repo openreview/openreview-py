@@ -14,7 +14,7 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue()
+        helpers.await_queue(openreview_client)
 
         #post journal request form
         request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
@@ -33,7 +33,7 @@ class TestJournalRequest():
                 }
             ))
 
-        helpers.await_queue()
+        helpers.await_queue(openreview_client)
 
         #return journal details
         journal_details = {
@@ -60,7 +60,7 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue()
+        helpers.await_queue(openreview_client)
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), openreview_client.token)
 
         request_form = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request',
