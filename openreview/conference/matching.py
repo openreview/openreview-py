@@ -644,9 +644,9 @@ class Matching(object):
                 if call_count == 1440: ## one day to wait the completion or trigger a timeout
                     break
                 time.sleep(60)
-                job_status = self.client.get_expertise_status(job_id['job_id'])
-                status = job_status['status']
-                desc = job_status['description']
+                status_response = self.client.get_expertise_status(job_id['job_id'])
+                status = status_response.get('status')
+                desc = status_response.get('description')
                 call_count += 1
             if 'Completed' in status:
                 result = self.client.get_expertise_results(job_id['job_id'])
@@ -659,8 +659,10 @@ class Matching(object):
 
                 scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
                 return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
-            else:
-                raise openreview.OpenReviewException(f"There was an error computing scores, status: {status}\nDescription: {desc}")
+            if 'Error' in status:
+                raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)
+            if call_count == 240:
+                raise openreview.OpenReviewException('Time out computing scores, description: ' + desc)
         except openreview.OpenReviewException as e:
             raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
 
