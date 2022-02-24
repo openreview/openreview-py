@@ -91,7 +91,7 @@ function getBidsCount() {
 
 function getAffinityScores() {
   var invitation = selectedScore;
-  if (_.startsWith(selectedScore, 'SUPER_')) {
+  if (_.startsWith(selectedScore, 'SUPER-')) {
     invitation = selectedScore.substring(6);
   }
   return Webfield.get('/edges', {
@@ -251,7 +251,7 @@ function getPapersByBids(bids, bidsByNote) {
 // Perform all the required API calls
 function load() {
   var sortedNotesP
-  if (_.startsWith(selectedScore, 'SUPER_')) {
+  if (_.startsWith(selectedScore, 'SUPER-')) {
     sortedNotesP = $.when(getAffinityScores(), getBidsCount())
       .then(function(affinityScores, bidsCount) {
         return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), 0);
@@ -351,7 +351,7 @@ function renderContent(notes, conflicts, bidEdges) {
     selectedScore = $(this).val();
 
     var sortedNotesP;
-    if (_.startsWith(selectedScore, 'SUPER_')) {
+    if (_.startsWith(selectedScore, 'SUPER-')) {
       sortedNotesP = $.when(getAffinityScores(), getBidsCount())
         .then(function(affinityScores, bidsCount) {
           return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), 0);
@@ -449,7 +449,7 @@ function updateNotes(notes) {
     pageSize: 50,
     onPageClick: function(offset) {
       var sortedNotesP;
-      if (_.startsWith(selectedScore, 'SUPER_')) {
+      if (_.startsWith(selectedScore, 'SUPER-')) {
         sortedNotesP = $.when(getAffinityScores(), getBidsCount())
           .then(function(affinityScores, bidsCount) {
             return getPapersSortedByAlgo(getPaperScores(affinityScores, bidsCount), offset);
@@ -482,7 +482,7 @@ function updateNotes(notes) {
         // Only add SUPER to the specified scores
         if (!_.includes(SCORE_IDS_WITH_SUPER, scoreId)) return;
         var label = 'SUPER ' + view.prettyInvitationId(scoreId);
-        var superScoreId = 'SUPER_' + scoreId;
+        var superScoreId = 'SUPER-' + scoreId;
         var selectedClass = selectedScore == superScoreId && 'selected';
         optionsHtml = optionsHtml + '<option value="' + superScoreId + '" ' + selectedClass + '>' + label + '</option>';
       })
