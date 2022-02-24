@@ -746,7 +746,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-0')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
@@ -777,7 +777,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-1')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 3

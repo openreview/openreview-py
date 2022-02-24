@@ -32,7 +32,7 @@ The {journal.short_name} Editors-in-Chief
         replyTo=journal.contact_info
     )
 
-    if int(date_index) > 0:
+    if date_index > 0:
       ## get preferred names
       profiles = openreview.tools.get_profiles(client, late_invitees)
       ## send email to action editors
