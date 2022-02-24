@@ -410,6 +410,17 @@ class Journal(object):
             return '\n'.join(bibtex)
 
 
+    def get_late_invitees(self, invitation_id):
+
+        invitation = self.client.get_invitation(invitation_id)
+        invitee_groups = [ self.client.get_group(i) for i in invitation.invitees if i != self.venue_id ]
+        invitee_members = [member for group in invitee_groups for member in group.members]
+
+        replies = self.client.get_notes(invitation=invitation.id, details='signatures')
+        signature_members = [member for reply in replies for signature in reply.details['signatures'] for member in signature['members']]
+
+        return list(set(invitee_members) - set(signature_members))
+
     def notify_readers(self, edit, content_fields=[]):
 
         vowels = ['a', 'e', 'i', 'o', 'u']

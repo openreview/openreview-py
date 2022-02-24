@@ -7,14 +7,12 @@ def process(client, invitation):
     now = datetime.datetime.utcnow()
     task = 'Review'
 
-    reviews = client.get_notes(forum=submission.id, invitation=invitation.id)
-    signatures = [r.signatures[0] for r in reviews]
+    late_invitees = journal.get_late_invitees(invitation.id)
 
     ## send email to reviewers
-    print('send email to reviewers')
+    print('send email to reviewers', late_invitees)
     client.post_message(
-        recipients=[journal.get_reviewers_id(number=submission.number)],
-        ignoreRecipients=signatures,
+        recipients=late_invitees,
         subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
@@ -33,3 +31,29 @@ The {journal.short_name} Editors-in-Chief
 ''',
         replyTo=journal.contact_info
     )
+
+    if int(date_index) > 0:
+      ## get preferred names
+      profiles = openreview.tools.get_profiles(client, late_invitees)
+      ## send email to action editors
+      print('send email to action editors')
+      client.post_message(
+          recipients=[journal.get_action_editors_id(number=submission.number)],
+          subject=f'''[{journal.short_name}] Reviewer is late in performing a task for assigned paper {submission.content['title']['value']}''',
+          message=f'''Hi {{{{fullname}}}},
+
+Our records show that a reviewer on a paper you are the AE for is *one week* late on a reviewing task:
+
+Task: {task}
+Reviewer: {', '.join([p.get_preferred_name(pretty=True) for p in profiles])}
+Submission: {submission.content['title']['value']}
+Link: https://openreview/forum?id={submission.id}
+
+Please follow up directly with the reviewer in question to ensure they complete their task ASAP.
+
+We thank you for your cooperation.
+
+The {journal.short_name} Editors-in-Chief
+''',
+          replyTo=journal.contact_info
+      )
