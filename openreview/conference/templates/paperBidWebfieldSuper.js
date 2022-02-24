@@ -13,8 +13,9 @@ var BID_ID = '';
 var SUBJECT_AREAS = '';
 var CONFLICT_SCORE_ID = '';
 var SCORE_IDS = [];
-var SCORE_IDS_WITH_SUPER = [];
-var ENABLE_SUPER_ALGO = false;
+var ENABLE_SUPER_ALGO = true;
+// This can be replaced with only a subset of SCORE_IDS
+var SCORE_IDS_WITH_SUPER = SCORE_IDS;
 var BID_OPTIONS = [];
 // In the SUPER* algorithm, we will map only positive bids to a bid, and treat
 // not positive bids as no bids in the algorithm. The following variables enforce this.
