@@ -31,6 +31,9 @@ var TRADE_OFF = 0.5;
 
 // Bid status data
 var selectedScore = SCORE_IDS.length && SCORE_IDS[0];
+if (SCORE_IDS_WITH_SUPER.length && ENABLE_SUPER_ALGO) {
+  selectedScore = 'SUPER-' + SCORE_IDS_WITH_SUPER[0];
+}
 var activeTab = 0;
 var noteCount = 0;
 var conflictIds = [];
