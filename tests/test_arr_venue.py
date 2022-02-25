@@ -756,3 +756,45 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         assert url
         assert 'Reviewers/-/Assignment' in url.get_attribute('href')
 
+        # Desk Reject Paper 2
+        desk_reject_note = openreview.Note(
+            invitation='aclweb.org/ACL/ARR/2021/September/Paper2/-/Desk_Reject',
+            forum=submissions[3].forum,
+            replyto=submissions[3].forum,
+            readers=['aclweb.org/ACL/ARR/2021/September',
+                     'aclweb.org/ACL/ARR/2021/September/Paper2/Authors',
+                     'aclweb.org/ACL/ARR/2021/September/Paper2/Reviewers',
+                     'aclweb.org/ACL/ARR/2021/September/Paper2/Area_Chairs',
+                     'aclweb.org/ACL/ARR/2021/September/Program_Chairs'],
+            writers=[venue.get_id(), venue.get_program_chairs_id()],
+            signatures=[venue.get_program_chairs_id()],
+            content={
+                'desk_reject_comments': 'PC has decided to reject this submission.',
+                'title': 'Submission Desk Rejected by Program Chairs'
+            }
+        )
+
+        posted_note = pc_client.post_note(desk_reject_note)
+        assert posted_note
+
+        helpers.await_queue()
+
+        ## Reviewer reviewer_arr2@mit.edu tries to accept invitation for desk-rejected submission but gets an error
+        invite_edges = pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment',
+                                           head=submissions[3].id, tail='~Reviewer_ARR_MIT1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        messages = client.get_messages(to='reviewer_arr2@mit.edu',
+                                       subject='[ARR 2021 - September] Invitation to review paper titled Paper title 2')
+        assert messages and len(messages) == 1
+        invitation_message = messages[0]['content']['text']
+
+        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace(
+            'https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        request_page(selenium, accept_url, alert=True)
+
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'This submission is no longer under review. No action is required from your end.' == error_message.text
