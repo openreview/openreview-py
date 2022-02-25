@@ -1734,7 +1734,7 @@ class InvitationBuilder(object):
                     'process': { 'value': paper_process },
                     'dateprocesses': { 'values': [{
                         'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-                        'process': duedate_process
+                        'script': duedate_process
                     }]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
@@ -1873,7 +1873,7 @@ class InvitationBuilder(object):
                     'process': { 'value': paper_process },
                     'dateprocesses': { 'values': [{
                         'dates': [ "#{cdate} + 1000" ],
-                        'process': cdate_process
+                        'script': cdate_process
                     }]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
