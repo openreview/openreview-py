@@ -2074,16 +2074,13 @@ note={Rejected}
 <p>The TMLR Editors-in-Chief</p>
 '''
         ## Expire review invitations to the jobs are cancelled
-        cho_client.post_invitation_edit(
-            invitations='TMLR/-/Edit',
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Review',
-                expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=['TMLR/Editors_In_Chief']
-            )
-        )
+        withdraw_note = raia_client.post_note_edit(invitation='TMLR/Paper5/-/Withdrawal',
+                                    signatures=[f'{venue_id}/Paper5/Authors'],
+                                    note=Note(
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
 
 
     def test_withdraw_submission(self, journal, openreview_client, helpers):
