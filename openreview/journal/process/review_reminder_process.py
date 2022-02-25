@@ -37,15 +37,16 @@ The {journal.short_name} Editors-in-Chief
       profiles = openreview.tools.get_profiles(client, late_invitees)
       ## send email to action editors
       print('send email to action editors')
-      client.post_message(
-          recipients=[journal.get_action_editors_id(number=submission.number)],
-          subject=f'''[{journal.short_name}] Reviewer is late in performing a task for assigned paper {submission.content['title']['value']}''',
-          message=f'''Hi {{{{fullname}}}},
+      for profile in profiles:
+        client.post_message(
+            recipients=[journal.get_action_editors_id(number=submission.number)],
+            subject=f'''[{journal.short_name}] Reviewer is late in performing a task for assigned paper {submission.content['title']['value']}''',
+            message=f'''Hi {{{{fullname}}}},
 
 Our records show that a reviewer on a paper you are the AE for is *one week* late on a reviewing task:
 
 Task: {task}
-Reviewer: {', '.join([p.get_preferred_name(pretty=True) for p in profiles])}
+Reviewer: {profile.get_preferred_name(pretty=True)}
 Submission: {submission.content['title']['value']}
 Link: https://openreview/forum?id={submission.id}
 
@@ -55,5 +56,5 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-          replyTo=journal.contact_info
-      )
+            replyTo=journal.contact_info
+        )
