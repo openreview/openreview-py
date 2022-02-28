@@ -45,7 +45,7 @@ class Helpers:
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
     @staticmethod
-    def await_queue(super_client=None, wait_for_delayed=True):
+    def await_queue(super_client=None):
         if super_client is None:
             super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
             assert super_client is not None, 'Super Client is none'
@@ -54,9 +54,7 @@ class Helpers:
             jobs = super_client.get_jobs_status()
             jobCount = 0
             for jobName, job in jobs.items():
-                jobCount += job.get('waiting', 0) + job.get('active', 0)
-                if wait_for_delayed:
-                    jobCount += job.get('delayed', 0)
+                jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
 
             if jobCount == 0:
                 break
@@ -64,6 +62,18 @@ class Helpers:
             time.sleep(0.5)
 
         assert not super_client.get_process_logs(status='error')
+
+    @staticmethod
+    def await_queue_edit(super_client, edit_id=None, invitation=None):
+        print('await_queue_edit', edit_id)
+        while True:
+            process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
+            if process_logs:
+                break
+
+            time.sleep(0.5)
+
+        assert process_logs[0]['status'] == 'ok'
 
 
     @staticmethod
