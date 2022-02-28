@@ -1383,9 +1383,14 @@ var addTagsToPaperSummaryCell = function(data, pcAssignmentTagInvitations) {
 var sendReviewerReminderEmailsStep2 = function(e) {
   var reviewerMessages = localStorage.getItem('reviewerMessages');
   var messageCount = localStorage.getItem('messageCount');
-  if (!reviewerMessages || !parseInt(messageCount)) {
+  if (!reviewerMessages) {
     $('#message-reviewers-modal').modal('hide');
     promptError('Could not send emails at this time. Please refresh the page and try again.');
+    return
+  }
+  if (!parseInt(messageCount)) {
+    $('#message-reviewers-modal').modal('hide');
+    promptError('There are no email recipients. Please check the recipients list and try again.');
     return
   }
   JSON.parse(reviewerMessages).forEach(postReviewerEmails);
