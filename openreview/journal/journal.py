@@ -413,7 +413,7 @@ class Journal(object):
     def get_late_invitees(self, invitation_id):
 
         invitation = self.client.get_invitation(invitation_id)
-        invitee_groups = [ self.client.get_group(i) for i in invitation.invitees if i != self.venue_id ]
+        invitee_groups = [ self.client.get_group(i) for i in invitation.invitees if i not in [self.venue_id, self.get_editors_in_chief_id()] ]
         invitee_members = [member for group in invitee_groups for member in group.members]
 
         replies = self.client.get_notes(invitation=invitation.id, details='signatures')
