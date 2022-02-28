@@ -918,6 +918,7 @@ class InvitationBuilder(object):
                     'maxReplies': { 'value': 1},
                     'duedate': { 'value': '${params.duedate}' },
                     'process': { 'value': paper_process },
+                    'dateprocesses': { 'values': [self.ae_reminder_process]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': paper_action_editors_id }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id] }},
@@ -2657,7 +2658,7 @@ class InvitationBuilder(object):
                             }
                         },
                         process=os.path.join(os.path.dirname(__file__), 'process/review_rating_process.py'),
-                        date_processes=[self.reviewer_reminder_process]
+                        date_processes=[self.ae_reminder_process]
                     )
                     self.save_invitation(invitation)
 
@@ -2841,7 +2842,7 @@ class InvitationBuilder(object):
                 }
             },
             process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_verification_process.py'),
-            date_processes=[self.reviewer_reminder_process]
+            date_processes=[self.ae_reminder_process]
         )
 
         self.save_invitation(invitation)
