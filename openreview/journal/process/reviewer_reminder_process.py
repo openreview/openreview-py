@@ -2,7 +2,7 @@ def process(client, invitation):
 
     journal = openreview.journal.Journal()
 
-    submission = client.get_note(invitation.edit['note']['forum']['value'])
+    submission = client.get_note(invitation.edit['note']['forum']['const'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
     now = datetime.datetime.utcnow()
     task = invitation.id.split('/-/')[-1].replace('_', ' ')
