@@ -121,11 +121,7 @@ class TestJournal():
                 }
             ))
 
-        helpers.await_queue(openreview_client)
-        note_id_1=submission_note_1['note']['id']
-        process_logs = openreview_client.get_process_logs(id = submission_note_1['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[MELBA] Suggest candidate Action Editor for your new MELBA submission')
         assert len(messages) == 1
@@ -136,3 +132,6 @@ class TestJournal():
 <p>For more details and guidelines on the MELBA review process, visit <a href=\"http://melba-journal.org\">melba-journal.org</a>.</p>
 <p>The MELBA Editors-in-Chief</p>
 '''
+
+        note = openreview_client.get_note(submission_note_1['note']['id'])
+        journal.invitation_builder.expire_paper_invitations(note)
