@@ -68,18 +68,16 @@ class TestJournal():
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
         assert len(messages) == 9
 
-        # for message in messages:
-        #     text = message['content']['text']
-        #     accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        #     request_page(selenium, accept_url, alert=True)
+        for message in messages:
+            text = message['content']['text']
+            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+            request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue(openreview_client)
 
         group = openreview_client.get_group('TMLR/Action_Editors')
-        # assert len(group.members) == 9
-        # assert '~Joelle_Pineau1' in group.members
-        group.members = ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
-        openreview_client.post_group(group)
+        assert len(group.members) == 9
+        assert '~Joelle_Pineau1' in group.members
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -93,25 +91,23 @@ class TestJournal():
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer')
         assert len(messages) == 6
 
-        # for message in messages:
-        #     text = message['content']['text']
-        #     accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        #     request_page(selenium, accept_url, alert=True)
+        for message in messages:
+            text = message['content']['text']
+            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+            request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue(openreview_client)
 
         group = openreview_client.get_group('TMLR/Reviewers')
-        # assert len(group.members) == 6
-        # assert '~Javier_Burroni1' in group.members
-        group.members = ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
-        openreview_client.post_group(group)
+        assert len(group.members) == 6
+        assert '~Javier_Burroni1' in group.members
 
         status = journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['javier@mailtwo.com'])
         messages = openreview_client.get_messages(to = 'javier@mailtwo.com', subject = 'Invitation to be an Reviewer')
         assert len(messages) == 1
 
-        # assert status.get('already_member')
-        # assert 'javier@mailtwo.com' in status.get('already_member')
+        assert status.get('already_member')
+        assert 'javier@mailtwo.com' in status.get('already_member')
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
