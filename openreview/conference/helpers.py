@@ -375,7 +375,7 @@ def get_submission_revision_stage(client, request_forum):
     if request_forum.content.get('accepted_submissions_only', '') == 'Enable revision for accepted submissions only':
         only_accepted = True
 
-    allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow order of the authors only'
+    allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
 
     return openreview.SubmissionRevisionStage(
         name=revision_name,

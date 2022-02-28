@@ -1232,7 +1232,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_author_edition': 'Allow add and remove authors',
+                'submission_author_edition': 'Allow addition and removal of authors',
                 'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
@@ -1389,7 +1389,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_author_edition': 'Allow order of the authors only',
+                'submission_author_edition': 'Allow reorder of existing authors only',
                 'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
@@ -1527,7 +1527,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_author_edition': 'Allow add and remove authors',
+                'submission_author_edition': 'Allow addition and removal of authors',
                 'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TL;DR'],
                 'submission_revision_additional_options': {
                     'supplementary_material': {

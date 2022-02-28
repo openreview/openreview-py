@@ -380,12 +380,12 @@ class VenueStages():
                 'order': 4
             },
             'submission_author_edition': {
-                'description': 'Choose how to edit the author list',
+                'description': 'Choose how authors may edit the author list',
                 'value-radio': [
-                    'Allow add and remove authors',
-                    'Allow order of the authors only'
+                    'Allow addition and removal of authors',
+                    'Allow reorder of existing authors only'
                 ],
-                'default': 'Allow add and remove authors',
+                'default': 'Allow addition and removal of authors',
                 'required': True,
                 'order': 5
             },
