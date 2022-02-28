@@ -1314,7 +1314,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
 
         content=invitations.paper_recruitment
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), process_file)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
