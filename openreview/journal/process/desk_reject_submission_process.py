@@ -22,3 +22,5 @@ The {journal.short_name} Editors-in-Chief
 ''',
         replyTo=journal.contact_info
     )
+
+    journal.invitation_builder.expire_paper_invitations(note)

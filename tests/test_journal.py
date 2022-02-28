@@ -402,14 +402,11 @@ note={Under review}
 
         ## Check invitations as an author
         invitations = test_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 2
-        assert invitations[0].details['writable'] == False
-        assert invitations[1].details['writable'] == False
+        assert len(invitations) == 0
 
         ## Check invitations as an AE
         invitations = joelle_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 1
-        assert f"{venue_id}/Paper2/-/Review_Approval"  in [i.id for i in invitations]
+        assert len(invitations) == 0
 
         ## Check assignment invitations
         with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission'):
@@ -2391,6 +2388,9 @@ note={Withdrawn}
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_7['id'])
+
+        note = openreview_client.get_note(submission_note_7['note']['id'])
+        journal.invitation_builder.expire_paper_invitations(note)
 
 
 
