@@ -26,6 +26,10 @@ class InvitationBuilder(object):
             ae_duedate_process = f.read()
             ae_duedate_process = ae_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
+        ae_edge_duedate_process = None
+        with open(os.path.join(os.path.dirname(__file__), 'process/action_editor_edge_reminder_process.py')) as f:
+            ae_edge_duedate_process = f.read()
+            ae_edge_duedate_process = ae_edge_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
         self.reviewer_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
@@ -35,6 +39,11 @@ class InvitationBuilder(object):
         self.ae_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': ae_duedate_process
+        }
+
+        self.ae_edge_reminder_process = {
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'script': ae_edge_duedate_process
         }
 
     def set_invitations(self):
@@ -1656,6 +1665,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=3,
+            date_processes=[self.ae_edge_reminder_process],
             type='Edge',
             edit={
                 'ddate': {
