@@ -1,4 +1,4 @@
-def process(client, note, invitation, existing_note):
+def process_update(client, note, invitation, existing_note):
     from datetime import datetime
     CONFERENCE_ID = ''
     CONFERENCE_SHORT_NAME = ''
