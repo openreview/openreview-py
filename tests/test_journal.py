@@ -1259,6 +1259,37 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## Check reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                signatures=[venue_id]
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Verification-0-1')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 2
+
+        messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 2
+
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
+<p>Our records show that the AE for submission Paper title VERSION 2 is <em>one week</em> late on an AE task::</p>
+<p>Task: Camera Ready Verification<br>
+AE: Joelle Pineau<br>
+Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/forum?id={note_id_1}</a></p>
+<p>OpenReview Team</p>
+'''
+
+
         ## AE verifies the camera ready revision
         verification_note = joelle_client.post_note_edit(invitation='TMLR/Paper1/-/Camera_Ready_Verification',
                             signatures=[f"{venue_id}/Paper1/Action_Editors"],
