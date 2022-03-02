@@ -50,6 +50,7 @@ class InvitationBuilder(object):
         self.set_meta_invitation()
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
+        self.set_reviewer_responsability_invitation()
         self.set_submission_invitation()
         self.set_review_approval_invitation()
         self.set_under_review_invitation()
@@ -287,6 +288,154 @@ class InvitationBuilder(object):
                 )
                 print(invitation)
                 return invitation
+
+    def set_reviewer_responsability_invitation(self):
+
+        venue_id=self.journal.venue_id
+        reviewers_id = self.journal.get_reviewers_id()
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        invitation=Invitation(id=self.journal.get_form_id(),
+            invitees = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            signatures = [venue_id],
+            edit = {
+                'signatures': { 'const': [venue_id], 'type': 'group[]' },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
+                'note': {
+                    'id': {
+                        'withInvitation': self.journal.get_form_id(),
+                        'optional': True
+                    },
+                    'ddate': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'nullable': True
+                    },
+                    'signatures': { 'const': [editors_in_chief_id] },
+                    'readers': { 'const': [venue_id, reviewers_id] },
+                    'writers': { 'const': [venue_id] },
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'value': {
+                                'type': "string",
+                                'regex': '.*'
+                            }
+                        },
+                        'description': {
+                            'order': 2,
+                            'value': {
+                                'type': "string",
+                                'regex': '.{0,50000}'
+                            },
+                            'presentation': {
+                                'markdown': True
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)
+
+        forum_edit = self.client.post_note_edit(invitation=self.journal.get_form_id(),
+            signatures=[venue_id],
+            note = openreview.api.Note(
+                signatures = [editors_in_chief_id],
+                content = {
+                    'title': { 'value': 'Acknowledgement of reviewer responsibility'},
+                    'description': { 'value': '''TMLR operates somewhat differently to other journals and conferences. Please read and acknowledge the following critical points before undertaking your first review. Note that the items below are stated very briefly; please see the full guidelines and instructions for reviewers on the journal website (links below).
+
+- [Reviewer guidelines](https://jmlr.org/tmlr/reviewer-guide.html)
+- [Editorial policies](https://jmlr.org/tmlr/editorial-policies.html)
+- [FAQ](https://jmlr.org/tmlr/contact.html)
+
+If you have questions after reviewing the points below that are not answered on the website, please contact the Editors-In-Chief: tmlr-editors@tmlr.org
+'''}
+                }
+            )
+        )
+        forum_note_id = forum_edit['note']['id']
+
+        invitation=Invitation(id=self.journal.get_reviewer_responsability_id(),
+            duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+            invitees = [reviewers_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            signatures = [venue_id],
+            edit = {
+                'signatures': { 'regex': '~.*', 'type': 'group[]' },
+                'readers': { 'const': [venue_id, '${signatues}'] },
+                'note': {
+                    'forum': { 'const': forum_note_id },
+                    'replyto': { 'const': forum_note_id },
+                    'signatures': { 'const': ['${signatures}'] },
+                    'readers': { 'const': [venue_id, '${signatues}'] },
+                    'writers': { 'const': [venue_id, '${signatues}'] },
+                    'content': {
+                        'paper_assignment': {
+                            'order': 1,
+                            'description': "Assignments may be refused under certain circumstances only (see website).",
+                            'value': {
+                                'type': "string",
+                                'enum': ['I understand that I am required to review submissions that are assigned, as long as they fill in my area of expertise and are within my annual quota']
+                            },
+                            'presentation': {
+                                'input': 'checkbox'
+                            }
+                        },
+                        'review_process': {
+                            'order': 2,
+                            'value': {
+                                'type': "string",
+                                'enum': ['I understand that TMLR has a 4 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
+                            },
+                            'presentation': {
+                                'input': 'checkbox'
+                            }
+                        },
+                        'submissions': {
+                            'order': 3,
+                            'description': 'Versions of papers that have been released as pre-prints (e.g. on arXiv) or non-archival workshop submissions may be submitted',
+                            'value': {
+                                'type': "string",
+                                'enum': ['I understand that TMLR does not accept submissions which are expanded or modified versions of previously published papers.']
+                            },
+                            'presentation': {
+                                'input': 'checkbox'
+                            }
+                        },
+                        'acceptance_criteria': {
+                            'order': 4,
+                            'value': {
+                                'type': "string",
+                                'enum': ['I understand that the acceptance criteria for TMLR is technical correctness and clarity of presentation rather than significance or impact.']
+                            },
+                            'presentation': {
+                                'input': 'checkbox'
+                            }
+                        },
+                        'action_editor_visibility': {
+                            'order': 5,
+                            'description': 'TMLR is double blind for reviewers and authors, but the Action Editor assigned to a submission is visible to both reviewers and authors.',
+                            'value': {
+                                'type': "string",
+                                'enum': ['I understand that Action Editors are not anonymous.']
+                            },
+                            'presentation': {
+                                'input': 'checkbox'
+                            }
+                        }
+
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)
 
     def set_submission_invitation(self):
 

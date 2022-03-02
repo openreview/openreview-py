@@ -87,6 +87,9 @@ class Journal(object):
     def get_meta_invitation_id(self):
         return self.__get_invitation_id(name='Edit')
 
+    def get_form_id(self):
+        return self.__get_invitation_id(name='Form')
+
     def get_review_approval_id(self, number=None):
         return self.__get_invitation_id(name='Review_Approval', number=number)
 
@@ -173,6 +176,9 @@ class Journal(object):
 
     def get_reviewer_recruitment_id(self):
         return self.__get_invitation_id(name='Recruitment', prefix=self.get_reviewers_id())
+
+    def get_reviewer_responsability_id(self):
+        return self.__get_invitation_id(name='Responsability', prefix=self.get_reviewers_id())
 
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())
