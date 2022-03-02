@@ -109,13 +109,13 @@ def process_update(client, note, invitation, existing_note):
         client.remove_members_from_group(CONFERENCE_ID + '/Authors/Accepted', PAPER_AUTHORS_ID)
 
     # Mail Authors, Reviewers, ACs (if present) and PCs
-    action = 'unmarked' if note.ddate else 'marked'
-    email_subject = '''{CONFERENCE_SHORT_NAME}: Paper #{paper_number} {action} withdrawn by paper authors'''.format(
+    action = 'restored' if note.ddate else 'withdrawn'
+    email_subject = '''{CONFERENCE_SHORT_NAME}: Paper #{paper_number} {action} by paper authors'''.format(
         CONFERENCE_SHORT_NAME=CONFERENCE_SHORT_NAME,
         paper_number=forum_note.number,
         action=action
     )
-    email_body = '''The {CONFERENCE_SHORT_NAME} paper "{paper_title_or_num}" has been {action} withdrawn by the paper authors.'''.format(
+    email_body = '''The {CONFERENCE_SHORT_NAME} paper "{paper_title_or_num}" has been {action} by the paper authors.'''.format(
         CONFERENCE_SHORT_NAME=CONFERENCE_SHORT_NAME,
         paper_title_or_num=forum_note.content.get('title', '#'+str(forum_note.number)),
         action=action
