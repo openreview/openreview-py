@@ -516,6 +516,35 @@ note={Withdrawn}
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## Check reviewer assignment reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/Assignment',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/Assignment-0-0')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'joelle@mailseven.com'
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>Our records show that you are late on the current action editor task:</p>
+<p>Task: Reviewer Assignment<br>
+Submission: Paper title UPDATED<br>
+Number of days late: 1<br>
+Link: <a href=\"https://openreview/group?id=TMLR/Action_Editors#action-editor-tasks\">https://openreview/group?id=TMLR/Action_Editors#action-editor-tasks</a></p>
+<p>Please follow the provided link and complete your task ASAP.</p>
+<p>We thank you for your cooperation.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
+
         ## Javier Burroni
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Javier_Burroni1'],
@@ -746,6 +775,8 @@ Comment: This is an inapropiate comment</p>
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-0')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 2
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'carlos@mailthree.com'
         assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
@@ -777,7 +808,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-1')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 3
+        assert len(messages) == 4
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
@@ -1227,6 +1258,37 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 <p>If any correction is needed, you may contact the authors directly by email or through OpenReview.</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
+
+        ## Check reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                signatures=[venue_id]
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Verification-0-1')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 2
+
+        messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 2
+
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
+<p>Our records show that the AE for submission Paper title VERSION 2 is <em>one week</em> late on an AE task::</p>
+<p>Task: Camera Ready Verification<br>
+AE: Joelle Pineau<br>
+Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/forum?id={note_id_1}</a></p>
+<p>OpenReview Team</p>
+'''
+
 
         ## AE verifies the camera ready revision
         verification_note = joelle_client.post_note_edit(invitation='TMLR/Paper1/-/Camera_Ready_Verification',

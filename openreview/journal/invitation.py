@@ -26,6 +26,10 @@ class InvitationBuilder(object):
             ae_duedate_process = f.read()
             ae_duedate_process = ae_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
+        ae_edge_duedate_process = None
+        with open(os.path.join(os.path.dirname(__file__), 'process/action_editor_edge_reminder_process.py')) as f:
+            ae_edge_duedate_process = f.read()
+            ae_edge_duedate_process = ae_edge_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
         self.reviewer_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
@@ -35,6 +39,11 @@ class InvitationBuilder(object):
         self.ae_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': ae_duedate_process
+        }
+
+        self.ae_edge_reminder_process = {
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'script': ae_edge_duedate_process
         }
 
     def set_invitations(self):
@@ -60,11 +69,12 @@ class InvitationBuilder(object):
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
 
-    def post_invitation_edit(self, invitation):
+    def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
             readers=[self.venue_id],
             writers=[self.venue_id],
             signatures=[self.venue_id],
+            replacement=replacement,
             invitation=invitation
         )
 
@@ -100,7 +110,7 @@ class InvitationBuilder(object):
         if invitation.process:
             invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
-        return self.post_invitation_edit(invitation)
+        return self.post_invitation_edit(invitation, replacement=True)
 
     def set_meta_invitation(self):
 
@@ -1752,6 +1762,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=3,
+            date_processes=[self.ae_edge_reminder_process],
             type='Edge',
             edit={
                 'ddate': {
