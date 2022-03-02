@@ -451,7 +451,7 @@ var renderHeader = function() {
   Webfield.ui.setup('#group-container', CONFERENCE_ID);
 
   if (ENABLE_EDIT_REVIEWER_ASSIGNMENTS) {
-    HEADER.instructions += '<p><a id="edge_browser_url" href="' + EDGE_BROWSER_URL + '" target="_blank" rel="nofollow">Modify Reviewer Assignments</a></p>';
+    HEADER.instructions += '<p><strong>Reviewer Assignment Browser: </strong><a id="edge_browser_url" href="' + EDGE_BROWSER_URL + '" target="_blank" rel="nofollow">Modify Reviewer Assignments</a></p>';
   }
 
   Webfield.ui.header(HEADER.title, HEADER.instructions);
