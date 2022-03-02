@@ -211,6 +211,13 @@ class WebfieldBuilder(object):
             'instructions': instructions_html.format(sorted_tip=sorted_tip, request_count=stage.request_count)
         }
 
+        if stage.committee_id == conference.get_senior_area_chairs_id():
+            template = 'templates/profileBidWebfield.js'
+        elif stage.use_super_algorithm:
+            template = 'templates/paperBidWebfieldSuper.js'
+        else:
+            template = 'templates/paperBidWebfield.js'
+
         template = 'templates/profileBidWebfield.js' if stage.committee_id == conference.get_senior_area_chairs_id() else 'templates/paperBidWebfield.js'
 
         with open(os.path.join(os.path.dirname(__file__), template)) as f:
@@ -226,6 +233,9 @@ class WebfieldBuilder(object):
 
             if stage.score_ids:
                 content = content.replace("var SCORE_IDS = [];", "var SCORE_IDS = " + json.dumps(stage.score_ids) + ";")
+
+            if stage.positive_bids:
+                content = content.replace("var POSITIVE_BIDS = [];", "var POSITIVE_BIDS = " + json.dumps(stage.positive_bids) + ";")
 
             if stage.committee_id == conference.get_senior_area_chairs_id():
                 content = content.replace("var PROFILE_GROUP_ID = '';", "var PROFILE_GROUP_ID = '" + conference.get_area_chairs_id() + "';")
