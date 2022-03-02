@@ -103,7 +103,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'area chair',
+                'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -131,7 +131,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'reviewer',
+                'invitee_role': 'Reviewers',
                 'invitee_details': reviewer_details,
                 'allow_role_overlap': 'Yes',
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -159,7 +159,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'area chair',
+                'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -183,7 +183,7 @@ class TestNeurIPSConference():
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
 
         ## Accept to be a reviewer
-        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as reviewer')
+        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -198,7 +198,7 @@ class TestNeurIPSConference():
         assert client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Reviewer Invitation accepted')
 
         ## Accept to be an AC
-        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as area chair')
+        messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as Area Chair')
         text = messages[0]['content']['text']
         # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -237,7 +237,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'area chair',
+                'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -264,7 +264,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'reviewer',
+                'invitee_role': 'Reviewers',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
@@ -286,6 +286,92 @@ class TestNeurIPSConference():
         assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
 
+
+    def test_registration_tasks(self, client):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(pc_client, request_form.id)
+
+        fields = {}
+        instructions = 'Test instructions for profile registration'
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_reviewers_id(),
+                additional_fields = fields,
+                instructions = instructions,
+                name = 'Registration',
+                title = 'Reviewers Registration Form',
+                start_date = None,
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10)
+            )
+        )
+
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_area_chairs_id(),
+                additional_fields = fields,
+                instructions = instructions,
+                name = 'Registration',
+                title = 'Action Editors Registration Form',
+                start_date = None,
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10)
+            )
+        )
+
+
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+
+        notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
+        assert len(notes) == 1
+        assert notes[0].content['instructions'] == 'Test instructions for profile registration'
+
+        notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+        assert len(notes) == 1
+        assert notes[0].content['instructions'] == 'Test instructions for profile registration'
+
+        fields = {
+            'agreement': {
+                'description': "By selecting 'I agree' below you confirm that you agree to this license agreement.",
+                'order': 8,
+                'required': True,
+                'value-radio': ["I agree", "I do not agree"]
+            }
+        }
+        instructions = 'Test instructions for license agreement'
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_reviewers_id(),
+                additional_fields = fields,
+                remove_fields = ['profile_confirmed', 'expertise_confirmed'],
+                instructions = instructions,
+                name = 'License_Agreement',
+                title = 'Reviewers License Agreement',
+                start_date = None,
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10)
+            )
+        )
+
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/License_Agreement')
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement was not found'):
+            assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement')
+
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/License_Agreement_Form')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement_Form was not found'):
+            assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement_Form')
+
+        notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/License_Agreement_Form')
+        assert len(notes) == 1
+        assert notes[0].content['instructions'] == 'Test instructions for license agreement'
 
 
     def test_submit_papers(self, test_client, client, helpers):
@@ -670,3 +756,45 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         assert url
         assert 'Reviewers/-/Assignment' in url.get_attribute('href')
 
+        # Desk Reject Paper 2
+        desk_reject_note = openreview.Note(
+            invitation='aclweb.org/ACL/ARR/2021/September/Paper2/-/Desk_Reject',
+            forum=submissions[3].forum,
+            replyto=submissions[3].forum,
+            readers=['aclweb.org/ACL/ARR/2021/September',
+                     'aclweb.org/ACL/ARR/2021/September/Paper2/Authors',
+                     'aclweb.org/ACL/ARR/2021/September/Paper2/Reviewers',
+                     'aclweb.org/ACL/ARR/2021/September/Paper2/Area_Chairs',
+                     'aclweb.org/ACL/ARR/2021/September/Program_Chairs'],
+            writers=[venue.get_id(), venue.get_program_chairs_id()],
+            signatures=[venue.get_program_chairs_id()],
+            content={
+                'desk_reject_comments': 'PC has decided to reject this submission.',
+                'title': 'Submission Desk Rejected by Program Chairs'
+            }
+        )
+
+        posted_note = pc_client.post_note(desk_reject_note)
+        assert posted_note
+
+        helpers.await_queue()
+
+        ## Reviewer reviewer_arr2@mit.edu tries to accept invitation for desk-rejected submission but gets an error
+        invite_edges = pc_client.get_edges(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Invite_Assignment',
+                                           head=submissions[3].id, tail='~Reviewer_ARR_MIT1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        messages = client.get_messages(to='reviewer_arr2@mit.edu',
+                                       subject='[ARR 2021 - September] Invitation to review paper titled Paper title 2')
+        assert messages and len(messages) == 1
+        invitation_message = messages[0]['content']['text']
+
+        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace(
+            'https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        request_page(selenium, accept_url, alert=True)
+
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'This submission is no longer under review. No action is required from your end.' == error_message.text

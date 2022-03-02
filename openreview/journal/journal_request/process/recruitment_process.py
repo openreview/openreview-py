@@ -15,16 +15,10 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, website)
 
     recruitment_note = client.get_note(edit.note.id)
-
-    role = recruitment_note.content['invitee_role']['value']
-
     role_map={
-        'reviewer': 'Reviewers',
-        'action editor': 'Action_Editor',
+        'Reviewer': 'Reviewers',
+        'Action Editor': 'Action_Editors',
     }
-
-    subject = recruitment_note.content['email_subject']['value'].replace('{invitee_role}', role)
-    content = recruitment_note.content['email_content']['value'].replace('{invitee_role}', role)
 
     invitee_details_str = recruitment_note.content['invitee_details']['value']
     invitee_emails = []
@@ -43,10 +37,16 @@ def process(client, edit, invitation):
                 invitee_emails.append(email)
                 invitee_names.append(name)
 
-    if role == 'reviewer':
-        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
-    else:
+    subject = recruitment_note.content['email_subject']['value']
+    content = recruitment_note.content['email_content']['value']
+    if 'Action_Editor' in invitation.id:
+        role = 'Action Editor'
+        subject = subject.replace('{role}', role)
         status = journal.invite_action_editors(content, subject, invitee_emails, invitee_names)
+    else:
+        role = 'Reviewer'
+        subject = subject.replace('{role}', role)
+        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
 
     non_invited_status = f'''No recruitment invitation was sent to the following users because they have already been invited as {role}:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
@@ -59,7 +59,7 @@ def process(client, edit, invitation):
 {status.get('errors')}''' if status.get('errors') else ''
 
     comment_content = f'''
-Invited: {len(status.get('invited'))} {role}s.
+Invited: {len(status.get('invited'))} {role}(s).
 
 {non_invited_status}
 {already_member_status}
@@ -67,13 +67,13 @@ Invited: {len(status.get('invited'))} {role}s.
 Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/{role_map[role]}/Invited
 '''
     if status['errors']:
-        error_status=f'''{len(status.get('errors'))} error(s) in the recruitment process:
+        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        {status.get('errors') }'''
 
-{status.get('errors')}'''
-        comment_content += f'''
-Error: {error_status}'''
+        comment_content += f'''\nError: {error_status}'''
 
-    comment_note = client.post_note_edit(invitation=recruitment_note.invitations[0].replace('Recruitment', 'Comment'),
+    invitation = recruitment_note.invitations[0].split('/-/')[0]
+    comment_note = client.post_note_edit(invitation=invitation + '/-/Comment',
         signatures=[SUPPORT_GROUP],
         note = openreview.api.Note(
             content = {

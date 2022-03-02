@@ -12,11 +12,11 @@ def process_update(client, edge, invitation, existing_edge):
 
         message=f'''Hi {{{{fullname}}}},
 
-We recently informed you that your help was requested to manage the review process for a new TMLR submission titled "{note.content['title']['value']}".
+We recently informed you that your help was requested to manage the review process for a new {journal.short_name} submission titled "{note.content['title']['value']}".
 
 However, we’ve just determined that your help was no longer needed for this submission and have unassigned you as the AE for it.
 
-Apologies for the change and thank you for your continued involvement with TMLR!
+Apologies for the change and thank you for your continued involvement with {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 '''
@@ -52,6 +52,6 @@ The {journal.short_name} Editors-in-Chief
         client.post_message(subject, recipients, message, parentGroup=group.id)
 
         ## expire AE recommendation
-        journal.invitation_builder.expire_invitation(journal, journal.get_ae_recommendation_id(number=note.number))
+        journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
 
         return

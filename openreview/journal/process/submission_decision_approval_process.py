@@ -5,20 +5,18 @@ def process(client, edit, invitation):
 
     duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4))
 
+    decision_approval = client.get_note(edit.note.id)
     decision = client.get_note(edit.note.replyto)
 
     ## On update or delete return
-    if decision.tcdate != decision.tmdate:
+    if decision_approval.tcdate != decision_approval.tmdate:
         return
 
     submission = client.get_note(decision.forum)
 
     ## Make the decision public
     print('Make decision public')
-    invitation = client.post_invitation_edit(readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
             bulk=True,
             invitees=[venue_id],
             readers=['everyone'],
@@ -55,10 +53,7 @@ def process(client, edit, invitation):
 
     ## Make submission editable by the authors
     print('Make submission editable by the authors')
-    invitation = client.post_invitation_edit(readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
             #bulk=True,
             invitees=[venue_id],
             noninvitees=[journal.get_editors_in_chief_id()],
@@ -85,7 +80,7 @@ def process(client, edit, invitation):
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')
-    journal.invitation_builder.set_camera_ready_revision_invitation(journal, submission, decision, duedate)
+    journal.invitation_builder.set_camera_ready_revision_invitation(submission, decision, duedate)
 
     ## Send email to authors
     print('Send email to authors')

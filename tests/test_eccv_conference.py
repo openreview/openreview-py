@@ -125,12 +125,18 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 If you don't have a TPMS account yet, you can create one here: http://torontopapermatching.org/webapp/profileBrowser/register/
 Ensure that the email you use for your TPMS profile is listed as one of the emails in your OpenReview profile.
         '''
-        builder.set_registration_stage(name='Profile_Confirmation',
-        additional_fields = reviewer_registration_tasks,
-        due_date = now + datetime.timedelta(minutes = 40),
-        ac_additional_fields=ac_registration_tasks,
-        instructions=reviewer_instructions,
-        ac_instructions=ac_instructions)
+        builder.set_registration_stage(committee_id='thecvf.com/ECCV/2020/Conference/Reviewers',
+            name='Profile_Confirmation',
+            additional_fields = reviewer_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40),
+            instructions=reviewer_instructions
+        )
+        builder.set_registration_stage(committee_id='thecvf.com/ECCV/2020/Conference/Area_Chairs',
+            name='Profile_Confirmation',
+            additional_fields = ac_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40),
+            instructions=ac_instructions
+        )
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
             public = False,
@@ -312,7 +318,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'mohit+1@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as Reviewer' in text
 
         # Test to check that a user is not able to accept/decline if they are not a part of the invited group
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -423,7 +429,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         assert selenium.find_element_by_link_text('Reviewer Profile Confirmation')
 
-        registration_notes = reviewer_client.get_notes(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Form')
+        registration_notes = reviewer_client.get_notes(invitation = 'thecvf.com/ECCV/2020/Conference/Reviewers/-/Profile_Confirmation_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 

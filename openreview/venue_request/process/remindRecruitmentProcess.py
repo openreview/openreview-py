@@ -6,16 +6,25 @@ def process(client, note, invitation):
     print('Conference: ', conference.get_id())
 
     reduced_load=note.content.get('invitee_reduced_load', None)
+    role_name=note.content['invitee_role'].strip()
 
-    note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
-    note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', note.content.get('invitee_role', 'reviewer'))
-
+    ## Backward compatibility
     roles={
         'reviewer': 'Reviewers',
         'area chair': 'Area_Chairs',
         'senior area chair': 'Senior_Area_Chairs'
     }
-    role_name=roles[note.content['invitee_role'].strip()]
+
+    if role_name in roles:
+      role_name = roles[role_name]
+    ##
+
+    pretty_role = role_name.replace('_', ' ')
+    pretty_role = pretty_role[:-1] if pretty_role.endswith('s') else pretty_role
+
+    note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', pretty_role)
+    note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', pretty_role)
+
     recruitment_status=conference.recruit_reviewers(
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),

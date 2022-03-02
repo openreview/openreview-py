@@ -35,10 +35,7 @@ def process(client, edit, invitation):
     if len(reviews) == 3:
         print('Relese review to the public...')
         ## Change review invitation readers
-        invitation = client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=journal.get_review_id(number=submission.number),
+        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=submission.number),
                 signatures=[journal.get_editors_in_chief_id()],
                 edit={
                     'note': {
@@ -48,10 +45,7 @@ def process(client, edit, invitation):
         ))
 
         ## Release the reviews to everyone
-        invitation = client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=journal.get_release_review_id(number=submission.number),
+        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_release_review_id(number=submission.number),
                 bulk=True,
                 invitees=[venue_id],
                 readers=['everyone'],
@@ -71,10 +65,7 @@ def process(client, edit, invitation):
         ## Release the comments to everyone
         official_comment_invitation_id = journal.get_official_comment_id(number=submission.number)
         release_comment_invitation_id = journal.get_release_comment_id(number=submission.number)
-        invitation = client.post_invitation_edit(readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=Invitation(id=release_comment_invitation_id,
+        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=release_comment_invitation_id,
                 invitees=[venue_id],
                 readers=['everyone'],
                 writers=[venue_id],
@@ -108,7 +99,7 @@ def process(client, edit, invitation):
         print('Enable official recommendations')
         cdate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
         duedate = cdate + datetime.timedelta(weeks = 2)
-        journal.invitation_builder.set_official_recommendation_invitation(journal, submission, cdate, duedate)
+        journal.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
 
         ## Send email notifications to authors
         print('Send emails to authors')

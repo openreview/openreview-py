@@ -64,6 +64,7 @@ class Client(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
+        self.limit = 1000
         self.token = token.replace('Bearer ', '') if token else None
         self.profile = None
         self.user = None
@@ -294,7 +295,7 @@ class Client(object):
         return: Edge object with its information
         :rtype: Edge
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.edges_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
         edges = response.json()['edges']
         if edges:
@@ -608,7 +609,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None):
+    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -642,9 +643,48 @@ class Client(object):
         response = requests.get(self.groups_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
+
+        if with_count:
+            return groups, response.json()['count']
+
         return groups
 
-    def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None):
+    def get_all_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+        """
+        Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
+
+        :param id: id of the Group
+        :type id: str, optional
+        :param regex: Regex that matches several Group ids
+        :type regex: str, optional
+        :param member: Groups that contain this member
+        :type member: str, optional
+        :param signatory: Groups that contain this signatory
+        :type signatory: str, optional
+        :param web: Groups that contain a web field value
+        :type web: bool, optional
+        :param limit: Maximum amount of Groups that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Groups will be returned
+        :type limit: int, optional
+        :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
+
+        :return: List of Groups
+        :rtype: list[Group]
+        """
+
+        params = {
+            'id': id,
+            'regex': id,
+            'member': id,
+            'signatory': id,
+            'web': id,
+            'limit': id,
+            'offset': id,
+            'with_count': with_count
+        }
+        return tools.concurrent_get(self, self.get_groups, **params)
+
+    def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -717,7 +757,75 @@ class Client(object):
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
+
+        if with_count:
+            return invitations, response.json()['count']
+
         return invitations
+    
+    def get_all_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+        """
+        Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
+
+        :param id: id of the Invitation
+        :type id: str, optional
+        :param invitee: Invitations that contain this invitee
+        :type invitee: str, optional
+        :param replytoNote: Invitations that contain this replytoNote
+        :type replytoNote: str, optional
+        :param replyForum: Invitations that contain this replyForum
+        :type replyForum: str, optional
+        :param signature: Invitations that contain this signature
+        :type signature: optional
+        :param note: Invitations that contain this note
+        :type note: str, optional
+        :param regex: Invitation ids that match this regex
+        :type regex: str, optional
+        :param tags: Invitations that contain these tags
+        :type tags: Tag, optional
+        :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
+        :type limit: int, optional
+        :param int offset: Indicates the position to start retrieving Invitations. For example, if there are 10 Invitations and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
+        :param minduedate: Invitations that have at least this value as due date
+        :type minduedate: int, optional
+        :param duedate: Invitations that contain this due date
+        :type duedate: int, optional
+        :param pastdue: Invitaions that are past due
+        :type pastdue: bool, optional
+        :param replyto: Invitations that contain this replyto
+        :type replyto: optional
+        :param details: TODO: What is a valid value for this field?
+        :type details: dict, optional
+        :param expired: If true, retrieves the Invitations that have expired, otherwise, the ones that have not expired
+        :type expired: bool, optional
+
+        :return: List of Invitations
+        :rtype: list[Invitation]
+        """
+        
+        params = {
+            'id': id,
+            'invitee': invitee,
+            'replytoNote': replytoNote,
+            'replyForum': replyForum,
+            'signature': signature,
+            'note': note,
+            'regex': regex,
+            'tags': tags,
+            'limit': limit,
+            'offset': offset,
+            'minduedate': minduedate,
+            'duedate': duedate,
+            'pastdue': pastdue,
+            'replyto': replyto,
+            'details': details,
+            'expired': expired,
+            'super': super,
+            'with_count': with_count
+       }
+
+        return tools.concurrent_get(self, self.get_invitations, **params)
 
     def get_notes(self, id = None,
             paperhash = None,
@@ -735,7 +843,8 @@ class Client(object):
             offset = None,
             mintcdate = None,
             details = None,
-            sort = None):
+            sort = None,
+            with_count=False):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
 
@@ -819,7 +928,98 @@ class Client(object):
         response = requests.get(self.notes_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
+        notes = [Note.from_json(n) for n in response.json()['notes']]
+
+        if with_count:
+            return notes, response.json()['count']
+
         return [Note.from_json(n) for n in response.json()['notes']]
+
+    def get_all_notes(self, id = None,
+            paperhash = None,
+            forum = None,
+            original = None,
+            invitation = None,
+            replyto = None,
+            tauthor = None,
+            signature = None,
+            writer = None,
+            trash = None,
+            number = None,
+            content = None,
+            limit = None,
+            offset = None,
+            mintcdate = None,
+            details = None,
+            sort = None,
+            with_count=False):
+        """
+        Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
+
+        :param id: a Note ID. If provided, returns Notes whose ID matches the given ID.
+        :type id: str, optional
+        :param paperhash: A "paperhash" for a note. If provided, returns Notes whose paperhash matches this argument.
+            (A paperhash is a human-interpretable string built from the Note's title and list of authors to uniquely
+            identify the Note)
+        :type paperhash: str, optional
+        :param forum: A Note ID. If provided, returns Notes whose forum matches the given ID.
+        :type forum: str, optional
+        :param original: A Note ID. If provided, returns Notes whose original matches the given ID.
+        :type original: str, optional
+        :param invitation: An Invitation ID. If provided, returns Notes whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
+        :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
+        :type replyto: str, optional
+        :param tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
+        :type tauthor: str, optional
+        :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
+        :type signature: str, optional
+        :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
+        :type writer: str, optional
+        :param trash: If True, includes Notes that have been deleted (i.e. the ddate field is less than the
+            current date)
+        :type trash: bool, optional
+        :param number: If present, includes Notes whose number field equals the given integer.
+        :type number: int, optional
+        :param content: If present, includes Notes whose each key is present in the content field and it is equals the given value.
+        :type content: dict, optional
+        :param limit: Maximum amount of Notes that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Notes will be returned
+        :type limit: int, optional
+        :param offset: Indicates the position to start retrieving Notes. For example, if there are 10 Notes and you want to obtain the last 3, then the offset would need to be 7.
+        :type offset: int, optional
+        :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
+            whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+        :type mintcdate: int, optional
+        :param details: TODO: What is a valid value for this field?
+        :type details: optional
+        :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
+        :type sort: str, optional
+
+        :return: List of Notes
+        :rtype: list[Note]
+        """
+        
+        params = {
+            'id': id,
+            'paperhash': paperhash,
+            'forum': forum,
+            'original': original,
+            'invitation': invitation,
+            'replyto': replyto,
+            'tauthor': tauthor,
+            'signature': signature,
+            'writer': writer,
+            'trash': trash,
+            'number': number,
+            'content': content,
+            'limit': limit,
+            'offset': offset,
+            'mintcdate': mintcdate,
+            'details': details,
+            'sort': sort,
+            'with_count': with_count
+        }
+        return tools.concurrent_get(self, self.get_notes, **params)
 
     def get_reference(self, id):
         """
@@ -836,7 +1036,7 @@ class Client(object):
         n = response.json()['references'][0]
         return Note.from_json(n)
 
-    def get_references(self, referent = None, invitation = None, content = None, mintcdate = None, limit = None, offset = None, original = False, trash=None):
+    def get_references(self, referent = None, invitation = None, content = None, mintcdate = None, limit = None, offset = None, original = False, trash=None, with_count=False):
         """
         Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
 
@@ -878,9 +1078,48 @@ class Client(object):
         response = requests.get(self.reference_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Note.from_json(n) for n in response.json()['references']]
+        references = [Note.from_json(n) for n in response.json()['references']]
 
-    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None):
+        if with_count:
+            return references, response.json()['count']
+
+        return references
+
+    def get_all_references(self, referent = None, invitation = None, content = None, mintcdate = None, limit = None, offset = None, original = False, trash=None, with_count=False):
+        """
+        Gets a list of revisions for a note. The revisions that will be returned match all the criteria passed in the parameters.
+
+        Refer to the section of Mental Models and then click on Blind Submissions for more information.
+
+        :param referent: A Note ID. If provided, returns references whose "referent" value is this Note ID.
+        :type referent: str, optional
+        :param invitation: An Invitation ID. If provided, returns references whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
+        :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns references
+            whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
+        :type mintcdate: int, optional
+        :param bool original: If True then get_references will additionally return the references to the original note.
+        :type offset: int, optional
+        :type original: bool, optional
+
+        :return: List of revisions
+        :rtype: list[Note]
+        """
+        params = {
+            'referent': referent,
+            'invitation': invitation,
+            'content': content,
+            'mintcdate': mintcdate,
+            'limit': limit,
+            'offset': offset,
+            'original': original,
+            'trash': trash,
+            'with_count': with_count
+        }
+
+        return tools.concurrent_get(self, self.get_references, **params)
+
+    def get_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -914,9 +1153,41 @@ class Client(object):
         response = requests.get(self.tags_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Tag.from_json(t) for t in response.json()['tags']]
+        tags = [Tag.from_json(t) for t in response.json()['tags']]
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None):
+        if with_count:
+            return tags, response.json()['count']
+
+        return tags
+
+    def get_all_tags(self, id = None, invitation = None, forum = None, signature = None, tag = None, limit = None, offset = None, with_count=False):
+        """
+        Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
+
+        :param id: A Tag ID. If provided, returns Tags whose ID matches the given ID.
+        :type id: str, optional
+        :param forum: A Note ID. If provided, returns Tags whose forum matches the given ID.
+        :type forum: str, optional
+        :param invitation: An Invitation ID. If provided, returns Tags whose "invitation" field is this Invitation ID.
+        :type invitation: str, optional
+
+        :return: List of tags
+        :rtype: list[Tag]
+        """
+        params = {
+            'id': id,
+            'invitation': invitation,
+            'forum': forum,
+            'signature': signature,
+            'tag': tag,
+            'limit': limit,
+            'offset': offset,
+            'with_count': with_count
+        }
+
+        return tools.concurrent_get(self, self.get_tags, **params)
+
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -940,7 +1211,36 @@ class Client(object):
         response = requests.get(self.edges_url, params = params, headers = self.headers)
         response = self.__handle_response(response)
 
-        return [Edge.from_json(t) for t in response.json()['edges']]
+        edges = [Edge.from_json(e) for e in response.json()['edges']]
+
+        if with_count:
+            return edges, response.json()['count']
+
+        return edges
+
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False):
+        """
+        Returns a list of Edge objects based on the filters provided.
+
+        :arg id: a Edge ID. If provided, returns Edge whose ID matches the given ID.
+        :arg invitation: an Invitation ID. If provided, returns Edges whose "invitation" field is this Invitation ID.
+        :arg head: Profile ID of the Profile that is connected to the Note ID in tail
+        :arg tail: Note ID of the Note that is connected to the Profile ID in head
+        :arg label: Label ID of the match
+        """
+        params = {
+            'id': id,
+            'invitation': invitation,
+            'head': head,
+            'tail': tail,
+            'label': label,
+            'limit': limit,
+            'offset': offset,
+            'sort': sort,
+            'with_count': with_count
+        }
+
+        return tools.concurrent_get(self, self.get_edges, **params)
 
     def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
         """
@@ -1449,9 +1749,33 @@ class Client(object):
 
 
     def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
+    
+        # Build entityA from group_id
+        entityA = {
+            'type': 'Group',
+            'memberOf': group_id
+        }
+        if exclusion_inv:
+            expertise = {'exclusion': { 'invitation': exclusion_inv }}
+            entityA['expertise'] = expertise
+        
+        # Build entityB from paper_invitation
+        entityB = {
+            'type': 'Note',
+            'invitation': paper_invitation
+        }
+
+        expertise_request = {
+            'name': name,
+            'entityA': entityA,
+            'entityB': entityB,
+            'model': {
+                'name': model
+            }
+        }
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.post(base_url + '/expertise', json = {'name': name, 'match_group': group_id , 'paper_invitation': paper_invitation, 'exclusion_inv': exclusion_inv, 'model': model}, headers = self.headers)
+        response = requests.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1459,7 +1783,7 @@ class Client(object):
     def get_expertise_status(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/status', params = {'id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/status', params = {'job_id': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1467,7 +1791,7 @@ class Client(object):
     def get_expertise_results(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/results', params = {'id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/results', params = {'job_id': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
