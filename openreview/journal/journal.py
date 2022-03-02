@@ -177,8 +177,10 @@ class Journal(object):
     def get_reviewer_recruitment_id(self):
         return self.__get_invitation_id(name='Recruitment', prefix=self.get_reviewers_id())
 
-    def get_reviewer_responsability_id(self):
-        return self.__get_invitation_id(name='Responsability', prefix=self.get_reviewers_id())
+    def get_reviewer_responsability_id(self, signature=None):
+        if signature:
+            return self.__get_invitation_id(name=f'{signature}_Responsability_Acknowledgement', prefix=self.get_reviewers_id())
+        return self.__get_invitation_id(name='Responsability_Acknowledgement', prefix=self.get_reviewers_id())
 
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())

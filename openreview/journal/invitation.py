@@ -297,7 +297,7 @@ class InvitationBuilder(object):
 
         invitation=Invitation(id=self.journal.get_form_id(),
             invitees = [venue_id],
-            readers = [venue_id],
+            readers = ['everyone'],
             writers = [venue_id],
             signatures = [venue_id],
             edit = {
@@ -362,75 +362,99 @@ If you have questions after reviewing the points below that are not answered on 
         forum_note_id = forum_edit['note']['id']
 
         invitation=Invitation(id=self.journal.get_reviewer_responsability_id(),
-            duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
-            invitees = [reviewers_id],
-            readers = ['everyone'],
-            writers = [venue_id],
-            signatures = [venue_id],
-            edit = {
-                'signatures': { 'regex': '~.*', 'type': 'group[]' },
-                'readers': { 'const': [venue_id, '${signatues}'] },
-                'note': {
-                    'forum': { 'const': forum_note_id },
-                    'replyto': { 'const': forum_note_id },
-                    'signatures': { 'const': ['${signatures}'] },
-                    'readers': { 'const': [venue_id, '${signatues}'] },
-                    'writers': { 'const': [venue_id, '${signatues}'] },
-                    'content': {
-                        'paper_assignment': {
-                            'order': 1,
-                            'description': "Assignments may be refused under certain circumstances only (see website).",
-                            'value': {
-                                'type': "string",
-                                'enum': ['I understand that I am required to review submissions that are assigned, as long as they fill in my area of expertise and are within my annual quota']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
-                            }
-                        },
-                        'review_process': {
-                            'order': 2,
-                            'value': {
-                                'type': "string",
-                                'enum': ['I understand that TMLR has a 4 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
-                            }
-                        },
-                        'submissions': {
-                            'order': 3,
-                            'description': 'Versions of papers that have been released as pre-prints (e.g. on arXiv) or non-archival workshop submissions may be submitted',
-                            'value': {
-                                'type': "string",
-                                'enum': ['I understand that TMLR does not accept submissions which are expanded or modified versions of previously published papers.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
-                            }
-                        },
-                        'acceptance_criteria': {
-                            'order': 4,
-                            'value': {
-                                'type': "string",
-                                'enum': ['I understand that the acceptance criteria for TMLR is technical correctness and clarity of presentation rather than significance or impact.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
-                            }
-                        },
-                        'action_editor_visibility': {
-                            'order': 5,
-                            'description': 'TMLR is double blind for reviewers and authors, but the Action Editor assigned to a submission is visible to both reviewers and authors.',
-                            'value': {
-                                'type': "string",
-                                'enum': ['I understand that Action Editors are not anonymous.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
+                'params': {
+                    'reviewerId': { 'regex': '.*', 'type': 'string' },
+                    'duedate': { 'regex': '.*', 'type': 'integer' }
+                },
+                'invitation': {
+                    'id': { 'const': self.journal.get_reviewer_responsability_id(signature='${params.reviewerId}') },
+                    'invitees': { 'const': [venue_id, '${params.reviewerId}'] },
+                    'readers': { 'const': ['everyone'] },
+                    'writers': { 'const': [venue_id] },
+                    'signatures': { 'const': [venue_id] },
+                    'maxReplies': { 'const': 1},
+                    'duedate': { 'const': '${params.duedate}' },
+                    'dateprocesses': { 'const': [self.reviewer_reminder_process]},
+                    'edit': {
+                        'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
+                        'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
+                        'note': {
+                            'forum': { 'const': { 'const': forum_note_id }},
+                            'replyto': { 'const': { 'const': forum_note_id }},
+                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
+                            'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
+                            'writers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
+                            'content': {
+                                'title': { 'const': {
+                                    'order': 1,
+                                    'value': {
+                                        'type': "string",
+                                        'const': 'Reviewer Responsability Acknowledgement'
+                                    }
+                                }},
+                                'paper_assignment': { 'const': {
+                                    'order': 2,
+                                    'description': "Assignments may be refused under certain circumstances only (see website).",
+                                    'value': {
+                                        'type': "string",
+                                        'enum': ['I understand that I am required to review submissions that are assigned, as long as they fill in my area of expertise and are within my annual quota']
+                                    },
+                                    'presentation': {
+                                        'input': 'checkbox'
+                                    }
+                                }},
+                                'review_process': { 'const': {
+                                    'order': 3,
+                                    'value': {
+                                        'type': "string",
+                                        'enum': ['I understand that TMLR has a 4 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
+                                    },
+                                    'presentation': {
+                                        'input': 'checkbox'
+                                    }
+                                }},
+                                'submissions': { 'const': {
+                                    'order': 4,
+                                    'description': 'Versions of papers that have been released as pre-prints (e.g. on arXiv) or non-archival workshop submissions may be submitted',
+                                    'value': {
+                                        'type': "string",
+                                        'enum': ['I understand that TMLR does not accept submissions which are expanded or modified versions of previously published papers.']
+                                    },
+                                    'presentation': {
+                                        'input': 'checkbox'
+                                    }
+                                }},
+                                'acceptance_criteria': { 'const': {
+                                    'order': 5,
+                                    'value': {
+                                        'type': "string",
+                                        'enum': ['I understand that the acceptance criteria for TMLR is technical correctness and clarity of presentation rather than significance or impact.']
+                                    },
+                                    'presentation': {
+                                        'input': 'checkbox'
+                                    }
+                                }},
+                                'action_editor_visibility': { 'const': {
+                                    'order': 6,
+                                    'description': 'TMLR is double blind for reviewers and authors, but the Action Editor assigned to a submission is visible to both reviewers and authors.',
+                                    'value': {
+                                        'type': "string",
+                                        'enum': ['I understand that Action Editors are not anonymous.']
+                                    },
+                                    'presentation': {
+                                        'input': 'checkbox'
+                                    }
+                                }}
                             }
                         }
-
                     }
                 }
             }

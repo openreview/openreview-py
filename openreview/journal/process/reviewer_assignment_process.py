@@ -5,10 +5,21 @@ def process_update(client, edge, invitation, existing_edge):
     venue_id = journal.venue_id
     note = client.get_note(edge.head)
     group = client.get_group(journal.get_reviewers_id(number=note.number))
-    edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
+    tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
+
+    if len(tail_assignment_edges) == 1 and not edge.ddate:
+        print('Enable reviewer responsability task for', edge.tail)
+        client.post_invitation_edit(invitations=journal.get_reviewer_responsability_id(),
+            params={ 'reviewerId': edge.tail, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)) },
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id]
+        )
+
+    pending_review_edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
     pending_review_edge = None
-    if edges:
-        pending_review_edge = edges[0]
+    if pending_review_edges:
+        pending_review_edge = pending_review_edges[0]
 
     if edge.ddate and edge.tail in group.members:
         print(f'Remove member {edge.tail} from {group.id}')
