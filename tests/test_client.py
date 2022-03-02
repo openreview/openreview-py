@@ -95,6 +95,17 @@ class TestClient():
             error = e.args[0]
             assert e.args[0]['name'] == 'TokenExpiredError'
 
+        client_v2 = openreview.api.OpenReviewClient(username = "openreview.net", password = "1234", tokenExpiresIn=3)
+        group = client_v2.get_group("openreview.net")
+        assert group
+        assert group.members == ['~Super_User1']
+        time.sleep(4)
+        try:
+            group = client_v2.get_group("openreview.net")
+        except openreview.OpenReviewException as e:
+            error = e.args[0]
+            assert e.args[0]['name'] == 'TokenExpiredError'
+
     def test_get_notes_with_details(self, client):
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
         assert len(notes) == 0, 'notes is empty'
