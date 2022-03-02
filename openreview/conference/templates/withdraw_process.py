@@ -98,7 +98,7 @@ def process_update(client, note, invitation, existing_note):
         forum_note = client.post_note(forum_note)
 
         # Expire review, meta-review and decision invitations
-        invitation_regex = CONFERENCE_ID + '/Paper' + str(forum_note.number) + '/-/(Official_Review|Meta_Review|Decision|Revision|Withdraw|Supplementary_Material|Official_Comment|Public_Comment)$'
+        invitation_regex = CONFERENCE_ID + '/Paper' + str(forum_note.number) + '/-/(Official_Review|Meta_Review|Decision|Revision|Supplementary_Material|Official_Comment|Public_Comment)$'
         all_paper_invitations = client.get_all_invitations(regex=invitation_regex)
         now = openreview.tools.datetime_millis(datetime.utcnow())
         for invitation in all_paper_invitations:
