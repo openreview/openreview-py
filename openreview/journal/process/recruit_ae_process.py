@@ -48,4 +48,4 @@ If you would like to change your decision, please click the Accept link in the p
 
             return client.post_message(subject, [user], message, parentGroup=ACTION_EDITOR_DECLINED_ID)
     else:
-        raise OpenReviewException(f'Invalid key or user no invited {user}')
+        raise openreview.OpenReviewException(f'Invalid key or user no invited {user}')
