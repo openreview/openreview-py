@@ -355,19 +355,19 @@ class VenueStages():
             'submission_revision_name': {
                 'description': 'What should be the name of the submission revision button (e.g. Revision, Supplementary Material, Post-Decision Revision)? Default name: Revision',
                 'value-regex': '.*',
-                'order': 35,
+                'order': 1,
                 'default':'Revision'
             },
             'submission_revision_start_date': {
                 'description': 'When should the authors start revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 36
+                'order': 2
             },
             'submission_revision_deadline': {
                 'description': 'By when should the authors finish revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
-                'order': 37
+                'order': 3
             },
             'accepted_submissions_only': {
                 'description': 'Choose option for enabling submission revisions',
@@ -377,15 +377,25 @@ class VenueStages():
                 ],
                 'default': 'Enable revision for all submissions',
                 'required': True,
-                'order': 38
+                'order': 4
+            },
+            'submission_author_edition': {
+                'description': 'Choose how authors may edit the author list',
+                'value-radio': [
+                    'Allow addition and removal of authors',
+                    'Allow reorder of existing authors only'
+                ],
+                'default': 'Allow addition and removal of authors',
+                'required': True,
+                'order': 5
             },
             'submission_revision_additional_options': {
-                'order': 39,
+                'order': 6,
                 'value-dict': {},
                 'description': 'Configure additional options in the revision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'submission_revision_remove_options': {
-                'order': 40,
+                'order': 7,
                 'values-dropdown': ['title','authors','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
                 'description': 'Fields that should not be available during revision.'
             }
@@ -483,7 +493,13 @@ class VenueStages():
                 'required': True,
                 'default': 'No, I will send the emails to the authors',
                 'order': 35
-            }
+            },
+            'additional_decision_form_options': {
+                'order': 36,
+                'value-dict': {},
+                'required': False,
+                'description': 'Configure additional options in the decision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+            },
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
@@ -723,89 +739,6 @@ class VenueRequest():
                 'order': 19,
                 'required': False
             },
-            'Open Reviewing Policy': {
-                'description': 'Should submitted papers and/or reviews be visible to the public? (This is independent of anonymity policy)',
-                'value-radio': [
-                    'Submissions and reviews should both be private.',
-                    'Submissions should be public, but reviews should be private.',
-                    'Submissions and reviews should both be public.'
-                ],
-                'order': 20,
-                'required': True
-            },
-            'submissions_visibility': {
-                'description': 'This option is only available for non-blind, public submissions. Double-blind submissions will be released to their respective readers after the submission deadline.',
-                'value-radio': [
-                    'Yes, submissions should be immediately revealed to the public.',
-                    'No, wait until the submission deadline has passed to make them public.'],
-                'default': 'No, wait until the submission deadline has passed to make them public.',
-                'order': 21
-            },
-            'withdrawn_submissions_visibility': {
-                'description': 'Would you like to make withdrawn submissions public?',
-                'value-radio': [
-                    'Yes, withdrawn submissions should be made public.',
-                    'No, withdrawn submissions should not be made public.'],
-                'default': 'No, withdrawn submissions should not be made public.',
-                'order': 22
-            },
-            'withdrawn_submissions_author_anonymity': {
-                'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
-                'value-radio': [
-                    'Yes, author identities of withdrawn submissions should be revealed.',
-                    'No, author identities of withdrawn submissions should not be revealed.'],
-                'default': 'No, author identities of withdrawn submissions should not be revealed.',
-                'order': 23
-            },
-            'email_pcs_for_withdrawn_submissions': {
-                'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
-                'value-radio': [
-                    'Yes, email PCs.',
-                    'No, do not email PCs.'
-                ],
-                'default': 'No, do not email PCs.',
-                'order': 24
-            },
-            'desk_rejected_submissions_visibility': {
-                'description': 'Would you like to make desk rejected submissions public?',
-                'value-radio': [
-                    'Yes, desk rejected submissions should be made public.',
-                    'No, desk rejected submissions should not be made public.'],
-                'default': 'No, desk rejected submissions should not be made public.',
-                'order': 25
-            },
-            'desk_rejected_submissions_author_anonymity': {
-                'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
-                'value-radio': [
-                    'Yes, author identities of desk rejected submissions should be revealed.',
-                    'No, author identities of desk rejected submissions should not be revealed.'],
-                'default': 'No, author identities of desk rejected submissions should not be revealed.',
-                'order': 26
-            },
-            'Expected Submissions': {
-                'value-regex': '[0-9]*',
-                'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 27
-            },
-            'email_pcs_for_new_submissions': {
-                'description': 'Do you want email notifications to PCs when there is a new submission?',
-                'value-radio': [
-                    'Yes, email PCs for every new submission.',
-                    'No, do not email PCs.'
-                ],
-                'default': 'No, do not email PCs.',
-                'order': 28
-            },
-            'Other Important Information': {
-                'value-regex': '[\\S\\s]{1,5000}',
-                'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 29
-            },
-            'How did you hear about us?': {
-                'value-regex': '.*',
-                'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 30
-            },
             'area_chair_identity': {
                 'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the area chair\' real identities.',
                 'values-checkbox': [
@@ -817,10 +750,9 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
-                'default': ['Program Chairs'],
-                'order': 31,
+                'default': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'order': 20,
                 'required': False,
-                'hidden': True
             },
             'senior_area_chair_identity': {
                 'description': 'If you selected the option Double-blind or Single-blind, please select who should be able to see the senior area chair\' real identities.',
@@ -833,16 +765,119 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
-                'default': ['Program Chairs'],
-                'order': 31,
+                'default': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'order': 21,
                 'required': False,
-                'hidden': True
             },
-            'submission_name':{
+            'Open Reviewing Policy': {
+                'description': 'Should submitted papers and/or reviews be visible to the public? (This is independent of anonymity policy)',
+                'value-radio': [
+                    'Submissions and reviews should both be private.',
+                    'Submissions should be public, but reviews should be private.',
+                    'Submissions and reviews should both be public.'
+                ],
+                'order': 22,
+                'required': True
+            },
+            'submissions_visibility': {
+                'description': 'This option is only available for non-blind, public submissions. Double-blind submissions will be released to their respective readers after the submission deadline.',
+                'value-radio': [
+                    'Yes, submissions should be immediately revealed to the public.',
+                    'No, wait until the submission deadline has passed to make them public.'],
+                'default': 'No, wait until the submission deadline has passed to make them public.',
+                'order': 23
+            },
+            'withdrawn_submissions_visibility': {
+                'description': 'Would you like to make withdrawn submissions public?',
+                'value-radio': [
+                    'Yes, withdrawn submissions should be made public.',
+                    'No, withdrawn submissions should not be made public.'],
+                'default': 'No, withdrawn submissions should not be made public.',
+                'order': 24
+            },
+            'withdrawn_submissions_author_anonymity': {
+                'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
+                'value-radio': [
+                    'Yes, author identities of withdrawn submissions should be revealed.',
+                    'No, author identities of withdrawn submissions should not be revealed.'],
+                'default': 'No, author identities of withdrawn submissions should not be revealed.',
+                'order': 25
+            },
+            'email_pcs_for_withdrawn_submissions': {
+                'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
+                'value-radio': [
+                    'Yes, email PCs.',
+                    'No, do not email PCs.'
+                ],
+                'default': 'No, do not email PCs.',
+                'order': 26
+            },
+            'desk_rejected_submissions_visibility': {
+                'description': 'Would you like to make desk rejected submissions public?',
+                'value-radio': [
+                    'Yes, desk rejected submissions should be made public.',
+                    'No, desk rejected submissions should not be made public.'],
+                'default': 'No, desk rejected submissions should not be made public.',
+                'order': 27
+            },
+            'desk_rejected_submissions_author_anonymity': {
+                'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
+                'value-radio': [
+                    'Yes, author identities of desk rejected submissions should be revealed.',
+                    'No, author identities of desk rejected submissions should not be revealed.'],
+                'default': 'No, author identities of desk rejected submissions should not be revealed.',
+                'order': 28
+            },
+            'Expected Submissions': {
+                'value-regex': '[0-9]*',
+                'description': 'How many submissions are expected in this venue? Please provide a number.',
+                'order': 29
+            },
+            'email_pcs_for_new_submissions': {
+                'description': 'Do you want email notifications to PCs when there is a new submission?',
+                'value-radio': [
+                    'Yes, email PCs for every new submission.',
+                    'No, do not email PCs.'
+                ],
+                'default': 'No, do not email PCs.',
+                'order': 30
+            },
+            'Other Important Information': {
+                'value-regex': '[\\S\\s]{1,5000}',
+                'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
+                'order': 31
+            },
+            'How did you hear about us?': {
+                'value-regex': '.*',
+                'description': 'Please briefly describe how you heard about OpenReview.',
+                'order': 32
+            },
+            'submission_name': {
                 'value-regex': '\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
-                'order':32,
+                'order':33,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
+            },
+            'reviewer_roles': {
+                'values-regex': '.*',
+                'default': ['Reviewers'],
+                'order':34,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
+            },
+            'area_chair_roles': {
+                'values-regex': '.*',
+                'default': ['Area_Chairs'],
+                'order':35,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
+            },
+            'senior_area_chair_roles': {
+                'values-regex': '.*',
+                'default': ['Senior_Area_Chairs'],
+                'order':36,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }
@@ -1019,8 +1054,8 @@ class VenueRequest():
             },
             'invitee_role': {
                 'description': 'Please select the role of the invitees in the venue.',
-                'value-radio': ['reviewer', 'area chair'],
-                'default': 'reviewer',
+                'value-dropdown': ['Reviewers', 'Area_Chairs'],
+                'default': 'Reviewers',
                 'required': True,
                 'order': 2
             },
@@ -1120,8 +1155,8 @@ class VenueRequest():
             },
             'invitee_role': {
                 'description': 'Please select the role of the invitees you would like to remind.',
-                'value-radio': ['reviewer', 'area chair'],
-                'default': 'reviewer',
+                'value-dropdown': ['Reviewers', 'Area_Chairs'],
+                'default': 'Reviewers',
                 'required': True,
                 'order': 2
             },

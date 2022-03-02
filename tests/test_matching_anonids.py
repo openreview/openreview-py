@@ -47,6 +47,8 @@ class TestMatchingWithAnonIds():
         builder.set_conference_program_chairs_ids(['pc1@uai.com', 'pc4@mail.com'])
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
+        builder.set_area_chair_roles(['Senior_Program_Committee'])
+        builder.set_reviewer_roles(['Program_Committee'])
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
@@ -68,7 +70,8 @@ class TestMatchingWithAnonIds():
                 'required': False
             }
         }
-        builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
+        builder.set_registration_stage('auai.org/UAI/2021/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_registration_stage('auai.org/UAI/2021/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), additional_fields = additional_registration_content)
 
         builder.set_bid_stage('auai.org/UAI/2021/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         builder.set_bid_stage('auai.org/UAI/2021/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
@@ -537,7 +540,7 @@ class TestMatchingWithAnonIds():
 
         blinded_notes = list(conference.get_submissions())
 
-        registration_notes = pc_client.get_notes(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Form')
+        registration_notes = pc_client.get_notes(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Registration_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 

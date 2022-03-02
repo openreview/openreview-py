@@ -63,6 +63,18 @@ class Helpers:
 
         assert not super_client.get_process_logs(status='error')
 
+    @staticmethod
+    def await_queue_edit(super_client, edit_id=None, invitation=None):
+        print('await_queue_edit', edit_id)
+        while True:
+            process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
+            if process_logs:
+                break
+
+            time.sleep(0.5)
+
+        assert process_logs[0]['status'] == 'ok'
+
 
     @staticmethod
     def create_reviewer_edge(client, conference, name, note, reviewer, label=None, weight=None):

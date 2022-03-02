@@ -230,6 +230,12 @@ class TestClient():
         notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
 
+        notes = client.get_all_notes(content = { 'title': 'Paper title'})
+        assert len(notes) == 4
+
+        notes = client.get_all_notes(content = { 'title': 'Paper title333'})
+        assert len(notes) == 0
+
     def test_merge_profile(self, client):
         guest = openreview.Client()
         from_profile = guest.register_user(email = 'celeste@mail.com', first = 'Celeste', last = 'Bok', password = '1234')

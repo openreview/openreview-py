@@ -54,8 +54,8 @@ class Assignment(object):
         for action_editor_profile in tqdm(action_editor_profiles):
 
             conflicts = tools.get_conflicts(author_profiles, action_editor_profile, policy='neurips')
-            print('Compute AE conflict', note.id, action_editor_profile.id, conflicts)
             if conflicts:
+                print('Compute AE conflict', note.id, action_editor_profile.id, conflicts)
                 edge = Edge(invitation = self.journal.get_ae_conflict_id(),
                     readers = [venue_id, authors_id],
                     writers = [venue_id],
@@ -72,10 +72,8 @@ class Assignment(object):
 
     def setup_reviewer_assignment(self, note):
         venue_id=self.journal.venue_id
-        reviewers_id=self.journal.get_reviewers_id()
         action_editors_id=self.journal.get_action_editors_id(number=note.number)
         authors_id = self.journal.get_authors_id(number=note.number)
-        note=self.client.get_notes(invitation=self.journal.get_author_submission_id(), number=note.number)[0]
 
         reviewers = self.journal.get_reviewers()
         reviewer_profiles = tools.get_profiles(self.client, reviewers, with_publications=True)
@@ -107,8 +105,8 @@ class Assignment(object):
         for reviewer_profile in tqdm(reviewer_profiles):
 
             conflicts = tools.get_conflicts(author_profiles, reviewer_profile, policy='neurips')
-            print('Compute Reviewer conflict', note.id, reviewer_profile.id, conflicts)
             if conflicts:
+                print('Compute Reviewer conflict', note.id, reviewer_profile.id, conflicts)
                 edge = Edge(invitation = self.journal.get_reviewer_conflict_id(),
                     readers = [venue_id, action_editors_id],
                     nonreaders = [authors_id],

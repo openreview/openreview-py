@@ -30,7 +30,7 @@ class GroupBuilder(object):
         if not editor_in_chief_group:
             editor_in_chief_group=self.client.post_group(Group(id=editor_in_chief_id,
                             readers=['everyone'],
-                            writers=[editor_in_chief_id],
+                            writers=[venue_id, editor_in_chief_id],
                             signatures=[venue_id],
                             signatories=[editor_in_chief_id, venue_id],
                             members=editors
@@ -231,7 +231,7 @@ class GroupBuilder(object):
         action_editors_group=openreview.tools.get_group(self.client, action_editors_group_id)
         if not action_editors_group:
             action_editors_group=self.client.post_group(Group(id=action_editors_group_id,
-                readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                readers=['everyone'],
                 nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
