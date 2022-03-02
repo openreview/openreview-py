@@ -384,6 +384,13 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
             file_content = file_content.replace(
+                'BLIND_SUBMISSION_ID = \'\'',
+                'BLIND_SUBMISSION_ID = \'' + conference.get_blind_submission_id() + '\'')
+            file_content = file_content.replace(
+                'SUBMISSION_READERS = []',
+                str.format('SUBMISSION_READERS = {}', note.readers)
+            )
+            file_content = file_content.replace(
                 'CONFERENCE_NAME = \'\'',
                 'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
             file_content = file_content.replace(
