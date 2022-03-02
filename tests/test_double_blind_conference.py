@@ -1663,6 +1663,26 @@ class TestDoubleBlindConference():
         assert len(author_group.members) == 2
         assert 'AKBC.ws/2019/Conference/Paper3/Authors' not in author_group.members
 
+        posted_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        test_client.post_note(posted_note)
+
+        helpers.await_queue()
+
+        submission_note = client.get_note(withdrawal_note.forum)
+        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Blind_Submission'
+        assert submission_note.readers == ['everyone']
+
+        author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
+        assert 'AKBC.ws/2019/Conference/Paper2/Authors' in author_group.members
+
+        # Withdraw again
+        posted_note.ddate = None
+        test_client.post_note(posted_note)
+
+        helpers.await_queue()
+        submission_note = client.get_note(withdrawal_note.forum)
+        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Withdrawn_Submission'
+
     def test_desk_reject_submission(self, client, helpers):
 
         builder = openreview.conference.ConferenceBuilder(client)
