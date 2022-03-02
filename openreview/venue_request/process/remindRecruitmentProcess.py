@@ -7,6 +7,18 @@ def process(client, note, invitation):
 
     reduced_load=note.content.get('invitee_reduced_load', None)
     role_name=note.content['invitee_role'].strip()
+
+    ## Backward compatibility
+    roles={
+        'reviewer': 'Reviewers',
+        'area chair': 'Area_Chairs',
+        'senior area chair': 'Senior_Area_Chairs'
+    }
+
+    if role_name in roles:
+      role_name = roles[role_name]
+    ##
+
     pretty_role = role_name.replace('_', ' ')
     pretty_role = pretty_role[:-1] if pretty_role.endswith('s') else pretty_role
 
