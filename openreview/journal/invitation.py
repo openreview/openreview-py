@@ -69,11 +69,12 @@ class InvitationBuilder(object):
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
 
-    def post_invitation_edit(self, invitation):
+    def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
             readers=[self.venue_id],
             writers=[self.venue_id],
             signatures=[self.venue_id],
+            replacement=replacement,
             invitation=invitation
         )
 
@@ -109,7 +110,7 @@ class InvitationBuilder(object):
         if invitation.process:
             invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
-        return self.post_invitation_edit(invitation)
+        return self.post_invitation_edit(invitation, replacement=True)
 
     def set_meta_invitation(self):
 
