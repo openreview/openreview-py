@@ -1723,7 +1723,7 @@ class ExpertiseSelectionStage(object):
 
 class BidStage(object):
 
-    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False, allow_conflicts_bids=False, use_super_algorithm=False, positive_bids=[]):
+    def __init__(self, committee_id, start_date=None, due_date=None, request_count=50, score_ids=[], instructions=False, bid_options=['Very High', 'High', 'Neutral', 'Low', 'Very Low'], allow_conflicts_bids=False, use_super_algorithm=False, positive_bids=[]):
         self.committee_id=committee_id
         self.start_date=start_date
         self.due_date=due_date
@@ -1731,9 +1731,13 @@ class BidStage(object):
         self.request_count=request_count
         self.score_ids=score_ids
         self.instructions=instructions
+        self.bid_options=bid_options
         self.allow_conflicts_bids=allow_conflicts_bids
         self.use_super_algorithm=use_super_algorithm
         self.positive_bids=positive_bids
+
+        if allow_conflicts_bids and 'Conflict' not in self.bid_options:
+            self.bid_options.append('Conflict')
 
     def get_invitation_readers(self, conference):
         readers = [conference.get_id()]
@@ -1762,10 +1766,7 @@ class BidStage(object):
         return values_copied
 
     def get_bid_options(self):
-        options = ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
-        if self.allow_conflicts_bids:
-            options.append('Conflict')
-        return options
+        return self.bid_options
 
 class SubmissionRevisionStage():
 
@@ -2299,8 +2300,8 @@ class ConferenceBuilder(object):
         reviewer_instructions = instructions if instructions else default_instructions
         self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, additional_fields, reviewer_instructions))
 
-    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False, use_super_algorithm=False, positive_bids=[]):
-        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions, use_super_algorithm, positive_bids))
+    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False,  bid_options=['Very High', 'High', 'Neutral', 'Low', 'Very Low'], allow_conflicts=False, use_super_algorithm=False, positive_bids=[]):
+        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions, bid_options, allow_conflicts, use_super_algorithm, positive_bids))
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
