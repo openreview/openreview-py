@@ -15,7 +15,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'submissions_visibility']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -367,19 +367,19 @@ class VenueStages():
             'submission_revision_name': {
                 'description': 'What should be the name of the submission revision button (e.g. Revision, Supplementary Material, Post-Decision Revision)? Default name: Revision',
                 'value-regex': '.*',
-                'order': 35,
+                'order': 1,
                 'default':'Revision'
             },
             'submission_revision_start_date': {
                 'description': 'When should the authors start revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 36
+                'order': 2
             },
             'submission_revision_deadline': {
                 'description': 'By when should the authors finish revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
-                'order': 37
+                'order': 3
             },
             'accepted_submissions_only': {
                 'description': 'Choose option for enabling submission revisions',
@@ -389,15 +389,25 @@ class VenueStages():
                 ],
                 'default': 'Enable revision for all submissions',
                 'required': True,
-                'order': 38
+                'order': 4
+            },
+            'submission_author_edition': {
+                'description': 'Choose how authors may edit the author list',
+                'value-radio': [
+                    'Allow addition and removal of authors',
+                    'Allow reorder of existing authors only'
+                ],
+                'default': 'Allow addition and removal of authors',
+                'required': True,
+                'order': 5
             },
             'submission_revision_additional_options': {
-                'order': 39,
+                'order': 6,
                 'value-dict': {},
                 'description': 'Configure additional options in the revision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'submission_revision_remove_options': {
-                'order': 40,
+                'order': 7,
                 'values-dropdown': ['title','authors','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
                 'description': 'Fields that should not be available during revision.'
             }

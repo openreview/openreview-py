@@ -397,13 +397,16 @@ def get_submission_revision_stage(client, request_forum):
     if request_forum.content.get('accepted_submissions_only', '') == 'Enable revision for accepted submissions only':
         only_accepted = True
 
+    allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
+
     return openreview.SubmissionRevisionStage(
         name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,
-        only_accepted=only_accepted)
+        only_accepted=only_accepted,
+        allow_author_reorder=allow_author_reorder)
 
 def get_comment_stage(client, request_forum):
 
