@@ -354,6 +354,7 @@ note={Under review}
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>With this email, we request that you assign 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;. The assignments must be completed <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors\">https://openreview.net/group?id=TMLR/Action_Editors</a></p>
 <p>As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.</p>
+<p>Once assigned, reviewers will be asked to acknowledge on OpenReview their responsibility to review this submission. This acknowledgement will be made visible to you on the OpenReview page of the submission. If the reviewer has not acknowledged their responsibility a couple of days after their assignment, consider reaching out to them directly to confirm.</p>
 <p>We thank you for your essential contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
@@ -489,6 +490,7 @@ note={Withdrawn}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
+<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
 <p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
@@ -511,6 +513,7 @@ note={Withdrawn}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
+<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
 <p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
@@ -562,6 +565,7 @@ Link: <a href=\"https://openreview/group?id=TMLR/Action_Editors#action-editor-ta
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Javier Burroni,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
+<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
 <p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
@@ -590,7 +594,7 @@ Link: <a href=\"https://openreview/group?id=TMLR/Action_Editors#action-editor-ta
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 14
+        assert len(invitations) == 17
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -732,7 +736,7 @@ Comment: This is an inapropiate comment</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 14
+        assert len(invitations) == 17
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -843,7 +847,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 15
+        assert len(invitations) == 18
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejection"  in [i.id for i in invitations]
@@ -1004,7 +1008,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 15
+        assert len(invitations) == 19
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -1028,7 +1032,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 15
+        assert len(invitations) == 19
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -1052,7 +1056,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 19
+        assert len(invitations) == 23
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]

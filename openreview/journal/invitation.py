@@ -62,6 +62,7 @@ class InvitationBuilder(object):
         self.set_authors_release_invitation()
         self.set_ae_assignment()
         self.set_reviewer_assignment()
+        self.set_reviewer_assignment_acknowledgement_invitation()
         self.set_super_review_invitation()
         self.set_official_recommendation_invitation()
         self.set_solicit_review_invitation()
@@ -377,7 +378,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'invitation': {
                     'id': { 'const': self.journal.get_reviewer_responsability_id(signature='${params.reviewerId}') },
                     'invitees': { 'const': ['${params.reviewerId}'] },
-                    'readers': { 'const': ['everyone'] },
+                    'readers': { 'const': [venue_id, '${params.reviewerId}'] },
                     'writers': { 'const': [venue_id] },
                     'signatures': { 'const': [venue_id] },
                     'maxReplies': { 'const': 1},
@@ -393,15 +394,8 @@ If you have questions after reviewing the points below that are not answered on 
                             'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
                             'writers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
                             'content': {
-                                'title': { 'const': {
-                                    'order': 1,
-                                    'value': {
-                                        'type': "string",
-                                        'const': 'Reviewer Responsability Acknowledgement'
-                                    }
-                                }},
                                 'paper_assignment': { 'const': {
-                                    'order': 2,
+                                    'order': 1,
                                     'description': "Assignments may be refused under certain circumstances only (see website).",
                                     'value': {
                                         'type': "string",
@@ -412,7 +406,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     }
                                 }},
                                 'review_process': { 'const': {
-                                    'order': 3,
+                                    'order': 2,
                                     'value': {
                                         'type': "string",
                                         'enum': ['I understand that TMLR has a 4 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
@@ -422,7 +416,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     }
                                 }},
                                 'submissions': { 'const': {
-                                    'order': 4,
+                                    'order': 3,
                                     'description': 'Versions of papers that have been released as pre-prints (e.g. on arXiv) or non-archival workshop submissions may be submitted',
                                     'value': {
                                         'type': "string",
@@ -433,7 +427,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     }
                                 }},
                                 'acceptance_criteria': { 'const': {
-                                    'order': 5,
+                                    'order': 4,
                                     'value': {
                                         'type': "string",
                                         'enum': ['I understand that the acceptance criteria for TMLR is technical correctness and clarity of presentation rather than significance or impact.']
@@ -443,7 +437,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     }
                                 }},
                                 'action_editor_visibility': { 'const': {
-                                    'order': 6,
+                                    'order': 5,
                                     'description': 'TMLR is double blind for reviewers and authors, but the Action Editor assigned to a submission is visible to both reviewers and authors.',
                                     'value': {
                                         'type': "string",
@@ -460,6 +454,66 @@ If you have questions after reviewing the points below that are not answered on 
             }
         )
         self.save_invitation(invitation)
+
+    def set_reviewer_assignment_acknowledgement_invitation(self):
+
+        venue_id=self.journal.venue_id
+        action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        invitation=Invitation(id=self.journal.get_reviewer_assignment_acknowledgement_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
+                'params': {
+                    'noteId': { 'regex': '.*', 'type': 'string' },
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
+                    'reviewerId': { 'regex': '.*', 'type': 'string' },
+                    'duedate': { 'regex': '.*', 'type': 'integer' },
+                    'reviewDuedate': { 'regex': '.*', 'type': 'string' }
+                },
+                'invitation': {
+                    'id': { 'const': self.journal.get_reviewer_assignment_acknowledgement_id(number='${params.noteNumber}', reviewer_id='${params.reviewerId}') },
+                    'invitees': { 'const': ['${params.reviewerId}'] },
+                    'readers': { 'const': [venue_id, action_editors_id, '${params.reviewerId}'] },
+                    'writers': { 'const': [venue_id] },
+                    'signatures': { 'const': [editors_in_chief_id] },
+                    'maxReplies': { 'const': 1 },
+                    'duedate': { 'const': '${params.duedate}' },
+                    'dateprocesses': { 'const': [self.reviewer_reminder_process]},
+                    'edit': {
+                        'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
+                        'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
+                        'note': {
+                            'forum': { 'const': { 'const': '${params.noteId}' }},
+                            'replyto': { 'const': { 'const': '${params.noteId}' }},
+                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
+                            'readers': { 'const': { 'const': [editors_in_chief_id, action_editors_id, '\\${signatures}'] }},
+                            'writers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
+                            'content': {
+                                'assignment_acknowledgement': { 'const': {
+                                    'order': 1,
+                                    'value': {
+                                        'type': "string",
+                                        'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${params.reviewDuedate}.']
+                                    },
+                                    'presentation': {
+                                        'input': 'checkbox'
+                                    }
+                                }},
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)
+
 
     def set_submission_invitation(self):
 

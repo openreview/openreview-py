@@ -191,6 +191,11 @@ class Journal(object):
     def get_reviewer_assignment_id(self, number=None):
         return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id(number))
 
+    def get_reviewer_assignment_acknowledgement_id(self, number=None, reviewer_id=None):
+        if reviewer_id:
+           return self.__get_invitation_id(name=f'{reviewer_id}/Assignment/Acknowledgement', prefix=self.get_reviewers_id(number))
+        return self.__get_invitation_id(name='Assignment_Acknowledgement', prefix=self.get_reviewers_id(number))
+
     def get_reviewer_custom_max_papers_id(self):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())
 
