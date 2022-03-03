@@ -1232,6 +1232,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow addition and removal of authors',
                 'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
@@ -1274,8 +1275,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             content={
                 'title': 'revised test submission 3',
                 'abstract': 'revised abstract 3',
-                'authors': ['Venue Author'],
-                'authorids': ['~Venue_Author3']
+                'authors': ['Venue Author', 'Melisa Bok'],
+                'authorids': ['~Venue_Author3', 'melisa@mail.com']
             }
         ))
         assert revision_note
@@ -1293,8 +1294,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert updated_note.content['authorids'] == blind_submissions[0].content['authorids']
 
         messages = client.get_messages(subject='{} has received a new revision of your submission titled revised test submission 3'.format(venue['request_form_note'].content['Abbreviated Venue Name']))
-        assert messages and len(messages) == 1
-        assert messages[0]['content']['to'] == 'venue_author3@mail.com'
+        assert messages and len(messages) == 2
+        #assert messages[0]['content']['to'] == 'venue_author3@mail.com'
 
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
@@ -1370,8 +1371,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert blind_submissions[0].content['authorids'] == ['~Venue_Author1']
         assert blind_submissions[1].content['authors'] == ['Venue Author']
         assert blind_submissions[1].content['authorids'] == ['~Venue_Author2']
-        assert blind_submissions[2].content['authors'] == ['Venue Author']
-        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3']
+        assert blind_submissions[2].content['authors'] == ['Venue Author', 'Melisa Bok']
+        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3', 'melisa@mail.com']
 
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']
@@ -1384,9 +1385,11 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         due_date = now + datetime.timedelta(days=5)
         revision_stage_note = test_client.post_note(openreview.Note(
             content={
+                'submission_revision_name': 'Camera_Ready_Revision',
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow reorder of existing authors only',
                 'submission_revision_remove_options': ['keywords']
             },
             forum=venue['request_form_note'].forum,
@@ -1412,13 +1415,32 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert blind_submissions[0].content['authorids'] == ['~Venue_Author1']
         assert blind_submissions[1].content['authors'] == ['Venue Author']
         assert blind_submissions[1].content['authorids'] == ['~Venue_Author2']
-        assert blind_submissions[2].content['authors'] == ['Venue Author']
-        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3']
+        assert blind_submissions[2].content['authors'] == ['Venue Author', 'Melisa Bok']
+        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3', 'melisa@mail.com']
 
         # Assert that submissions are still public
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
+
+        # Post revision note for a submission
+        author_client = openreview.Client(username='venue_author3@mail.com', password='1234')
+        with pytest.raises(openreview.OpenReviewException, match=r'The value Venue Author,Andrew McCallum in field authors does not match the invitation definition'):
+            revision_note = author_client.post_note(openreview.Note(
+                invitation='{}/Paper{}/-/Camera_Ready_Revision'.format(venue['venue_id'], blind_submissions[2].number),
+                forum=blind_submissions[2].original,
+                referent=blind_submissions[2].original,
+                replyto=blind_submissions[2].original,
+                readers=[venue['venue_id'], '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)],
+                writers=['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number), venue['venue_id']],
+                signatures=['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)],
+                content={
+                    'title': 'camera ready revised test submission 3',
+                    'abstract': 'revised abstract 3',
+                    'authors': ['Venue Author', 'Andrew McCallum'],
+                    'authorids': ['~Venue_Author3', 'mccallum@gmail.com']
+                }
+            ))
 
     def test_venue_public_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -1505,6 +1527,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow addition and removal of authors',
                 'submission_revision_remove_options': ['title','authors', 'authorids','abstract','keywords', 'TL;DR'],
                 'submission_revision_additional_options': {
                     'supplementary_material': {

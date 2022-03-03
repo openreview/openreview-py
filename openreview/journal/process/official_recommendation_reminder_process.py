@@ -5,7 +5,7 @@ def process(client, invitation):
     submission = client.get_note(invitation.edit['note']['forum']['value'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
     now = datetime.datetime.utcnow()
-    task = 'Review'
+    task = 'Official Recommendation'
 
     reviews = client.get_notes(forum=submission.id, invitation=invitation.id)
     signatures = [r.signatures[0] for r in reviews]

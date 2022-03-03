@@ -13,6 +13,39 @@ class InvitationBuilder(object):
         self.journal = journal
         self.venue_id = journal.venue_id
 
+        day = 1000 * 60 * 60 * 24
+        seven_days = day * 7
+
+        reviewer_duedate_process = None
+        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_reminder_process.py')) as f:
+            reviewer_duedate_process = f.read()
+            reviewer_duedate_process = reviewer_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+        ae_duedate_process = None
+        with open(os.path.join(os.path.dirname(__file__), 'process/action_editor_reminder_process.py')) as f:
+            ae_duedate_process = f.read()
+            ae_duedate_process = ae_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+        ae_edge_duedate_process = None
+        with open(os.path.join(os.path.dirname(__file__), 'process/action_editor_edge_reminder_process.py')) as f:
+            ae_edge_duedate_process = f.read()
+            ae_edge_duedate_process = ae_edge_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+        self.reviewer_reminder_process = {
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'script': reviewer_duedate_process
+        }
+
+        self.ae_reminder_process = {
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'script': ae_duedate_process
+        }
+
+        self.ae_edge_reminder_process = {
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'script': ae_edge_duedate_process
+        }
+
     def set_invitations(self):
         self.set_meta_invitation()
         self.set_ae_recruitment_invitation()
@@ -36,11 +69,12 @@ class InvitationBuilder(object):
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
 
-    def post_invitation_edit(self, invitation):
+    def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
             readers=[self.venue_id],
             writers=[self.venue_id],
             signatures=[self.venue_id],
+            replacement=replacement,
             invitation=invitation
         )
 
@@ -76,7 +110,7 @@ class InvitationBuilder(object):
         if invitation.process:
             invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
-        return self.post_invitation_edit(invitation)
+        return self.post_invitation_edit(invitation, replacement=True)
 
     def set_meta_invitation(self):
 
@@ -894,6 +928,7 @@ class InvitationBuilder(object):
                     'maxReplies': { 'value': 1},
                     'duedate': { 'value': '${params.duedate}' },
                     'process': { 'value': paper_process },
+                    'dateprocesses': { 'values': [self.ae_reminder_process]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': paper_action_editors_id }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id] }},
@@ -1631,6 +1666,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=3,
+            date_processes=[self.ae_edge_reminder_process],
             type='Edge',
             edit={
                 'ddate': {
@@ -1697,16 +1733,10 @@ class InvitationBuilder(object):
 
         review_invitation_id = self.journal.get_review_id()
         paper_review_invitation_id = self.journal.get_review_id(number='${params.noteNumber}')
-        day = 1000 * 60 * 60 * 24
-        seven_days = day * 7
 
         with open(os.path.join(os.path.dirname(__file__), 'process/review_process.py')) as f:
             paper_process = f.read()
             paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        with open(os.path.join(os.path.dirname(__file__), 'process/review_reminder_process.py')) as f:
-            duedate_process = f.read()
-            duedate_process = duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -1732,10 +1762,7 @@ class InvitationBuilder(object):
                     'maxReplies': { 'value': 1 },
                     'duedate': { 'value': '${params.duedate}' },
                     'process': { 'value': paper_process },
-                    'dateprocesses': { 'values': [{
-                        'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-                        'process': duedate_process
-                    }]},
+                    'dateprocesses': { 'values': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -1873,8 +1900,8 @@ class InvitationBuilder(object):
                     'process': { 'value': paper_process },
                     'dateprocesses': { 'values': [{
                         'dates': [ "#{cdate} + 1000" ],
-                        'process': cdate_process
-                    }]},
+                        'script': cdate_process
+                    }, self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'value': { 'values-regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}' }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -2098,6 +2125,7 @@ class InvitationBuilder(object):
                     'maxReplies': { 'value': 1},
                     'process': { 'value': paper_process },
                     'preprocess': { 'value': paper_preprocess },
+                    'dateprocesses': { 'values': [self.ae_reminder_process]},
                     'edit': {
                         'signatures': { 'value': { 'values': [ paper_action_editors_id ] }},
                         'readers': { 'value': { 'values': [ venue_id, paper_action_editors_id ] }},
@@ -2531,7 +2559,8 @@ class InvitationBuilder(object):
                 }
             },
             preprocess=os.path.join(os.path.dirname(__file__), 'process/submission_decision_pre_process.py'),
-            process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py')
+            process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py'),
+            date_processes=[self.ae_reminder_process]
         )
 
         self.save_invitation(invitation)
@@ -2639,7 +2668,8 @@ class InvitationBuilder(object):
                                 }
                             }
                         },
-                        process=os.path.join(os.path.dirname(__file__), 'process/review_rating_process.py')
+                        process=os.path.join(os.path.dirname(__file__), 'process/review_rating_process.py'),
+                        date_processes=[self.ae_reminder_process]
                     )
                     self.save_invitation(invitation)
 
@@ -2822,7 +2852,8 @@ class InvitationBuilder(object):
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_verification_process.py')
+            process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_verification_process.py'),
+            date_processes=[self.ae_reminder_process]
         )
 
         self.save_invitation(invitation)
