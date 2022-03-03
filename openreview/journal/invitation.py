@@ -376,7 +376,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'invitation': {
                     'id': { 'const': self.journal.get_reviewer_responsability_id(signature='${params.reviewerId}') },
-                    'invitees': { 'const': [venue_id, '${params.reviewerId}'] },
+                    'invitees': { 'const': ['${params.reviewerId}'] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
                     'signatures': { 'const': [venue_id] },
