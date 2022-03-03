@@ -79,7 +79,7 @@ class VenueStages():
                 'value-regex': '[\w\s,]+'
             },
             'use_super_algorithm': {
-                'description': 'Use SUPER Algorithm for paper sorting',
+                'description': 'Sort papers in a way that balances the competing objectives of 1) ensuring each paper receives a sufficient number of bids and 2) ensuring that reviewers see the most relevant papers to them. For more information on the approach, see the associated paper from UAI 2020 available at https://arxiv.org/abs/2007.07079.',
                 'value-checkbox': 'Yes'
             },
             'positive_bids': {
