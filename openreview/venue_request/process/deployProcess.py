@@ -391,3 +391,17 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         )
 
         client.post_invitation(matching_invitation)
+
+        client.post_invitation(openreview.Invitation(
+            id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
+            super=SUPPORT_GROUP + '/-/Comment',
+            reply={
+                'forum': forum.id,
+                'referent': forum.id,
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values': readers
+                }
+            },
+            signatures=['~Super_User1']
+        ))
