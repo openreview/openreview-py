@@ -1145,6 +1145,66 @@ class VenueRequest():
                 }
             ))
 
+        recruitment_status_content = {
+            'title': {
+                'value': 'Recruitment Status',
+                'required': True,
+                'order': 1
+            },
+            'invited': {
+                'value-regex': '.*',
+                'description': 'No. of users invited',
+                'required': True,
+                'order': 2
+            },
+            'already_invited': {
+                'value-regex': '.*',
+                'description': 'List of users already invited',
+                'required': False,
+                'order': 3
+            },
+            'already_member': {
+                'value-regex': '.*',
+                'description': 'List of users who are already a member of the group',
+                'required': False,
+                'order': 4
+            },
+            'error': {
+                'value-regex': '.*',
+                'description': 'List of users who were not invited due to an error',
+                'required': False,
+                'order': 5
+            },
+            'comment': {
+                'order': 6,
+                'value-regex': '[\\S\\s]{1,200000}',
+                'description': 'Your comment or reply (max 200000 characters).',
+                'required': True,
+                'markdown': True
+            }
+        }
+
+        self.recruitment_status_super_invitation = self.client.post_invitation(openreview.Invitation(
+            id=self.support_group.id + '/-/Recruitment_Status',
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.support_group.id],
+            invitees=[self.support_group.id],
+            multiReply=True,
+            reply={
+                'readers': {
+                    'values': ['everyone']
+                },
+                'writers': {
+                    'values': [],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(self.support_group.id)
+                },
+                'content': recruitment_status_content
+            }
+        ))
+
     def setup_venue_remind_recruitment(self):
 
         remind_recruitment_content = {
@@ -1226,6 +1286,54 @@ class VenueRequest():
                 }
             ))
 
+            remind_recruitment_status_content = {
+                'title': {
+                    'value': 'Remind Recruitment Status',
+                    'required': True,
+                    'order': 1
+                },
+                'reminded': {
+                    'value-regex': '.*',
+                    'description': 'No. of users reminded',
+                    'required': True,
+                    'order': 2
+                },
+                'error': {
+                    'value-regex': '.*',
+                    'description': 'List of users who were not reminded due to an error',
+                    'required': False,
+                    'order': 5
+                },
+                'comment': {
+                    'order': 6,
+                    'value-regex': '[\\S\\s]{1,200000}',
+                    'description': 'Your comment or reply (max 200000 characters).',
+                    'required': True,
+                    'markdown': True
+                }
+            }
+
+            self.recruitment_status_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Remind_Recruitment_Status',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': ['everyone']
+                    },
+                    'writers': {
+                        'values': [],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': remind_recruitment_status_content
+                }
+            ))
+
     def setup_matching(self):
 
         matching_content = {
@@ -1290,5 +1398,59 @@ class VenueRequest():
                             'values-regex': '~.*|{}'.format(self.support_group.id)
                         },
                         'content': matching_content
+                    }
+                ))
+
+                matching_status_content = {
+                    'title': {
+                        'value': 'Paper Matching Setup Status',
+                        'required': True,
+                        'order': 1
+                    },
+                    'without_profile': {
+                        'value-regex': '.*',
+                        'description': 'List of users without profile',
+                        'required': False,
+                        'order': 2
+                    },
+                    'without_publication': {
+                        'value-regex': '.*',
+                        'description': 'List of users without publication',
+                        'required': False,
+                        'order': 3
+                    },
+                    'error': {
+                        'value-regex': '.*',
+                        'description': 'List of users who were not invited due to an error',
+                        'required': False,
+                        'order': 5
+                    },
+                    'comment': {
+                        'order': 6,
+                        'value-regex': '[\\S\\s]{1,200000}',
+                        'description': 'Your comment or reply (max 200000 characters).',
+                        'required': True,
+                        'markdown': True
+                    }
+                }
+
+                self.matching_status_super_invitation = self.client.post_invitation(openreview.Invitation(
+                    id=self.support_group.id + '/-/Paper_Matching_Setup_Status',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.support_group.id],
+                    invitees=[self.support_group.id],
+                    multiReply=True,
+                    reply={
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'writers': {
+                            'values': [],
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                        },
+                        'content': matching_status_content
                     }
                 ))
