@@ -73,6 +73,18 @@ class VenueStages():
             'bid_count': {
                 'description': 'Minimum bids one should make to mark bidding task completed for them. Default is 50.',
                 'value-regex': '[0-9]*'
+            },
+            'bid_options': {
+                'description': 'Comma separated values e.g. Very High, High, Neutral, Low, Very Low. Default values are Very High, High, Neutral, Low, Very Low',
+                'value-regex': '[\w\s,]+'
+            },
+            'use_super_algorithm': {
+                'description': 'Use SUPER Algorithm for paper sorting',
+                'value-checkbox': 'Yes'
+            },
+            'positive_bids': {
+                'description': 'This field is only required if you plan to use the SUPER algorithm. Comma separated values e.g. Very High, High',
+                'value-regex': '[\w\s,]+'
             }
         }
 

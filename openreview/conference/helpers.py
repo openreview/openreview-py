@@ -195,7 +195,29 @@ def get_bid_stage(client, request_forum, committee_id):
     else:
         bid_due_date = None
 
-    return openreview.BidStage(committee_id if committee_id else request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+    bid_options = request_forum.content.get('bid_options', '').strip()
+    if bid_options:
+        bid_options = [option.strip() for option in bid_options.split(',')]
+    else:
+        bid_options=['Very High', 'High', 'Neutral', 'Low', 'Very Low']
+
+    use_super_algorithm = request_forum.content.get('use_super_algorithm', '') == 'Yes'
+
+    positive_bids = request_forum.content.get('positive_bids', '').strip()
+    if positive_bids:
+        positive_bids = [option.strip() for option in positive_bids.split(',')]
+    else:
+        positive_bids=[]
+
+    return openreview.BidStage(
+        committee_id if committee_id else request_forum.content['venue_id'] + '/Reviewers',
+        start_date=bid_start_date,
+        due_date=bid_due_date,
+        request_count=int(request_forum.content.get('bid_count', 50)),
+        bid_options=bid_options,
+        use_super_algorithm=use_super_algorithm,
+        positive_bids=positive_bids
+    )
 
 def get_review_stage(client, request_forum):
     review_start_date = request_forum.content.get('review_start_date', '').strip()
