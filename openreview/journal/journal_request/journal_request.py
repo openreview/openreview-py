@@ -15,7 +15,8 @@ class JournalRequest():
             readers=['~Super_User1'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
-            invitation=invitation
+            invitation=invitation,
+            replacement=True
         )
 
     def set_meta_invitation(self):

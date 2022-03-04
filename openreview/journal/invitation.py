@@ -157,12 +157,9 @@ class InvitationBuilder(object):
                         signatures = [venue_id],
                         edit = {
                             'signatures': { 'const': ['(anonymous)'] },
-                            #'readers': { 'values': [venue_id, '${note.content.user.value}'] }, remove the user for now
                             'readers': { 'const': [venue_id] },
                             'note': {
-                                #'signatures': { 'values': ['${note.content.user.value}'] },
                                 'signatures': { 'const': ['${signatures}'] },
-                                # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
                                 'readers': { 'const': [venue_id] },
                                 'writers': { 'const': [venue_id] },
                                 'content': {
@@ -205,7 +202,8 @@ class InvitationBuilder(object):
                         },
                         process_string=process_content,
                         web_string=webfield_content
-                    )
+                    ),
+                    replacement=True
                 )
                 return invitation
 
@@ -237,12 +235,9 @@ class InvitationBuilder(object):
                         signatures = [venue_id],
                         edit = {
                             'signatures': { 'const': ['(anonymous)'] },
-                            #'readers': { 'values': [venue_id, '${note.content.user.value}'] }, remove the user for now
                             'readers': { 'const': [venue_id] },
                             'note': {
-                                #'signatures': { 'values': ['${note.content.user.value}'] },
                                 'signatures': { 'const': ['${signatures}'] },
-                                # 'readers': { 'values': [venue_id, '${note.content.user.value}'] },
                                 'readers': { 'const': [venue_id] },
                                 'writers': { 'const': [venue_id] },
                                 'content': {
@@ -285,9 +280,9 @@ class InvitationBuilder(object):
                         },
                         process_string=process_content,
                         web_string=webfield_content
-                    )
+                    ),
+                    replacement=True
                 )
-                print(invitation)
                 return invitation
 
     def set_reviewer_responsability_invitation(self):
