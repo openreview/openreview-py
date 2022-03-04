@@ -343,13 +343,17 @@ class InvitationBuilder(object):
         )
         self.save_invitation(invitation)
 
-        forum_edit = self.client.post_note_edit(invitation=self.journal.get_form_id(),
-            signatures=[venue_id],
-            note = openreview.api.Note(
-                signatures = [editors_in_chief_id],
-                content = {
-                    'title': { 'value': 'Acknowledgement of reviewer responsibility'},
-                    'description': { 'value': '''TMLR operates somewhat differently to other journals and conferences. Please read and acknowledge the following critical points before undertaking your first review. Note that the items below are stated very briefly; please see the full guidelines and instructions for reviewers on the journal website (links below).
+        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsability'})
+        if len(forum_notes) > 0:
+            forum_note_id = forum_notes[0].id
+        else:
+            forum_edit = self.client.post_note_edit(invitation=self.journal.get_form_id(),
+                signatures=[venue_id],
+                note = openreview.api.Note(
+                    signatures = [editors_in_chief_id],
+                    content = {
+                        'title': { 'value': 'Acknowledgement of reviewer responsability'},
+                        'description': { 'value': '''TMLR operates somewhat differently to other journals and conferences. Please read and acknowledge the following critical points before undertaking your first review. Note that the items below are stated very briefly; please see the full guidelines and instructions for reviewers on the journal website (links below).
 
 - [Reviewer guidelines](https://jmlr.org/tmlr/reviewer-guide.html)
 - [Editorial policies](https://jmlr.org/tmlr/editorial-policies.html)
@@ -357,10 +361,10 @@ class InvitationBuilder(object):
 
 If you have questions after reviewing the points below that are not answered on the website, please contact the Editors-In-Chief: tmlr-editors@tmlr.org
 '''}
-                }
+                    }
+                )
             )
-        )
-        forum_note_id = forum_edit['note']['id']
+            forum_note_id = forum_edit['note']['id']
 
         invitation=Invitation(id=self.journal.get_reviewer_responsability_id(),
             invitees=[venue_id],
