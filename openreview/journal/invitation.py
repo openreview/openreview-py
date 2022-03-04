@@ -98,6 +98,14 @@ class InvitationBuilder(object):
             if invitation.id.split('/')[-1] not in exceptions:
                 self.expire_invitation(invitation.id, now)
 
+    def expire_acknowledgement_invitations(self):
+
+        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsability_id(signature='.*'))
+
+        for invitation in invitations:
+            self.expire_invitation(invitation.id, now)
+
 
     def save_invitation(self, invitation):
 

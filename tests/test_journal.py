@@ -574,7 +574,6 @@ Link: <a href=\"https://openreview/group?id=TMLR/Action_Editors#action-editor-ta
         reviewerrs_group = raia_client.get_group(f'{venue_id}/Paper1/Reviewers')
         assert reviewerrs_group.members == ['~David_Belanger1', '~Carlos_Mondragon1', '~Javier_Burroni1']
 
-        assert False
 
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
@@ -2487,6 +2486,8 @@ note={Withdrawn}
         note = openreview_client.get_note(submission_note_7['note']['id'])
         journal.invitation_builder.expire_paper_invitations(note)
 
+
+        journal.invitation_builder.expire_acknowledgement_invitations()
 
 
 
