@@ -1982,12 +1982,12 @@ If you have questions after reviewing the points below that are not answered on 
         invitation = Invitation(
             id=reviewer_assignment_invitation_id,
             duedate=openreview.tools.datetime_millis(duedate),
-            invitees=[paper_action_editors_id],
-            noninvitees=[paper_authors_id],
+            invitees=[venue_id, paper_action_editors_id],
             readers=[venue_id, paper_action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
-            minReplies=3,
+            minReplies=1,
+            maxReplies=1,
             date_processes=[self.ae_edge_reminder_process],
             type='Edge',
             edit={

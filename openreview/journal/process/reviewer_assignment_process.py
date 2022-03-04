@@ -6,7 +6,30 @@ def process_update(client, edge, invitation, existing_edge):
     note = client.get_note(edge.head)
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
+    head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
+    submission_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(number=note.number))
 
+    ## Check task completion
+    if len(head_assignment_edges) >= 3:
+        if not submission_edges:
+            print('Mark task a complete')
+            client.post_edge(openreview.api.Edge(invitation=journal.get_reviewer_assignment_id(number=note.number),
+                readers = [venue_id, journal.get_action_editors_id(number=note.number)],
+                nonreaders = [journal.get_authors_id(number=note.number)],
+                writers = [venue_id],
+                signatures = [journal.get_action_editors_id(number=note.number)],
+                head = note.id,
+                tail = journal.get_reviewers_id(),
+                weight = 1
+            ))
+    else:
+        if submission_edges:
+            print('Mark task as uncomplete')
+            submission_edge = submission_edges[0]
+            submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            client.post_edge(submission_edge)
+
+    ## Enable reviewer responsability task
     if len(tail_assignment_edges) == 1 and not edge.ddate:
         print('Enable reviewer responsability task for', edge.tail)
         client.post_invitation_edit(invitations=journal.get_reviewer_responsability_id(),
@@ -21,6 +44,7 @@ def process_update(client, edge, invitation, existing_edge):
     if pending_review_edges:
         pending_review_edge = pending_review_edges[0]
 
+    ## Unassignment action
     if edge.ddate and edge.tail in group.members:
         print(f'Remove member {edge.tail} from {group.id}')
         client.remove_members_from_group(group.id, edge.tail)
@@ -53,6 +77,7 @@ The {journal.short_name} Editors-in-Chief
 
         return
 
+    ## Assignment action
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
         client.add_members_to_group(group.id, edge.tail)
