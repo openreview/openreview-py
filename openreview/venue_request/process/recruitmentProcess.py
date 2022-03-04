@@ -69,31 +69,26 @@ def process(client, note, invitation):
 {recruitment_status.get('already_member', '')}''' if recruitment_status.get('already_member') else ''
 
     comment_note = openreview.Note(
-        invitation = note.invitation.replace('Recruitment', 'Comment'),
+        invitation = note.invitation.replace('Recruitment', 'Recruitment_Status'),
         forum = note.forum,
         replyto = note.id,
         readers = [conference.get_program_chairs_id(), SUPPORT_GROUP],
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': f'Recruitment Status [{note.id}]',
+            'title': f'Recruitment Status',
+            'invited': f'''{len(recruitment_status.get('invited', []))} users''',
+            'already_invited': non_invited_status,
+            'already_member': already_member_status,
             'comment': f'''
-Invited: {len(recruitment_status.get('invited', []))} users.
-\n
-{non_invited_status}
-\n
-{already_member_status}
-\n
 Please check the invitee group to see more details: https://openreview.net/group?id={conference.id}/{role_name}/Invited
             '''
         }
     )
     if recruitment_status['errors']:
-        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
+        error_status = f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
         {recruitment_status.get('errors') }'''
 
-        comment_note.content['comment'] += f'''
-Error: {error_status}
-'''
+        comment_note.content['error'] = error_status
 
     client.post_note(comment_note)

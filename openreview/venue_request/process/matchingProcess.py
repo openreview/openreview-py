@@ -36,21 +36,21 @@ def process(client, note, invitation):
     print(traceback.format_exc())
 
     comment_note = openreview.Note(
-        invitation = note.invitation.replace('Paper_Matching_Setup', 'Comment'),
+        invitation = note.invitation.replace('Paper_Matching_Setup', 'Paper_Matching_Setup_Status'),
         forum = note.forum,
         replyto = note.id,
         readers = [conference.get_program_chairs_id()] + [SUPPORT_GROUP],
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Matching Status [{note_id}]'.format(note_id=note.id),
+            'title': 'Paper Matching Setup Status',
             'comment': ''
         }
     )
 
     if matching_status.get('error'):
         error_status = f'''{len(matching_status.get('error'))} error(s): {matching_status.get('error')}'''
-        comment_note.content['comment'] += error_status
+        comment_note.content['error'] = error_status
         comment_note.content['comment'] += f'''
 
 To check references for the note: https://api.openreview.net/references?id={note.id}
@@ -59,24 +59,23 @@ To check references for the note: https://api.openreview.net/references?id={note
     else:
         no_profiles_status = matching_status.get('no_profiles')
         if no_profiles_status:
-            profiles_status=f'''
+            without_profiles_status = f'''
 {len(no_profiles_status)} {role_name} without a profile: {no_profiles_status}
 
 Affinity scores and/or conflicts could not be computed for these users. Please ask these users to sign up in OpenReview and upload their papers. Alternatively, you can remove these users from the {role_name} group.
 
 Please check the {role_name} group to see more details: https://openreview.net/group?id={matching_group}'''
+            comment_note.content['without_profile'] = without_profiles_status
         else:
-            profiles_status=f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group?id={conference.get_program_chairs_id()}
+            profiles_status = f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group?id={conference.get_program_chairs_id()}
 
 Please refer to the FAQ for pointers on how to run the matcher: https://openreview.net/faq#question-edge-browswer'''
 
-        comment_note.content['comment'] += f'''{profiles_status}'''
+            comment_note.content['comment'] += f'''{profiles_status}'''
 
         if matching_status.get('no_publications'):
-            no_publications_status=f'''{len(matching_status.get('no_publications'))} {role_name} with no publications: {matching_status.get('no_publications')}'''
+            no_publications_status = f'''{len(matching_status.get('no_publications'))} {role_name} with no publications: {matching_status.get('no_publications')}'''
             no_publications_status = no_publications_status.replace('~', '\~')
-            comment_note.content['comment'] += f'''
-
-{no_publications_status}'''
+            comment_note.content['without_publication'] = no_publications_status
 
     client.post_note(comment_note)
