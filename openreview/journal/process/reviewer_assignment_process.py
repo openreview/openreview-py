@@ -47,6 +47,10 @@ The {journal.short_name} Editors-in-Chief
             pending_review_edge.weight -= 1
             client.post_edge(pending_review_edge)
 
+
+        print('Disable assignment acknowledgement task for', edge.tail)
+        journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=note.number, reviewer_id=edge.tail))
+
         return
 
     if not edge.ddate and edge.tail not in group.members:

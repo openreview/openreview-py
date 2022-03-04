@@ -317,7 +317,7 @@ class InvitationBuilder(object):
                         'nullable': True
                     },
                     'signatures': { 'const': [editors_in_chief_id] },
-                    'readers': { 'const': [venue_id, reviewers_id] },
+                    'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
                     'content': {
                         'title': {
