@@ -28,8 +28,10 @@ class Client(object):
     :type password: str, optional
     :param token: Session token. This token can be provided instead of the username and password if the user had already logged in
     :type token: str, optional
+    :param tokenExpiresIn: Time in seconds before the token expires. This parameter only works when providing a username and a password. If none is set, the value will be set automatically to one day. The max value that it can be set to is 1 week.
+    :type expiresIn: number, optional
     """
-    def __init__(self, baseurl = None, username = None, password = None, token= None):
+    def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
 
         self.baseurl = baseurl
         if not self.baseurl:
@@ -86,7 +88,7 @@ class Client(object):
                 password = os.environ.get('OPENREVIEW_PASSWORD')
 
             if username or password:
-                self.login_user(username, password)
+                self.login_user(username, password, expiresIn=tokenExpiresIn)
 
 
 
@@ -114,7 +116,7 @@ class Client(object):
         self.__handle_token(json_response)
         return json_response
 
-    def login_user(self,username=None, password=None):
+    def login_user(self,username=None, password=None, expiresIn=None):
         """
         Logs in a registered user
 
@@ -122,11 +124,13 @@ class Client(object):
         :type username: str, optional
         :param password: OpenReview password
         :type password: str, optional
+        :param expiresIn: Time in seconds before the token expires. If none is set the value will be set automatically to one hour. The max value that it can be set to is 1 week.
+        :type expiresIn: number, optional
 
         :return: Dictionary containing user information and the authentication token
         :rtype: dict
         """
-        user = { 'id': username, 'password': password }
+        user = { 'id': username, 'password': password, 'expiresIn': expiresIn }
         response = requests.post(self.login_url, headers=self.headers, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
