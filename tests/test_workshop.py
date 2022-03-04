@@ -582,7 +582,8 @@ class TestWorkshop():
 
         accepted_authors = client.get_group('icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors/Accepted')
         assert accepted_authors
-        assert accepted_authors.members == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors']
+        assert 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors' in accepted_authors.members
+        assert 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors' in accepted_authors.members
 
         notes = conference.get_submissions(accepted=True, sort='number:asc')
         assert len(notes) == 2
