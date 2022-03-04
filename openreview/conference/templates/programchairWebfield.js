@@ -1652,16 +1652,16 @@ var displayPaperStatusTable = function() {
   };
 
   var postRenderTable = function(data, pageNum) {
-    $('.console-table th').eq(0).css('width', '3%');
-    $('.console-table th').eq(1).css('width', '5%');
-    $('.console-table th').eq(2).css('width', '22%');
+    $(container + ' .console-table th').eq(0).css('width', '3%');
+    $(container + ' .console-table th').eq(1).css('width', '5%');
+    $(container + ' .console-table th').eq(2).css('width', '22%');
     if (AREA_CHAIRS_ID) {
-      $('.console-table th').eq(3).css('width', '30%');
-      $('.console-table th').eq(4).css('width', '28%');
-      $('.console-table th').eq(5).css('width', '12%');
+      $(container + ' .console-table th').eq(3).css('width', '30%');
+      $(container + ' .console-table th').eq(4).css('width', '28%');
+      $(container + ' .console-table th').eq(5).css('width', '12%');
     } else {
-      $('.console-table th').eq(3).css('width', '45%');
-      $('.console-table th').eq(4).css('width', '25%');
+      $(container + ' .console-table th').eq(3).css('width', '45%');
+      $(container + ' .console-table th').eq(4).css('width', '25%');
     }
 
     var offset = (pageNum - 1) * PAGE_SIZE;
@@ -1797,15 +1797,13 @@ var displayRejectedWithdrawnPaperStatusTable = function () {
     };
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
-    $('.console-table th').eq(0).css('width', '20%');
-    $('.console-table th').eq(1).css('width', '50%');
-    $('.console-table th').eq(2).css('width', '30%');
+
+    $(container + ' .console-table th').eq(0).css('width', '20%');
+    $(container + ' .console-table th').eq(1).css('width', '50%');
+    $(container + ' .console-table th').eq(2).css('width', '30%');
 
     $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
-
-      var newPageNum = parseInt($(this).parent().data('pageNumber'), 10);
-      postRenderTable(data, newPageNum);
       return false;
     });
   };
@@ -2028,7 +2026,7 @@ var displayAreaChairsStatusTable = function() {
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
 
-    $container.on('click', 'ul.pagination > li > a', function(e) {
+    $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
       return false;
     });
@@ -2163,7 +2161,7 @@ var displaySeniorAreaChairsStatusTable = function() {
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
 
-    $container.on('click', 'ul.pagination > li > a', function(e) {
+    $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
       return false;
     });
@@ -2325,7 +2323,7 @@ var displayReviewerStatusTable = function() {
     var pageNum = $container.data('lastPageNum') || 1;
     renderPaginatedTable($container, tableData, pageNum);
 
-    $container.on('click', 'ul.pagination > li > a', function(e) {
+    $container.off('click', 'ul.pagination > li > a').on('click', 'ul.pagination > li > a', function(e) {
       paginationOnClick($(this).parent(), $container, tableData);
       return false;
     });
