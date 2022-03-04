@@ -218,8 +218,6 @@ class WebfieldBuilder(object):
         else:
             template = 'templates/paperBidWebfield.js'
 
-        template = 'templates/profileBidWebfield.js' if stage.committee_id == conference.get_senior_area_chairs_id() else 'templates/paperBidWebfield.js'
-
         with open(os.path.join(os.path.dirname(__file__), template)) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
