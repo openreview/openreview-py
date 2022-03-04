@@ -1159,14 +1159,14 @@ class VenueRequest():
                 'order': 2
             },
             'already_invited': {
-                'value-regex': '.*',
+                'value-regex': '[\\S\\s]{0,100000}',
                 'description': 'List of users already invited',
                 'required': False,
                 'markdown': True,
                 'order': 3
             },
             'already_member': {
-                'value-regex': '.*',
+                'value-regex': '[\\S\\s]{0,100000}',
                 'description': 'List of users who are already a member of the group',
                 'required': False,
                 'markdown': True,
@@ -1308,7 +1308,7 @@ class VenueRequest():
                 'order': 2
             },
             'error': {
-                'value-regex': '[\\S\\s]{1,100000}',
+                'value-regex': '[\\S\\s]{0,200000}',
                 'description': 'List of users who were not reminded due to an error',
                 'required': False,
                 'markdown': True,
@@ -1423,21 +1423,21 @@ class VenueRequest():
                 'order': 1
             },
             'without_profile': {
-                'value-regex': '[\\S\\s]{1,200000}',
+                'value-regex': '[\\S\\s]{0,200000}',
                 'description': 'List of users without profile',
                 'required': False,
                 'markdown': True,
                 'order': 2
             },
             'without_publication': {
-                'value-regex': '[\\S\\s]{1,200000}',
+                'value-regex': '[\\S\\s]{0,200000}',
                 'description': 'List of users without publication',
                 'required': False,
                 'markdown': True,
                 'order': 3
             },
             'error': {
-                'value-regex': '[\\S\\s]{1,20000}',
+                'value-regex': '[\\S\\s]{0,20000}',
                 'description': 'Error due to which matching setup failed',
                 'required': False,
                 'markdown': True,
