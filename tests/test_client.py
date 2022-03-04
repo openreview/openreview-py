@@ -3,6 +3,7 @@ import os
 import datetime
 import openreview
 import pytest
+import time
 
 class TestClient():
 
@@ -34,6 +35,12 @@ class TestClient():
         os.environ["OPENREVIEW_PASSWORD"] = "1234"
 
         client = openreview.Client()
+        assert client
+        assert client.token
+        assert client.profile
+        assert '~Super_User1' == client.profile.id
+
+        client = openreview.Client(tokenExpiresIn=5000)
         assert client
         assert client.token
         assert client.profile
@@ -72,6 +79,32 @@ class TestClient():
 
         response = guest.login_user(username = "openreview.net", password = "1234")
         assert response
+
+        response = guest.login_user(username = "openreview.net", password = "1234", expiresIn=4000)
+        assert response
+
+    def test_login_expiration(self):
+        client = openreview.Client(username = "openreview.net", password = "1234", tokenExpiresIn=3)
+        group = client.get_group("openreview.net")
+        assert group
+        assert group.members == ['~Super_User1']
+        time.sleep(4)
+        try:
+            group = client.get_group("openreview.net")
+        except openreview.OpenReviewException as e:
+            error = e.args[0]
+            assert e.args[0]['name'] == 'TokenExpiredError'
+
+        client_v2 = openreview.api.OpenReviewClient(username = "openreview.net", password = "1234", tokenExpiresIn=3)
+        group = client_v2.get_group("openreview.net")
+        assert group
+        assert group.members == ['~Super_User1']
+        time.sleep(4)
+        try:
+            group = client_v2.get_group("openreview.net")
+        except openreview.OpenReviewException as e:
+            error = e.args[0]
+            assert e.args[0]['name'] == 'TokenExpiredError'
 
     def test_get_notes_with_details(self, client):
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
