@@ -5,7 +5,7 @@ def process(client, invitation):
     submission = client.get_note(invitation.edit['note']['forum']['const'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
     now = datetime.datetime.utcnow()
-    task = invitation.id.split('/-/')[-1].replace('_', ' ')
+    task = invitation.pretty_id()
 
     late_invitees = journal.get_late_invitees(invitation.id)
 

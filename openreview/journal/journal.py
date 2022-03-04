@@ -426,11 +426,24 @@ class Journal(object):
     def get_late_invitees(self, invitation_id):
 
         invitation = self.client.get_invitation(invitation_id)
-        invitee_groups = [ self.client.get_group(i) for i in invitation.invitees if i not in [self.venue_id, self.get_editors_in_chief_id()] ]
-        invitee_members = [member for group in invitee_groups for member in group.members]
+
+        invitee_members = []
+        for invitee in invitation.invitees:
+            if invitee not in [self.venue_id, self.get_editors_in_chief_id()]:
+                if invitee.startswith('~'):
+                    invitee_members.append(invitee)
+                else:
+                    invitee_members = invitee_members + self.client.get_group(invitee).members
 
         replies = self.client.get_notes(invitation=invitation.id, details='signatures')
-        signature_members = [member for reply in replies for signature in reply.details['signatures'] for member in signature['members']]
+
+        signature_members = []
+        for reply in replies:
+            for signature in reply.details['signatures']:
+                if signature['id'].startswith('~'):
+                    signature_members.append(signature)
+                else:
+                    signature_members = signature_members + signature['members']
 
         return list(set(invitee_members) - set(signature_members))
 

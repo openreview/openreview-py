@@ -2093,6 +2093,19 @@ class Invitation(object):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
 
+    def pretty_id(self):
+        tokens = self.id.split('/')[-2:]
+        filtered_tokens = []
+
+        for token in tokens:
+            token = token.replace('_', ' ').strip()
+            if token.startswith('~'):
+                token = tools.pretty_id(token)
+            if token != '-':
+                filtered_tokens.append(token)
+
+        return (' ').join(filtered_tokens)
+
     def to_json(self):
         """
         Converts Invitation instance to a dictionary. The instance variable names are the keys and their values the values of the dictinary.

@@ -828,6 +828,33 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## Check reviewer assignment acknowledge reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement-0-0')
+
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
+<p>Our records show that you are late on the current reviewing task:</p>
+<p>Task: Assignment Acknowledgement<br>
+Submission: Paper title UPDATED<br>
+Number of days late: 1<br>
+Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/forum?id={note_id_1}</a></p>
+<p>Please follow the provided link and complete your task ASAP.</p>
+<p>We thank you for your cooperation.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
 
