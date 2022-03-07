@@ -453,6 +453,9 @@ class TestVenueRequest():
         last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
         assert '2 users' in last_comment.content['invited']
 
+        last_message = client.get_messages(to='support@openreview.net')[-1]
+        assert 'Recruitment Status' not in last_message['content']['text']
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -553,6 +556,9 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=remind_recruitment_status_invitation)[0]
         assert '4 users' in last_comment.content['reminded']
+
+        last_message = client.get_messages(to='support@openreview.net')[-1]
+        assert 'Remind Recruitment Status' not in last_message['content']['text']
 
     def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
         now = datetime.datetime.utcnow()
@@ -882,6 +888,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert scores_invitation
         affinity_scores = client.get_edges(invitation=scores_invitation.id)
         assert len(affinity_scores) == 4
+
+        last_message = client.get_messages(to='support@openreview.net')[-1]
+        assert 'Paper Matching Setup Status' not in last_message['content']['text']
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 

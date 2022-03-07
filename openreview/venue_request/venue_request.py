@@ -596,6 +596,7 @@ class VenueRequest():
         self.support_process = os.path.join(os.path.dirname(__file__), 'process/supportProcess.js')
         self.support_pre_process = os.path.join(os.path.dirname(__file__), 'process/request_form_pre_process.py')
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
+        self.invitation_status_process = os.path.join(os.path.dirname(__file__), 'process/invitationStatusProcess.js')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
@@ -1188,7 +1189,7 @@ class VenueRequest():
             }
         }
 
-        with open(self.comment_process, 'r') as f:
+        with open(self.invitation_status_process, 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + self.super_user + "';")
             self.recruitment_status_super_invitation = self.client.post_invitation(openreview.Invitation(
@@ -1323,7 +1324,7 @@ class VenueRequest():
             }
         }
 
-        with open(self.comment_process, 'r') as f:
+        with open(self.invitation_status_process, 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("var GROUP_PREFIX = '';",
                                                 "var GROUP_PREFIX = '" + self.super_user + "';")
@@ -1452,7 +1453,7 @@ class VenueRequest():
             }
         }
 
-        with open(self.comment_process, 'r') as f:
+        with open(self.invitation_status_process, 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + self.super_user + "';")
             self.matching_status_super_invitation = self.client.post_invitation(openreview.Invitation(
