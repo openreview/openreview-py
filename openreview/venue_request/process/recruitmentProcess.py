@@ -72,7 +72,7 @@ def process(client, note, invitation):
         invitation = note.invitation.replace('Recruitment', 'Comment'),
         forum = note.forum,
         replyto = note.id,
-        readers = request_form.content.get('program_chair_emails', []) + [SUPPORT_GROUP],
+        readers = [conference.get_program_chairs_id(), SUPPORT_GROUP],
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {

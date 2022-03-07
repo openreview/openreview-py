@@ -5,12 +5,13 @@ def process(client, note, invitation):
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
 
     invitation_type = invitation.id.split('/')[-1]
+    forum_note = client.get_note(note.forum)
+
+    comment_readers = [forum_note.content.get('venue_id') + '/Program_Chairs', SUPPORT_GROUP]
 
     try:
         conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
-        forum_note = client.get_note(note.forum)
-        comment_readers = forum_note.content.get('Contact Emails', []) + forum_note.content.get('program_chair_emails',[]) + [SUPPORT_GROUP]
-
+        comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
             conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
@@ -132,7 +133,6 @@ To check references for the note: https://api.openreview.net/references?id={note
         print(traceback.format_exc())
 
         forum_note = client.get_note(note.forum)
-        comment_readers = forum_note.content.get('Contact Emails', []) + forum_note.content.get('program_chair_emails',[]) + [SUPPORT_GROUP]
 
         comment_note = openreview.Note(
             invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',

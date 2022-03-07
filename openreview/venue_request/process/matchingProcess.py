@@ -39,7 +39,7 @@ def process(client, note, invitation):
         invitation = note.invitation.replace('Paper_Matching_Setup', 'Comment'),
         forum = note.forum,
         replyto = note.id,
-        readers = request_form.content.get('program_chair_emails', []) + [SUPPORT_GROUP],
+        readers = [conference.get_program_chairs_id()] + [SUPPORT_GROUP],
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
@@ -62,9 +62,11 @@ To check references for the note: https://api.openreview.net/references?id={note
             profiles_status=f'''
 {len(no_profiles_status)} {role_name} without a profile: {no_profiles_status}
 
-Affinity scores and/or conflicts could not be computed for these users. Please ask these users to sign up in OpenReview and upload their papers. Alternatively, you can remove these users from the {role_name} group.
+Affinity scores and/or conflicts could not be computed for these users. You will not be able to run the matcher until all {role_name} have profiles. You have two options:
 
-Please check the {role_name} group to see more details: https://openreview.net/group?id={matching_group}'''
+1. You can ask these users to sign up in OpenReview and upload their papers. After all {role_name} have done this, you will need to rerun the paper matching setup to recompute conflicts and/or affinity scores for all users.
+2. You can remove these users from the {role_name} group: https://openreview.net/group/edit?id={matching_group}. You can find all users without a profile by searching for the '@' character in the search box.
+'''
         else:
             profiles_status=f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group?id={conference.get_program_chairs_id()}
 

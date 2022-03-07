@@ -325,69 +325,77 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures=['~Super_User1']
     ))
 
-    if (forum.content.get('Submission Deadline') and forum.content.get('Paper Matching')):
-        activation_date = forum.content.get('Submission Deadline').strip()
-        try:
-            activation_date = datetime.strptime(activation_date, '%Y/%m/%d %H:%M')
-        except ValueError:
-            activation_date = datetime.strptime(activation_date, '%Y/%m/%d')
-        matching_group_ids = [conference.get_committee_id(r) for r in conference.reviewer_roles]
-        if conference.use_area_chairs:
-            matching_group_ids.append(conference.get_area_chairs_id())
-        if conference.use_senior_area_chairs:
-            matching_group_ids.append(conference.get_senior_area_chairs_id())
-        matching_invitation = openreview.Invitation(
-            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Paper_Matching_Setup',
-            super = SUPPORT_GROUP + '/-/Paper_Matching_Setup',
-            invitees = readers,
-            cdate = openreview.tools.datetime_millis(activation_date),
-            reply = {
-                'forum': forum.id,
-                'replyto': forum.id,
-                'readers' : {
-                    'description': 'The users who will be allowed to read the above content.',
-                    'values' : readers
-                },
-                'writers': {
-                    'values':[],
-                },
-                'content': {
-                    'title': {
-                        'value': 'Paper Matching Setup',
-                        'required': True,
-                        'order': 1
-                    },
-                    'matching_group': {
-                        'description': 'Please select the group you want to set up matching for.',
-                        'value-dropdown' : matching_group_ids,
-                        'required': True,
-                        'order': 2
-                    },
-                    'compute_conflicts': {
-                        'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
-                        'value-radio': ['Yes', 'No'],
-                        'default': 'Yes',
-                        'required': True,
-                        'order': 3
-                    },
-                    'compute_affinity_scores': {
-                        'description': 'Please select whether you would like affinity scores to be computed by our expertise API and uploaded automatically.',
-                        'order': 4,
-                        'value-radio': ['Yes', 'No'],
-                        'required': True,
-                    },
-                    'upload_affinity_scores': {
-                        'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                        'order': 4,
-                        'value-file': {
-                            'fileTypes': ['csv'],
-                            'size': 50
-                        },
-                        'required': False
-                    }
-                }
+    # always post Paper_Matching_Setup invitation
+    matching_group_ids = [conference.get_committee_id(r) for r in conference.reviewer_roles]
+    if conference.use_area_chairs:
+        matching_group_ids.append(conference.get_area_chairs_id())
+    if conference.use_senior_area_chairs:
+        matching_group_ids.append(conference.get_senior_area_chairs_id())
+    matching_invitation = openreview.Invitation(
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Paper_Matching_Setup',
+        super = SUPPORT_GROUP + '/-/Paper_Matching_Setup',
+        invitees = readers,
+        reply = {
+            'forum': forum.id,
+            'replyto': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
             },
-            signatures = ['~Super_User1']
-        )
+            'writers': {
+                'values':[],
+            },
+            'content': {
+                'title': {
+                    'value': 'Paper Matching Setup',
+                    'required': True,
+                    'order': 1
+                },
+                'matching_group': {
+                    'description': 'Please select the group you want to set up matching for.',
+                    'value-dropdown' : matching_group_ids,
+                    'required': True,
+                    'order': 2
+                },
+                'compute_conflicts': {
+                    'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
+                    'value-radio': ['Yes', 'No'],
+                    'default': 'Yes',
+                    'required': True,
+                    'order': 3
+                },
+                'compute_affinity_scores': {
+                    'description': 'Please select whether you would like affinity scores to be computed by our expertise API and uploaded automatically.',
+                    'order': 4,
+                    'value-radio': ['Yes', 'No'],
+                    'required': True,
+                },
+                'upload_affinity_scores': {
+                    'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
+                    'order': 4,
+                    'value-file': {
+                        'fileTypes': ['csv'],
+                        'size': 50
+                    },
+                    'required': False
+                }
+            }
+        },
+        signatures = ['~Super_User1']
+    )
+    print('posting paper matching setup invitation!!')
+    client.post_invitation(matching_invitation)
 
-        client.post_invitation(matching_invitation)
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
+        super=SUPPORT_GROUP + '/-/Comment',
+        reply={
+            'forum': forum.id,
+            'referent': forum.id,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
