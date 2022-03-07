@@ -125,16 +125,11 @@ var loadData = function() {
       // expired: true
     }).then(function(invitations) {
       return _.keyBy(invitations, 'id');
-    }),
-    Webfield2.api.getAll('/edges', {
-      invitation: VENUE_ID + '/' + ACTION_EDITOR_NAME + '/-/' + RECOMMENDATION_NAME,
-      groupBy: 'head'
-    }),
-    Webfield2.api.getAssignedInvitations(VENUE_ID, EDITORS_IN_CHIEF_NAME),
+    })
   );
 };
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById, actionEditorRecommendations, invitations) {
+var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   // build the rows
@@ -246,7 +241,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     if (reviewApprovalInvitation) {
       tasks.push({
         id: reviewApprovalInvitation.id,
-        startdate: reviewApprovalInvitation.cdate,
+        cdate: reviewApprovalInvitation.cdate,
         duedate: reviewApprovalInvitation.duedate,
         complete: reviewApprovalNotes.length > 0,
         replies: reviewApprovalNotes
@@ -256,7 +251,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     if (reviewInvitation) {
       tasks.push({
         id: reviewInvitation.id,
-        startdate: reviewInvitation.cdate,
+        cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
         complete: reviewNotes.length >= 3,
         replies: reviewNotes
@@ -266,7 +261,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     if (officialRecommendationInvitation) {
       tasks.push({
         id: officialRecommendationInvitation.id,
-        startdate: officialRecommendationInvitation.cdate,
+        cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
         complete: officialRecommendationNotes.length >= 3,
         replies: officialRecommendationNotes
@@ -276,7 +271,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     if (reviewerRatingInvitations.length) {
       tasks.push({
         id: getInvitationId(number, 'Reviewer_Rating'),
-        startdate: reviewerRatingInvitations[0].cdate,
+        cdate: reviewerRatingInvitations[0].cdate,
         duedate: reviewerRatingInvitations[0].duedate,
         complete: reviewerRatingReplies.length == reviewNotes.length,
         replies: reviewerRatingReplies
@@ -286,7 +281,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     if (decisionInvitation) {
       tasks.push({
         id: decisionInvitation.id,
-        startdate: decisionInvitation.cdate,
+        cdate: decisionInvitation.cdate,
         duedate: decisionInvitation.duedate,
         complete: decisionNotes.length > 0,
         replies: decisionNotes
@@ -296,7 +291,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     if (decisionApprovalInvitation) {
       tasks.push({
         id: decisionApprovalInvitation.id,
-        startdate: decisionApprovalInvitation.cdate,
+        cdate: decisionApprovalInvitation.cdate,
         duedate: decisionApprovalInvitation.duedate,
         complete: decisionApprovalNotes.length > 0,
         replies: decisionApprovalNotes
@@ -307,7 +302,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       var complete = submission.invitations.includes(cameraReadyRevisionInvitation.id);
       cameraReadyTask = {
         id: cameraReadyRevisionInvitation.id,
-        startdate: cameraReadyRevisionInvitation.cdate,
+        cdate: cameraReadyRevisionInvitation.cdate,
         duedate: cameraReadyRevisionInvitation.duedate,
         complete: complete,
         replies: complete ? [1] : []
@@ -318,7 +313,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     if (cameraReadyVerificationInvitation) {
       cameraReadyVerificationTask = {
         id: cameraReadyVerificationInvitation.id,
-        startdate: cameraReadyVerificationInvitation.cdate,
+        cdate: cameraReadyVerificationInvitation.cdate,
         duedate: cameraReadyVerificationInvitation.duedate,
         complete: cameraReadyVerificationNotes.length > 0,
         replies: cameraReadyVerificationNotes
@@ -505,8 +500,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     cameraReadyStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.cameraReadyPending; }),
     completeSubmissionStatusRows: paperStatusRows.filter(function(row) { return ![SUBMITTED_STATUS, UNDER_REVIEW_STATUS].includes(row.submission.content.venueid); }),
     reviewerStatusRows: Object.values(reviewerStatusById),
-    actionEditorStatusRows: Object.values(actionEditorStatusById),
-    invitations: invitations
+    actionEditorStatusRows: Object.values(actionEditorStatusById)
   };
 };
 
