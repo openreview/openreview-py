@@ -101,8 +101,6 @@ var loadData = function() {
         Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
         Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
         Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
-        Webfield2.api.get('/edges', { invitation: REVIEWERS_ASSIGNMENT_ID, groupBy: 'head'})
-          .then(function(result) { return result.groupedEdges; }),
         Webfield2.api.getAll('/invitations', {
           regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
           type: 'all',
@@ -115,7 +113,7 @@ var loadData = function() {
     });
 };
 
-var formatData = function(reviewersByNumber, invitations, submissions, assignmentEdges, invitationsById) {
+var formatData = function(reviewersByNumber, invitations, submissions, invitationsById) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
 
   // build the rows
@@ -179,7 +177,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     if (reviewApprovalInvitation) {
       tasks.push({
         id: reviewApprovalInvitation.id,
-        startdate: reviewApprovalInvitation.cdate,
+        cdate: reviewApprovalInvitation.cdate,
         duedate: reviewApprovalInvitation.duedate,
         complete: reviewApprovalNotes.length > 0,
         replies: reviewApprovalNotes
@@ -189,7 +187,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     if (reviewInvitation) {
       tasks.push({
         id: reviewInvitation.id,
-        startdate: reviewInvitation.cdate,
+        cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
         complete: reviewNotes.length >= 3,
         replies: reviewNotes
@@ -199,7 +197,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     if (officialRecommendationInvitation) {
       tasks.push({
         id: officialRecommendationInvitation.id,
-        startdate: officialRecommendationInvitation.cdate,
+        cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
         complete: officialRecommendationNotes.length >= 3,
         replies: officialRecommendationNotes
@@ -209,7 +207,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     if (reviewerRatingInvitations.length) {
       tasks.push({
         id: getInvitationId(number, 'Reviewer_Rating'),
-        startdate: reviewerRatingInvitations[0].cdate,
+        cdate: reviewerRatingInvitations[0].cdate,
         duedate: reviewerRatingInvitations[0].duedate,
         complete: reviewerRatingReplies.length == reviewNotes.length,
         replies: reviewerRatingReplies
@@ -219,7 +217,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     if (decisionInvitation) {
       tasks.push({
         id: decisionInvitation.id,
-        startdate: decisionInvitation.cdate,
+        cdate: decisionInvitation.cdate,
         duedate: decisionInvitation.duedate,
         complete: decisionNotes.length > 0,
         replies: decisionNotes
@@ -229,7 +227,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     if (decisionApprovalInvitation) {
       tasks.push({
         id: decisionApprovalInvitation.id,
-        startdate: decisionApprovalInvitation.cdate,
+        cdate: decisionApprovalInvitation.cdate,
         duedate: decisionApprovalInvitation.duedate,
         complete: decisionApprovalNotes.length > 0,
         replies: decisionApprovalNotes
@@ -239,7 +237,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     if (cameraReadyRevisionInvitation) {
       tasks.push({
         id: cameraReadyRevisionInvitation.id,
-        startdate: cameraReadyRevisionInvitation.cdate,
+        cdate: cameraReadyRevisionInvitation.cdate,
         duedate: cameraReadyRevisionInvitation.duedate,
         complete: submission.invitations.includes(cameraReadyRevisionInvitation.id),
         replies: []
@@ -249,7 +247,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
     if (cameraReadyVerificationInvitation) {
       tasks.push({
         id: cameraReadyVerificationInvitation.id,
-        startdate: cameraReadyVerificationInvitation.cdate,
+        cdate: cameraReadyVerificationInvitation.cdate,
         duedate: cameraReadyVerificationInvitation.duedate,
         complete: cameraReadyVerificationNotes.length > 0,
         replies: cameraReadyVerificationNotes
@@ -319,14 +317,6 @@ var formatData = function(reviewersByNumber, invitations, submissions, assignmen
       status: submission.content.venue.value
     });
 
-    //Add the assignment edges to each paper assignmnt invitation
-    paper_assignment_invitation = invitations.find(function(i) { return i.id == Webfield2.utils.getInvitationId(VENUE_ID, submission.number, 'Assignment', { prefix: REVIEWERS_NAME, submissionGroupName: SUBMISSION_GROUP_NAME })});
-    if (paper_assignment_invitation) {
-      var foundEdges = assignmentEdges.find(function(a) { return a.id.head == submission.id });
-      if (foundEdges) {
-        paper_assignment_invitation.details.repliedEdges = foundEdges.values;
-      }
-    }
   });
 
   return venueStatusData = {
