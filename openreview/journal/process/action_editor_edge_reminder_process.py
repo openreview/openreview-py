@@ -2,7 +2,7 @@ def process(client, invitation):
 
     journal = openreview.journal.Journal()
 
-    submission = client.get_note(invitation.edit['head']['value'])
+    submission = client.get_note(invitation.edit['head']['const'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
     now = datetime.datetime.utcnow()
     task = "Reviewer Assignment"
