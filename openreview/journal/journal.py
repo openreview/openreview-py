@@ -87,6 +87,9 @@ class Journal(object):
     def get_meta_invitation_id(self):
         return self.__get_invitation_id(name='Edit')
 
+    def get_form_id(self):
+        return self.__get_invitation_id(name='Form')
+
     def get_review_approval_id(self, number=None):
         return self.__get_invitation_id(name='Review_Approval', number=number)
 
@@ -174,6 +177,11 @@ class Journal(object):
     def get_reviewer_recruitment_id(self):
         return self.__get_invitation_id(name='Recruitment', prefix=self.get_reviewers_id())
 
+    def get_reviewer_responsability_id(self, signature=None):
+        if signature:
+            return self.__get_invitation_id(name=f'{signature}/Responsability/Acknowledgement', prefix=self.get_reviewers_id())
+        return self.__get_invitation_id(name='Responsability_Acknowledgement', prefix=self.get_reviewers_id())
+
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())
 
@@ -182,6 +190,11 @@ class Journal(object):
 
     def get_reviewer_assignment_id(self, number=None):
         return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id(number))
+
+    def get_reviewer_assignment_acknowledgement_id(self, number=None, reviewer_id=None):
+        if reviewer_id:
+           return self.__get_invitation_id(name=f'{reviewer_id}/Assignment/Acknowledgement', prefix=self.get_reviewers_id(number))
+        return self.__get_invitation_id(name='Assignment_Acknowledgement', prefix=self.get_reviewers_id(number))
 
     def get_reviewer_custom_max_papers_id(self):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())
@@ -413,11 +426,24 @@ class Journal(object):
     def get_late_invitees(self, invitation_id):
 
         invitation = self.client.get_invitation(invitation_id)
-        invitee_groups = [ self.client.get_group(i) for i in invitation.invitees if i not in [self.venue_id, self.get_editors_in_chief_id()] ]
-        invitee_members = [member for group in invitee_groups for member in group.members]
+
+        invitee_members = []
+        for invitee in invitation.invitees:
+            if invitee not in [self.venue_id, self.get_editors_in_chief_id()]:
+                if invitee.startswith('~'):
+                    invitee_members.append(invitee)
+                else:
+                    invitee_members = invitee_members + self.client.get_group(invitee).members
 
         replies = self.client.get_notes(invitation=invitation.id, details='signatures')
-        signature_members = [member for reply in replies for signature in reply.details['signatures'] for member in signature['members']]
+
+        signature_members = []
+        for reply in replies:
+            for signature in reply.details['signatures']:
+                if signature['id'].startswith('~'):
+                    signature_members.append(signature)
+                else:
+                    signature_members = signature_members + signature['members']
 
         return list(set(invitee_members) - set(signature_members))
 

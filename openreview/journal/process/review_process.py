@@ -39,7 +39,7 @@ def process(client, edit, invitation):
                 signatures=[journal.get_editors_in_chief_id()],
                 edit={
                     'note': {
-                        'readers': { 'values': [ 'everyone' ] }
+                        'readers': { 'const': [ 'everyone' ] }
                     }
                 }
         ))
@@ -52,12 +52,12 @@ def process(client, edit, invitation):
                 writers=[venue_id],
                 signatures=[venue_id],
                 edit={
-                    'signatures': { 'values': [venue_id ] },
-                    'readers': { 'values': [ venue_id, journal.get_action_editors_id(number=submission.number), '${{note.id}.signatures}' ] },
-                    'writers': { 'values': [ venue_id ] },
+                    'signatures': { 'const': [venue_id ] },
+                    'readers': { 'const': [ venue_id, journal.get_action_editors_id(number=submission.number), '${{note.id}.signatures}' ] },
+                    'writers': { 'const': [ venue_id ] },
                     'note': {
-                        'id': { 'value-invitation': edit.invitation },
-                        'readers': { 'values': [ 'everyone' ] }
+                        'id': { 'withInvitation': edit.invitation },
+                        'readers': { 'const': [ 'everyone' ] }
                     }
                 }
         ))
@@ -71,12 +71,12 @@ def process(client, edit, invitation):
                 writers=[venue_id],
                 signatures=[venue_id],
                 edit={
-                    'signatures': { 'values': [venue_id ] },
-                    'readers': { 'values': [ venue_id, '${{note.id}.signatures}' ] },
-                    'writers': { 'values': [ venue_id ] },
+                    'signatures': { 'const': [venue_id ] },
+                    'readers': { 'const': [ venue_id, '${{note.id}.signatures}' ] },
+                    'writers': { 'const': [ venue_id ] },
                     'note': {
-                        'id': { 'value-invitation': official_comment_invitation_id },
-                        'readers': { 'values': [ 'everyone' ] }
+                        'id': { 'withInvitation': official_comment_invitation_id },
+                        'readers': { 'const': [ 'everyone' ] }
                     }
                 }
         ))
