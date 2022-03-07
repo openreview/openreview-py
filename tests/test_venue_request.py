@@ -823,9 +823,11 @@ class TestVenueRequest():
         assert matching_status.content['comment'] == '''
 1 Reviewers without a profile: ['some_user@mail.com']
 
-Affinity scores and/or conflicts could not be computed for these users. Please ask these users to sign up in OpenReview and upload their papers. Alternatively, you can remove these users from the Reviewers group.
+Affinity scores and/or conflicts could not be computed for these users. You will not be able to run the matcher until all Reviewers have profiles. You have two options:
 
-Please check the Reviewers group to see more details: https://openreview.net/group?id=TEST.cc/2030/Conference/Reviewers'''
+1. You can ask these users to sign up in OpenReview and upload their papers. After all Reviewers have done this, you will need to rerun the paper matching setup to recompute conflicts and/or affinity scores for all users.
+2. You can remove these users from the Reviewers group: https://openreview.net/group/edit?id=TEST.cc/2030/Conference/Reviewers. You can find all users without a profile by searching for the '@' character in the search box.
+'''
 
         scores_invitation = client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
