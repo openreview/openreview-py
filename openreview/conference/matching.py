@@ -849,10 +849,10 @@ class Matching(object):
                         'hidden': True
                     },
                     'allow_zero_score_assignments': {
-                        'description': 'Select "Yes" only if you want to allow assignments with 0 scores',
+                        'description': 'Select "No" only if you do not want to allow assignments with 0 scores. Note that if there are any users without publications, you need to select "Yes" in order to run a paper matching.',
                         'value-radio': ['Yes', 'No'],
                         'required': False,
-                        'default': 'No',
+                        'default': 'Yes',
                         'order': 20
                     },
                     'randomized_probability_limits': {
