@@ -399,3 +399,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         },
         signatures=['~Super_User1']
     ))
+
+    replies = client.get_notes(forum=forum.id, invitation=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment')
+    for reply in replies:
+        reply.readers = readers
+        client.post_note(reply)
