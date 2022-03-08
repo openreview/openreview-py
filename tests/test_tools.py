@@ -5,10 +5,34 @@ import types
 import sys
 import os
 
-def do_work(value):
-    return value.id
+from openreview import OpenReviewException
+from openreview.tools import concurrent_requests
 
 class TestTools():
+    def test_concurrent_requests(self, client):
+        def post_random_group(number):
+            return client.post_group(
+                openreview.Group(
+                    id = f'NewGroup{number}',
+                    members = [],
+                    signatures = ['~Super_User1'],
+                    signatories = ['NewGroup'],
+                    readers = ['everyone'],
+                    writers =['NewGroup']
+                ))
+        
+        params = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        results = openreview.tools.concurrent_requests(post_random_group, params)
+        assert len(results) == len(params)
+
+        def get_random_group(number):
+            return client.get_group(f'NewGroup{number}')
+
+        groups = openreview.tools.concurrent_requests(get_random_group, params)
+        assert len(groups) == len(params)
+
+        for number, group in enumerate(groups):
+            assert group.id == f'NewGroup{number}'
 
     def test_get_submission_invitations(self, client):
         invitations = openreview.tools.get_submission_invitations(client)
@@ -155,11 +179,6 @@ class TestTools():
         assert preferred_name, "preferred name not found"
         assert preferred_name == 'Super User'
 
-    def test_parallel_exec(self, client):
-        values = client.get_groups(limit=10)
-        results = openreview.tools.parallel_exec(values, do_work)
-        assert len(results) == len(values)
-
     def test_create_authorid_profiles(self, client):
         authors = [
             'Ada Lovelace',
@@ -192,21 +211,20 @@ class TestTools():
     def test_subdomains(self):
         # ensure that two part top-level domains are handled appropriately
         # e.g. "edu.cn", "ac.uk"
-        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu.cn']
-        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['robots.ox.ac.uk', 'ox.ac.uk']
-        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'ox.ac.uk']
+        assert openreview.tools.subdomains('michael@mails.tsinghua.edu.cn') == ['mails.tsinghua.edu.cn', 'tsinghua.edu']
+        assert openreview.tools.subdomains('michael@robots.ox.ac.uk') == ['oxford.ac.uk', 'robots.ox.ac.uk']
+        assert openreview.tools.subdomains('michael@eng.ox.ac.uk') == ['eng.ox.ac.uk', 'oxford.ac.uk']
         assert openreview.tools.subdomains('michael@ground.ai') == ['ground.ai']
         assert openreview.tools.subdomains('michael@cs.umass.edu') == ['cs.umass.edu', 'umass.edu']
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
-
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
             signatories=['~Super_User1'],
-            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1']
+            members=['test@mail.com', '~SomeFirstName_User1', '~Another_Name1', 'NewGroup']
         ))
         assert posted_group
 
@@ -227,7 +245,7 @@ class TestTools():
 
         replaced_group = openreview.tools.replace_members_with_ids(client, posted_group)
         assert replaced_group
-        assert replaced_group.members == ['~SomeFirstName_User1']
+        assert replaced_group.members == ['~SomeFirstName_User1', 'NewGroup']
 
         posted_group = client.post_group(openreview.Group(id='test.org',
             readers=['everyone'],
@@ -240,14 +258,15 @@ class TestTools():
         assert replaced_group
         assert replaced_group.members == ['~Super_User1', '~SomeFirstName_User1', 'noprofile@mail.com']
 
-        # Test to assert that member is removed while running replace members on a group has a member that is an invalid profile
+        # Test to assert that an exception is raised while running replace members on a group has a member that is an invalid profile
         invalid_member_group = client.add_members_to_group(replaced_group, '~Invalid_Profile1')
         assert len(invalid_member_group.members) == 4
         assert '~Invalid_Profile1' in invalid_member_group.members
 
-        replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
-        assert len(replaced_group.members) == 3
-        assert '~Invalid_Profile1' not in invalid_member_group.members
+        with pytest.raises(OpenReviewException) as ex:
+            replaced_group = openreview.tools.replace_members_with_ids(client, invalid_member_group)
+
+        assert 'Profile Not Found' in ex.value.args[0]
 
         ## Replace emails with only profile with confirmed emails
         posted_group = client.post_group(openreview.Group(id='test.org',
@@ -282,6 +301,14 @@ class TestTools():
 
         conflicts = openreview.tools.get_conflicts([user2_profile], user_profile)
         assert len(conflicts) == 0
+
+        guest_client = openreview.Client()
+        user_profile = guest_client.get_profile(email_or_id='user@qq.com')
+        user2_profile = guest_client.get_profile(email_or_id='user2@qq.com')
+
+        with pytest.raises(OpenReviewException) as error:
+            openreview.tools.get_conflicts([user2_profile], user_profile)
+        assert "You do not have the required permissions as some emails are obfuscated" in error.value.args[0]
 
         profile1 = openreview.Profile(
             id = 'Test_Conflict1',
@@ -332,6 +359,7 @@ class TestTools():
         os.environ["OPENREVIEW_PASSWORD"] = ""
         guest_client = openreview.Client()
 
-        with pytest.raises(openreview.OpenReviewException, match=r'forbidden'):
-            assert openreview.tools.get_group(guest_client, '~Super_User1')
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            openreview.tools.get_group(guest_client, '~Super_User1')
+        assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 

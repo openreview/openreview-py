@@ -14,13 +14,14 @@ class Helpers:
         client = openreview.Client(baseurl = 'http://localhost:3000')
         assert client is not None, "Client is none"
         res = client.register_user(email = email, first = first, last = last, password = '1234')
+        username = res.get('id')
         assert res, "Res i none"
         profile_content={
             'names': [
                     {
                         'first': first,
                         'last': last,
-                        'username': '~' + first + '_' + last + '1'
+                        'username': username
                     }
                 ],
             'emails': [email] + alternates,
@@ -44,9 +45,10 @@ class Helpers:
         return openreview.Client(baseurl = 'http://localhost:3000', username = email, password = '1234')
 
     @staticmethod
-    def await_queue():
-        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
-        assert super_client is not None, 'Super Client is none'
+    def await_queue(super_client=None):
+        if super_client is None:
+            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password='1234')
+            assert super_client is not None, 'Super Client is none'
 
         while True:
             jobs = super_client.get_jobs_status()
@@ -60,6 +62,18 @@ class Helpers:
             time.sleep(0.5)
 
         assert not super_client.get_process_logs(status='error')
+
+    @staticmethod
+    def await_queue_edit(super_client, edit_id=None, invitation=None):
+        print('await_queue_edit', edit_id)
+        while True:
+            process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
+            if process_logs:
+                break
+
+            time.sleep(0.5)
+
+        assert process_logs[0]['status'] == 'ok'
 
 
     @staticmethod
@@ -85,6 +99,10 @@ def helpers():
 @pytest.fixture(scope="session")
 def client():
     yield openreview.Client(baseurl = 'http://localhost:3000', username='openreview.net', password='1234')
+
+@pytest.fixture(scope="session")
+def openreview_client():
+    yield openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password='1234')
 
 @pytest.fixture(scope="session")
 def test_client():

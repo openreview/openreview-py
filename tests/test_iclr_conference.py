@@ -118,11 +118,16 @@ If you don't have a TPMS account yet, you can create one here: http://torontopap
 Ensure that the email you use for your TPMS profile is listed as one of the emails in your OpenReview profile.
         '''
         builder.set_registration_stage(
-        additional_fields = reviewer_registration_tasks,
-        due_date = now + datetime.timedelta(minutes = 40),
-        ac_additional_fields=ac_registration_tasks,
-        instructions=reviewer_instructions,
-        ac_instructions=ac_instructions
+            committee_id = 'ICLR.cc/2021/Conference/Reviewers',
+            additional_fields = reviewer_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40),
+            instructions=reviewer_instructions
+        )
+        builder.set_registration_stage(
+            committee_id = 'ICLR.cc/2021/Conference/Area_Chairs',
+            additional_fields = ac_registration_tasks,
+            due_date = now + datetime.timedelta(minutes = 40),
+            instructions=ac_instructions
         )
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
@@ -224,10 +229,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
         request_page(selenium, reject_url, alert=True)
         helpers.await_queue()
@@ -246,10 +251,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_two@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
         request_page(selenium, reject_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
@@ -260,10 +265,10 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_four@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
-        reject_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
         request_page(selenium, accept_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
@@ -273,7 +278,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         messages = client.get_messages(to = 'iclr2021_five@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 1
@@ -282,7 +287,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         messages = client.get_messages(to = 'iclr2021_six_alternate@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
         assert len(declined_group.members) == 1
@@ -298,7 +303,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert selenium.find_element_by_link_text('Reviewer Registration')
         assert selenium.find_element_by_link_text('Expertise Selection')
 
-        registration_notes = reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Form')
+        registration_notes = reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Registration_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 
@@ -378,11 +383,11 @@ ICLR2021 Programme Chairs,
 Naila, Katja, Alice, and Ivan
         '''
 
-        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
+        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers', 'ICLR.cc/2021/Conference/Reviewers/-/Registration')
         assert reminders
         assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com', 'iclr2021_six@mail.com']
 
-        registration_notes = six_reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Form')
+        registration_notes = six_reviewer_client.get_notes(invitation = 'ICLR.cc/2021/Conference/Reviewers/-/Registration_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 
@@ -413,7 +418,7 @@ Naila, Katja, Alice, and Ivan
                 ]
             ))
 
-        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers')
+        reminders = conference.remind_registration_stage(subject, message, 'ICLR.cc/2021/Conference/Reviewers', 'ICLR.cc/2021/Conference/Reviewers/-/Registration')
         assert reminders
         assert reminders == ['iclr2021_four@mail.com', 'iclr2021_five@mail.com']
 
@@ -455,7 +460,8 @@ Naila, Katja, Alice, and Ivan
         assert messages[0]['content']['to'] == 'iclr2021_two@mail.com'
         text = messages[0]['content']['text']
 
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
 
         request_page(selenium, accept_url, alert=True)
         declined_group = client.get_group(id='ICLR.cc/2021/Conference/Reviewers/Declined')
@@ -571,7 +577,7 @@ Naila, Katja, Alice, and Ivan
         assert 'melisa@mail.com' in recipients
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
-        assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been posted.\n\nTitle: EDITED Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+        assert messages[0]['content']['text'] == f'<p>Your new revision of the submission to ICLR 2021 has been posted.</p>\n<p>Title: EDITED Paper title 5</p>\n<p>Abstract: This is an abstract 5</p>\n<p>To view your submission, click here: <a href=\"https://openreview.net/forum?id={note.forum}\">https://openreview.net/forum?id={note.forum}</a></p>\n'
 
         ## Edit revision
         references = client.get_references(invitation='ICLR.cc/2021/Conference/Paper5/-/Revision')
@@ -589,7 +595,7 @@ Naila, Katja, Alice, and Ivan
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
 
-        assert messages[0]['content']['text'] == '''Your new revision of the submission to ICLR 2021 has been updated.\n\nTitle: EDITED Rev 2 Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+        assert messages[0]['content']['text'] == f'<p>Your new revision of the submission to ICLR 2021 has been updated.</p>\n<p>Title: EDITED Rev 2 Paper title 5</p>\n<p>Abstract: This is an abstract 5</p>\n<p>To view your submission, click here: <a href=\"https://openreview.net/forum?id={note.forum}\">https://openreview.net/forum?id={note.forum}</a></p>\n'
 
         ## Withdraw paper
         test_client.post_note(openreview.Note(invitation='ICLR.cc/2021/Conference/Paper1/-/Withdraw',

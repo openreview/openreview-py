@@ -27,7 +27,9 @@ class TestESWCConference():
         builder.set_conference_short_name('ESWC 2021')
         builder.has_area_chairs(True)
 
-        builder.set_submission_stage(double_blind = False,
+        builder.set_submission_stage(
+            name = 'Special_Submission',
+            double_blind = False,
             public = True,
             due_date = now + datetime.timedelta(minutes = 10),
             second_due_date = now + datetime.timedelta(minutes = 20),
@@ -106,7 +108,7 @@ class TestESWCConference():
         year = datetime.datetime.now().year
         domains = ['umass.edu', 'umass.edu', 'fb.com', 'umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
-            note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2021/Conference/-/Submission',
+            note = openreview.Note(invitation = 'eswc-conferences.org/ESWC/2021/Conference/-/Special_Submission',
                 readers = ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@' + domains[i], '~SomeFirstName_User1'],
                 writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]],
                 signatures = ['~SomeFirstName_User1'],
@@ -122,7 +124,7 @@ class TestESWCConference():
 
         conference.setup_first_deadline_stage(force=True, submission_readers=['eswc-conferences.org/ESWC/2021/Conference/Reviewers'])
 
-        notes = test_client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Submission', sort='number:asc')
+        notes = test_client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Special_Submission', sort='number:asc')
         assert len(notes) == 5
         assert notes[0].readers == ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@umass.edu', '~SomeFirstName_User1', 'eswc-conferences.org/ESWC/2021/Conference/Reviewers']
 
@@ -140,7 +142,7 @@ class TestESWCConference():
         assert 'eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Revision' in ids
 
         ## Withdraw paper
-        test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw',
+        withdrawn_note = test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw',
             forum = notes[0].forum,
             replyto = notes[0].forum,
             readers = [
@@ -159,7 +161,7 @@ class TestESWCConference():
 
         helpers.await_queue()
 
-        withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Submission')
+        withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Special_Submission')
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].readers == [
             'eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors',
@@ -175,6 +177,29 @@ year={'''+str(year)+'''},
 url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 }'''
         assert len(conference.get_submissions()) == 4
+
+        # Undo Withdraw
+        ## Undo desk rejection
+        withdrawn_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        test_client.post_note(withdrawn_note)
+
+        helpers.await_queue()
+
+        submission_note = client.get_note(withdrawn_notes[0].forum)
+        assert submission_note.invitation == 'eswc-conferences.org/ESWC/2021/Conference/-/Special_Submission'
+        assert submission_note.readers == ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com',
+                                           'peter@mail.com', 'andrew@umass.edu', '~SomeFirstName_User1',
+                                           'eswc-conferences.org/ESWC/2021/Conference/Reviewers']
+
+        messages = client.get_messages(subject='^ESWC 2021: Paper .* restored by paper authors$')
+        assert len(messages) == 3
+        assert len(conference.get_submissions()) == 5
+
+        # Withdraw the paper again
+        withdrawn_note.ddate = None
+        test_client.post_note(withdrawn_note)
+
+        helpers.await_queue()
 
         # Add a revision
         pdf_url = test_client.put_attachment(
@@ -215,7 +240,11 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert 'melisa@mail.com' in recipients
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
-        assert messages[0]['content']['text'] == '''Your new revision of the submission to ESWC 2021 has been posted.\n\nTitle: EDITED Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+        text = messages[0]['content']['text']
+        assert 'Your new revision of the submission to ESWC 2021 has been posted.' in text
+        assert 'Title: EDITED Paper title 5' in text
+        assert 'Abstract: This is an abstract 5' in text
+        assert 'To view your submission, click here:' in text
 
         ## Edit revision
         references = client.get_references(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper2/-/Revision')
@@ -232,11 +261,15 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert 'melisa@mail.com' in recipients
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
-        assert messages[0]['content']['text'] == '''Your new revision of the submission to ESWC 2021 has been updated.\n\nTitle: EDITED Rev 2 Paper title 5\n\nAbstract: This is an abstract 5\n\nTo view your submission, click here: https://openreview.net/forum?id=''' + note.forum
+        text = messages[0]['content']['text']
+        assert 'Your new revision of the submission to ESWC 2021 has been updated.' in text
+        assert 'Title: EDITED Rev 2 Paper title 5' in text
+        assert 'Abstract: This is an abstract 5' in text
+        assert 'To view your submission, click here:' in text
 
         ## Desk Reject paper
         pc_client = openreview.Client(username='pc@eswc-conferences.org', password='1234')
-        pc_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper3/-/Desk_Reject',
+        desk_reject_note = pc_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper3/-/Desk_Reject',
             forum = notes[2].id,
             replyto = notes[2].id,
             readers = [
@@ -255,7 +288,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 
         helpers.await_queue()
 
-        desk_rejected_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Desk_Rejected_Submission')
+        desk_rejected_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Desk_Rejected_Special_Submission')
         assert len(desk_rejected_notes) == 1
         desk_rejected_notes[0].readers == [
             'eswc-conferences.org/ESWC/2021/Conference/Paper3/Authors',
@@ -265,15 +298,30 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         ]
         assert len(conference.get_submissions()) == 3
 
+        ## Undo desk rejection
+        desk_reject_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        pc_client.post_note(desk_reject_note)
+
+        helpers.await_queue()
+
+        submission_note = client.get_note(desk_rejected_notes[0].forum)
+        assert submission_note.invitation == 'eswc-conferences.org/ESWC/2021/Conference/-/Special_Submission'
+        assert submission_note.readers == ['eswc-conferences.org/ESWC/2021/Conference', 'test@mail.com', 'peter@mail.com', 'andrew@umass.edu', '~SomeFirstName_User1', 'eswc-conferences.org/ESWC/2021/Conference/Reviewers']
+
+        messages = client.get_messages(subject = '^ESWC 2021: Paper .* unmarked desk rejected by program chairs$')
+        assert len(messages) == 4
+
+
     def test_post_submission_stage(self, conference, helpers, test_client, client):
         year = datetime.datetime.now().year
         conference.setup_final_deadline_stage(force=True)
 
         submissions = conference.get_submissions(sort='number:desc')
-        assert len(submissions) == 3
+        assert len(submissions) == 4
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
         assert submissions[2].readers == ['everyone']
+        assert submissions[3].readers == ['everyone']
 
         ## Withdraw paper
         test_client.post_note(openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper5/-/Withdraw',
@@ -291,7 +339,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 
         helpers.await_queue()
 
-        withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Submission')
+        withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Special_Submission')
         assert len(withdrawn_notes) == 2
         withdrawn_notes[0].readers == [
             'everyone'

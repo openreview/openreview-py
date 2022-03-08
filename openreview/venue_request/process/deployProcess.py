@@ -1,4 +1,6 @@
 def process(client, note, invitation):
+    from datetime import datetime
+
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
@@ -114,8 +116,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees in the venue.',
-                    'value-radio': ['reviewer'],
-                    'default': 'reviewer',
+                    'value-dropdown': conference.get_roles(),
+                    'default': conference.get_roles()[0],
                     'required': True,
                     'order': 2
                 },
@@ -124,25 +126,25 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'values-regex': '[0-9]+',
                     'default': ['1', '2', '3'],
                     'required': False,
-                    'order': 3
+                    'order': 4
                 },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
-                    'description': 'Email,Name pairs expected with each line having only one invitee\'s details. E.g. captain_rogers@marvel.com, Captain America',
+                    'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
                     'required': True,
-                    'order': 4
+                    'order': 5
                 },
                 'invitation_email_subject': {
                     'value-regex': '.*',
                     'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 5,
+                    'order': 6,
                     'required': True,
                     'default': recruitment_email_subject
                 },
                 'invitation_email_content': {
                     'value-regex': '[\\S\\s]{1,10000}',
                     'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
-                    'order': 6,
+                    'order': 7,
                     'required': True,
                     'default': recruitment_email_body
                 }
@@ -170,8 +172,8 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_role': {
                     'description': 'Please select the role of the invitees you would like to remind.',
-                    'value-radio': ['reviewer'],
-                    'default': 'reviewer',
+                    'value-dropdown': conference.get_roles(),
+                    'default': conference.get_roles()[0],
                     'required': True,
                     'order': 2
                 },
@@ -201,12 +203,14 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
-    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
-        recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
-        remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair']
-        if (forum.content.get('senior_area_chairs') == "Yes, our venue has Senior Area Chairs") :
-            recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
-            remind_recruitment_invitation.reply['content']['invitee_role']['value-radio'] = ['reviewer', 'area chair', 'senior area chair']
+    if len(conference.get_roles()) > 1:
+        recruitment_invitation.reply['content']['allow_role_overlap'] = {
+            'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False,
+            'order': 3
+        }
 
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)
@@ -316,6 +320,81 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
             'readers' : {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
+
+    # always post Paper_Matching_Setup invitation
+    matching_group_ids = [conference.get_committee_id(r) for r in conference.reviewer_roles]
+    if conference.use_area_chairs:
+        matching_group_ids.append(conference.get_area_chairs_id())
+    if conference.use_senior_area_chairs:
+        matching_group_ids.append(conference.get_senior_area_chairs_id())
+    matching_invitation = openreview.Invitation(
+        id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Paper_Matching_Setup',
+        super = SUPPORT_GROUP + '/-/Paper_Matching_Setup',
+        invitees = readers,
+        reply = {
+            'forum': forum.id,
+            'replyto': forum.id,
+            'readers' : {
+                'description': 'The users who will be allowed to read the above content.',
+                'values' : readers
+            },
+            'writers': {
+                'values':[],
+            },
+            'content': {
+                'title': {
+                    'value': 'Paper Matching Setup',
+                    'required': True,
+                    'order': 1
+                },
+                'matching_group': {
+                    'description': 'Please select the group you want to set up matching for.',
+                    'value-dropdown' : matching_group_ids,
+                    'required': True,
+                    'order': 2
+                },
+                'compute_conflicts': {
+                    'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. By default, conflicts will be computed.',
+                    'value-radio': ['Yes', 'No'],
+                    'default': 'Yes',
+                    'required': True,
+                    'order': 3
+                },
+                'compute_affinity_scores': {
+                    'description': 'Please select whether you would like affinity scores to be computed by our expertise API and uploaded automatically.',
+                    'order': 4,
+                    'value-radio': ['Yes', 'No'],
+                    'required': True,
+                },
+                'upload_affinity_scores': {
+                    'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
+                    'order': 4,
+                    'value-file': {
+                        'fileTypes': ['csv'],
+                        'size': 50
+                    },
+                    'required': False
+                }
+            }
+        },
+        signatures = ['~Super_User1']
+    )
+    print('posting paper matching setup invitation!!')
+    client.post_invitation(matching_invitation)
+
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
+        super=SUPPORT_GROUP + '/-/Comment',
+        reply={
+            'forum': forum.id,
+            'referent': forum.id,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': readers
             }
         },
         signatures=['~Super_User1']

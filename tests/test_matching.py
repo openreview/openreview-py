@@ -70,7 +70,8 @@ class TestMatching():
                 'required': False
             }
         }
-        builder.set_registration_stage(due_date = now + datetime.timedelta(minutes = 40), ac_additional_fields = additional_registration_content)
+        builder.set_registration_stage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_registration_stage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), additional_fields = additional_registration_content)
 
         builder.set_bid_stage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
         builder.set_bid_stage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
@@ -80,6 +81,14 @@ class TestMatching():
         return conference
 
     def test_setup_matching(self, conference, pc_client, test_client, helpers):
+
+        ## setup matching with no reviewers
+        with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
+            conference.setup_committee_matching(committee_id=conference.get_reviewers_id(), compute_conflicts=True)
+
+        ## setup matching with no area chairs
+        with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
+            conference.setup_committee_matching(committee_id=conference.get_area_chairs_id(), compute_conflicts=True)
 
         ## Set committee
         conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
@@ -147,6 +156,10 @@ class TestMatching():
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/paper.pdf'), conference.get_submission_id(), 'pdf')
         note_3.content['pdf'] = url
         note_3 = test_client.post_note(note_3)
+
+        ## setup matching with no submissions
+        with pytest.raises(openreview.OpenReviewException, match=r'Submissions not found'):
+            conference.setup_committee_matching(committee_id=conference.get_reviewers_id(), compute_conflicts=True)
 
         ## Create blind submissions
         conference.setup_post_submission_stage(force=True)
@@ -544,7 +557,7 @@ class TestMatching():
 
         blinded_notes = list(conference.get_submissions())
 
-        registration_notes = pc_client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Form')
+        registration_notes = pc_client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Registration_Form')
         assert registration_notes
         assert len(registration_notes) == 1
 

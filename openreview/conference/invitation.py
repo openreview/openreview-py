@@ -57,13 +57,7 @@ class SubmissionInvitation(openreview.Invitation):
                 'forum': None,
                 'replyto': None,
                 'readers': readers,
-                'writers': {
-                    'values-copied': [
-                        conference.get_id(),
-                        '{content.authorids}',
-                        '{signatures}'
-                    ]
-                },
+                'writers': submission_stage.get_invitation_writers(conference),
                 'signatures': {
                     'values-regex': '~.*'
                 },
@@ -290,7 +284,7 @@ class CommentInvitation(openreview.Invitation):
 
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, reveal_authors, reveal_submission):
+    def __init__(self, conference, reveal_authors, reveal_submission, hide_fields=[]):
 
         signatures = {'values-regex': '~.*'}
         writers = {'values-regex': '.*'}
@@ -308,11 +302,16 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                     'values-regex': '[^;,\\n]+(,[^,\\n]+)*',
                     'required': False,
                     'order': 2
-                }
+                },
             }
             if not reveal_authors:
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
+            for field in hide_fields:
+                content[field] = {
+                    'value-regex': '.*',
+                    'required': False
+                }
         else:
             content = conference.submission_stage.get_content()
 
@@ -338,7 +337,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 
 class PaperWithdrawInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
 
         content = invitations.withdraw.copy()
 
@@ -385,6 +384,13 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
             file_content = file_content.replace(
+                'BLIND_SUBMISSION_ID = \'\'',
+                'BLIND_SUBMISSION_ID = \'' + conference.get_blind_submission_id() + '\'')
+            file_content = file_content.replace(
+                'SUBMISSION_READERS = []',
+                str.format('SUBMISSION_READERS = {}', note.readers)
+            )
+            file_content = file_content.replace(
                 'CONFERENCE_NAME = \'\'',
                 'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
             file_content = file_content.replace(
@@ -402,6 +408,11 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'REVEAL_SUBMISSIONS_ON_WITHDRAW = False',
                     'REVEAL_SUBMISSIONS_ON_WITHDRAW = True')
+            if hide_fields:
+                file_content = file_content.replace(
+                    'HIDE_FIELDS = []',
+                    str.format('HIDE_FIELDS = {}', hide_fields)
+                )
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
@@ -434,7 +445,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
 class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, reveal_authors, reveal_submission):
+    def __init__(self, conference, reveal_authors, reveal_submission, hide_fields=[]):
 
         signatures = {'values-regex': '~.*'}
         writers = {'values-regex': '.*'}
@@ -458,6 +469,11 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
             if not reveal_authors:
                 content['authors'] = {'values': ['Anonymous']}
                 content['authorids'] = {'values-regex': '.*'}
+            for field in hide_fields:
+                content[field] = {
+                    'value-regex': '.*',
+                    'required': False
+                }
         else:
             content = conference.submission_stage.get_content()
 
@@ -483,7 +499,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
 class PaperDeskRejectInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, hide_fields=None):
 
         content = invitations.desk_reject.copy()
 
@@ -535,6 +551,13 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
+            file_content = file_content.replace(
+                'BLIND_SUBMISSION_ID = \'\'',
+                'BLIND_SUBMISSION_ID = \'' + conference.get_blind_submission_id() + '\'')
+            file_content = file_content.replace(
+                'SUBMISSION_READERS = []',
+                str.format('SUBMISSION_READERS = {}', note.readers)
+            )
             if reveal_authors:
                 file_content = file_content.replace(
                     'REVEAL_AUTHORS_ON_DESK_REJECT = False',
@@ -543,6 +566,11 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'REVEAL_SUBMISSIONS_ON_DESK_REJECT = False',
                     'REVEAL_SUBMISSIONS_ON_DESK_REJECT = True')
+            if hide_fields:
+                file_content = file_content.replace(
+                    'HIDE_FIELDS = []',
+                    str.format('HIDE_FIELDS = {}', hide_fields)
+                )
 
             super(PaperDeskRejectInvitation, self).__init__(
                 id=conference.get_invitation_id('Desk_Reject', note.number),
@@ -1123,10 +1151,11 @@ class PaperMetaReviewInvitation(openreview.Invitation):
         readers = meta_review_stage.get_readers(conference, note.number)
         invitees = [conference.get_program_chairs_id()]
         writers = [conference.get_program_chairs_id()]
+        nonreaders = meta_review_stage.get_nonreaders(conference, note.number)
 
         if conference.use_area_chairs:
             paper_area_chair = conference.get_area_chairs_id(number = note.number)
-            invitees = [paper_area_chair]
+            invitees.append(paper_area_chair)
             writers.append(paper_area_chair)
 
         super(PaperMetaReviewInvitation, self).__init__(
@@ -1142,6 +1171,9 @@ class PaperMetaReviewInvitation(openreview.Invitation):
                 'readers': {
                     "description": "Select all user groups that should be able to read this comment.",
                     "values": readers
+                },
+                'nonreaders': {
+                    'values': nonreaders
                 },
                 'writers': {
                     'values': writers,
@@ -1160,6 +1192,7 @@ class DecisionInvitation(openreview.Invitation):
         decision_stage = conference.decision_stage
         start_date = decision_stage.start_date
         due_date = decision_stage.due_date
+        additional_fields = decision_stage.additional_fields
         content = {
             'title': {
                 'order': 1,
@@ -1180,17 +1213,20 @@ class DecisionInvitation(openreview.Invitation):
             }
         }
 
+        for key in additional_fields:
+            content[key] = additional_fields[key]
+
         file_content = None
-        with open(os.path.join(os.path.dirname(__file__), 'templates/decisionProcess.js')) as f:
+        decision_process_file = 'templates/decision_process.py'
+        with open(os.path.join(os.path.dirname(__file__), decision_process_file)) as f:
             file_content = f.read()
 
-            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
-            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
-            file_content = file_content.replace("var ACCEPTED_AUTHORS_NAME = '';", "var ACCEPTED_AUTHORS_NAME = '" + conference.authors_name + '/Accepted' + "';")
-
+            file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
+            file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
+            file_content = file_content.replace("AUTHORS_NAME_ACCEPTED = ''", "AUTHORS_NAME_ACCEPTED = '"  + conference.authors_name + '/Accepted' + "'")
             if decision_stage.email_authors:
-                file_content = file_content.replace("var EMAIL_AUTHORS = false;", "var EMAIL_AUTHORS = true;")
+                file_content = file_content.replace("EMAIL_AUTHORS = False", "EMAIL_AUTHORS = True")
 
         super(DecisionInvitation, self).__init__(id = conference.get_invitation_id(decision_stage.name),
             cdate = tools.datetime_millis(start_date),
@@ -1285,7 +1321,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
 
         content=invitations.paper_recruitment
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), process_file)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
@@ -1448,27 +1484,27 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission, email_pcs):
+    def set_withdraw_invitation(self, conference, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
 
         invitations = []
 
-        self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission))
+        self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
 
         notes = list(conference.get_submissions())
         for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs)))
+            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)))
 
         return invitations
 
-    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission):
+    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission, hide_fields=None):
 
         invitations = []
 
-        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, reveal_authors, reveal_submission))
+        self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
 
         notes = list(conference.get_submissions())
         for note in tqdm(notes, total=len(notes), desc='set_desk_reject_invitation'):
-            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission)))
+            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission, hide_fields=hide_fields)))
 
         return invitations
 
@@ -1527,13 +1563,13 @@ class InvitationBuilder(object):
         return invitations
 
     def set_decision_invitation(self, conference, notes):
-
-        invitations = []
         self.client.post_invitation(DecisionInvitation(conference))
-        for note in tqdm(notes, total=len(notes), desc='set_decision_invitation'):
+        def post_invitation(note):
             invitation = self.client.post_invitation(PaperDecisionInvitation(conference, note))
             self.__update_readers(note, invitation)
-            invitations.append(invitation)
+            return invitation
+
+        invitations = tools.concurrent_requests(post_invitation, notes)
 
         return invitations
 
@@ -1654,6 +1690,8 @@ class InvitationBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
                 pre_content = pre.read()
                 post_content = post.read()
+                pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")
+                pre_content = pre_content.replace("var CHECK_DECLINE = False;", "var CHECK_DECLINE = True;")
                 post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
                 post_content = post_content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.get_id() + "'")
                 post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "'")
@@ -1661,12 +1699,13 @@ class InvitationBuilder(object):
                 pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
                 post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")
                 post_content = post_content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "'")
-                if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
-                    post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
-                    post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
-                elif options.get('reviewers_name') == 'Area_Chairs':
-                    post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
-                    post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
+                if not options.get('allow_overlap_official_committee'):
+                    if options.get('reviewers_name') == 'Reviewers' and conference.use_area_chairs:
+                        post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Area Chair'")
+                        post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_area_chairs_id() + "'")
+                    elif options.get('reviewers_name') == 'Area_Chairs':
+                        post_content = post_content.replace("AREA_CHAIR_NAME = ''", "AREA_CHAIR_NAME = 'Reviewer'")
+                        post_content = post_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + conference.get_reviewers_id() + "'")
                 pre_content = pre_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 if reduced_load:
@@ -1790,18 +1829,17 @@ class InvitationBuilder(object):
 
         return self.client.post_invitation(reviewer_paper_ranking_invitation)
 
-    def __set_registration_invitation(self, conference, start_date, due_date, additional_fields, instructions, committee_id, committee_name):
+    def __set_registration_invitation(self, conference, name, start_date, due_date, additional_fields, remove_fields, instructions, title, committee_id, committee_name):
 
-        invitees = [committee_id, conference.support_user]
         readers = [conference.id, committee_id]
 
         # Create super invitation with a webfield
         registration_parent_invitation = openreview.Invitation(
-            id = conference.get_invitation_id(name='Form', prefix=committee_id),
+            id = conference.get_invitation_id(name=f'{name}_Form', prefix=committee_id),
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = invitees,
+            invitees = [conference.get_id(), conference.support_user],
             reply = {
                 'forum': None,
                 'replyto': None,
@@ -1810,11 +1848,11 @@ class InvitationBuilder(object):
                 'signatures': {'values': [conference.get_id()]},
                 'content': {
                     'title': {
-                        'value': committee_name + ' Information'
+                        'value-regex': '[\\S\\s]{0,2500}'
                     },
                     'instructions': {
                         'order': 1,
-                        'value': instructions
+                        'value-regex': '[\\S\\s]{0,250000}'
                     }
                 }
             }
@@ -1831,7 +1869,7 @@ class InvitationBuilder(object):
             forum = None,
             content = {
                 'instructions': instructions,
-                'title': committee_name + ' Information'
+                'title': title if title else committee_name + ' Information'
             }
         ))
 
@@ -1860,8 +1898,12 @@ class InvitationBuilder(object):
         for content_key in additional_fields:
             registration_content[content_key] = additional_fields[content_key]
 
+        for field in remove_fields:
+            if field in registration_content:
+                del registration_content[field]
+
         registration_invitation = self.client.post_invitation(openreview.Invitation(
-            id = conference.get_registration_id(committee_id),
+            id = conference.get_invitation_id(name = name, prefix = committee_id),
             cdate = tools.datetime_millis(start_date) if start_date else None,
             duedate = tools.datetime_millis(due_date) if due_date else None,
             expdate = tools.datetime_millis(due_date),
@@ -1869,7 +1911,7 @@ class InvitationBuilder(object):
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = invitees,
+            invitees = [committee_id, conference.support_user],
             reply = {
                 'forum': registration_parent.id,
                 'replyto': registration_parent.id,
@@ -1897,28 +1939,34 @@ class InvitationBuilder(object):
 
         return registration_invitation
 
-    def set_registration_invitation(self, conference):
+    def set_registration_invitation(self, conference, stage):
 
-        invitations = []
-        stage=conference.registration_stage
-        if conference.use_area_chairs:
-            invitations.append(self.__set_registration_invitation(conference=conference,
-            start_date=stage.start_date,
-            due_date=stage.due_date,
-            additional_fields=stage.ac_additional_fields,
-            instructions=stage.ac_instructions,
-            committee_id=conference.get_area_chairs_id(),
-            committee_name=conference.get_area_chairs_name(pretty=True)))
+        if conference.use_area_chairs and stage.committee_id == conference.get_area_chairs_id():
+            return self.__set_registration_invitation(conference=conference,
+                name=stage.name,
+                start_date=stage.start_date,
+                due_date=stage.due_date,
+                additional_fields=stage.additional_fields,
+                remove_fields=stage.remove_fields,
+                instructions=stage.instructions,
+                title=stage.title,
+                committee_id=conference.get_area_chairs_id(),
+                committee_name=conference.get_area_chairs_name(pretty=True)
+            )
 
-        invitations.append(self.__set_registration_invitation(conference=conference,
-        start_date=stage.start_date,
-        due_date=stage.due_date,
-        additional_fields=stage.additional_fields,
-        instructions=stage.instructions,
-        committee_id=conference.get_reviewers_id(),
-        committee_name=conference.get_reviewers_name(pretty=True)))
+        if stage.committee_id == conference.get_reviewers_id():
+            return self.__set_registration_invitation(conference=conference,
+                name=stage.name,
+                start_date=stage.start_date,
+                due_date=stage.due_date,
+                additional_fields=stage.additional_fields,
+                remove_fields=stage.remove_fields,
+                instructions=stage.instructions,
+                title=stage.title,
+                committee_id=conference.get_reviewers_id(),
+                committee_name=conference.get_reviewers_name(pretty=True)
+            )
 
-        return invitations
 
     def set_paper_group_invitation(self, conference, committee_id, with_process_function=False):
 
@@ -1934,8 +1982,21 @@ class InvitationBuilder(object):
 
     def set_assignment_invitation(self, conference, committee_id):
 
-        invitation=self.client.get_invitation(conference.get_paper_assignment_id(committee_id, deployed=True))
-        is_area_chair=committee_id == conference.get_area_chairs_id()
+        invitation = self.client.get_invitation(conference.get_paper_assignment_id(committee_id, deployed=True))
+        is_area_chair = committee_id == conference.get_area_chairs_id()
+        is_senior_area_chair = committee_id == conference.get_senior_area_chairs_id()
+        is_reviewer = committee_id == conference.get_reviewers_id()
+
+        if is_senior_area_chair:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/sac_assignment_post_process.py')) as post:
+                post_content = post.read()
+                post_content = post_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + conference.get_senior_area_chairs_id(number='{number}') + "'")
+                post_content = post_content.replace("AC_ASSIGNMENT_INVITATION_ID = ''", "AC_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(conference.get_area_chairs_id(), deployed=True) + "'")
+                invitation.process=post_content
+                invitation.signatures=[conference.get_program_chairs_id()] ## Program Chairs can see the reviews
+                return self.client.post_invitation(invitation)
+
         with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_pre_process.py')) as pre:
             pre_content = pre.read()
             pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + conference.get_invitation_id(conference.meta_review_stage.name if is_area_chair else conference.review_stage.name, '{number}') + "'")
@@ -1947,6 +2008,9 @@ class InvitationBuilder(object):
                 post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + (conference.get_area_chairs_id(number='{number}') if is_area_chair else conference.get_reviewers_id(number='{number}')) + "'")
                 post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + (conference.get_area_chairs_name(pretty=True) if is_area_chair else conference.get_reviewers_name(pretty=True)) + "'")
                 post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + (conference.get_area_chairs_id() if is_area_chair else conference.get_reviewers_id()) + "'")
+                if conference.use_senior_area_chairs and is_area_chair:
+                    post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + conference.get_senior_area_chairs_id(number='{number}') + "'")
+                    post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(conference.get_senior_area_chairs_id(), deployed=True) + "'")
                 invitation.process=post_content
                 invitation.preprocess=pre_content
                 invitation.signatures=[conference.get_program_chairs_id()] ## Program Chairs can see the reviews

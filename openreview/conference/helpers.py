@@ -123,7 +123,10 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
 
+    name = note.content.get('submission_name', 'Submission').strip()
+
     builder.set_submission_stage(
+        name=name,
         double_blind=double_blind,
         public=public,
         start_date=submission_start_date,
@@ -167,6 +170,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_reviewer_identity_readers([readers_map[r] for r in note.content.get('reviewer_identity', [])])
     builder.set_area_chair_identity_readers([readers_map[r] for r in note.content.get('area_chair_identity', [])])
     builder.set_senior_area_chair_identity_readers([readers_map[r] for r in note.content.get('senior_area_chair_identity', [])])
+    builder.set_reviewer_roles(note.content.get('reviewer_roles', ['Reviewers']))
+    builder.set_area_chair_roles(note.content.get('area_chair_roles', ['Area_Chairs']))
+    builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
 
     return builder
 
@@ -268,10 +274,23 @@ def get_meta_review_stage(client, request_forum):
 
     meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
 
+    readers_map = {
+        'Meta reviews should be immediately revealed to all reviewers': openreview.MetaReviewStage.Readers.REVIEWERS,
+        'Meta reviews should be immediately revealed to the paper\'s reviewers': openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED,
+        'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.MetaReviewStage.Readers.REVIEWERS_SUBMITTED,
+        'Meta review should not be revealed to any reviewer': openreview.MetaReviewStage.Readers.NO_REVIEWERS
+    }
+
+    reviewer_readers= request_forum.content.get('release_meta_reviews_to_reviewers', '')
+
+    release_to_reviewers = readers_map.get(reviewer_readers, openreview.MetaReviewStage.Readers.NO_REVIEWERS)
+
     return openreview.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
+        release_to_authors = (request_forum.content.get('release_meta_reviews_to_authors', '').startswith('Yes')),
+        release_to_reviewers = release_to_reviewers,
         additional_fields = meta_review_form_additional_options,
         remove_fields = meta_review_form_remove_options
     )
@@ -296,6 +315,7 @@ def get_decision_stage(client, request_forum):
         decision_due_date = None
 
     decision_options = request_forum.content.get('decision_options', '').strip()
+    decision_form_additional_options = request_forum.content.get('additional_decision_form_options', {})
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
         return openreview.DecisionStage(
@@ -305,7 +325,10 @@ def get_decision_stage(client, request_forum):
             public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
-            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
+            release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
+            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'),
+            additional_fields=decision_form_additional_options
+        )
     else:
         return openreview.DecisionStage(
             start_date = decision_start_date,
@@ -313,7 +336,10 @@ def get_decision_stage(client, request_forum):
             public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
             release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
             release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
-            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'))
+            release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
+            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'),
+            additional_fields=decision_form_additional_options
+        )
 
 def get_submission_revision_stage(client, request_forum):
     revision_name = request_forum.content.get('submission_revision_name', '').strip()
@@ -349,13 +375,16 @@ def get_submission_revision_stage(client, request_forum):
     if request_forum.content.get('accepted_submissions_only', '') == 'Enable revision for accepted submissions only':
         only_accepted = True
 
+    allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
+
     return openreview.SubmissionRevisionStage(
         name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,
-        only_accepted=only_accepted)
+        only_accepted=only_accepted,
+        allow_author_reorder=allow_author_reorder)
 
 def get_comment_stage(client, request_forum):
 
