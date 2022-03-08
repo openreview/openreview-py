@@ -660,7 +660,7 @@ class Matching(object):
                 return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
             if 'Error' in status:
                 raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)
-            if call_count == 240:
+            if call_count == 1440:
                 raise openreview.OpenReviewException('Time out computing scores, description: ' + desc)
         except openreview.OpenReviewException as e:
             raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
