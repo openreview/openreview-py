@@ -391,7 +391,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         super=SUPPORT_GROUP + '/-/Comment',
         reply={
             'forum': forum.id,
-            'referent': forum.id,
+            'replyto': None,
             'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values': readers
