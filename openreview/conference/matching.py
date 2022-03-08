@@ -561,8 +561,7 @@ class Matching(object):
         if scores:
             score_handle = scores
         elif score_file:
-            with open(score_file) as file_handle:
-                score_handle = csv.reader(file_handle)
+            score_handle = csv.reader(open(score_file))
 
         for row in tqdm(score_handle, desc='_build_scores'):
             edges.append(Edge(
