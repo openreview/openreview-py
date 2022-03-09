@@ -548,23 +548,31 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
 
-    def _build_profile_scores(self, score_invitation_id, score_file):
+    def _build_profile_scores(self, score_invitation_id, score_file = None, scores = None):
         '''
-        Given a csv file with affinity scores, create score edges
+        Given a csv file or score list with affinity scores, create score edges
         '''
         invitation = self._create_edge_invitation(score_invitation_id)
         edges = []
-        with open(score_file) as file_handle:
-            for row in tqdm(csv.reader(file_handle), desc='_build_scores'):
-                edges.append(Edge(
-                    invitation=invitation.id,
-                    head=row[0],
-                    tail=row[1],
-                    weight=float(row[2]),
-                    readers=self._get_edge_readers(tail=row[1]),
-                    writers=[self.conference.id],
-                    signatures=[self.conference.id]
-                ))
+
+        # Validate and select scores
+        if not scores and not score_file:
+            raise openreview.OpenReviewException('No profile scores provided')
+        if scores:
+            score_handle = scores
+        elif score_file:
+            score_handle = csv.reader(open(score_file))
+
+        for row in tqdm(score_handle, desc='_build_scores'):
+            edges.append(Edge(
+                invitation=invitation.id,
+                head=row[0],
+                tail=row[1],
+                weight=str(max(round(float(row[2]), 4), 0)),
+                readers=self._get_edge_readers(tail=row[1]),
+                writers=[self.conference.id],
+                signatures=[self.conference.id]
+            ))
 
         ## Delete previous scores
         self.client.delete_edges(invitation.id, wait_to_finish=True)
@@ -626,6 +634,7 @@ class Matching(object):
                 name=self.conference.get_short_name(),
                 group_id=self.match_group.id,
                 paper_invitation=self.conference.get_blind_submission_id(),
+                alternate_match_group = self.alternate_matching_group,
                 exclusion_inv=self.conference.get_expertise_selection_id(),
                 model='specter+mfr')
             status = ''
@@ -634,16 +643,25 @@ class Matching(object):
                 if call_count == 1440: ## one day to wait the completion or trigger a timeout
                     break
                 time.sleep(60)
-                status = self.client.get_expertise_status(job_id['job_id'])['status']
+                status_response = self.client.get_expertise_status(job_id['job_id'])
+                status = status_response.get('status')
+                desc = status_response.get('description')
                 call_count += 1
             if 'Completed' in status:
                 result = self.client.get_expertise_results(job_id['job_id'])
-                scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
                 matching_status['no_profiles'] = result['metadata']['no_profile']
                 matching_status['no_publications'] = result['metadata']['no_publications']
+
+                if self.alternate_matching_group:
+                    scores = [[entry['match_member'], entry['submission_member'], entry['score']] for entry in result['results']]
+                    return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
+
+                scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
                 return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
-            else:
-                raise openreview.OpenReviewException('Could not compute the scores, timeout waiting for a response, status: ' + status)
+            if 'Error' in status:
+                raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)
+            if call_count == 1440:
+                raise openreview.OpenReviewException('Time out computing scores, description: ' + desc)
         except openreview.OpenReviewException as e:
             raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
 
