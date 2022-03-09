@@ -234,6 +234,11 @@ class TestVenueRequest():
         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, Abstract Registration: ' + abstract_due_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
         assert conference.get_submission_id() == 'TEST.cc/2021/Conference/-/Submission_Test'
 
+        comment_invitation = '{}/-/Request{}/Comment'.format(venue.support_group_id,
+                                                             request_form_note.number)
+        last_comment = client.get_notes(invitation=comment_invitation)[-1]
+        assert 'TEST.cc/2021/Conference/Program_Chairs' in last_comment.readers
+
     def test_venue_revision_error(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
