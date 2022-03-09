@@ -187,6 +187,25 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'].startswith(f'<p>A request for service has been submitted by TestVenue@OR2021. Check it here: <a href=\"https://openreview.net/forum?id={request_form_note.forum}\">https://openreview.net/forum?id={request_form_note.forum}</a></p>')
 
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Urgent',
+                'comment': 'Please deploy ASAP.'
+            },
+            forum=request_form_note.forum,
+            invitation='{}/-/Request{}/Comment'.format(venue.support_group_id, request_form_note.number),
+            readers=[
+                support_group_id,
+                'new_test_user@mail.com',
+                'tom@mail.com'
+            ],
+            replyto=None,
+            signatures=['~NewFirstName_User1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2021/Conference'},
