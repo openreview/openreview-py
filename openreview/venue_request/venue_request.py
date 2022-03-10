@@ -927,8 +927,8 @@ class VenueRequest():
             self.comment_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Comment',
                 readers=['everyone'],
-                writers=[self.super_user],
-                signatures=[self.super_user],
+                writers=[self.support_group.id],
+                signatures=[self.support_group.id],
                 invitees=['everyone'],
                 process_string=file_content,
                 reply={
