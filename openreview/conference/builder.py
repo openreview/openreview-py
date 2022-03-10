@@ -2296,8 +2296,8 @@ class ConferenceBuilder(object):
         reviewer_instructions = instructions if instructions else default_instructions
         self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, additional_fields, reviewer_instructions))
 
-    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False,  bid_options=['Very High', 'High', 'Neutral', 'Low', 'Very Low'], allow_conflicts=False, use_super_algorithm=False, positive_bids=[]):
-        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions, bid_options, allow_conflicts, use_super_algorithm, positive_bids))
+    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False,  bid_options=['Very High', 'High', 'Neutral', 'Low', 'Very Low'], use_super_algorithm=False, positive_bids=[]):
+        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions, bid_options, use_super_algorithm, positive_bids))
 
     def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
         self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
