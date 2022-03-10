@@ -1646,7 +1646,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_note_edit(self, invitation, signatures, note=None, readers=None):
+    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None):
         """
         """
         edit_json = {
@@ -1655,8 +1655,11 @@ class OpenReviewClient(object):
             'note': note.to_json() if note else {}
         }
 
-        if readers:
+        if readers is not None:
             edit_json['readers'] = readers
+
+        if writers is not None:
+            edit_json['writers'] = writers
 
         response = requests.post(self.note_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
@@ -1684,8 +1687,8 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def request_expertise(self, name, group_id, paper_invitation, exclusion_inv=None, model=None, baseurl=None):
-
+    def request_expertise(self, name, group_id, paper_invitation, alternate_match_group = None, exclusion_inv=None, model=None, baseurl=None):
+        
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
@@ -1694,12 +1697,18 @@ class OpenReviewClient(object):
         if exclusion_inv:
             expertise = {'exclusion': { 'invitation': exclusion_inv }}
             entityA['expertise'] = expertise
-
-        # Build entityB from paper_invitation
-        entityB = {
-            'type': 'Note',
-            'invitation': paper_invitation
-        }
+        
+        # Build entityB from alternate_match_group or paper_invitation
+        if alternate_match_group:
+            entityB = {
+                'type': 'Group',
+                'memberOf': alternate_match_group
+            }
+        else:
+            entityB = {
+                'type': 'Note',
+                'invitation': paper_invitation
+            }
 
         expertise_request = {
             'name': name,
@@ -2091,6 +2100,19 @@ class Invitation(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))
+
+    def pretty_id(self):
+        tokens = self.id.split('/')[-2:]
+        filtered_tokens = []
+
+        for token in tokens:
+            token = token.replace('_', ' ').strip()
+            if token.startswith('~'):
+                token = tools.pretty_id(token)
+            if token != '-':
+                filtered_tokens.append(token)
+
+        return (' ').join(filtered_tokens)
 
     def to_json(self):
         """
