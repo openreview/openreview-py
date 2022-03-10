@@ -944,7 +944,7 @@ class VenueRequest():
                         ]
                     },
                     'signatures': {
-                        'values-regex': '~.*|' + self.support_group.id,
+                        'values-regex': self.super_user,
                         'description': 'How your identity will be displayed.'
                     },
                     'content': {
