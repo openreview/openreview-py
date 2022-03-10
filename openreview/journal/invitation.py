@@ -416,7 +416,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'order': 2,
                                     'value': {
                                         'type': "string",
-                                        'enum': ['I understand that TMLR has a 4 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
+                                        'enum': ['I understand that TMLR has a strict 6 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
                                     },
                                     'presentation': {
                                         'input': 'checkbox'
