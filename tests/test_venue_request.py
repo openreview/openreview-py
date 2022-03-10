@@ -200,7 +200,7 @@ class TestVenueRequest():
                 'tom@mail.com'
             ],
             replyto=None,
-            signatures=['openreview.net'],
+            signatures=['~NewFirstName_User1'],
             writers=[]
         ))
 

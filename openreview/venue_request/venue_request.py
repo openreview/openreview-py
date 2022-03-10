@@ -927,8 +927,8 @@ class VenueRequest():
             self.comment_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Comment',
                 readers=['everyone'],
-                writers=[self.support_group.id],
-                signatures=[self.support_group.id],
+                writers=[self.super_user],
+                signatures=[self.super_user],
                 invitees=['everyone'],
                 process_string=file_content,
                 reply={
@@ -944,7 +944,7 @@ class VenueRequest():
                         ]
                     },
                     'signatures': {
-                        'values-regex': self.super_user,
+                        'values-regex': '~.*|' + self.support_group.id,
                         'description': 'How your identity will be displayed.'
                     },
                     'content': {
