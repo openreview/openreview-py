@@ -49,7 +49,8 @@ def process(client, note, invitation):
     )
 
     if matching_status.get('error'):
-        error_status = f'''{len(matching_status.get('error'))} error(s): {matching_status.get('error')}'''
+        error_status = f'''{len(matching_status.get('error'))} error(s): 
+        `{matching_status.get('error')}`'''
         comment_note.content['error'] = error_status
         comment_note.content['comment'] += f'''
 

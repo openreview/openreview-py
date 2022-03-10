@@ -1517,9 +1517,10 @@ class VenueRequest():
                         },
                         'error': {
                             'order': 2,
-                            'value-regex': '.{1,500}',
+                            'value-regex': '[\\S\\s]{1,200000}',
                             'description': 'Brief summary of the error.',
-                            'required': True
+                            'required': True,
+                            'markdown': True
                         },
                         'comment': {
                             'order': 3,

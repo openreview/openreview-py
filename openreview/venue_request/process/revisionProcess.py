@@ -1,6 +1,8 @@
 def process(client, note, invitation):
     import datetime
     import traceback
+    import json
+
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
 
@@ -126,11 +128,9 @@ def process(client, note, invitation):
         print('Conference: ', conference.get_id())
     except Exception as e:
         forum_note = client.get_note(note.forum)
-        error_status = e.__class__.__name__ + str(e.args)
 
-        if hasattr(e, 'message'):
-            error_status += f''' : {e.message}'''
-
+        from openreview import OpenReviewException
+        error_status = json.dumps(e.args[0], indent=2) if isinstance(e, OpenReviewException) else repr(e)
         comment_note = openreview.Note(
             invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Error_Status',
             forum=forum_note.id,
@@ -139,13 +139,14 @@ def process(client, note, invitation):
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
             content={
-                'title': '{invitation} Failed [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
-                'error': str(e.args[0]),
-                'comment': f'''
-{invitation_type.replace("_", " ")} Process failed due to the following error:
+                'title': '{invitation} Process Failed [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
+                'error': f'''
 ```python
-{traceback.format_exc()}
+{error_status}
 ```
+''',
+                'comment': f'''
+{invitation_type.replace("_", " ")} Process failed.
 \n
 To check references for the note: https://api.openreview.net/references?id={note.id}'''
             }

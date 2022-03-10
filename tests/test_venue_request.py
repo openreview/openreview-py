@@ -277,8 +277,15 @@ class TestVenueRequest():
         comment_invitation = '{}/-/Request{}/Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'Revision Process failed due to the following error:\n```python\nOpenReviewException({\'name\': \'InvalidFieldError\', \'message\': \'The field value-regexx is not allowed\', \'status\': 400, \'details\': {\'path\': \'invitation.reply.content.preprint.value-regexx\'}})'
-        assert error_string in last_comment.content['comment']
+        error_string = '\n```python\n{\n' \
+                       '  "name": "InvalidFieldError",\n' \
+                       '  "message": "The field value-regexx is not allowed",\n' \
+                       '  "status": 400,\n' \
+                       '  "details": {\n' \
+                       '    "path": "invitation.reply.content.preprint.value-regexx"\n' \
+                       '  }\n' \
+                       '}\n```\n'
+        assert error_string in last_comment.content['error']
 
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -588,8 +595,8 @@ class TestVenueRequest():
         comment_invitation = '{}/-/Request{}/Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'Bid Stage Process failed due to the following error:\n```python\nValueError(\'day is out of range for month\')'
-        assert error_string in last_comment.content['comment']
+        error_string = '\n```python\nValueError(\'day is out of range for month\')'
+        assert error_string in last_comment.content['error']
 
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -716,7 +723,7 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '1 error(s): ["Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button."]' in matching_status.content['error']
+        assert '1 error(s): \n        `["Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button."]`' in matching_status.content['error']
 
         conference.setup_post_submission_stage(force=True)
 
@@ -747,7 +754,7 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '1 error(s): ["Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers."]' in matching_status.content['error']
+        assert '1 error(s): \n        `["Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers."]`' in matching_status.content['error']
 
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer1')
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer2')
