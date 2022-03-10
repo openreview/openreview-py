@@ -33,7 +33,7 @@ function(){
             values: note.content['program_chair_emails'].concat([SUPPORT_GROUP])
         }
       },
-      writers: [SUPER_USER],
+      writers: [SUPPORT_GROUP],
       signatures: [SUPER_USER]
     }
 
