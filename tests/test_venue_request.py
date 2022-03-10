@@ -274,10 +274,10 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        comment_invitation = '{}/-/Request{}/Comment'.format(venue['support_group_id'],
+        comment_invitation = '{}/-/Request{}/Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'Revision Process failed due to the following error: OpenReviewException({\'name\': \'InvalidFieldError\', \'message\': \'The field value-regexx is not allowed\', \'status\': 400, \'details\': {\'path\': \'invitation.reply.content.preprint.value-regexx\'}})'
+        error_string = 'Revision Process failed due to the following error:\n```python\nOpenReviewException({\'name\': \'InvalidFieldError\', \'message\': \'The field value-regexx is not allowed\', \'status\': 400, \'details\': {\'path\': \'invitation.reply.content.preprint.value-regexx\'}})'
         assert error_string in last_comment.content['comment']
 
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
@@ -585,10 +585,10 @@ class TestVenueRequest():
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
         assert process_logs[0]['status'] == 'ok'
 
-        comment_invitation = '{}/-/Request{}/Comment'.format(venue['support_group_id'],
+        comment_invitation = '{}/-/Request{}/Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'Bid Stage Process failed due to the following error: ValueError(\'day is out of range for month\')'
+        error_string = 'Bid Stage Process failed due to the following error:\n```python\nValueError(\'day is out of range for month\')'
         assert error_string in last_comment.content['comment']
 
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):

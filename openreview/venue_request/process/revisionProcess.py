@@ -125,25 +125,32 @@ def process(client, note, invitation):
 
         print('Conference: ', conference.get_id())
     except Exception as e:
-        error_status = f'''
-{invitation_type.replace("_", " ")} Process failed due to the following error: {repr(e)}
-
-To check references for the note: https://api.openreview.net/references?id={note.id} '''
-        print("Following error in the process function was posted as a comment:")
-        print(traceback.format_exc())
-
         forum_note = client.get_note(note.forum)
+        error_status = e.__class__.__name__ + str(e.args)
+
+        if hasattr(e, 'message'):
+            error_status += f''' : {e.message}'''
 
         comment_note = openreview.Note(
-            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Error_Status',
             forum=forum_note.id,
             replyto=forum_note.id,
             readers=comment_readers,
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
             content={
-                'title': '{invitation} Status [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
-                'comment': error_status
+                'title': '{invitation} Failed [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
+                'error': error_status,
+                'comment': f'''
+{invitation_type.replace("_", " ")} Process failed due to the following error:
+```python
+{repr(e)}
+```
+```python
+{traceback.format_exc()}
+```
+\n
+To check references for the note: https://api.openreview.net/references?id={note.id}'''
             }
         )
 

@@ -611,6 +611,7 @@ class VenueRequest():
         self.setup_venue_recruitment()
         self.setup_venue_remind_recruitment()
         self.setup_matching()
+        self.setup_error_status()
 
         # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
@@ -1475,5 +1476,58 @@ class VenueRequest():
                         'values-regex': '~.*|{}'.format(self.support_group.id)
                     },
                     'content': matching_status_content
+                }
+            ))
+
+    def setup_error_status(self):
+
+        with open(self.invitation_status_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + self.super_user + "';")
+
+            self.comment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Error_Status',
+                readers=['everyone'],
+                writers=[self.support_group.id],
+                signatures=[self.support_group.id],
+                invitees=['everyone'],
+                process_string=file_content,
+                reply={
+                    'forum': None,
+                    'replyto': None,
+                    'readers': {
+                        'description': 'Select all user groups that should be able to read this comment.',
+                        'values': [self.support_group.id]
+                    },
+                    'writers': {
+                        'values-copied': [
+                            '{signatures}'
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|' + self.support_group.id,
+                        'description': 'How your identity will be displayed.'
+                    },
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'value-regex': '.{1,500}',
+                            'description': 'Invitation/Stage Name',
+                            'required': True
+                        },
+                        'error': {
+                            'order': 2,
+                            'value-regex': '.{1,500}',
+                            'description': 'Brief summary of the error.',
+                            'required': True
+                        },
+                        'comment': {
+                            'order': 3,
+                            'value-regex': '[\\S\\s]{1,200000}',
+                            'description': 'Error description (max 200000 characters).',
+                            'required': True,
+                            'markdown': True
+                        }
+                    }
                 }
             ))
