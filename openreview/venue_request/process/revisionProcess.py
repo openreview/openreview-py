@@ -140,12 +140,9 @@ def process(client, note, invitation):
             signatures=[SUPPORT_GROUP],
             content={
                 'title': '{invitation} Failed [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
-                'error': error_status,
+                'error': str(e.args[0]),
                 'comment': f'''
 {invitation_type.replace("_", " ")} Process failed due to the following error:
-```python
-{repr(e)}
-```
 ```python
 {traceback.format_exc()}
 ```
