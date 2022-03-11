@@ -114,7 +114,7 @@ class TestVenueRequest():
 
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
-        VenueRequest(client, support_group_id, super_id)
+        venue = VenueRequest(client, support_group_id, super_id)
 
         helpers.await_queue()
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
@@ -187,6 +187,25 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'].startswith(f'<p>A request for service has been submitted by TestVenue@OR2021. Check it here: <a href=\"https://openreview.net/forum?id={request_form_note.forum}\">https://openreview.net/forum?id={request_form_note.forum}</a></p>')
 
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Urgent',
+                'comment': 'Please deploy ASAP.'
+            },
+            forum=request_form_note.forum,
+            invitation='{}/-/Request{}/Comment'.format(venue.support_group_id, request_form_note.number),
+            readers=[
+                support_group_id,
+                'new_test_user@mail.com',
+                'tom@mail.com'
+            ],
+            replyto=None,
+            signatures=['~NewFirstName_User1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2021/Conference'},
@@ -214,6 +233,11 @@ class TestVenueRequest():
         abstract_due_date_str = abstract_due_date.strftime('%b %d %Y %I:%M%p')
         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, Abstract Registration: ' + abstract_due_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
         assert conference.get_submission_id() == 'TEST.cc/2021/Conference/-/Submission_Test'
+
+        comment_invitation = '{}/-/Request{}/Comment'.format(venue.support_group_id,
+                                                             request_form_note.number)
+        last_comment = client.get_notes(invitation=comment_invitation)[-1]
+        assert 'TEST.cc/2021/Conference/Program_Chairs' in last_comment.readers
 
     def test_venue_revision_error(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -611,6 +635,9 @@ class TestVenueRequest():
         assert selenium.find_element_by_link_text('Reviewer Bid')
 
     def test_venue_matching_setup(self, client, test_client, selenium, request_page, helpers, venue):
+        # add a member to PC group
+        pc_group = client.get_group('{}/Program_Chairs'.format(venue['venue_id']))
+        client.add_members_to_group(group=pc_group, members=['pc@test.com'])
 
         author_client = helpers.create_user('venue_author1@mail.com', 'Venue', 'Author')
         reviewer_client = helpers.create_user('venue_reviewer2@mail.com', 'Venue', 'Reviewer')
@@ -637,10 +664,11 @@ class TestVenueRequest():
         helpers.await_queue()
 
         messages = client.get_messages(subject='{} has received a new submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
-        assert messages and len(messages) == 2
+        assert messages and len(messages) == 3
         recipients = [msg['content']['to'] for msg in messages]
         assert 'test@mail.com' in recipients
         assert 'tom@mail.com' in recipients
+        assert 'pc@test.com' in recipients
 
         author_client = helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
 
