@@ -1,4 +1,5 @@
 def process(client, note, invitation):
+    import json
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     request_form = client.get_note(note.forum)
@@ -50,8 +51,11 @@ Please check the invitee group to see more details: https://openreview.net/group
     )
 
     if recruitment_status['errors']:
-        error_status = f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
-        {recruitment_status.get('errors') }'''
+        error_status = f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process:
+```python
+{json.dumps(recruitment_status.get('errors'), indent=2)}
+```
+'''
 
         comment_note.content['error'] = error_status
 
