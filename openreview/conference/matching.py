@@ -82,6 +82,14 @@ def _conflict_label(conflicts):
     return 'Institutional (level {})'.format(
         max([len(openreview.tools.subdomains(c)) for c in conflicts]))
 
+def _build_translate_map(bid_options):
+    upper_bound = 1
+    lower_bound = -1
+    step = (upper_bound - lower_bound) / (len(bid_options) - 1)
+    translate_map = {}
+    for i, option in enumerate(bid_options):
+        translate_map[option] = round(upper_bound - i * step, 3)
+    return translate_map
 
 class Matching(object):
     '''

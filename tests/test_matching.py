@@ -80,6 +80,18 @@ class TestMatching():
         # conference.client = pc_client
         return conference
 
+    def test_build_translate_map(self):
+        translate_map = openreview.matching._build_translate_map(['Very High', 'High', 'Neutral', 'Low', 'Very Low'])
+        assert translate_map == {'Very High': 1.0, 'High': 0.5, 'Neutral': 0.0, 'Low': -0.5, 'Very Low': -1.0}
+        translate_map = openreview.matching._build_translate_map(['Very High', 'High', 'Neutral', 'Low', 'Very Low', 'Conflict'])
+        assert translate_map == {'Very High': 1.0, 'High': 0.6, 'Neutral': 0.2, 'Low': -0.2, 'Very Low': -0.6, 'Conflict': -1.0}
+        translate_map = openreview.matching._build_translate_map(['High', 'Neutral', 'Low'])
+        assert translate_map == {'High': 1.0, 'Neutral': 0.0, 'Low': -1.0}
+        translate_map = openreview.matching._build_translate_map(['High', 'Low'])
+        assert translate_map == {'High': 1.0, 'Low': -1.0}
+        translate_map = openreview.matching._build_translate_map(['Very High', 'High', 'Neutral', 'Low'])
+        assert translate_map == {'Very High': 1.0, 'High': 0.333, 'Neutral': -0.333, 'Low': -1.0}
+
     def test_setup_matching(self, conference, pc_client, test_client, helpers):
 
         ## setup matching with no reviewers
