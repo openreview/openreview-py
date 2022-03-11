@@ -76,7 +76,7 @@ class VenueStages():
             },
             'bid_options': {
                 'description': 'Comma separated values e.g. Very High, High, Neutral, Low, Very Low. Default values are Very High, High, Neutral, Low, Very Low',
-                'value-regex': '[\w\s,]+',
+                'value-regex': '\w+[\w\s,]*',
                 'default': 'Very High, High, Neutral, Low, Very Low'
             },
             'use_super_algorithm': {
