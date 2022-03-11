@@ -139,14 +139,14 @@ def process(client, note, invitation):
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
             content={
-                'title': '{invitation} Process Failed [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
+                'title': '{invitation} Process Failed'.format(invitation=invitation_type.replace("_", " ")),
                 'error': f'''
 ```python
 {error_status}
 ```
 ''',
                 'comment': f'''
-{invitation_type.replace("_", " ")} Process failed.
+{invitation_type.replace("_", " ")} [{note.id}] Process failed.
 \n
 To check references for the note: https://api.openreview.net/references?id={note.id}'''
             }

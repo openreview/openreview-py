@@ -926,6 +926,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Paper Matching Setup Status' not in last_message['content']['text']
+        last_message = client.get_messages(to='test@mail.com')[-1]
+        assert 'Paper Matching Setup Status' in last_message['content']['subject']
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
