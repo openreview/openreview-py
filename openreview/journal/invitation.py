@@ -50,7 +50,7 @@ class InvitationBuilder(object):
         self.set_meta_invitation()
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
-        self.set_reviewer_responsability_invitation()
+        self.set_reviewer_responsibility_invitation()
         self.set_submission_invitation()
         self.set_review_approval_invitation()
         self.set_under_review_invitation()
@@ -101,7 +101,7 @@ class InvitationBuilder(object):
     def expire_acknowledgement_invitations(self):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsability_id(signature='.*'))
+        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsibility_id(signature='.*'))
 
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
@@ -293,7 +293,7 @@ class InvitationBuilder(object):
                 )
                 return invitation
 
-    def set_reviewer_responsability_invitation(self):
+    def set_reviewer_responsibility_invitation(self):
 
         venue_id=self.journal.venue_id
         reviewers_id = self.journal.get_reviewers_id()
@@ -346,7 +346,7 @@ class InvitationBuilder(object):
         )
         self.save_invitation(invitation)
 
-        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsability'})
+        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
         if len(forum_notes) > 0:
             forum_note_id = forum_notes[0].id
         else:
@@ -355,7 +355,7 @@ class InvitationBuilder(object):
                 note = openreview.api.Note(
                     signatures = [editors_in_chief_id],
                     content = {
-                        'title': { 'value': 'Acknowledgement of reviewer responsability'},
+                        'title': { 'value': 'Acknowledgement of reviewer responsibility'},
                         'description': { 'value': '''TMLR operates somewhat differently to other journals and conferences. Please read and acknowledge the following critical points before undertaking your first review. Note that the items below are stated very briefly; please see the full guidelines and instructions for reviewers on the journal website (links below).
 
 - [Reviewer guidelines](https://jmlr.org/tmlr/reviewer-guide.html)
@@ -369,7 +369,7 @@ If you have questions after reviewing the points below that are not answered on 
             )
             forum_note_id = forum_edit['note']['id']
 
-        invitation=Invitation(id=self.journal.get_reviewer_responsability_id(),
+        invitation=Invitation(id=self.journal.get_reviewer_responsibility_id(),
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
@@ -383,7 +383,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'duedate': { 'regex': '.*', 'type': 'integer' }
                 },
                 'invitation': {
-                    'id': { 'const': self.journal.get_reviewer_responsability_id(signature='${params.reviewerId}') },
+                    'id': { 'const': self.journal.get_reviewer_responsibility_id(signature='${params.reviewerId}') },
                     'invitees': { 'const': ['${params.reviewerId}'] },
                     'readers': { 'const': [venue_id, '${params.reviewerId}'] },
                     'writers': { 'const': [venue_id] },
