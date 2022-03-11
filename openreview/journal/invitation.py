@@ -550,7 +550,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'note': {
                     'signatures': { 'const': [authors_value] },
                     'readers': { 'const': [ venue_id, action_editors_value, authors_value]},
-                    'writers': { 'const': [ venue_id, action_editors_value, authors_value]},
+                    'writers': { 'const': [ venue_id, authors_value]},
                     'content': {
                         'title': {
                             'value': {
@@ -1548,9 +1548,6 @@ If you have questions after reviewing the points below that are not answered on 
                     'id': { 'withInvitation': self.journal.get_author_submission_id() },
                     'readers': {
                         'const': ['everyone']
-                    },
-                    'writers': {
-                        'const': [venue_id]
                     },
                     'content': {
                         'assigned_action_editor': {
@@ -2555,7 +2552,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'nullable': True
                 },
                 'signatures': { 'const': [paper_authors_id] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_authors_id]},
+                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
                 'writers': { 'const': [ venue_id, paper_authors_id]},
                 'note': {
                     'id': { 'const': note.id },
@@ -2579,33 +2576,6 @@ If you have questions after reviewing the points below that are not answered on 
                             'order': 2,
                             'presentation': {
                                 'markdown': True
-                            }
-                        },
-                        'authors': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                'optional': True
-                            },
-                            'description': 'Comma separated list of author names.',
-                            'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            },
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
-                        },
-                        'authorids': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': r'~.*',
-                                'optional': True
-                            },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                            'order': 4,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
                             }
                         },
                         'pdf': {
@@ -3107,25 +3077,6 @@ If you have questions after reviewing the points below that are not answered on 
                             'presentation': {
                                 'markdown': True
                             }
-                        },
-                        'authors': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': '[^;,\\n]+(,[^,\\n]+)*'
-                            },
-                            'description': 'Comma separated list of author names.',
-                            'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            }
-                        },
-                        'authorids': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': r'~.*'
-                            },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                            'order': 4
                         },
                         'pdf': {
                             'value': {
