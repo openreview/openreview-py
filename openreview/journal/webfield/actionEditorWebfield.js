@@ -13,6 +13,7 @@ var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var SUBMISSION_GROUP_NAME = 'Paper';
 var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
+var JOURNAL_REQUEST_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -45,6 +46,10 @@ var HEADER = {
   title: SHORT_PHRASE + ' Action Editor Console',
   instructions: "<strong>Reviewer Assignment Browser:</strong><br><a href='" + reviewersUrl + "'> Modify Reviewer Assignments</a>"
 };
+
+if (JOURNAL_REQUEST_ID) {
+  HEADER.instructions += "<br><br><strong>Journal Recruitment:</strong><br><a href=/forum?id=" + JOURNAL_REQUEST_ID + "> Recruit Reviewer</a>"
+}
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {

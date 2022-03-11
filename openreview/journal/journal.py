@@ -233,6 +233,11 @@ class Journal(object):
     def get_submission_editable_id(self, number):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
+    def get_request_id(self):
+        forum_note = self.client.get_notes(invitation='(openreview.net|OpenReview.net)/Support/-/Journal_Request$', content={'venue_id':self.venue_id})
+        if forum_note:
+            return forum_note[0].id
+
     def setup(self, support_role, editors=[]):
         self.group_builder.set_groups(self, support_role, editors)
         self.invitation_builder.set_invitations()
