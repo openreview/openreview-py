@@ -912,16 +912,12 @@ class Matching(object):
 
         try:
             invitation = self.client.get_invitation(self.conference.get_bid_id(self.match_group.id))
+            default_bid_options = ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
+            bid_options = invitation.reply.get('content', {}).get('label', {}).get('value-radio', default_bid_options)
             score_spec[invitation.id] = {
                 'weight': 1,
                 'default': 0,
-                'translate_map' : {
-                    'Very High': 1.0,
-                    'High': 0.5,
-                    'Neutral': 0.0,
-                    'Low': -0.5,
-                    'Very Low': -1.0
-                }
+                'translate_map' : _build_translate_map(bid_options)
             }
         except:
             print('Bid invitation not found')
