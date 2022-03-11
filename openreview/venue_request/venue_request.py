@@ -76,7 +76,8 @@ class VenueStages():
             },
             'bid_options': {
                 'description': 'Comma separated values e.g. Very High, High, Neutral, Low, Very Low. Default values are Very High, High, Neutral, Low, Very Low',
-                'value-regex': '[\w\s,]+'
+                'value-regex': '[\w\s,]+',
+                'default': 'Very High, High, Neutral, Low, Very Low'
             },
             'use_super_algorithm': {
                 'description': 'Sort papers in a way that balances the competing objectives of 1) ensuring each paper receives a sufficient number of bids and 2) ensuring that reviewers see the most relevant papers to them. For more information on the approach, see the associated paper from UAI 2020 available at https://arxiv.org/abs/2007.07079.',
