@@ -35,7 +35,7 @@ var REVIEWER_RATING_MAP = {
 }
 
 var HEADER = {
-  title: SHORT_PHRASE + ' Editors-In-Chief Console',
+  title: SHORT_PHRASE + ' Editors-in-Chief Console',
   instructions: ''
 };
 var SUBMISSION_GROUP_NAME = 'Paper';
@@ -53,12 +53,12 @@ var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
 '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
 '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
-'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
+'&version=2&referrer=[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
 
 var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
 '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
 '&browse=' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
-'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
+'&version=2&referrer=[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
 
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
