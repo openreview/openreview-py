@@ -49,6 +49,10 @@ var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
+var WITHDRAWN_STATUS = VENUE_ID + '/Withdrawn_Submission';
+var RETRACTED_STATUS = VENUE_ID + '/Retracted_Acceptance';
+var REJECTED_STATUS = VENUE_ID + '/Rejection';
+var DESK_REJECTED_STATUS = VENUE_ID + '/Desk_Rejection'
 
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
 '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
@@ -99,7 +103,7 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Camera Ready', 'Submission Complete', 'Action Editor Status', 'Reviewer Status'],
+    tabs: ['Overview', 'Submitted', 'Under Review', 'Decision Approval', 'Camera Ready', 'Submission Complete', 'Action Editor Status', 'Reviewer Status'],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -109,6 +113,21 @@ var main = function() {
     .then(renderData)
     .then(Webfield2.ui.done)
     .fail(Webfield2.ui.errorMessage);
+};
+
+var getGroupMembersCount = function(groupId) {
+  if (!groupId) {
+    return $.Deferred().resolve(0);
+  }
+
+  return Webfield.get('/groups', { id: groupId, limit: 1, select: 'members' }, { handleErrors: false })
+    .then(function(result) {
+      var members = _.get(result, 'groups[0].members', []);
+      return members.length;
+    }, function() {
+      // Do not fail if group cannot be retreived
+      return $.Deferred().resolve(0);
+    });
 };
 
 var loadData = function() {
@@ -125,14 +144,26 @@ var loadData = function() {
       // expired: true
     }).then(function(invitations) {
       return _.keyBy(invitations, 'id');
-    })
+    }),
+    getGroupMembersCount(VENUE_ID + '/' + REVIEWERS_NAME + '/' + 'Invited'),
+    getGroupMembersCount(VENUE_ID + '/' + REVIEWERS_NAME + '/' + 'Declined'),
+
   );
 };
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById) {
+var formatData = function(
+  aeByNumber,
+  reviewersByNumber,
+  submissions,
+  actionEditors,
+  reviewers,
+  invitationsById,
+  numReviewersInvited,
+  numReviewersDeclined,
+) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
-  // build the rows
+  // Build the table rows
   var paperStatusRows = [];
   var reviewerStatusById = {};
   reviewers.members.forEach(function(reviewer, index) {
@@ -425,7 +456,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     });
 
     var metaReview = null;
-    var decision = decisions.length && decisions[0];
+    var decision = decisions.length > 0 ? decisions[0] : null;
     if (decision) {
       metaReview = {
         id: decision.id,
@@ -493,14 +524,58 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     });
   });
 
+  var submissionStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === SUBMITTED_STATUS;
+  });
+  var underReviewStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && !row.actionEditorProgressData.decisionApprovalPending
+      && !row.actionEditorProgressData.cameraReadyPending;
+  });
+  var decisionApprovalStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && row.actionEditorProgressData.decisionApprovalPending;
+  });
+  var cameraReadyStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && row.actionEditorProgressData.cameraReadyPending;
+  });
+  var completeSubmissionStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid !== SUBMITTED_STATUS
+      && row.submission.content.venueid !== UNDER_REVIEW_STATUS;
+  });
+  var withdrawnStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === WITHDRAWN_STATUS;
+  });
+  var retractedStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === RETRACTED_STATUS;
+  });
+  var rejectedStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === REJECTED_STATUS
+      || row.submission.content.venueid === DESK_REJECTED_STATUS;
+  });
+
+  // Generate journal stats for overview tab
+  var journalStats = {
+    numReviewers: reviewers.members.length,
+    numActionEditors: actionEditors.members.length,
+    numSubmissions: submissionStatusRows.length,
+    numUnderReview: underReviewStatusRows.length,
+    numAccepted: completeSubmissionStatusRows.length,
+    numWithdrawn: withdrawnStatusRows.length,
+    numRetracted: retractedStatusRows.length,
+    numRejected: rejectedStatusRows.length,
+  };
+
   return {
-    submissionStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === SUBMITTED_STATUS; }),
-    paperStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && !row.actionEditorProgressData.decisionApprovalPending && !row.actionEditorProgressData.cameraReadyPending;  }),
-    decisionApprovalStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.decisionApprovalPending; }),
-    cameraReadyStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.cameraReadyPending; }),
-    completeSubmissionStatusRows: paperStatusRows.filter(function(row) { return ![SUBMITTED_STATUS, UNDER_REVIEW_STATUS].includes(row.submission.content.venueid); }),
+    submissionStatusRows: submissionStatusRows,
+    paperStatusRows: paperStatusRows,
+    decisionApprovalStatusRows: decisionApprovalStatusRows,
+    cameraReadyStatusRows: cameraReadyStatusRows,
+    completeSubmissionStatusRows: completeSubmissionStatusRows,
     reviewerStatusRows: Object.values(reviewerStatusById),
-    actionEditorStatusRows: Object.values(actionEditorStatusById)
+    actionEditorStatusRows: Object.values(actionEditorStatusById),
+    journalStats: journalStats,
   };
 };
 
@@ -681,7 +756,136 @@ var renderTable = function(container, rows) {
   });
 };
 
+var renderOverviewTab = function(conferenceStats) {
+  var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
+
+  var formatPeriod = function(invitation) {
+    var start;
+    var end;
+    var exp = 'never';
+    var afterStart = true;
+    var beforeEnd = true;
+    var now = Date.now();
+    if (invitation.cdate) {
+      var date = new Date(invitation.cdate);
+      start =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
+      afterStart = now > invitation.cdate;
+    }
+    if (invitation.duedate) {
+      var date = new Date(invitation.duedate);
+      end =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
+      beforeEnd = now < invitation.duedate;
+    }
+    if (invitation.expdate) {
+      var date = new Date(invitation.expdate);
+      exp =  date.toLocaleDateString('en-GB', { hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'short'});
+    }
+
+    var periodString = start ? 'from <em>' + start + '</em> ' : 'open ';
+    if (end) {
+      periodString = periodString + 'until <em>' + end + '</em> and expires <em>' + exp + '</em>';
+    } else {
+      periodString = periodString + 'no deadline' + ' and expires <em>' + exp + '</em>';
+    }
+
+    return periodString;
+  };
+
+  var renderInvitation = function(invitationMap, id, name) {
+    var invitation = invitationMap[id];
+
+    if (invitation) {
+      return '<li><a href="/invitation/edit?id=' + invitation.id + '&referrer=' + referrerUrl + '">' + name + '</a> ' + formatPeriod(invitation) + '</li>';
+    };
+    return '';
+  };
+
+  var renderProgressStat = function(numComplete, numTotal) {
+    if (numTotal === 0) {
+      return '<h3><span style="color: #777;">' + numComplete + ' / 0</span></h3>'
+    }
+    return '<h3>' +
+      _.round((numComplete / numTotal) * 100, 2) + '% &nbsp;' +
+      '<span style="color: #777;">(' + numComplete + ' / ' + numTotal + ')</span>' +
+    '</h3>';
+  };
+
+  var renderStatContainer = function(title, stat, hint, extraClasses) {
+    return '<div class="col-md-4 col-xs-6 mb-3 ' + (extraClasses || '') + '">' +
+      '<h4>' + title + '</h4>' +
+      stat +
+      (hint ? '<p class="hint">' + hint + '</p>' : '') +
+      '</div>';
+  };
+
+  // Conference statistics
+  var html = '<div class="container"><div class="row" style="margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Reviewers:',
+    '<h3>' + conferenceStats.numReviewers + '</h3>',
+    '<a href="/group/edit?id=' + REVIEWERS_ID + '">Reviewers Group</a> (<a href="/group/edit?id=' + REVIEWERS_ID + '/Invited">Invited</a>, <a href="/group/edit?id=' + REVIEWERS_ID + '/Declined">Declined</a>)',
+    'col-md-offset-2'
+  );
+  html += renderStatContainer(
+    'Action Editors:',
+    '<h3>' + conferenceStats.numActionEditors + '</h3>',
+    '<a href="/group/edit?id=' + ACTION_EDITOR_ID + '">Action Editors Group</a> (<a href="/group/edit?id=' + ACTION_EDITOR_ID + '/Invited">Invited</a>, <a href="/group/edit?id=' + ACTION_EDITOR_ID + '/Declined">Declined</a>)'
+  );
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem; margin-top: .5rem;">';
+
+  html += '<div class="row" style="margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Submitted Papers:',
+    '<h3>' + conferenceStats.numSubmissions + '</h3>'
+  );
+  html += renderStatContainer(
+    'Papers Under Review:',
+    '<h3>' + conferenceStats.numUnderReview + '</h3>'
+  );
+  html += renderStatContainer(
+    'Accepted Papers:',
+    '<h3>' + conferenceStats.numAccepted + '</h3>'
+  );
+  html += renderStatContainer(
+    'Withdrawn Papers:',
+    '<h3>' + conferenceStats.numWithdrawn + '</h3>'
+  );
+  html += renderStatContainer(
+    'Rejected Papers:',
+    '<h3>' + conferenceStats.numRejected + '</h3>'
+  );
+  html += renderStatContainer(
+    'Retracted Papers:',
+    '<h3>' + conferenceStats.numRetracted + '</h3>'
+  );
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem; margin-top: 0;">';
+
+  // // Config
+  // var requestForm = conferenceStatusData.requestForm;
+  // var senior_area_chair_roles = requestForm && requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs']
+  // var area_chair_roles = requestForm && requestForm.content['area_chair_roles'] || ['Area_Chairs']
+  // var reviewer_roles = requestForm && requestForm.content['reviewer_roles'] || ['Reviewers']
+
+  // html += '<div class="row" style="margin-top: .5rem;">';
+  // if (requestForm) {
+  //   html += '<div class="col-md-4 col-xs-12">'
+  //   html += '<h4>Description:</h4>';
+  //   html += '<p style="margin-bottom:2rem"><span>' + getConfigurationDescription(requestForm) + '</span><br>' +
+  //     '<a href="/forum?id=' + requestForm.id + '"><strong>Full Venue Configuration</strong></a>'
+  //     '</p>';
+  //   html += '</div>';
+  // }
+
+  html += '</div></div>';
+
+  $('#overview').html(html);
+};
+
 var renderData = function(venueStatusData) {
+  renderOverviewTab(venueStatusData.journalStats);
+
   renderTable('submitted', venueStatusData.submissionStatusRows);
   renderTable('under-review', venueStatusData.paperStatusRows);
   renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
