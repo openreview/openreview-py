@@ -1,6 +1,6 @@
 def process_update(client, edge, invitation, existing_edge):
     latest_edge = client.get_edge(edge.id,True)
-    if latest_edge.ddate:
+    if latest_edge.ddate and not edge.ddate:
         # edge has been removed
         return
 
