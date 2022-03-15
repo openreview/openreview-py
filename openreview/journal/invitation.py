@@ -32,17 +32,17 @@ class InvitationBuilder(object):
             ae_edge_duedate_process = ae_edge_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
         self.reviewer_reminder_process = {
-             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': reviewer_duedate_process
         }
 
         self.ae_reminder_process = {
-             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': ae_duedate_process
         }
 
         self.ae_edge_reminder_process = {
-             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': ae_edge_duedate_process
         }
 
