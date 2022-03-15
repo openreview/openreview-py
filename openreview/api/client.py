@@ -261,7 +261,7 @@ class OpenReviewClient(object):
         t = response.json()['tags'][0]
         return Tag.from_json(t)
 
-    def get_edge(self, id):
+    def get_edge(self, id, trash=False):
         """
         Get a single Edge by id if available
 
@@ -271,7 +271,7 @@ class OpenReviewClient(object):
         return: Edge object with its information
         :rtype: Edge
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.edges_url, params = {'id': id, 'trash': 'true' if trash == True else 'false'}, headers=self.headers)
         response = self.__handle_response(response)
         edges = response.json()['edges']
         if edges:

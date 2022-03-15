@@ -1,4 +1,8 @@
 def process_update(client, edge, invitation, existing_edge):
+    latest_edge = client.get_edge(edge.id,True)
+    if latest_edge.ddate:
+        print("Edge already has a ddate, skipping")
+        return
 
     journal = openreview.journal.Journal()
 

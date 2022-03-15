@@ -32,17 +32,17 @@ class InvitationBuilder(object):
             ae_edge_duedate_process = ae_edge_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
         self.reviewer_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': reviewer_duedate_process
         }
 
         self.ae_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': ae_duedate_process
         }
 
         self.ae_edge_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': ae_edge_duedate_process
         }
 
@@ -119,6 +119,13 @@ class InvitationBuilder(object):
 
         if invitation.process:
             invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+
+        if invitation.date_processes:
+            for date_process in invitation.date_processes:
+                if os.path.isfile(date_process['script']):
+                    with open(date_process['script']) as f:
+                        process=f.read()
+                        date_process['script']=process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
         return self.post_invitation_edit(invitation, replacement=True)
 
@@ -1083,8 +1090,12 @@ If you have questions after reviewing the points below that are not answered on 
                     'optional': True
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py'),
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py')
+            preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py'),
+            date_processes=[
+            {
+                'delay': 5000,
+                'script': os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')
+            }]
         )
 
         self.save_invitation(invitation)

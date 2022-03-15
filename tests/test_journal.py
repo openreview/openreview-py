@@ -431,7 +431,7 @@ note={Under review}
                 weight=1
             ))
 
-        ## Withdraw the submission 3
+            ## Withdraw the submission 3
         withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper3/-/Withdrawal',
                                     signatures=[f'{venue_id}/Paper3/Authors'],
                                     note=Note(
@@ -484,8 +484,38 @@ note={Withdrawn}
             weight=1
         ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+        # immediately remove assignment of David Belanger
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1,
+            id=paper_assignment_edge.id,
+            ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        ))
 
+        # wait for process function delay (5 seconds) and check no email is sent
+        time.sleep(6)
+        messages = journal.client.get_messages(
+            to='david@mailone.com', subject='[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
+        assert len(messages) == 0
+
+        # add David Belanger again
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+         # wait for process function delay (5 seconds) and check email has been sent
+        time.sleep(6)
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
@@ -496,7 +526,7 @@ note={Withdrawn}
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
-        ## Carlos Mondragon
+         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Carlos_Mondragon1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
@@ -2488,6 +2518,3 @@ note={Withdrawn}
 
 
         journal.invitation_builder.expire_acknowledgement_invitations()
-
-
-
