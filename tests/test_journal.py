@@ -431,7 +431,7 @@ note={Under review}
                 weight=1
             ))
 
-            ## Withdraw the submission 3
+        ## Withdraw the submission 3
         withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper3/-/Withdrawal',
                                     signatures=[f'{venue_id}/Paper3/Authors'],
                                     note=Note(
