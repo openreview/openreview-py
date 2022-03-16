@@ -142,3 +142,4 @@ The {journal.short_name} Editors-in-Chief
 '''
 
         client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+        journal.invitation_builder.unexpire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=note.number, reviewer_id=edge.tail))

@@ -88,6 +88,14 @@ class InvitationBuilder(object):
             )
         )
 
+    def unexpire_invitation(self, invitation_id):
+        invitation = self.client.get_invitation(invitation_id)
+        self.post_invitation_edit(invitation=Invitation(id=invitation.id,
+                use_null_expdate=True,
+                signatures=[self.venue_id]
+            )
+        )
+
     def expire_paper_invitations(self, note):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())

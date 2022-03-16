@@ -499,7 +499,7 @@ note={Withdrawn}
 
         # wait for process function delay (5 seconds) and check no email is sent
         time.sleep(6)
-        messages = journal.client.get_messages(
+        messages = openreview_client.get_messages(
             to='david@mailone.com', subject='[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 0
 
@@ -516,7 +516,7 @@ note={Withdrawn}
 
          # wait for process function delay (5 seconds) and check email has been sent
         time.sleep(6)
-        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
+        messages = openreview_client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
@@ -526,7 +526,38 @@ note={Withdrawn}
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
-        ## Carlos Mondragon
+        # remove assignment of David Belanger
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1,
+            id=paper_assignment_edge.id,
+            ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        ))
+
+        # check that David Belanger has been removed from reviewer group
+        time.sleep(6)
+        note = openreview_client.get_note(note_id_1)
+        group = openreview_client.get_group('TMLR/Paper1/Reviewers')
+        assert len(group.members) == 0
+
+        # add David Belanger back
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+        time.sleep(6)
+
+        # Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Carlos_Mondragon1'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
