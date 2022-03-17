@@ -97,6 +97,10 @@ class TestJournalRequest():
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Comment']
 
+        #check request form id is added to AE console
+        AE_group = openreview_client.get_group('{}/Action_Editors'.format(request_form['note']['content']['venue_id']['value']))
+        assert "var JOURNAL_REQUEST_ID = '{}';".format(request_form['note']['id']) in AE_group.web
+
     def test_journal_reviewer_recruitment(self, openreview_client, selenium, request_page, helpers, journal):
 
         super_id = 'openreview.net'
