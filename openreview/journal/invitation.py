@@ -566,10 +566,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 2
                         },
                         'authors': {
                             'value': {
@@ -2573,10 +2570,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 2
                         },
                         'pdf': {
                             'value': {
@@ -3073,10 +3067,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 2
                         },
                         'pdf': {
                             'value': {
