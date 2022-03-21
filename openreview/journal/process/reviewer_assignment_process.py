@@ -33,10 +33,10 @@ def process_update(client, edge, invitation, existing_edge):
             submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
             client.post_edge(submission_edge)
 
-    ## Enable reviewer responsability task
+    ## Enable reviewer responsibility task
     if len(tail_assignment_edges) == 1 and not edge.ddate:
-        print('Enable reviewer responsability task for', edge.tail)
-        client.post_invitation_edit(invitations=journal.get_reviewer_responsability_id(),
+        print('Enable reviewer responsibility task for', edge.tail)
+        client.post_invitation_edit(invitations=journal.get_reviewer_responsibility_id(),
             params={ 'reviewerId': edge.tail, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)) },
             readers=[venue_id],
             writers=[venue_id],

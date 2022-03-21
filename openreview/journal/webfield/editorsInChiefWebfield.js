@@ -27,6 +27,7 @@ var ACTION_EDITORS_CONFLICT_ID = ACTION_EDITOR_ID + '/-/Conflict';
 var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
+var RESPONSIBILITY_ACK_NAME = 'Responsibility/Acknowledgement';
 
 var REVIEWER_RATING_MAP = {
   "Exceeds expectations": 3,
@@ -116,6 +117,7 @@ var loadData = function() {
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
+    Webfield2.api.getAllSubmissions(REVIEWERS_ID + '/-/.*/' + RESPONSIBILITY_ACK_NAME, { details: {} }),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
@@ -129,19 +131,25 @@ var loadData = function() {
   );
 };
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById) {
+var formatData = function(aeByNumber, reviewersByNumber, submissions, responsibilityNotes, actionEditors, reviewers, invitationsById) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   // build the rows
   var paperStatusRows = [];
   var reviewerStatusById = {};
   reviewers.members.forEach(function(reviewer, index) {
+    var responsibility = responsibilityNotes.find(function(reply) { return reply.invitations[0] == REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME});
     reviewerStatusById[reviewer.id] = {
       index: { number: index + 1 },
       summary: {
         id: reviewer.id,
         name: reviewer.name,
         email: reviewer.email,
+        status: {
+          Profile: reviewer.id.startsWith('~') ? 'Yes' : 'No',
+          Publications: '-',
+          'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No'
+        }
       },
       reviewerProgressData: {
         numCompletedReviews: 0,
@@ -171,6 +179,10 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         id: actionEditor.id,
         name: actionEditor.name,
         email: actionEditor.email,
+        status: {
+          Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
+          Publications: '-'
+        }
       },
       reviewProgressData: {
         numCompletedReviews: 0,
