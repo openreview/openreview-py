@@ -2051,8 +2051,7 @@ class Invitation(object):
         transform = None,
         bulk = None,
         reply_forum_views = [],
-        details = None,
-        use_null_expdate=False):
+        details = None):
 
         self.id = id
         self.domain = domain
@@ -2074,7 +2073,6 @@ class Invitation(object):
         self.tmdate = tmdate
         self.bulk = bulk
         self.details = details
-        self.use_null_expdate = use_null_expdate
         self.reply_forum_views = reply_forum_views
         self.web = None
         self.process = None
@@ -2141,9 +2139,6 @@ class Invitation(object):
 
         if self.expdate:
             body['expdate'] = self.expdate
-
-        if self.use_null_expdate:
-            body['expdate'] = None
 
         if self.readers:
             body['readers'] = self.readers

@@ -108,14 +108,6 @@ class InvitationBuilder(object):
             )
         )
 
-    def unexpire_invitation(self, invitation_id):
-        invitation = self.client.get_invitation(invitation_id)
-        self.post_invitation_edit(invitation=Invitation(id=invitation.id,
-                use_null_expdate=True,
-                signatures=[self.venue_id]
-            )
-        )
-
     def expire_paper_invitations(self, note):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -520,7 +512,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
-                    # 'expdate': { 'const': None },
+                    'expdate': { 'const': None },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
