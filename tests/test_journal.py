@@ -273,7 +273,6 @@ class TestJournal():
 
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
-        assert False
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -344,6 +343,18 @@ year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
+
+        ## try to make an assignment before the scores were computed
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not add assignment, invitation is not active yet.'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+                readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+                nonreaders=[f"{venue_id}/Paper1/Authors"],
+                writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                head=note_id_1,
+                tail='~David_Belanger1',
+                weight=1
+            ))
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
 
@@ -1524,6 +1535,10 @@ note={Retracted after acceptance}
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
+        edits = openreview_client.get_note_edits(note_id=note_id_4, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper4/Action_Editors", '~David_Belanger1'],
@@ -1966,6 +1981,10 @@ note={Rejected}
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
+        edits = openreview_client.get_note_edits(note_id=note_id_5, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper5/Action_Editors", '~David_Belanger1'],
@@ -2237,6 +2256,10 @@ note={Rejected}
                                     }))
 
         helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_6, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',

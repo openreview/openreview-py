@@ -28,6 +28,18 @@ def process(client, edge, invitation):
                 raise openreview.OpenReviewException(f'Can not remove assignment, the user {edge.tail} already posted a review.')
 
     else:
+        ## Check Paper Assignment invitation is active
+        print('GEt invitation', journal.get_reviewer_assignment_id(number=submission.number))
+        invitation = openreview.tools.get_invitation(client, journal.get_reviewer_assignment_id(number=submission.number))
+
+        if invitation is None:
+           raise openreview.OpenReviewException(f'Can not add assignment, invitation is not active yet.')
+
+        ## Check pending reviews
+        pending_review_edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
+        if pending_review_edges and pending_review_edges[0].weight >= 1:
+            raise openreview.OpenReviewException(f'Can not add assignment, reviewer has pending reviews.')
+
         ## Check conflicts
         conflicts = journal.assignment.compute_conflicts(submission, edge.tail)
         if conflicts:
