@@ -1201,6 +1201,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'invitation': {
                     'id': { 'const': paper_review_approval_invitation_id },
                     'invitees': { 'const': [venue_id, paper_action_editors_id] },
+                    'noninvitees': { 'const': [editors_in_chief_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
                     'signatures': { 'const': [venue_id] },
