@@ -273,7 +273,7 @@ class TestJournal():
 
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
-
+        assert False
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -1016,6 +1016,15 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
         ## Check emails being sent to Reviewers and AE
         messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
         assert len(messages) == 4
+        messages = journal.client.get_messages(to= 'hugo@mailsix.com', subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
+        assert messages[0]['content']['text'] == f'''<p>Hi Hugo Larochelle,</p>
+<p>Thank you for submitting your review and engaging with the authors of TMLR submission &quot;Paper title UPDATED&quot;.</p>
+<p>You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.</p>
+<p>We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Official_Recommendation\">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Official_Recommendation</a></p>
+<p>For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>We thank you for your essential contribution to TMLR!</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
         messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
 

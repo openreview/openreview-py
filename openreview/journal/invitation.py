@@ -1955,6 +1955,7 @@ If you have questions after reviewing the points below that are not answered on 
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
                         <li>AEs who have conflicts with your submission are not shown.</li>\
                         <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
+                        <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
                         <li>To get started click the button below.</li>\
                     </ul>\
                     <br>'
