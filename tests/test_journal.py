@@ -485,17 +485,8 @@ note={Withdrawn}
         ))
 
         # immediately remove assignment of David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
-            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
-            nonreaders=[f"{venue_id}/Paper1/Authors"],
-            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
-            signatures=[f"{venue_id}/Paper1/Action_Editors"],
-            head=note_id_1,
-            tail='~David_Belanger1',
-            weight=1,
-            id=paper_assignment_edge.id,
-            ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        ))
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
         # wait for process function delay (5 seconds) and check no email is sent
         time.sleep(6)
@@ -527,17 +518,8 @@ note={Withdrawn}
 '''
 
         # remove assignment of David Belanger
-        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
-            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
-            nonreaders=[f"{venue_id}/Paper1/Authors"],
-            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
-            signatures=[f"{venue_id}/Paper1/Action_Editors"],
-            head=note_id_1,
-            tail='~David_Belanger1',
-            weight=1,
-            id=paper_assignment_edge.id,
-            ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        ))
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
         # check that David Belanger has been removed from reviewer group
         time.sleep(6)
