@@ -16,7 +16,7 @@ Thank you for submitting your review and engaging with the authors of {journal.s
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
-We ask that you submit your recommendation within 2 weeks ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}
+We ask that you submit your recommendation within 2 weeks ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={invitation.id}
 
 For more details and guidelines on performing your review, visit {journal.website}.
 

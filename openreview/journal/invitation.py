@@ -1798,7 +1798,7 @@ If you have questions after reviewing the points below that are not answered on 
                         'venue': {
                             'value': {
                                 'type': 'string',
-                                'const': self.journal.short_name
+                                'const': 'Accepted by ' + self.journal.short_name
                             },
                             'order': 1
                         },
