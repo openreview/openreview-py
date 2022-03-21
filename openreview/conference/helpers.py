@@ -125,6 +125,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     name = note.content.get('submission_name', 'Submission').strip()
 
+    bidding_enabled = 'Reviewer Bid Scores' in note.content.get('Paper Matching') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching')
+
     builder.set_submission_stage(
         name=name,
         double_blind=double_blind,
@@ -143,7 +145,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         desk_rejected_submission_public=desk_rejected_submission_public,
         desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
         author_names_revealed=author_names_revealed,
-        papers_released=papers_released)
+        papers_released=papers_released,
+        bidding_enabled=bidding_enabled)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:

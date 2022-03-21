@@ -55,7 +55,8 @@ class TestMatchingWithAnonIds():
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
-        ])
+        ],
+        bidding_enabled=True)
         additional_registration_content = {
             'reviewing_experience': {
                 'description': 'How many times have you been a reviewer for any conference or journal?',
