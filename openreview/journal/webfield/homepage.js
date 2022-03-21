@@ -41,7 +41,7 @@ function main() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Your Consoles', 'Accepted Papers', 'Featured Papers', 'Reproducibility Papers', 'Survey Papers', 'Under Review Submissions', 'All Submissions'],
+    tabs: ['Your Consoles', 'Accepted Papers', 'Under Review Submissions', 'All Submissions', 'Featured Certification', 'Reproducibility Certification', 'Survey Certification'],
     referrer: args && args.referrer,
     showBanner: false
   })
@@ -170,27 +170,6 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
     $('.tabs-container a[href="#accepted-papers"]').parent().hide();
   }
 
-  if (featuredResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#featured-papers', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
-    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
-  } else {
-    $('.tabs-container a[href="#featured-papers"]').parent().hide();
-  }
-
-  if (reproducibilityResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#reproducibility-papers', SUBMISSION_ID, reproducibilityResponse.notes, reproducibilityResponse.count,
-    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Reproducibility Certification' }}));
-  } else {
-    $('.tabs-container a[href="#reproducibility-papers"]').parent().hide();
-  }
-
-  if (surveyResponse.count > 0) {
-    Webfield2.ui.renderSubmissionList('#survey-papers', SUBMISSION_ID, surveyResponse.notes, surveyResponse.count,
-    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Survey Certification' }}));
-  } else {
-    $('.tabs-container a[href="#survey-papers"]').parent().hide();
-  }
-
   if (underReviewResponse.count > 0) {
     Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count,
     Object.assign({}, options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
@@ -203,6 +182,29 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
   } else {
     $('.tabs-container a[href="#all-submissions"]').parent().hide();
   }
+
+  if (featuredResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#featured-certification', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
+  } else {
+    $('.tabs-container a[href="#featured-certification"]').parent().hide();
+  }
+
+  if (reproducibilityResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#reproducibility-certification', SUBMISSION_ID, reproducibilityResponse.notes, reproducibilityResponse.count,
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Reproducibility Certification' }}));
+  } else {
+    $('.tabs-container a[href="#reproducibility-certification"]').parent().hide();
+  }
+
+  if (surveyResponse.count > 0) {
+    Webfield2.ui.renderSubmissionList('#survey-certification', SUBMISSION_ID, surveyResponse.notes, surveyResponse.count,
+    Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Survey Certification' }}));
+  } else {
+    $('.tabs-container a[href="#survey-certification"]').parent().hide();
+  }
+
+  
 
   $('#notes .spinner-container').remove();
   $('.tabs-container').show();
