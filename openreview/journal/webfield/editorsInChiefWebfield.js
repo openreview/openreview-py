@@ -13,7 +13,7 @@ var SUBMISSION_ID = '';
 var EDITORS_IN_CHIEF_NAME = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
-var REQUEST_FORM_ID = '';
+var JOURNAL_REQUEST_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
@@ -69,7 +69,7 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
   '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Journal Request Forum:</strong></li>' +
-  '<li><a href="/forum?id=' + REQUEST_FORM_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>';
+  '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>';
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
