@@ -610,7 +610,9 @@ var formatData = function(
     numRetracted: retractedStatusRows.length,
     numRejected: rejectedStatusRows.length,
     superInvitationIds: superInvitationIds,
-    reviewerInvitationIds: reviewerInvitationIds,
+    reviewerInvitationIds: reviewerInvitationIds.filter(function(inv) {
+      return !inv.id.endsWith('/' + RESPONSIBILITY_ACK_NAME);
+    }),
     aeInvitationIds: aeInvitationIds,
     activeAuthors: _.sortBy(
       _.toPairs(authorSubmissionsCount),
