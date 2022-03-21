@@ -15,7 +15,7 @@ var SUBMISSION_GROUP_NAME = 'Paper';
 
 var HEADER = {
   title: SHORT_PHRASE + ' Author Console',
-  instructions: 'Visit <a href="https://' + WEBSITE + '" target="_blank" rel="nofollow">' + WEBSITE + '</a> for the ' + SHORT_PHRASE + ' author guidelines.'
+  instructions: 'Visit the <a href="https://' + WEBSITE + '" target="_blank" rel="nofollow"> ' + SHORT_PHRASE + ' website</a> for the author guidelines.'
 };
 var AUTHOR_NAME = 'Authors';
 var ACTION_EDITORS_NAME = 'Action_Editors';
