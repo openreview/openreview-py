@@ -276,6 +276,22 @@ class TestJournal():
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
 
+        # Assign Action Editor and immediately remove assignment
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_1,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = raia_client.post_edge(paper_assignment_edge)
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission Paper title UPDATED')
+        assert len(messages) == 0
+
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -489,8 +505,7 @@ note={Withdrawn}
         paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
         # wait for process function delay (5 seconds) and check no email is sent
-        time.sleep(6)
-        messages = openreview_client.get_messages(
+        messages = journal.client.get_messages(
             to='david@mailone.com', subject='[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 0
 
@@ -507,7 +522,7 @@ note={Withdrawn}
 
          # wait for process function delay (5 seconds) and check email has been sent
         time.sleep(6)
-        messages = openreview_client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
@@ -523,8 +538,8 @@ note={Withdrawn}
 
         # check that David Belanger has been removed from reviewer group
         time.sleep(6)
-        note = openreview_client.get_note(note_id_1)
-        group = openreview_client.get_group('TMLR/Paper1/Reviewers')
+        note = journal.client.get_note(note_id_1)
+        group = journal.client.get_group('TMLR/Paper1/Reviewers')
         assert len(group.members) == 0
 
         # add David Belanger back
@@ -537,7 +552,6 @@ note={Withdrawn}
             tail='~David_Belanger1',
             weight=1
         ))
-        time.sleep(6)
 
         # Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',

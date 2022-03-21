@@ -31,6 +31,16 @@ class InvitationBuilder(object):
             ae_edge_duedate_process = f.read()
             ae_edge_duedate_process = ae_edge_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
+        reviewer_assignment_process = None
+        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')) as f:
+            reviewer_assignment_process = f.read()
+            reviewer_assignment_process = reviewer_assignment_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
+        ae_assignment_process = None
+        with open(os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py')) as f:
+            ae_assignment_process = f.read()
+            ae_assignment_process = ae_assignment_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
         self.reviewer_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': reviewer_duedate_process
@@ -44,6 +54,16 @@ class InvitationBuilder(object):
         self.ae_edge_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': ae_edge_duedate_process
+        }
+
+        self.reviewer_assignment_process = {
+            'delay':5000,
+            'script':reviewer_assignment_process
+        }
+
+        self.ae_assignment_process = {
+            'delay':5000,
+            'script':ae_assignment_process
         }
 
     def set_invitations(self):
@@ -127,13 +147,6 @@ class InvitationBuilder(object):
 
         if invitation.process:
             invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
-
-        if invitation.date_processes:
-            for date_process in invitation.date_processes:
-                if os.path.isfile(date_process['script']):
-                    with open(date_process['script']) as f:
-                        process=f.read()
-                        date_process['script']=process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
         return self.post_invitation_edit(invitation, replacement=True)
 
@@ -507,6 +520,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
+                    # 'expdate': { 'const': None },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
@@ -851,8 +865,8 @@ If you have questions after reviewing the points below that are not answered on 
                     'optional': True
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py'),
             preprocess=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_pre_process.py'),
+            date_processes=[self.ae_assignment_process]
         )
 
         self.save_invitation(invitation)
@@ -1099,11 +1113,7 @@ If you have questions after reviewing the points below that are not answered on 
                 }
             },
             preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py'),
-            date_processes=[
-            {
-                'delay': 5000,
-                'script': os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')
-            }]
+            date_processes=[self.reviewer_assignment_process]
         )
 
         self.save_invitation(invitation)
