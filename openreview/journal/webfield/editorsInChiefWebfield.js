@@ -227,6 +227,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, responsibi
     // Review approval by AE
     var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
     var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
+    // Reviewer assignment by AE
+    var reviewerAssignmentInvitation = invitationsById[getInvitationId(number, 'Assignment', REVIEWERS_NAME)];
     // Reviews by Reviewers
     var reviewInvitation = invitationsById[getInvitationId(number, REVIEW_NAME)];
     var reviewNotes = getReplies(submission, REVIEW_NAME);
@@ -257,6 +259,17 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, responsibi
         duedate: reviewApprovalInvitation.duedate,
         complete: reviewApprovalNotes.length > 0,
         replies: reviewApprovalNotes
+      });
+    }
+
+    if (reviewerAssignmentInvitation) {
+      var reviewers = reviewersByNumber[number] || [];
+      tasks.push({
+        id: reviewerAssignmentInvitation.id,
+        cdate: reviewerAssignmentInvitation.cdate,
+        duedate: reviewerAssignmentInvitation.duedate,
+        complete: reviewers.length >= 3,
+        replies: reviewers
       });
     }
 
@@ -463,7 +476,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, responsibi
         expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
-        actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
+        actions: ([UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) && reviewerAssignmentInvitation) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
