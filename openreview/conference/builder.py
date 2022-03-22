@@ -2257,15 +2257,13 @@ class ConferenceBuilder(object):
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
             papers_released=False,
-            readers=None,
-            bidding_enabled=False
+            readers=None
         ):
 
         submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
         if public:
             submissions_readers=[SubmissionStage.Readers.EVERYONE]
-        if bidding_enabled:
-            submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS, SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
+
         if readers:
             submissions_readers=readers
 

@@ -249,7 +249,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             email_pcs_on_withdraw=True,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            bidding_enabled=True)
+            readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS])
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
