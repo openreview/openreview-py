@@ -2492,6 +2492,10 @@ note={Withdrawn}
     def test_submitted_submission(self, journal, openreview_client, helpers):
 
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        venue_id = journal.venue_id
+        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        editor_in_chief_group_id = journal.get_editors_in_chief_id()
 
         ## Post the submission 7
         submission_note_7 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -2510,8 +2514,104 @@ note={Withdrawn}
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_7['id'])
+        note_id_7 = submission_note_7['note']['id']
 
-        note = openreview_client.get_note(submission_note_7['note']['id'])
+        # Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_7,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Accept the submission 7
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper7/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper7/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_7, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        ## Assign David Belanger
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper7/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper7/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper7/Action_Editors"],
+            signatures=[f"{venue_id}/Paper7/Action_Editors"],
+            head=note_id_7,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+        ## Post the submission 8
+        submission_note_8 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 8' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_8['id'])
+        note_id_8 = submission_note_8['note']['id']
+
+        # Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_8,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Accept the submission 8
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper8/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper8/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_8, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        ## Assign David Belanger should throw an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not add assignment, reviewer ~David_Belanger1 has 1 pending reviews.'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+                readers=[venue_id, f"{venue_id}/Paper8/Action_Editors", '~David_Belanger1'],
+                nonreaders=[f"{venue_id}/Paper8/Authors"],
+                writers=[venue_id, f"{venue_id}/Paper8/Action_Editors"],
+                signatures=[f"{venue_id}/Paper8/Action_Editors"],
+                head=note_id_8,
+                tail='~David_Belanger1',
+                weight=1
+            ))
+
+        note = openreview_client.get_note(note_id_7)
+        journal.invitation_builder.expire_paper_invitations(note)
+
+        note = openreview_client.get_note(note_id_8)
         journal.invitation_builder.expire_paper_invitations(note)
 
 
