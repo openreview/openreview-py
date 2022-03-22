@@ -264,7 +264,7 @@ var formatData = function(
 
     // Track number of submissions per author
     if (
-      formattedSubmission.content.venueid === SUBMITTED_STATUS &&
+      formattedSubmission.content.venueid === UNDER_REVIEW_STATUS &&
       formattedSubmission.content.authorids &&
       formattedSubmission.content.authorids.length
     ) {
@@ -641,7 +641,7 @@ var formatData = function(
 
   return {
     submissionStatusRows: submissionStatusRows,
-    paperStatusRows: paperStatusRows,
+    underReviewStatusRows: underReviewStatusRows,
     decisionApprovalStatusRows: decisionApprovalStatusRows,
     cameraReadyStatusRows: cameraReadyStatusRows,
     completeSubmissionStatusRows: completeSubmissionStatusRows,
@@ -990,7 +990,7 @@ var renderData = function(venueStatusData) {
   renderOverviewTab(venueStatusData.journalStats);
 
   renderTable('submitted', venueStatusData.submissionStatusRows);
-  renderTable('under-review', venueStatusData.paperStatusRows);
+  renderTable('under-review', venueStatusData.underReviewStatusRows);
   renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
