@@ -92,7 +92,7 @@ jobs:
           name: install firefox driver
           command: |
             sudo apt-get update
-            sudo apt-get install firefox-esr
+            sudo apt-get install firefox
             cd ~/openreview-py-repo/tests/drivers
             wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz
             tar -xvzf geckodriver*
