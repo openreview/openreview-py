@@ -101,12 +101,12 @@ jobs:
           name: run tests
           command: |
             cd ~/openreview-py-repo
-            sudo pip install -U pytest
-            sudo pip install selenium
-            sudo pip install pytest-selenium
-            sudo pip install pytest-cov
-            sudo pip install codecov
-            sudo pip install -e .
+            pip install -U pytest
+            pip install selenium
+            pip install pytest-selenium
+            pip install pytest-cov
+            pip install codecov
+            pip install -e .
             mkdir test-reports
             pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report xml:~/openreview-py-repo/coverage/cov.xml --cov=./
       - codecov/upload:
@@ -121,7 +121,7 @@ jobs:
       - image: circleci/python:2.7
     steps:
       - checkout
-      - run: sudo pip install twine
+      - run: pip install twine
       - run: python setup.py bdist_wheel --universal
       - run: twine upload dist/* --skip-existing
 workflows:
