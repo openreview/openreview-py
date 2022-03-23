@@ -880,6 +880,29 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## post the assignment ack
+        formatted_date = (datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d, %Y")
+        assignment_ack_note = david_client.post_note_edit(invitation=f'TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement',
+            signatures=['~David_Belanger1'],
+            note=Note(
+                content={
+                    'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_ack_note['id'])
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment Acknowledgement posted on submission Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>David Belanger posted an assignment acknowledgement on a submission for which you are an Action Editor.</p>
+<p>Submission: Paper title UPDATED<br>
+Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.</p>
+<p>To view the acknowledgement, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}</a></p>
+'''
+
+
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
 
