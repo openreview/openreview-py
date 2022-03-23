@@ -505,6 +505,17 @@ note={Withdrawn}
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
+        forum_notes = journal.client.get_notes(invitation=journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
+
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Acknowledgement of Reviewer Responsibility')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
+<p>TMLR operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of TMLR that might differ from your previous reviewing experience.</p>
+<p>To perform this quick task, simply visit the following link: <a href=\"https://openreview.net/forum?id={forum_notes[0].id}&amp;invitationId=TMLR/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement\">https://openreview.net/forum?id={forum_notes[0].id}&amp;invitationId=TMLR/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement</a></p>
+<p>We thank you for your essential contribution to TMLR!</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Carlos_Mondragon1'],

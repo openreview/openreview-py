@@ -8,6 +8,7 @@ def process_update(client, edge, invitation, existing_edge):
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
     submission_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(number=note.number))
+    responsiblity_invitation_edit = None
 
     ## Check task completion
     if len(head_assignment_edges) >= 3:
@@ -32,7 +33,7 @@ def process_update(client, edge, invitation, existing_edge):
     ## Enable reviewer responsibility task
     if len(tail_assignment_edges) == 1 and not edge.ddate:
         print('Enable reviewer responsibility task for', edge.tail)
-        client.post_invitation_edit(invitations=journal.get_reviewer_responsibility_id(),
+        responsiblity_invitation_edit = client.post_invitation_edit(invitations=journal.get_reviewer_responsibility_id(),
             params={ 'reviewerId': edge.tail, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)) },
             readers=[venue_id],
             writers=[venue_id],
@@ -138,3 +139,22 @@ The {journal.short_name} Editors-in-Chief
 '''
 
         client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+
+    if responsiblity_invitation_edit is not None:
+
+        print('Send email to the reviewer')
+        recipients = [edge.tail]
+        ignoreRecipients = []
+        subject=f'''[{journal.short_name}] Acknowledgement of Reviewer Responsibility'''
+        message=f'''Hi {{{{fullname}}}},
+
+{journal.short_name} operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of {journal.short_name} that might differ from your previous reviewing experience.
+
+To perform this quick task, simply visit the following link: https://openreview.net/forum?id={responsiblity_invitation_edit['invitation']['edit']['note']['forum']['const']}&invitationId={responsiblity_invitation_edit['invitation']['id']}
+
+We thank you for your essential contribution to {journal.short_name}!
+
+The {journal.short_name} Editors-in-Chief
+'''
+        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+
