@@ -58,7 +58,7 @@ jobs:
           command: |
             cd ~/openreview-web
             npm install
-            cp .env.example .env
+            cp .env.example .env.local
             NODE_ENV=production SUPER_USER=openreview.net npm run build
       - run:
           name: run web-app
