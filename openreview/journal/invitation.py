@@ -730,8 +730,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
-                    'inGroup' : action_editors_id,
-                    'regex': '^~.*$'
+                    'inGroup' : action_editors_id
                 },
                 'weight': {
                     'type': 'float',
@@ -775,8 +774,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
-                    'inGroup' : action_editors_id,
-                    'regex': '^~.*$'
+                    'inGroup' : action_editors_id
                 },
                 'weight': {
                     'type': 'float',
@@ -921,8 +919,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
-                    'inGroup': action_editors_id,
-                    'regex': '^~.*$'
+                    'inGroup': action_editors_id
                 },
                 'weight': {
                     'type': 'integer',
@@ -977,8 +974,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'withInvitation': author_submission_id
                 },
                 'tail': {
-                    'type': 'profile',
-                    'regex': '^~.*$'
+                    'type': 'profile'
                 },
                 'weight': {
                     'type': 'float',
@@ -1024,8 +1020,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'withInvitation': author_submission_id
                 },
                 'tail': {
-                    'type': 'profile',
-                    'regex': '^~.*$'
+                    'type': 'profile'
                     #'member-of' : reviewers_id
                 },
                 'weight': {
@@ -1128,8 +1123,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
-                    'inGroup': reviewers_id,
-                    'regex': '^~.*$'
+                    'inGroup': reviewers_id
                 },
                 'weight': {
                     'type': 'integer',
@@ -1170,8 +1164,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'const': reviewers_id
                 },
                 'tail': {
-                    'type': 'profile',
-                    'regex': '^~.*$'
+                    'type': 'profile'
                 },
                 'weight': {
                     'type': 'float',
