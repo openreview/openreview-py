@@ -1688,7 +1688,7 @@ class OpenReviewClient(object):
         return response.json()
 
     def request_expertise(self, name, group_id, paper_invitation, alternate_match_group = None, exclusion_inv=None, model=None, baseurl=None):
-        
+
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
@@ -1697,7 +1697,7 @@ class OpenReviewClient(object):
         if exclusion_inv:
             expertise = {'exclusion': { 'invitation': exclusion_inv }}
             entityA['expertise'] = expertise
-        
+
         # Build entityB from alternate_match_group or paper_invitation
         if alternate_match_group:
             entityB = {
@@ -1788,7 +1788,7 @@ class OpenReviewClient(object):
                 return self.get_expertise_results(job_id, baseurl=base_url)
             if 'Error' == status:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
-            if call_count == 30:
+            if call_count == 300:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
