@@ -144,8 +144,7 @@ var loadData = function() {
     Webfield2.api.getAll('/invitations', {
       regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
-      select: 'id,cdate,duedate,expdate',
-      expired: true
+      select: 'id,cdate,duedate,expdate'
     }).then(function(invitations) {
       return _.keyBy(invitations, 'id');
     }),
