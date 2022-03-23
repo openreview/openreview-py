@@ -730,7 +730,8 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
-                    'inGroup' : action_editors_id
+                    'inGroup' : action_editors_id,
+                    'regex': '^~.*$'
                 },
                 'weight': {
                     'type': 'float',
@@ -774,7 +775,8 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
-                    'inGroup' : action_editors_id
+                    'inGroup' : action_editors_id,
+                    'regex': '^~.*$'
                 },
                 'weight': {
                     'type': 'float',
@@ -826,6 +828,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$',
                     'inGroup' : action_editors_id
                 },
                 'weight': {
@@ -878,6 +881,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'tail': {
                     'type': 'profile',
                     'inGroup' : action_editors_id,
+                    'regex': '^~.*$',
                     'description': 'select at least 3 AEs to recommend. AEs who have conflicts with your submission are not shown.'
                 },
                 'weight': {
@@ -917,7 +921,8 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
-                    'inGroup': action_editors_id
+                    'inGroup': action_editors_id,
+                    'regex': '^~.*$'
                 },
                 'weight': {
                     'type': 'integer',
@@ -972,7 +977,8 @@ If you have questions after reviewing the points below that are not answered on 
                     'withInvitation': author_submission_id
                 },
                 'tail': {
-                    'type': 'profile'
+                    'type': 'profile',
+                    'regex': '^~.*$'
                 },
                 'weight': {
                     'type': 'float',
@@ -1019,6 +1025,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$'
                     #'member-of' : reviewers_id
                 },
                 'weight': {
@@ -1070,6 +1077,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$',
                     #'member-of' : reviewers_id
                     'presentation': {
                         'options': { 'group': reviewers_id }
@@ -1120,7 +1128,8 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
-                    'inGroup': reviewers_id
+                    'inGroup': reviewers_id,
+                    'regex': '^~.*$'
                 },
                 'weight': {
                     'type': 'integer',
@@ -1161,7 +1170,8 @@ If you have questions after reviewing the points below that are not answered on 
                     'const': reviewers_id
                 },
                 'tail': {
-                    'type': 'profile'
+                    'type': 'profile',
+                    'regex': '^~.*$'
                 },
                 'weight': {
                     'type': 'float',
