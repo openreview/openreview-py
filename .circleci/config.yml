@@ -6,7 +6,7 @@ jobs:
     working_directory: ~/openreview-py-repo
     docker:
       - image: circleci/python:3.7-node
-      - image: circleci/redis:6.0.0
+      - image: cimg/redis:6.2.6
       - image: circleci/mongo:4.4.5
         command: [--replSet,rs0]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
