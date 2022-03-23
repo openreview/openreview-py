@@ -468,6 +468,10 @@ If you have questions after reviewing the points below that are not answered on 
         action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
+        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_acknowledgement_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
         invitation=Invitation(id=self.journal.get_reviewer_assignment_acknowledgement_id(),
             invitees=[venue_id],
             readers=[venue_id],
@@ -492,6 +496,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
+                    'process': { 'const': paper_process },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
