@@ -468,6 +468,10 @@ If you have questions after reviewing the points below that are not answered on 
         action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
+        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_acknowledgement_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
         invitation=Invitation(id=self.journal.get_reviewer_assignment_acknowledgement_id(),
             invitees=[venue_id],
             readers=[venue_id],
@@ -492,6 +496,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
+                    'process': { 'const': paper_process },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
@@ -821,6 +826,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$',
                     'inGroup' : action_editors_id
                 },
                 'weight': {
@@ -873,6 +879,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'tail': {
                     'type': 'profile',
                     'inGroup' : action_editors_id,
+                    'regex': '^~.*$',
                     'description': 'select at least 3 AEs to recommend. AEs who have conflicts with your submission are not shown.'
                 },
                 'weight': {
@@ -1013,7 +1020,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'withInvitation': author_submission_id
                 },
                 'tail': {
-                    'type': 'profile',
+                    'type': 'profile'
                     #'member-of' : reviewers_id
                 },
                 'weight': {
@@ -1065,6 +1072,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$',
                     #'member-of' : reviewers_id
                     'presentation': {
                         'options': { 'group': reviewers_id }
@@ -1798,7 +1806,7 @@ If you have questions after reviewing the points below that are not answered on 
                         'venue': {
                             'value': {
                                 'type': 'string',
-                                'const': self.journal.short_name
+                                'const': 'Accepted by ' + self.journal.short_name
                             },
                             'order': 1
                         },
@@ -1955,6 +1963,7 @@ If you have questions after reviewing the points below that are not answered on 
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
                         <li>AEs who have conflicts with your submission are not shown.</li>\
                         <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
+                        <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
                         <li>To get started click the button below.</li>\
                     </ul>\
                     <br>'
