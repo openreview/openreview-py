@@ -301,7 +301,7 @@ class TestVenueRequest():
         comment_invitation = '{}/-/Request{}/Comment'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'Revision Process failed due to the following error: OpenReviewException({\'name\': \'InvalidFieldError\', \'message\': \'The field value-regexx is not allowed\', \'status\': 400, \'details\': {\'path\': \'invitation.reply.content.preprint.value-regexx\'}})'
+        error_string = 'The field value-regexx is not allowed'
         assert error_string in last_comment.content['comment']
 
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
@@ -780,7 +780,7 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '{\'name\': \'NotFoundError\', \'message\': \'The requested page could not be found: /expertise\', \'status\': 404}' in matching_status.content['comment']
+        assert 'The requested page could not be found: /expertise' in matching_status.content['comment']
 
         ## Setup matching with no computation selected
         with pytest.raises(openreview.OpenReviewException, match=r'You need to compute either conflicts or affinity scores or both'):
