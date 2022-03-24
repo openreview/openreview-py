@@ -150,7 +150,16 @@ var loadData = function() {
     }),
     Webfield2.api.getAll('/invitations', { regex: VENUE_ID + '/-/.*', select: 'id', expired: true }),
     Webfield2.api.getAll('/invitations', { regex: REVIEWERS_ID + '/-/.*', select: 'id', expired: true }),
-    Webfield2.api.getAll('/invitations', { regex: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true })
+    Webfield2.api.getAll('/invitations', { regex: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true }),
+    Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count'})
+    .then(function(response) {
+      var groupedEdges = response.groupedEdges;
+      var recommendationCount = {};
+      groupedEdges.forEach(function(group){
+        recommendationCount[group.id.head] = group.count;
+      })
+      return recommendationCount;
+    })
   );
 };
 
@@ -164,7 +173,8 @@ var formatData = function(
   invitationsById,
   superInvitationIds,
   reviewerInvitationIds,
-  aeInvitationIds
+  aeInvitationIds,
+  aeRecommendations
 ) {
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
@@ -275,6 +285,8 @@ var formatData = function(
 
     // Build array of tasks
     var tasks = [];
+    // AE Recommendation by Authors
+    var aeRecommendationInvitation = invitationsById[getInvitationId(number, RECOMMENDATION_NAME, ACTION_EDITOR_NAME)];
     // Review approval by AE
     var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
     var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
@@ -302,6 +314,17 @@ var formatData = function(
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
     var cameraReadyTask = null;
     var cameraReadyVerificationTask = null;
+
+    if (aeRecommendationInvitation) {
+      var recommendationCount = aeRecommendations[submission.id] || 0;
+      tasks.push({
+        id: aeRecommendationInvitation.id,
+        cdate: aeRecommendationInvitation.cdate,
+        duedate: aeRecommendationInvitation.duedate,
+        complete: recommendationCount >= 3,
+        replies: Array(recommendationCount).fill(1, 0, recommendationCount)
+      });
+    }
 
     if (reviewApprovalInvitation) {
       tasks.push({
