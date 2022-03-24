@@ -868,7 +868,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-1')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 4
+        assert len(messages) == 3
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
@@ -1359,7 +1359,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Verification-0-1')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title VERSION 2')
-        assert len(messages) == 2
+        assert len(messages) == 1
 
         messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
         assert len(messages) == 2
