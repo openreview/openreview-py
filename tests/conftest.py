@@ -128,7 +128,7 @@ def request_page():
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
-        timeout = 5
+        timeout = 15
         if alert:
             try:
                 WebDriverWait(selenium, timeout).until(EC.alert_is_present())
