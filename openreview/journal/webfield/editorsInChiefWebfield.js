@@ -264,7 +264,7 @@ var formatData = function(
 
     // Track number of submissions per author
     if (
-      formattedSubmission.content.venueid === SUBMITTED_STATUS &&
+      formattedSubmission.content.venueid === UNDER_REVIEW_STATUS &&
       formattedSubmission.content.authorids &&
       formattedSubmission.content.authorids.length
     ) {
@@ -279,6 +279,8 @@ var formatData = function(
     // Review approval by AE
     var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
     var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
+    // Reviewer assignment by AE
+    var reviewerAssignmentInvitation = invitationsById[getInvitationId(number, 'Assignment', REVIEWERS_NAME)];
     // Reviews by Reviewers
     var reviewInvitation = invitationsById[getInvitationId(number, REVIEW_NAME)];
     var reviewNotes = getReplies(submission, REVIEW_NAME);
@@ -309,6 +311,17 @@ var formatData = function(
         duedate: reviewApprovalInvitation.duedate,
         complete: reviewApprovalNotes.length > 0,
         replies: reviewApprovalNotes
+      });
+    }
+
+    if (reviewerAssignmentInvitation) {
+      var reviewers = reviewersByNumber[number] || [];
+      tasks.push({
+        id: reviewerAssignmentInvitation.id,
+        cdate: reviewerAssignmentInvitation.cdate,
+        duedate: reviewerAssignmentInvitation.duedate,
+        complete: reviewers.length >= 3,
+        replies: reviewers
       });
     }
 
@@ -526,7 +539,7 @@ var formatData = function(
         expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
-        actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
+        actions: ([UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) && reviewerAssignmentInvitation) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
@@ -628,7 +641,7 @@ var formatData = function(
 
   return {
     submissionStatusRows: submissionStatusRows,
-    paperStatusRows: paperStatusRows,
+    underReviewStatusRows: underReviewStatusRows,
     decisionApprovalStatusRows: decisionApprovalStatusRows,
     cameraReadyStatusRows: cameraReadyStatusRows,
     completeSubmissionStatusRows: completeSubmissionStatusRows,
@@ -977,7 +990,7 @@ var renderData = function(venueStatusData) {
   renderOverviewTab(venueStatusData.journalStats);
 
   renderTable('submitted', venueStatusData.submissionStatusRows);
-  renderTable('under-review', venueStatusData.paperStatusRows);
+  renderTable('under-review', venueStatusData.underReviewStatusRows);
   renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
