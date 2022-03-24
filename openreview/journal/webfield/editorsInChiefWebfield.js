@@ -617,7 +617,7 @@ var formatData = function(
     numActionEditors: actionEditors.members.length,
     numSubmissions: submissionStatusRows.length,
     numUnderReview: underReviewStatusRows.length,
-    numAccepted: completeSubmissionStatusRows.length,
+    numAccepted: completeSubmissionStatusRows.length - withdrawnStatusRows.length - retractedStatusRows.length - rejectedStatusRows.length,
     numWithdrawn: withdrawnStatusRows.length,
     numRetracted: retractedStatusRows.length,
     numRejected: rejectedStatusRows.length,
