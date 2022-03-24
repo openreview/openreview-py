@@ -5,7 +5,7 @@ jobs:
   build:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/python:3.7-node
+      - image: cimg/python:3.7-node
       - image: cimg/redis:6.2.6
       - image: circleci/mongo:4.4.5
         command: [--replSet,rs0]
@@ -24,7 +24,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y mongodb-org=4.4.5 mongodb-org-server=4.4.5 mongodb-org-shell=4.4.5 mongodb-org-mongos=4.4.5 mongodb-org-tools=4.4.5
             mongo mongodb://localhost:27017 --eval "rs.initiate()"
-      - run: sudo pip install ~/openreview-py-repo
+      - run: pip install ~/openreview-py-repo
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api-v1.git ~/openreview
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
       - run: git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
@@ -58,14 +58,14 @@ jobs:
           command: |
             cd ~/openreview-web
             npm install
-            cp .env.example .env
-            SUPER_USER=openreview.net npm run build
+            cp .env.example .env.local
+            NODE_ENV=production SUPER_USER=openreview.net npm run build
       - run:
           name: run web-app
           command: |
             cd ~/openreview-web
             export NEXT_PORT=3030
-            SUPER_USER=openreview.net npm run start
+            NODE_ENV=production SUPER_USER=openreview.net npm run start
           background: true
       - run:
           shell: /bin/sh
@@ -92,7 +92,7 @@ jobs:
           name: install firefox driver
           command: |
             sudo apt-get update
-            sudo apt-get install firefox-esr
+            sudo apt-get install firefox
             cd ~/openreview-py-repo/tests/drivers
             wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz
             tar -xvzf geckodriver*
@@ -101,12 +101,12 @@ jobs:
           name: run tests
           command: |
             cd ~/openreview-py-repo
-            sudo pip install -U pytest
-            sudo pip install selenium
-            sudo pip install pytest-selenium
-            sudo pip install pytest-cov
-            sudo pip install codecov
-            sudo pip install -e .
+            pip install -U pytest
+            pip install selenium
+            pip install pytest-selenium
+            pip install pytest-cov
+            pip install codecov
+            pip install -e .
             mkdir test-reports
             pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report xml:~/openreview-py-repo/coverage/cov.xml --cov=./
       - codecov/upload:
@@ -121,7 +121,7 @@ jobs:
       - image: circleci/python:2.7
     steps:
       - checkout
-      - run: sudo pip install twine
+      - run: pip install twine
       - run: python setup.py bdist_wheel --universal
       - run: twine upload dist/* --skip-existing
 workflows:

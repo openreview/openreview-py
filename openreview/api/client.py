@@ -1771,6 +1771,8 @@ class OpenReviewClient(object):
     def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
 
         base_url = baseurl if baseurl else self.baseurl
+        call_max = 500
+
         if base_url.startswith('http://localhost'):
             return { 'results': [] }
 
@@ -1778,7 +1780,7 @@ class OpenReviewClient(object):
             call_count = 0
             status_response = self.get_expertise_status(job_id, baseurl=base_url)
             status = status_response.get('status')
-            while status not in ['Completed', 'Error'] and call_count < 30:
+            while status not in ['Completed', 'Error'] and call_count < call_max:
                 time.sleep(30)
                 status_response = self.get_expertise_status(job_id)
                 status = status_response.get('status')
@@ -1788,7 +1790,7 @@ class OpenReviewClient(object):
                 return self.get_expertise_results(job_id, baseurl=base_url)
             if 'Error' == status:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
-            if call_count == 300:
+            if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
