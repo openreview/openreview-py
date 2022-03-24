@@ -1781,7 +1781,7 @@ class OpenReviewClient(object):
             status_response = self.get_expertise_status(job_id, baseurl=base_url)
             status = status_response.get('status')
             while status not in ['Completed', 'Error'] and call_count < call_max:
-                time.sleep(30)
+                time.sleep(60)
                 status_response = self.get_expertise_status(job_id)
                 status = status_response.get('status')
                 call_count += 1
