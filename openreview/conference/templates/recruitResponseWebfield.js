@@ -25,11 +25,11 @@ function render() {
   var $response = $('#notes');
   $response.empty();
 
-  if (note && note.content.response) {
-    var accepted = (note.content.response === 'Yes');
-    var declined = (note.content.response === 'No');
-    var userEmail = note.content.user;
-    var key = note.content.key;
+  if (noteContent && noteContent.response) {
+    var accepted = (noteContent.response === 'Yes');
+    var declined = (noteContent.response === 'No');
+    var userEmail = noteContent.user;
+    var key = noteContent.key;
 
     if (accepted) {
       // Display response text
@@ -71,7 +71,7 @@ function render() {
           $('#notes').on('click', 'button.btn.btn-submit', function(e) {
             var comment = $('#comment').val();
             if (comment && comment.length) {
-              note.content.comment = comment;
+              noteContent.comment = comment;
               Webfield.post('/notes', note)
               .then(function(result) {
                 $('#notes').empty().append('<div><h5 style="line-height:normal;">Thank you for your response.</h5></div>');
