@@ -34,6 +34,23 @@ def run_once(f):
     wrapper.has_run = False
     return wrapper
 
+def format_params(params):
+    if isinstance(params, dict):
+        formatted_params = {}
+        for key, value in params.items():
+            formatted_params[key] = format_params(value)
+        return formatted_params
+
+    if isinstance(params, list):
+        formatted_params = []
+        for value in params:
+            formatted_params.append(format_params(value))
+        return formatted_params
+
+    if isinstance(params, bool):
+        return json.dumps(params)
+
+    return params
 
 def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1)):
     """

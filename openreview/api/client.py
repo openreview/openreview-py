@@ -8,6 +8,7 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
+from .. import tools
 import requests
 import pprint
 import os
@@ -297,7 +298,7 @@ class OpenReviewClient(object):
             else:
                 att = 'email'
             params[att] = email_or_id
-        response = requests.get(self.profiles_url, params = params, headers = self.headers)
+        response = requests.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
         if profiles:
@@ -422,7 +423,7 @@ class OpenReviewClient(object):
 
         url = self.pdf_revisions_url if is_reference else self.pdf_url
 
-        response = requests.get(url, params = params, headers = headers)
+        response = requests.get(url, params=tools.format_params(params), headers = headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -471,7 +472,7 @@ class OpenReviewClient(object):
         if invitations is not None:
             params['invitations'] = ','.join(invitations)
 
-        response = requests.get(self.venues_url, params=params, headers=self.headers)
+        response = requests.get(self.venues_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()['venues']
@@ -576,7 +577,7 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.groups_url, params = params, headers = self.headers)
+        response = requests.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
@@ -707,7 +708,7 @@ class OpenReviewClient(object):
         params['expired'] = expired
         params['type'] = type
 
-        response = requests.get(self.invitations_url, params=params, headers=self.headers)
+        response = requests.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
@@ -913,7 +914,7 @@ class OpenReviewClient(object):
         params['sort'] = sort
         params['original'] = original
 
-        response = requests.get(self.notes_url, params = params, headers = self.headers)
+        response = requests.get(self.notes_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
@@ -1039,7 +1040,7 @@ class OpenReviewClient(object):
         if invitation:
             params['invitation'] = invitation
 
-        response = requests.get(self.note_edits_url, params = params, headers = self.headers)
+        response = requests.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edits = [Edit.from_json(n) for n in response.json()['edits']]
@@ -1080,7 +1081,7 @@ class OpenReviewClient(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.tags_url, params = params, headers = self.headers)
+        response = requests.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
@@ -1136,7 +1137,7 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
@@ -1189,7 +1190,7 @@ class OpenReviewClient(object):
         params['limit'] = 1
         params['offset'] = 0
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()['count']
@@ -1218,7 +1219,7 @@ class OpenReviewClient(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
@@ -1538,7 +1539,7 @@ class OpenReviewClient(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
+        response = requests.get(self.notes_url + '/search', params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
