@@ -57,12 +57,12 @@ class InvitationBuilder(object):
         }
 
         self.reviewer_assignment_process = {
-            'delay':5000,
+            'delay':30000,
             'script':reviewer_assignment_process
         }
 
         self.ae_assignment_process = {
-            'delay':5000,
+            'delay':30000,
             'script':ae_assignment_process
         }
 
