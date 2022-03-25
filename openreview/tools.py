@@ -681,17 +681,19 @@ def concurrent_get(client, get_function, **params):
 
     params.update({
         'offset': params.get('offset') or 0,
-        'limit': min(params.get('limit') or client.limit, client.limit),
         'with_count': True
     })
 
     docs, count = get_function(**params)
-    if count <= params['limit']:
+    if params.get('limit') or float('inf') <= client.limit:
+        return docs
+
+    if count <= client.limit:
         return docs
 
     params['with_count'] = False
 
-    offset_list = list(range(params['limit'], count, params['limit']))
+    offset_list = list(range(client.limit, min(params.get('limit') or count, count), client.limit))
 
     futures = []
     gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
