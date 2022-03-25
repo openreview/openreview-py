@@ -159,5 +159,4 @@ class Assignment(object):
             response = self.client.get_expertise_results(job_id, wait_for_complete=True)
             return response.get('results', [])
         except Exception as e:
-            print('Error computing affinity scores', e)
-            return []
+            raise openreview.OpenReviewException('Error computing affinity scores: ' + str(e))
