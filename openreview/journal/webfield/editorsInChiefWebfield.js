@@ -322,7 +322,7 @@ var formatData = function(
         cdate: aeRecommendationInvitation.cdate,
         duedate: aeRecommendationInvitation.duedate,
         complete: recommendationCount >= 3,
-        replies: Array(recommendationCount).fill(1, 0, recommendationCount)
+        replies: Array(recommendationCount).fill(1)
       });
     }
 
