@@ -128,7 +128,7 @@ def request_page():
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
-        timeout = 5
+        timeout = 15
         if alert:
             try:
                 WebDriverWait(selenium, timeout).until(EC.alert_is_present())
@@ -140,7 +140,7 @@ def request_page():
         try:
             element_present = EC.presence_of_element_located((By.ID, wait_for_element))
             WebDriverWait(selenium, timeout).until(element_present)
-            time.sleep(2) ## temporally sleep time to wait until the whole page is loaded
+            time.sleep(5) ## temporally sleep time to wait until the whole page is loaded
         except TimeoutException:
             print("Timed out waiting for page to load")
 

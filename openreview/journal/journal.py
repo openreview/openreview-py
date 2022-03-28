@@ -177,10 +177,10 @@ class Journal(object):
     def get_reviewer_recruitment_id(self):
         return self.__get_invitation_id(name='Recruitment', prefix=self.get_reviewers_id())
 
-    def get_reviewer_responsability_id(self, signature=None):
+    def get_reviewer_responsibility_id(self, signature=None):
         if signature:
-            return self.__get_invitation_id(name=f'{signature}/Responsability/Acknowledgement', prefix=self.get_reviewers_id())
-        return self.__get_invitation_id(name='Responsability_Acknowledgement', prefix=self.get_reviewers_id())
+            return self.__get_invitation_id(name=f'{signature}/Responsibility/Acknowledgement', prefix=self.get_reviewers_id())
+        return self.__get_invitation_id(name='Responsibility_Acknowledgement', prefix=self.get_reviewers_id())
 
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())
@@ -232,6 +232,11 @@ class Journal(object):
 
     def get_submission_editable_id(self, number):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
+
+    def get_request_id(self):
+        forum_note = self.client.get_notes(invitation='(openreview.net|OpenReview.net)/Support/-/Journal_Request$', content={'venue_id':self.venue_id})
+        if forum_note:
+            return forum_note[0].id
 
     def setup(self, support_role, editors=[]):
         self.group_builder.set_groups(self, support_role, editors)

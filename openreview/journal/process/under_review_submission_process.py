@@ -15,7 +15,7 @@ def process(client, edit, invitation):
         subject=f'''[{journal.short_name}] Perform reviewer assignments for {journal.short_name} submission {note.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-With this email, we request that you assign 3 reviewers to your assigned {journal.short_name} submission "{note.content['title']['value']}". The assignments must be completed **within 1 week** ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/group?id={journal.get_action_editors_id()}
+With this email, we request that you assign 3 reviewers to your assigned {journal.short_name} submission "{note.content['title']['value']}". The assignments must be completed **within 1 week** ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/group?id={journal.get_action_editors_id()} and click on "Edit Assignment" for that paper in your "Assigned Papers" console.
 
 As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another {journal.short_name} submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.
 

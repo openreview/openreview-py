@@ -40,7 +40,7 @@ As a reminder, {journal.short_name} Action Editors (AEs) are **expected to accep
 
 Your first task is to make sure the submitted preprint is appropriate for {journal.short_name} and respects our submission guidelines. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {journal.short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication). If you suspect but are unsure about whether a submission might need to be desk rejected for any other reasons (e.g. lack of fit with the scope of {journal.short_name} or lack of technical depth), please email us.
 
-Please follow this link to perform this task: https://openreview.net/forum?id={note.id}
+Please follow this link to perform this task: https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_approval_id(number=note.number)}
 
 If you think the submission can continue through {journal.short_name}’s review process, click the button "Under Review". Otherwise, click on "Desk Reject". Once the submission has been confirmed, then the review process will begin immediately, and your next step will be to assign 3 reviewers to the paper.
 

@@ -50,7 +50,7 @@ class InvitationBuilder(object):
         self.set_meta_invitation()
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
-        self.set_reviewer_responsability_invitation()
+        self.set_reviewer_responsibility_invitation()
         self.set_submission_invitation()
         self.set_review_approval_invitation()
         self.set_under_review_invitation()
@@ -101,7 +101,7 @@ class InvitationBuilder(object):
     def expire_acknowledgement_invitations(self):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsability_id(signature='.*'))
+        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsibility_id(signature='.*'))
 
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
@@ -293,7 +293,7 @@ class InvitationBuilder(object):
                 )
                 return invitation
 
-    def set_reviewer_responsability_invitation(self):
+    def set_reviewer_responsibility_invitation(self):
 
         venue_id=self.journal.venue_id
         reviewers_id = self.journal.get_reviewers_id()
@@ -346,7 +346,7 @@ class InvitationBuilder(object):
         )
         self.save_invitation(invitation)
 
-        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsability'})
+        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
         if len(forum_notes) > 0:
             forum_note_id = forum_notes[0].id
         else:
@@ -355,7 +355,7 @@ class InvitationBuilder(object):
                 note = openreview.api.Note(
                     signatures = [editors_in_chief_id],
                     content = {
-                        'title': { 'value': 'Acknowledgement of reviewer responsability'},
+                        'title': { 'value': 'Acknowledgement of reviewer responsibility'},
                         'description': { 'value': '''TMLR operates somewhat differently to other journals and conferences. Please read and acknowledge the following critical points before undertaking your first review. Note that the items below are stated very briefly; please see the full guidelines and instructions for reviewers on the journal website (links below).
 
 - [Reviewer guidelines](https://jmlr.org/tmlr/reviewer-guide.html)
@@ -369,7 +369,7 @@ If you have questions after reviewing the points below that are not answered on 
             )
             forum_note_id = forum_edit['note']['id']
 
-        invitation=Invitation(id=self.journal.get_reviewer_responsability_id(),
+        invitation=Invitation(id=self.journal.get_reviewer_responsibility_id(),
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
@@ -383,7 +383,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'duedate': { 'regex': '.*', 'type': 'integer' }
                 },
                 'invitation': {
-                    'id': { 'const': self.journal.get_reviewer_responsability_id(signature='${params.reviewerId}') },
+                    'id': { 'const': self.journal.get_reviewer_responsibility_id(signature='${params.reviewerId}') },
                     'invitees': { 'const': ['${params.reviewerId}'] },
                     'readers': { 'const': [venue_id, '${params.reviewerId}'] },
                     'writers': { 'const': [venue_id] },
@@ -416,7 +416,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'order': 2,
                                     'value': {
                                         'type': "string",
-                                        'enum': ['I understand that TMLR has a 4 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
+                                        'enum': ['I understand that TMLR has a strict 6 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
                                     },
                                     'presentation': {
                                         'input': 'checkbox'
@@ -468,6 +468,10 @@ If you have questions after reviewing the points below that are not answered on 
         action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
+        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_acknowledgement_process.py')) as f:
+            paper_process = f.read()
+            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+
         invitation=Invitation(id=self.journal.get_reviewer_assignment_acknowledgement_id(),
             invitees=[venue_id],
             readers=[venue_id],
@@ -492,6 +496,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
+                    'process': { 'const': paper_process },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
@@ -550,7 +555,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'note': {
                     'signatures': { 'const': [authors_value] },
                     'readers': { 'const': [ venue_id, action_editors_value, authors_value]},
-                    'writers': { 'const': [ venue_id, action_editors_value, authors_value]},
+                    'writers': { 'const': [ venue_id, authors_value]},
                     'content': {
                         'title': {
                             'value': {
@@ -566,10 +571,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 2
                         },
                         'authors': {
                             'value': {
@@ -824,6 +826,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$',
                     'inGroup' : action_editors_id
                 },
                 'weight': {
@@ -876,6 +879,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'tail': {
                     'type': 'profile',
                     'inGroup' : action_editors_id,
+                    'regex': '^~.*$',
                     'description': 'select at least 3 AEs to recommend. AEs who have conflicts with your submission are not shown.'
                 },
                 'weight': {
@@ -1016,7 +1020,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'withInvitation': author_submission_id
                 },
                 'tail': {
-                    'type': 'profile',
+                    'type': 'profile'
                     #'member-of' : reviewers_id
                 },
                 'weight': {
@@ -1068,6 +1072,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$',
                     #'member-of' : reviewers_id
                     'presentation': {
                         'options': { 'group': reviewers_id }
@@ -1201,6 +1206,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'invitation': {
                     'id': { 'const': paper_review_approval_invitation_id },
                     'invitees': { 'const': [venue_id, paper_action_editors_id] },
+                    'noninvitees': { 'const': [editors_in_chief_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
                     'signatures': { 'const': [venue_id] },
@@ -1549,9 +1555,6 @@ If you have questions after reviewing the points below that are not answered on 
                     'readers': {
                         'const': ['everyone']
                     },
-                    'writers': {
-                        'const': [venue_id]
-                    },
                     'content': {
                         'assigned_action_editor': {
                             'value': {
@@ -1803,7 +1806,7 @@ If you have questions after reviewing the points below that are not answered on 
                         'venue': {
                             'value': {
                                 'type': 'string',
-                                'const': self.journal.short_name
+                                'const': 'Accepted by ' + self.journal.short_name
                             },
                             'order': 1
                         },
@@ -1960,6 +1963,7 @@ If you have questions after reviewing the points below that are not answered on 
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
                         <li>AEs who have conflicts with your submission are not shown.</li>\
                         <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
+                        <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
                         <li>To get started click the button below.</li>\
                     </ul>\
                     <br>'
@@ -2555,7 +2559,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'nullable': True
                 },
                 'signatures': { 'const': [paper_authors_id] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_authors_id]},
+                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
                 'writers': { 'const': [ venue_id, paper_authors_id]},
                 'note': {
                     'id': { 'const': note.id },
@@ -2576,37 +2580,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
-                        },
-                        'authors': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                'optional': True
-                            },
-                            'description': 'Comma separated list of author names.',
-                            'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            },
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
-                        },
-                        'authorids': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': r'~.*',
-                                'optional': True
-                            },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                            'order': 4,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'order': 2
                         },
                         'pdf': {
                             'value': {
@@ -3103,29 +3077,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
-                        },
-                        'authors': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': '[^;,\\n]+(,[^,\\n]+)*'
-                            },
-                            'description': 'Comma separated list of author names.',
-                            'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            }
-                        },
-                        'authorids': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': r'~.*'
-                            },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                            'order': 4
+                            'order': 2
                         },
                         'pdf': {
                             'value': {

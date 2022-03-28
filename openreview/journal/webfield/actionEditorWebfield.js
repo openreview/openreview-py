@@ -13,6 +13,7 @@ var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var SUBMISSION_GROUP_NAME = 'Paper';
 var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
+var JOURNAL_REQUEST_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -45,6 +46,10 @@ var HEADER = {
   title: SHORT_PHRASE + ' Action Editor Console',
   instructions: "<strong>Reviewer Assignment Browser:</strong><br><a href='" + reviewersUrl + "'> Modify Reviewer Assignments</a>"
 };
+
+if (JOURNAL_REQUEST_ID) {
+  HEADER.instructions += "<br><br><strong>Journal Recruitment:</strong><br><a href=/forum?id=" + JOURNAL_REQUEST_ID + "> Recruit Reviewer</a>"
+}
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
@@ -153,6 +158,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
     // Review approval by AE
     var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
     var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
+    // Reviewer assignment by AE
+    var reviewerAssignmentInvitation = invitationsById[getInvitationId(number, 'Assignment', REVIEWERS_NAME)];
     // Reviews by Reviewers
     var reviewInvitation = invitationsById[getInvitationId(number, REVIEW_NAME)];
     var reviewNotes = getReplies(submission, REVIEW_NAME);
@@ -181,6 +188,16 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         duedate: reviewApprovalInvitation.duedate,
         complete: reviewApprovalNotes.length > 0,
         replies: reviewApprovalNotes
+      });
+    }
+
+    if (reviewerAssignmentInvitation) {
+      tasks.push({
+        id: reviewerAssignmentInvitation.id,
+        cdate: reviewerAssignmentInvitation.cdate,
+        duedate: reviewerAssignmentInvitation.duedate,
+        complete: reviewers.length >= 3,
+        replies: reviewers
       });
     }
 
@@ -298,7 +315,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
-        actions: submission.content.venueid.value == UNDER_REVIEW_STATUS ? [
+        actions: (submission.content.venueid.value == UNDER_REVIEW_STATUS && reviewerAssignmentInvitation) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
