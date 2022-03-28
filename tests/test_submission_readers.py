@@ -70,6 +70,8 @@ class TestSubmissionReaders():
             writers=[support_group_id]
         ))
 
+        helpers.await_queue()
+
         # Return venue details as a dict
         venue_details = {
             'request_form_note': request_form_note,
