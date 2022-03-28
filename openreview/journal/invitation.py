@@ -16,57 +16,22 @@ class InvitationBuilder(object):
         day = 1000 * 60 * 60 * 24
         seven_days = day * 7
 
-        reviewer_duedate_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_reminder_process.py')) as f:
-            reviewer_duedate_process = f.read()
-            reviewer_duedate_process = reviewer_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        ae_duedate_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/action_editor_reminder_process.py')) as f:
-            ae_duedate_process = f.read()
-            ae_duedate_process = ae_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        ae_edge_duedate_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/action_editor_edge_reminder_process.py')) as f:
-            ae_edge_duedate_process = f.read()
-            ae_edge_duedate_process = ae_edge_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        reviewer_assignment_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py')) as f:
-            reviewer_assignment_process = f.read()
-            reviewer_assignment_process = reviewer_assignment_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        ae_assignment_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py')) as f:
-            ae_assignment_process = f.read()
-            ae_assignment_process = ae_assignment_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
         self.reviewer_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-            'script': reviewer_duedate_process
+            'script': self.get_process_content('process/reviewer_reminder_process.py')
         }
 
         self.ae_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-            'script': ae_duedate_process
+            'script': self.get_process_content('process/action_editor_reminder_process.py')
         }
 
         self.ae_edge_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-            'script': ae_edge_duedate_process
+            'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
-        self.reviewer_assignment_process = {
-            'delay':30000,
-            'script':reviewer_assignment_process
-        }
-
-        self.ae_assignment_process = {
-            'delay':30000,
-            'script':ae_assignment_process
-        }
-
-    def set_invitations(self):
+    def set_invitations(self, assignment_delay):
         self.set_meta_invitation()
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
@@ -80,8 +45,8 @@ class InvitationBuilder(object):
         self.set_acceptance_invitation()
         self.set_retracted_invitation()
         self.set_authors_release_invitation()
-        self.set_ae_assignment()
-        self.set_reviewer_assignment()
+        self.set_ae_assignment(assignment_delay)
+        self.set_reviewer_assignment(assignment_delay)
         self.set_reviewer_assignment_acknowledgement_invitation()
         self.set_super_review_invitation()
         self.set_official_recommendation_invitation()
@@ -90,6 +55,12 @@ class InvitationBuilder(object):
         self.set_withdrawal_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
+
+    def get_process_content(self, file_path):
+        process = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            process = f.read()
+            return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
 
     def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -709,7 +680,7 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
-    def set_ae_assignment(self):
+    def set_ae_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
         author_submission_id = self.journal.get_author_submission_id()
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
@@ -861,7 +832,10 @@ If you have questions after reviewing the points below that are not answered on 
                 }
             },
             preprocess=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_pre_process.py'),
-            date_processes=[self.ae_assignment_process]
+            date_processes=[{
+                'delay': assignment_delay * 1000,
+                'script': self.get_process_content('process/ae_assignment_process.py')
+            }]
         )
 
         self.save_invitation(invitation)
@@ -954,7 +928,7 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
-    def set_reviewer_assignment(self):
+    def set_reviewer_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
         author_submission_id = self.journal.get_author_submission_id()
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
@@ -1110,7 +1084,10 @@ If you have questions after reviewing the points below that are not answered on 
                 }
             },
             preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py'),
-            date_processes=[self.reviewer_assignment_process]
+            date_processes=[{
+                'delay': assignment_delay * 1000,
+                'script': self.get_process_content('process/reviewer_assignment_process.py')
+            }]
         )
 
         self.save_invitation(invitation)

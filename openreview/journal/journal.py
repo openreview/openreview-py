@@ -238,9 +238,9 @@ class Journal(object):
         if forum_note:
             return forum_note[0].id
 
-    def setup(self, support_role, editors=[]):
+    def setup(self, support_role, editors=[], assignment_delay=5):
         self.group_builder.set_groups(self, support_role, editors)
-        self.invitation_builder.set_invitations()
+        self.invitation_builder.set_invitations(assignment_delay)
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
