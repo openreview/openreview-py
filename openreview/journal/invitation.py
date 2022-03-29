@@ -60,7 +60,7 @@ class InvitationBuilder(object):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+            return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
     def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -99,17 +99,6 @@ class InvitationBuilder(object):
 
 
     def save_invitation(self, invitation):
-
-        venue_id = self.venue_id
-
-        if invitation.preprocess:
-            with open(invitation.preprocess) as f:
-                preprocess = f.read()
-                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
-                invitation.preprocess = preprocess
-
-        if invitation.process:
-            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
         return self.post_invitation_edit(invitation, replacement=True)
 
@@ -199,8 +188,8 @@ class InvitationBuilder(object):
                                 }
                             }
                         },
-                        process_string=process_content,
-                        web_string=webfield_content
+                        process=process_content,
+                        web=webfield_content
                     ),
                     replacement=True
                 )
@@ -277,8 +266,8 @@ class InvitationBuilder(object):
                                 }
                             }
                         },
-                        process_string=process_content,
-                        web_string=webfield_content
+                        process=process_content,
+                        web=webfield_content
                     ),
                     replacement=True
                 )
@@ -459,9 +448,7 @@ If you have questions after reviewing the points below that are not answered on 
         action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_acknowledgement_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/reviewer_assignment_acknowledgement_process.py')
 
         invitation=Invitation(id=self.journal.get_reviewer_assignment_acknowledgement_id(),
             invitees=[venue_id],
@@ -676,7 +663,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/author_submission_process.py')
+            process=self.get_process_content('process/author_submission_process.py')
         )
         self.save_invitation(invitation)
 
@@ -831,7 +818,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'optional': True
                 }
             },
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_pre_process.py'),
+            preprocess=self.get_process_content('process/ae_assignment_pre_process.py'),
             date_processes=[{
                 'delay': assignment_delay * 1000,
                 'script': self.get_process_content('process/ae_assignment_process.py')
@@ -1083,7 +1070,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'optional': True
                 }
             },
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py'),
+            preprocess=self.get_process_content('process/reviewer_assignment_pre_process.py'),
             date_processes=[{
                 'delay': assignment_delay * 1000,
                 'script': self.get_process_content('process/reviewer_assignment_process.py')
@@ -1182,10 +1169,7 @@ If you have questions after reviewing the points below that are not answered on 
         review_approval_invitation_id=self.journal.get_review_approval_id()
         paper_review_approval_invitation_id=self.journal.get_review_approval_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
+        paper_process = self.get_process_content('process/review_approval_process.py')
 
         invitation = Invitation(id=review_approval_invitation_id,
             invitees=[venue_id],
@@ -1272,9 +1256,7 @@ If you have questions after reviewing the points below that are not answered on 
         withdrawal_invitation_id = self.journal.get_withdrawal_id()
         paper_withdrawal_invitation_id = self.journal.get_withdrawal_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/withdrawal_submission_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/withdrawal_submission_process.py')
 
         invitation = Invitation(id=withdrawal_invitation_id,
             invitees=[venue_id],
@@ -1360,9 +1342,7 @@ If you have questions after reviewing the points below that are not answered on 
         retraction_invitation_id = self.journal.get_retraction_id()
         paper_retraction_invitation_id = self.journal.get_retraction_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/retraction_submission_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/retraction_submission_process.py')
 
         invitation = Invitation(id=retraction_invitation_id,
             invitees=[venue_id],
@@ -1447,10 +1427,7 @@ If you have questions after reviewing the points below that are not answered on 
         retraction_approval_invitation_id=self.journal.get_retraction_approval_id()
         paper_retraction_approval_invitation_id=self.journal.get_retraction_approval_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/retraction_approval_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
+        paper_process = self.get_process_content('process/retraction_approval_process.py')
 
         invitation = Invitation(id=retraction_approval_invitation_id,
             invitees=[venue_id],
@@ -1581,7 +1558,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/under_review_submission_process.py')
+            process=self.get_process_content('process/under_review_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -1632,7 +1609,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/desk_reject_submission_process.py')
+            process=self.get_process_content('process/desk_reject_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -1676,7 +1653,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
+            process=self.get_process_content('process/withdrawn_submission_process.py')
 
         )
         self.save_invitation(invitation)
@@ -1718,7 +1695,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/retracted_submission_process.py')
+            process=self.get_process_content('process/retracted_submission_process.py')
 
         )
         self.save_invitation(invitation)
@@ -1765,7 +1742,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/rejected_submission_process.py')
+            process=self.get_process_content('process/rejected_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -1853,7 +1830,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/acceptance_submission_process.py')
+            process=self.get_process_content('process/acceptance_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -2068,9 +2045,7 @@ If you have questions after reviewing the points below that are not answered on 
         review_invitation_id = self.journal.get_review_id()
         paper_review_invitation_id = self.journal.get_review_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/review_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/review_process.py')
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -2202,15 +2177,8 @@ If you have questions after reviewing the points below that are not answered on 
         recommendation_invitation_id = self.journal.get_reviewer_recommendation_id()
         paper_recommendation_invitation_id = self.journal.get_reviewer_recommendation_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        cdate_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/official_recommendation_cdate_process.py')) as f:
-            cdate_process = f.read()
-            cdate_process = cdate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
-
+        paper_process = self.get_process_content('process/official_recommendation_process.py')
+        cdate_process = self.get_process_content('process/official_recommendation_cdate_process.py')
 
         invitation = Invitation(id=recommendation_invitation_id,
             invitees=[venue_id],
@@ -2330,14 +2298,8 @@ If you have questions after reviewing the points below that are not answered on 
         solicit_review_invitation_id = self.journal.get_solicit_review_id()
         paper_solicit_review_invitation_id = self.journal.get_solicit_review_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')) as f:
-            paper_preprocess = f.read()
-            paper_preprocess = paper_preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
+        paper_process = self.get_process_content('process/solicit_review_process.py')
+        paper_preprocess = self.get_process_content('process/solicit_review_pre_process.py')
 
         invitation = Invitation(id=solicit_review_invitation_id,
             invitees=[venue_id],
@@ -2445,13 +2407,8 @@ If you have questions after reviewing the points below that are not answered on 
         solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id()
         paper_solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id(number='${params.noteNumber}', signature='${params.soliciter}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_pre_process.py')) as f:
-            paper_preprocess = f.read()
-            paper_preprocess = paper_preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/solicit_review_approval_process.py')
+        paper_preprocess = self.get_process_content('process/solicit_review_approval_pre_process.py')
 
         invitation = Invitation(id=solicit_review_invitation_approval_id,
             invitees=[venue_id],
@@ -2648,7 +2605,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/submission_revision_process.py')
+            process=self.get_process_content('process/submission_revision_process.py')
         )
 
         self.save_invitation(invitation)
@@ -2710,7 +2667,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/public_comment_process.py')
+            process=self.get_process_content('process/public_comment_process.py')
         )
 
         self.save_invitation(invitation)
@@ -2771,8 +2728,8 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/official_comment_pre_process.py'),
-            process=os.path.join(os.path.dirname(__file__), 'process/official_comment_process.py')
+            preprocess=self.get_process_content('process/official_comment_pre_process.py'),
+            process=self.get_process_content('process/official_comment_process.py')
         )
 
         self.save_invitation(invitation)
@@ -2915,8 +2872,8 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/submission_decision_pre_process.py'),
-            process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py'),
+            preprocess=self.get_process_content('process/submission_decision_pre_process.py'),
+            process=self.get_process_content('process/submission_decision_process.py'),
             date_processes=[self.ae_reminder_process]
         )
 
@@ -2977,7 +2934,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_approval_process.py')
+            process=self.get_process_content('process/submission_decision_approval_process.py')
         )
 
         self.save_invitation(invitation)
@@ -3034,7 +2991,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 }
                             }
                         },
-                        process=os.path.join(os.path.dirname(__file__), 'process/review_rating_process.py'),
+                        process=self.get_process_content('process/review_rating_process.py'),
                         date_processes=[self.ae_reminder_process]
                     )
                     self.save_invitation(invitation)
@@ -3163,7 +3120,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_revision_process.py')
+            process=self.get_process_content('process/camera_ready_revision_process.py')
         )
 
         self.save_invitation(invitation)
@@ -3205,7 +3162,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_verification_process.py'),
+            process=self.get_process_content('process/camera_ready_verification_process.py'),
             date_processes=[self.ae_reminder_process]
         )
 
@@ -3248,7 +3205,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/authors_deanonimization_process.py')
+            process=self.get_process_content('process/authors_deanonimization_process.py')
         )
 
         self.save_invitation(invitation)
