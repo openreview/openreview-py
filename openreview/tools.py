@@ -1880,11 +1880,12 @@ def overwrite_pdf(client, note_id, file_path):
         original_note = client.get_note(id=note.original)
 
     references = client.get_references(referent=original_note.id)
+    invitaiton_id = original_note.invitation
 
     updated_references = []
 
     if references:
-        pdf_url = client.put_pdf(file_path)
+        pdf_url = client.put_attachment(file_path, invitaiton_id, 'pdf')
 
         for reference in references:
             if 'pdf' in reference.content:
