@@ -125,7 +125,12 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     name = note.content.get('submission_name', 'Submission').strip()
 
-    readers = None
+    readers_map = {
+        'All program commitee (all reviewers, all area chairs, all senior area chairs)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS],
+        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
+        'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
+    }
+    readers = readers_map[note.content.get('submission_readers', 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)')]
 
     if 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', ''):
         readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS]
