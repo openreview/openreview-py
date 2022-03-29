@@ -262,7 +262,7 @@ class OpenReviewClient(object):
         t = response.json()['tags'][0]
         return Tag.from_json(t)
 
-    def get_edge(self, id):
+    def get_edge(self, id, trash=False):
         """
         Get a single Edge by id if available
 
@@ -272,7 +272,7 @@ class OpenReviewClient(object):
         return: Edge object with its information
         :rtype: Edge
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.edges_url, params = {'id': id, 'trash': 'true' if trash == True else 'false'}, headers=self.headers)
         response = self.__handle_response(response)
         edges = response.json()['edges']
         if edges:
@@ -1782,7 +1782,7 @@ class OpenReviewClient(object):
             status_response = self.get_expertise_status(job_id, baseurl=base_url)
             status = status_response.get('status')
             while status not in ['Completed', 'Error'] and call_count < call_max:
-                time.sleep(30)
+                time.sleep(60)
                 status_response = self.get_expertise_status(job_id)
                 status = status_response.get('status')
                 call_count += 1
@@ -2038,9 +2038,7 @@ class Invitation(object):
         noninvitees = None,
         nonreaders = None,
         web = None,
-        web_string = None,
         process = None,
-        process_string = None,
         preprocess = None,
         date_processes = None,
         duedate = None,
@@ -2051,7 +2049,6 @@ class Invitation(object):
         tmdate = None,
         minReplies = None,
         maxReplies = None,
-        transform = None,
         bulk = None,
         reply_forum_views = [],
         details = None):
@@ -2078,23 +2075,9 @@ class Invitation(object):
         self.details = details
         self.reply_forum_views = reply_forum_views
         self.web = None
-        self.process = None
+        self.process = process
         self.preprocess = preprocess
         self.date_processes = date_processes
-        if web is not None:
-            with open(web) as f:
-                self.web = f.read()
-        if process is not None:
-            with open(process) as f:
-                self.process = f.read()
-        self.transform = None
-        if transform is not None:
-            with open(transform) as f:
-                self.transform = f.read()
-        if process_string:
-            self.process = process_string
-        if web_string:
-            self.web = web_string
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])

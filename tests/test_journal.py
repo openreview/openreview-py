@@ -277,6 +277,23 @@ class TestJournal():
 
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
+
+        # Assign Action Editor and immediately remove  assignment
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_1,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = raia_client.post_edge(paper_assignment_edge)
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission Paper title UPDATED')
+        assert len(messages) == 0
+
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
@@ -497,8 +514,28 @@ note={Withdrawn}
             weight=1
         ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+        # immediately remove assignment of David Belanger
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
+        # wait for process function delay (5 seconds) and check no email is sent
+        messages = journal.client.get_messages(
+            to='david@mailone.com', subject='[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
+        assert len(messages) == 0
+
+        # add David Belanger again
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+         # wait for process function delay (5 seconds) and check email has been sent
+        time.sleep(6)
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
@@ -508,6 +545,27 @@ note={Withdrawn}
 <p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
+
+        # remove assignment of David Belanger
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
+
+        # check that David Belanger has been removed from reviewer group
+        time.sleep(6)
+        note = journal.client.get_note(note_id_1)
+        group = journal.client.get_group('TMLR/Paper1/Reviewers')
+        assert len(group.members) == 0
+
+        # add David Belanger back
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1
+        ))
 
         forum_notes = journal.client.get_notes(invitation=journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
 
@@ -837,7 +895,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-1')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 4
+        assert len(messages) == 3
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
@@ -1360,7 +1418,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Verification-0-1')
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title VERSION 2')
-        assert len(messages) == 2
+        assert len(messages) == 1
 
         messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
         assert len(messages) == 2
