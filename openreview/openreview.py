@@ -500,26 +500,6 @@ class Client(object):
 
         return response.json()['venues']
 
-    @deprecated(version='1.0.3', reason="Use put_attachment instead")
-    def put_pdf(self, fname):
-        """
-        Uploads a pdf to the openreview server
-
-        :param fname: Path to the pdf
-        :type fname: str
-
-        :return: A relative URL for the uploaded pdf
-        :rtype: str
-        """
-        headers = self.headers.copy()
-
-        with open(fname, 'rb') as f:
-            headers['content-type'] = 'application/pdf'
-            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
-
-        response = self.__handle_response(response)
-        return response.json()['url']
-
     def put_attachment(self, file_path, invitation, name):
         """
         Uploads a file to the openreview server

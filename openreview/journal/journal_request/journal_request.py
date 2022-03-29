@@ -135,7 +135,7 @@ class JournalRequest():
                         }
                     }
                 },
-                process_string = content
+                process = content
             )
 
 
@@ -197,7 +197,7 @@ class JournalRequest():
                         }
                     }
                 },
-                process_string = content
+                process = content
             )
 
             self.post_invitation_edit(invitation = invitation)
@@ -287,7 +287,7 @@ Cheers!'''.replace('{short_name}', short_name)
                         'content': recruitment_content
                     }
                 },
-                process_string = content
+                process = content
             )
 
             self.post_invitation_edit(invitation = invitation)
@@ -318,7 +318,7 @@ Cheers!'''.replace('{short_name}', short_name)
                         'content': recruitment_content
                     }
                 },
-                process_string = content
+                process = content
             )
 
             self.post_invitation_edit(invitation = invitation)
@@ -407,7 +407,7 @@ Cheers!
                         'content': recruitment_content
                     }
                 },
-                process_string = content
+                process = content
             )
 
             self.post_invitation_edit(invitation = invitation)
