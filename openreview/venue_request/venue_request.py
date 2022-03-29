@@ -596,7 +596,9 @@ class VenueRequest():
         self.support_process = os.path.join(os.path.dirname(__file__), 'process/supportProcess.js')
         self.support_pre_process = os.path.join(os.path.dirname(__file__), 'process/request_form_pre_process.py')
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
-        self.invitation_status_process = os.path.join(os.path.dirname(__file__), 'process/invitationStatusProcess.py')
+        self.error_status_process = os.path.join(os.path.dirname(__file__), 'process/error_status_process.py')
+        self.matching_status_process = os.path.join(os.path.dirname(__file__), 'process/matching_status_process.py')
+        self.recruitment_status_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_status_process.py')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
@@ -1190,7 +1192,7 @@ class VenueRequest():
             }
         }
 
-        with open(self.invitation_status_process, 'r') as f:
+        with open(self.recruitment_status_process, 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
             self.recruitment_status_super_invitation = self.client.post_invitation(openreview.Invitation(
@@ -1325,7 +1327,7 @@ class VenueRequest():
             }
         }
 
-        with open(self.invitation_status_process, 'r') as f:
+        with open(self.recruitment_status_process, 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
             self.recruitment_status_super_invitation = self.client.post_invitation(openreview.Invitation(
@@ -1453,7 +1455,7 @@ class VenueRequest():
             }
         }
 
-        with open(self.invitation_status_process, 'r') as f:
+        with open(self.matching_status_process, 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
             self.matching_status_super_invitation = self.client.post_invitation(openreview.Invitation(
@@ -1480,12 +1482,12 @@ class VenueRequest():
 
     def setup_error_status(self):
 
-        with open(self.invitation_status_process, 'r') as f:
+        with open(self.error_status_process, 'r') as f:
             file_content = f.read()
             file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
             self.comment_super_invitation = self.client.post_invitation(openreview.Invitation(
-                id=self.support_group.id + '/-/Error_Status',
+                id=self.support_group.id + '/-/Stage_Error_Status',
                 readers=['everyone'],
                 writers=[self.support_group.id],
                 signatures=[self.support_group.id],
@@ -1525,8 +1527,14 @@ class VenueRequest():
                             'order': 3,
                             'value-regex': '[\\S\\s]{1,200000}',
                             'description': 'Error description (max 200000 characters).',
-                            'required': True,
+                            'required': False,
                             'markdown': True
+                        },
+                        'reference_url': {
+                            'value-regex': '.{1,500}',
+                            'description': 'URL to check references',
+                            'required': False,
+                            'hidden': True
                         }
                     }
                 }

@@ -132,7 +132,7 @@ def process(client, note, invitation):
         from openreview import OpenReviewException
         error_status = json.dumps(e.args[0], indent=2) if isinstance(e, OpenReviewException) else repr(e)
         comment_note = openreview.Note(
-            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Error_Status',
+            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Stage_Error_Status',
             forum=forum_note.id,
             replyto=forum_note.id,
             readers=comment_readers,
@@ -145,10 +145,7 @@ def process(client, note, invitation):
 {error_status}
 ```
 ''',
-                'comment': f'''
-{invitation_type.replace("_", " ")} [{note.id}] Process failed.
-\n
-To check references for the note: https://api.openreview.net/references?id={note.id}'''
+                'reference_url': f'''https://api.openreview.net/references?id={note.id}'''
             }
         )
 

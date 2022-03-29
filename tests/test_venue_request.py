@@ -1,3 +1,5 @@
+import json
+
 import openreview
 import pytest
 import time
@@ -298,18 +300,12 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        comment_invitation = '{}/-/Request{}/Error_Status'.format(venue['support_group_id'],
+        comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = '\n```python\n{\n' \
-                       '  "name": "InvalidFieldError",\n' \
-                       '  "message": "The field value-regexx is not allowed",\n' \
-                       '  "status": 400,\n' \
-                       '  "details": {\n' \
-                       '    "path": "invitation.reply.content.preprint.value-regexx"\n' \
-                       '  }\n' \
-                       '}\n```\n'
-        assert error_string in last_comment.content['error']
+        error = last_comment.content['error']
+        assert 'InvalidFieldError' in error
+        assert 'The field value-regexx is not allowed' in error
 
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -427,7 +423,12 @@ class TestVenueRequest():
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
-        error_string = 'No recruitment invitation was sent to the following users due to the error(s) in the recruitment process'
+        error_string = '{\n ' \
+                       ' "KeyError(\'program\')": [\n' \
+                       '    "reviewer_candidate1@email.com",\n' \
+                       '    "reviewer_candidate2@email.com"\n' \
+                       '  ]\n' \
+                       '}'
         assert error_string in last_comment.content['error']
         assert '0 users' in last_comment.content['invited']
 
@@ -616,7 +617,7 @@ class TestVenueRequest():
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
         assert process_logs[0]['status'] == 'ok'
 
-        comment_invitation = '{}/-/Request{}/Error_Status'.format(venue['support_group_id'],
+        comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
         error_string = '\n```python\nValueError(\'day is out of range for month\')'
@@ -809,7 +810,7 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '{\'name\': \'NotFoundError\', \'message\': \'The requested page could not be found: /expertise\', \'status\': 404}' in matching_status.content['error']
+        assert 'There was an error connecting with the expertise API' in matching_status.content['error']
 
         ## Setup matching with no computation selected
         with pytest.raises(openreview.OpenReviewException, match=r'You need to compute either conflicts or affinity scores or both'):
@@ -877,14 +878,15 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert matching_status.content['without_profile'] == '''
-1 Reviewers without a profile: ['some_user@mail.com']
+        assert matching_status.content['without_profile'] == ['some_user@mail.com']
+        assert '''
+1 Reviewers without a profile.
 
-Affinity scores and/or conflicts could not be computed for these users. You will not be able to run the matcher until all Reviewers have profiles. You have two options:
+Affinity scores and/or conflicts could not be computed for the users listed under 'Without Profile'. You will not be able to run the matcher until all Reviewers have profiles. You have two options:
 
 1. You can ask these users to sign up in OpenReview and upload their papers. After all Reviewers have done this, you will need to rerun the paper matching setup to recompute conflicts and/or affinity scores for all users.
 2. You can remove these users from the Reviewers group: https://openreview.net/group/edit?id=TEST.cc/2030/Conference/Reviewers. You can find all users without a profile by searching for the '@' character in the search box.
-'''
+''' in matching_status.content['comment']
 
         scores_invitation = client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation

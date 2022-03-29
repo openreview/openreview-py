@@ -410,7 +410,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         super=SUPPORT_GROUP + '/-/Recruitment_Status',
         reply={
             'forum': forum.id,
-            'referent': forum.id,
             'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values': readers
@@ -424,7 +423,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         super=SUPPORT_GROUP + '/-/Remind_Recruitment_Status',
         reply={
             'forum': forum.id,
-            'referent': forum.id,
             'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values': readers
@@ -438,7 +436,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         super=SUPPORT_GROUP + '/-/Paper_Matching_Setup_Status',
         reply={
             'forum': forum.id,
-            'referent': forum.id,
             'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values': readers
@@ -448,11 +445,10 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     ))
 
     client.post_invitation(openreview.Invitation(
-        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Error_Status',
-        super=SUPPORT_GROUP + '/-/Error_Status',
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Stage_Error_Status',
+        super=SUPPORT_GROUP + '/-/Stage_Error_Status',
         reply={
             'forum': forum.id,
-            'referent': forum.id,
             'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values': readers

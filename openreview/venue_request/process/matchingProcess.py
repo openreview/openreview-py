@@ -52,23 +52,20 @@ def process(client, note, invitation):
         error_status = f'''{len(matching_status.get('error'))} error(s): 
         `{matching_status.get('error')}`'''
         comment_note.content['error'] = error_status
-        comment_note.content['comment'] += f'''
-
-To check references for the note: https://api.openreview.net/references?id={note.id}
-'''
 
     else:
-        no_profiles_status = matching_status.get('no_profiles')
-        if no_profiles_status:
+        no_profiles_members = matching_status.get('no_profiles')
+        if no_profiles_members:
             without_profiles_status = f'''
-{len(no_profiles_status)} {role_name} without a profile: {no_profiles_status}
+{len(no_profiles_members)} {role_name} without a profile.
 
-Affinity scores and/or conflicts could not be computed for these users. You will not be able to run the matcher until all {role_name} have profiles. You have two options:
+Affinity scores and/or conflicts could not be computed for the users listed under 'Without Profile'. You will not be able to run the matcher until all {role_name} have profiles. You have two options:
 
 1. You can ask these users to sign up in OpenReview and upload their papers. After all {role_name} have done this, you will need to rerun the paper matching setup to recompute conflicts and/or affinity scores for all users.
 2. You can remove these users from the {role_name} group: https://openreview.net/group/edit?id={matching_group}. You can find all users without a profile by searching for the '@' character in the search box.
 '''
-            comment_note.content['without_profile'] = without_profiles_status
+            comment_note.content['without_profile'] = no_profiles_members
+            comment_note.content['comment'] += f'''{without_profiles_status}'''
         else:
             profiles_status = f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group?id={conference.get_program_chairs_id()}
 
@@ -77,8 +74,11 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             comment_note.content['comment'] += f'''{profiles_status}'''
 
         if matching_status.get('no_publications'):
-            no_publications_status = f'''{len(matching_status.get('no_publications'))} {role_name} with no publications: {matching_status.get('no_publications')}'''
-            no_publications_status = no_publications_status.replace('~', '\~')
-            comment_note.content['without_publication'] = no_publications_status
+            no_publication_members = matching_status.get('no_publications')
+            no_publications_status = f'''{len(matching_status.get('no_publications'))} {role_name} listed under 'Without Publication' don't have any publications.'''
+            # no_publications_status = no_publications_status.replace('~', '\~')
+            comment_note.content['without_publication'] = no_publication_members
+            comment_note.content['comment'] += f'''
+            \n{no_publications_status}'''
 
     client.post_note(comment_note)
