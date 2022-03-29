@@ -2073,7 +2073,6 @@ class Invitation(object):
         self.bulk = bulk
         self.details = details
         self.reply_forum_views = reply_forum_views
-        self.web = None
         self.process = process
         self.preprocess = preprocess
         self.date_processes = date_processes
