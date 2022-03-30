@@ -15,7 +15,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -1015,6 +1015,16 @@ class VenueRequest():
     def setup_venue_post_submission(self):
 
         post_submission_content = {
+            'submission_readers': {
+                'description': 'Please select who should have access to the submissions after the submission deadline.',
+                'value-radio': [
+                    'All program commitee (all reviewers, all area chairs, all senior area chairs)',
+                    'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)',
+                    'Everyone (submissions are public)'
+                ],
+                'default': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)',
+                'required': False
+            },
             'force': {
                 'value-radio': ['Yes', 'No'],
                 'required': True,
@@ -1024,16 +1034,6 @@ class VenueRequest():
                 'values-regex': '.*',
                 'required': False,
                 'description': 'Comma separated values of submission fields to be hidden, author names are already hidden.'
-            },
-            'submission_readers': {
-                'description': 'If you selected that submissions should be private, please select who should have access to the submissions after the submission deadline.',
-                'value-radio': [
-                    'All program commitee (all reviewers, all area chairs, all senior area chairs)',
-                    'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)'
-                ],
-                'default': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)',
-                'order': 23,
-                'required': False
             }
         }
 
