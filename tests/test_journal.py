@@ -2648,6 +2648,43 @@ note={Withdrawn}
             weight=1
         ))
 
+        ## Ask solitic review with a conflict
+        tom_client = OpenReviewClient(username='tom@mail.com', password='1234')
+        solitic_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Solicit_Review',
+            signatures=['~Tom_Rain1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=solitic_review_note['id'])
+
+        ## Post a response
+        solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Tom_Rain1_Solicit_Review_Approval',
+            signatures=[f"{venue_id}/Paper7/Action_Editors"],
+            note=Note(
+                forum=note_id_7,
+                replyto=solitic_review_note['note']['id'],
+                content={
+                    'decision': { 'value': 'No, I decline the solitic review.' },
+                    'comment': { 'value': 'Sorry, all the reviewers were assigned.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=solitic_review_approval_note['id'])
+
+        messages = journal.client.get_messages(to = 'tom@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 7" was not accepted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Tom Rain,</p>
+<p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: <a href=\"https://openreview.net/forum?id={note_id_7}&amp;noteId={solitic_review_approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_7}&amp;noteId={solitic_review_approval_note['note']['id']}</a>.</p>
+<p>Respectfully,</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
         ## Post the submission 8
         submission_note_8 = test_client.post_note_edit(invitation='TMLR/-/Submission',
             signatures=['~SomeFirstName_User1'],

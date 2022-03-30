@@ -269,3 +269,13 @@ class GroupBuilder(object):
                 signatures=[venue_id],
                 signatories=[],
                 members=[]))
+
+        declined_solicit_reviewers_id = journal.get_solicit_reviewers_id(number=note.number, declined=True)
+        declined_solicit_reviewers_group = openreview.tools.get_group(self.client, declined_solicit_reviewers_id)
+        if not declined_solicit_reviewers_group:
+            self.client.post_group(Group(id=declined_solicit_reviewers_id,
+                readers=[venue_id, action_editors_group_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[],
+                members=[]))
