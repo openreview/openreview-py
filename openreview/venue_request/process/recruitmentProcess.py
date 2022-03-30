@@ -61,15 +61,17 @@ def process(client, note, invitation):
         allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No')
     )
 
-    already_invited_status=f'''
-    No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.
-    ''' if recruitment_status.get('already_invited') else ''
-    already_invited_members = recruitment_status.get('already_invited') if recruitment_status.get('already_invited') else ''
+    already_invited_status='No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' if recruitment_status.get('already_invited') else ''
+    already_invited_members = recruitment_status.get('already_invited') if recruitment_status.get('already_invited') else []
 
-    already_member_status=f'''
-    No recruitment invitation was sent to the users listed under \'Already Member\' because they are already members of the group.
-    ''' if recruitment_status.get('already_member') else ''
-    already_members = recruitment_status.get('already_member') if recruitment_status.get('already_member') else ''
+    already_member_status='No recruitment invitation was sent to the users listed under \'Already Member\' because they are already members of the group.' if recruitment_status.get('already_member') else ''
+    already_members = recruitment_status.get('already_member') if recruitment_status.get('already_member') else []
+
+    comment = '\n'
+    if already_invited_status:
+        comment += already_invited_status + '\n\n'
+    if already_member_status:
+        comment += already_member_status + '\n\n'
 
     comment_note = openreview.Note(
         invitation = note.invitation.replace('Recruitment', 'Recruitment_Status'),
@@ -83,10 +85,7 @@ def process(client, note, invitation):
             'invited': f'''{len(recruitment_status.get('invited', []))} users''',
             'already_invited': already_invited_members,
             'already_member': already_members,
-            'comment': f'''
-            {already_invited_status} \n
-            {already_member_status} \n
-Please check the invitee group to see more details: https://openreview.net/group?id={conference.id}/{role_name}/Invited
+            'comment': comment + f'''Please check the invitee group to see more details: https://openreview.net/group?id={conference.id}/{role_name}/Invited
             '''
         }
     )

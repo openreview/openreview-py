@@ -179,7 +179,7 @@ class TestNeurIPSConference():
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
         assert '1 users' in recruitment_status_notes[0].content['invited']
-        assert 'No recruitment invitation was sent to the following users because they have already been invited:\n\n{\'aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited\': [\'~Area_CMUChair1\']}' in recruitment_status_notes[0].content['already_invited']
+        assert {'aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited': ['~Area_CMUChair1']} == recruitment_status_notes[0].content['already_invited']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
 
         ## Accept to be a reviewer
@@ -257,7 +257,7 @@ class TestNeurIPSConference():
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
         assert '0 users' in recruitment_status_notes[0].content['invited']
-        assert 'No recruitment invitation was sent to the following users because they are already members of the group:\n\n{\'aclweb.org/ACL/ARR/2021/September/Area_Chairs\': [\'previous_ac@mail.com\']}' in recruitment_status_notes[0].content['already_member']
+        assert {'aclweb.org/ACL/ARR/2021/September/Area_Chairs': ['previous_ac@mail.com']} == recruitment_status_notes[0].content['already_member']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
 
         reviewer_details = '''previous_ac@mail.com, Previous AC'''

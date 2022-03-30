@@ -1163,14 +1163,14 @@ class VenueRequest():
                 'order': 2
             },
             'already_invited': {
-                'value-regex': '[\\S\\s]{0,100000}',
+                'value-dict': {},
                 'description': 'List of users already invited',
                 'required': False,
                 'markdown': True,
                 'order': 3
             },
             'already_member': {
-                'value-regex': '[\\S\\s]{0,100000}',
+                'value-dict': {},
                 'description': 'List of users who are already a member of the group',
                 'required': False,
                 'markdown': True,
@@ -1426,14 +1426,14 @@ class VenueRequest():
                 'order': 1
             },
             'without_profile': {
-                'value-regex': '[\\S\\s]{0,200000}',
+                'values-regex': '.*',
                 'description': 'List of users without profile',
                 'required': False,
                 'markdown': True,
                 'order': 2
             },
             'without_publication': {
-                'value-regex': '[\\S\\s]{0,200000}',
+                'values-regex': '.*',
                 'description': 'List of users without publication',
                 'required': False,
                 'markdown': True,
@@ -1513,7 +1513,7 @@ class VenueRequest():
                         'title': {
                             'order': 1,
                             'value-regex': '.{1,500}',
-                            'description': 'Invitation/Stage Name',
+                            'description': 'Failed Invitation/Stage Name',
                             'required': True
                         },
                         'error': {
@@ -1531,8 +1531,16 @@ class VenueRequest():
                             'markdown': True
                         },
                         'reference_url': {
+                            'order': 4,
                             'value-regex': '.{1,500}',
                             'description': 'URL to check references',
+                            'required': False,
+                            'hidden': True
+                        },
+                        'stage_name': {
+                            'order': 5,
+                            'value-regex': '.{1,500}',
+                            'description': 'Invitation/Stage Name',
                             'required': False,
                             'hidden': True
                         }

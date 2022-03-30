@@ -4,9 +4,8 @@ def process(client, note, invitation):
 
     forum_note = client.get_note(note.forum)
     subject = f'''{note.content['title']} for service: {forum_note.content['title']}'''
-    message = f'''A comment was posted to your service request. 
-\n\nComment title: {note.content['title']} 
-\n\nComment: {note.content['error']} 
+    message = f'''An error occurred while running the stage {note.content['stage_name']} your service request. 
+\n\nError: {note.content['error']} 
 \n\nTo view the comment, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}
 '''
 

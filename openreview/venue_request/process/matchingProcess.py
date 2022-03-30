@@ -54,7 +54,7 @@ def process(client, note, invitation):
         comment_note.content['error'] = error_status
 
     else:
-        no_profiles_members = matching_status.get('no_profiles')
+        no_profiles_members = matching_status.get('no_profiles', [])
         if no_profiles_members:
             without_profiles_status = f'''
 {len(no_profiles_members)} {role_name} without a profile.

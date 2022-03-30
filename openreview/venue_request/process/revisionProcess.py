@@ -145,7 +145,8 @@ def process(client, note, invitation):
 {error_status}
 ```
 ''',
-                'reference_url': f'''https://api.openreview.net/references?id={note.id}'''
+                'reference_url': f'''https://api.openreview.net/references?id={note.id}''',
+                'stage_name': '{invitation}'.format(invitation=invitation_type.replace("_", " "))
             }
         )
 
