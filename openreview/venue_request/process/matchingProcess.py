@@ -23,14 +23,14 @@ def process(client, note, invitation):
         matching_status = conference.setup_committee_matching(matching_group, compute_affinity_scores, compute_conflicts)
     except Exception as e:
         if 'Submissions not found.' in str(e):
-            matching_status['error'] = ['Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.']
+            matching_status['error'] = 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.'
         elif 'The match group is empty' in str(e):
-            matching_status['error'] = [f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.']
+            matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.'
         elif 'The alternate match group is empty' in str(e):
             role_name = conference.get_area_chairs_name()
-            matching_status['error'] = [f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.']
+            matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.'
         else:
-            matching_status['error'] = [str(e)]
+            matching_status['error'] = str(e)
 
     print("Following error in the process function was posted as a comment:")
     print(traceback.format_exc())
@@ -49,8 +49,8 @@ def process(client, note, invitation):
     )
 
     if matching_status.get('error'):
-        error_status = f'''{len(matching_status.get('error'))} error(s): 
-        `{matching_status.get('error')}`'''
+        error_status = f'''{len(matching_status.get('error'))} error(s): \n
+        {matching_status.get('error')}'''
         comment_note.content['error'] = error_status
 
     else:

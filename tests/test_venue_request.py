@@ -752,7 +752,7 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '1 error(s): \n        `["Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button."]`' in matching_status.content['error']
+        assert 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.' in matching_status.content['error']
 
         conference.setup_post_submission_stage(force=True)
 
@@ -783,7 +783,7 @@ class TestVenueRequest():
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '1 error(s): \n        `["Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers."]`' in matching_status.content['error']
+        assert 'Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers.' in matching_status.content['error']
 
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer1')
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer2')
