@@ -556,10 +556,10 @@ class TestNeurIPSConference():
 
         # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
-        notes = selenium.find_element_by_id("notes")
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
+        notes = selenium.find_element_by_id('notes')
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name('h3')
         assert messages
         assert 'Thank you for accepting this invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -608,7 +608,7 @@ Thank you for accepting the invitation to serve as area chair for the paper numb
 
         # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True)
+        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -636,7 +636,7 @@ You have declined the invitation to serve as area chair for the paper number: 4,
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
-        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
         header = selenium.find_element_by_id("header")
         assert header
         url = header.find_element_by_id("edge_browser_url")
@@ -658,7 +658,7 @@ You have declined the invitation to serve as area chair for the paper number: 4,
 
         # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -713,7 +713,7 @@ The Reviewer Reviewer ARR Facebook(<a href=\"mailto:reviewer_arr4@fb.com\">revie
 
         # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True)
+        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -749,7 +749,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
-        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
         header = selenium.find_element_by_id("header")
         assert header
         url = header.find_element_by_id("edge_browser_url")
@@ -794,7 +794,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace(
             'https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, by='class name', wait_for_element='important_message')
 
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'This submission is no longer under review. No action is required from your end.' == error_message.text

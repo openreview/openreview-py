@@ -4,6 +4,7 @@ import openreview
 import pytest
 import time
 import datetime
+from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from openreview import VenueRequest
 import csv
@@ -244,7 +245,7 @@ class TestVenueRequest():
     def test_venue_revision_error(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
-        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
@@ -310,7 +311,7 @@ class TestVenueRequest():
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
-        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
@@ -366,7 +367,7 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
         header_div = selenium.find_element_by_id('header')
         assert header_div
         title_tag = header_div.find_element_by_tag_name('h1')
@@ -661,7 +662,7 @@ class TestVenueRequest():
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
         assert process_logs[0]['status'] == 'ok'
 
-        request_page(selenium, reviewer_url, reviewer_client.token)
+        request_page(selenium, reviewer_url, reviewer_client.token, By.LINK_TEXT, wait_for_element='Reviewer Bid')
         assert selenium.find_element_by_link_text('Reviewer Bid')
 
     def test_venue_matching_setup(self, client, test_client, selenium, request_page, helpers, venue):
@@ -969,7 +970,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert reviewer_group and len(reviewer_group.members) == 2
 
         reviewer_page_url = 'http://localhost:3030/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
-        request_page(selenium, reviewer_page_url, token=reviewer_client.token)
+        request_page(selenium, reviewer_page_url, token=reviewer_client.token, by=By.LINK_TEXT, wait_for_element='test submission')
 
         note_div = selenium.find_element_by_id('note-summary-1')
         assert note_div
@@ -1028,7 +1029,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert ac_group and len(ac_group.members) == 1
 
         ac_page_url = 'http://localhost:3030/group?id={}/Area_Chairs'.format(venue['venue_id'])
-        request_page(selenium, ac_page_url, token=meta_reviewer_client.token)
+        request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='1-metareview-status')
 
         submit_div_1 = selenium.find_element_by_id('1-metareview-status')
         with pytest.raises(NoSuchElementException):
@@ -1075,7 +1076,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert process_logs[0]['status'] == 'ok'
 
         # Assert that AC now see the Submit button for assigned papers
-        request_page(selenium, ac_page_url, token=meta_reviewer_client.token)
+        request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='note-summary-2')
 
         note_div_1 = selenium.find_element_by_id('note-summary-1')
         assert note_div_1
@@ -1318,7 +1319,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         blind_submissions = author_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
 
-        author_page_url = 'http://localhost:3030/forum?id={}'.format(blind_submissions[0].forum)
+        author_page_url = 'http://localhost:3030/forum?id={}'.format(blind_submissions[0].forum, by=By.CLASS_NAME, wait_for_element='edit_button')
         request_page(selenium, author_page_url, token=author_client.token)
 
         meta_actions = selenium.find_elements_by_class_name('meta_actions')
