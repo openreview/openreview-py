@@ -59,7 +59,7 @@ function load() {
   })
   .then(function(notes){
     return notes.filter(function(note){
-      return !(note.original);
+      return !(note.original) && note.readers.includes('everyone');
     });
   });
 
@@ -280,6 +280,19 @@ function renderContent(authoredNotes, edgesMap) {
     });
   }
   updateNotes(authoredNotes);
+
+  //Mark task a complete
+  if (_.isEmpty(edgesMap)) {
+    Webfield.post('/edges', {
+      invitation: EXPERTISE_BID_ID,
+      readers: [CONFERENCE_ID, user.profile.id],
+      writers: [CONFERENCE_ID, user.profile.id],
+      signatures: [user.profile.id],
+      head: 'xf0zSBd2iufMg', //OpenReview paper
+      tail: user.profile.id,
+      label: 'Exclude'
+    });
+  }
 }
 
 function addEdgesToNotes(notesArray, edgesMap) {
