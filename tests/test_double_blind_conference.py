@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
+from asyncio import wait_for
 import openreview
 import pytest
 import requests
@@ -179,7 +180,7 @@ class TestDoubleBlindConference():
         assert '"deadline": "Submission Deadline: Midnight Pacific Time, Friday, November 16, 2018"' in groups[2].web
         #assert "var BLIND_SUBMISSION_ID = 'AKBC.ws/2019/Conference/-/Blind_Submission';" in groups[2].web
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='notes')
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
@@ -241,7 +242,7 @@ class TestDoubleBlindConference():
         assert posted_invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 10))
         assert posted_invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='notes')
 
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
@@ -338,7 +339,7 @@ class TestDoubleBlindConference():
         test_client.post_note(note)
 
         # Author user
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", test_client.token, wait_for_element='your-consoles')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -354,7 +355,7 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Authors", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Authors", test_client.token, wait_for_element='your-submissions')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -363,7 +364,7 @@ class TestDoubleBlindConference():
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='your-consoles')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -378,7 +379,7 @@ class TestDoubleBlindConference():
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
 
         # Co-author user
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", peter_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", peter_client.token, wait_for_element='your-consoles')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -394,7 +395,7 @@ class TestDoubleBlindConference():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Authors", peter_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Authors", peter_client.token, wait_for_element='your-submissions')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -735,7 +736,7 @@ class TestDoubleBlindConference():
         assert group
         assert len(group.members) == 0
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Program_Chairs", client.token)
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Program_Chairs", client.token, by='link text', wait_for_element='Paper Status')
         assert selenium.find_element_by_link_text('Paper Status')
         assert selenium.find_element_by_link_text('Area Chair Status')
         assert selenium.find_element_by_link_text('Reviewer Status')
@@ -780,7 +781,7 @@ class TestDoubleBlindConference():
         assert 'peter@mail.com' in notes[0].writers
         assert 'andrew@mail.com' in notes[0].writers
 
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='edit_button')
 
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
@@ -941,7 +942,7 @@ class TestDoubleBlindConference():
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 2
@@ -962,7 +963,7 @@ class TestDoubleBlindConference():
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
         submission = notes[0]
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
@@ -987,13 +988,13 @@ class TestDoubleBlindConference():
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com', 'reviewer@domain.com'])
 
-        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token, by=By.CLASS_NAME, wait_for_element='note')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
         assert len(notes) == 3
 
-        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token)
+        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token, by=By.CLASS_NAME, wait_for_element='note')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
@@ -1003,19 +1004,19 @@ class TestDoubleBlindConference():
         builder.set_bid_stage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Area_Chairs/-/Affinity_Score'])
         conference = builder.get_result()
 
-        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token, by=By.CLASS_NAME, wait_for_element='note')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
         assert len(notes) == 3
 
-        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token)
+        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token, by=By.CLASS_NAME, wait_for_element='note')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
         assert len(notes) == 3
 
-        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token)
+        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token, by=By.CLASS_NAME, wait_for_element='note')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
@@ -1031,19 +1032,19 @@ class TestDoubleBlindConference():
 
         conference.setup_matching(affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), build_conflicts=True)
 
-        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer_client.token, by=By.CLASS_NAME, wait_for_element='note')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
         assert not notes
 
-        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token)
+        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Reviewers/-/Bid", reviewer2_client.token, by=By.CLASS_NAME, wait_for_element='note')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
         assert len(notes) == 1
 
-        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token)
+        request_page(selenium, "http://localhost:3030/invitation?id=AKBC.ws/2019/Conference/Area_Chairs/-/Bid", ac_client.token, by=By.CLASS_NAME, wait_for_element='note')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         notes = selenium.find_elements_by_class_name('note')
@@ -1074,14 +1075,14 @@ class TestDoubleBlindConference():
         conference.set_assignment('reviewer2@mail.com', submission.number)
 
         # Reviewer
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
 
         # Author
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
@@ -1479,7 +1480,7 @@ class TestDoubleBlindConference():
         #Program chair user
         pc_client = openreview.Client(baseurl = 'http://localhost:3000', username='pc@mail.com', password='1234')
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", pc_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", pc_client.token, wait_for_element='your-consoles')
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
@@ -1489,7 +1490,7 @@ class TestDoubleBlindConference():
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Program_Chairs#paper-status", pc_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference/Program_Chairs#paper-status", pc_client.token, wait_for_element='paper-status')
         assert "AKBC 2019 Conference Program Chairs | OpenReview" in selenium.title
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
@@ -1518,7 +1519,7 @@ class TestDoubleBlindConference():
 
         #area chair to reassign reviewer
         ac_client=openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
-        request_page(selenium,"http://localhost:3030/group?id=AKBC.ws/2019/Conference/Area_Chairs",ac_client.token)
+        request_page(selenium,"http://localhost:3030/group?id=AKBC.ws/2019/Conference/Area_Chairs",ac_client.token, by=By.XPATH, wait_for_element='//*[@id="1-reviewer-progress"]/a')
 
         show_Reviewers_AnchorTag=selenium.find_element_by_xpath('//*[@id="1-reviewer-progress"]/a')
         selenium.execute_script("arguments[0].click()",show_Reviewers_AnchorTag) #click on "show reviewers anchor tag"
@@ -2024,7 +2025,7 @@ url={'''
                                                              'Accept (Oral)': 'Accepted oral papers',
                                                              'Reject': 'Reject'})
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='reject')
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
@@ -2083,7 +2084,7 @@ url={'''
 
         conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={'Accept (Poster)': 'Accepted poster papers', 'Accept (Oral)': 'Accepted oral papers', 'Reject': 'Reject'})
 
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference")
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='reject')
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
