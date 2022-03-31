@@ -121,7 +121,7 @@ def firefox_options(firefox_options):
 
 @pytest.fixture
 def request_page():
-    def request(selenium, url, token = None, alert=False, wait_for_element='content'):
+    def request(selenium, url, token = None, alert=False, by=By.ID, wait_for_element='content'):
         if token:
             selenium.get('http://localhost:3030')
             selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax'})
@@ -138,7 +138,7 @@ def request_page():
                 print("No alert is present")
 
         try:
-            element_present = EC.presence_of_element_located((By.ID, wait_for_element))
+            element_present = EC.presence_of_element_located((by, wait_for_element))
             WebDriverWait(selenium, timeout).until(element_present)
             time.sleep(5) ## temporally sleep time to wait until the whole page is loaded
         except TimeoutException:
