@@ -1491,7 +1491,7 @@ class VenueRequest():
                 readers=['everyone'],
                 writers=[self.support_group.id],
                 signatures=[self.support_group.id],
-                invitees=['everyone'],
+                invitees=[self.support_group.id],
                 process_string=file_content,
                 reply={
                     'forum': None,
