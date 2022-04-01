@@ -777,18 +777,18 @@ class VenueRequest():
                     'Submissions and reviews should both be public.'
                 ],
                 'order': 22,
-                'required': True
+                'required': False,
+                'hidden': True
             },
             'submission_readers': {
-                'description': 'Please select who should have access to the submissions after the submission deadline.',
+                'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
-                    'All program commitee (all reviewers, all area chairs, all senior area chairs)',
-                    'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)',
+                    'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                    'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                     'Everyone (submissions are public)'
                 ],
-                'default': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)',
                 'order': 23,
-                'required': False
+                'required': True
             },
             'submissions_visibility': {
                 'description': 'This option is only available for non-blind, public submissions. Double-blind submissions will be released to their respective readers after the submission deadline.',
@@ -1016,14 +1016,13 @@ class VenueRequest():
 
         post_submission_content = {
             'submission_readers': {
-                'description': 'Please select who should have access to the submissions after the submission deadline.',
+                'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
-                    'All program commitee (all reviewers, all area chairs, all senior area chairs)',
-                    'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)',
+                    'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                    'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                     'Everyone (submissions are public)'
                 ],
-                'default': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs)',
-                'required': False
+                'required': True
             },
             'force': {
                 'value-radio': ['Yes', 'No'],

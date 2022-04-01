@@ -65,6 +65,7 @@ class TestMultipleRoles():
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'reviewer_roles': ['Program_Committee', 'Senior_Program_Committee']
@@ -173,7 +174,11 @@ class TestMultipleRoles():
             note = test_client.post_note(note)
 
         post_submission_note=pc_client.post_note(openreview.Note(
-            content= { 'force': 'Yes', 'hide_fields': ['keywords'] },
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+            },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
             readers= ['lifelong-ml.cc/CoLLAs/2022/Conference/Program_Chairs', 'openreview.net/Support'],
