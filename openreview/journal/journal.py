@@ -452,7 +452,12 @@ class Journal(object):
                     signature_members.append(signature)
                 else:
                     signature_members = signature_members + signature['members']
+            for signature in reply.signatures:
+                if signature.startswith('~'):
+                    signature_members.append(signature)
 
+        print('invitee_members', invitee_members)
+        print('signature_members', signature_members)
         return list(set(invitee_members) - set(signature_members))
 
     def notify_readers(self, edit, content_fields=[]):

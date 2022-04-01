@@ -623,7 +623,7 @@ note={Withdrawn}
 <p>Task: Reviewer Assignment<br>
 Submission: Paper title UPDATED<br>
 Number of days late: 1<br>
-Link: <a href=\"https://openreview/group?id=TMLR/Action_Editors#action-editor-tasks\">https://openreview/group?id=TMLR/Action_Editors#action-editor-tasks</a></p>
+Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks\">https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks</a></p>
 <p>Please follow the provided link and complete your task ASAP.</p>
 <p>We thank you for your cooperation.</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -871,7 +871,7 @@ Comment: This is an inapropiate comment</p>
 <p>Task: Review<br>
 Submission: Paper title UPDATED<br>
 Number of days late: 1<br>
-Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/forum?id={note_id_1}</a></p>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>Please follow the provided link and complete your task ASAP.</p>
 <p>We thank you for your cooperation.</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -905,7 +905,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 <p>Task: Review<br>
 Reviewer: Carlos Mondragon<br>
 Submission: Paper title UPDATED<br>
-Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/forum?id={note_id_1}</a></p>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>Please follow up directly with the reviewer in question to ensure they complete their task ASAP.</p>
 <p>We thank you for your cooperation.</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -932,7 +932,7 @@ Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/for
 <p>Task: Assignment Acknowledgement<br>
 Submission: Paper title UPDATED<br>
 Number of days late: 1<br>
-Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/forum?id={note_id_1}</a></p>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>Please follow the provided link and complete your task ASAP.</p>
 <p>We thank you for your cooperation.</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -1429,7 +1429,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 <p>Our records show that the AE for submission Paper title VERSION 2 is <em>one week</em> late on an AE task::</p>
 <p>Task: Camera Ready Verification<br>
 AE: Joelle Pineau<br>
-Link: <a href=\"https://openreview/forum?id={note_id_1}\">https://openreview/forum?id={note_id_1}</a></p>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>OpenReview Team</p>
 '''
 
