@@ -90,6 +90,10 @@ def process(client, note, invitation):
         }
     )
     if recruitment_status['errors']:
-        comment_note.content['error'] = json.dumps(recruitment_status.get('errors'), indent=2)
+        comment_note.content['error'] = f'''
+```python
+{json.dumps(recruitment_status.get('errors'), indent=2)}
+```
+'''
 
     client.post_note(comment_note)

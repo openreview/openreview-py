@@ -112,6 +112,10 @@ class TestVenueRequest():
         assert venue.comment_super_invitation
         assert venue.recruitment_super_invitation
         assert venue.venue_revision_invitation
+        assert venue.matching_setup_super_invitation
+        assert venue.matching_status_super_invitation
+        assert venue.recruitment_status_process
+        assert venue.error_status_super_invitation
 
     def test_venue_deployment(self, client, selenium, request_page, helpers):
 
