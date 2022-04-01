@@ -1486,7 +1486,7 @@ class VenueRequest():
             file_content = f.read()
             file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
-            self.comment_super_invitation = self.client.post_invitation(openreview.Invitation(
+            self.error_status_super_invitation = self.client.post_invitation(openreview.Invitation(
                 id=self.support_group.id + '/-/Stage_Error_Status',
                 readers=['everyone'],
                 writers=[self.support_group.id],
