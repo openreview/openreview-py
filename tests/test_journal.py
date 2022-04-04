@@ -2669,7 +2669,7 @@ note={Withdrawn}
                 forum=note_id_7,
                 replyto=solitic_review_note['note']['id'],
                 content={
-                    'decision': { 'value': 'No, I decline the solitic review.' },
+                    'decision': { 'value': 'No, I decline the solicit review.' },
                     'comment': { 'value': 'Sorry, all the reviewers were assigned.' }
                 }
             )
