@@ -78,8 +78,11 @@ class Journal(object):
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
 
-    def get_solicit_reviewers_id(self, number=None):
-        return self.__get_group_id(self.solicit_reviewers_name, number)
+    def get_solicit_reviewers_id(self, number=None, declined=False):
+        group_id = self.__get_group_id(self.solicit_reviewers_name, number)
+        if declined:
+            group_id = group_id + '/Declined'
+        return group_id
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
