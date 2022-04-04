@@ -24,7 +24,7 @@ Our records show that you are late on the current action editor task:
   Task: {task}
   Submission: {submission.content['title']['value']}
   Number of days late: {abs((now - duedate).days)}
-  Link: https://openreview/forum?id={submission.id}
+  Link: https://openreview.net/forum?id={submission.id}
 
 Please follow the provided link and complete your task ASAP.
 
@@ -50,7 +50,7 @@ Our records show that the AE for submission {submission.content['title']['value'
 
 Task: {task}
 AE: {profile.get_preferred_name(pretty=True)}
-Link: https://openreview/forum?id={submission.id}
+Link: https://openreview.net/forum?id={submission.id}
 
 OpenReview Team
 ''',

@@ -367,7 +367,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'invitees': { 'const': ['${params.reviewerId}'] },
                     'readers': { 'const': [venue_id, '${params.reviewerId}'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
+                    'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1},
                     'duedate': { 'const': '${params.duedate}' },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
@@ -1191,7 +1191,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'noninvitees': { 'const': [editors_in_chief_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
+                    'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1},
                     'duedate': { 'const': '${params.duedate}' },
                     'process': { 'const': paper_process },
@@ -1510,7 +1510,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(id=under_review_invitation_id,
             invitees=[venue_id],
-            noninvitees=[self.journal.get_editors_in_chief_id()],
+            #noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[self.journal.get_editors_in_chief_id()],
@@ -1572,7 +1572,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(id=desk_rejection_invitation_id,
             invitees=[venue_id],
-            noninvitees=[self.journal.get_editors_in_chief_id()],
+            #noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -2457,7 +2457,7 @@ If you have questions after reviewing the points below that are not answered on 
                                         'type': 'string',
                                         'enum': [
                                             'Yes, I approve the solicit review.',
-                                            'No, I decline the solitic review.'
+                                            'No, I decline the solicit review.'
                                         ]
                                     },
                                     'presentation': {
@@ -2802,7 +2802,7 @@ If you have questions after reviewing the points below that are not answered on 
             invitees=[venue_id, paper_action_editors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editors_in_chief_id],
             maxReplies=1,
             minReplies=1,
             edit={
@@ -3137,7 +3137,7 @@ If you have questions after reviewing the points below that are not answered on 
             invitees=[venue_id, paper_action_editors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editors_in_chief_id],
             edit={
                 'signatures': { 'const': [ paper_action_editors_id ] },
                 'readers': { 'const': [ venue_id, paper_action_editors_id ] },
