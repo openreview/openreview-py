@@ -24,7 +24,7 @@ Our records show that you are late on the current reviewing task:
   Task: {task}
   Submission: {submission.content['title']['value']}
   Number of days late: {abs((now - duedate).days)}
-  Link: https://openreview/forum?id={submission.id}
+  Link: https://openreview.net/forum?id={submission.id}
 
 Please follow the provided link and complete your task ASAP.
 
@@ -51,7 +51,7 @@ Our records show that a reviewer on a paper you are the AE for is *one week* lat
 Task: {task}
 Reviewer: {profile.get_preferred_name(pretty=True)}
 Submission: {submission.content['title']['value']}
-Link: https://openreview/forum?id={submission.id}
+Link: https://openreview.net/forum?id={submission.id}
 
 Please follow up directly with the reviewer in question to ensure they complete their task ASAP.
 
