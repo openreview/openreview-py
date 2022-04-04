@@ -2680,7 +2680,7 @@ note={Withdrawn}
         messages = journal.client.get_messages(to = 'tom@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 7" was not accepted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Tom Rain,</p>
-<p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: <a href=\"https://openreview.net/forum?id={note_id_7}&amp;noteId={solitic_review_approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_7}&amp;noteId={solitic_review_approval_note['note']['id']}</a>.</p>
+<p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: <a href=\"https://openreview.net/forum?id={note_id_7}&amp;noteId={solicit_review_approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_7}&amp;noteId={solicit_review_approval_note['note']['id']}</a>.</p>
 <p>Respectfully,</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
