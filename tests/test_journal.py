@@ -1678,8 +1678,8 @@ note={Retracted after acceptance}
         edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert len(edges) == 4
 
-        ## Ask solitic review with a conflict
-        solitic_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
+        ## Ask solicit review with a conflict
+        solicit_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
             signatures=['~Tom_Rain1'],
             note=Note(
                 content={
@@ -1689,14 +1689,14 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solitic_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been submitted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>This is to inform you that an OpenReview user has requested to review TMLR submission Paper title 4, which you are the AE for.</p>
 <p>Please consult the request and either accept or reject it, by visiting this link:</p>
-<p><a href=\"https://openreview.net/forum?id={note_id_4}&amp;noteId={solitic_review_note['note']['id']}\">https://openreview.net/forum?id={note_id_4}&amp;noteId={solitic_review_note['note']['id']}</a></p>
+<p><a href=\"https://openreview.net/forum?id={note_id_4}&amp;noteId={solicit_review_note['note']['id']}\">https://openreview.net/forum?id={note_id_4}&amp;noteId={solicit_review_note['note']['id']}</a></p>
 <p>We ask that you provide a response within 1 week, by {(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (<a href=\"https://openreview.net/profile?id=~Tom_Rain1\">https://openreview.net/profile?id=~Tom_Rain1</a>) before making a decision.</p>
 <p>We thank you for your contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -1704,11 +1704,11 @@ note={Retracted after acceptance}
 
         ## Post a response
         with pytest.raises(openreview.OpenReviewException, match=r'Can not approve this solicit review: conflict detected for ~Tom_Rain1'):
-            solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Solicit_Review_Approval',
+            solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Solicit_Review_Approval',
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
                     forum=note_id_4,
-                    replyto=solitic_review_note['note']['id'],
+                    replyto=solicit_review_note['note']['id'],
                     content={
                         'decision': { 'value': 'Yes, I approve the solicit review.' },
                         'comment': { 'value': 'thanks!' }
@@ -1716,8 +1716,8 @@ note={Retracted after acceptance}
                 )
             )
 
-        ## Ask solitic review
-        solitic_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
+        ## Ask solicit review
+        solicit_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
             signatures=['~Peter_Snow1'],
             note=Note(
                 content={
@@ -1727,17 +1727,17 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solitic_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
 
         invitations = joelle_client.get_invitations(replyForum=note_id_4)
         assert f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval' in [i.id for i in invitations]
 
         ## Post a response
-        solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval',
+        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval',
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
                 forum=note_id_4,
-                replyto=solitic_review_note['note']['id'],
+                replyto=solicit_review_note['note']['id'],
                 content={
                     'decision': { 'value': 'Yes, I approve the solicit review.' },
                     'comment': { 'value': 'thanks!' }
@@ -1745,9 +1745,9 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solitic_review_approval_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
 
-        assert '~Peter_Snow1' in solitic_review_approval_note['note']['readers']
+        assert '~Peter_Snow1' in solicit_review_approval_note['note']['readers']
 
         paper_assignment_edges = openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', tail='~Peter_Snow1', head=note_id_4)
         assert len(paper_assignment_edges) == 1
@@ -2648,7 +2648,7 @@ note={Withdrawn}
             weight=1
         ))
 
-        ## Ask solitic review with a conflict
+        ## Ask solicit review with a conflict
         tom_client = OpenReviewClient(username='tom@mail.com', password='1234')
         solicit_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Solicit_Review',
             signatures=['~Tom_Rain1'],
@@ -2667,7 +2667,7 @@ note={Withdrawn}
             signatures=[f"{venue_id}/Paper7/Action_Editors"],
             note=Note(
                 forum=note_id_7,
-                replyto=solitic_review_note['note']['id'],
+                replyto=solicit_review_note['note']['id'],
                 content={
                     'decision': { 'value': 'No, I decline the solicit review.' },
                     'comment': { 'value': 'Sorry, all the reviewers were assigned.' }
