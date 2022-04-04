@@ -2660,7 +2660,7 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solitic_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
 
         ## Post a response
         solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Tom_Rain1_Solicit_Review_Approval',
