@@ -34,6 +34,7 @@ var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
+var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
@@ -56,8 +57,8 @@ var getInvitationId = function(number, name, prefix) {
   return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
 };
 
-var getReplies = function(submission, name) {
-  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
+var getReplies = function(submission, name, prefix) {
+  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
 var getRatingInvitations = function(invitationsById, number) {
@@ -274,13 +275,24 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
 
     reviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
+      var assignmentAcknowledgement = getReplies(submission, reviewer.id + '/' + ASSIGNMENT_ACKNOWLEDGEMENT_NAME, REVIEWERS_NAME);
       var status = {};
+
+      if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
+        status.Acknowledged = 'Yes';
+      }
+
       if (completedReview) {
         var reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
-        status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
+        }
+        var reviewerRating = submission.details.replies.find(function (p) {
+          return p.replyto === completedReview.id && p.invitations.includes(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Reviewer_' + reviewer.anonId + '/-/Rating');
+        });
+        if(reviewerRating){
+          status.Rating = reviewerRating.content.rating.value;
         }
       }
       reviewerStatus[reviewer.anonId] = {
