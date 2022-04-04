@@ -2675,7 +2675,7 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solitic_review_approval_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
 
         messages = journal.client.get_messages(to = 'tom@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 7" was not accepted')
         assert len(messages) == 1
