@@ -2457,7 +2457,7 @@ If you have questions after reviewing the points below that are not answered on 
                                         'type': 'string',
                                         'enum': [
                                             'Yes, I approve the solicit review.',
-                                            'No, I decline the solitic review.'
+                                            'No, I decline the solicit review.'
                                         ]
                                     },
                                     'presentation': {
