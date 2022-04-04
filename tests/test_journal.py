@@ -2650,7 +2650,7 @@ note={Withdrawn}
 
         ## Ask solitic review with a conflict
         tom_client = OpenReviewClient(username='tom@mail.com', password='1234')
-        solitic_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Solicit_Review',
+        solicit_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Solicit_Review',
             signatures=['~Tom_Rain1'],
             note=Note(
                 content={
