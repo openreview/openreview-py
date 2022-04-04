@@ -596,6 +596,9 @@ class VenueRequest():
         self.support_process = os.path.join(os.path.dirname(__file__), 'process/supportProcess.js')
         self.support_pre_process = os.path.join(os.path.dirname(__file__), 'process/request_form_pre_process.py')
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
+        self.error_status_process = os.path.join(os.path.dirname(__file__), 'process/error_status_process.py')
+        self.matching_status_process = os.path.join(os.path.dirname(__file__), 'process/matching_status_process.py')
+        self.recruitment_status_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_status_process.py')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
@@ -610,6 +613,7 @@ class VenueRequest():
         self.setup_venue_recruitment()
         self.setup_venue_remind_recruitment()
         self.setup_matching()
+        self.setup_error_status()
 
         # Setup for venue stages
         venue_stages = VenueStages(venue_request=self)
@@ -1165,6 +1169,74 @@ class VenueRequest():
                 }
             ))
 
+        recruitment_status_content = {
+            'title': {
+                'value': 'Recruitment Status',
+                'required': True,
+                'order': 1
+            },
+            'invited': {
+                'value-regex': '.*',
+                'description': 'No. of users invited',
+                'required': True,
+                'markdown': True,
+                'order': 2
+            },
+            'already_invited': {
+                'value-dict': {},
+                'description': 'List of users already invited',
+                'required': False,
+                'markdown': True,
+                'order': 3
+            },
+            'already_member': {
+                'value-dict': {},
+                'description': 'List of users who are already a member of the group',
+                'required': False,
+                'markdown': True,
+                'order': 4
+            },
+            'error': {
+                'value-regex': '[\\S\\s]{0,100000}',
+                'description': 'List of users who were not invited due to an error',
+                'required': False,
+                'markdown': True,
+                'order': 5
+            },
+            'comment': {
+                'order': 6,
+                'value-regex': '[\\S\\s]{1,200000}',
+                'description': 'Your comment or reply (max 200000 characters).',
+                'required': True,
+                'markdown': True
+            }
+        }
+
+        with open(self.recruitment_status_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+            self.recruitment_status_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Recruitment_Status',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': ['everyone']
+                    },
+                    'writers': {
+                        'values': [],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': recruitment_status_content
+                }
+            ))
+
     def setup_venue_remind_recruitment(self):
 
         remind_recruitment_content = {
@@ -1246,6 +1318,60 @@ class VenueRequest():
                 }
             ))
 
+        remind_recruitment_status_content = {
+            'title': {
+                'value': 'Remind Recruitment Status',
+                'required': True,
+                'order': 1
+            },
+            'reminded': {
+                'value-regex': '.*',
+                'description': 'No. of users reminded',
+                'required': True,
+                'markdown': True,
+                'order': 2
+            },
+            'error': {
+                'value-regex': '[\\S\\s]{0,200000}',
+                'description': 'List of users who were not reminded due to an error',
+                'required': False,
+                'markdown': True,
+                'order': 5
+            },
+            'comment': {
+                'order': 6,
+                'value-regex': '[\\S\\s]{1,200000}',
+                'description': 'Your comment or reply (max 200000 characters).',
+                'required': True,
+                'markdown': True
+            }
+        }
+
+        with open(self.recruitment_status_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+            self.remind_recruitment_status_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Remind_Recruitment_Status',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': ['everyone']
+                    },
+                    'writers': {
+                        'values': [],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': remind_recruitment_status_content
+                }
+            ))
+
     def setup_matching(self):
 
         matching_content = {
@@ -1290,7 +1416,7 @@ class VenueRequest():
                 file_content = f.read()
                 file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
 
-                self.recruitment_super_invitation = self.client.post_invitation(openreview.Invitation(
+                self.matching_setup_super_invitation = self.client.post_invitation(openreview.Invitation(
                     id=self.support_group.id + '/-/Paper_Matching_Setup',
                     readers=['everyone'],
                     writers=[],
@@ -1312,3 +1438,132 @@ class VenueRequest():
                         'content': matching_content
                     }
                 ))
+
+        matching_status_content = {
+            'title': {
+                'value': 'Paper Matching Setup Status',
+                'required': True,
+                'order': 1
+            },
+            'without_profile': {
+                'values-regex': '.*',
+                'description': 'List of users without profile',
+                'required': False,
+                'markdown': True,
+                'order': 2
+            },
+            'without_publication': {
+                'values-regex': '.*',
+                'description': 'List of users without publication',
+                'required': False,
+                'markdown': True,
+                'order': 3
+            },
+            'error': {
+                'value-regex': '[\\S\\s]{0,20000}',
+                'description': 'Error due to which matching setup failed',
+                'required': False,
+                'markdown': True,
+                'order': 5
+            },
+            'comment': {
+                'order': 6,
+                'value-regex': '[\\S\\s]{0,200000}',
+                'description': 'Your comment or reply (max 200000 characters).',
+                'required': False,
+                'markdown': True
+            }
+        }
+
+        with open(self.matching_status_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+            self.matching_status_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Paper_Matching_Setup_Status',
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                multiReply=True,
+                reply={
+                    'readers': {
+                        'values': ['everyone']
+                    },
+                    'writers': {
+                        'values': [],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                    },
+                    'content': matching_status_content
+                }
+            ))
+
+    def setup_error_status(self):
+
+        with open(self.error_status_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
+
+            self.error_status_super_invitation = self.client.post_invitation(openreview.Invitation(
+                id=self.support_group.id + '/-/Stage_Error_Status',
+                readers=['everyone'],
+                writers=[self.support_group.id],
+                signatures=[self.support_group.id],
+                invitees=[self.support_group.id],
+                process_string=file_content,
+                reply={
+                    'forum': None,
+                    'replyto': None,
+                    'readers': {
+                        'description': 'Select all user groups that should be able to read this comment.',
+                        'values': [self.support_group.id]
+                    },
+                    'writers': {
+                        'values-copied': [
+                            '{signatures}'
+                        ]
+                    },
+                    'signatures': {
+                        'values-regex': '~.*|' + self.support_group.id,
+                        'description': 'How your identity will be displayed.'
+                    },
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'value-regex': '.{1,500}',
+                            'description': 'Failed Invitation/Stage Name',
+                            'required': True
+                        },
+                        'error': {
+                            'order': 2,
+                            'value-regex': '[\\S\\s]{1,200000}',
+                            'description': 'Brief summary of the error.',
+                            'required': True,
+                            'markdown': True
+                        },
+                        'comment': {
+                            'order': 3,
+                            'value-regex': '[\\S\\s]{1,200000}',
+                            'description': 'Error description (max 200000 characters).',
+                            'required': False,
+                            'markdown': True
+                        },
+                        'reference_url': {
+                            'order': 4,
+                            'value-regex': '.{1,500}',
+                            'description': 'URL to check references',
+                            'required': False,
+                            'hidden': True
+                        },
+                        'stage_name': {
+                            'order': 5,
+                            'value-regex': '.{1,500}',
+                            'description': 'Invitation/Stage Name',
+                            'required': False,
+                            'hidden': True
+                        }
+                    }
+                }
+            ))

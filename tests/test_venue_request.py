@@ -1,3 +1,5 @@
+import json
+
 import openreview
 import pytest
 import time
@@ -116,6 +118,10 @@ class TestVenueRequest():
         assert venue.comment_super_invitation
         assert venue.recruitment_super_invitation
         assert venue.venue_revision_invitation
+        assert venue.matching_setup_super_invitation
+        assert venue.matching_status_super_invitation
+        assert venue.recruitment_status_process
+        assert venue.error_status_super_invitation
 
     def test_venue_deployment(self, client, selenium, request_page, helpers):
 
@@ -306,11 +312,12 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        comment_invitation = '{}/-/Request{}/Comment'.format(venue['support_group_id'],
+        comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'The field value-regexx is not allowed'
-        assert error_string in last_comment.content['comment']
+        error = last_comment.content['error']
+        assert 'InvalidFieldError' in error
+        assert 'The field value-regexx is not allowed' in error
 
     def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -425,11 +432,17 @@ class TestVenueRequest():
         messages = client.get_messages(to='reviewer_candidate2@email.com')
         assert not messages
 
-        comment_invitation = '{}/-/Request{}/Comment'.format(venue['support_group_id'],
+        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'Error: No recruitment invitation was sent to the following users due to the error(s) in the recruitment process'
-        assert error_string in last_comment.content['comment']
+        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        error_string = '{\n ' \
+                       ' "KeyError(\'program\')": [\n' \
+                       '    "reviewer_candidate1@email.com",\n' \
+                       '    "reviewer_candidate2@email.com"\n' \
+                       '  ]\n' \
+                       '}'
+        assert error_string in last_comment.content['error']
+        assert '0 users' in last_comment.content['invited']
 
     def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -479,6 +492,14 @@ class TestVenueRequest():
         assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as Reviewer'
         assert messages[0]['content']['text'].startswith('<p>Dear Reviewer Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
 
+        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
+                                                                                   venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        assert '2 users' in last_comment.content['invited']
+
+        last_message = client.get_messages(to='support@openreview.net')[-1]
+        assert 'Recruitment Status' not in last_message['content']['text']
+
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -527,6 +548,11 @@ class TestVenueRequest():
         assert messages[1]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as Reviewer'
         assert messages[1]['content']['text'].startswith('<p>Dear Reviewer TwoTilde,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
 
+        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
+                                                                                   venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        assert '2 users' in last_comment.content['invited']
+
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Remind Recruitment
@@ -570,6 +596,14 @@ class TestVenueRequest():
         assert messages[1]['content']['subject'] == 'Reminder: [TestVenue@OR2030] Invitation to serve as Reviewer'
         assert messages[1]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
 
+        remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
+                                                                                   venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=remind_recruitment_status_invitation)[0]
+        assert '4 users' in last_comment.content['reminded']
+
+        last_message = client.get_messages(to='support@openreview.net')[-1]
+        assert 'Remind Recruitment Status' not in last_message['content']['text']
+
     def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -595,11 +629,11 @@ class TestVenueRequest():
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
         assert process_logs[0]['status'] == 'ok'
 
-        comment_invitation = '{}/-/Request{}/Comment'.format(venue['support_group_id'],
+        comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=comment_invitation)[0]
-        error_string = 'Bid Stage Process failed due to the following error: ValueError(\'day is out of range for month\')'
-        assert error_string in last_comment.content['comment']
+        error_string = '\n```python\nValueError(\'day is out of range for month\')'
+        assert error_string in last_comment.content['error']
 
     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -727,10 +761,10 @@ class TestVenueRequest():
         assert matching_setup_note
         helpers.await_queue()
 
-        comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
+        comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '1 error(s): ["Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button."]' in matching_status.content['comment']
+        assert 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.' in matching_status.content['error']
 
         conference.setup_post_submission_stage(force=True)
 
@@ -758,10 +792,10 @@ class TestVenueRequest():
         assert matching_setup_note
         helpers.await_queue()
 
-        comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
+        comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert '1 error(s): ["Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers."]' in matching_status.content['comment']
+        assert 'Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers.' in matching_status.content['error']
 
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer1')
         client.add_members_to_group(reviewer_group, '~Venue_Reviewer2')
@@ -785,10 +819,10 @@ class TestVenueRequest():
         assert matching_setup_note
         helpers.await_queue()
 
-        comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
+        comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert 'The requested page could not be found: /expertise' in matching_status.content['comment']
+        assert 'There was an error connecting with the expertise API' in matching_status.content['error']
 
         ## Setup matching with no computation selected
         with pytest.raises(openreview.OpenReviewException, match=r'You need to compute either conflicts or affinity scores or both'):
@@ -853,17 +887,18 @@ class TestVenueRequest():
         assert matching_setup_note
         helpers.await_queue()
 
-        comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
+        comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
-        assert matching_status.content['comment'] == '''
-1 Reviewers without a profile: ['some_user@mail.com']
+        assert matching_status.content['without_profile'] == ['some_user@mail.com']
+        assert '''
+1 Reviewers without a profile.
 
-Affinity scores and/or conflicts could not be computed for these users. You will not be able to run the matcher until all Reviewers have profiles. You have two options:
+Affinity scores and/or conflicts could not be computed for the users listed under 'Without Profile'. You will not be able to run the matcher until all Reviewers have profiles. You have two options:
 
 1. You can ask these users to sign up in OpenReview and upload their papers. After all Reviewers have done this, you will need to rerun the paper matching setup to recompute conflicts and/or affinity scores for all users.
 2. You can remove these users from the Reviewers group: https://openreview.net/group/edit?id=TEST.cc/2030/Conference/Reviewers. You can find all users without a profile by searching for the '@' character in the search box.
-'''
+''' in matching_status.content['comment']
 
         scores_invitation = client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
@@ -891,7 +926,7 @@ Affinity scores and/or conflicts could not be computed for these users. You will
         assert matching_setup_note
         helpers.await_queue()
 
-        comment_invitation_id = '{}/-/Request{}/Comment'.format(venue['support_group_id'], venue['request_form_note'].number)
+        comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
         assert matching_status
         assert matching_status.content['comment'] == '''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the 'Reviewers Paper Assignment' link in the PC console: https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs
@@ -902,6 +937,11 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert scores_invitation
         affinity_scores = client.get_edges(invitation=scores_invitation.id)
         assert len(affinity_scores) == 4
+
+        last_message = client.get_messages(to='support@openreview.net')[-1]
+        assert 'Paper Matching Setup Status' not in last_message['content']['text']
+        last_message = client.get_messages(to='test@mail.com')[-1]
+        assert 'Paper Matching Setup Status' in last_message['content']['subject']
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
