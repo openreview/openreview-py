@@ -453,8 +453,7 @@ class TestNeurIPSConference():
 
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
-        assert 'No recruitment invitation was sent to the following users because they have already been invited' in recruitment_status_notes[0].content['comment']
-        assert "{'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/Invited': ['sac1@google.com', 'sac2@gmail.com']}" in recruitment_status_notes[0].content['comment']
+        assert {'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/Invited': ['sac1@google.com', 'sac2@gmail.com']} == recruitment_status_notes[0].content['already_invited']
 
         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Invitation to serve as Reviewer')
         assert messages and len(messages) == 1
