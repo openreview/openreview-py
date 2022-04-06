@@ -86,7 +86,7 @@ function load() {
     // Log exception to GA if user object is empty, since only authenticated users
     // should be able to access the invitation. Don't log actual cookie value for safety.
     window.gtag('event', 'exception', {
-      description: 'Expertise Bid Webfield: Missing User Error. Invitation: ' + INVITATION_ID + ', AuthCookie: ' + !!getCookie('openreview.accessToken'),
+      description: 'JavaScript Error: Missing user in expertise bid webfield. Invitation: ' + INVITATION_ID + ', AuthCookie: ' + !!getCookie('openreview.accessToken'),
       fatal: true,
     });
   }
