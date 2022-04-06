@@ -1,4 +1,5 @@
 def process(client, note, invitation):
+    import json
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     request_form = client.get_note(note.forum)
@@ -34,7 +35,7 @@ def process(client, note, invitation):
     )
 
     comment_note = openreview.Note(
-        invitation = note.invitation.replace('Remind_Recruitment', 'Comment'),
+        invitation = note.invitation.replace('Remind_Recruitment', 'Remind_Recruitment_Status'),
         forum = note.forum,
         replyto = note.id,
         readers = [conference.get_program_chairs_id(), SUPPORT_GROUP],
@@ -42,20 +43,20 @@ def process(client, note, invitation):
         signatures = [SUPPORT_GROUP],
         content = {
             'title': f'Remind Recruitment Status',
+            'reminded': f'''{len(recruitment_status.get('reminded', []))} users.''',
             'comment': f'''
-Reminded: {len(recruitment_status.get('reminded', []))} users.
-
 Please check the invitee group to see more details: https://openreview.net/group?id={conference.id}/{role_name}/Invited
             '''
         }
     )
 
     if recruitment_status['errors']:
-        error_status=f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process: \n
-        {recruitment_status.get('errors') }'''
-
-        comment_note.content['comment'] += f'''
-Error: {error_status}
+        error_status = f'''No recruitment invitation was sent to the following users due to the error(s) in the recruitment process:
+```python
+{json.dumps(recruitment_status.get('errors'), indent=2)}
+```
 '''
+
+        comment_note.content['error'] = error_status
 
     client.post_note(comment_note)

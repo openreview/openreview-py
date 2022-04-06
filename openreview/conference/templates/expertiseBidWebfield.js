@@ -52,32 +52,37 @@ function renderSubmissionButton(INVITATION_ID) {
 
 function load() {
 
-  var authoredNotesP = Webfield.getAll('/notes', {
-    'content.authorids': user.profile.id,
-    details: 'invitation',
-    sort: 'cdate'
-  })
-  .then(function(notes){
-    return notes.filter(function(note){
-      return !(note.original);
+  var authoredNotesP = $.Deferred().resolve([]);
+  var edgesMapP = $.Deferred().resolve({});
+
+  if (user && user.profile && user.profile.id) {
+    authoredNotesP = Webfield.getAll('/notes', {
+      'content.authorids': user.profile.id,
+      details: 'invitation',
+      sort: 'cdate'
+    })
+    .then(function(notes){
+      return notes.filter(function(note){
+        return !(note.original) && note.readers.includes('everyone');
+      });
     });
-  });
 
-  var edgesMapP = Webfield.getAll('/edges', {
-    invitation: EXPERTISE_BID_ID,
-    tail : user.profile.id
-  })
-  .then(function(edges) {
-    if (!edges || !edges.length) {
-      return {}
-    }
+    edgesMapP = Webfield.getAll('/edges', {
+      invitation: EXPERTISE_BID_ID,
+      tail : user.profile.id
+    })
+    .then(function(edges) {
+      if (!edges || !edges.length) {
+        return {}
+      }
 
-    return edges.reduce(function(noteMap, edge) {
-      // Only include the users bids in the map
-      noteMap[edge.head] = edge;
-      return noteMap;
-    }, {});
-  });
+      return edges.reduce(function(noteMap, edge) {
+        // Only include the users bids in the map
+        noteMap[edge.head] = edge;
+        return noteMap;
+      }, {});
+    });
+  }
 
   return $.when(authoredNotesP, edgesMapP);
 }
@@ -280,6 +285,19 @@ function renderContent(authoredNotes, edgesMap) {
     });
   }
   updateNotes(authoredNotes);
+
+  //Mark task a complete
+  if (user && user.profile && user.profile.id && _.isEmpty(edgesMap)) {
+    Webfield.post('/edges', {
+      invitation: EXPERTISE_BID_ID,
+      readers: [CONFERENCE_ID, user.profile.id],
+      writers: [CONFERENCE_ID, user.profile.id],
+      signatures: [user.profile.id],
+      head: 'xf0zSBd2iufMg', //OpenReview paper
+      tail: user.profile.id,
+      label: 'Exclude'
+    });
+  }
 }
 
 function addEdgesToNotes(notesArray, edgesMap) {

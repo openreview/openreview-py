@@ -46,7 +46,7 @@ Your first task is to make sure the submitted preprint is appropriate for {journ
 
 Please follow this link to perform this task: https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_approval_id(number=note.number)}
 
-If you think the submission can continue through {journal.short_name}’s review process, click the button "Under Review". Otherwise, click on "Desk Reject". Once the submission has been confirmed, then the review process will begin immediately, and your next step will be to assign 3 reviewers to the paper.
+If you think the submission can continue through {journal.short_name}'s review process, click the button "Under Review". Otherwise, click on "Desk Reject". Once the submission has been confirmed, then the review process will begin, and your next step will be to assign 3 reviewers to the paper. You will get a follow up email when OpenReview is ready for you to assign these 3 reviewers.
 
 We thank you for your essential contribution to {journal.short_name}!
 

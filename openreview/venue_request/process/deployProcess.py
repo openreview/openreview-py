@@ -404,3 +404,55 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     for reply in replies:
         reply.readers = readers
         client.post_note(reply)
+
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Recruitment_Status',
+        super=SUPPORT_GROUP + '/-/Recruitment_Status',
+        reply={
+            'forum': forum.id,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
+
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Remind_Recruitment_Status',
+        super=SUPPORT_GROUP + '/-/Remind_Recruitment_Status',
+        reply={
+            'forum': forum.id,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
+
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Paper_Matching_Setup_Status',
+        super=SUPPORT_GROUP + '/-/Paper_Matching_Setup_Status',
+        reply={
+            'forum': forum.id,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
+
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Stage_Error_Status',
+        super=SUPPORT_GROUP + '/-/Stage_Error_Status',
+        reply={
+            'forum': forum.id,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
