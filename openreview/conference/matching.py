@@ -1043,7 +1043,7 @@ class Matching(object):
                 pre_content = pre.read()
                 post_content = post.read()
                 pre_content = pre_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + self.match_group.id + "'")
-                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.conference.get_short_name()}";')
+                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.conference.get_short_name()}"')
                 post_content = post_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
                 post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + self.conference.get_committee_id(name=invited_committee_name + '/Invited')  + "'")
                 if email_template:
