@@ -98,7 +98,25 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
-    public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
+    readers_map = {
+        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS],
+        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
+        'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
+    }
+
+    # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
+    if 'submission_readers' in note.content:
+        readers = readers_map[note.content.get('submission_readers')]
+        public = 'Everyone' in readers
+    else:
+        public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
+        bidding_enabled = 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', '')
+        if bidding_enabled and not public:
+            readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS]
+        elif public:
+            readers = [openreview.SubmissionStage.Readers.EVERYONE]
+        else:
+            readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
     submission_additional_options = note.content.get('Additional Submission Options', {})
     if isinstance(submission_additional_options, str):
@@ -116,7 +134,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     # Create review invitation during submission process function only when the venue is public, single blind and the review stage is setup.
     submission_release=(note.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
     create_groups=(not double_blind) and public and submission_release
-    create_review_invitation = create_groups and (note.content.get('Open Reviewing Policy', '') == 'Submissions and reviews should both be public.') and note.content.get('make_reviews_public', None)
+    create_review_invitation = create_groups and note.content.get('make_reviews_public', None)
 
     author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
     papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '')
@@ -143,7 +161,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         desk_rejected_submission_public=desk_rejected_submission_public,
         desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
         author_names_revealed=author_names_revealed,
-        papers_released=papers_released)
+        papers_released=papers_released,
+        readers=readers)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     if 'OpenReview Affinity' in paper_matching_options:

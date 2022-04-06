@@ -55,7 +55,8 @@ class TestMatching():
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
-        ])
+        ],
+        readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS])
         additional_registration_content = {
             'reviewing_experience': {
                 'description': 'How many times have you been a reviewer for any conference or journal?',

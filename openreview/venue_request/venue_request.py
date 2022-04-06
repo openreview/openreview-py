@@ -15,7 +15,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'Paper Matching', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submissions_visibility', 'submission_readers']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -781,6 +781,17 @@ class VenueRequest():
                     'Submissions and reviews should both be public.'
                 ],
                 'order': 22,
+                'required': False,
+                'hidden': True
+            },
+            'submission_readers': {
+                'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
+                'value-radio': [
+                    'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                    'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                    'Everyone (submissions are public)'
+                ],
+                'order': 23,
                 'required': True
             },
             'submissions_visibility': {
@@ -789,7 +800,7 @@ class VenueRequest():
                     'Yes, submissions should be immediately revealed to the public.',
                     'No, wait until the submission deadline has passed to make them public.'],
                 'default': 'No, wait until the submission deadline has passed to make them public.',
-                'order': 23
+                'order': 24
             },
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
@@ -797,7 +808,7 @@ class VenueRequest():
                     'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
-                'order': 24
+                'order': 25
             },
             'withdrawn_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -805,7 +816,7 @@ class VenueRequest():
                     'Yes, author identities of withdrawn submissions should be revealed.',
                     'No, author identities of withdrawn submissions should not be revealed.'],
                 'default': 'No, author identities of withdrawn submissions should not be revealed.',
-                'order': 25
+                'order': 26
             },
             'email_pcs_for_withdrawn_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
@@ -814,7 +825,7 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 26
+                'order': 27
             },
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
@@ -822,7 +833,7 @@ class VenueRequest():
                     'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
-                'order': 27
+                'order': 28
             },
             'desk_rejected_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -830,12 +841,12 @@ class VenueRequest():
                     'Yes, author identities of desk rejected submissions should be revealed.',
                     'No, author identities of desk rejected submissions should not be revealed.'],
                 'default': 'No, author identities of desk rejected submissions should not be revealed.',
-                'order': 28
+                'order': 29
             },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 29
+                'order': 30
             },
             'email_pcs_for_new_submissions': {
                 'description': 'Do you want email notifications to PCs when there is a new submission?',
@@ -844,44 +855,44 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 30
+                'order': 31
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 31
+                'order': 32
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 32
+                'order': 33
             },
             'submission_name': {
                 'value-regex': '\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
-                'order':33,
+                'order':34,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'reviewer_roles': {
                 'values-regex': '.*',
                 'default': ['Reviewers'],
-                'order':34,
+                'order':35,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Area_Chairs'],
-                'order':35,
+                'order':36,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'senior_area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Senior_Area_Chairs'],
-                'order':36,
+                'order':37,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }
@@ -1008,6 +1019,15 @@ class VenueRequest():
     def setup_venue_post_submission(self):
 
         post_submission_content = {
+            'submission_readers': {
+                'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
+                'value-radio': [
+                    'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                    'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                    'Everyone (submissions are public)'
+                ],
+                'required': True
+            },
             'force': {
                 'value-radio': ['Yes', 'No'],
                 'required': True,
