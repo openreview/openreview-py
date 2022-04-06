@@ -26,7 +26,7 @@ def process(client, edit, invitation):
     ## 4. Send confirmation email to the author group
 ''',
         'edit': {
-            'signatures': { 'regex': '~.*', 'type': 'group' }},
+            'signatures': { 'param': { 'regex': '~.*', 'type': 'group' }},
             'readers': ['${...params.venueid}', '${...params.venueid}/${...params.name}\\${note.number}/Authors'], ## note.number needs to be escaped. It is defined at note creation
             'writers': ['${...params.venueid}'],
             'note': {
