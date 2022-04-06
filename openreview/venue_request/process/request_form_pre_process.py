@@ -7,7 +7,7 @@ def process(client, note, invitation):
         if 'No' in note.content['desk_rejected_submissions_author_anonymity']:
             raise openreview.OpenReviewException('Author identities of desk-rejected submissions can only be anonymized for double-blind submissions')
 
-    if 'Double-blind' in note.content['Author and Reviewer Anonymity'] or 'Submissions and reviews should both be private.' in note.content['Open Reviewing Policy']:
+    if 'Double-blind' in note.content['Author and Reviewer Anonymity'] or 'Submissions and reviews should both be private.' in note.content.get('Open Reviewing Policy', '') or 'Everyone' not in note.content.get('submission_readers', ''):
         if 'submissions_visibility' in note.content and 'Yes' in note.content['submissions_visibility']:
             raise openreview.OpenReviewException('Submissions can only be immediately released to the public for non double-blind, public venues')
 
@@ -16,3 +16,6 @@ def process(client, note, invitation):
 
     if 'Yes, our venue has Senior Area Chairs' in note.content.get('senior_area_chairs', '') and 'All Senior Area Chairs' not in note.content['reviewer_identity'] and 'Assigned Senior Area Chair' not in note.content['reviewer_identity']:
         raise openreview.OpenReviewException('Assigned senior area chairs must see the reviewer identity')
+
+    if ('Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', '')) and 'Assigned program committee' in note.content.get('submission_readers', ''):
+        raise openreview.OpenReviewException('Papers should be visible to all program committee if bidding or reviewer recommendation is enabled')

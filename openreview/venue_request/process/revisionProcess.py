@@ -45,7 +45,7 @@ def process(client, note, invitation):
 
             content = {}
 
-            if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private."):
+            if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private." or 'Everyone' not in forum_note.content.get('submission_readers', '')):
                 content['release_submissions'] = {
                     'description': 'Would you like to release submissions to the public?',
                     'value-radio': [

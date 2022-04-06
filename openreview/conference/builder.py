@@ -2260,11 +2260,13 @@ class ConferenceBuilder(object):
             readers=None
         ):
 
-        submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS, SubmissionStage.Readers.AREA_CHAIRS, SubmissionStage.Readers.REVIEWERS]
-        if public:
-            submissions_readers=[SubmissionStage.Readers.EVERYONE]
+        submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+
         if readers:
             submissions_readers=readers
+
+        if public:
+            submissions_readers=[SubmissionStage.Readers.EVERYONE]
 
         self.submission_stage = SubmissionStage(
             name,
