@@ -42,7 +42,7 @@ class TestVenueRequest():
             content={
                 'title': 'Test 2030 Venue',
                 'Official Venue Name': 'Test 2030 Venue',
-                'Abbreviated Venue Name': 'TestVenue@OR2030',
+                'Abbreviated Venue Name': "TestVenue@OR'2030",
                 'Official Website URL': 'https://testvenue2030.gitlab.io/venue/',
                 'program_chair_emails': [
                     'test@mail.com',
@@ -477,12 +477,12 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_candidate1@email.com')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as Reviewer'
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('<p>Dear Reviewer One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
 
         messages = client.get_messages(to='reviewer_candidate2@email.com')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as Reviewer'
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('<p>Dear Reviewer Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -533,12 +533,12 @@ class TestVenueRequest():
         messages = client.get_messages(to='reviewer_one_tilde@mail.com')
         assert messages and len(messages) == 2
 
-        assert messages[1]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as Reviewer'
+        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('<p>Dear Reviewer OneTilde,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
 
         messages = client.get_messages(to='reviewer_two_tilde@mail.com')
         assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == '[TestVenue@OR2030] Invitation to serve as Reviewer'
+        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('<p>Dear Reviewer TwoTilde,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -581,12 +581,12 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_candidate1@email.com')
         assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == 'Reminder: [TestVenue@OR2030] Invitation to serve as Reviewer'
+        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
 
         messages = client.get_messages(to='reviewer_candidate2@email.com')
         assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == 'Reminder: [TestVenue@OR2030] Invitation to serve as Reviewer'
+        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
 
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],

@@ -28,7 +28,7 @@ class SubmissionInvitation(openreview.Invitation):
         if under_submission:
             with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
                 file_content = f.read()
-                file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+                file_content = file_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
                 file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
                 if submission_stage.email_pcs:
                     file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
@@ -253,7 +253,7 @@ class CommentInvitation(openreview.Invitation):
 
                 pre_content = pre_content.replace("MANDATORY_READERS = []", "MANDATORY_READERS = " + json.dumps(mandatory_readers))
                 post_content = post_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-                post_content = post_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+                post_content = post_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
                 post_content = post_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
                 post_content = post_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
                 post_content = post_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
@@ -625,7 +625,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/submission_revision_process.py')) as f:
             file_content = f.read()
-            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+            file_content = file_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}";')
             file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.get_id() + "'")
             file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
             if accepted_only:
@@ -827,7 +827,7 @@ class ReviewInvitation(openreview.Invitation):
             file_content = f.read()
 
             file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
             file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
             file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
@@ -918,7 +918,7 @@ class RebuttalInvitation(openreview.Invitation):
             file_content = f.read()
 
             file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
             file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
             file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
@@ -995,7 +995,7 @@ class ReviewRevisionInvitation(openreview.Invitation):
             file_content = f.read()
 
             file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.short_name + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
             file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
             file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
@@ -1222,7 +1222,7 @@ class DecisionInvitation(openreview.Invitation):
             file_content = f.read()
 
             file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
-            file_content = file_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
+            file_content = file_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}";')
             file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
             file_content = file_content.replace("AUTHORS_NAME_ACCEPTED = ''", "AUTHORS_NAME_ACCEPTED = '"  + conference.authors_name + '/Accepted' + "'")
             if decision_stage.email_authors:
@@ -1325,7 +1325,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
             with open(os.path.join(os.path.dirname(__file__), process_file)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
-                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}";')
                 post_content = post_content.replace("VENUE_ID = ''", "VENUE_ID = '" + conference.get_id() + "'")
                 post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + conference.get_committee_name(committee_id, pretty=True) + "'")
                 post_content = post_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + committee_id + "'")
@@ -1637,7 +1637,7 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruitReducedLoadProcess.js')) as f:
             content = f.read()
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + conference.get_short_name() + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
             content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "';")
             content = content.replace("var REVIEWERS_ACCEPTED_ID = '';", "var REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "';")
             content = content.replace("var REVIEWERS_DECLINED_ID = '';", "var REVIEWERS_DECLINED_ID = '" + options.get('reviewers_declined_id') + "';")
@@ -1691,8 +1691,8 @@ class InvitationBuilder(object):
                 pre_content = pre.read()
                 post_content = post.read()
                 pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")
-                pre_content = pre_content.replace("var CHECK_DECLINE = False;", "var CHECK_DECLINE = True;")
-                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.get_short_name() + "'")
+                pre_content = pre_content.replace("CHECK_DECLINE = False;", "CHECK_DECLINE = True;")
+                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}";')
                 post_content = post_content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.get_id() + "'")
                 post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "'")
                 post_content = post_content.replace("REVIEWERS_ACCEPTED_ID = ''", "REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "'")
@@ -2004,7 +2004,7 @@ class InvitationBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_post_process.py')) as post:
                 post_content = post.read()
                 post_content = post_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
-                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + conference.short_name + "'")
+                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}";')
                 post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + (conference.get_area_chairs_id(number='{number}') if is_area_chair else conference.get_reviewers_id(number='{number}')) + "'")
                 post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + (conference.get_area_chairs_name(pretty=True) if is_area_chair else conference.get_reviewers_name(pretty=True)) + "'")
                 post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + (conference.get_area_chairs_id() if is_area_chair else conference.get_reviewers_id()) + "'")
