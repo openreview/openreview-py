@@ -3,6 +3,7 @@ function(){
     var GROUP_PREFIX = '';
     var SUPPORT_GROUP = GROUP_PREFIX + '/Support';
     var baseUrl = 'https://openreview.net'
+    var SUPER_USER = '~Super_User1'
 
     var adminMessage = 'A request for service has been submitted by ' + note.content['Abbreviated Venue Name'] + '. Check it here: ' + baseUrl + '/forum?id=' + note.forum + '\n'
 
@@ -33,7 +34,7 @@ function(){
         }
       },
       writers: [SUPPORT_GROUP],
-      signatures: [SUPPORT_GROUP]
+      signatures: [SUPER_USER]
     }
 
     var deployInvitation = {

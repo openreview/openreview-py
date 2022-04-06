@@ -1,16 +1,19 @@
 def process(client, note, invitation):
     import datetime
     import traceback
+    import json
+
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
 
     invitation_type = invitation.id.split('/')[-1]
+    forum_note = client.get_note(note.forum)
+
+    comment_readers = [forum_note.content.get('venue_id') + '/Program_Chairs', SUPPORT_GROUP]
 
     try:
         conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
-        forum_note = client.get_note(note.forum)
-        comment_readers = forum_note.content.get('Contact Emails', []) + forum_note.content.get('program_chair_emails',[]) + [SUPPORT_GROUP]
-
+        comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
             conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
 
@@ -42,7 +45,7 @@ def process(client, note, invitation):
 
             content = {}
 
-            if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private."):
+            if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private." or 'Everyone' not in forum_note.content.get('submission_readers', '')):
                 content['release_submissions'] = {
                     'description': 'Would you like to release submissions to the public?',
                     'value-radio': [
@@ -124,26 +127,26 @@ def process(client, note, invitation):
 
         print('Conference: ', conference.get_id())
     except Exception as e:
-        error_status = f'''
-{invitation_type.replace("_", " ")} Process failed due to the following error: {repr(e)}
-
-To check references for the note: https://api.openreview.net/references?id={note.id} '''
-        print("Following error in the process function was posted as a comment:")
-        print(traceback.format_exc())
-
         forum_note = client.get_note(note.forum)
-        comment_readers = forum_note.content.get('Contact Emails', []) + forum_note.content.get('program_chair_emails',[]) + [SUPPORT_GROUP]
 
+        from openreview import OpenReviewException
+        error_status = json.dumps(e.args[0], indent=2) if isinstance(e, OpenReviewException) else repr(e)
         comment_note = openreview.Note(
-            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Stage_Error_Status',
             forum=forum_note.id,
             replyto=forum_note.id,
             readers=comment_readers,
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
             content={
-                'title': '{invitation} Status [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
-                'comment': error_status
+                'title': '{invitation} Process Failed'.format(invitation=invitation_type.replace("_", " ")),
+                'error': f'''
+```python
+{error_status}
+```
+''',
+                'reference_url': f'''https://api.openreview.net/references?id={note.id}''',
+                'stage_name': '{invitation}'.format(invitation=invitation_type.replace("_", " "))
             }
         )
 

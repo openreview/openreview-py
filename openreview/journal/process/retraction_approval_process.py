@@ -6,6 +6,26 @@ def process(client, edit, invitation):
 
     submission = client.get_note(edit.note.forum)
 
+    ## Make the retraction public
+    print('Make retraction public')
+    invitation = journal.invitation_builder.post_invitation_edit(Invitation(id=journal.get_retraction_release_id(number=submission.number),
+            bulk=True,
+            invitees=[venue_id],
+            readers=['everyone'],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'const': [venue_id ] },
+                'readers': { 'const': [ venue_id, journal.get_action_editors_id(number=submission.number), journal.get_authors_id(number=submission.number) ] },
+                'writers': { 'const': [ venue_id ] },
+                'note': {
+                    'id': { 'withInvitation': journal.get_retraction_id(number=submission.number) },
+                    'readers': { 'const': [ 'everyone' ] },
+                    'nonreaders': { 'const': [] }
+                }
+            }
+    ))
+
     if edit.note.content['approval']['value'] == 'Yes':
         client.post_note_edit(invitation= journal.get_retracted_id(),
                                 signatures=[venue_id],

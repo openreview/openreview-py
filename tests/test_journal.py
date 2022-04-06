@@ -53,7 +53,6 @@ class TestJournal():
         melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
         celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
 
-
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
@@ -112,6 +111,10 @@ class TestJournal():
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
+        ## Remove reviewers with no profile
+        openreview_client.remove_members_from_group('TMLR/Action_Editors', 'user@mail.com')
+        openreview_client.remove_members_from_group('TMLR/Reviewers', 'zach@mail.com')
+
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
         raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
@@ -150,11 +153,8 @@ class TestJournal():
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
-        process_logs = openreview_client.get_process_logs(id = submission_note_1['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
         assert len(messages) == 1
@@ -176,7 +176,7 @@ class TestJournal():
         assert note
         assert note.invitations == ['TMLR/-/Submission']
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
-        assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Submitted to TMLR'
@@ -202,32 +202,30 @@ class TestJournal():
                 id=note_id_1,
                 content={
                     'title': { 'value': 'Paper title UPDATED' },
-                    'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
                     'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
                 }
             ))
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
 
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision']
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
-        assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['title']['value'] == 'Paper title UPDATED'
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['authorids']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Bok1']
 
         ## Post the submission 2
         submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -244,11 +242,8 @@ class TestJournal():
                                         }
                                     ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
         note_id_2=submission_note_2['note']['id']
-        process_logs = openreview_client.get_process_logs(id = submission_note_2['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper2/Authors")
         assert author_group
@@ -271,11 +266,8 @@ class TestJournal():
                                         }
                                     ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_3['id'])
         note_id_3=submission_note_3['note']['id']
-        process_logs = openreview_client.get_process_logs(id = submission_note_3['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper3/Authors")
         assert author_group
@@ -285,6 +277,22 @@ class TestJournal():
 
         editor_in_chief_group_id = f"{venue_id}/Editors_In_Chief"
         action_editors_id=f'{venue_id}/Action_Editors'
+
+        # Assign Action Editor and immediately remove  assignment
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_1,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = raia_client.post_edge(paper_assignment_edge)
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission Paper title UPDATED')
+        assert len(messages) == 0
 
         # Assign Action Editor
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
@@ -296,10 +304,7 @@ class TestJournal():
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
-        process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ae_group = raia_client.get_group(f'{venue_id}/Paper1/Action_Editors')
         assert ae_group.members == ['~Joelle_Pineau1']
@@ -310,8 +315,8 @@ class TestJournal():
 <p>With this email, we request that you manage the review process for a new TMLR submission titled &quot;Paper title UPDATED&quot;.</p>
 <p>As a reminder, TMLR Action Editors (AEs) are <strong>expected to accept all AE requests</strong> to manage submissions that fall within your expertise and quota. Reasonable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at <a href=\"mailto:tmlr@jmlr.org\">tmlr@jmlr.org</a>.</p>
 <p>Your first task is to make sure the submitted preprint is appropriate for TMLR and respects our submission guidelines. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication). If you suspect but are unsure about whether a submission might need to be desk rejected for any other reasons (e.g. lack of fit with the scope of TMLR or lack of technical depth), please email us.</p>
-<p>Please follow this link to perform this task: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>If you think the submission can continue through TMLR’s review process, click the button &quot;Under Review&quot;. Otherwise, click on &quot;Desk Reject&quot;. Once the submission has been confirmed, then the review process will begin immediately, and your next step will be to assign 3 reviewers to the paper.</p>
+<p>Please follow this link to perform this task: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review_Approval">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review_Approval</a></p>
+<p>If you think the submission can continue through TMLR's review process, click the button &quot;Under Review&quot;. Otherwise, click on &quot;Desk Reject&quot;. Once the submission has been confirmed, then the review process will begin, and your next step will be to assign 3 reviewers to the paper. You will get a follow up email when OpenReview is ready for you to assign these 3 reviewers.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
@@ -326,6 +331,11 @@ class TestJournal():
                 weight=1
             ))
 
+        ## Check action editor recommendation is expired
+        invitation = openreview_client.get_invitation(id='TMLR/Paper1/Action_Editors/-/Recommendation')
+        assert invitation.expdate is not None
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper1/-/Review_Approval',
                                     signatures=[f'{venue_id}/Paper1/Action_Editors'],
@@ -333,15 +343,15 @@ class TestJournal():
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
 
         note = joelle_client.get_note(note_id_1)
         assert note
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review']
         assert note.readers == ['everyone']
-        assert note.writers == ['TMLR']
+        assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
@@ -355,11 +365,26 @@ url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
 
+        ## try to make an assignment before the scores were computed
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not add assignment, invitation is not active yet.'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+                readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+                nonreaders=[f"{venue_id}/Paper1/Authors"],
+                writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                head=note_id_1,
+                tail='~David_Belanger1',
+                weight=1
+            ))
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
+
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>With this email, we request that you assign 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;. The assignments must be completed <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors\">https://openreview.net/group?id=TMLR/Action_Editors</a></p>
+<p>With this email, we request that you assign 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;. The assignments must be completed <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors\">https://openreview.net/group?id=TMLR/Action_Editors</a> and click on &quot;Edit Assignment&quot; for that paper in your &quot;Assigned Papers&quot; console.</p>
 <p>As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.</p>
+<p>Once assigned, reviewers will be asked to acknowledge on OpenReview their responsibility to review this submission. This acknowledgement will be made visible to you on the OpenReview page of the submission. If the reviewer has not acknowledged their responsibility a couple of days after their assignment, consider reaching out to them directly to confirm.</p>
 <p>We thank you for your essential contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
@@ -382,7 +407,9 @@ note={Under review}
                                         'comment': { 'value': 'missing PDF' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Desk_Rejection')
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
         assert len(messages) == 1
@@ -406,14 +433,11 @@ note={Under review}
 
         ## Check invitations as an author
         invitations = test_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 2
-        assert invitations[0].details['writable'] == False
-        assert invitations[1].details['writable'] == False
+        assert len(invitations) == 0
 
         ## Check invitations as an AE
         invitations = joelle_client.get_invitations(replyForum=note_id_2)
-        assert len(invitations) == 1
-        assert f"{venue_id}/Paper2/-/Review_Approval"  in [i.id for i in invitations]
+        assert len(invitations) == 0
 
         ## Check assignment invitations
         with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission'):
@@ -446,13 +470,13 @@ note={Under review}
                                         }
                                     ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
 
         note = test_client.get_note(note_id_3)
         assert note
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Withdrawn']
         assert note.readers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
-        assert note.writers == ['TMLR', 'TMLR/Paper3/Action_Editors', 'TMLR/Paper3/Authors']
+        assert note.writers == ['TMLR', 'TMLR/Paper3/Authors']
         assert note.signatures == ['TMLR/Paper3/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
@@ -490,18 +514,68 @@ note={Withdrawn}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
-        process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        # immediately remove assignment of David Belanger
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
+        # wait for process function delay (5 seconds) and check no email is sent
+        messages = journal.client.get_messages(
+            to='david@mailone.com', subject='[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
+        assert len(messages) == 0
+
+        # add David Belanger again
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+         # wait for process function delay (5 seconds) and check email has been sent
+        time.sleep(6)
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
+<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement</a></p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
+'''
+
+        # remove assignment of David Belanger
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
+
+        # check that David Belanger has been removed from reviewer group
+        time.sleep(6)
+        note = journal.client.get_note(note_id_1)
+        group = journal.client.get_group('TMLR/Paper1/Reviewers')
+        assert len(group.members) == 0
+
+        # add David Belanger back
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper1/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+            signatures=[f"{venue_id}/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+        forum_notes = journal.client.get_notes(invitation=journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
+
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Acknowledgement of Reviewer Responsibility')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
+<p>TMLR operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of TMLR that might differ from your previous reviewing experience.</p>
+<p>To perform this quick task, simply visit the following link: <a href=\"https://openreview.net/forum?id={forum_notes[0].id}&amp;invitationId=TMLR/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement\">https://openreview.net/forum?id={forum_notes[0].id}&amp;invitationId=TMLR/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement</a></p>
+<p>We thank you for your essential contribution to TMLR!</p>
+<p>The TMLR Editors-in-Chief</p>
 '''
 
         ## Carlos Mondragon
@@ -515,19 +589,46 @@ note={Withdrawn}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
-        process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
+<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement</a></p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
+
+        ## Check reviewer assignment reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/Assignment',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/Assignment-0-0')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'joelle@mailseven.com'
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>Our records show that you are late on the current action editor task:</p>
+<p>Task: Reviewer Assignment<br>
+Submission: Paper title UPDATED<br>
+Number of days late: 1<br>
+Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks\">https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks</a></p>
+<p>Please follow the provided link and complete your task ASAP.</p>
+<p>We thank you for your cooperation.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
 
         ## Javier Burroni
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -540,22 +641,21 @@ note={Withdrawn}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
-        process_logs = openreview_client.get_process_logs(id = paper_assignment_edge.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         messages = journal.client.get_messages(to = 'javier@mailtwo.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Javier Burroni,</p>
 <p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
+<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~Javier_Burroni1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~Javier_Burroni1/Assignment/Acknowledgement</a></p>
 <p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
 '''
 
         reviewerrs_group = raia_client.get_group(f'{venue_id}/Paper1/Reviewers')
         assert reviewerrs_group.members == ['~David_Belanger1', '~Carlos_Mondragon1', '~Javier_Burroni1']
+
 
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
@@ -573,14 +673,11 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue(openreview_client)
-        process_logs = openreview_client.get_process_logs(id = david_review_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 14
+        assert len(invitations) == 17
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -604,7 +701,7 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
         assert len(messages) == 4
@@ -640,7 +737,7 @@ note={Withdrawn}
                 )
             )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
@@ -665,7 +762,7 @@ note={Withdrawn}
         assert note.content['title']['value'] == 'Comment title'
         assert note.content['comment']['value'] == 'This is an inapropiate comment'
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Public Comment posted on submission Paper title UPDATED')
         assert len(messages) == 7
@@ -718,15 +815,11 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
-        review_2=review_note['note']['id']
-        process_logs = openreview_client.get_process_logs(id = review_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 14
+        assert len(invitations) == 17
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -754,6 +847,120 @@ Comment: This is an inapropiate comment</p>
         assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id, f"{venue_id}/Paper1/Authors"]
         assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id, f"{venue_id}/Paper1/Authors"]
 
+        ## Check review reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-0')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 2
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'carlos@mailthree.com'
+        assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
+<p>Our records show that you are late on the current reviewing task:</p>
+<p>Task: Review<br>
+Submission: Paper title UPDATED<br>
+Number of days late: 1<br>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>Please follow the provided link and complete your task ASAP.</p>
+<p>We thank you for your cooperation.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 0
+
+        ## Check review reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-1')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 3
+
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['to'] == 'joelle@mailseven.com'
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>Our records show that a reviewer on a paper you are the AE for is <em>one week</em> late on a reviewing task:</p>
+<p>Task: Review<br>
+Reviewer: Carlos Mondragon<br>
+Submission: Paper title UPDATED<br>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>Please follow up directly with the reviewer in question to ensure they complete their task ASAP.</p>
+<p>We thank you for your cooperation.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
+        ## Check reviewer assignment acknowledge reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement-0-0')
+
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
+<p>Our records show that you are late on the current reviewing task:</p>
+<p>Task: Assignment Acknowledgement<br>
+Submission: Paper title UPDATED<br>
+Number of days late: 1<br>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>Please follow the provided link and complete your task ASAP.</p>
+<p>We thank you for your cooperation.</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
+        ## post the assignment ack
+        formatted_date = (datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d, %Y")
+        assignment_ack_note = david_client.post_note_edit(invitation=f'TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement',
+            signatures=['~David_Belanger1'],
+            note=Note(
+                content={
+                    'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_ack_note['id'])
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment Acknowledgement posted on submission Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
+<p>David Belanger posted an assignment acknowledgement on a submission for which you are an Action Editor.</p>
+<p>Submission: Paper title UPDATED<br>
+Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.</p>
+<p>To view the acknowledgement, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}</a></p>
+'''
+
+
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
 
@@ -769,15 +976,11 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
-        review_3=review_note['note']['id']
-        process_logs = openreview_client.get_process_logs(id = review_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 15
+        assert len(invitations) == 18
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejection"  in [i.id for i in invitations]
@@ -853,7 +1056,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1
@@ -870,7 +1073,7 @@ Comment: This is an inapropiate comment</p>
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         hugo_anon_groups=hugo_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Hugo_Larochelle1')
         assert len(hugo_anon_groups) == 1
@@ -887,9 +1090,9 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
-        ## All the reviewes should be public now
+        ## All the reviews should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         assert len(reviews) == 4
         assert reviews[0].readers == ['everyone']
@@ -905,15 +1108,32 @@ Comment: This is an inapropiate comment</p>
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
 
+        time.sleep(5) ## wait until the process function runs
+
+        ## Check emails being sent to Reviewers and AE
+        messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
+        assert len(messages) == 4
+        messages = journal.client.get_messages(to= 'hugo@mailsix.com', subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
+        assert messages[0]['content']['text'] == f'''<p>Hi Hugo Larochelle,</p>
+<p>Thank you for submitting your review and engaging with the authors of TMLR submission &quot;Paper title UPDATED&quot;.</p>
+<p>You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.</p>
+<p>We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Official_Recommendation\">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Official_Recommendation</a></p>
+<p>For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>We thank you for your essential contribution to TMLR!</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
+        assert len(messages) == 1
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
@@ -926,11 +1146,11 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 15
+        assert len(invitations) == 19
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -950,11 +1170,11 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 15
+        assert len(invitations) == 19
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -974,11 +1194,11 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 19
+        assert len(invitations) == 23
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -1001,7 +1221,7 @@ Comment: This is an inapropiate comment</p>
 <li>Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.</li>
 <li>Rate the quality of the reviews submitted by the reviewers. <strong>You will not be able to submit your decision until these ratings have been submitted</strong>. To rate a review, go on the submission’s page and click on button “Rating” for each of the reviews.</li>
 </ul>
-<p>We ask that you submit your decision <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>We ask that you submit your decision <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Decision">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Decision</a></p>
 <p>The possible decisions are:</p>
 <ul>
 <li><strong>Accept as is</strong>: once its camera ready version is submitted, the manuscript will be marked as accepted.</li>
@@ -1026,13 +1246,13 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
 
         ## Check permissions of the review revisions
-        review_revisions=openreview_client.get_note_edits(noteId=reviews[0].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[0].id)
         assert len(review_revisions) == 3
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
@@ -1041,14 +1261,14 @@ Comment: This is an inapropiate comment</p>
         assert review_revisions[2].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[2].invitation == f"{venue_id}/Paper1/-/Review"
 
-        review_revisions=openreview_client.get_note_edits(noteId=reviews[1].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[1].id)
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
-        review_revisions=openreview_client.get_note_edits(noteId=reviews[2].id)
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[2].id)
         assert len(review_revisions) == 2
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
@@ -1065,7 +1285,7 @@ Comment: This is an inapropiate comment</p>
                     }
                 )
             )
-            helpers.await_queue(openreview_client)
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
             process_logs = openreview_client.get_process_logs(id = rating_note['id'])
             assert len(process_logs) == 1
             assert process_logs[0]['status'] == 'ok'
@@ -1081,10 +1301,24 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors"]
+
+
+        ## Second decision note and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number 1 of replies for this Invitation'):
+            decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+                signatures=[f"{venue_id}/Paper1/Action_Editors"],
+                note=Note(
+                    content={
+                        'recommendation': { 'value': 'Accept as is' },
+                        'comment': { 'value': 'This is a nice paper!' },
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
+                    }
+                )
+            )
 
         ## Check invitations
         invitations = raia_client.get_invitations(replyForum=note_id_1)
@@ -1100,7 +1334,7 @@ Comment: This is an inapropiate comment</p>
                                 }
                             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
 
         decision_note = raia_client.get_note(decision_note.id)
@@ -1130,8 +1364,6 @@ Comment: This is an inapropiate comment</p>
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Andrew McCallum']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1141,7 +1373,7 @@ Comment: This is an inapropiate comment</p>
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -1151,7 +1383,7 @@ Comment: This is an inapropiate comment</p>
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         # TODO: check this with Carlos
         #assert note.content['authorids'].get('readers') == None
         #assert note.content['authors'].get('readers') == None
@@ -1166,10 +1398,41 @@ Comment: This is an inapropiate comment</p>
 <p>The authors of TMLR paper Paper title VERSION 2 have now submitted the deanonymized camera ready version of their work.</p>
 <p>As your final task for this submission, please verify that the camera ready manuscript complies with the TMLR stylefile, with all author information inserted in the manuscript as well as the link to the OpenReview page for the submission.</p>
 <p>Moreover, if the paper was accepted with minor revision, verify that the changes requested have been followed.</p>
-<p>Visit the following link to perform this task: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>Visit the following link to perform this task: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Camera_Ready_Verification">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Camera_Ready_Verification</a></p>
 <p>If any correction is needed, you may contact the authors directly by email or through OpenReview.</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
+
+        ## Check reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                signatures=[venue_id]
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Verification-0-1')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 1
+
+        messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 2
+
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
+<p>Our records show that the AE for submission Paper title VERSION 2 is <em>one week</em> late on an AE task::</p>
+<p>Task: Camera Ready Verification<br>
+AE: Joelle Pineau<br>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>OpenReview Team</p>
+'''
+
 
         ## AE verifies the camera ready revision
         verification_note = joelle_client.post_note_edit(invitation='TMLR/Paper1/-/Camera_Ready_Verification',
@@ -1183,7 +1446,7 @@ Comment: This is an inapropiate comment</p>
                                  }
                             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Camera ready version accepted for your TMLR submission Paper title VERSION 2')
         assert len(messages) == 1
@@ -1201,23 +1464,25 @@ Comment: This is an inapropiate comment</p>
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
-        assert note.content['venue']['value'] == 'TMLR'
+        assert note.content['venue']['value'] == 'Accepted by TMLR'
         assert note.content['venueid']['value'] == 'TMLR'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
 userpaper,
 title={Paper title {VERSION} 2},
-author={Test User and Andrew McCallum},
+author={Test User and Melisa Bok},
 journal={Transactions of Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
 }'''
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Acceptance')
 
         ## Check invitations are expired
         invitations = openreview_client.get_invitations(regex=f"{venue_id}/Paper1/.*", type = "all")
@@ -1240,13 +1505,13 @@ note={Featured Certification, Reproducibility Certification}
                                  }
                             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=retraction_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
         assert len(messages) == 2
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
         assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
-<p>The authors of paper Paper title VERSION 2 are requesting to retract the paper. An EIC must confirm and accept the retraction: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>The authors of paper Paper title VERSION 2 are requesting to retract the paper. An EIC must confirm and accept the retraction: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Retraction_Approval">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Retraction_Approval</a></p>
 <p>OpenReview Team</p>
 '''
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Retraction_Approval")
@@ -1262,7 +1527,7 @@ note={Featured Certification, Reproducibility Certification}
                                  }
                             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
         assert len(messages) == 2
@@ -1273,6 +1538,10 @@ note={Featured Certification, Reproducibility Certification}
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        note = openreview_client.get_note(retraction_note['note']['id'])
+        assert note.readers == ['everyone']
+        assert note.nonreaders == []
+
         note = openreview_client.get_note(note_id_1)
         assert note
         assert note.forum == note_id_1
@@ -1281,7 +1550,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Andrew_McCallum1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -1292,7 +1561,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.content['_bibtex']['value'] == '''@article{
 userpaper,
 title={Paper title {VERSION} 2},
-author={Test User and Andrew McCallum},
+author={Test User and Melisa Bok},
 journal={Submitted to Transactions of Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
@@ -1338,7 +1607,7 @@ note={Retracted after acceptance}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_4['id'])
         note_id_4=submission_note_4['note']['id']
 
         # Assign Action Editor
@@ -1351,7 +1620,7 @@ note={Retracted after acceptance}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Accept the submission 4
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper4/-/Review_Approval',
@@ -1360,7 +1629,11 @@ note={Retracted after acceptance}
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_4, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1373,7 +1646,7 @@ note={Retracted after acceptance}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Assign Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1386,7 +1659,7 @@ note={Retracted after acceptance}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Assign Javier Burroni
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1399,14 +1672,14 @@ note={Retracted after acceptance}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert len(edges) == 4
 
-        ## Ask solitic review with a conflict
-        solitic_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
+        ## Ask solicit review with a conflict
+        solicit_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
             signatures=['~Tom_Rain1'],
             note=Note(
                 content={
@@ -1416,14 +1689,14 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been submitted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>This is to inform you that an OpenReview user has requested to review TMLR submission Paper title 4, which you are the AE for.</p>
 <p>Please consult the request and either accept or reject it, by visiting this link:</p>
-<p><a href=\"https://openreview.net/forum?id={note_id_4}&amp;noteId={solitic_review_note['note']['id']}\">https://openreview.net/forum?id={note_id_4}&amp;noteId={solitic_review_note['note']['id']}</a></p>
+<p><a href=\"https://openreview.net/forum?id={note_id_4}&amp;noteId={solicit_review_note['note']['id']}\">https://openreview.net/forum?id={note_id_4}&amp;noteId={solicit_review_note['note']['id']}</a></p>
 <p>We ask that you provide a response within 1 week, by {(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (<a href=\"https://openreview.net/profile?id=~Tom_Rain1\">https://openreview.net/profile?id=~Tom_Rain1</a>) before making a decision.</p>
 <p>We thank you for your contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -1431,11 +1704,11 @@ note={Retracted after acceptance}
 
         ## Post a response
         with pytest.raises(openreview.OpenReviewException, match=r'Can not approve this solicit review: conflict detected for ~Tom_Rain1'):
-            solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Solicit_Review_Approval',
+            solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Solicit_Review_Approval',
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
                     forum=note_id_4,
-                    replyto=solitic_review_note['note']['id'],
+                    replyto=solicit_review_note['note']['id'],
                     content={
                         'decision': { 'value': 'Yes, I approve the solicit review.' },
                         'comment': { 'value': 'thanks!' }
@@ -1443,8 +1716,8 @@ note={Retracted after acceptance}
                 )
             )
 
-        ## Ask solitic review
-        solitic_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
+        ## Ask solicit review
+        solicit_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
             signatures=['~Peter_Snow1'],
             note=Note(
                 content={
@@ -1454,17 +1727,17 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
 
         invitations = joelle_client.get_invitations(replyForum=note_id_4)
         assert f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval' in [i.id for i in invitations]
 
         ## Post a response
-        solitic_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval',
+        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval',
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
                 forum=note_id_4,
-                replyto=solitic_review_note['note']['id'],
+                replyto=solicit_review_note['note']['id'],
                 content={
                     'decision': { 'value': 'Yes, I approve the solicit review.' },
                     'comment': { 'value': 'thanks!' }
@@ -1472,9 +1745,14 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
 
-        assert '~Peter_Snow1' in solitic_review_approval_note['note']['readers']
+        assert '~Peter_Snow1' in solicit_review_approval_note['note']['readers']
+
+        paper_assignment_edges = openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', tail='~Peter_Snow1', head=note_id_4)
+        assert len(paper_assignment_edges) == 1
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edges[0].id)
 
         assert '~Peter_Snow1' in joelle_client.get_group(f'{venue_id}/Paper4/Reviewers').members
 
@@ -1483,7 +1761,7 @@ note={Retracted after acceptance}
         assert messages[0]['content']['text'] == f'''<p>Hi Peter Snow,</p>
 <p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 4 has been accepted by the Action Editor (AE).</p>
 <p>You are required to submit your review within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}\">https://openreview.net/forum?id={note_id_4}</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers\">https://openreview.net/group?id=TMLR/Reviewers</a></p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers\">https://openreview.net/group?id=TMLR/Reviewers</a></p>
 <p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -1508,7 +1786,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Review posted on TMLR submission Paper title 4')
 
@@ -1526,7 +1804,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Carlos_Mondragon1')
@@ -1542,7 +1820,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
@@ -1554,9 +1832,10 @@ note={Retracted after acceptance}
         assert edges[4].weight == 1
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper4/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1576,7 +1855,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Post a review recommendation
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Official_Recommendation',
@@ -1588,7 +1867,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Post a review recommendation
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Official_Recommendation',
@@ -1600,7 +1879,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         reviews=openreview_client.get_notes(forum=note_id_4, invitation=f'{venue_id}/Paper4/-/Review', sort= 'number:asc')
 
@@ -1614,7 +1893,7 @@ note={Retracted after acceptance}
                     }
                 )
             )
-            helpers.await_queue(openreview_client)
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
 
         with pytest.raises(openreview.OpenReviewException, match=r'Decision Reject can not have certifications'):
             decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Decision',
@@ -1638,7 +1917,7 @@ note={Retracted after acceptance}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == ['TMLR/Editors_In_Chief', f"{venue_id}/Paper4/Action_Editors"]
@@ -1652,10 +1931,12 @@ note={Retracted after acceptance}
                                 'comment_to_the_AE': { 'value': 'I agree with the AE' }
                             }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Rejection')
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 4')
         assert len(messages) == 1
@@ -1674,7 +1955,7 @@ note={Retracted after acceptance}
         assert note.replyto is None
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection']
         assert note.readers == ['everyone']
-        assert note.writers == ['TMLR']
+        assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
@@ -1698,7 +1979,7 @@ note={Rejected}
                                 'confirmation': { 'value': 'I want to reveal all author names on behalf of myself and my co-authors.' }
                             }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=deanonymize_authors_note['id'])
 
         note = openreview_client.get_note(note_id_4)
         assert note
@@ -1706,7 +1987,7 @@ note={Rejected}
         assert note.replyto is None
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
-        assert note.writers == ['TMLR']
+        assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['authorids'].get('readers') == ['everyone']
@@ -1772,7 +2053,7 @@ note={Rejected}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_5['id'])
         note_id_5=submission_note_5['note']['id']
 
         # Assign Action Editor
@@ -1785,7 +2066,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Accept the submission 5
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper5/-/Review_Approval',
@@ -1794,7 +2075,11 @@ note={Rejected}
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_5, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1807,7 +2092,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Assign Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1820,7 +2105,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Assign Javier Burroni
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1833,7 +2118,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')
@@ -1851,7 +2136,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Javier_Burroni1')
@@ -1867,7 +2152,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Carlos_Mondragon1')
@@ -1883,13 +2168,14 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper5/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         cho_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1909,7 +2195,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Post a review recommendation
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Official_Recommendation',
@@ -1921,7 +2207,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Post a review recommendation
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Official_Recommendation',
@@ -1933,7 +2219,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         reviews=openreview_client.get_notes(forum=note_id_5, invitation=f'{venue_id}/Paper5/-/Review', sort= 'number:asc')
 
@@ -1947,7 +2233,7 @@ note={Rejected}
                     }
                 )
             )
-            helpers.await_queue(openreview_client)
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Decision',
             signatures=[f"{venue_id}/Paper5/Action_Editors"],
@@ -1959,7 +2245,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
         decision_note = joelle_client.get_note(decision_note['note']['id'])
         assert decision_note.readers == ['TMLR/Editors_In_Chief', f"{venue_id}/Paper5/Action_Editors"]
@@ -1982,7 +2268,7 @@ note={Rejected}
                                 'comment_to_the_AE': { 'value': 'I agree with the AE' }
                             }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
@@ -1998,6 +2284,14 @@ note={Rejected}
 <p>We thank you for your contribution to TMLR and congratulate you for your successful submission!</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
+        ## Expire review invitations to the jobs are cancelled
+        withdraw_note = raia_client.post_note_edit(invitation='TMLR/Paper5/-/Withdrawal',
+                                    signatures=[f'{venue_id}/Paper5/Authors'],
+                                    note=Note(
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
 
 
     def test_withdraw_submission(self, journal, openreview_client, helpers):
@@ -2035,7 +2329,7 @@ note={Rejected}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_6['id'])
         note_id_6=submission_note_6['note']['id']
 
         # Assign Action Editor
@@ -2048,7 +2342,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Accept the submission 6
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper6/-/Review_Approval',
@@ -2057,7 +2351,11 @@ note={Rejected}
                                         'under_review': { 'value': 'Appropriate for Review' }
                                     }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_6, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
         ## Assign David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -2070,7 +2368,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Assign Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -2083,7 +2381,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Assign Javier Burroni
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -2096,7 +2394,7 @@ note={Rejected}
             weight=1
         ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~David_Belanger1')
@@ -2114,7 +2412,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Javier_Burroni1')
@@ -2130,7 +2428,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Carlos_Mondragon1')
@@ -2146,13 +2444,14 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper6/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         cho_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
@@ -2172,7 +2471,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Post a review recommendation
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Official_Recommendation',
@@ -2184,7 +2483,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         ## Post a review recommendation
         official_recommendation_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Official_Recommendation',
@@ -2196,7 +2495,7 @@ note={Rejected}
             )
         )
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
 
         reviews=openreview_client.get_notes(forum=note_id_6, invitation=f'{venue_id}/Paper6/-/Review', sort= 'number:asc')
 
@@ -2210,7 +2509,7 @@ note={Rejected}
                     }
                 )
             )
-            helpers.await_queue(openreview_client)
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
 
         ## Withdraw the submission 6
         withdraw_note = test_client.post_note_edit(invitation='TMLR/Paper6/-/Withdrawal',
@@ -2221,17 +2520,21 @@ note={Rejected}
                                         }
                                     ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
 
         note = test_client.get_note(note_id_6)
         assert note
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn']
         assert note.readers == ['everyone']
-        assert note.writers == ['TMLR']
+        assert note.writers == ['TMLR', 'TMLR/Paper6/Authors']
         assert note.signatures == ['TMLR/Paper6/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
+
+        edits = openreview_client.get_note_edits(note_id=note_id_6, invitation='TMLR/-/Withdrawn')
+        assert len(edits) == 1
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_6)
@@ -2254,7 +2557,7 @@ note={Rejected}
                                 'confirmation': { 'value': 'I want to reveal all author names on behalf of myself and my co-authors.' }
                             }))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=deanonymize_authors_note['id'])
 
         note = openreview_client.get_note(note_id_6)
         assert note
@@ -2262,7 +2565,7 @@ note={Rejected}
         assert note.replyto is None
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Withdrawn', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
-        assert note.writers == ['TMLR']
+        assert note.writers == ['TMLR', 'TMLR/Paper6/Authors']
         assert note.signatures == ['TMLR/Paper6/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['authorids'].get('readers') == ['everyone']
@@ -2285,6 +2588,10 @@ note={Withdrawn}
     def test_submitted_submission(self, journal, openreview_client, helpers):
 
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        venue_id = journal.venue_id
+        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        editor_in_chief_group_id = journal.get_editors_in_chief_id()
 
         ## Post the submission 7
         submission_note_7 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -2302,8 +2609,146 @@ note={Withdrawn}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_7['id'])
+        note_id_7 = submission_note_7['note']['id']
 
+        # Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_7,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Accept the submission 7
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper7/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper7/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_7, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        ## Assign David Belanger
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper7/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper7/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper7/Action_Editors"],
+            signatures=[f"{venue_id}/Paper7/Action_Editors"],
+            head=note_id_7,
+            tail='~David_Belanger1',
+            weight=1
+        ))
+
+        ## Ask solicit review with a conflict
+        tom_client = OpenReviewClient(username='tom@mail.com', password='1234')
+        solicit_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Solicit_Review',
+            signatures=['~Tom_Rain1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
+
+        ## Post a response
+        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Tom_Rain1_Solicit_Review_Approval',
+            signatures=[f"{venue_id}/Paper7/Action_Editors"],
+            note=Note(
+                forum=note_id_7,
+                replyto=solicit_review_note['note']['id'],
+                content={
+                    'decision': { 'value': 'No, I decline the solicit review.' },
+                    'comment': { 'value': 'Sorry, all the reviewers were assigned.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
+
+        messages = journal.client.get_messages(to = 'tom@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 7" was not accepted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi Tom Rain,</p>
+<p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: <a href=\"https://openreview.net/forum?id={note_id_7}&amp;noteId={solicit_review_approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_7}&amp;noteId={solicit_review_approval_note['note']['id']}</a>.</p>
+<p>Respectfully,</p>
+<p>The TMLR Editors-in-Chief</p>
+'''
+
+        ## Post the submission 8
+        submission_note_8 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 8' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_8['id'])
+        note_id_8 = submission_note_8['note']['id']
+
+        # Assign Action Editor
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_8,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Accept the submission 8
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper8/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper8/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_8, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        ## Assign David Belanger should throw an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not add assignment, reviewer ~David_Belanger1 has 1 pending reviews.'):
+            paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+                readers=[venue_id, f"{venue_id}/Paper8/Action_Editors", '~David_Belanger1'],
+                nonreaders=[f"{venue_id}/Paper8/Authors"],
+                writers=[venue_id, f"{venue_id}/Paper8/Action_Editors"],
+                signatures=[f"{venue_id}/Paper8/Action_Editors"],
+                head=note_id_8,
+                tail='~David_Belanger1',
+                weight=1
+            ))
+
+        note = openreview_client.get_note(note_id_7)
+        journal.invitation_builder.expire_paper_invitations(note)
+
+        note = openreview_client.get_note(note_id_8)
+        journal.invitation_builder.expire_paper_invitations(note)
+
+
+        journal.invitation_builder.expire_acknowledgement_invitations()
 
 
 

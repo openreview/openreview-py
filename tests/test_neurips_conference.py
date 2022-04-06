@@ -78,6 +78,7 @@ class TestNeurIPSConference():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
@@ -116,7 +117,7 @@ class TestNeurIPSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -128,7 +129,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'senior area chair',
+                'invitee_role': 'Senior_Area_Chairs',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
                 'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
@@ -148,17 +149,17 @@ class TestNeurIPSConference():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == 'openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number)
 
-        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
-        assert messages[0]['content']['text'].startswith('<p>Dear SAC One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
+        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
+        assert messages[0]['content']['text'].startswith('<p>Dear SAC One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
-        messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2021] Invitation to serve as senior area chair')
+        messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2021] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as senior area chair'
-        assert messages[0]['content']['text'].startswith('<p>Dear SAC Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as senior area chair.')
+        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
+        assert messages[0]['content']['text'].startswith('<p>Dear SAC Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
@@ -166,7 +167,7 @@ class TestNeurIPSConference():
         assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@google.com', 'sac2@gmail.com']
 
         sac_client = openreview.Client(username='sac1@google.com', password='1234')
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token, wait_for_element='notes')
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
@@ -193,7 +194,7 @@ class TestNeurIPSConference():
         messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2021]: Invitation to serve as Area Chair')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of NeurIPS 2021 to serve as area chair' in text
+        assert 'You have been nominated by the program chair committee of NeurIPS 2021 to serve as Area Chair' in text
 
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -211,7 +212,7 @@ class TestNeurIPSConference():
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 0
 
-        request_page(selenium, reject_url, alert=True)
+        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -301,13 +302,13 @@ class TestNeurIPSConference():
         assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
 
         tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs#senior-areachair-tasks'
-        request_page(selenium, tasks_url, sac_client.token)
+        request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
 
         assert selenium.find_element_by_link_text('Senior Area Chair Bid')
 
 
         bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid'
-        request_page(selenium, bid_url, sac_client.token)
+        request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
 
         assert selenium.find_element_by_id('notes')
 
@@ -418,7 +419,7 @@ class TestNeurIPSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -430,7 +431,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
-                'invitee_role': 'reviewer',
+                'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
@@ -453,17 +454,16 @@ class TestNeurIPSConference():
 
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
-        assert 'No recruitment invitation was sent to the following users because they have already been invited' in recruitment_status_notes[0].content['comment']
-        assert "{'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/Invited': ['sac1@google.com', 'sac2@gmail.com']}" in recruitment_status_notes[0].content['comment']
+        assert {'NeurIPS.cc/2021/Conference/Senior_Area_Chairs/Invited': ['sac1@google.com', 'sac2@gmail.com']} == recruitment_status_notes[0].content['already_invited']
 
-        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Invitation to serve as reviewer')
+        messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Invitation to serve as Reviewer')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as reviewer'
-        assert messages[0]['content']['text'].startswith('<p>Dear Reviewer UMass,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+        assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Reviewer'
+        assert messages[0]['content']['text'].startswith('<p>Dear Reviewer UMass,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
         assert 'pc@neurips.cc' in messages[0]['content']['text']
         reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, reject_url, alert=True)
+        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -510,7 +510,7 @@ class TestNeurIPSConference():
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Remind Recruitment',
-                'invitee_role': 'reviewer',
+                'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
                 'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
@@ -525,10 +525,10 @@ class TestNeurIPSConference():
 
         helpers.await_queue()
 
-        messages = client.get_messages(to='reviewer2@mit.edu', subject='Reminder: [NeurIPS 2021] Invitation to serve as reviewer')
+        messages = client.get_messages(to='reviewer2@mit.edu', subject='Reminder: [NeurIPS 2021] Invitation to serve as Reviewer')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == 'Reminder: [NeurIPS 2021] Invitation to serve as reviewer'
-        assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as reviewer.')
+        assert messages[0]['content']['subject'] == 'Reminder: [NeurIPS 2021] Invitation to serve as Reviewer'
+        assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
         reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, reject_url, alert=True)
 
@@ -705,7 +705,11 @@ class TestNeurIPSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         post_submission_note=pc_client.post_note(openreview.Note(
-            content= { 'force': 'Yes', 'hide_fields': ['keywords'] },
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+            },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
             readers= ['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
@@ -771,7 +775,7 @@ class TestNeurIPSConference():
         conference.open_paper_ranking(committee_id=conference.get_authors_id(), due_date=now + datetime.timedelta(days=3))
 
         authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Authors'
-        request_page(selenium, authors_url, test_client.token)
+        request_page(selenium, authors_url, test_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
         assert selenium.find_elements_by_class_name('tag-widget')
 
@@ -1170,13 +1174,13 @@ Thank you,
         invitation_message=messages[0]['content']['text']
 
         invalid_accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('user=~External_Reviewer_Amazon1', 'user=~External_Reviewer_Amazon2').replace('&amp;', '&')
-        request_page(selenium, invalid_accept_url, alert=True)
+        request_page(selenium, invalid_accept_url, alert=True, by=By.CLASS_NAME, wait_for_element='important_message')
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
         accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -1219,7 +1223,7 @@ Thank you,
 
         ## External reviewer declines the invitation, assignment rollback
         decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True)
+        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -1262,7 +1266,7 @@ Thank you,
 
         ## External reviewer accepts the invitation again
         accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -1346,7 +1350,7 @@ Thank you,
         assert messages and len(messages) == 1
         reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, reject_url, alert=True)
+        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -1413,7 +1417,7 @@ Thank you,
         assert messages and len(messages) == 1
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         decline_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -1448,7 +1452,7 @@ Thank you,
         ## External reviewer creates a profile and accepts the invitation again
         external_reviewer=helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
 
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -1501,7 +1505,7 @@ Thank you,
         messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
         reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, reject_url, alert=True)
+        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -1931,7 +1935,7 @@ Thank you,
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')
         assert messages and len(messages) == 1
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -2030,7 +2034,7 @@ Thank you,
         messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')
         assert messages and len(messages) == 1
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -2272,7 +2276,7 @@ Thank you,
         ac_anon_id=signatory_groups[0].id
 
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
-        request_page(selenium, ac_url, ac_client.token)
+        request_page(selenium, ac_url, ac_client.token, wait_for_element='5-metareview-status')
 
         status = selenium.find_element_by_id("5-metareview-status")
         assert status
@@ -2295,7 +2299,7 @@ Thank you,
         conference.open_paper_ranking(conference.get_reviewers_id(), due_date=now + datetime.timedelta(minutes = 40))
 
         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Area_Chairs'
-        request_page(selenium, ac_url, ac_client.token)
+        request_page(selenium, ac_url, ac_client.token, by=By.ID, wait_for_element='5-metareview-status')
 
         status = selenium.find_element_by_id("5-metareview-status")
         assert status
@@ -2321,7 +2325,7 @@ Thank you,
         )
 
         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers'
-        request_page(selenium, reviewer_url, reviewer_client.token)
+        request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
         tags = selenium.find_elements_by_class_name('tag-widget')
         assert tags
@@ -2448,7 +2452,7 @@ Thank you,
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
 
-        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Program_Chairs#paper-status", pc_client.token, wait_for_element='notes')
         assert "NeurIPS 2021 Conference Program Chairs | OpenReview" in selenium.title
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel

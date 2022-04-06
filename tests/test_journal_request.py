@@ -1,5 +1,6 @@
 import openreview
 import pytest
+from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Invitation
 from openreview.api import Note
@@ -14,7 +15,7 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue()
+        helpers.await_queue(openreview_client)
 
         #post journal request form
         request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
@@ -33,7 +34,7 @@ class TestJournalRequest():
                 }
             ))
 
-        helpers.await_queue()
+        helpers.await_queue(openreview_client)
 
         #return journal details
         journal_details = {
@@ -60,7 +61,7 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue()
+        helpers.await_queue(openreview_client)
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), openreview_client.token)
 
         request_form = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request',
@@ -89,13 +90,17 @@ class TestJournalRequest():
         helpers.create_user('support_role@mail.com', 'Support', 'Role')
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form['note']['id']))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
         assert reply_row
         buttons = reply_row.find_elements_by_class_name('btn-xs')
         assert [btn for btn in buttons if btn.text == 'Comment']
+
+        #check request form id is added to AE console
+        AE_group = openreview_client.get_group('{}/Action_Editors'.format(request_form['note']['content']['venue_id']['value']))
+        assert "var JOURNAL_REQUEST_ID = '{}';".format(request_form['note']['id']) in AE_group.web
 
     def test_journal_reviewer_recruitment(self, openreview_client, selenium, request_page, helpers, journal):
 
@@ -119,7 +124,7 @@ TJ22 Editors-in-Chief
 
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), test_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(journal['journal_request_note']['id']))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -186,7 +191,7 @@ TJ22 Editors-in-Chief
     def test_journal_action_editor_recruitment(self, openreview_client, selenium, request_page, helpers, journal):
 
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
-        
+
         invitation = test_client.get_invitation(id='{}/Journal_Request{}/-/Action_Editor_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']))
         assert 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['presentation']['default']
 
@@ -204,7 +209,7 @@ TJ22 Editors-in-Chief
                 content = {
                     'title': { 'value': 'Recruitment' },
                     'invitee_details': ae_details,
-                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as Action Editor for ' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] },
+                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as {role} for ' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] },
                     'email_content': {'value': 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22 to serve as action editor.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!'}
                 },
                 forum = journal['journal_request_note']['forum'],
@@ -249,7 +254,7 @@ TJ22 Editors-in-Chief
         helpers.create_user('ae_journal1@mail.com', 'First', 'AE')
         ae_client = OpenReviewClient(username='ae_journal1@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), ae_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), ae_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(journal['journal_request_note']['id']))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -264,8 +269,8 @@ TJ22 Editors-in-Chief
                 content = {
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com'},
-                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as reviewer' },
-                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated to serve as reviewer for TJ22.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!\n{inviter}'}
+                    'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to act as Reviewer for ' + journal['journal_request_note']['content']['abbreviated_venue_name']['value']},
+                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated to serve as reviewer for TJ22 by {inviter}.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!\n{inviter}'}
                 },
                 forum = journal['journal_request_note']['forum'],
                 replyto = journal['journal_request_note']['forum'],
@@ -279,9 +284,10 @@ TJ22 Editors-in-Chief
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
 
-        messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to serve as reviewer')
+        messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22.</p>')
+        assert messages[0]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22 by First AE.</p>')
+        assert messages[0]['content']['replyTo'] == 'ae_journal1@mail.com'
 
         inv = '{}/Journal_Request{}/-/Comment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
         recruitment_status = ae_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])

@@ -384,6 +384,13 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
             file_content = file_content.replace(
+                'BLIND_SUBMISSION_ID = \'\'',
+                'BLIND_SUBMISSION_ID = \'' + conference.get_blind_submission_id() + '\'')
+            file_content = file_content.replace(
+                'SUBMISSION_READERS = []',
+                str.format('SUBMISSION_READERS = {}', note.readers)
+            )
+            file_content = file_content.replace(
                 'CONFERENCE_NAME = \'\'',
                 'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
             file_content = file_content.replace(
@@ -1185,6 +1192,7 @@ class DecisionInvitation(openreview.Invitation):
         decision_stage = conference.decision_stage
         start_date = decision_stage.start_date
         due_date = decision_stage.due_date
+        additional_fields = decision_stage.additional_fields
         content = {
             'title': {
                 'order': 1,
@@ -1204,6 +1212,9 @@ class DecisionInvitation(openreview.Invitation):
                 'description': ''
             }
         }
+
+        for key in additional_fields:
+            content[key] = additional_fields[key]
 
         file_content = None
         decision_process_file = 'templates/decision_process.py'
@@ -1310,7 +1321,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
 
         content=invitations.paper_recruitment
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
+        with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), process_file)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
@@ -1820,7 +1831,6 @@ class InvitationBuilder(object):
 
     def __set_registration_invitation(self, conference, name, start_date, due_date, additional_fields, remove_fields, instructions, title, committee_id, committee_name):
 
-        invitees = [committee_id, conference.support_user]
         readers = [conference.id, committee_id]
 
         # Create super invitation with a webfield
@@ -1829,7 +1839,7 @@ class InvitationBuilder(object):
             readers = ['everyone'],
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = invitees,
+            invitees = [conference.get_id(), conference.support_user],
             reply = {
                 'forum': None,
                 'replyto': None,
@@ -1901,7 +1911,7 @@ class InvitationBuilder(object):
             readers = readers,
             writers = [conference.get_id()],
             signatures = [conference.get_id()],
-            invitees = invitees,
+            invitees = [committee_id, conference.support_user],
             reply = {
                 'forum': registration_parent.id,
                 'replyto': registration_parent.id,
