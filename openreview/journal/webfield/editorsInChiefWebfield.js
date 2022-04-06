@@ -29,6 +29,7 @@ var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
 var RESPONSIBILITY_ACK_NAME = 'Responsibility/Acknowledgement';
+var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 
 var REVIEWER_RATING_MAP = {
   "Exceeds expectations": 3,
@@ -76,8 +77,8 @@ var getInvitationId = function(number, name, prefix) {
   return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
 };
 
-var getReplies = function(submission, name) {
-  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
+var getReplies = function(submission, name, prefix) {
+  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
 var getRatingInvitations = function(invitationsById, number) {
@@ -443,13 +444,17 @@ var formatData = function(
 
     paperReviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
+      var assignmentAcknowledgement = getReplies(submission, reviewer.id + '/' + ASSIGNMENT_ACKNOWLEDGEMENT_NAME, REVIEWERS_NAME);
       var reviewerRecommendation = null;
       var status = {};
       var reviewerStatus = reviewerStatusById[reviewer.id];
 
+      if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
+        status.Acknowledged = 'Yes';
+      }
+
       if (completedReview) {
         reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
-        status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
@@ -458,7 +463,7 @@ var formatData = function(
           return p.replyto === completedReview.id;
         });
         if(reviewerRating){
-          status.Rating = reviewerRating.content.rating.value
+          status.Rating = reviewerRating.content.rating.value;
           if(reviewerStatus){
             var rating = reviewerRating.content.rating.value;
             var ratingValue = REVIEWER_RATING_MAP[rating];

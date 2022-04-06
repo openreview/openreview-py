@@ -34,6 +34,23 @@ def run_once(f):
     wrapper.has_run = False
     return wrapper
 
+def format_params(params):
+    if isinstance(params, dict):
+        formatted_params = {}
+        for key, value in params.items():
+            formatted_params[key] = format_params(value)
+        return formatted_params
+
+    if isinstance(params, list):
+        formatted_params = []
+        for value in params:
+            formatted_params.append(format_params(value))
+        return formatted_params
+
+    if isinstance(params, bool):
+        return json.dumps(params)
+
+    return params
 
 def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1)):
     """
@@ -681,17 +698,19 @@ def concurrent_get(client, get_function, **params):
 
     params.update({
         'offset': params.get('offset') or 0,
-        'limit': min(params.get('limit') or client.limit, client.limit),
         'with_count': True
     })
 
     docs, count = get_function(**params)
-    if count <= params['limit']:
+    if params.get('limit') or float('inf') <= client.limit:
+        return docs
+
+    if count <= client.limit:
         return docs
 
     params['with_count'] = False
 
-    offset_list = list(range(params['limit'], count, params['limit']))
+    offset_list = list(range(client.limit, min(params.get('limit') or count, count), client.limit))
 
     futures = []
     gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
