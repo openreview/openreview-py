@@ -78,6 +78,7 @@ class TestNeurIPSConference():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
@@ -704,7 +705,11 @@ class TestNeurIPSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         post_submission_note=pc_client.post_note(openreview.Note(
-            content= { 'force': 'Yes', 'hide_fields': ['keywords'] },
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+            },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
             readers= ['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
