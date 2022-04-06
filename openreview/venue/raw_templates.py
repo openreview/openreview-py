@@ -18,9 +18,16 @@ submission_template = {
         'invitees': ['~'],
         'cdate': { '${..params.cdate}' },
         'duedate': { '${..params.duedate}' },
+        'process': '''
+def process(client, edit, invitation):
+    ## 1. Create paper group: submission_group_id = f'${...params.venueid}/${...params.name}{edit.note.number}' ## Example: TMLR/Submission1
+    ## 2. Create author paper author_submission_group_id = f'{submission_group_id}/Authors' ## Example: TMLR/Submission1/Authors
+    ## 3. Add authorids as members of the group
+    ## 4. Send confirmation email to the author group
+''',
         'edit': {
             'signatures': { 'regex': '~.*', 'type': 'group' }},
-            'readers': ['${...params.venueid}', '${...params.venueid}/${...params.name}/\\${note.number}/Authors'], ## note.number needs to be escaped. It is defined at note creation
+            'readers': ['${...params.venueid}', '${...params.venueid}/${...params.name}\\${note.number}/Authors'], ## note.number needs to be escaped. It is defined at note creation
             'writers': ['${...params.venueid}'],
             'note': {
                 'id': {
@@ -29,9 +36,9 @@ submission_template = {
                         'optional': True
                     }
                 },
-                'signatures': ['${....params.venueid}/${....params.name}/\\${note.number}/Authors'],
-                'readers': ['${....params.venueid}', '${....params.venueid}/${....params.name}/\\${note.number}/Authors'],
-                'writers': ['${....params.venueid}', '${....params.venueid}/${....params.name}/\\${note.number}/Authors'],
+                'signatures': ['${....params.venueid}/${....params.name}\\${note.number}/Authors'],
+                'readers': ['${....params.venueid}', '${....params.venueid}/${....params.name}\\${note.number}/Authors'],
+                'writers': ['${....params.venueid}', '${....params.venueid}/${....params.name}\\${note.number}/Authors'],
                 'content': {
                     'title': {
                         'order': 1, ## we store this value in the invitation edit but we don't store it in the note, should we assume that only 'value' and 'readers' will be saved in the note content?
