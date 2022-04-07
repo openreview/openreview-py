@@ -7,12 +7,60 @@ submission_template = {
     'edit': {
         'readers': ['OpenReview.net/Support', '${params.venueid}'],
         'writers': ['OpenReview.net/Support', '${params.venueid}'],
-        'signatures': ['${params.venueid}'],
+        'signatures': ['${params.venueid.value}'],
         'params': {
-            'venueid': { 'type': 'group' }, ## any other validation? can we use any group id as venueid?
-            'name': { 'type': 'string', 'default': 'Submission'},
-            'cdate': { 'type': 'date', 'range': [ 0, 9999999999999 ] },
-            'duedate': { 'type': 'date', 'range': [ 0, 9999999999999 ] }       
+            'venueid': { 
+                'value': {
+                    'param': {
+                        'memberOf': 'active_venues'
+                    }                    
+                },
+                'readers': ['everyone'],
+                'type': 'group',
+                'presentation': {
+                    'order': 1,
+                    'description': 'Venue id', 
+                    'markdown': True
+                }
+            }, ## any other validation? can we use any group id as venueid?
+            'name': { 
+                'value': {
+                    'param': {
+                        'default': 'Submission'
+                        'optional': True
+                    }
+                },
+                'type': 'string',
+                'presentation': {
+                    'order': 2,
+                    'description': 'Submission name.', 
+                    'markdown': True
+                }
+            },
+            'cdate': {
+                'value': {
+                    'param': { 
+                        'range': [ 0, 9999999999999 ] 
+                    },
+                },
+                'type': 'date',
+                'presentation': {
+                    'order': 3,
+                    'description': 'Activation date.'
+                }                
+            },
+            'duedate': {
+                'value': {
+                    'param': { 
+                        'range': [ 0, 9999999999999 ] 
+                    },
+                },
+                'type': 'date',
+                'presentation': {
+                    'order': 4,
+                    'description': 'Submission due date.'
+                }                
+            },      
         },
         'invitation': {
             'id': '${../params.venueid}/-/${../params.name}',
@@ -24,7 +72,7 @@ submission_template = {
             'duedate': { '${../params.duedate}' },
             'process': '''
 def process(client, edit, invitation):
-    ## 1. Create paper group: submission_group_id = f'${../params.venueid}/${../params.name}{edit.note.number}' ## Example: TMLR/Submission1
+    ## 1. Create paper group: submission_group_id = f'{invitation.params.venueid}/${../params.name}{edit.note.number}' ## Example: TMLR/Submission1
     ## 2. Create author paper author_submission_group_id = f'{submission_group_id}/Authors' ## Example: TMLR/Submission1/Authors
     ## 3. Add authorids as members of the group
     ## 4. Send confirmation email to the author group
