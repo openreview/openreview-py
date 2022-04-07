@@ -223,3 +223,62 @@ def process(client, edit, invitation):
         }
    }
 }
+
+
+submission_release_template = {
+    'id': 'OpenReview.net/Support/-/Submission_Release_Template', ## template should be part of the name?
+    'invitees': ['active_venues'], ## how to give access to the PCs only from all the venues
+    'readers': ['everyone'],
+    'writers': ['OpenReview.net'],
+    'signatures': ['OpenReview.net'],
+    'params': {
+        'venueid': { 'type': 'group' }, ## any other validation? can we use any group id as venueid?
+        'name': { 'type': 'string', 'default': 'Submission_Release'},
+        'submission_name': { 'type': 'string'},
+        'cdate': { 'type': 'date', 'range': [ 0, 9999999999999 ] }       
+    },
+    'invitation': {
+        'id': '${../params.venueid}/-/${../params.name}',
+        'signatures': ['${../params.venueid}'],
+        'readers': ['everyone'],
+        'writers': ['${signatures}'],
+        'invitees': ['${../params.venueid}'],
+        'cdate': { '${../params.cdate}' },
+        'dateprocesses': [{
+            'dates': ['#{cdate}'],
+            'script': '''
+def process(client, invitation):
+    submissions = client.get_notes(invitation='${../../params.venueid}/-/${../../params.submission_name}')
+    ## Set submissions to be under review
+    for submission in submissions:
+        client.post_invitation_edit({
+            invitation: '${../../params.venueid}/-/${../../params.name}',
+            note: {
+                id: submission.id
+            }
+        })
+'''
+        }], 
+        'edit': {
+            'signatures': ['${../..params.venueid}'],
+            'readers': ['${../../params.venueid}', '${../../params.venueid}/${../../params.name}\\${note.number}/Authors'], ## note.number needs to be escaped. It is defined at note creation
+            'writers': ['${../..params.venueid}'],
+            'note': {
+                'id': {
+                    'param': {
+                        'withInvitation': '${../../../../../params.venueid}/-/${../../../../../params.submission_name}'
+                    }
+                },
+                'readers': ['everyone'],  ## parametrize readers of have a template per readers combination?
+                'content': {
+                    'venue': {
+                        'value': 'Under Review for ${../../../../params.venueid}'
+                    },
+                    'venueid': {
+                        'value': '${../../../../params.venueid}/Under_Review'
+                    }                                                                                             
+                }               
+            }       
+        }    
+    }
+}
