@@ -51,12 +51,14 @@ def process(client, edit, invitation):
                         'presentation': {
                             'hidden': True
                         },
-                        'value': { 'param': { 'type': 'string[]', 'regex': '[^;,\\n]+(,[^,\\n]+)*' } }
+                        'value': { 'param': { 'type': 'string[]', 'regex': '[^;,\\n]+(,[^,\\n]+)*' } },
+                        'readers': [ '${.....params.venueid}', '${.....params.venueid}/${.....params.name}\\${note.number}/Authors']
                     },
                     'authorids': {
                         'order': 3,
                         'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                        'value': { 'param': { 'type': 'group[]', 'regex': r'~.*' } }
+                        'value': { 'param': { 'type': 'group[]', 'regex': r'~.*' } },
+                        'readers': [ '${.....params.venueid}', '${.....params.venueid}/${.....params.name}\\${note.number}/Authors']
                     },
                     'keywords': {
                         'order': 4,
