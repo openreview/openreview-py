@@ -23,11 +23,11 @@ submission_template = {
             'cdate': { '${../params.cdate}' },
             'duedate': { '${../params.duedate}' },
             'process': '''
-    def process(client, edit, invitation):
-        ## 1. Create paper group: submission_group_id = f'${../params.venueid}/${../params.name}{edit.note.number}' ## Example: TMLR/Submission1
-        ## 2. Create author paper author_submission_group_id = f'{submission_group_id}/Authors' ## Example: TMLR/Submission1/Authors
-        ## 3. Add authorids as members of the group
-        ## 4. Send confirmation email to the author group
+def process(client, edit, invitation):
+    ## 1. Create paper group: submission_group_id = f'${../params.venueid}/${../params.name}{edit.note.number}' ## Example: TMLR/Submission1
+    ## 2. Create author paper author_submission_group_id = f'{submission_group_id}/Authors' ## Example: TMLR/Submission1/Authors
+    ## 3. Add authorids as members of the group
+    ## 4. Send confirmation email to the author group
     ''',
             'edit': {
                 'signatures': { 'param': { 'regex': '~.*', 'type': 'group' }},
@@ -128,17 +128,17 @@ review_template = {
             'dateprocesses': [{
                 'dates': ['#{cdate}'],
                 'script': '''
-    def process(client, invitation):
-        submissions = client.get_notes(invitation='${../../params.venueid}/-/${../../params.submission_name}')
-        ## Create review invitations for all the active submissions
-        for submission in submissions:
-            client.post_invitation_edit({
-                invitation: '${../../params.venueid}/-/${../../params.name}',
-                params: {
-                    noteId: submission.id,
-                    noteNumber: submission.number
-                }
-            })
+def process(client, invitation):
+    submissions = client.get_notes(invitation='${../../params.venueid}/-/${../../params.submission_name}')
+    ## Create review invitations for all the active submissions
+    for submission in submissions:
+        client.post_invitation_edit({
+            invitation: '${../../params.venueid}/-/${../../params.name}',
+            params: {
+                noteId: submission.id,
+                noteNumber: submission.number
+            }
+        })
     '''
             }],        
             'edit': {
@@ -159,9 +159,9 @@ review_template = {
                     'cdate': { '${../../../params.cdate}' },
                     'duedate': { '${../../../params.duedate}' },
                     'process': '''
-    def process(client, edit, invitation):
-        ## send confirmation email to the reviewer
-        ## add the reviewer to the submitted group (?)
+def process(client, edit, invitation):
+    ## send confirmation email to the reviewer
+    ## add the reviewer to the submitted group (?)
                     ''',
                     'edit': {
                         'signatures': { 'param': { 'regex': '${../../../params.submissionGroupId}/Reviewer_', 'type': 'group' }},
@@ -266,16 +266,16 @@ submission_release_template = {
             'dateprocesses': [{
                 'dates': ['#{cdate}'],
                 'script': '''
-    def process(client, invitation):
-        submissions = client.get_notes(invitation='${../../params.venueid}/-/${../../params.submission_name}')
-        ## Set submissions to be under review
-        for submission in submissions:
-            client.post_invitation_edit({
-                invitation: '${../../params.venueid}/-/${../../params.name}',
-                note: {
-                    id: submission.id
-                }
-            })
+def process(client, invitation):
+    submissions = client.get_notes(invitation='${../../params.venueid}/-/${../../params.submission_name}')
+    ## Set submissions to be under review
+    for submission in submissions:
+        client.post_invitation_edit({
+            invitation: '${../../params.venueid}/-/${../../params.name}',
+            note: {
+                id: submission.id
+            }
+        })
     '''
             }], 
             'edit': {
