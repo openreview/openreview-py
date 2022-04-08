@@ -1437,9 +1437,9 @@ class InvitationBuilder(object):
                     note.nonreaders = invitation.reply['nonreaders']['values']
                 self.client.post_note(note)
 
-    def set_submission_invitation(self, conference):
+    def set_submission_invitation(self, conference, under_submission=False):
 
-        return self.client.post_invitation(SubmissionInvitation(conference))
+        return self.client.post_invitation(SubmissionInvitation(conference, under_submission))
 
 
     def set_blind_submission_invitation(self, conference, hide_fields):

@@ -1639,7 +1639,9 @@ class SubmissionStage(object):
 
             return readers
 
-        return self.get_readers(conference, '.*')
+        return {
+            'values-regex': '.*'
+        }
 
     def get_invitation_writers(self, conference):
 
