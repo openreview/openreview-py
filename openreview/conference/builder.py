@@ -2249,7 +2249,7 @@ class ConferenceBuilder(object):
 
         submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
-        if readers:
+        if readers is not None:
             submissions_readers=readers
 
         if public:
