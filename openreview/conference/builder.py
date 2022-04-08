@@ -1590,14 +1590,7 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
 
-    def get_readers(self, conference, number, under_submission, under_submission_readers=[]):
-
-        ## the paper is still under submission and shouldn't be released yet
-        if under_submission:
-            submission_readers=[conference.get_id()]
-            submission_readers=submission_readers + under_submission_readers
-            submission_readers.append(conference.get_authors_id(number=number))
-            return submission_readers
+    def get_readers(self, conference, number):
 
         if self.public:
             return ['everyone']
