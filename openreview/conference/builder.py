@@ -1699,7 +1699,7 @@ class SubmissionStage(object):
         return content
 
     def is_under_submission(self):
-        return datetime.datetime.utcnow() < self.due_date
+        return self.due_date is None or datetime.datetime.utcnow() < self.due_date
 
 class ExpertiseSelectionStage(object):
 
