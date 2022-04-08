@@ -890,9 +890,9 @@ class Conference(object):
             self.create_blind_submissions(hide_fields)
 
         if not self.submission_stage.double_blind and not self.submission_stage.papers_released and not self.submission_stage.create_groups:
-            self.invitation_builder.set_submission_invitation(self, under_submission=False)
+            self.invitation_builder.set_submission_invitation(self)
             for note in tqdm(self.client.get_all_notes(invitation=self.get_submission_id(), sort='number:asc'), desc='set_final_readers'):
-                final_readers =  self.submission_stage.get_readers(conference=self, number=note.number, under_submission=False)
+                final_readers =  self.submission_stage.get_readers(conference=self, number=note.number)
                 if note.readers != final_readers:
                     note.readers = final_readers
                     self.client.post_note(note)
@@ -1482,7 +1482,8 @@ Program Chairs
         decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
 
         if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
-            self.invitation_builder.set_submission_invitation(self, under_submission=False, submission_readers=['everyone'])
+            self.submission_stage.public = True
+            self.invitation_builder.set_submission_invitation(self)
 
         def is_release_note(is_note_accepted):
             return release_all_notes or (release_notes_accepted and is_note_accepted)
@@ -1618,13 +1619,13 @@ class SubmissionStage(object):
         submission_readers.append(conference.get_authors_id(number=number))
         return submission_readers
 
-    def get_invitation_readers(self, conference, under_submission, submission_readers):
+    def get_invitation_readers(self, conference, under_submission):
 
         ## Rolling review should be release right away
         if self.create_groups:
             return {'values': ['everyone']}
 
-        if under_submission or self.double_blind:
+        if under_submission:
             has_authorids = 'authorids' in self.get_content()
             readers = {
                 'values-copied': [
@@ -1636,17 +1637,9 @@ class SubmissionStage(object):
                 readers['values-copied'].append('{content.authorids}')
             readers['values-copied'].append('{signatures}')
 
-            if submission_readers:
-                readers['values-copied'] = readers['values-copied'] + submission_readers
             return readers
 
-        if self.public or (submission_readers and submission_readers == ['everyone']):
-            return {'values': ['everyone']}
-
-        ## allow any reader until we can figure out how to set the readers by paper number
-        return {
-            'values-regex': '.*'
-        }
+        return self.get_readers(conference, '.*')
 
     def get_invitation_writers(self, conference):
 
@@ -1704,8 +1697,7 @@ class SubmissionStage(object):
         return content
 
     def is_under_submission(self):
-        final_due_date = self.second_due_date if self.second_due_date else self.due_date
-        return not final_due_date or datetime.datetime.utcnow() < final_due_date
+        return datetime.datetime.utcnow() < self.due_date
 
 class ExpertiseSelectionStage(object):
 
