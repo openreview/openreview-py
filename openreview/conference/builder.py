@@ -784,7 +784,7 @@ class Conference(object):
         active_venues = self.client.get_group('active_venues')
         self.client.add_members_to_group(active_venues, self.id)
 
-    def create_blind_submissions(self, hide_fields=[], under_submission=False, under_submission_readers=[]):
+    def create_blind_submissions(self, hide_fields=[]):
 
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
@@ -811,7 +811,7 @@ class Conference(object):
             for field in hide_fields:
                 blind_content[field] = ''
 
-            blind_readers = self.submission_stage.get_readers(self, note.number, under_submission, under_submission_readers)
+            blind_readers = self.submission_stage.get_readers(self, note.number)
 
             if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
 
@@ -845,18 +845,18 @@ class Conference(object):
 
         return blinded_notes
 
-    def setup_first_deadline_stage(self, force=False, hide_fields=[], submission_readers=[], allow_author_reorder=False):
+    def setup_first_deadline_stage(self, force=False, hide_fields=[], allow_author_reorder=False):
 
         if self.submission_stage.double_blind:
-            self.create_blind_submissions(hide_fields=hide_fields, under_submission=True, under_submission_readers=submission_readers)
+            self.create_blind_submissions(hide_fields=hide_fields)
         else:
-            if submission_readers:
-                self.invitation_builder.set_submission_invitation(conference=self, under_submission=True, submission_readers=submission_readers)
-                submissions = self.get_submissions()
-                for s in submissions:
-                    if not set(submission_readers).issubset(set(s.readers)):
-                        s.readers = s.readers + submission_readers
-                        self.client.post_note(s)
+            self.invitation_builder.set_submission_invitation(conference=self)
+            submissions = self.get_submissions()
+            for s in submissions:
+                final_readers =  self.submission_stage.get_readers(conference=self, number=s.number)
+                if s.readers != final_readers:
+                    s.readers = final_readers
+                    self.client.post_note(s)
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
         self.create_withdraw_invitations(
