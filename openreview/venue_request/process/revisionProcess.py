@@ -109,6 +109,12 @@ def process(client, note, invitation):
             conference.set_comment_stage(openreview.helpers.get_comment_stage(client, forum_note))
 
         elif invitation_type == 'Post_Decision_Stage':
+            #expire post_submission invitation
+            post_submission_inv = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Post_Submission')
+            if post_submission_inv:
+                post_submission_inv.expdate = datetime.datetime.now()
+                client.post_invitation(post_submission_inv)
+
             reveal_all_authors=reveal_authors_accepted=release_all_notes=release_notes_accepted=False
             if 'reveal_authors' in forum_note.content:
                 reveal_all_authors=forum_note.content.get('reveal_authors', '') == 'Reveal author identities of all submissions to the public'

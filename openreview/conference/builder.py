@@ -1477,12 +1477,15 @@ Program Chairs
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False, decision_heading_map=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False, hide_rejected=False, decision_heading_map=None):
         submissions = self.get_submissions(details='original')
         decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
 
-        if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
-            self.invitation_builder.set_submission_invitation(self, under_submission=False, submission_readers=['everyone'])
+        if (release_all_notes or release_notes_accepted or hide_rejected) and not self.submission_stage.double_blind:
+            submission_invitation = self.client.get_invitation(self.get_submission_id())
+            submission_invitation.reply['readers'] = { 'values-regex': '.*' }
+            self.client.post_invitation(submission_invitation)
+            # self.invitation_builder.set_submission_invitation(self, under_submission=False, submission_readers=['everyone'])
 
         def is_release_note(is_note_accepted):
             return release_all_notes or (release_notes_accepted and is_note_accepted)
@@ -1490,10 +1493,14 @@ Program Chairs
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
-        for submission in tqdm(submissions):
+        def is_hide_note(is_note_rejected):
+            return hide_rejected and is_note_rejected
+
+        # for submission in tqdm(submissions):
+        for submission in submissions:
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-            if is_release_note(note_accepted) or 'everyone' in submission.readers:
+            if is_release_note(note_accepted):
                 submission.readers = ['everyone']
                 if self.submission_stage.double_blind:
                     release_authors = is_release_authors(note_accepted)
@@ -1526,6 +1533,14 @@ Program Chairs
                         venue += ' ' + decision
                     submission.content['venueid'] = venueid
                     submission.content['venue'] = venue
+                self.client.post_note(submission)
+            note_rejected = decision_note and 'Reject' in decision_note.content['decision']
+            if is_hide_note(note_rejected) and 'everyone' in submission.readers:
+                final_readers = self.submission_stage.get_hidden_readers(self, submission.number)
+                if self.submission_stage.double_blind:
+                    submission.content['authors']
+                    submission.content['authorids']
+                submission.readers = final_readers
                 self.client.post_note(submission)
 
         if decision_heading_map:
@@ -1623,6 +1638,21 @@ class SubmissionStage(object):
             submission_readers.append(conference.get_reviewers_id(number=number))
 
         submission_readers.append(conference.get_authors_id(number=number))
+        return submission_readers
+
+    def get_hidden_readers(self, conference, number):
+        
+        submission_readers = [conference.get_id()]
+
+        if conference.use_senior_area_chairs:
+            submission_readers.append(conference.get_senior_area_chairs_id(number=number))
+
+        if conference.use_area_chairs:
+            submission_readers.append(conference.get_area_chairs_id(number=number))
+
+        submission_readers.append(conference.get_reviewers_id(number=number))
+        submission_readers.append(conference.get_authors_id(number=number))
+
         return submission_readers
 
     def get_invitation_readers(self, conference, under_submission, submission_readers):

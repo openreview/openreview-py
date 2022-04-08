@@ -140,5 +140,80 @@ class TestSubmissionReaders():
         assert f'{venue_id}/Paper1/Reviewers' in blind_submissions[0].readers
         assert f'{venue_id}/Reviewers' not in blind_submissions[0].readers
 
-        assert f'{venue_id}/Paper1/Area_Chairs' in blind_submissions[0].readers
-        assert f'{venue_id}/Area_Chairs' not in blind_submissions[0].readers
+        assert f'{venue_id}/Paper2/Area_Chairs' in blind_submissions[1].readers
+        assert f'{venue_id}/Area_Chairs' not in blind_submissions[1].readers
+
+    def test_change_readers(self, client, venue, helpers):
+
+        post_submission_note=client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Everyone (submissions are public)'
+            },
+            forum= venue['request_form_note'].id,
+            invitation= 'openreview.net/Support/-/Request{}/Post_Submission'.format(venue['request_form_note'].number),
+            readers= [venue['venue_id'] + '/Program_Chairs', venue['support_group_id']],
+            referent= venue['request_form_note'].id,
+            replyto= venue['request_form_note'].id,
+            signatures= ['~Super_User1'],
+            writers= [],
+        ))
+        assert post_submission_note
+        helpers.await_queue()
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert blind_submissions and len(blind_submissions) == 2
+
+        assert blind_submissions[0].readers == ['everyone']
+        assert blind_submissions[1].readers == ['everyone']
+
+    def test_hide_rejected(self, client, venue, helpers):
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.set_decision_stage(openreview.DecisionStage(public=True))
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert blind_submissions and len(blind_submissions) == 2
+
+        decision_one = client.post_note(openreview.Note(
+            content = {
+                'title': 'Paper Decision',
+                'decision': 'Reject'
+            },
+            forum = blind_submissions[0].id,
+            replyto = blind_submissions[0].id,
+            invitation = '{venue}/Paper{number}/-/Decision'.format(venue=venue['venue_id'], number=blind_submissions[0].number),
+            readers = ['everyone'],
+            signatures = [venue['venue_id'] + '/Program_Chairs'],
+            writers = [venue['venue_id'] + '/Program_Chairs']
+        ))
+
+        decision_two = client.post_note(openreview.Note(
+            content = {
+                'title': 'Paper Decision',
+                'decision': 'Accept (Oral)'
+            },
+            forum = blind_submissions[1].id,
+            replyto = blind_submissions[1].id,
+            invitation = '{venue}/Paper{number}/-/Decision'.format(venue=venue['venue_id'], number=blind_submissions[1].number),
+            readers = ['everyone'],
+            signatures = [venue['venue_id'] + '/Program_Chairs'],
+            writers = [venue['venue_id'] + '/Program_Chairs']
+        ))
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert blind_submissions and len(blind_submissions) == 2
+
+        assert blind_submissions[0].readers == ['everyone']
+        assert blind_submissions[1].readers == ['everyone']
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.post_decision_stage(hide_rejected=True)
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert blind_submissions and len(blind_submissions) == 2
+
+        venue_id = venue['venue_id']
+
+        assert blind_submissions[0].readers == [f'{venue_id}', f'{venue_id}/Paper1/Area_Chairs', f'{venue_id}/Paper1/Reviewers', f'{venue_id}/Paper1/Authors']
+        assert blind_submissions[1].readers == ['everyone']
