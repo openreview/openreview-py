@@ -39,10 +39,10 @@ class InvitationBuilder(object):
         self.set_submission_invitation()
         self.set_review_approval_invitation()
         self.set_under_review_invitation()
-        self.set_desk_rejection_invitation()
-        self.set_rejection_invitation()
+        self.set_desk_rejected_invitation()
+        self.set_rejected_invitation()
         self.set_withdrawn_invitation()
-        self.set_acceptance_invitation()
+        self.set_accepted_invitation()
         self.set_retracted_invitation()
         self.set_authors_release_invitation()
         self.set_ae_assignment(assignment_delay)
@@ -1563,14 +1563,14 @@ If you have questions after reviewing the points below that are not answered on 
 
         self.save_invitation(invitation)
 
-    def set_desk_rejection_invitation(self):
+    def set_desk_rejected_invitation(self):
         venue_id = self.journal.venue_id
         paper_action_editors_id = self.journal.get_action_editors_id(number='${note.number}')
         paper_authors_id = self.journal.get_authors_id(number='${note.number}')
 
-        desk_rejection_invitation_id = self.journal.get_desk_rejection_id()
+        desk_rejected_invitation_id = self.journal.get_desk_rejected_id()
 
-        invitation = Invitation(id=desk_rejection_invitation_id,
+        invitation = Invitation(id=desk_rejected_invitation_id,
             invitees=[venue_id],
             #noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
@@ -1609,7 +1609,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=self.get_process_content('process/desk_reject_submission_process.py')
+            process=self.get_process_content('process/desk_rejected_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -1700,12 +1700,12 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
-    def set_rejection_invitation(self):
+    def set_rejected_invitation(self):
 
         venue_id = self.journal.venue_id
 
         ## Reject invitation
-        reject_invitation_id = self.journal.get_rejection_id()
+        reject_invitation_id = self.journal.get_rejected_id()
 
         invitation = Invitation(id=reject_invitation_id,
             invitees=[venue_id],
@@ -1747,11 +1747,11 @@ If you have questions after reviewing the points below that are not answered on 
 
         self.save_invitation(invitation)
 
-    def set_acceptance_invitation(self):
+    def set_accepted_invitation(self):
         venue_id = self.journal.venue_id
 
-        acceptance_invitation_id = self.journal.get_acceptance_id()
-        invitation = Invitation(id=acceptance_invitation_id,
+        accepted_invitation_id = self.journal.get_accepted_id()
+        invitation = Invitation(id=accepted_invitation_id,
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
@@ -1830,7 +1830,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=self.get_process_content('process/acceptance_submission_process.py')
+            process=self.get_process_content('process/accepted_submission_process.py')
         )
 
         self.save_invitation(invitation)

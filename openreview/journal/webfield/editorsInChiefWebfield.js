@@ -54,8 +54,8 @@ var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 var WITHDRAWN_STATUS = VENUE_ID + '/Withdrawn_Submission';
 var RETRACTED_STATUS = VENUE_ID + '/Retracted_Acceptance';
-var REJECTED_STATUS = VENUE_ID + '/Rejection';
-var DESK_REJECTED_STATUS = VENUE_ID + '/Desk_Rejection'
+var REJECTED_STATUS = VENUE_ID + '/Rejected';
+var DESK_REJECTED_STATUS = VENUE_ID + '/Desk_Rejected'
 
 var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')');
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +

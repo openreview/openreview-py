@@ -189,8 +189,8 @@ class TestJournal():
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
-        assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
-        assert f"{venue_id}/-/Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejected" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Rejected" in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
         assert f"{venue_id}/-/Retracted" in [i.id for i in invitations]
         assert f"{venue_id}/-/Authors_Release" in [i.id for i in invitations]
@@ -410,7 +410,7 @@ note={Under review}
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
 
-        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Desk_Rejection')
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Desk_Rejected')
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
         assert len(messages) == 1
@@ -424,13 +424,13 @@ note={Under review}
 
         note = joelle_client.get_note(note_id_2)
         assert note
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Desk_Rejection']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Desk_Rejected']
         assert note.readers == ['TMLR', 'TMLR/Paper2/Action_Editors', 'TMLR/Paper2/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper2/Action_Editors']
         assert note.signatures == ['TMLR/Paper2/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
         assert note.content['venue']['value'] == 'Desk rejected by TMLR'
-        assert note.content['venueid']['value'] == 'TMLR/Desk_Rejection'
+        assert note.content['venueid']['value'] == 'TMLR/Desk_Rejected'
 
         ## Check invitations as an author
         invitations = test_client.get_invitations(replyForum=note_id_2)
@@ -451,7 +451,7 @@ note={Under review}
                 weight=1
             ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission: TMLR/Desk_Rejection'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not edit assignments for this submission: TMLR/Desk_Rejected'):
             paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
                 readers=[venue_id, f"{venue_id}/Paper2/Action_Editors", '~David_Belanger1'],
                 nonreaders=[f"{venue_id}/Paper2/Authors"],
@@ -983,8 +983,8 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 18
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
-        assert f"{venue_id}/-/Desk_Rejection"  in [i.id for i in invitations]
-        assert f"{venue_id}/-/Rejection"  in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejected"  in [i.id for i in invitations]
+        assert f"{venue_id}/-/Rejected"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
@@ -1461,7 +1461,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Acceptance']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1483,7 +1483,7 @@ url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
 }'''
 
-        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Acceptance')
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Accepted')
 
         ## Check invitations are expired
         invitations = openreview_client.get_invitations(regex=f"{venue_id}/Paper1/.*", type = "all")
@@ -1547,7 +1547,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Acceptance', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1937,7 +1937,7 @@ note={Retracted after acceptance}
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
 
-        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Rejection')
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Rejected')
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 4')
         assert len(messages) == 1
@@ -1954,13 +1954,13 @@ note={Retracted after acceptance}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejected']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
-        assert note.content['venueid']['value'] == 'TMLR/Rejection'
+        assert note.content['venueid']['value'] == 'TMLR/Rejected'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
@@ -1986,7 +1986,7 @@ note={Rejected}
         assert note
         assert note.forum == note_id_4
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejection', 'TMLR/-/Authors_Release']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/-/Under_Review', 'TMLR/-/Rejected', 'TMLR/-/Authors_Release']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper4/Authors']
         assert note.signatures == ['TMLR/Paper4/Authors']
@@ -1994,7 +1994,7 @@ note={Rejected}
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
         assert note.content['venue']['value'] == 'Rejected by TMLR'
-        assert note.content['venueid']['value'] == 'TMLR/Rejection'
+        assert note.content['venueid']['value'] == 'TMLR/Rejected'
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
@@ -2012,8 +2012,8 @@ note={Rejected}
         assert len(invitations) == 10
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
-        assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
-        assert f"{venue_id}/-/Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejected" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Rejected" in [i.id for i in invitations]
         assert f"{venue_id}/-/Retracted" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Public_Comment" in [i.id for i in invitations]
@@ -2542,8 +2542,8 @@ note={Rejected}
         assert len(invitations) == 10
         assert f"{venue_id}/-/Under_Review" in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn" in [i.id for i in invitations]
-        assert f"{venue_id}/-/Desk_Rejection" in [i.id for i in invitations]
-        assert f"{venue_id}/-/Rejection" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Desk_Rejected" in [i.id for i in invitations]
+        assert f"{venue_id}/-/Rejected" in [i.id for i in invitations]
         assert f"{venue_id}/Paper6/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper6/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper6/-/Moderation" in [i.id for i in invitations]

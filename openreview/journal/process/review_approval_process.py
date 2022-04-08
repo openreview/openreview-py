@@ -28,6 +28,6 @@ def process(client, edit, invitation):
                                 }))
 
     if edit.note.content['under_review']['value'] == 'Desk Reject':
-        client.post_note_edit(invitation= journal.get_desk_rejection_id(),
+        client.post_note_edit(invitation= journal.get_desk_rejected_id(),
                                 signatures=[venue_id],
                                 note=openreview.api.Note(id=edit.note.forum))
