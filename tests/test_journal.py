@@ -365,17 +365,18 @@ url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
 
+        ## Remove assertion, the process function may run faster in the new machines
         ## try to make an assignment before the scores were computed
-        with pytest.raises(openreview.OpenReviewException, match=r'Can not add assignment, invitation is not active yet.'):
-            paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
-                readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
-                nonreaders=[f"{venue_id}/Paper1/Authors"],
-                writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
-                signatures=[f"{venue_id}/Paper1/Action_Editors"],
-                head=note_id_1,
-                tail='~David_Belanger1',
-                weight=1
-            ))
+        # with pytest.raises(openreview.OpenReviewException, match=r'Can not add assignment, invitation is not active yet.'):
+        #     paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+        #         readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~David_Belanger1'],
+        #         nonreaders=[f"{venue_id}/Paper1/Authors"],
+        #         writers=[venue_id, f"{venue_id}/Paper1/Action_Editors"],
+        #         signatures=[f"{venue_id}/Paper1/Action_Editors"],
+        #         head=note_id_1,
+        #         tail='~David_Belanger1',
+        #         weight=1
+        #     ))
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Under_Review')
 

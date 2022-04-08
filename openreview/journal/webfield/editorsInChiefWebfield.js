@@ -107,7 +107,17 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Overview', 'Submitted', 'Under Review', 'Decision Approval', 'Camera Ready', 'Submission Complete', 'Action Editor Status', 'Reviewer Status'],
+    tabs: [
+      'Overview', 
+      'Submitted', 
+      'Under Review', 
+      'Under Discussion',
+      'Under Decision', 
+      'Camera Ready', 
+      'Submission Complete', 
+      'Action Editor Status', 
+      'Reviewer Status'
+    ],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -587,6 +597,8 @@ var formatData = function(
         actionEditor: actionEditor,
         metaReview: metaReview,
         referrer: referrerUrl,
+        reviewPending: reviewInvitation && reviewNotes.length < 3,
+        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
         cameraReadyPending: (cameraReadyTask && !cameraReadyTask.complete) || (cameraReadyVerificationTask && !cameraReadyVerificationTask.complete),
         metaReviewName: 'Decision',
@@ -613,10 +625,13 @@ var formatData = function(
   });
   var underReviewStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
-      && !row.actionEditorProgressData.decisionApprovalPending
-      && !row.actionEditorProgressData.cameraReadyPending;
+      && row.actionEditorProgressData.reviewPending;
   });
-  var decisionApprovalStatusRows = paperStatusRows.filter(function(row) {
+  var underDiscussionStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && row.actionEditorProgressData.recommendationPending;
+  });
+  var underDecisionStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
       && row.actionEditorProgressData.decisionApprovalPending;
   });
@@ -645,6 +660,8 @@ var formatData = function(
     numActionEditors: actionEditors.members.length,
     numSubmissions: submissionStatusRows.length,
     numUnderReview: underReviewStatusRows.length,
+    numUnderDiscussion: underDiscussionStatusRows.length,
+    numUnderDecision: underDecisionStatusRows.length,
     numAccepted: completeSubmissionStatusRows.length - withdrawnStatusRows.length - retractedStatusRows.length - rejectedStatusRows.length,
     numWithdrawn: withdrawnStatusRows.length,
     numRetracted: retractedStatusRows.length,
@@ -669,7 +686,8 @@ var formatData = function(
   return {
     submissionStatusRows: submissionStatusRows,
     underReviewStatusRows: underReviewStatusRows,
-    decisionApprovalStatusRows: decisionApprovalStatusRows,
+    underDiscussionStatusRows: underDiscussionStatusRows,
+    underDecisionStatusRows: underDecisionStatusRows,
     cameraReadyStatusRows: cameraReadyStatusRows,
     completeSubmissionStatusRows: completeSubmissionStatusRows,
     reviewerStatusRows: Object.values(reviewerStatusById),
@@ -939,6 +957,14 @@ var renderOverviewTab = function(conferenceStats) {
     '<h3>' + conferenceStats.numUnderReview + '</h3>'
   );
   html += renderStatContainer(
+    'Papers Under Discussion:',
+    '<h3>' + conferenceStats.numUnderDiscussion + '</h3>'
+  );
+  html += renderStatContainer(
+    'Papers Under Decision:',
+    '<h3>' + conferenceStats.numUnderDecision + '</h3>'
+  );
+  html += renderStatContainer(
     'Accepted Papers:',
     '<h3>' + conferenceStats.numAccepted + '</h3>'
   );
@@ -1018,7 +1044,8 @@ var renderData = function(venueStatusData) {
 
   renderTable('submitted', venueStatusData.submissionStatusRows);
   renderTable('under-review', venueStatusData.underReviewStatusRows);
-  renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('under-discussion', venueStatusData.underDiscussionStatusRows);
+  renderTable('under-decision', venueStatusData.underDecisionStatusRows);
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
