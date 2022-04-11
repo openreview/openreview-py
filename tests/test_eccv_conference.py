@@ -1261,12 +1261,15 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         paper_reviewer_group = client.get_group(id='thecvf.com/ECCV/2020/Conference/Paper1/Reviewers')
         assert '~ReviewerFirstName_Eccv1' in paper_reviewer_group.members
 
-        messages = client.get_messages(to = 'mohit+1@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
+        messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
         #Assert reviewer is still in reviewer group
         request_page(selenium, reject_url, alert=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'You have already been assigned to a paper. Please contact the paper area chair or program chairs to be unassigned.' == error_message.text
+
         reviewer_group = client.get_group('thecvf.com/ECCV/2020/Conference/Reviewers')
         assert '~ReviewerFirstName_Eccv1' in reviewer_group.members
 

@@ -792,13 +792,15 @@ class VenueRequest():
                 'hidden': True
             },
             'submission_readers': {
-                'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
+                'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue had one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
                     'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                     'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                    'Program chairs and paper authors only',
                     'Everyone (submissions are public)'
                 ],
                 'order': 23,
+                'default': ['Program chairs and paper authors only'],
                 'required': True
             },
             'submissions_visibility': {
@@ -1193,14 +1195,12 @@ class VenueRequest():
                 'value-dict': {},
                 'description': 'List of users already invited',
                 'required': False,
-                'markdown': True,
                 'order': 3
             },
             'already_member': {
                 'value-dict': {},
                 'description': 'List of users who are already a member of the group',
                 'required': False,
-                'markdown': True,
                 'order': 4
             },
             'error': {
@@ -1456,14 +1456,12 @@ class VenueRequest():
                 'values-regex': '.*',
                 'description': 'List of users without profile',
                 'required': False,
-                'markdown': True,
                 'order': 2
             },
             'without_publication': {
                 'values-regex': '.*',
                 'description': 'List of users without publication',
                 'required': False,
-                'markdown': True,
                 'order': 3
             },
             'error': {

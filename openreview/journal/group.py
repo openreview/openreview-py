@@ -38,7 +38,7 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/editorsInChiefWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
             content = content.replace("var EDITORS_IN_CHIEF_NAME = '';", "var EDITORS_IN_CHIEF_NAME = '" + journal.editors_in_chief_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
@@ -113,7 +113,7 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/actionEditorWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
@@ -160,7 +160,7 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
@@ -204,7 +204,7 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
             content = content.replace("var WEBSITE = '';", "var WEBSITE = '" + journal.website + "';")
             authors_group.web = content
