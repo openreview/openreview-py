@@ -1684,8 +1684,7 @@ If you have questions after reviewing the points below that are not answered on 
                         }
                     }
                 }
-            },
-            process=self.get_process_content('process/desk_rejected_submission_process.py')
+            }
         )
 
         self.save_invitation(invitation)

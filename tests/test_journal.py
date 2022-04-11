@@ -411,8 +411,6 @@ note={Under review}
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
 
-        helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Desk_Rejected')
-
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
@@ -2804,7 +2802,7 @@ note={Withdrawn}
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 9')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title &quot;Paper title 9&quot; has been rejected without further review.</p>
+<p>We are sorry to inform you that, after consideration by the Editors-in-Chief, your TMLR submission title &quot;Paper title 9&quot; has been rejected without further review.</p>
 <p>Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).</p>
 <p>To know more about the decision, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_9}\">https://openreview.net/forum?id={note_id_9}</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
