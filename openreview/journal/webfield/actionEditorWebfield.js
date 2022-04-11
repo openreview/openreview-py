@@ -22,6 +22,7 @@ var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
 var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
+var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 
 var SUBMISSION_GROUP_NAME = 'Paper';
 var RECOMMENDATION_NAME = 'Recommendation';
@@ -115,11 +116,16 @@ var loadData = function() {
         }).then(function(invitations) {
           return _.keyBy(invitations, 'id');
         }),
+        Webfield2.api.getAll('/invitations', {
+          regex: ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID,
+          type: 'edges',
+          details: 'repliedEdges'
+        })
       );
     });
 };
 
-var formatData = function(reviewersByNumber, invitations, submissions, invitationsById) {
+var formatData = function(reviewersByNumber, invitations, submissions, invitationsById, customQuotaInvitations) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
 
   // build the rows
@@ -350,12 +356,18 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
 
   return venueStatusData = {
     invitations: invitations,
-    rows: rows
+    rows: rows,
+    customQuotaInvitations: customQuotaInvitations
   };
 };
 
 // Render functions
 var renderData = function(venueStatusData) {
+
+  var customQuotaInvitation = venueStatusData.customQuotaInvitations[0];
+
+  Webfield2.ui.renderCustomQuotaWidget('#invitation', customQuotaInvitation);
+
   // Assigned Papers Tab
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
     headings: ['<input type="checkbox" class="select-all-papers">', '#', 'Paper Summary', 'Review Progress', 'Decision Status', 'Tasks', 'Status'],

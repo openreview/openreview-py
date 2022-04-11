@@ -875,8 +875,8 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(
             id=self.journal.get_ae_custom_max_papers_id(),
-            invitees=[venue_id, editor_in_chief_id],
-            readers=[venue_id, editor_in_chief_id],
+            invitees=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
             type='Edge',
@@ -894,7 +894,8 @@ If you have questions after reviewing the points below that are not answered on 
                     'const': [venue_id, '${tail}']
                 },
                 'signatures': {
-                    'const': [venue_id]
+                    'type': 'group[]',
+                    'regex': f'{editor_in_chief_id}|~.*'
                 },
                 'head': {
                     'type': 'group',
@@ -1082,8 +1083,8 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(
             id=self.journal.get_reviewer_custom_max_papers_id(),
-            invitees=[venue_id],
-            readers=[venue_id, action_editors_id],
+            invitees=[venue_id, reviewers_id],
+            readers=[venue_id, action_editors_id, reviewers_id],
             writers=[venue_id],
             signatures=[venue_id],
             type='Edge',
@@ -1095,13 +1096,14 @@ If you have questions after reviewing the points below that are not answered on 
                     'nullable': True
                 },
                 'readers': {
-                    'const': [venue_id, '${tail}']
+                    'const': [venue_id, action_editors_id, '${tail}']
                 },
                 'writers': {
-                    'const': [venue_id]
+                    'const': [venue_id, '${tail}']
                 },
                 'signatures': {
-                    'const': [editor_in_chief_id]
+                    'type': 'group[]',
+                    'regex': f'{editor_in_chief_id}|~.*'
                 },
                 'head': {
                     'type': 'group',
