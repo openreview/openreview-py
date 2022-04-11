@@ -82,11 +82,21 @@ function load() {
         return noteMap;
       }, {});
     });
+  } else {
+    // Log exception to GA if user object is empty, since only authenticated users
+    // should be able to access the invitation. Don't log actual cookie value for safety.
+    window.gtag('event', 'exception', {
+      description: 'JavaScript Error: Missing user in expertise bid webfield. Invitation: ' + INVITATION_ID + ', AuthCookie: ' + !!getCookie('openreview.accessToken'),
+      fatal: true,
+    });
   }
 
   return $.when(authoredNotesP, edgesMapP);
 }
 
+function getCookie(name) {
+  return (name = (document.cookie + ';').match(new RegExp(name + '=.*;'))) && name[0].split(/=|;/)[1];
+}
 
 // Display the expertise selection interface populated with loaded data
 function renderContent(authoredNotes, edgesMap) {
@@ -286,7 +296,7 @@ function renderContent(authoredNotes, edgesMap) {
   }
   updateNotes(authoredNotes);
 
-  //Mark task a complete
+  // Mark task a complete
   if (user && user.profile && user.profile.id && _.isEmpty(edgesMap)) {
     Webfield.post('/edges', {
       invitation: EXPERTISE_BID_ID,

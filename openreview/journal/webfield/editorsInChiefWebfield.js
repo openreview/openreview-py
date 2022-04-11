@@ -29,6 +29,7 @@ var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
 var RESPONSIBILITY_ACK_NAME = 'Responsibility/Acknowledgement';
+var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 
 var REVIEWER_RATING_MAP = {
   "Exceeds expectations": 3,
@@ -76,8 +77,8 @@ var getInvitationId = function(number, name, prefix) {
   return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
 };
 
-var getReplies = function(submission, name) {
-  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
+var getReplies = function(submission, name, prefix) {
+  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
 var getRatingInvitations = function(invitationsById, number) {
@@ -106,7 +107,17 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Overview', 'Submitted', 'Under Review', 'Decision Approval', 'Camera Ready', 'Submission Complete', 'Action Editor Status', 'Reviewer Status'],
+    tabs: [
+      'Overview', 
+      'Submitted', 
+      'Under Review', 
+      'Under Discussion',
+      'Under Decision', 
+      'Camera Ready', 
+      'Submission Complete', 
+      'Action Editor Status', 
+      'Reviewer Status'
+    ],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -443,13 +454,17 @@ var formatData = function(
 
     paperReviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
+      var assignmentAcknowledgement = getReplies(submission, reviewer.id + '/' + ASSIGNMENT_ACKNOWLEDGEMENT_NAME, REVIEWERS_NAME);
       var reviewerRecommendation = null;
       var status = {};
       var reviewerStatus = reviewerStatusById[reviewer.id];
 
+      if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
+        status.Acknowledged = 'Yes';
+      }
+
       if (completedReview) {
         reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
-        status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
@@ -458,7 +473,7 @@ var formatData = function(
           return p.replyto === completedReview.id;
         });
         if(reviewerRating){
-          status.Rating = reviewerRating.content.rating.value
+          status.Rating = reviewerRating.content.rating.value;
           if(reviewerStatus){
             var rating = reviewerRating.content.rating.value;
             var ratingValue = REVIEWER_RATING_MAP[rating];
@@ -582,6 +597,8 @@ var formatData = function(
         actionEditor: actionEditor,
         metaReview: metaReview,
         referrer: referrerUrl,
+        reviewPending: reviewInvitation && reviewNotes.length < 3,
+        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
         cameraReadyPending: (cameraReadyTask && !cameraReadyTask.complete) || (cameraReadyVerificationTask && !cameraReadyVerificationTask.complete),
         metaReviewName: 'Decision',
@@ -608,10 +625,13 @@ var formatData = function(
   });
   var underReviewStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
-      && !row.actionEditorProgressData.decisionApprovalPending
-      && !row.actionEditorProgressData.cameraReadyPending;
+      && row.actionEditorProgressData.reviewPending;
   });
-  var decisionApprovalStatusRows = paperStatusRows.filter(function(row) {
+  var underDiscussionStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && row.actionEditorProgressData.recommendationPending;
+  });
+  var underDecisionStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
       && row.actionEditorProgressData.decisionApprovalPending;
   });
@@ -640,6 +660,8 @@ var formatData = function(
     numActionEditors: actionEditors.members.length,
     numSubmissions: submissionStatusRows.length,
     numUnderReview: underReviewStatusRows.length,
+    numUnderDiscussion: underDiscussionStatusRows.length,
+    numUnderDecision: underDecisionStatusRows.length,
     numAccepted: completeSubmissionStatusRows.length - withdrawnStatusRows.length - retractedStatusRows.length - rejectedStatusRows.length,
     numWithdrawn: withdrawnStatusRows.length,
     numRetracted: retractedStatusRows.length,
@@ -664,7 +686,8 @@ var formatData = function(
   return {
     submissionStatusRows: submissionStatusRows,
     underReviewStatusRows: underReviewStatusRows,
-    decisionApprovalStatusRows: decisionApprovalStatusRows,
+    underDiscussionStatusRows: underDiscussionStatusRows,
+    underDecisionStatusRows: underDecisionStatusRows,
     cameraReadyStatusRows: cameraReadyStatusRows,
     completeSubmissionStatusRows: completeSubmissionStatusRows,
     reviewerStatusRows: Object.values(reviewerStatusById),
@@ -934,6 +957,14 @@ var renderOverviewTab = function(conferenceStats) {
     '<h3>' + conferenceStats.numUnderReview + '</h3>'
   );
   html += renderStatContainer(
+    'Papers Under Discussion:',
+    '<h3>' + conferenceStats.numUnderDiscussion + '</h3>'
+  );
+  html += renderStatContainer(
+    'Papers Under Decision:',
+    '<h3>' + conferenceStats.numUnderDecision + '</h3>'
+  );
+  html += renderStatContainer(
     'Accepted Papers:',
     '<h3>' + conferenceStats.numAccepted + '</h3>'
   );
@@ -1013,7 +1044,8 @@ var renderData = function(venueStatusData) {
 
   renderTable('submitted', venueStatusData.submissionStatusRows);
   renderTable('under-review', venueStatusData.underReviewStatusRows);
-  renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('under-discussion', venueStatusData.underDiscussionStatusRows);
+  renderTable('under-decision', venueStatusData.underDecisionStatusRows);
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
