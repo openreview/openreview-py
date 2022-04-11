@@ -67,6 +67,7 @@ class TestNeurIPSConference():
                 'area_chair_identity': ['Program Chairs'],
                 'senior_area_chair_identity': ['Program Chairs'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
@@ -122,7 +123,7 @@ class TestNeurIPSConference():
 
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
-        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
+        assert '1 users' in recruitment_status_notes[0].content['invited']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
 
 
@@ -150,7 +151,7 @@ class TestNeurIPSConference():
 
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
-        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
+        assert '1 users' in recruitment_status_notes[0].content['invited']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
 
 
@@ -178,8 +179,8 @@ class TestNeurIPSConference():
 
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
-        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
-        assert 'No recruitment invitation was sent to the following users because they have already been invited:\n\n{\'aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited\': [\'~Area_CMUChair1\']}' in recruitment_status_notes[0].content['comment']
+        assert '1 users' in recruitment_status_notes[0].content['invited']
+        assert {'aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited': ['~Area_CMUChair1']} == recruitment_status_notes[0].content['already_invited']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
 
         ## Accept to be a reviewer
@@ -256,8 +257,8 @@ class TestNeurIPSConference():
 
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
-        assert 'Invited: 0 users.' in recruitment_status_notes[0].content['comment']
-        assert 'No recruitment invitation was sent to the following users because they are already members of the group:\n\n{\'aclweb.org/ACL/ARR/2021/September/Area_Chairs\': [\'previous_ac@mail.com\']}' in recruitment_status_notes[0].content['comment']
+        assert '0 users' in recruitment_status_notes[0].content['invited']
+        assert {'aclweb.org/ACL/ARR/2021/September/Area_Chairs': ['previous_ac@mail.com']} == recruitment_status_notes[0].content['already_member']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs/Invited" in recruitment_status_notes[0].content['comment']
 
         reviewer_details = '''previous_ac@mail.com, Previous AC'''
@@ -283,7 +284,7 @@ class TestNeurIPSConference():
 
         recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
         assert len(recruitment_status_notes) == 1
-        assert 'Invited: 1 users.' in recruitment_status_notes[0].content['comment']
+        assert '1 users' in recruitment_status_notes[0].content['invited']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
 
 
@@ -556,10 +557,10 @@ class TestNeurIPSConference():
 
         # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
-        notes = selenium.find_element_by_id("notes")
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
+        notes = selenium.find_element_by_id('notes')
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name('h3')
         assert messages
         assert 'Thank you for accepting this invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -608,7 +609,7 @@ Thank you for accepting the invitation to serve as area chair for the paper numb
 
         # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True)
+        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -636,7 +637,7 @@ You have declined the invitation to serve as area chair for the paper number: 4,
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
-        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
         header = selenium.find_element_by_id("header")
         assert header
         url = header.find_element_by_id("edge_browser_url")
@@ -658,7 +659,7 @@ You have declined the invitation to serve as area chair for the paper number: 4,
 
         # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -713,7 +714,7 @@ The Reviewer Reviewer ARR Facebook(<a href=\"mailto:reviewer_arr4@fb.com\">revie
 
         # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
         decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True)
+        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
         notes = selenium.find_element_by_id("notes")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -749,7 +750,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password='1234')
-        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
         header = selenium.find_element_by_id("header")
         assert header
         url = header.find_element_by_id("edge_browser_url")
@@ -794,7 +795,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace(
             'https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, accept_url, alert=True)
+        request_page(selenium, accept_url, alert=True, by='class name', wait_for_element='important_message')
 
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'This submission is no longer under review. No action is required from your end.' == error_message.text

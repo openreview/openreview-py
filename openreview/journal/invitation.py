@@ -16,41 +16,26 @@ class InvitationBuilder(object):
         day = 1000 * 60 * 60 * 24
         seven_days = day * 7
 
-        reviewer_duedate_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/reviewer_reminder_process.py')) as f:
-            reviewer_duedate_process = f.read()
-            reviewer_duedate_process = reviewer_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        ae_duedate_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/action_editor_reminder_process.py')) as f:
-            ae_duedate_process = f.read()
-            ae_duedate_process = ae_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        ae_edge_duedate_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/action_editor_edge_reminder_process.py')) as f:
-            ae_edge_duedate_process = f.read()
-            ae_edge_duedate_process = ae_edge_duedate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
         self.reviewer_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-            'script': reviewer_duedate_process
+            'script': self.get_process_content('process/reviewer_reminder_process.py')
         }
 
         self.ae_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-            'script': ae_duedate_process
+            'script': self.get_process_content('process/action_editor_reminder_process.py')
         }
 
         self.ae_edge_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-            'script': ae_edge_duedate_process
+            'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
-    def set_invitations(self):
+    def set_invitations(self, assignment_delay):
         self.set_meta_invitation()
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
-        self.set_reviewer_responsability_invitation()
+        self.set_reviewer_responsibility_invitation()
         self.set_submission_invitation()
         self.set_review_approval_invitation()
         self.set_under_review_invitation()
@@ -60,8 +45,8 @@ class InvitationBuilder(object):
         self.set_acceptance_invitation()
         self.set_retracted_invitation()
         self.set_authors_release_invitation()
-        self.set_ae_assignment()
-        self.set_reviewer_assignment()
+        self.set_ae_assignment(assignment_delay)
+        self.set_reviewer_assignment(assignment_delay)
         self.set_reviewer_assignment_acknowledgement_invitation()
         self.set_super_review_invitation()
         self.set_official_recommendation_invitation()
@@ -70,6 +55,12 @@ class InvitationBuilder(object):
         self.set_withdrawal_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
+
+    def get_process_content(self, file_path):
+        process = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            process = f.read()
+            return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
     def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -101,24 +92,13 @@ class InvitationBuilder(object):
     def expire_acknowledgement_invitations(self):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsability_id(signature='.*'))
+        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsibility_id(signature='.*'))
 
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
 
 
     def save_invitation(self, invitation):
-
-        venue_id = self.venue_id
-
-        if invitation.preprocess:
-            with open(invitation.preprocess) as f:
-                preprocess = f.read()
-                preprocess = preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
-                invitation.preprocess = preprocess
-
-        if invitation.process:
-            invitation.process = invitation.process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
 
         return self.post_invitation_edit(invitation, replacement=True)
 
@@ -146,7 +126,7 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruit_ae_process.py')) as process_reader:
             process_content = process_reader.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f"SHORT_PHRASE = '{self.journal.short_name}'")
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.journal.short_name}"')
             process_content = process_content.replace("ACTION_EDITOR_NAME = ''", f"ACTION_EDITOR_NAME = 'Action Editor'")
             process_content = process_content.replace("ACTION_EDITOR_INVITED_ID = ''", f"ACTION_EDITOR_INVITED_ID = '{action_editors_invited_id}'")
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{action_editors_id}'")
@@ -208,8 +188,8 @@ class InvitationBuilder(object):
                                 }
                             }
                         },
-                        process_string=process_content,
-                        web_string=webfield_content
+                        process=process_content,
+                        web=webfield_content
                     ),
                     replacement=True
                 )
@@ -224,7 +204,7 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruit_process.py')) as process_reader:
             process_content = process_reader.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f"SHORT_PHRASE = '{self.journal.short_name}'")
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.journal.short_name}"')
             process_content = process_content.replace("ACTION_EDITOR_NAME = ''", f"ACTION_EDITOR_NAME = 'Reviewer'")
             process_content = process_content.replace("ACTION_EDITOR_INVITED_ID = ''", f"ACTION_EDITOR_INVITED_ID = '{reviewers_invited_id}'")
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{reviewers_id}'")
@@ -286,14 +266,14 @@ class InvitationBuilder(object):
                                 }
                             }
                         },
-                        process_string=process_content,
-                        web_string=webfield_content
+                        process=process_content,
+                        web=webfield_content
                     ),
                     replacement=True
                 )
                 return invitation
 
-    def set_reviewer_responsability_invitation(self):
+    def set_reviewer_responsibility_invitation(self):
 
         venue_id=self.journal.venue_id
         reviewers_id = self.journal.get_reviewers_id()
@@ -346,7 +326,7 @@ class InvitationBuilder(object):
         )
         self.save_invitation(invitation)
 
-        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsability'})
+        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
         if len(forum_notes) > 0:
             forum_note_id = forum_notes[0].id
         else:
@@ -355,7 +335,7 @@ class InvitationBuilder(object):
                 note = openreview.api.Note(
                     signatures = [editors_in_chief_id],
                     content = {
-                        'title': { 'value': 'Acknowledgement of reviewer responsability'},
+                        'title': { 'value': 'Acknowledgement of reviewer responsibility'},
                         'description': { 'value': '''TMLR operates somewhat differently to other journals and conferences. Please read and acknowledge the following critical points before undertaking your first review. Note that the items below are stated very briefly; please see the full guidelines and instructions for reviewers on the journal website (links below).
 
 - [Reviewer guidelines](https://jmlr.org/tmlr/reviewer-guide.html)
@@ -369,7 +349,7 @@ If you have questions after reviewing the points below that are not answered on 
             )
             forum_note_id = forum_edit['note']['id']
 
-        invitation=Invitation(id=self.journal.get_reviewer_responsability_id(),
+        invitation=Invitation(id=self.journal.get_reviewer_responsibility_id(),
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
@@ -383,11 +363,11 @@ If you have questions after reviewing the points below that are not answered on 
                     'duedate': { 'regex': '.*', 'type': 'integer' }
                 },
                 'invitation': {
-                    'id': { 'const': self.journal.get_reviewer_responsability_id(signature='${params.reviewerId}') },
+                    'id': { 'const': self.journal.get_reviewer_responsibility_id(signature='${params.reviewerId}') },
                     'invitees': { 'const': ['${params.reviewerId}'] },
                     'readers': { 'const': [venue_id, '${params.reviewerId}'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
+                    'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1},
                     'duedate': { 'const': '${params.duedate}' },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
@@ -416,7 +396,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'order': 2,
                                     'value': {
                                         'type': "string",
-                                        'enum': ['I understand that TMLR has a 4 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
+                                        'enum': ['I understand that TMLR has a strict 6 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
                                     },
                                     'presentation': {
                                         'input': 'checkbox'
@@ -468,6 +448,8 @@ If you have questions after reviewing the points below that are not answered on 
         action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
+        paper_process = self.get_process_content('process/reviewer_assignment_acknowledgement_process.py')
+
         invitation=Invitation(id=self.journal.get_reviewer_assignment_acknowledgement_id(),
             invitees=[venue_id],
             readers=[venue_id],
@@ -492,6 +474,8 @@ If you have questions after reviewing the points below that are not answered on 
                     'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
+                    'expdate': { 'const': None },
+                    'process': { 'const': paper_process },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
@@ -550,7 +534,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'note': {
                     'signatures': { 'const': [authors_value] },
                     'readers': { 'const': [ venue_id, action_editors_value, authors_value]},
-                    'writers': { 'const': [ venue_id, action_editors_value, authors_value]},
+                    'writers': { 'const': [ venue_id, authors_value]},
                     'content': {
                         'title': {
                             'value': {
@@ -566,10 +550,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 2
                         },
                         'authors': {
                             'value': {
@@ -682,11 +663,11 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/author_submission_process.py')
+            process=self.get_process_content('process/author_submission_process.py')
         )
         self.save_invitation(invitation)
 
-    def set_ae_assignment(self):
+    def set_ae_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
         author_submission_id = self.journal.get_author_submission_id()
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
@@ -824,6 +805,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$',
                     'inGroup' : action_editors_id
                 },
                 'weight': {
@@ -836,8 +818,11 @@ If you have questions after reviewing the points below that are not answered on 
                     'optional': True
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_process.py'),
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/ae_assignment_pre_process.py'),
+            preprocess=self.get_process_content('process/ae_assignment_pre_process.py'),
+            date_processes=[{
+                'delay': assignment_delay * 1000,
+                'script': self.get_process_content('process/ae_assignment_process.py')
+            }]
         )
 
         self.save_invitation(invitation)
@@ -876,6 +861,7 @@ If you have questions after reviewing the points below that are not answered on 
                 'tail': {
                     'type': 'profile',
                     'inGroup' : action_editors_id,
+                    'regex': '^~.*$',
                     'description': 'select at least 3 AEs to recommend. AEs who have conflicts with your submission are not shown.'
                 },
                 'weight': {
@@ -929,7 +915,7 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
-    def set_reviewer_assignment(self):
+    def set_reviewer_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
         author_submission_id = self.journal.get_author_submission_id()
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
@@ -1016,7 +1002,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'withInvitation': author_submission_id
                 },
                 'tail': {
-                    'type': 'profile',
+                    'type': 'profile'
                     #'member-of' : reviewers_id
                 },
                 'weight': {
@@ -1068,6 +1054,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'tail': {
                     'type': 'profile',
+                    'regex': '^~.*$',
                     #'member-of' : reviewers_id
                     'presentation': {
                         'options': { 'group': reviewers_id }
@@ -1083,8 +1070,11 @@ If you have questions after reviewing the points below that are not answered on 
                     'optional': True
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_process.py'),
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/reviewer_assignment_pre_process.py')
+            preprocess=self.get_process_content('process/reviewer_assignment_pre_process.py'),
+            date_processes=[{
+                'delay': assignment_delay * 1000,
+                'script': self.get_process_content('process/reviewer_assignment_process.py')
+            }]
         )
 
         self.save_invitation(invitation)
@@ -1179,10 +1169,7 @@ If you have questions after reviewing the points below that are not answered on 
         review_approval_invitation_id=self.journal.get_review_approval_id()
         paper_review_approval_invitation_id=self.journal.get_review_approval_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/review_approval_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
+        paper_process = self.get_process_content('process/review_approval_process.py')
 
         invitation = Invitation(id=review_approval_invitation_id,
             invitees=[venue_id],
@@ -1201,9 +1188,10 @@ If you have questions after reviewing the points below that are not answered on 
                 'invitation': {
                     'id': { 'const': paper_review_approval_invitation_id },
                     'invitees': { 'const': [venue_id, paper_action_editors_id] },
+                    'noninvitees': { 'const': [editors_in_chief_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
+                    'signatures': { 'const': [editors_in_chief_id] },
                     'maxReplies': { 'const': 1},
                     'duedate': { 'const': '${params.duedate}' },
                     'process': { 'const': paper_process },
@@ -1268,9 +1256,7 @@ If you have questions after reviewing the points below that are not answered on 
         withdrawal_invitation_id = self.journal.get_withdrawal_id()
         paper_withdrawal_invitation_id = self.journal.get_withdrawal_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/withdrawal_submission_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/withdrawal_submission_process.py')
 
         invitation = Invitation(id=withdrawal_invitation_id,
             invitees=[venue_id],
@@ -1356,9 +1342,7 @@ If you have questions after reviewing the points below that are not answered on 
         retraction_invitation_id = self.journal.get_retraction_id()
         paper_retraction_invitation_id = self.journal.get_retraction_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/retraction_submission_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/retraction_submission_process.py')
 
         invitation = Invitation(id=retraction_invitation_id,
             invitees=[venue_id],
@@ -1443,10 +1427,7 @@ If you have questions after reviewing the points below that are not answered on 
         retraction_approval_invitation_id=self.journal.get_retraction_approval_id()
         paper_retraction_approval_invitation_id=self.journal.get_retraction_approval_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/retraction_approval_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
+        paper_process = self.get_process_content('process/retraction_approval_process.py')
 
         invitation = Invitation(id=retraction_approval_invitation_id,
             invitees=[venue_id],
@@ -1529,7 +1510,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(id=under_review_invitation_id,
             invitees=[venue_id],
-            noninvitees=[self.journal.get_editors_in_chief_id()],
+            #noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[self.journal.get_editors_in_chief_id()],
@@ -1548,9 +1529,6 @@ If you have questions after reviewing the points below that are not answered on 
                     'id': { 'withInvitation': self.journal.get_author_submission_id() },
                     'readers': {
                         'const': ['everyone']
-                    },
-                    'writers': {
-                        'const': [venue_id]
                     },
                     'content': {
                         'assigned_action_editor': {
@@ -1580,7 +1558,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/under_review_submission_process.py')
+            process=self.get_process_content('process/under_review_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -1594,7 +1572,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(id=desk_rejection_invitation_id,
             invitees=[venue_id],
-            noninvitees=[self.journal.get_editors_in_chief_id()],
+            #noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1631,7 +1609,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/desk_reject_submission_process.py')
+            process=self.get_process_content('process/desk_reject_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -1675,7 +1653,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
+            process=self.get_process_content('process/withdrawn_submission_process.py')
 
         )
         self.save_invitation(invitation)
@@ -1717,7 +1695,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/retracted_submission_process.py')
+            process=self.get_process_content('process/retracted_submission_process.py')
 
         )
         self.save_invitation(invitation)
@@ -1764,7 +1742,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/rejected_submission_process.py')
+            process=self.get_process_content('process/rejected_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -1803,7 +1781,7 @@ If you have questions after reviewing the points below that are not answered on 
                         'venue': {
                             'value': {
                                 'type': 'string',
-                                'const': self.journal.short_name
+                                'const': 'Accepted by ' + self.journal.short_name
                             },
                             'order': 1
                         },
@@ -1852,7 +1830,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/acceptance_submission_process.py')
+            process=self.get_process_content('process/acceptance_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -1960,6 +1938,7 @@ If you have questions after reviewing the points below that are not answered on 
                         <li>For your submission, please select at least 3 AEs to recommend.</li>\
                         <li>AEs who have conflicts with your submission are not shown.</li>\
                         <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
+                        <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
                         <li>To get started click the button below.</li>\
                     </ul>\
                     <br>'
@@ -2066,9 +2045,7 @@ If you have questions after reviewing the points below that are not answered on 
         review_invitation_id = self.journal.get_review_id()
         paper_review_invitation_id = self.journal.get_review_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/review_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/review_process.py')
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -2200,15 +2177,8 @@ If you have questions after reviewing the points below that are not answered on 
         recommendation_invitation_id = self.journal.get_reviewer_recommendation_id()
         paper_recommendation_invitation_id = self.journal.get_reviewer_recommendation_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/official_recommendation_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        cdate_process = None
-        with open(os.path.join(os.path.dirname(__file__), 'process/official_recommendation_cdate_process.py')) as f:
-            cdate_process = f.read()
-            cdate_process = cdate_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
-
+        paper_process = self.get_process_content('process/official_recommendation_process.py')
+        cdate_process = self.get_process_content('process/official_recommendation_cdate_process.py')
 
         invitation = Invitation(id=recommendation_invitation_id,
             invitees=[venue_id],
@@ -2328,14 +2298,8 @@ If you have questions after reviewing the points below that are not answered on 
         solicit_review_invitation_id = self.journal.get_solicit_review_id()
         paper_solicit_review_invitation_id = self.journal.get_solicit_review_id(number='${params.noteNumber}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_pre_process.py')) as f:
-            paper_preprocess = f.read()
-            paper_preprocess = paper_preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
+        paper_process = self.get_process_content('process/solicit_review_process.py')
+        paper_preprocess = self.get_process_content('process/solicit_review_pre_process.py')
 
         invitation = Invitation(id=solicit_review_invitation_id,
             invitees=[venue_id],
@@ -2443,13 +2407,8 @@ If you have questions after reviewing the points below that are not answered on 
         solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id()
         paper_solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id(number='${params.noteNumber}', signature='${params.soliciter}')
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_process.py')) as f:
-            paper_process = f.read()
-            paper_process = paper_process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
-
-        with open(os.path.join(os.path.dirname(__file__), 'process/solicit_review_approval_pre_process.py')) as f:
-            paper_preprocess = f.read()
-            paper_preprocess = paper_preprocess.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}")')
+        paper_process = self.get_process_content('process/solicit_review_approval_process.py')
+        paper_preprocess = self.get_process_content('process/solicit_review_approval_pre_process.py')
 
         invitation = Invitation(id=solicit_review_invitation_approval_id,
             invitees=[venue_id],
@@ -2498,7 +2457,7 @@ If you have questions after reviewing the points below that are not answered on 
                                         'type': 'string',
                                         'enum': [
                                             'Yes, I approve the solicit review.',
-                                            'No, I decline the solitic review.'
+                                            'No, I decline the solicit review.'
                                         ]
                                     },
                                     'presentation': {
@@ -2555,7 +2514,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'nullable': True
                 },
                 'signatures': { 'const': [paper_authors_id] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_authors_id]},
+                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
                 'writers': { 'const': [ venue_id, paper_authors_id]},
                 'note': {
                     'id': { 'const': note.id },
@@ -2576,37 +2535,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
-                        },
-                        'authors': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': '[^;,\\n]+(,[^,\\n]+)*',
-                                'optional': True
-                            },
-                            'description': 'Comma separated list of author names.',
-                            'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            },
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
-                        },
-                        'authorids': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': r'~.*',
-                                'optional': True
-                            },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                            'order': 4,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'order': 2
                         },
                         'pdf': {
                             'value': {
@@ -2676,7 +2605,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/submission_revision_process.py')
+            process=self.get_process_content('process/submission_revision_process.py')
         )
 
         self.save_invitation(invitation)
@@ -2738,7 +2667,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/public_comment_process.py')
+            process=self.get_process_content('process/public_comment_process.py')
         )
 
         self.save_invitation(invitation)
@@ -2799,8 +2728,8 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/official_comment_pre_process.py'),
-            process=os.path.join(os.path.dirname(__file__), 'process/official_comment_process.py')
+            preprocess=self.get_process_content('process/official_comment_pre_process.py'),
+            process=self.get_process_content('process/official_comment_process.py')
         )
 
         self.save_invitation(invitation)
@@ -2873,7 +2802,7 @@ If you have questions after reviewing the points below that are not answered on 
             invitees=[venue_id, paper_action_editors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editors_in_chief_id],
             maxReplies=1,
             minReplies=1,
             edit={
@@ -2943,8 +2872,8 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            preprocess=os.path.join(os.path.dirname(__file__), 'process/submission_decision_pre_process.py'),
-            process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_process.py'),
+            preprocess=self.get_process_content('process/submission_decision_pre_process.py'),
+            process=self.get_process_content('process/submission_decision_process.py'),
             date_processes=[self.ae_reminder_process]
         )
 
@@ -3005,7 +2934,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/submission_decision_approval_process.py')
+            process=self.get_process_content('process/submission_decision_approval_process.py')
         )
 
         self.save_invitation(invitation)
@@ -3062,7 +2991,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 }
                             }
                         },
-                        process=os.path.join(os.path.dirname(__file__), 'process/review_rating_process.py'),
+                        process=self.get_process_content('process/review_rating_process.py'),
                         date_processes=[self.ae_reminder_process]
                     )
                     self.save_invitation(invitation)
@@ -3103,29 +3032,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2,
-                            'presentation': {
-                                'markdown': True
-                            }
-                        },
-                        'authors': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': '[^;,\\n]+(,[^,\\n]+)*'
-                            },
-                            'description': 'Comma separated list of author names.',
-                            'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            }
-                        },
-                        'authorids': {
-                            'value': {
-                                'type': 'string[]',
-                                'regex': r'~.*'
-                            },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                            'order': 4
+                            'order': 2
                         },
                         'pdf': {
                             'value': {
@@ -3213,7 +3120,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_revision_process.py')
+            process=self.get_process_content('process/camera_ready_revision_process.py')
         )
 
         self.save_invitation(invitation)
@@ -3230,7 +3137,7 @@ If you have questions after reviewing the points below that are not answered on 
             invitees=[venue_id, paper_action_editors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=[editors_in_chief_id],
             edit={
                 'signatures': { 'const': [ paper_action_editors_id ] },
                 'readers': { 'const': [ venue_id, paper_action_editors_id ] },
@@ -3255,7 +3162,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/camera_ready_verification_process.py'),
+            process=self.get_process_content('process/camera_ready_verification_process.py'),
             date_processes=[self.ae_reminder_process]
         )
 
@@ -3298,7 +3205,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=os.path.join(os.path.dirname(__file__), 'process/authors_deanonimization_process.py')
+            process=self.get_process_content('process/authors_deanonimization_process.py')
         )
 
         self.save_invitation(invitation)

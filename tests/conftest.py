@@ -121,14 +121,14 @@ def firefox_options(firefox_options):
 
 @pytest.fixture
 def request_page():
-    def request(selenium, url, token = None, alert=False, wait_for_element='content'):
+    def request(selenium, url, token = None, alert=False, by=By.ID, wait_for_element='content'):
         if token:
             selenium.get('http://localhost:3030')
             selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax'})
         else:
             selenium.delete_all_cookies()
         selenium.get(url)
-        timeout = 5
+        timeout = 8
         if alert:
             try:
                 WebDriverWait(selenium, timeout).until(EC.alert_is_present())
@@ -138,9 +138,9 @@ def request_page():
                 print("No alert is present")
 
         try:
-            element_present = EC.presence_of_element_located((By.ID, wait_for_element))
+            element_present = EC.presence_of_element_located((by, wait_for_element))
             WebDriverWait(selenium, timeout).until(element_present)
-            time.sleep(2) ## temporally sleep time to wait until the whole page is loaded
+            time.sleep(5) ## temporally sleep time to wait until the whole page is loaded
         except TimeoutException:
             print("Timed out waiting for page to load")
 

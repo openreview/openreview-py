@@ -15,7 +15,7 @@ def process(client, edit, invitation):
         subject=f'''[{journal.short_name}] Authors request to retract {journal.short_name} submission {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-The authors of paper {submission.content['title']['value']} are requesting to retract the paper. An EIC must confirm and accept the retraction: https://openreview.net/forum?id={submission.id}
+The authors of paper {submission.content['title']['value']} are requesting to retract the paper. An EIC must confirm and accept the retraction: https://openreview.net/forum?id={submission.id}&invitationId={journal.get_retraction_approval_id(number=submission.number)}
 
 OpenReview Team
 ''',

@@ -661,7 +661,7 @@ class Matching(object):
                 matching_status['no_publications'] = result['metadata']['no_publications']
 
                 if self.alternate_matching_group:
-                    scores = [[entry['match_member'], entry['submission_member'], entry['score']] for entry in result['results']]
+                    scores = [[entry['submission_member'], entry['match_member'], entry['score']] for entry in result['results']]
                     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 
                 scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
@@ -1047,7 +1047,7 @@ class Matching(object):
                 pre_content = pre.read()
                 post_content = post.read()
                 pre_content = pre_content.replace("REVIEWERS_ID = ''", "REVIEWERS_ID = '" + self.match_group.id + "'")
-                post_content = post_content.replace("SHORT_PHRASE = ''", "SHORT_PHRASE = '" + self.conference.short_name + "'")
+                post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.conference.get_short_name()}"')
                 post_content = post_content.replace("RECRUITMENT_INVITATION_ID = ''", "RECRUITMENT_INVITATION_ID = '" + recruitment_invitation_id + "'")
                 post_content = post_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + self.conference.get_committee_id(name=invited_committee_name + '/Invited')  + "'")
                 if email_template:

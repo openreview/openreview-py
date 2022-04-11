@@ -321,7 +321,7 @@ class Client(object):
             else:
                 att = 'confirmedEmail'
             params[att] = email_or_id
-        response = requests.get(self.profiles_url, params = params, headers = self.headers)
+        response = requests.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
         if profiles:
@@ -446,7 +446,7 @@ class Client(object):
 
         url = self.pdf_revisions_url if is_reference else self.pdf_url
 
-        response = requests.get(url, params = params, headers = headers)
+        response = requests.get(url, params=tools.format_params(params), headers = headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -495,30 +495,10 @@ class Client(object):
         if invitations is not None:
             params['invitations'] = ','.join(invitations)
 
-        response = requests.get(self.venues_url, params=params, headers=self.headers)
+        response = requests.get(self.venues_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()['venues']
-
-    @deprecated(version='1.0.3', reason="Use put_attachment instead")
-    def put_pdf(self, fname):
-        """
-        Uploads a pdf to the openreview server
-
-        :param fname: Path to the pdf
-        :type fname: str
-
-        :return: A relative URL for the uploaded pdf
-        :rtype: str
-        """
-        headers = self.headers.copy()
-
-        with open(fname, 'rb') as f:
-            headers['content-type'] = 'application/pdf'
-            response = requests.put(self.pdf_url, files={'data': f}, headers = headers)
-
-        response = self.__handle_response(response)
-        return response.json()['url']
 
     def put_attachment(self, file_path, invitation, name):
         """
@@ -640,7 +620,7 @@ class Client(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.groups_url, params = params, headers = self.headers)
+        response = requests.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
@@ -753,7 +733,7 @@ class Client(object):
         params['offset'] = offset
         params['expired'] = expired
 
-        response = requests.get(self.invitations_url, params=params, headers=self.headers)
+        response = requests.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
@@ -925,7 +905,7 @@ class Client(object):
         params['sort'] = sort
         params['original'] = original
 
-        response = requests.get(self.notes_url, params = params, headers = self.headers)
+        response = requests.get(self.notes_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
@@ -1075,7 +1055,7 @@ class Client(object):
         if trash:
             params['trash'] = trash
 
-        response = requests.get(self.reference_url, params = params, headers = self.headers)
+        response = requests.get(self.reference_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         references = [Note.from_json(n) for n in response.json()['references']]
@@ -1150,7 +1130,7 @@ class Client(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.tags_url, params = params, headers = self.headers)
+        response = requests.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
@@ -1208,7 +1188,7 @@ class Client(object):
         params['offset'] = offset
         params['sort'] = sort
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
@@ -1262,7 +1242,7 @@ class Client(object):
         params['limit'] = 1
         params['offset'] = 0
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()['count']
@@ -1291,7 +1271,7 @@ class Client(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
@@ -1671,7 +1651,7 @@ class Client(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
+        response = requests.get(self.notes_url + '/search', params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 

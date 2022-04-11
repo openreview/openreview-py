@@ -1,5 +1,6 @@
 import openreview
 import pytest
+from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Invitation
 from openreview.api import Note
@@ -89,7 +90,7 @@ class TestJournalRequest():
         helpers.create_user('support_role@mail.com', 'Support', 'Role')
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form['note']['id']))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -123,7 +124,7 @@ TJ22 Editors-in-Chief
 
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), test_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(journal['journal_request_note']['id']))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -253,7 +254,7 @@ TJ22 Editors-in-Chief
         helpers.create_user('ae_journal1@mail.com', 'First', 'AE')
         ae_client = OpenReviewClient(username='ae_journal1@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), ae_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), ae_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(journal['journal_request_note']['id']))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
