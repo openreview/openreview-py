@@ -600,7 +600,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'const': [ venue_id, action_editors_value, reviewers_value, authors_value]
                             }
                         },
-                        'previous_submission_url': {
+                        f'previous_{short_name}_submission_url': {
                             'value': {
                                 'type': "string",
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
@@ -2634,7 +2634,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                             }
                         },
-                        'previous_submission_url': {
+                        f'previous_{short_name}_submission_url': {
                             'value': {
                                 'type': 'string',
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
@@ -3131,7 +3131,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                             }
                         },
-                        'previous_submission_url': {
+                        f'previous_{short_name}_submission_url': {
                             'value': {
                                 'type': 'string',
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
