@@ -785,13 +785,15 @@ class VenueRequest():
                 'hidden': True
             },
             'submission_readers': {
-                'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
+                'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue had one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
                     'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                     'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                    'Program chairs and paper authors only',
                     'Everyone (submissions are public)'
                 ],
                 'order': 23,
+                'default': ['Program chairs and paper authors only'],
                 'required': True
             },
             'submissions_visibility': {
