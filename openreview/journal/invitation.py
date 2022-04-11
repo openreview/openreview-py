@@ -53,6 +53,7 @@ class InvitationBuilder(object):
         self.set_solicit_review_invitation()
         self.set_solicit_review_approval_invitation()
         self.set_withdrawal_invitation()
+        self.set_desk_rejection_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
 
@@ -1249,6 +1250,7 @@ If you have questions after reviewing the points below that are not answered on 
 
     def set_withdrawal_invitation(self):
         venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
         paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
         paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
         paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
@@ -1281,7 +1283,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'process': { 'const': paper_process },
                     'edit': {
                         'signatures': { 'const': { 'regex': paper_authors_id, 'type': 'group[]'  }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
+                        'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
                         'writers': { 'const': { 'const': [ venue_id, paper_authors_id] }},
                         'note': {
                             'forum': { 'const': { 'const': '${params.noteId}' }},
@@ -1331,6 +1333,80 @@ If you have questions after reviewing the points below that are not answered on 
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
+
+    def set_desk_rejection_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
+
+        desk_rejection_invitation_id = self.journal.get_desk_rejection_id()
+        paper_desk_rejection_invitation_id = self.journal.get_desk_rejection_id(number='${params.noteNumber}')
+
+        paper_process = self.get_process_content('process/desk_rejection_submission_process.py')
+
+        invitation = Invitation(id=desk_rejection_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
+                'params': {
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
+                    'noteId': { 'regex': '.*', 'type': 'string'  }
+                },
+                'invitation': {
+                    'id': { 'const': paper_desk_rejection_invitation_id },
+                    'invitees': { 'const': [venue_id] },
+                    'readers': { 'const': ['everyone'] },
+                    'writers': { 'const': [venue_id] },
+                    'signatures': { 'const': [venue_id] },
+                    'maxReplies': { 'const': 1 },
+                    'process': { 'const': paper_process },
+                    'edit': {
+                        'signatures': { 'const': { 'const': [editors_in_chief_id]  }},
+                        'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
+                        'writers': { 'const': { 'const': [ venue_id] }},
+                        'note': {
+                            'forum': { 'const': { 'const': '${params.noteId}' }},
+                            'replyto': { 'const': { 'const': '${params.noteId}' }},
+                            'signatures': { 'const': { 'const': [editors_in_chief_id] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
+                            'writers': { 'const': { 'const': [ venue_id ] }},
+                            'content': {
+                                'desk_reject_comments': { 'const': {
+                                    'order': 2,
+                                    'description': 'Brief summary of reasons for marking this submission as desk rejected. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'type': 'string',
+                                        'regex': '^[\\S\\s]{1,200000}$',
+                                        'optional': True
+                                    },
+                                    'presentation': {
+                                        'markdown': True
+                                    }
+                                }}
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
+
+    def set_note_desk_rejection_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
 
     def set_retraction_invitation(self):
         venue_id = self.journal.venue_id

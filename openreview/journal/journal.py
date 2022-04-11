@@ -99,6 +99,9 @@ class Journal(object):
     def get_withdrawal_id(self, number=None):
         return self.__get_invitation_id(name='Withdrawal', number=number)
 
+    def get_desk_rejection_id(self, number=None):
+        return self.__get_invitation_id(name='Desk_Rejection', number=number)
+
     def get_retraction_id(self, number=None):
         return self.__get_invitation_id(name='Retraction', number=number)
 
@@ -289,6 +292,7 @@ class Journal(object):
         self.invitation_builder.set_revision_submission(note)
         self.invitation_builder.set_note_review_approval_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_note_withdrawal_invitation(note)
+        self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
 
