@@ -48,7 +48,9 @@ class TestJournal():
         carlos_client=helpers.create_user('carlos@mailthree.com', 'Carlos', 'Mondragon')
         andrew_client = helpers.create_user('andrewmc@mailfour.com', 'Andrew', 'McCallum')
         hugo_client = helpers.create_user('hugo@mailsix.com', 'Hugo', 'Larochelle')
-
+        david2_client=helpers.create_user('david_2@mailone.com', 'David K', 'Belanger')
+        openreview_client.merge_profiles('~David_Belanger1', '~David_K_Belanger1')
+        
         ## Authors
         melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
         celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
@@ -939,10 +941,15 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+
+        late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement')
+        assert late_reviewers
+        assert '~David_Belanger1' in late_reviewers
+
         ## post the assignment ack
         formatted_date = (datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d, %Y")
         assignment_ack_note = david_client.post_note_edit(invitation=f'TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement',
-            signatures=['~David_Belanger1'],
+            signatures=['~David_K_Belanger1'],
             note=Note(
                 content={
                     'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.' }
@@ -951,6 +958,9 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_ack_note['id'])
+
+        late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement')
+        assert not late_reviewers
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment Acknowledgement posted on submission Paper title UPDATED')
         assert len(messages) == 1
