@@ -439,22 +439,26 @@ class Journal(object):
         for invitee in invitation.invitees:
             if invitee not in [self.venue_id, self.get_editors_in_chief_id()]:
                 if invitee.startswith('~'):
-                    invitee_members.append(invitee)
+                    profile = self.client.get_profile(invitee)
+                    invitee_members.append(profile.id)
                 else:
                     invitee_members = invitee_members + self.client.get_group(invitee).members
 
+        ## Check replies and get signatures
         replies = self.client.get_notes(invitation=invitation.id, details='signatures')
 
         signature_members = []
         for reply in replies:
             for signature in reply.details['signatures']:
                 if signature['id'].startswith('~'):
-                    signature_members.append(signature)
+                    profile = self.client.get_profile(signature)
+                    signature_members.append(profile.id)
                 else:
                     signature_members = signature_members + signature['members']
             for signature in reply.signatures:
                 if signature.startswith('~'):
-                    signature_members.append(signature)
+                    profile = self.client.get_profile(signature)
+                    signature_members.append(profile.id)
 
         print('invitee_members', invitee_members)
         print('signature_members', signature_members)
