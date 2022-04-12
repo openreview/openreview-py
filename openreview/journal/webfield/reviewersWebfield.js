@@ -12,7 +12,7 @@ var WEBSITE = '';
 var SUBMISSION_ID = '';
 var HEADER = {
   title: SHORT_PHRASE + ' Reviewer Console',
-  instructions: 'Visit <a href="https://' + WEBSITE + '" target="_blank" rel="nofollow">' + WEBSITE + '</a> for the ' + SHORT_PHRASE + ' reviewer guidelines.'
+  instructions: 'Visit the <a href="https://' + WEBSITE + '" target="_blank" rel="nofollow"> ' + SHORT_PHRASE + ' website</a> for the reviewer guidelines.'
 };
 var REVIEWERS_NAME = '';
 var REVIEW_NAME = 'Review';

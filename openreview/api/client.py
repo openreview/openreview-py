@@ -8,6 +8,7 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
+from .. import tools
 import requests
 import pprint
 import os
@@ -261,7 +262,7 @@ class OpenReviewClient(object):
         t = response.json()['tags'][0]
         return Tag.from_json(t)
 
-    def get_edge(self, id):
+    def get_edge(self, id, trash=False):
         """
         Get a single Edge by id if available
 
@@ -271,7 +272,7 @@ class OpenReviewClient(object):
         return: Edge object with its information
         :rtype: Edge
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = requests.get(self.edges_url, params = {'id': id, 'trash': 'true' if trash == True else 'false'}, headers=self.headers)
         response = self.__handle_response(response)
         edges = response.json()['edges']
         if edges:
@@ -297,7 +298,7 @@ class OpenReviewClient(object):
             else:
                 att = 'email'
             params[att] = email_or_id
-        response = requests.get(self.profiles_url, params = params, headers = self.headers)
+        response = requests.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
         if profiles:
@@ -422,7 +423,7 @@ class OpenReviewClient(object):
 
         url = self.pdf_revisions_url if is_reference else self.pdf_url
 
-        response = requests.get(url, params = params, headers = headers)
+        response = requests.get(url, params=tools.format_params(params), headers = headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -471,7 +472,7 @@ class OpenReviewClient(object):
         if invitations is not None:
             params['invitations'] = ','.join(invitations)
 
-        response = requests.get(self.venues_url, params=params, headers=self.headers)
+        response = requests.get(self.venues_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()['venues']
@@ -576,7 +577,7 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.groups_url, params = params, headers = self.headers)
+        response = requests.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
@@ -707,7 +708,7 @@ class OpenReviewClient(object):
         params['expired'] = expired
         params['type'] = type
 
-        response = requests.get(self.invitations_url, params=params, headers=self.headers)
+        response = requests.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
@@ -913,7 +914,7 @@ class OpenReviewClient(object):
         params['sort'] = sort
         params['original'] = original
 
-        response = requests.get(self.notes_url, params = params, headers = self.headers)
+        response = requests.get(self.notes_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
@@ -1039,7 +1040,7 @@ class OpenReviewClient(object):
         if invitation:
             params['invitation'] = invitation
 
-        response = requests.get(self.note_edits_url, params = params, headers = self.headers)
+        response = requests.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edits = [Edit.from_json(n) for n in response.json()['edits']]
@@ -1080,7 +1081,7 @@ class OpenReviewClient(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.tags_url, params = params, headers = self.headers)
+        response = requests.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
@@ -1136,7 +1137,7 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
@@ -1189,7 +1190,7 @@ class OpenReviewClient(object):
         params['limit'] = 1
         params['offset'] = 0
 
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()['count']
@@ -1218,7 +1219,7 @@ class OpenReviewClient(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
-        response = requests.get(self.edges_url, params = params, headers = self.headers)
+        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
@@ -1538,7 +1539,7 @@ class OpenReviewClient(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.notes_url + '/search', params = params, headers = self.headers)
+        response = requests.get(self.notes_url + '/search', params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
@@ -1688,7 +1689,7 @@ class OpenReviewClient(object):
         return response.json()
 
     def request_expertise(self, name, group_id, paper_invitation, alternate_match_group = None, exclusion_inv=None, model=None, baseurl=None):
-        
+
         # Build entityA from group_id
         entityA = {
             'type': 'Group',
@@ -1697,7 +1698,7 @@ class OpenReviewClient(object):
         if exclusion_inv:
             expertise = {'exclusion': { 'invitation': exclusion_inv }}
             entityA['expertise'] = expertise
-        
+
         # Build entityB from alternate_match_group or paper_invitation
         if alternate_match_group:
             entityB = {
@@ -1771,6 +1772,8 @@ class OpenReviewClient(object):
     def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
 
         base_url = baseurl if baseurl else self.baseurl
+        call_max = 500
+
         if base_url.startswith('http://localhost'):
             return { 'results': [] }
 
@@ -1778,8 +1781,8 @@ class OpenReviewClient(object):
             call_count = 0
             status_response = self.get_expertise_status(job_id, baseurl=base_url)
             status = status_response.get('status')
-            while status not in ['Completed', 'Error'] and call_count < 30:
-                time.sleep(30)
+            while status not in ['Completed', 'Error'] and call_count < call_max:
+                time.sleep(60)
                 status_response = self.get_expertise_status(job_id)
                 status = status_response.get('status')
                 call_count += 1
@@ -1788,7 +1791,7 @@ class OpenReviewClient(object):
                 return self.get_expertise_results(job_id, baseurl=base_url)
             if 'Error' == status:
                 raise OpenReviewException('There was an error computing scores, description: ' + status_response.get('description'))
-            if call_count == 30:
+            if call_count == call_max:
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
@@ -2035,9 +2038,7 @@ class Invitation(object):
         noninvitees = None,
         nonreaders = None,
         web = None,
-        web_string = None,
         process = None,
-        process_string = None,
         preprocess = None,
         date_processes = None,
         duedate = None,
@@ -2048,7 +2049,6 @@ class Invitation(object):
         tmdate = None,
         minReplies = None,
         maxReplies = None,
-        transform = None,
         bulk = None,
         reply_forum_views = [],
         details = None):
@@ -2075,23 +2075,9 @@ class Invitation(object):
         self.details = details
         self.reply_forum_views = reply_forum_views
         self.web = None
-        self.process = None
+        self.process = process
         self.preprocess = preprocess
         self.date_processes = date_processes
-        if web is not None:
-            with open(web) as f:
-                self.web = f.read()
-        if process is not None:
-            with open(process) as f:
-                self.process = f.read()
-        self.transform = None
-        if transform is not None:
-            with open(transform) as f:
-                self.transform = f.read()
-        if process_string:
-            self.process = process_string
-        if web_string:
-            self.web = web_string
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])

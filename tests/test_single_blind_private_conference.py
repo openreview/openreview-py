@@ -164,7 +164,7 @@ class TestSingleBlindPrivateConference():
         submissions=conference.get_submissions(number=3)
         assert submissions[0].readers == ['everyone']
 
-        request_page(selenium, "http://localhost:3030/group?id=MICCAI.org/2021/Challenges")
+        request_page(selenium, "http://localhost:3030/group?id=MICCAI.org/2021/Challenges", wait_for_element='tabs-container')
         assert "MICCAI 2021 Challenges | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header

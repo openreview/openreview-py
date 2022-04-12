@@ -131,7 +131,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         )
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
-            public = True,
+            public = False,
             due_date = now + datetime.timedelta(minutes = 10),
             second_due_date = now + datetime.timedelta(minutes = 20),
             withdrawn_submission_public=True,
@@ -174,7 +174,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                     "value-checkbox": "I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics",
                     "required": True
                 }
-            })
+            },
+            readers=[openreview.SubmissionStage.Readers.AREA_CHAIRS])
         builder.set_reviewer_identity_readers([openreview.Conference.IdentityReaders.PROGRAM_CHAIRS, openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED])
 
         conference = builder.get_result()
@@ -298,7 +299,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         reviewer_client = openreview.Client(username='iclr2021_one@mail.com', password='1234')
         reviewer_tasks_url = 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers#reviewer-tasks'
-        request_page(selenium, reviewer_tasks_url, reviewer_client.token)
+        request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
         assert selenium.find_element_by_link_text('Reviewer Registration')
         assert selenium.find_element_by_link_text('Expertise Selection')
@@ -336,7 +337,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert registration_note
 
 
-        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
         assert header
         notes = header.find_elements_by_class_name("description")
@@ -344,7 +345,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ICLR 2021. It will be regularly updated as the conference progresses, so please check back frequently.'
 
-        request_page(selenium, reviewer_tasks_url, reviewer_client.token)
+        request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
         assert selenium.find_element_by_link_text('Reviewer Registration')
         assert selenium.find_element_by_link_text('Expertise Selection')
@@ -506,7 +507,7 @@ Naila, Katja, Alice, and Ivan
             )
             note = test_client.post_note(note)
 
-        conference.setup_first_deadline_stage(force=True, submission_readers=['ICLR.cc/2021/Conference/Area_Chairs'])
+        conference.setup_first_deadline_stage(force=True)
 
         blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission')
         assert len(blinded_notes) == 5
@@ -629,6 +630,8 @@ Naila, Katja, Alice, and Ivan
 
     def test_post_submission_stage(self, conference, helpers, test_client, client):
 
+        conference.submission_stage.public = True
+        conference.submission_stage.readers = [openreview.SubmissionStage.Readers.EVERYONE]
         conference.setup_final_deadline_stage(force=True)
 
         submissions = conference.get_submissions()
