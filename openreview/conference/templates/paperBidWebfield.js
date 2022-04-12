@@ -211,9 +211,10 @@ function renderContent(notes, conflicts, bidEdges) {
 
     // If not on the All Papers tab, fade out note when bid is changed
     if (activeTab !== 0) {
+      $(e.currentTarget).find('.btn-group').addClass('disabled');
       setTimeout(function() {
-        $(e.currentTarget).closest('.note').fadeOut();
-      }, 500);
+        $(e.currentTarget).closest('.note').fadeOut('fast');
+      }, 100);
     }
 
     updateCounts();
