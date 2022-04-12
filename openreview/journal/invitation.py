@@ -1162,6 +1162,49 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
+        invitation = Invitation(
+            id=self.journal.get_reviewer_availability_id(),
+            invitees=[venue_id, reviewers_id],
+            readers=[venue_id, action_editors_id, reviewers_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            type='Edge',
+            edit={
+                'ddate': {
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'const': [venue_id, action_editors_id, '${tail}']
+                },
+                'writers': {
+                    'const': [venue_id, '${tail}']
+                },
+                'signatures': {
+                    'type': 'group[]',
+                    'regex': f'{editor_in_chief_id}|~.*'
+                },
+                'head': {
+                    'type': 'group',
+                    'const': reviewers_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'inGroup': reviewers_id
+                },
+                'label': {
+                    'type': 'string',
+                    'enum': ['Available', 'Not Available'],
+                    'presentation': {
+                        'default': 'Available'
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)        
+
     def set_review_approval_invitation(self):
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name

@@ -366,7 +366,7 @@ var renderData = function(venueStatusData) {
 
   var customQuotaInvitation = venueStatusData.customQuotaInvitations[0];
 
-  Webfield2.ui.renderCustomQuotaWidget('#invitation', customQuotaInvitation);
+  Webfield2.ui.renderEdgeWidget('#invitation', customQuotaInvitation);
 
   // Assigned Papers Tab
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {

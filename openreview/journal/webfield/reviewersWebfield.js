@@ -21,7 +21,8 @@ var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var DECISION_NAME = 'Decision';
 var SUBMISSION_GROUP_NAME = 'Paper';
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
-var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
+var REVIEWERS_CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
+var REVIEWERS_AVAILABILITY_NAME = 'Assignment_Availability';
 
 
 function main() {
@@ -51,7 +52,7 @@ var loadData = function() {
       Webfield2.api.getAssignedInvitations(VENUE_ID, REVIEWERS_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
       Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)}),
       Webfield2.api.getAll('/invitations', {
-        regex: REVIEWERS_CUSTOM_MAX_PAPERS_ID,
+        regex: REVIEWERS_ID + '/-/(' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME + '|' + REVIEWERS_AVAILABILITY_NAME + ')',
         type: 'edges',
         details: 'repliedEdges'
       })
@@ -126,9 +127,9 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
 
 var renderData = function(venueStatusData) {
 
-  var customQuotaInvitation = venueStatusData.customQuotaInvitations[0];
-
-  Webfield2.ui.renderCustomQuotaWidget('#invitation', customQuotaInvitation);  
+  venueStatusData.customQuotaInvitations.forEach(function(invitation) {
+    Webfield2.ui.renderEdgeWidget('#invitation', invitation, { fieldName: invitation.edge.label ? 'label': 'weight' });  
+  });
 
   Webfield2.ui.renderTasks('#reviewer-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Reviewer Console](/group?id=' + VENUE_ID + '/' + REVIEWERS_NAME + '#reviewer-tasks)') + '&t=' + Date.now()});
 

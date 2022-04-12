@@ -205,6 +205,9 @@ class Journal(object):
     def get_reviewer_custom_max_papers_id(self):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())
 
+    def get_reviewer_availability_id(self):
+        return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_reviewers_id())
+
     def get_reviewer_pending_review_id(self):
         return self.__get_invitation_id(name='Pending_Reviews', prefix=self.get_reviewers_id())
 
