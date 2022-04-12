@@ -541,7 +541,8 @@ class VenueStages():
                 'value-radio': [
                     'Yes, hide rejected submissions from the public',
                     'No, keep rejected submissions public'
-                ]
+                ],
+                'required': True
             },
             'reveal_authors': {
                 'description': 'Would you like to release author identities of submissions to the public?',

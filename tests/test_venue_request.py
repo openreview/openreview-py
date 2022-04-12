@@ -1424,6 +1424,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reveal_authors': 'Reveal author identities of all submissions to the public',
+                'hide_rejected_submissions': 'No, keep rejected submissions public',
                 'release_submissions': 'Release all submissions to the public'
             },
             forum=venue['request_form_note'].forum,

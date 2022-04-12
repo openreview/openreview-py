@@ -43,19 +43,24 @@ def process(client, note, invitation):
         elif invitation_type == 'Decision_Stage':
             conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))
 
-            content = {}
-
-            if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private." or 'Everyone' not in forum_note.content.get('submission_readers', '')):
-                content['release_submissions'] = {
+            content = {
+                'release_submissions': {
                     'description': 'Would you like to release submissions to the public?',
                     'value-radio': [
                         'Release all submissions to the public',
                         'Release only accepted submission to the public',
                         'No, I don\'t want to release any submissions'],
                     'required': True
-                }
-            if (forum_note.content.get('Author and Reviewer Anonymity', '') == "Double-blind"):
-                content['reveal_authors'] = {
+                },
+                'hide_rejected_submissions': {
+                    'description': 'Select if you would like to hide rejected submissions from the public',
+                    'value-radio': [
+                        'Yes, hide rejected submissions from the public',
+                        'No, keep rejected submissions public'
+                    ],
+                    'required': True
+                },
+                'reveal_authors': {
                     'description': 'Would you like to release author identities of submissions to the public?',
                     'value-radio': [
                         'Reveal author identities of all submissions to the public',
@@ -63,6 +68,8 @@ def process(client, note, invitation):
                         'No, I don\'t want to reveal any author identities.'],
                     'required': True
                 }
+            }
+
             decision_options = forum_note.content.get('decision_options')
             if decision_options:
                 decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
@@ -75,32 +82,31 @@ def process(client, note, invitation):
                 'required': False
             }
 
-            if content:
-                decision_due_date = forum_note.content.get('decision_deadline').strip()
-                cdate = datetime.datetime.now()
-                if decision_due_date:
-                    try:
-                        decision_due_date = datetime.datetime.strptime(decision_due_date, '%Y/%m/%d %H:%M')
-                    except ValueError:
-                        decision_due_date = datetime.datetime.strptime(decision_due_date, '%Y/%m/%d')
-                    cdate = openreview.tools.datetime_millis(decision_due_date)
+            decision_due_date = forum_note.content.get('decision_deadline').strip()
+            cdate = datetime.datetime.now()
+            if decision_due_date:
+                try:
+                    decision_due_date = datetime.datetime.strptime(decision_due_date, '%Y/%m/%d %H:%M')
+                except ValueError:
+                    decision_due_date = datetime.datetime.strptime(decision_due_date, '%Y/%m/%d')
+                cdate = openreview.tools.datetime_millis(decision_due_date)
 
-                client.post_invitation(openreview.Invitation(
-                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Post_Decision_Stage',
-                    super = SUPPORT_GROUP + '/-/Post_Decision_Stage',
-                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
-                    cdate = cdate,
-                    reply = {
-                        'forum': forum_note.id,
-                        'referent': forum_note.id,
-                        'readers' : {
-                            'description': 'The users who will be allowed to read the above content.',
-                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
-                        },
-                        'content': content
+            client.post_invitation(openreview.Invitation(
+                id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Post_Decision_Stage',
+                super = SUPPORT_GROUP + '/-/Post_Decision_Stage',
+                invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                cdate = cdate,
+                reply = {
+                    'forum': forum_note.id,
+                    'referent': forum_note.id,
+                    'readers' : {
+                        'description': 'The users who will be allowed to read the above content.',
+                        'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
                     },
-                    signatures = ['~Super_User1']
-                ))
+                    'content': content
+                },
+                signatures = ['~Super_User1']
+            ))
 
         elif invitation_type == 'Submission_Revision_Stage':
             conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
@@ -112,7 +118,7 @@ def process(client, note, invitation):
             #expire post_submission invitation
             post_submission_inv = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Post_Submission')
             if post_submission_inv:
-                post_submission_inv.expdate = datetime.datetime.now()
+                post_submission_inv.expdate = openreview.tools.datetime_millis(datetime.datetime.now())
                 client.post_invitation(post_submission_inv)
 
             reveal_all_authors=reveal_authors_accepted=release_all_notes=release_notes_accepted=False
@@ -122,7 +128,9 @@ def process(client, note, invitation):
             if 'release_submissions' in forum_note.content:
                 release_all_notes=forum_note.content.get('release_submissions', '') == 'Release all submissions to the public'
                 release_notes_accepted=forum_note.content.get('release_submissions', '') == 'Release only accepted submission to the public'
-            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted, decision_heading_map=forum_note.content.get('home_page_tab_names'))
+            if 'hide_rejected_submissions' in forum_note.content:
+                hide_rejected=forum_note.content.get('hide_rejected_submissions', '') == 'Yes, hide rejected submissions from the public'
+            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted, hide_rejected, decision_heading_map=forum_note.content.get('home_page_tab_names'))
 
         submission_content = conference.submission_stage.get_content()
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
