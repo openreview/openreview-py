@@ -243,9 +243,13 @@ function renderContent(notes, conflicts, bidEdges) {
         });
       }, 100);
 
-      // Unselect bid in the All Papers tab
+      // Change bid in the All Papers tab
       var $noteToChange = $('#all-papers .submissions-list .note[data-id="' + previousEdge.head + '"] .btn-group');
-      $noteToChange.button('toggle').children('input').prop('checked', false);
+      if (edge.ddate) {
+        $noteToChange.button('toggle').children('input').prop('checked', false);
+      } else {
+        $noteToChange.find('label[data-value="' + edge.label + '"]').button('toggle');
+      }
     }
 
     updateCounts();
