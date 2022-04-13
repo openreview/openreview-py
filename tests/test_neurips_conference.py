@@ -78,7 +78,7 @@ class TestNeurIPSConference():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
-                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'submission_readers': 'Program chairs and paper authors only',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100'
             }))
