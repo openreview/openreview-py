@@ -1300,7 +1300,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'noninvitees': { 'const': [editors_in_chief_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [editors_in_chief_id] },
+                    'signatures': { 'const': [venue_id] },
                     'maxReplies': { 'const': 1},
                     'duedate': { 'const': '${params.duedate}' },
                     'process': { 'const': paper_process },
@@ -1546,7 +1546,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'invitees': { 'const': [venue_id, paper_authors_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [editors_in_chief] },
+                    'signatures': { 'const': [venue_id] },
                     'maxReplies': { 'const': 1 },
                     'process': { 'const': paper_process },
                     'edit': {
@@ -1694,7 +1694,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(id=under_review_invitation_id,
             invitees=[venue_id],
-            #noninvitees=[self.journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[self.journal.get_editors_in_chief_id()],
@@ -1756,7 +1756,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(id=desk_rejected_invitation_id,
             invitees=[venue_id],
-            #noninvitees=[self.journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -2246,7 +2246,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'invitation': {
                     'id': { 'const': paper_review_invitation_id },
-                    'signatures': { 'const': [ editors_in_chief_id ] },
+                    'signatures': { 'const': [ venue_id ] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
                     'invitees': { 'const': [venue_id, paper_reviewers_id] },
@@ -2380,7 +2380,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'invitation': {
                     'id': { 'const': paper_recommendation_invitation_id },
-                    'signatures': { 'const': [ editors_in_chief_id ] },
+                    'signatures': { 'const': [ venue_id ] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
                     'invitees': { 'const': [venue_id, paper_reviewers_id] },
@@ -2614,7 +2614,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'invitees': { 'const': [venue_id, paper_action_editors_id]},
                     'readers': { 'const': [venue_id, paper_action_editors_id]},
                     'writers': { 'const': [venue_id]},
-                    'signatures': { 'const': [editors_in_chief_id]},
+                    'signatures': { 'const': [editors_in_chief_id]}, ## to compute conflicts
                     'duedate': { 'const': '${params.duedate}'},
                     'maxReplies': { 'const': 1},
                     'process': { 'const': paper_process },
