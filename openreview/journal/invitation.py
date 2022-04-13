@@ -687,6 +687,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -731,6 +733,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -834,6 +838,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -879,6 +885,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -917,6 +925,51 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
+        invitation = Invitation(
+            id=self.journal.get_ae_availability_id(),
+            invitees=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'ddate': {
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'const': [venue_id, '${tail}']
+                },
+                'writers': {
+                    'const': [venue_id, '${tail}']
+                },
+                'signatures': {
+                    'type': 'group[]',
+                    'regex': f'{editor_in_chief_id}|~.*'
+                },
+                'head': {
+                    'type': 'group',
+                    'const': action_editors_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'inGroup': action_editors_id
+                },
+                'label': {
+                    'type': 'string',
+                    'enum': ['Available', 'Unavailable'],
+                    'presentation': {
+                        'default': 'Available'
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)         
+
     def set_reviewer_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
         author_submission_id = self.journal.get_author_submission_id()
@@ -933,6 +986,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[editor_in_chief_id], ## to compute conflicts
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -979,6 +1034,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -1087,6 +1144,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id, reviewers_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -1130,6 +1189,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -1168,6 +1229,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id, reviewers_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -1196,7 +1259,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'label': {
                     'type': 'string',
-                    'enum': ['Available', 'Not Available'],
+                    'enum': ['Available', 'Unavailable'],
                     'presentation': {
                         'default': 'Available'
                     }

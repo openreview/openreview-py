@@ -162,6 +162,9 @@ class Journal(object):
     def get_ae_custom_max_papers_id(self, number=None):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_action_editors_id(number=number))
 
+    def get_ae_availability_id(self):
+        return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_action_editors_id())
+
     def get_decision_approval_id(self, number=None):
         return self.__get_invitation_id(name='Decision_Approval', number=number)
 
