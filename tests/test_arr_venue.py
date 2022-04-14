@@ -410,7 +410,7 @@ class TestNeurIPSConference():
 
         venue.set_area_chairs(['~Area_CMUChair1', '~Area_MITChair1', '~Area_AmazonChair1'])
 
-        submissions=venue.get_submissions()
+        submissions=venue.get_submissions(sort='tmdate')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)

@@ -235,7 +235,7 @@ class TestMultipleRoles():
         assert matching_setup_note
         helpers.await_queue()
 
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
 
         ## Program Committee
         client.post_edge(openreview.Edge(

@@ -725,7 +725,7 @@ class TestNeurIPSConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 5
 
         assert submissions[0].content['keywords'] == ''
@@ -811,7 +811,7 @@ class TestNeurIPSConference():
         now = datetime.datetime.utcnow()
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -1031,7 +1031,7 @@ class TestNeurIPSConference():
     def test_ac_reassignment(self, conference, helpers, client):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
 
         assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
         assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
@@ -1134,7 +1134,7 @@ Thank you,
         print(url)
 
         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
-        submission=conference.get_submissions()[0]
+        submission=conference.get_submissions(sort='tmdate')[0]
         signatory_group=ac_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0]
 
         ## Invite external reviewer 1
@@ -1585,7 +1585,7 @@ Thank you,
     def test_deployment_stage(self, conference, client, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
 
         conference.set_assignments(assignment_title='reviewer-matching', committee_id='NeurIPS.cc/2021/Conference/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
 
@@ -1898,7 +1898,7 @@ Thank you,
         print(url)
 
         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
-        submission=conference.get_submissions()[1]
+        submission=conference.get_submissions(sort='tmdate')[1]
         signatory_group=ac_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper4/Area_Chair_')[0]
 
         ## Invite external reviewer 1

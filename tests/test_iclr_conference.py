@@ -634,7 +634,7 @@ Naila, Katja, Alice, and Ivan
         conference.submission_stage.readers = [openreview.SubmissionStage.Readers.EVERYONE]
         conference.setup_final_deadline_stage(force=True)
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 4
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
@@ -675,7 +675,7 @@ Naila, Katja, Alice, and Ivan
         now = datetime.datetime.utcnow()
         conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(due_date=now + datetime.timedelta(minutes = 40), allow_author_reorder=True))
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
 
         print(submissions[0])
 

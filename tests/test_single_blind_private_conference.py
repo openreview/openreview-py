@@ -106,7 +106,7 @@ class TestSingleBlindPrivateConference():
 
         conference.set_decision_stage(openreview.DecisionStage(release_to_area_chairs=True))
 
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
         assert len(submissions) == 5
 
         client.post_note(openreview.Note(

@@ -168,7 +168,7 @@ class TestMatching():
         conference.setup_matching(committee_id=conference.get_area_chairs_id())
         conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
 
         ac1_client.post_edge(openreview.Edge(invitation = conference.get_bid_id(conference.get_area_chairs_id()),
             readers = ['auai.org/UAI/2019/Conference', '~AreaChair_One1'],
@@ -368,7 +368,7 @@ class TestMatching():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Conflict'
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
         assert 3 == len(submissions)
 
@@ -407,7 +407,7 @@ class TestMatching():
 
     def test_setup_matching_with_recommendations(self, conference, pc_client, test_client, helpers):
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         ## Open reviewer recommendations
         now = datetime.datetime.utcnow()
@@ -517,7 +517,7 @@ class TestMatching():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Conflict'
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
         assert 3 == len(submissions)
 
@@ -556,7 +556,7 @@ class TestMatching():
 
     def test_setup_matching_with_subject_areas(self, conference, pc_client, test_client, helpers):
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         registration_notes = pc_client.get_notes(invitation = 'auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Registration_Form')
         assert registration_notes
@@ -647,7 +647,7 @@ class TestMatching():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Conflict'
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
         assert 3 == len(submissions)
 
@@ -719,7 +719,7 @@ class TestMatching():
 
         conference.client = pc_client
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         edges = pc_client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Proposed_Assignment',
@@ -825,7 +825,7 @@ class TestMatching():
 
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
@@ -1097,7 +1097,7 @@ class TestMatching():
 
         conference.client = pc2_client
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         pc2_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, '~Reviewer_One1'],
@@ -1136,7 +1136,7 @@ class TestMatching():
     def test_set_ac_assigments(self, conference, pc_client, test_client, helpers):
 
         conference.set_area_chairs(['ac1@cmu.edu', 'ac2@umass.edu'])
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         edges = pc_client.get_edges(
             invitation='auai.org/UAI/2019/Conference/Senior_Program_Committee/-/Proposed_Assignment',

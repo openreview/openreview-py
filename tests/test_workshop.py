@@ -170,7 +170,7 @@ class TestWorkshop():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions = conference.get_submissions()
+        blind_submissions = conference.get_submissions(sort='tmdate')
         assert blind_submissions
         assert len(blind_submissions) == 1
 
@@ -191,7 +191,7 @@ class TestWorkshop():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions_2 = conference.get_submissions()
+        blind_submissions_2 = conference.get_submissions(sort='tmdate')
         assert blind_submissions_2
         assert len(blind_submissions_2) == 2
         assert blind_submissions[0].id == blind_submissions_2[1].id
@@ -216,7 +216,7 @@ class TestWorkshop():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions_3 = conference.get_submissions()
+        blind_submissions_3 = conference.get_submissions(sort='tmdate')
         assert blind_submissions_3
         assert len(blind_submissions_3) == 3
         assert blind_submissions[0].id == blind_submissions_3[2].id
