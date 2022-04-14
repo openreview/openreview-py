@@ -108,7 +108,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
     if 'submission_readers' in note.content:
         readers = readers_map[note.content.get('submission_readers')]
-        public = 'Everyone' in readers
+        public = 'Everyone (submissions are public)' in readers
     else:
         public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
         bidding_enabled = 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', '')
