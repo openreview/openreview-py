@@ -44,23 +44,21 @@ def process(client, note, invitation):
             conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))
 
             content = {
-                'release_submissions': {
-                    'description': 'Would you like to release submissions to the public?',
+                'submission_readers': {
+                    'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                     'value-radio': [
-                        'Release all submissions to the public',
-                        'Release only accepted submission to the public',
-                        'No, I don\'t want to release any submissions'],
-                    'required': True
-                },
-                'hide_rejected_submissions': {
-                    'description': 'Select if you would like to hide rejected submissions from the public',
-                    'value-radio': [
-                        'Yes, hide rejected submissions from the public',
-                        'No, keep rejected submissions public'
+                        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                        'Program chairs and paper authors only',
+                        'Everyone (submissions are public)',
+                        'Everyone for accepted submissions and only assigned program committee for rejected submissions'
                     ],
                     'required': True
-                },
-                'reveal_authors': {
+                }
+            }
+
+            if (forum_note.content.get('Author and Reviewer Anonymity', '') == "Double-blind"):
+                content['reveal_authors'] = {
                     'description': 'Would you like to release author identities of submissions to the public?',
                     'value-radio': [
                         'Reveal author identities of all submissions to the public',
@@ -68,7 +66,6 @@ def process(client, note, invitation):
                         'No, I don\'t want to reveal any author identities.'],
                     'required': True
                 }
-            }
 
             decision_options = forum_note.content.get('decision_options')
             if decision_options:
@@ -121,16 +118,19 @@ def process(client, note, invitation):
                 post_submission_inv.expdate = openreview.tools.datetime_millis(datetime.datetime.now())
                 client.post_invitation(post_submission_inv)
 
-            reveal_all_authors=reveal_authors_accepted=release_all_notes=release_notes_accepted=False
+            reveal_all_authors=reveal_authors_accepted=hide_rejected=False
             if 'reveal_authors' in forum_note.content:
-                reveal_all_authors=forum_note.content.get('reveal_authors', '') == 'Reveal author identities of all submissions to the public'
-                reveal_authors_accepted=forum_note.content.get('reveal_authors', '') == 'Reveal author identities of only accepted submissions to the public'
+                reveal_all_authors=forum_note.content.get('reveal_authors') == 'Reveal author identities of all submissions to the public'
+                reveal_authors_accepted=forum_note.content.get('reveal_authors') == 'Reveal author identities of only accepted submissions to the public'
             if 'release_submissions' in forum_note.content:
-                release_all_notes=forum_note.content.get('release_submissions', '') == 'Release all submissions to the public'
-                release_notes_accepted=forum_note.content.get('release_submissions', '') == 'Release only accepted submission to the public'
-            if 'hide_rejected_submissions' in forum_note.content:
-                hide_rejected=forum_note.content.get('hide_rejected_submissions', '') == 'Yes, hide rejected submissions from the public'
-            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,release_all_notes,release_notes_accepted, hide_rejected, decision_heading_map=forum_note.content.get('home_page_tab_names'))
+                hide_rejected=forum_note.content.get('release_submissions') == 'Release only accepted submission to the public'
+                if 'Release all submissions to the public' in forum_note.content['release_submissions']:
+                    conference.submission_stage.readers = [openreview.SubmissionStage.Readers.EVERYONE]
+
+            if 'submission_readers' in forum_note.content:
+                hide_rejected = forum_note.content['submission_readers'] == 'Everyone for accepted submissions and only assigned program committee for rejected submissions'
+
+            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,hide_rejected, decision_heading_map=forum_note.content.get('home_page_tab_names'))
 
         submission_content = conference.submission_stage.get_content()
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')

@@ -949,11 +949,11 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        review_stage_note = test_client.post_note(openreview.Note(
+        review_stage_note = openreview.Note(
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
-                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'remove_review_form_options': 'title',
@@ -966,7 +966,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Reviews cannot be released to the public since all papers are private'):
+            review_stage_note=test_client.post_note(review_stage_note)
+
+        review_stage_note.content['make_reviews_public'] = 'No, reviews should NOT be revealed publicly when they are posted'
+        review_stage_note=test_client.post_note(review_stage_note)
+
         assert review_stage_note
         helpers.await_queue()
 
@@ -1424,8 +1431,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reveal_authors': 'Reveal author identities of all submissions to the public',
-                'hide_rejected_submissions': 'No, keep rejected submissions public',
-                'release_submissions': 'Release all submissions to the public'
+                'submission_readers': 'Everyone (submissions are public)'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),

@@ -138,7 +138,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     create_review_invitation = create_groups and note.content.get('make_reviews_public', None)
 
     author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
-    papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '') or 'Yes, hide rejected submissions from the public' in note.content.get('hide_rejected_submissions', '')
+    papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '') or 'Everyone for accepted submissions and only assigned program committee for rejected submissions' in note.content.get('submission_readers', '')
 
     email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
 

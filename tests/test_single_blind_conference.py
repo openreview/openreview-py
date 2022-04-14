@@ -689,7 +689,7 @@ class TestSingleBlindConference():
         )
         note = client.post_note(note)
 
-        conference.post_decision_stage(release_notes_accepted=True)
+        conference.post_decision_stage_old(release_notes_accepted=True)
 
         submissions = conference.get_submissions()
         assert len(submissions) == 1

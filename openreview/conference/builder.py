@@ -1477,15 +1477,71 @@ Program Chairs
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False, hide_rejected=False, decision_heading_map=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, hide_rejected=False, decision_heading_map=None):
         submissions = self.get_submissions(details='original')
         decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
 
-        if (release_all_notes or release_notes_accepted or hide_rejected) and not self.submission_stage.double_blind:
-            submission_invitation = self.client.get_invitation(self.get_submission_id())
-            submission_invitation.reply['readers'] = { 'values-regex': '.*' }
-            self.client.post_invitation(submission_invitation)
-            # self.invitation_builder.set_submission_invitation(self)
+        def is_release_authors(is_note_accepted):
+            return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
+
+        for submission in tqdm(submissions):
+        # for submission in tqdm(submissions):
+            decision_note = decisions_by_forum.get(submission.forum, None)
+            note_accepted = decision_note and 'Accept' in decision_note.content['decision']
+            if hide_rejected:
+                submission.readers = self.submission_stage.get_readers(self, submission.number, decision_note)
+            else:
+                submission.readers = self.submission_stage.get_readers(self, submission.number)
+            #double-blind
+            if self.submission_stage.double_blind:
+                release_authors = is_release_authors(note_accepted)
+                submission.content = {
+                    '_bibtex': tools.get_bibtex(
+                        openreview.Note.from_json(submission.details['original']),
+                        venue_fullname=self.name,
+                        year=str(self.year),
+                        url_forum=submission.forum,
+                        accepted=note_accepted,
+                        anonymous=(not release_authors)
+                    )
+                }
+                if not release_authors:
+                    submission.content['authors'] = ['Anonymous']
+                    submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
+            #single-blind
+            else:
+                submission.content['_bibtex'] = tools.get_bibtex(
+                    submission,
+                    venue_fullname=self.name,
+                    year=str(self.year),
+                    url_forum=submission.forum,
+                    accepted=note_accepted,
+                    anonymouse=False
+                )
+            #add venue_id if note accepted
+            if note_accepted:
+                decision = decision_note.content['decision'].replace('Accept', '')
+                decision = re.sub(r'[()\W]+', '', decision)
+                venueid = self.id
+                venue = self.short_name
+                if decision:
+                    venue += ' ' + decision
+                submission.content['venueid'] = venueid
+                submission.content['venue'] = venue
+            self.client.post_note(submission)
+
+        if decision_heading_map:
+            self.set_homepage_decisions(decision_heading_map=decision_heading_map)
+        self.client.remove_members_from_group('active_venues', self.id)
+
+    #temporary name until I figure out what to do with this
+    def post_decision_stage_old(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False, decision_heading_map=None):
+        submissions = self.get_submissions(details='original')
+        decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
+
+        if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
+            self.submission_stage.public = True	
+            self.invitation_builder.set_submission_invitation(self)
 
         def is_release_note(is_note_accepted):
             return release_all_notes or (release_notes_accepted and is_note_accepted)
@@ -1493,11 +1549,7 @@ Program Chairs
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
-        def is_hide_note(is_note_rejected):
-            return hide_rejected and is_note_rejected
-
-        # for submission in tqdm(submissions):
-        for submission in submissions:
+        for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
             if is_release_note(note_accepted) or 'everyone' in submission.readers:
@@ -1533,14 +1585,6 @@ Program Chairs
                         venue += ' ' + decision
                     submission.content['venueid'] = venueid
                     submission.content['venue'] = venue
-                self.client.post_note(submission)
-            note_rejected = decision_note and 'Reject' in decision_note.content['decision']
-            if is_hide_note(note_rejected) and 'everyone' in submission.readers:
-                final_readers = self.submission_stage.get_hidden_readers(self, submission.number)
-                if self.submission_stage.double_blind:
-                    submission.content['authors']
-                    submission.content['authorids']
-                submission.readers = final_readers
                 self.client.post_note(submission)
 
         if decision_heading_map:
@@ -1605,10 +1649,19 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
 
-    def get_readers(self, conference, number):
+    def get_readers(self, conference, number, decision_note=None):
 
-        if self.public:
+        decision = decision_note.content['decision'] if decision_note else ''
+
+        if (self.public or 'Accept' in decision) and 'Reject' not in decision:
             return ['everyone']
+        
+        if 'Reject' in decision:
+            self.readers = [
+                self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,
+                self.Readers.AREA_CHAIRS_ASSIGNED,
+                self.Readers.REVIEWERS_ASSIGNED
+            ]
 
         submission_readers=[conference.get_id()]
 

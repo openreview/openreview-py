@@ -525,7 +525,7 @@ class TestWorkshop():
 
     def test_release_decisions(self, client, conference, selenium, request_page):
 
-        conference.post_decision_stage(reveal_authors_accepted=True, release_all_notes=True, decision_heading_map = {
+        conference.post_decision_stage_old(reveal_authors_accepted=True, release_all_notes=True, decision_heading_map = {
             'Accept (Oral)': 'Oral Presentations',
             'Accept (Poster)': 'Post Presentations',
             'Reject': 'All Presentations'
