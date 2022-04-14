@@ -256,7 +256,7 @@ class TestWorkshop():
 
     def test_open_reviews(self, client, conference, test_client, selenium, request_page, helpers):
 
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         # Reviewer
@@ -317,7 +317,7 @@ class TestWorkshop():
 
         conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, email_pcs = True, reader_selection=True, allow_public_comments = True, authors=True))
 
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
@@ -389,10 +389,10 @@ class TestWorkshop():
 
     def test_open_revise_reviews(self, client, conference, test_client, selenium, request_page, helpers):
 
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
-        reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
+        reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review', sort='tmdate')
         assert reviews
         review = reviews[0]
 
@@ -441,7 +441,7 @@ class TestWorkshop():
 
         conference.open_meta_reviews()
 
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Meta_Review',
@@ -467,7 +467,7 @@ class TestWorkshop():
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
-        notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         assert len(notes) == 3
         submission = notes[2]
 
@@ -609,7 +609,7 @@ class TestWorkshop():
         notes = conference.get_submissions(accepted=True, sort='number:asc')
         assert len(notes) == 1
 
-        withdrawn_notes = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Withdrawn_Submission')
+        withdrawn_notes = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Withdrawn_Submission', sort='tmdate')
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].readers == [
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',

@@ -80,7 +80,7 @@ class TestSingleBlindPrivateConference():
 
         conference.setup_post_submission_stage(force=True)
 
-        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
+        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')
         assert len(notes) == 5
         assert notes[0].readers == ['MICCAI.org/2021/Challenges', 'MICCAI.org/2021/Challenges/Area_Chairs', 'MICCAI.org/2021/Challenges/Paper5/Reviewers', 'MICCAI.org/2021/Challenges/Paper5/Authors']
 
@@ -95,7 +95,7 @@ class TestSingleBlindPrivateConference():
         assert 'MICCAI.org/2021/Challenges/Paper5/-/Withdraw' in invitation_ids
 
     def test_public_comments(self, conference, helpers, test_client, client):
-        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
+        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')
         assert len(notes) == 5
 
         conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True, allow_public_comments=True))
@@ -182,7 +182,7 @@ class TestSingleBlindPrivateConference():
         assert tabs.find_element_by_id('poster')
 
     def test_enable_public_comments(self, conference, helpers, test_client, client):
-        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
+        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')
         assert len(notes) == 5
 
         conference.submission_stage.papers_released=True
