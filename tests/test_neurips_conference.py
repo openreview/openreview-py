@@ -19,7 +19,7 @@ class TestNeurIPSConference():
     @pytest.fixture(scope="class")
     def conference(self, client):
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
         return conference
@@ -549,7 +549,7 @@ class TestNeurIPSConference():
     def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         result = conference.recruit_reviewers(invitees = ['reviewer2@mit.edu'], title = 'Ethics Review invitation', message = '{accept_url}, {decline_url}', reviewers_name = 'Ethics_Reviewers')
@@ -584,7 +584,7 @@ class TestNeurIPSConference():
     def test_submit_papers(self, test_client, client, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
@@ -2397,7 +2397,7 @@ Thank you,
 
     def test_add_impersonator(self, client, request_page, selenium):
         ## Need super user permission to add the venue to the active_venues group
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         conference.set_impersonators(group_ids=['pc@neurips.cc'])

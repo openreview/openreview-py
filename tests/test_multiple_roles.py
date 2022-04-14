@@ -19,7 +19,7 @@ class TestMultipleRoles():
     @pytest.fixture(scope="class")
     def conference(self, client):
         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
         return conference
@@ -153,7 +153,7 @@ class TestMultipleRoles():
 
         ## Need super user permission to add the venue to the active_venues group
         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
@@ -197,7 +197,7 @@ class TestMultipleRoles():
     def test_setup_matching(self, conference, client, helpers):
 
         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         ## Setup Matching for Program Committee
         matching_setup_note = client.post_note(openreview.Note(
