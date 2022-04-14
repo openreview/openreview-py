@@ -213,7 +213,7 @@ class VenueStages():
                 'order': 28
             },
             'participants': {
-                'description': 'Select who should be allowed to post comments on submissions.',
+                'description': 'Select who should be allowed to post and view comments on submissions.',
                 'values-checkbox' : [
                     'Program Chairs',
                     'Paper Area Chairs',
