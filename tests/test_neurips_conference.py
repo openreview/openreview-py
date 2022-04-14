@@ -611,7 +611,7 @@ class TestNeurIPSConference():
 
         conference.setup_first_deadline_stage(force=True)
 
-        blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission', sort='tmdate')
         assert len(blinded_notes) == 5
 
         assert blinded_notes[0].readers == ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper5/Authors']
@@ -2199,7 +2199,7 @@ Thank you,
 
         helpers.await_queue()
 
-        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review', sort='tmdate')
         assert len(reviews) == 1
         reviews[0].readers = [
             'NeurIPS.cc/2021/Conference/Program_Chairs',
@@ -2413,7 +2413,7 @@ Thank you,
 
     def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
-        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission', sort='tmdate')
         assert len(submissions) == 5
 
         withdrawn_note = test_client.post_note(openreview.Note(
@@ -2471,7 +2471,7 @@ Thank you,
 
     def test_desk_reject_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
-        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission', sort='tmdate')
         assert len(submissions) == 4
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')

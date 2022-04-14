@@ -509,7 +509,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_submission_edit(self, conference, client, helpers, test_client):
 
-        existing_notes = client.get_notes(invitation = conference.get_submission_id())
+        existing_notes = client.get_notes(invitation = conference.get_submission_id(), sort='tmdate')
         assert len(existing_notes) == 5
 
         helpers.await_queue()

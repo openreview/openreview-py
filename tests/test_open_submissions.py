@@ -111,7 +111,7 @@ class TestOpenSubmissions():
 
         reviewer_client=helpers.create_user('reviewer@aclweb.org', 'Reviewer', 'ACL')
 
-        submissions=reviewer_client.get_notes(invitation='aclweb.org/ACL/2020/Workshop/NLP-COVID/-/Submission')
+        submissions=reviewer_client.get_notes(invitation='aclweb.org/ACL/2020/Workshop/NLP-COVID/-/Submission', sort='tmdate')
         assert submissions
 
         note = openreview.Note(invitation = conference.get_invitation_id(name = 'Official_Review', number = 1),
