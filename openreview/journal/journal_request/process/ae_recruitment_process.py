@@ -30,7 +30,7 @@ def process(client, edit, invitation):
     if not inviter_email:
         inviter_email = inviter_profile.content.get('emails')[0]
 
-    status = journal.invite_reviewers(message, subject, [email], [name], replyTo=inviter_email)
+    status = journal.invite_reviewers(message, subject, [email], [name], replyTo=inviter_email, reinvite=True)
 
     non_invited_status = f'''No recruitment invitation was sent to the following user because they have already been invited as reviewer:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
