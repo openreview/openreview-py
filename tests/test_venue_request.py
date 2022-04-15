@@ -1193,10 +1193,18 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
         assert decision_invitation is None
 
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for sub in submissions:
+                writer.writerow([sub.id, 'Accept'])
+
         # Post a decision stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+        decision_stage_invitation = '{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), decision_stage_invitation, 'upload_decisions')
+
         decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
@@ -1214,6 +1222,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                         'required': False,
                     }
                 },
+                'upload_decisions': url
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import csv
 import time
 import datetime
 import re
@@ -1533,6 +1534,28 @@ Program Chairs
             self.set_homepage_decisions(decision_heading_map=decision_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
+    def post_decisions(self, decisions_file):
+        with open(decisions_file) as file_handle:
+            decisions = [row for row in csv.reader(file_handle)]
+        for paper_id, decision in decisions:
+            paper_note = self.client.get_notes(id=paper_id)[0]
+            self.client.post_note(openreview.Note(
+                invitation='{}/Paper{}/-/Decision'.format(self.id, paper_note.number),
+                writers=[self.get_program_chairs_id()],
+                readers=[self.get_program_chairs_id(), self.get_senior_area_chairs_id(), self.get_area_chairs_id()],
+                nonreaders=['{}/Paper{}/Authors'.format(self.id, paper_note.number)],
+                signatures=[self.get_program_chairs_id()],
+                content={
+                    'title': 'Paper Decision',
+                    'decision': decision,
+                    'comment': 'Good paper. I like!',
+                    'suggestions': 'Add more results for camera ready.'
+                },
+                forum=paper_note.forum,
+                replyto=paper_note.forum
+            ))
+
+
 class SubmissionStage(object):
 
     class Readers(Enum):
@@ -2060,7 +2083,7 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -2073,6 +2096,7 @@ class DecisionStage(object):
         self.release_to_area_chairs = release_to_area_chairs
         self.email_authors = email_authors
         self.additional_fields = additional_fields
+        self.decisions_file = decisions_file
 
     def get_readers(self, conference, number):
 
