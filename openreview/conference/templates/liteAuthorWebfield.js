@@ -46,7 +46,8 @@ function load() {
   return Webfield.get('/notes', {
     'content.authorids': user.profile.id,
     invitation: SUBMISSION_ID,
-    details: 'overwriting'
+    details: 'overwriting',
+    sort: 'number:asc'
   }).then(function(result) {
     // Get the blind submissions to have backward compatibility with the paper number
     var originalNotes = result.notes;
@@ -58,7 +59,7 @@ function load() {
     });
 
     if (blindNoteIds.length) {
-      return Webfield.get('/notes', { ids: blindNoteIds })
+      return Webfield.get('/notes', { ids: blindNoteIds, sort: 'number:asc' })
         .then(function(result) {
           return (result.notes || []).filter(function(note) {
             return note.invitation === BLIND_SUBMISSION_ID;
