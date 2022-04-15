@@ -38,7 +38,7 @@ def process(client, edit, invitation):
     print(decision.content)
     if decision.content['recommendation']['value'] == 'Reject':
         ## Post a reject edit
-        client.post_note_edit(invitation=journal.get_rejection_id(),
+        client.post_note_edit(invitation=journal.get_rejected_id(),
             signatures=[venue_id],
             note=openreview.api.Note(
                 id=submission.id,

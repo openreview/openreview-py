@@ -22,6 +22,9 @@ var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
 var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
+var CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
+var AVAILABILITY_NAME = 'Assignment_Availability';
+var REVIEWERS_AVAILABILITY_ID = REVIEWERS_ID + '/-/' + AVAILABILITY_NAME;
 
 var SUBMISSION_GROUP_NAME = 'Paper';
 var RECOMMENDATION_NAME = 'Recommendation';
@@ -39,7 +42,11 @@ var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID +
-  '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
+  '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + 
+    REVIEWERS_CONFLICT_ID + ';' + 
+    REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+    REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' +
+    REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&maxColumns=2&version=2&referrer=' + encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')');
 
 
@@ -115,11 +122,16 @@ var loadData = function() {
         }).then(function(invitations) {
           return _.keyBy(invitations, 'id');
         }),
+        Webfield2.api.getAll('/invitations', {
+          regex: ACTION_EDITOR_ID + '/-/(' + AVAILABILITY_NAME + '|' + CUSTOM_MAX_PAPERS_NAME + ')',
+          type: 'edges',
+          details: 'repliedEdges'
+        })
       );
     });
 };
 
-var formatData = function(reviewersByNumber, invitations, submissions, invitationsById) {
+var formatData = function(reviewersByNumber, invitations, submissions, invitationsById, customQuotaInvitations) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
 
   // build the rows
@@ -332,8 +344,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
             '&edit=' + REVIEWERS_ASSIGNMENT_ID +
-            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore&' +
-            'maxColumns=2&version=2'
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+            '&maxColumns=2&version=2'
           }
         ] : []
       },
@@ -350,12 +362,18 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
 
   return venueStatusData = {
     invitations: invitations,
-    rows: rows
+    rows: rows,
+    customQuotaInvitations: customQuotaInvitations
   };
 };
 
 // Render functions
 var renderData = function(venueStatusData) {
+
+  venueStatusData.customQuotaInvitations.forEach(function(invitation) {
+    Webfield2.ui.renderEdgeWidget('#invitation', invitation, { fieldName: invitation.edge.label ? 'label': 'weight' });  
+  });
+
   // Assigned Papers Tab
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
     headings: ['<input type="checkbox" class="select-all-papers">', '#', 'Paper Summary', 'Review Progress', 'Decision Status', 'Tasks', 'Status'],
