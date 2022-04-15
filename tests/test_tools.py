@@ -150,7 +150,46 @@ class TestTools():
         assert venues, "Venues could not be retrieved"
 
     def test_iterget_notes(self, client):
-        notes_iterator = openreview.tools.iterget_notes(client)
+        iter_group = client.post_group(
+            openreview.Group(
+                id = 'IterGroup',
+                members = [],
+                signatures = ['~Super_User1'],
+                signatories = ['IterGroup'],
+                readers = ['everyone'],
+                writers =['IterGroup']
+            ))
+        assert iter_group
+
+        invitation = openreview.Invitation(
+            id = 'IterGroup/-/Submission',
+            readers = ['everyone'],
+            writers = ['~Super_User1'],
+            signatures = ['~Super_User1'],
+            invitees = ['everyone'],
+            reply = {
+                'readers': { 'values': ['everyone'] },
+                'writers': { 'values': ['~Super_User1'] },
+                'signatures': {'values-regex': '~.*'},
+                'content': {
+                    'title': { 'value-regex': '.*' }
+                }
+            }
+        )
+        client.post_invitation(invitation)
+
+        note = openreview.Note(
+            invitation = 'IterGroup/-/Submission',
+            readers = ['everyone'],
+            writers = ['~Super_User1'],
+            signatures = ['~Super_User1'],
+            content = {
+                'title': 'Test Note'
+            }
+        )
+        note = client.post_note(note)
+
+        notes_iterator = openreview.tools.iterget_notes(client, invitation='IterGroup/-/Submission')
         assert notes_iterator
 
     def test_get_all_refs(self, client):
