@@ -820,7 +820,7 @@ class TestDoubleBlindConference():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions = conference.get_submissions()
+        blind_submissions = conference.get_submissions(sort='tmdate')
         assert blind_submissions
         assert len(blind_submissions) == 1
         assert blind_submissions[0].content['authors'] == ['Anonymous']
@@ -852,7 +852,7 @@ class TestDoubleBlindConference():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions_2 = conference.get_submissions()
+        blind_submissions_2 = conference.get_submissions(sort='tmdate')
         assert blind_submissions_2
         assert len(blind_submissions_2) == 2
         assert blind_submissions_2[0].readers == ['everyone']
@@ -880,7 +880,7 @@ class TestDoubleBlindConference():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions_3 = conference.get_submissions()
+        blind_submissions_3 = conference.get_submissions(sort='tmdate')
         assert blind_submissions_3
         assert len(blind_submissions_3) == 3
         assert blind_submissions[0].id == blind_submissions_3[2].id
@@ -1161,7 +1161,7 @@ class TestDoubleBlindConference():
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         reviews = test_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')
@@ -1231,7 +1231,7 @@ class TestDoubleBlindConference():
         builder.use_legacy_anonids(True)
         builder.get_result()
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
@@ -1278,7 +1278,7 @@ class TestDoubleBlindConference():
         })
         conference = builder.get_result()
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         conference.set_assignment('meta_additional@mail.com', submission.number, is_area_chair = True)
@@ -1321,7 +1321,7 @@ class TestDoubleBlindConference():
         }, remove_fields = ['confidence'])
         conference = builder.get_result()
 
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
@@ -1374,7 +1374,7 @@ class TestDoubleBlindConference():
         assert accepted_author_group
         assert accepted_author_group.members == []
 
-        notes = pc_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
+        notes = pc_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
         print(submission.readers)
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Decision',
@@ -1568,7 +1568,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 3
 
@@ -1615,7 +1615,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.setup_post_submission_stage(force=True)
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 3
 
@@ -1637,7 +1637,7 @@ class TestDoubleBlindConference():
 
         helpers.await_queue()
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 2
 
@@ -1702,7 +1702,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.setup_post_submission_stage(force=True)
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 2
 
@@ -1726,7 +1726,7 @@ class TestDoubleBlindConference():
 
         helpers.await_queue()
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
 
@@ -1807,7 +1807,7 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         conference = builder.get_result()
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]
@@ -1953,7 +1953,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
 
         conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(only_accepted=True))
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]
@@ -1984,7 +1984,7 @@ class TestDoubleBlindConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]
@@ -2043,7 +2043,7 @@ url={'''
         assert tabs.find_element_by_id('accepted-oral-papers')
         assert tabs.find_element_by_id('reject')
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]
@@ -2102,7 +2102,7 @@ url={'''
         assert tabs.find_element_by_id('accepted-oral-papers')
         assert tabs.find_element_by_id('reject')
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]
@@ -2167,7 +2167,7 @@ url={'''
 
         conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]
@@ -2198,7 +2198,7 @@ url={'''
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]

@@ -178,7 +178,8 @@ var getBlindedNotes = function(noteNumbers) {
     invitation: BLIND_SUBMISSION_ID,
     number: noteNumbers.join(','),
     select: 'id,number,forum,content.title,content.authors,content.authorDomains,content.pdf',
-    details: 'invitation'
+    details: 'invitation',
+    sort: 'number:asc'
   }).then(function(result) {
     return result.notes || [];
   });
