@@ -1653,7 +1653,7 @@ class SubmissionStage(object):
 
         decision = decision_note.content['decision'] if decision_note else ''
 
-        if (self.public or 'Accept' in decision):
+        if (self.public or 'Accept' in decision) and 'Reject' not in decision:
             return ['everyone']
         
         if 'Reject' in decision:
