@@ -169,8 +169,27 @@ class TestSubmissionReaders():
 
     def test_hide_rejected(self, client, venue, helpers):
 
-        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.set_decision_stage(openreview.DecisionStage(public=True))
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        decision_stage_note=client.post_note(openreview.Note(
+            content= {
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_decisions_public': 'Yes, decisions should be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+            },
+            forum= venue['request_form_note'].id,
+            invitation= 'openreview.net/Support/-/Request{}/Decision_Stage'.format(venue['request_form_note'].number),
+            readers= [venue['venue_id'] + '/Program_Chairs', venue['support_group_id']],
+            referent= venue['request_form_note'].id,
+            replyto= venue['request_form_note'].id,
+            signatures= ['~Super_User1'],
+            writers= [],
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 2
@@ -207,8 +226,27 @@ class TestSubmissionReaders():
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
 
-        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        conference.post_decision_stage(hide_rejected=True)
+        invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
+
+        #hide rejected papers
+        post_decision_note=client.post_note(openreview.Note(
+            content= {
+                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'submission_readers': 'Everyone for accepted submissions and only assigned program committee for rejected submissions'
+            },
+            forum= venue['request_form_note'].id,
+            invitation= 'openreview.net/Support/-/Request{}/Post_Decision_Stage'.format(venue['request_form_note'].number),
+            readers= [venue['venue_id'] + '/Program_Chairs', venue['support_group_id']],
+            referent= venue['request_form_note'].id,
+            replyto= venue['request_form_note'].id,
+            signatures= ['~Super_User1'],
+            writers= [],
+        ))
+        assert post_decision_note
+        helpers.await_queue()
+        # conference.post_decision_stage(hide_rejected=True)
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 2
@@ -216,4 +254,6 @@ class TestSubmissionReaders():
         venue_id = venue['venue_id']
 
         assert blind_submissions[0].readers == [f'{venue_id}', f'{venue_id}/Paper1/Area_Chairs', f'{venue_id}/Paper1/Reviewers', f'{venue_id}/Paper1/Authors']
+        assert blind_submissions[0].content['authors'] == ['Anonymous']
         assert blind_submissions[1].readers == ['everyone']
+        assert blind_submissions[1].content['authors'] == ['Workshop Author', 'Workshop Author']

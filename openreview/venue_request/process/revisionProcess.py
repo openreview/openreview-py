@@ -80,7 +80,7 @@ def process(client, note, invitation):
             }
 
             decision_due_date = forum_note.content.get('decision_deadline').strip()
-            cdate = datetime.datetime.now()
+            cdate = datetime.datetime.utcnow()
             if decision_due_date:
                 try:
                     decision_due_date = datetime.datetime.strptime(decision_due_date, '%Y/%m/%d %H:%M')
