@@ -1196,7 +1196,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
             for sub in submissions:
-                writer.writerow([sub.id, 'Accept'])
+                writer.writerow([sub.id, 'Reject', 'Not Good'])
 
         # Post a decision stage note
         now = datetime.datetime.utcnow()
@@ -1222,7 +1222,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                         'required': False,
                     }
                 },
-                'upload_decisions': url
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1243,25 +1242,67 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
         assert decision_invitation
 
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'value-regex': '[\\S\\s]{1,5000}',
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'required': False,
+                    }
+                },
+                'upload_decisions': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        assert decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        for sub in submissions:
+            sub_decision_note = test_client.get_notes(
+                invitation='{venue_id}/Paper{number}/-/Decision'.format(
+                    venue_id=venue['venue_id'], number=sub.number
+                )
+            )[0]
+            assert sub_decision_note
+
         # Post a decision note using pc test_client
         program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
         area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
         senior_area_chairs = '{}/Paper{}/Senior_Area_Chairs'.format(venue['venue_id'], submission.number)
-        decision_note = test_client.post_note(openreview.Note(
-            invitation='{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number),
-            writers=[program_chairs],
-            readers=[program_chairs, senior_area_chairs, area_chairs],
-            nonreaders=['{}/Paper{}/Authors'.format(venue['venue_id'], submission.number)],
-            signatures=[program_chairs],
-            content={
-                'title': 'Paper Decision',
-                'decision': 'Accept',
-                'comment':  'Good paper. I like!',
-                'suggestions': 'Add more results for camera ready.'
-            },
-            forum=submission.forum,
-            replyto=submission.forum
-        ))
+        decision_note = test_client.get_notes(
+            invitation='{venue_id}/Paper{number}/-/Decision'.format(
+                venue_id=venue['venue_id'], number=submission.number
+            )
+        )[0]
+
+        decision_note.content = {
+            'title': 'Paper Decision',
+            'decision': 'Accept',
+            'comment':  'Good paper. I like!',
+            'suggestions': 'Add more results for camera ready.'
+        }
+        decision_note = test_client.post_note(decision_note)
 
         assert decision_note
         assert 'suggestions' in decision_note.content

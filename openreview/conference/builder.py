@@ -6,6 +6,8 @@ import datetime
 import re
 import traceback
 from enum import Enum
+from io import StringIO
+
 from tqdm import tqdm
 import os
 import concurrent.futures
@@ -1535,25 +1537,32 @@ Program Chairs
         self.client.remove_members_from_group('active_venues', self.id)
 
     def post_decisions(self, decisions_file):
-        with open(decisions_file) as file_handle:
-            decisions = [row for row in csv.reader(file_handle)]
-        for paper_id, decision in decisions:
+        decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
+
+        def post_decision(paper_decision):
+            try:
+                paper_id, decision, comment = paper_decision
+            except IndexError:
+                paper_id, decision = paper_decision
+                comment = ''
+
             paper_note = self.client.get_notes(id=paper_id)[0]
             self.client.post_note(openreview.Note(
                 invitation='{}/Paper{}/-/Decision'.format(self.id, paper_note.number),
                 writers=[self.get_program_chairs_id()],
-                readers=[self.get_program_chairs_id(), self.get_senior_area_chairs_id(), self.get_area_chairs_id()],
-                nonreaders=['{}/Paper{}/Authors'.format(self.id, paper_note.number)],
+                readers=self.decision_stage.get_readers(conference=self, number=paper_note.number),
+                nonreaders=self.decision_stage.get_nonreaders(conference=self, number=paper_note.number),
                 signatures=[self.get_program_chairs_id()],
                 content={
                     'title': 'Paper Decision',
                     'decision': decision,
-                    'comment': 'Good paper. I like!',
-                    'suggestions': 'Add more results for camera ready.'
+                    'comment': comment,
                 },
                 forum=paper_note.forum,
                 replyto=paper_note.forum
             ))
+
+        tools.concurrent_requests(post_decision, decisions_data)
 
 
 class SubmissionStage(object):

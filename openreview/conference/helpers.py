@@ -340,6 +340,8 @@ def get_decision_stage(client, request_forum):
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
 
+    decisions_file = request_forum.content.get('upload_decisions')
+
     return openreview.DecisionStage(
         options = decision_options,
         start_date = decision_start_date,
@@ -349,7 +351,8 @@ def get_decision_stage(client, request_forum):
         release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
         release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
         email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'),
-        additional_fields=decision_form_additional_options
+        additional_fields=decision_form_additional_options,
+        decisions_file=decisions_file
     )
 
 def get_submission_revision_stage(client, request_forum):
