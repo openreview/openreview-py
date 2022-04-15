@@ -509,7 +509,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
     def test_submission_edit(self, conference, client, helpers, test_client):
 
-        existing_notes = client.get_notes(invitation = conference.get_submission_id())
+        existing_notes = client.get_notes(invitation = conference.get_submission_id(), sort='tmdate')
         assert len(existing_notes) == 5
 
         helpers.await_queue()
@@ -559,7 +559,7 @@ Please contact info@openreview.net with any questions or concerns about this int
 
         conference.setup_post_submission_stage(force=True, hide_fields=['pdf', 'supplementary_material'])
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
         assert len(submissions) == 5
         note = submissions[0]
@@ -671,7 +671,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1'])
         conference.set_area_chairs(['~AreaChair_ECCV_One1', '~AreaChair_ECCV_Two1'])
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -960,7 +960,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         conference.setup_post_submission_stage(force=True)
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
         assert len(blinded_notes) == 5
 
         desk_reject_note = openreview.Note(
@@ -990,7 +990,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert logs
         assert logs[0]['status'] == 'ok'
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
         assert len(blinded_notes) == 4
 
         desk_rejected_notes = client.get_notes(invitation = conference.submission_stage.get_desk_rejected_submission_id(conference))
@@ -1025,7 +1025,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         conference.setup_post_submission_stage(force=True, hide_fields=['_bibtex'])
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
         assert len(blinded_notes) == 4
 
         withdrawal_note = openreview.Note(
@@ -1055,7 +1055,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert logs
         assert logs[0]['status'] == 'ok'
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
         assert len(blinded_notes) == 3
 
         withdrawn_notes = client.get_notes(invitation = conference.submission_stage.get_withdrawn_submission_id(conference))
@@ -1158,7 +1158,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
 
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
         assert len(blinded_notes) == 3
 
         signatory = r1_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer1@fb.com')[0].id
@@ -1282,7 +1282,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
 
         signatory = r2_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Reviewer_.*', signatory='reviewer2@google.com')[0].id
 
@@ -1424,7 +1424,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert options
         assert len(options) == 3
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
 
         signatory = ac_client.get_groups(regex='thecvf.com/ECCV/2020/Conference/Paper1/Area_Chair_.*', signatory='ac1@eccv.org')[0].id
 
@@ -1480,7 +1480,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_rebuttal_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
 
         now = datetime.datetime.utcnow()
 
@@ -1537,7 +1537,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_revise_review_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
 
         now = datetime.datetime.utcnow()
 
@@ -1637,7 +1637,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
 
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , ac_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
         notes = selenium.find_elements_by_class_name('note_with_children')

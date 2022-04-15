@@ -250,7 +250,7 @@ class TestVenueRequest():
 
         comment_invitation = '{}/-/Request{}/Comment'.format(venue.support_group_id,
                                                              request_form_note.number)
-        last_comment = client.get_notes(invitation=comment_invitation)[-1]
+        last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[-1]
         assert 'TEST.cc/2021/Conference/Program_Chairs' in last_comment.readers
 
     def test_venue_revision_error(self, client, test_client, selenium, request_page, venue, helpers):
@@ -314,7 +314,7 @@ class TestVenueRequest():
 
         comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=comment_invitation)[0]
+        last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[0]
         error = last_comment.content['error']
         assert 'InvalidFieldError' in error
         assert 'The field value-regexx is not allowed' in error
@@ -434,7 +434,7 @@ class TestVenueRequest():
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         error_string = '{\n ' \
                        ' "KeyError(\'program\')": [\n' \
                        '    "reviewer_candidate1@email.com",\n' \
@@ -494,7 +494,7 @@ class TestVenueRequest():
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
@@ -550,7 +550,7 @@ class TestVenueRequest():
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
 
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
@@ -598,7 +598,7 @@ class TestVenueRequest():
 
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=remind_recruitment_status_invitation)[0]
+        last_comment = client.get_notes(invitation=remind_recruitment_status_invitation, sort='tmdate')[0]
         assert '4 users' in last_comment.content['reminded']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
@@ -631,7 +631,7 @@ class TestVenueRequest():
 
         comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=comment_invitation)[0]
+        last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[0]
         error_string = '\n```python\nValueError(\'day is out of range for month\')'
         assert error_string in last_comment.content['error']
 
@@ -762,13 +762,13 @@ class TestVenueRequest():
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.' in matching_status.content['error']
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 2
 
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
@@ -793,7 +793,7 @@ class TestVenueRequest():
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers.' in matching_status.content['error']
 
@@ -820,7 +820,7 @@ class TestVenueRequest():
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'There was an error connecting with the expertise API' in matching_status.content['error']
 
@@ -888,7 +888,7 @@ class TestVenueRequest():
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert matching_status.content['without_profile'] == ['some_user@mail.com']
         assert '''
@@ -927,7 +927,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert matching_status.content['comment'] == '''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the 'Reviewers Paper Assignment' link in the PC console: https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs
 
@@ -1026,7 +1026,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 2
 
         # Assert that ACs do not see the Submit button for meta reviews at this point
@@ -1112,7 +1112,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 2
 
         # Assert that official comment invitation is not available already
@@ -1185,7 +1185,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
 
-        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert submissions and len(submissions) == 2
         submission = submissions[0]
 
@@ -1348,7 +1348,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         conference.setup_post_submission_stage(force=True)
 
         blind_submissions = author_client.get_notes(
-            invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+            invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 1
 
         # Post a revision stage note
@@ -1426,7 +1426,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         #assert messages[0]['content']['to'] == 'venue_author3@mail.com'
 
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 3
 
         # Assert that submissions are still blind
@@ -1573,7 +1573,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_public_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 3
 
         # Post an official comment stage note

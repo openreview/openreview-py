@@ -219,7 +219,8 @@ var loadData = function(paperNums) {
       invitation: BLIND_SUBMISSION_ID,
       number: noteNumbersStr,
       select: 'id,number,forum,content,details,invitation',
-      details: 'invitation,replyCount,directReplies'
+      details: 'invitation,replyCount,directReplies',
+      sort: 'number:asc'
     }).then(function(notes) {
       return _.sortBy(notes, 'number');
     });
