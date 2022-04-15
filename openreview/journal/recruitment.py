@@ -73,7 +73,8 @@ class Recruitment(object):
             memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if tools.get_group(self.client, invitee) else []
             if reviewers_id in memberships:
                 recruitment_status['already_member'].append(invitee)
-            elif reviewers_invited_id in memberships:
+            #check if member already invited only if invitation did not come from AE
+            elif not replyTo and reviewers_invited_id in memberships:
                 recruitment_status['already_invited'].append(invitee)
             else:
                 profile=openreview.tools.get_profile(self.client, invitee)
