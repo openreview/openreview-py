@@ -46,7 +46,8 @@ function main() {
 function load() {
   var query = {
     invitation: SUBMISSION_ID,
-    details: 'invitation,overwriting,directReplies'
+    details: 'invitation,overwriting,directReplies',
+    sort: 'number:asc'
   }
   query[AUTHOR_SUBMISSION_FIELD] = user.profile.id;
   var notesP = Webfield.get('/notes', query).then(function(result) {
@@ -62,7 +63,8 @@ function load() {
     if (blindNoteIds.length) {
       return Webfield.get('/notes', {
         ids: blindNoteIds,
-        details: 'directReplies'
+        details: 'directReplies',
+        sort: 'number:asc'
       })
       .then(function(result) {
         return (result.notes || []).filter(function(note) {
