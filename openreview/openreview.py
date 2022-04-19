@@ -62,6 +62,7 @@ class Client(object):
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
+        self.infer_notes_url = self.baseurl + '/notes/infer'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.limit = 1000
@@ -1366,6 +1367,21 @@ class Client(object):
         response = self.__handle_response(response)
 
         return Note.from_json(response.json())
+
+    def infer_note(self, note_id):
+        """
+        Posts the note. If the note is unsigned, signs it using the client's default signature.
+
+        :param note: Note to be posted
+        :type note: Note
+
+        :return: The posted Note
+        :rtype: Note
+        """
+        response = requests.post(self.infer_notes_url, json={ 'id': note_id }, headers=self.headers)
+        response = self.__handle_response(response)
+
+        return Note.from_json(response.json())        
 
     def post_tag(self, tag):
         """
