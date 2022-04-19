@@ -39,10 +39,10 @@ class InvitationBuilder(object):
         self.set_submission_invitation()
         self.set_review_approval_invitation()
         self.set_under_review_invitation()
-        self.set_desk_rejection_invitation()
-        self.set_rejection_invitation()
+        self.set_desk_rejected_invitation()
+        self.set_rejected_invitation()
         self.set_withdrawn_invitation()
-        self.set_acceptance_invitation()
+        self.set_accepted_invitation()
         self.set_retracted_invitation()
         self.set_authors_release_invitation()
         self.set_ae_assignment(assignment_delay)
@@ -53,6 +53,7 @@ class InvitationBuilder(object):
         self.set_solicit_review_invitation()
         self.set_solicit_review_approval_invitation()
         self.set_withdrawal_invitation()
+        self.set_desk_rejection_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
 
@@ -599,7 +600,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'const': [ venue_id, action_editors_value, reviewers_value, authors_value]
                             }
                         },
-                        'previous_submission_url': {
+                        f'previous_{short_name}_submission_url': {
                             'value': {
                                 'type': "string",
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
@@ -686,6 +687,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -730,6 +733,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -833,6 +838,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, authors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -874,10 +881,12 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(
             id=self.journal.get_ae_custom_max_papers_id(),
-            invitees=[venue_id, editor_in_chief_id],
-            readers=[venue_id, editor_in_chief_id],
+            invitees=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -893,7 +902,8 @@ If you have questions after reviewing the points below that are not answered on 
                     'const': [venue_id, '${tail}']
                 },
                 'signatures': {
-                    'const': [venue_id]
+                    'type': 'group[]',
+                    'regex': f'{editor_in_chief_id}|~.*'
                 },
                 'head': {
                     'type': 'group',
@@ -915,6 +925,51 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
+        invitation = Invitation(
+            id=self.journal.get_ae_availability_id(),
+            invitees=[venue_id, action_editors_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'ddate': {
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'const': [venue_id, '${tail}']
+                },
+                'writers': {
+                    'const': [venue_id, '${tail}']
+                },
+                'signatures': {
+                    'type': 'group[]',
+                    'regex': f'{editor_in_chief_id}|~.*'
+                },
+                'head': {
+                    'type': 'group',
+                    'const': action_editors_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'inGroup': action_editors_id
+                },
+                'label': {
+                    'type': 'string',
+                    'enum': ['Available', 'Unavailable'],
+                    'presentation': {
+                        'default': 'Available'
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)         
+
     def set_reviewer_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
         author_submission_id = self.journal.get_author_submission_id()
@@ -931,6 +986,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[editor_in_chief_id], ## to compute conflicts
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -977,6 +1034,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -1081,10 +1140,12 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(
             id=self.journal.get_reviewer_custom_max_papers_id(),
-            invitees=[venue_id],
-            readers=[venue_id, action_editors_id],
+            invitees=[venue_id, reviewers_id],
+            readers=[venue_id, action_editors_id, reviewers_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -1094,13 +1155,14 @@ If you have questions after reviewing the points below that are not answered on 
                     'nullable': True
                 },
                 'readers': {
-                    'const': [venue_id, '${tail}']
+                    'const': [venue_id, action_editors_id, '${tail}']
                 },
                 'writers': {
-                    'const': [venue_id]
+                    'const': [venue_id, '${tail}']
                 },
                 'signatures': {
-                    'const': [editor_in_chief_id]
+                    'type': 'group[]',
+                    'regex': f'{editor_in_chief_id}|~.*'
                 },
                 'head': {
                     'type': 'group',
@@ -1127,6 +1189,8 @@ If you have questions after reviewing the points below that are not answered on 
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
             type='Edge',
             edit={
                 'ddate': {
@@ -1158,6 +1222,51 @@ If you have questions after reviewing the points below that are not answered on 
             }
         )
         self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_reviewer_availability_id(),
+            invitees=[venue_id, reviewers_id],
+            readers=[venue_id, action_editors_id, reviewers_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'ddate': {
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'nullable': True
+                },
+                'readers': {
+                    'const': [venue_id, action_editors_id, '${tail}']
+                },
+                'writers': {
+                    'const': [venue_id, '${tail}']
+                },
+                'signatures': {
+                    'type': 'group[]',
+                    'regex': f'{editor_in_chief_id}|~.*'
+                },
+                'head': {
+                    'type': 'group',
+                    'const': reviewers_id
+                },
+                'tail': {
+                    'type': 'profile',
+                    'inGroup': reviewers_id
+                },
+                'label': {
+                    'type': 'string',
+                    'enum': ['Available', 'Unavailable'],
+                    'presentation': {
+                        'default': 'Available'
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)        
 
     def set_review_approval_invitation(self):
         venue_id = self.journal.venue_id
@@ -1191,7 +1300,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'noninvitees': { 'const': [editors_in_chief_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [editors_in_chief_id] },
+                    'signatures': { 'const': [venue_id] },
                     'maxReplies': { 'const': 1},
                     'duedate': { 'const': '${params.duedate}' },
                     'process': { 'const': paper_process },
@@ -1249,6 +1358,7 @@ If you have questions after reviewing the points below that are not answered on 
 
     def set_withdrawal_invitation(self):
         venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
         paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
         paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
         paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
@@ -1281,7 +1391,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'process': { 'const': paper_process },
                     'edit': {
                         'signatures': { 'const': { 'regex': paper_authors_id, 'type': 'group[]'  }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
+                        'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
                         'writers': { 'const': { 'const': [ venue_id, paper_authors_id] }},
                         'note': {
                             'forum': { 'const': { 'const': '${params.noteId}' }},
@@ -1332,6 +1442,80 @@ If you have questions after reviewing the points below that are not answered on 
             signatures=[self.journal.venue_id]
         )
 
+    def set_desk_rejection_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
+
+        desk_rejection_invitation_id = self.journal.get_desk_rejection_id()
+        paper_desk_rejection_invitation_id = self.journal.get_desk_rejection_id(number='${params.noteNumber}')
+
+        paper_process = self.get_process_content('process/desk_rejection_submission_process.py')
+
+        invitation = Invitation(id=desk_rejection_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
+                'params': {
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
+                    'noteId': { 'regex': '.*', 'type': 'string'  }
+                },
+                'invitation': {
+                    'id': { 'const': paper_desk_rejection_invitation_id },
+                    'invitees': { 'const': [venue_id] },
+                    'readers': { 'const': ['everyone'] },
+                    'writers': { 'const': [venue_id] },
+                    'signatures': { 'const': [venue_id] },
+                    'maxReplies': { 'const': 1 },
+                    'process': { 'const': paper_process },
+                    'edit': {
+                        'signatures': { 'const': { 'const': [editors_in_chief_id]  }},
+                        'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
+                        'writers': { 'const': { 'const': [ venue_id] }},
+                        'note': {
+                            'forum': { 'const': { 'const': '${params.noteId}' }},
+                            'replyto': { 'const': { 'const': '${params.noteId}' }},
+                            'signatures': { 'const': { 'const': [editors_in_chief_id] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
+                            'writers': { 'const': { 'const': [ venue_id ] }},
+                            'content': {
+                                'desk_reject_comments': { 'const': {
+                                    'order': 2,
+                                    'description': 'Brief summary of reasons for marking this submission as desk rejected. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'type': 'string',
+                                        'regex': '^[\\S\\s]{1,200000}$',
+                                        'optional': True
+                                    },
+                                    'presentation': {
+                                        'markdown': True
+                                    }
+                                }}
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
+
+    def set_note_desk_rejection_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
+
     def set_retraction_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief = self.journal.get_editors_in_chief_id()
@@ -1362,7 +1546,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'invitees': { 'const': [venue_id, paper_authors_id] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [editors_in_chief] },
+                    'signatures': { 'const': [venue_id] },
                     'maxReplies': { 'const': 1 },
                     'process': { 'const': paper_process },
                     'edit': {
@@ -1510,7 +1694,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         invitation = Invitation(id=under_review_invitation_id,
             invitees=[venue_id],
-            #noninvitees=[self.journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[self.journal.get_editors_in_chief_id()],
@@ -1563,16 +1747,16 @@ If you have questions after reviewing the points below that are not answered on 
 
         self.save_invitation(invitation)
 
-    def set_desk_rejection_invitation(self):
+    def set_desk_rejected_invitation(self):
         venue_id = self.journal.venue_id
         paper_action_editors_id = self.journal.get_action_editors_id(number='${note.number}')
         paper_authors_id = self.journal.get_authors_id(number='${note.number}')
 
-        desk_rejection_invitation_id = self.journal.get_desk_rejection_id()
+        desk_rejected_invitation_id = self.journal.get_desk_rejected_id()
 
-        invitation = Invitation(id=desk_rejection_invitation_id,
+        invitation = Invitation(id=desk_rejected_invitation_id,
             invitees=[venue_id],
-            #noninvitees=[self.journal.get_editors_in_chief_id()],
+            noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
@@ -1608,8 +1792,7 @@ If you have questions after reviewing the points below that are not answered on 
                         }
                     }
                 }
-            },
-            process=self.get_process_content('process/desk_reject_submission_process.py')
+            }
         )
 
         self.save_invitation(invitation)
@@ -1700,12 +1883,12 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
-    def set_rejection_invitation(self):
+    def set_rejected_invitation(self):
 
         venue_id = self.journal.venue_id
 
         ## Reject invitation
-        reject_invitation_id = self.journal.get_rejection_id()
+        reject_invitation_id = self.journal.get_rejected_id()
 
         invitation = Invitation(id=reject_invitation_id,
             invitees=[venue_id],
@@ -1747,11 +1930,11 @@ If you have questions after reviewing the points below that are not answered on 
 
         self.save_invitation(invitation)
 
-    def set_acceptance_invitation(self):
+    def set_accepted_invitation(self):
         venue_id = self.journal.venue_id
 
-        acceptance_invitation_id = self.journal.get_acceptance_id()
-        invitation = Invitation(id=acceptance_invitation_id,
+        accepted_invitation_id = self.journal.get_accepted_id()
+        invitation = Invitation(id=accepted_invitation_id,
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
             readers=['everyone'],
@@ -1830,7 +2013,7 @@ If you have questions after reviewing the points below that are not answered on 
                     }
                 }
             },
-            process=self.get_process_content('process/acceptance_submission_process.py')
+            process=self.get_process_content('process/accepted_submission_process.py')
         )
 
         self.save_invitation(invitation)
@@ -2063,7 +2246,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'invitation': {
                     'id': { 'const': paper_review_invitation_id },
-                    'signatures': { 'const': [ editors_in_chief_id ] },
+                    'signatures': { 'const': [ venue_id ] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
                     'invitees': { 'const': [venue_id, paper_reviewers_id] },
@@ -2197,7 +2380,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'invitation': {
                     'id': { 'const': paper_recommendation_invitation_id },
-                    'signatures': { 'const': [ editors_in_chief_id ] },
+                    'signatures': { 'const': [ venue_id ] },
                     'readers': { 'const': ['everyone'] },
                     'writers': { 'const': [venue_id] },
                     'invitees': { 'const': [venue_id, paper_reviewers_id] },
@@ -2431,7 +2614,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'invitees': { 'const': [venue_id, paper_action_editors_id]},
                     'readers': { 'const': [venue_id, paper_action_editors_id]},
                     'writers': { 'const': [venue_id]},
-                    'signatures': { 'const': [editors_in_chief_id]},
+                    'signatures': { 'const': [editors_in_chief_id]}, ## to compute conflicts
                     'duedate': { 'const': '${params.duedate}'},
                     'maxReplies': { 'const': 1},
                     'process': { 'const': paper_process },
@@ -2559,7 +2742,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                             }
                         },
-                        'previous_submission_url': {
+                        f'previous_{short_name}_submission_url': {
                             'value': {
                                 'type': 'string',
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
@@ -3056,7 +3239,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                             }
                         },
-                        'previous_submission_url': {
+                        f'previous_{short_name}_submission_url': {
                             'value': {
                                 'type': 'string',
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',

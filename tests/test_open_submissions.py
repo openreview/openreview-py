@@ -94,7 +94,7 @@ class TestOpenSubmissions():
 
         ## call post submission stage and keep the submissions public
         conference.setup_post_submission_stage(force=True)
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
         assert submissions
         assert submissions[0].readers == ['everyone']
         assert submissions[0].tcdate == submissions[0].tmdate
@@ -111,7 +111,7 @@ class TestOpenSubmissions():
 
         reviewer_client=helpers.create_user('reviewer@aclweb.org', 'Reviewer', 'ACL')
 
-        submissions=reviewer_client.get_notes(invitation='aclweb.org/ACL/2020/Workshop/NLP-COVID/-/Submission')
+        submissions=reviewer_client.get_notes(invitation='aclweb.org/ACL/2020/Workshop/NLP-COVID/-/Submission', sort='tmdate')
         assert submissions
 
         note = openreview.Note(invitation = conference.get_invitation_id(name = 'Official_Review', number = 1),
@@ -139,7 +139,7 @@ class TestOpenSubmissions():
 
     def test_post_comments(self, client, conference, test_client, helpers):
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
 
         conference.open_comments()
@@ -170,7 +170,7 @@ class TestOpenSubmissions():
 
     def test_post_decisions(self, client, conference, helpers):
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
 
         conference.open_decisions()

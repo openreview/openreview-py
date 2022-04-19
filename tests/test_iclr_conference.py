@@ -509,7 +509,7 @@ Naila, Katja, Alice, and Ivan
 
         conference.setup_first_deadline_stage(force=True)
 
-        blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission')
+        blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission', sort='tmdate')
         assert len(blinded_notes) == 5
 
         assert blinded_notes[0].readers == [
@@ -634,7 +634,7 @@ Naila, Katja, Alice, and Ivan
         conference.submission_stage.readers = [openreview.SubmissionStage.Readers.EVERYONE]
         conference.setup_final_deadline_stage(force=True)
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 4
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
@@ -657,7 +657,7 @@ Naila, Katja, Alice, and Ivan
 
         helpers.await_queue()
 
-        withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
+        withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission', sort='tmdate')
         assert len(withdrawn_notes) == 2
         withdrawn_notes[0].readers == [
             'everyone'
@@ -675,7 +675,7 @@ Naila, Katja, Alice, and Ivan
         now = datetime.datetime.utcnow()
         conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(due_date=now + datetime.timedelta(minutes = 40), allow_author_reorder=True))
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
 
         print(submissions[0])
 

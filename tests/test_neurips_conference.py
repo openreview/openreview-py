@@ -19,7 +19,7 @@ class TestNeurIPSConference():
     @pytest.fixture(scope="class")
     def conference(self, client):
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
         return conference
@@ -549,7 +549,7 @@ class TestNeurIPSConference():
     def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         result = conference.recruit_reviewers(invitees = ['reviewer2@mit.edu'], title = 'Ethics Review invitation', message = '{accept_url}, {decline_url}', reviewers_name = 'Ethics_Reviewers')
@@ -584,7 +584,7 @@ class TestNeurIPSConference():
     def test_submit_papers(self, test_client, client, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
@@ -611,7 +611,7 @@ class TestNeurIPSConference():
 
         conference.setup_first_deadline_stage(force=True)
 
-        blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        blinded_notes = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission', sort='tmdate')
         assert len(blinded_notes) == 5
 
         assert blinded_notes[0].readers == ['NeurIPS.cc/2021/Conference', 'NeurIPS.cc/2021/Conference/Paper5/Authors']
@@ -725,7 +725,7 @@ class TestNeurIPSConference():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 5
 
         assert submissions[0].content['keywords'] == ''
@@ -811,7 +811,7 @@ class TestNeurIPSConference():
         now = datetime.datetime.utcnow()
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -1031,7 +1031,7 @@ class TestNeurIPSConference():
     def test_ac_reassignment(self, conference, helpers, client):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
 
         assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
         assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
@@ -1134,7 +1134,7 @@ Thank you,
         print(url)
 
         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
-        submission=conference.get_submissions()[0]
+        submission=conference.get_submissions(sort='tmdate')[0]
         signatory_group=ac_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper5/Area_Chair_')[0]
 
         ## Invite external reviewer 1
@@ -1585,7 +1585,7 @@ Thank you,
     def test_deployment_stage(self, conference, client, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
 
         conference.set_assignments(assignment_title='reviewer-matching', committee_id='NeurIPS.cc/2021/Conference/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
 
@@ -1898,7 +1898,7 @@ Thank you,
         print(url)
 
         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
-        submission=conference.get_submissions()[1]
+        submission=conference.get_submissions(sort='tmdate')[1]
         signatory_group=ac_client.get_groups(regex='NeurIPS.cc/2021/Conference/Paper4/Area_Chair_')[0]
 
         ## Invite external reviewer 1
@@ -2199,7 +2199,7 @@ Thank you,
 
         helpers.await_queue()
 
-        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review', sort='tmdate')
         assert len(reviews) == 1
         reviews[0].readers = [
             'NeurIPS.cc/2021/Conference/Program_Chairs',
@@ -2397,7 +2397,7 @@ Thank you,
 
     def test_add_impersonator(self, client, request_page, selenium):
         ## Need super user permission to add the venue to the active_venues group
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         conference.set_impersonators(group_ids=['pc@neurips.cc'])
@@ -2413,7 +2413,7 @@ Thank you,
 
     def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
-        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission', sort='tmdate')
         assert len(submissions) == 5
 
         withdrawn_note = test_client.post_note(openreview.Note(
@@ -2471,7 +2471,7 @@ Thank you,
 
     def test_desk_reject_after_review(self, conference, helpers, test_client, client, selenium, request_page):
 
-        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission')
+        submissions = test_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Blind_Submission', sort='tmdate')
         assert len(submissions) == 4
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')

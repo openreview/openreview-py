@@ -16,7 +16,7 @@ def process(client, edit, invitation):
     decision = decisions[0]
     certifications = decision.content.get('certifications', {}).get('value', [])
 
-    acceptance_note = client.post_note_edit(invitation=journal.get_acceptance_id(),
+    acceptance_note = client.post_note_edit(invitation=journal.get_accepted_id(),
                         signatures=[venue_id],
                         note=openreview.api.Note(id=submission.id,
                             content= {
