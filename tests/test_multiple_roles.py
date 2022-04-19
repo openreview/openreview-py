@@ -96,7 +96,7 @@ class TestMultipleRoles():
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         # Test Reviewer Recruitment
         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
