@@ -22,3 +22,9 @@ def process(client, edge, invitation):
         conflicts = journal.assignment.compute_conflicts(submission, edge.tail)
         if conflicts:
            raise openreview.OpenReviewException(f'Can not add assignment, conflict detected for {edge.tail}.')
+
+        ## Check availability
+        edges = client.get_edges(invitation=journal.get_ae_availability_id(), tail=edge.tail)
+        if edges and edges[0].label == 'Unavailable':
+           raise openreview.OpenReviewException(f'Action Editor {edge.tail} is currently unavailable.')
+
