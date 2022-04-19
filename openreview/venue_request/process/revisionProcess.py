@@ -119,18 +119,21 @@ def process(client, note, invitation):
                 client.post_invitation(post_submission_inv)
 
             reveal_all_authors=reveal_authors_accepted=hide_rejected=False
+            submission_readers=None
             if 'reveal_authors' in forum_note.content:
                 reveal_all_authors=forum_note.content.get('reveal_authors') == 'Reveal author identities of all submissions to the public'
                 reveal_authors_accepted=forum_note.content.get('reveal_authors') == 'Reveal author identities of only accepted submissions to the public'
             if 'release_submissions' in forum_note.content:
                 hide_rejected=forum_note.content.get('release_submissions') == 'Release only accepted submission to the public'
-                if 'Release all submissions to the public' in forum_note.content['release_submissions']:
-                    conference.submission_stage.readers = [openreview.SubmissionStage.Readers.EVERYONE]
+                if 'Release only accepted submission to the public' in forum_note.content['release_submissions']:
+                    hide_rejected=True
+                elif 'Release all submissions to the public' in forum_note.content['release_submissions']:
+                    submission_readers=[openreview.SubmissionStage.Readers.EVERYONE]
 
             if 'submission_readers' in forum_note.content:
                 hide_rejected = forum_note.content['submission_readers'] == 'Everyone for accepted submissions and only assigned program committee for rejected submissions'
 
-            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,hide_rejected, decision_heading_map=forum_note.content.get('home_page_tab_names'))
+            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,hide_rejected,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
 
         submission_content = conference.submission_stage.get_content()
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
