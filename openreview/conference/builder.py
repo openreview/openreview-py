@@ -1544,6 +1544,7 @@ Program Chairs
                 paper_id, decision, comment = paper_decision
             elif len(paper_decision) == 2:
                 paper_id, decision = paper_decision
+                comment = ''
             else:
                 raise ValueError(
                     "Too many values provided in the decision file. Expected values are: paper_id, decision, comment"
