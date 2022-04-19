@@ -9,7 +9,7 @@ import re
 import csv
 import random
 
-class TestNeurIPSConference():
+class TestARRVenue():
 
     @pytest.fixture(scope="class")
     def venue(self, client):
@@ -55,6 +55,7 @@ class TestNeurIPSConference():
                 'contact_email': 'pc@aclrollingreview.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
@@ -93,6 +94,8 @@ class TestNeurIPSConference():
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Area_Chairs')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Reviewers')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Authors')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Ethics_Chairs')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers')
 
     def test_recruit_actions_editors(self, client, helpers, request_page, selenium):
 
@@ -286,6 +289,83 @@ class TestNeurIPSConference():
         assert len(recruitment_status_notes) == 1
         assert '1 users' in recruitment_status_notes[0].content['invited']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
+
+
+    def test_recruit_ethic_chairs(self, client, helpers, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        reviewer_details = '''ethic_chair@arr.org, Ethics Chair'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Ethics_Chairs',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert '1 users' in recruitment_status_notes[0].content['invited']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Ethics_Chairs/Invited" in recruitment_status_notes[0].content['comment']
+
+        ## Accept to be an Ethics Chair
+        messages = client.get_messages(to = 'ethic_chair@arr.org', subject = '[ARR 2021 - September] Invitation to serve as Ethics Chair')
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        request_page(selenium, accept_url, alert=True)
+        helpers.await_queue()
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Ethics_Chairs')
+        assert len(accepted_group.members) == 1
+        assert 'ethic_chair@arr.org' in accepted_group.members
+        assert client.get_messages(to = 'ethic_chair@arr.org', subject = '[ARR 2021 - September] Ethics Chair Invitation accepted')        
+
+    def test_recruit_ethic_reviewers(self, client, helpers, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        ## Invite ~Area_CMUChair1 as AC
+        reviewer_details = '''ethic_reviewer@arr.org, Ethics Reviewer'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Ethics_Reviewers',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert '1 users' in recruitment_status_notes[0].content['invited']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/Invited" in recruitment_status_notes[0].content['comment']
+
 
 
     def test_registration_tasks(self, client):

@@ -54,6 +54,8 @@ class Conference(object):
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_secondary_area_chairs = False
+        self.use_ethics_chairs = False
+        self.use_ethics_reviewers = False
         self.legacy_anonids = False
         self.legacy_invitation_id = False
         self.groups = []
@@ -75,6 +77,8 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.secondary_area_chairs_name = 'Secondary_Area_Chair'
+        self.ethics_chairs_name = 'Ethics_Chairs'
+        self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
         self.submission_stage = SubmissionStage()
@@ -404,6 +408,12 @@ class Conference(object):
     def get_senior_area_chairs_id(self, number = None):
         return self.get_committee_id(self.senior_area_chairs_name, number)
 
+    def get_ethics_chairs_id(self, number = None):
+        return self.get_committee_id(self.ethics_chairs_name, number)
+
+    def get_ethics_reviewers_id(self, number = None):
+        return self.get_committee_id(self.ethics_reviewers_name, number)
+
     def get_secondary_area_chairs_id(self, number=None):
         return self.get_committee_id(self.secondary_area_chairs_name, number)
 
@@ -462,6 +472,11 @@ class Conference(object):
             roles = self.reviewer_roles + self.area_chair_roles
         if self.use_senior_area_chairs:
             roles = roles + self.senior_area_chair_roles
+        if self.use_ethics_chairs:
+            roles = roles + [self.ethics_chairs_name]
+        if self.use_ethics_reviewers:
+            roles = roles + [self.ethics_reviewers_name]
+
         return roles
 
     def get_submission_id(self):
@@ -574,6 +589,12 @@ class Conference(object):
 
     def has_senior_area_chairs(self, has_senior_area_chairs):
         self.use_senior_area_chairs = has_senior_area_chairs
+
+    def has_ethics_chairs(self, has_ethics_chairs):
+        self.use_ethics_chairs = has_ethics_chairs
+
+    def has_ethics_reviewers(self, has_ethics_reviewers):
+        self.use_ethics_reviewers = has_ethics_reviewers                
 
     def has_secondary_area_chairs(self, has_secondary_area_chairs):
         self.use_secondary_area_chairs = has_secondary_area_chairs
@@ -1022,6 +1043,7 @@ class Conference(object):
         else:
             raise openreview.OpenReviewException('Conference "has_secondary_area_chairs" setting is disabled')
 
+    ## Deprecated
     def set_senior_area_chair_recruitment_groups(self):
         if self.use_senior_area_chairs:
             parent_group_id = self.get_senior_area_chairs_id()
@@ -1040,6 +1062,7 @@ class Conference(object):
             raise openreview.OpenReviewException('Conference "has_senior_area_chairs" setting is disabled')
 
 
+    ## Deprecated
     def set_area_chair_recruitment_groups(self):
         if self.use_area_chairs:
             parent_group_id = self.get_area_chairs_id()
@@ -1056,6 +1079,19 @@ class Conference(object):
             self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
+
+    def set_recruitment_groups(self, parent_group_id):
+        parent_group_declined_id = parent_group_id + '/Declined'
+        parent_group_invited_id = parent_group_id + '/Invited'
+        parent_group_accepted_id = parent_group_id
+
+        pcs_id = self.get_program_chairs_id()
+        # parent_group_accepted_group
+        self.__create_group(parent_group_accepted_id, pcs_id)
+        # parent_group_declined_group
+        self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
+        # parent_group_invited_group
+        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
 
     def set_reviewer_recruitment_groups(self):
         parent_group_id = self.get_reviewers_id()
@@ -2219,6 +2255,12 @@ class ConferenceBuilder(object):
     def has_senior_area_chairs(self, has_senior_area_chairs):
         self.conference.has_senior_area_chairs(has_senior_area_chairs)
 
+    def has_ethics_chairs(self, has_ethics_chairs):
+        self.conference.has_ethics_chairs(has_ethics_chairs)  
+
+    def has_ethics_reviewers(self, has_ethics_reviewers):
+        self.conference.has_ethics_reviewers(has_ethics_reviewers)                
+
     def enable_reviewer_reassignment(self, enable):
         self.conference.enable_reviewer_reassignment = enable
 
@@ -2375,6 +2417,10 @@ class ConferenceBuilder(object):
             self.conference.set_senior_area_chair_recruitment_groups()
         if self.conference.use_area_chairs:
             self.conference.set_area_chair_recruitment_groups()
+        if self.conference.use_ethics_chairs:
+            self.conference.set_recruitment_groups(self.conference.get_ethics_chairs_id())
+        if self.conference.use_ethics_reviewers:
+            self.conference.set_recruitment_groups(self.conference.get_ethics_reviewers_id())                       
         self.conference.set_reviewer_recruitment_groups()
 
         for s in self.bid_stages:

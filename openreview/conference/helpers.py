@@ -96,6 +96,13 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     if note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs':
         builder.has_senior_area_chairs(True)
 
+    if note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers':
+        builder.has_ethics_chairs(True)
+        builder.has_ethics_reviewers(True)
+
+    if note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Reviewers only':
+        builder.has_ethics_reviewers(True)
+
     double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
     readers_map = {
