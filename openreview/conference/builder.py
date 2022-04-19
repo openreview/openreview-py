@@ -1488,7 +1488,6 @@ Program Chairs
             self.submission_stage.readers = submission_readers
 
         for submission in tqdm(submissions):
-        # for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
             submission.readers = self.submission_stage.get_readers(self, submission.number, hide= hide_rejected and decision_note and 'Reject' in decision_note.content)
@@ -1519,15 +1518,17 @@ Program Chairs
                     anonymous=False
                 )
             #add venue_id if note accepted
+            venue = self.short_name
             if note_accepted:
                 decision = decision_note.content['decision'].replace('Accept', '')
                 decision = re.sub(r'[()\W]+', '', decision)
                 venueid = self.id
-                venue = self.short_name
                 if decision:
                     venue += ' ' + decision
                 submission.content['venueid'] = venueid
                 submission.content['venue'] = venue
+            else:
+                submission.content['venue'] = f'Submitted to {venue}'
             self.client.post_note(submission)
 
         if decision_heading_map:

@@ -1265,7 +1265,34 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'suggestions' in decision_note.content
         helpers.await_queue()
 
-        process_logs = client.get_process_logs(id = decision_stage_note.id)
+        process_logs = client.get_process_logs(id = decision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        submission = submissions[1]
+
+        # Post another decision note using pc test_client
+        program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
+        area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
+        senior_area_chairs = '{}/Paper{}/Senior_Area_Chairs'.format(venue['venue_id'], submission.number)
+        decision_note = test_client.post_note(openreview.Note(
+            invitation='{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number),
+            writers=[program_chairs],
+            readers=[program_chairs, senior_area_chairs, area_chairs],
+            nonreaders=['{}/Paper{}/Authors'.format(venue['venue_id'], submission.number)],
+            signatures=[program_chairs],
+            content={
+                'title': 'Paper Decision',
+                'decision': 'Reject'
+            },
+            forum=submission.forum,
+            replyto=submission.forum
+        ))
+
+        assert decision_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = decision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -1464,6 +1491,15 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
 
+        #check venue and venueid for accepted, venue for rejected
+        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert submissions and len(submissions) == 3
+
+        assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
+        assert 'venueid' not in submissions[0].content
+        assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
+        assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
+        
         # Post another revision stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
