@@ -1557,6 +1557,7 @@ Program Chairs
             if paper_decision_notes:
                 paper_decision_note = paper_decision_notes[0]
                 paper_decision_note.content = {
+                    'title': 'Paper Decision',
                     'decision': decision.strip(),
                     'comment': comment,
                 }
