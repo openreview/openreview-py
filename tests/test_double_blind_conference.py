@@ -2020,11 +2020,9 @@ url={'''
         builder.set_decision_stage(public=True)
         conference = builder.get_result()
 
-        conference.post_decision_stage_old(reveal_authors_accepted=False,
-                                       decision_heading_map={'Accept (Poster)': 'Accepted poster papers',
+        conference.post_decision_stage(decision_heading_map={'Accept (Poster)': 'Accepted poster papers',
                                                              'Accept (Oral)': 'Accepted oral papers',
                                                              'Reject': 'Reject'})
-
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='reject')
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
@@ -2082,7 +2080,7 @@ url={'''
         builder.set_decision_stage(public=True)
         conference = builder.get_result()
 
-        conference.post_decision_stage_old(reveal_authors_accepted=True, decision_heading_map={'Accept (Poster)': 'Accepted poster papers', 'Accept (Oral)': 'Accepted oral papers', 'Reject': 'Reject'})
+        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={'Accept (Poster)': 'Accepted poster papers', 'Accept (Oral)': 'Accepted oral papers', 'Reject': 'Reject'})
 
         request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='reject')
         assert "AKBC 2019 Conference | OpenReview" in selenium.title

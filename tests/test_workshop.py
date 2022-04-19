@@ -525,11 +525,11 @@ class TestWorkshop():
 
     def test_release_decisions(self, client, conference, selenium, request_page):
 
-        conference.post_decision_stage_old(reveal_authors_accepted=True, release_all_notes=True, decision_heading_map = {
+        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map = {
             'Accept (Oral)': 'Oral Presentations',
             'Accept (Poster)': 'Post Presentations',
             'Reject': 'All Presentations'
-        })
+        }, submission_readers=[openreview.SubmissionStage.Readers.EVERYONE])
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client.token, wait_for_element='oral-presentations')
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
