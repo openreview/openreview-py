@@ -51,7 +51,7 @@ def process(client, note, invitation):
                         'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                         'Program chairs and paper authors only',
                         'Everyone (submissions are public)',
-                        'Everyone for accepted submissions and only assigned program committee for rejected submissions'
+                        'Make accepted submissions public and hide rejected submissions'
                     ],
                     'required': True
                 }
@@ -131,7 +131,7 @@ def process(client, note, invitation):
                     submission_readers=[openreview.SubmissionStage.Readers.EVERYONE]
 
             if 'submission_readers' in forum_note.content:
-                hide_rejected = forum_note.content['submission_readers'] == 'Everyone for accepted submissions and only assigned program committee for rejected submissions'
+                hide_rejected = forum_note.content['submission_readers'] == 'Make accepted submissions public and hide rejected submissions'
 
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,hide_rejected,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
 

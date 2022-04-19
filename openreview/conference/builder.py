@@ -1491,10 +1491,7 @@ Program Chairs
         # for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-            if hide_rejected:
-                submission.readers = self.submission_stage.get_readers(self, submission.number, decision_note)
-            else:
-                submission.readers = self.submission_stage.get_readers(self, submission.number)
+            submission.readers = self.submission_stage.get_readers(self, submission.number, hide= hide_rejected and decision_note and 'Reject' in decision_note.content)
             #double-blind
             if self.submission_stage.double_blind:
                 release_authors = is_release_authors(note_accepted)
@@ -1536,63 +1533,6 @@ Program Chairs
         if decision_heading_map:
             self.set_homepage_decisions(decision_heading_map=decision_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
-
-    #temporary name until I figure out what to do with this
-    # def post_decision_stage_old(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False, decision_heading_map=None):
-    #     submissions = self.get_submissions(details='original')
-    #     decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
-
-    #     if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
-    #         self.submission_stage.public = True	
-    #         self.invitation_builder.set_submission_invitation(self)
-
-    #     def is_release_note(is_note_accepted):
-    #         return release_all_notes or (release_notes_accepted and is_note_accepted)
-
-    #     def is_release_authors(is_note_accepted):
-    #         return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
-
-    #     for submission in tqdm(submissions):
-    #         decision_note = decisions_by_forum.get(submission.forum, None)
-    #         note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-    #         if is_release_note(note_accepted) or 'everyone' in submission.readers:
-    #             submission.readers = ['everyone']
-    #             if self.submission_stage.double_blind:
-    #                 release_authors = is_release_authors(note_accepted)
-    #                 submission.content = {
-    #                     '_bibtex': tools.get_bibtex(
-    #                                 openreview.Note.from_json(submission.details['original']),
-    #                                 venue_fullname=self.name,
-    #                                 year=str(self.year),
-    #                                 url_forum=submission.forum,
-    #                                 accepted=note_accepted,
-    #                                 anonymous=(not release_authors))
-    #                 }
-    #                 if not release_authors:
-    #                     submission.content['authors'] = ['Anonymous']
-    #                     submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
-    #             else:
-    #                 submission.content['_bibtex'] = tools.get_bibtex(
-    #                                 submission,
-    #                                 venue_fullname=self.name,
-    #                                 year=str(self.year),
-    #                                 url_forum=submission.forum,
-    #                                 accepted=note_accepted,
-    #                                 anonymous=False)
-    #             if note_accepted:
-    #                 decision = decision_note.content['decision'].replace('Accept', '')
-    #                 decision = re.sub(r'[()\W]+', '', decision)
-    #                 venueid = self.id
-    #                 venue = self.short_name
-    #                 if decision:
-    #                     venue += ' ' + decision
-    #                 submission.content['venueid'] = venueid
-    #                 submission.content['venue'] = venue
-    #             self.client.post_note(submission)
-
-    #     if decision_heading_map:
-    #         self.set_homepage_decisions(decision_heading_map=decision_heading_map)
-    #     self.client.remove_members_from_group('active_venues', self.id)
 
 class SubmissionStage(object):
 
@@ -1652,14 +1592,12 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
 
-    def get_readers(self, conference, number, decision_note=None):
+    def get_readers(self, conference, number, hide=False):
 
-        decision = decision_note.content['decision'] if decision_note else ''
-
-        if (self.public or 'Accept' in decision) and 'Reject' not in decision:
+        if self.public and not hide:
             return ['everyone']
         
-        if 'Reject' in decision:
+        if hide:
             self.readers = [
                 self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,
                 self.Readers.AREA_CHAIRS_ASSIGNED,
@@ -1687,21 +1625,6 @@ class SubmissionStage(object):
             submission_readers.append(conference.get_reviewers_id(number=number))
 
         submission_readers.append(conference.get_authors_id(number=number))
-        return submission_readers
-
-    def get_hidden_readers(self, conference, number):
-        
-        submission_readers = [conference.get_id()]
-
-        if conference.use_senior_area_chairs:
-            submission_readers.append(conference.get_senior_area_chairs_id(number=number))
-
-        if conference.use_area_chairs:
-            submission_readers.append(conference.get_area_chairs_id(number=number))
-
-        submission_readers.append(conference.get_reviewers_id(number=number))
-        submission_readers.append(conference.get_authors_id(number=number))
-
         return submission_readers
 
     def get_invitation_readers(self, conference, under_submission):
