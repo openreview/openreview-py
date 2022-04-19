@@ -1490,7 +1490,7 @@ Program Chairs
         for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-            submission.readers = self.submission_stage.get_readers(self, submission.number, hide= hide_rejected and decision_note and 'Reject' in decision_note.content)
+            submission.readers = self.submission_stage.get_readers(self, submission.number, hide= hide_rejected and decision_note is not None and 'Reject' in decision_note.content['decision'])
             #double-blind
             if self.submission_stage.double_blind:
                 release_authors = is_release_authors(note_accepted)
@@ -1595,17 +1595,19 @@ class SubmissionStage(object):
 
     def get_readers(self, conference, number, hide=False):
 
-        if self.public and not hide:
+        if (self.public or self.Readers.EVERYONE in self.readers) and not hide:
             return ['everyone']
         
-        if hide:
-            self.readers = [
-                self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,
-                self.Readers.AREA_CHAIRS_ASSIGNED,
-                self.Readers.REVIEWERS_ASSIGNED
-            ]
-
         submission_readers=[conference.get_id()]
+
+        if hide:
+            if conference.use_senior_area_chairs:
+                submission_readers.append(conference.get_senior_area_chairs_id(number=number))
+            if conference.use_area_chairs:
+                submission_readers.append(conference.get_area_chairs_id(number=number))
+            submission_readers.append(conference.get_reviewers_id(number=number))
+            submission_readers.append(conference.get_authors_id(number=number))
+            return submission_readers
 
         if self.Readers.SENIOR_AREA_CHAIRS in self.readers and conference.use_senior_area_chairs:
             submission_readers.append(conference.get_senior_area_chairs_id())

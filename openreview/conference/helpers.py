@@ -103,7 +103,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
         'Program chairs and paper authors only': [],
         'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
-        'Everyone for accepted submissions and only assigned program committee for rejected submissions': []
+        'Make accepted submissions public and hide rejected submissions': []
     }
 
     # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)

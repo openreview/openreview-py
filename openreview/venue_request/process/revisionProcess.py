@@ -124,14 +124,16 @@ def process(client, note, invitation):
                 reveal_all_authors=forum_note.content.get('reveal_authors') == 'Reveal author identities of all submissions to the public'
                 reveal_authors_accepted=forum_note.content.get('reveal_authors') == 'Reveal author identities of only accepted submissions to the public'
             if 'release_submissions' in forum_note.content:
-                hide_rejected=forum_note.content.get('release_submissions') == 'Release only accepted submission to the public'
                 if 'Release only accepted submission to the public' in forum_note.content['release_submissions']:
                     hide_rejected=True
+                    submission_readers=[openreview.SubmissionStage.Readers.EVERYONE]
                 elif 'Release all submissions to the public' in forum_note.content['release_submissions']:
                     submission_readers=[openreview.SubmissionStage.Readers.EVERYONE]
 
             if 'submission_readers' in forum_note.content:
-                hide_rejected = forum_note.content['submission_readers'] == 'Make accepted submissions public and hide rejected submissions'
+                if 'Make accepted submissions public and hide rejected submissions' in forum_note.content['submission_readers']:
+                    hide_rejected=True
+                    submission_readers=[openreview.SubmissionStage.Readers.EVERYONE]
 
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,hide_rejected,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
 
