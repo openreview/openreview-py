@@ -1202,8 +1202,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        decision_stage_invitation = '{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
-        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), decision_stage_invitation, 'upload_decisions')
 
         decision_stage_note = test_client.post_note(openreview.Note(
             content={
@@ -1241,6 +1239,39 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         # Assert that PC now has access to the Decision invitation
         decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
         assert decision_invitation
+
+        # Post a decision note using pc test_client
+        program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
+        area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
+        senior_area_chairs = '{}/Paper{}/Senior_Area_Chairs'.format(venue['venue_id'], submission.number)
+        decision_note = test_client.post_note(openreview.Note(
+            invitation='{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number),
+            writers=[program_chairs],
+            readers=[program_chairs, senior_area_chairs, area_chairs],
+            nonreaders=['{}/Paper{}/Authors'.format(venue['venue_id'], submission.number)],
+            signatures=[program_chairs],
+            content={
+                'title': 'Paper Decision',
+                'decision': 'Accept',
+                'comment': 'Good paper. I like!',
+                'suggestions': 'Add more results for camera ready.'
+            },
+            forum=submission.forum,
+            replyto=submission.forum
+        ))
+
+        assert decision_note
+        assert 'suggestions' in decision_note.content
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        decision_stage_invitation = '{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                                           venue['request_form_note'].number)
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'),
+                                         decision_stage_invitation, 'upload_decisions')
 
         decision_stage_note = test_client.post_note(openreview.Note(
             content={
@@ -1285,32 +1316,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 )
             )[0]
             assert sub_decision_note
-
-        # Post a decision note using pc test_client
-        program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
-        area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
-        senior_area_chairs = '{}/Paper{}/Senior_Area_Chairs'.format(venue['venue_id'], submission.number)
-        decision_note = test_client.get_notes(
-            invitation='{venue_id}/Paper{number}/-/Decision'.format(
-                venue_id=venue['venue_id'], number=submission.number
-            )
-        )[0]
-
-        decision_note.content = {
-            'title': 'Paper Decision',
-            'decision': 'Accept',
-            'comment':  'Good paper. I like!',
-            'suggestions': 'Add more results for camera ready.'
-        }
-        decision_note = test_client.post_note(decision_note)
-
-        assert decision_note
-        assert 'suggestions' in decision_note.content
-        helpers.await_queue()
-
-        process_logs = client.get_process_logs(id = decision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+            assert sub_decision_note.content['decision'] == 'Reject'
+            assert sub_decision_note.content['comment'] == 'Not Good'
 
         #get post_decision invitation
         with pytest.raises(openreview.OpenReviewException) as openReviewError:

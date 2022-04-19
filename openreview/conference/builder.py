@@ -1542,25 +1542,36 @@ Program Chairs
         def post_decision(paper_decision):
             try:
                 paper_id, decision, comment = paper_decision
-            except IndexError:
+            except ValueError:
                 paper_id, decision = paper_decision
                 comment = ''
 
-            paper_note = self.client.get_notes(id=paper_id)[0]
-            self.client.post_note(openreview.Note(
-                invitation='{}/Paper{}/-/Decision'.format(self.id, paper_note.number),
-                writers=[self.get_program_chairs_id()],
-                readers=self.decision_stage.get_readers(conference=self, number=paper_note.number),
-                nonreaders=self.decision_stage.get_nonreaders(conference=self, number=paper_note.number),
-                signatures=[self.get_program_chairs_id()],
-                content={
-                    'title': 'Paper Decision',
-                    'decision': decision,
+            paper_note = self.client.get_notes(id=paper_id.strip())[0]
+            paper_decision_notes = self.client.get_notes(
+                invitation='{}/Paper{}/-/Decision'.format(self.id, paper_note.number)
+            )
+            if paper_decision_notes:
+                paper_decision_note = paper_decision_notes[0]
+                paper_decision_note.content = {
+                    'decision': decision.strip(),
                     'comment': comment,
-                },
-                forum=paper_note.forum,
-                replyto=paper_note.forum
-            ))
+                }
+            else:
+                paper_decision_note = openreview.Note(
+                    invitation='{}/Paper{}/-/Decision'.format(self.id, paper_note.number),
+                    writers=[self.get_program_chairs_id()],
+                    readers=self.decision_stage.get_readers(conference=self, number=paper_note.number),
+                    nonreaders=self.decision_stage.get_nonreaders(conference=self, number=paper_note.number),
+                    signatures=[self.get_program_chairs_id()],
+                    content={
+                        'title': 'Paper Decision',
+                        'decision': decision.strip(),
+                        'comment': comment,
+                    },
+                    forum=paper_note.forum,
+                    replyto=paper_note.forum
+                )
+            self.client.post_note(paper_decision_note)
 
         tools.concurrent_requests(post_decision, decisions_data)
 
