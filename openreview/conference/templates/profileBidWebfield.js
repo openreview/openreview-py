@@ -179,7 +179,6 @@ function load() {
 
 // Display the bid interface populated with loaded data
 function renderContent(notes, conflicts, bidEdges) {
-
   conflictIds = conflicts;
 
   bidEdges.forEach(function(edge) {
@@ -195,9 +194,7 @@ function renderContent(notes, conflicts, bidEdges) {
     var bidId = sections[activeTab].heading;
 
     if (containerId !== 'allPapers') {
-
-      getPapersByBids(bidsById[bidId], bidsByNote)
-      .then(function(notes) {
+      getPapersByBids(bidsById[bidId], bidsByNote).then(function(notes) {
         Webfield.ui.submissionList(notes, {
           heading: null,
           container: '#' + containerId,
@@ -217,11 +214,12 @@ function renderContent(notes, conflicts, bidEdges) {
   });
 
   $('#invitation-container').on('bidUpdated', '.tag-widget', function(e, edge) {
+    var previousEdge = bidsByNote[edge.head];
+
     if (edge.ddate) {
       delete bidsByNote[edge.head];
       bidsById[edge.label] = bidsById[edge.label].filter(function(e) { return edge.id !== e.id; });
     } else {
-      var previousEdge = bidsByNote[edge.head];
       bidsByNote[edge.head] = edge;
       bidsById[edge.label].push(edge);
       if (previousEdge) {
@@ -232,9 +230,26 @@ function renderContent(notes, conflicts, bidEdges) {
     // If not on the All Papers tab, fade out note when bid is changed
     if (activeTab !== 0) {
       $(e.currentTarget).find('.btn-group').addClass('disabled');
+
       setTimeout(function() {
-        $(e.currentTarget).closest('.note').fadeOut('fast');
+        var $elem = $(e.currentTarget).closest('.note');
+        $elem.fadeOut('fast', function() {
+          var $parent = $elem.parent();
+          $elem.remove();
+
+          if (!$parent.children().length) {
+            $parent.append('<li><p class="empty-message">No papers to display at this time</p></li>');
+          }
+        });
       }, 100);
+
+      // Change bid in the All Papers tab
+      var $noteToChange = $('#all-papers .submissions-list .note[data-id="' + previousEdge.head + '"] .btn-group');
+      if (edge.ddate) {
+        $noteToChange.button('toggle').children('input').prop('checked', false);
+      } else {
+        $noteToChange.find('label[data-value="' + edge.label + '"]').button('toggle');
+      }
     }
 
     updateCounts();
@@ -367,9 +382,7 @@ function updateNotes(notes) {
 
   Webfield.ui.submissionList(notes, submissionListOptions);
 
-
   if (SCORE_IDS.length) {
-
     var optionsHtml = '';
     SCORE_IDS.forEach(function(scoreId) {
       var label = view.prettyInvitationId(scoreId);
