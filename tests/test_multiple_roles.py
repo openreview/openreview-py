@@ -19,7 +19,7 @@ class TestMultipleRoles():
     @pytest.fixture(scope="class")
     def conference(self, client):
         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
         return conference
@@ -65,6 +65,7 @@ class TestMultipleRoles():
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'reviewer_roles': ['Program_Committee', 'Senior_Program_Committee']
@@ -95,10 +96,10 @@ class TestMultipleRoles():
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -152,7 +153,7 @@ class TestMultipleRoles():
 
         ## Need super user permission to add the venue to the active_venues group
         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
@@ -173,7 +174,11 @@ class TestMultipleRoles():
             note = test_client.post_note(note)
 
         post_submission_note=pc_client.post_note(openreview.Note(
-            content= { 'force': 'Yes', 'hide_fields': ['keywords'] },
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+            },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
             readers= ['lifelong-ml.cc/CoLLAs/2022/Conference/Program_Chairs', 'openreview.net/Support'],
@@ -192,7 +197,7 @@ class TestMultipleRoles():
     def test_setup_matching(self, conference, client, helpers):
 
         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         ## Setup Matching for Program Committee
         matching_setup_note = client.post_note(openreview.Note(
@@ -230,7 +235,7 @@ class TestMultipleRoles():
         assert matching_setup_note
         helpers.await_queue()
 
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
 
         ## Program Committee
         client.post_edge(openreview.Edge(

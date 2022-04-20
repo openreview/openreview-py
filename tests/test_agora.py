@@ -22,7 +22,7 @@ class TestAgora():
 
         agora = openreview.agora.Agora(client, support_group.id, 'openreview.net', 'editor@agora.net')
 
-        request_page(selenium, "http://localhost:3030/group?id=-Agora/COVID-19")
+        request_page(selenium, "http://localhost:3030/group?id=-Agora/COVID-19", by='class name', wait_for_element='tabs-container')
         header = selenium.find_element_by_id('header')
         assert header
         invitation_panel = selenium.find_element_by_id('invitation')

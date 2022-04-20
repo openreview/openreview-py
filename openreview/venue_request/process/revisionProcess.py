@@ -1,6 +1,8 @@
 def process(client, note, invitation):
     import datetime
     import traceback
+    import json
+
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
 
@@ -43,7 +45,7 @@ def process(client, note, invitation):
 
             content = {}
 
-            if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private."):
+            if (forum_note.content.get('Open Reviewing Policy','') == "Submissions and reviews should both be private." or 'Everyone' not in forum_note.content.get('submission_readers', '')):
                 content['release_submissions'] = {
                     'description': 'Would you like to release submissions to the public?',
                     'value-radio': [
@@ -125,25 +127,26 @@ def process(client, note, invitation):
 
         print('Conference: ', conference.get_id())
     except Exception as e:
-        error_status = f'''
-{invitation_type.replace("_", " ")} Process failed due to the following error: {repr(e)}
-
-To check references for the note: https://api.openreview.net/references?id={note.id} '''
-        print("Following error in the process function was posted as a comment:")
-        print(traceback.format_exc())
-
         forum_note = client.get_note(note.forum)
 
+        from openreview import OpenReviewException
+        error_status = json.dumps(e.args[0], indent=2) if isinstance(e, OpenReviewException) else repr(e)
         comment_note = openreview.Note(
-            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Stage_Error_Status',
             forum=forum_note.id,
             replyto=forum_note.id,
             readers=comment_readers,
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
             content={
-                'title': '{invitation} Status [{note_id}]'.format(invitation=invitation_type.replace("_", " "), note_id=note.id),
-                'comment': error_status
+                'title': '{invitation} Process Failed'.format(invitation=invitation_type.replace("_", " ")),
+                'error': f'''
+```python
+{error_status}
+```
+''',
+                'reference_url': f'''https://api.openreview.net/references?id={note.id}''',
+                'stage_name': '{invitation}'.format(invitation=invitation_type.replace("_", " "))
             }
         )
 

@@ -13,6 +13,7 @@ var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var SUBMISSION_GROUP_NAME = 'Paper';
 var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
+var JOURNAL_REQUEST_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -21,6 +22,9 @@ var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
 var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
+var CUSTOM_MAX_PAPERS_NAME = 'Custom_Max_Papers';
+var AVAILABILITY_NAME = 'Assignment_Availability';
+var REVIEWERS_AVAILABILITY_ID = REVIEWERS_ID + '/-/' + AVAILABILITY_NAME;
 
 var SUBMISSION_GROUP_NAME = 'Paper';
 var RECOMMENDATION_NAME = 'Recommendation';
@@ -33,11 +37,16 @@ var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
+var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID +
-  '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
+  '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + 
+    REVIEWERS_CONFLICT_ID + ';' + 
+    REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+    REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' +
+    REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&maxColumns=2&version=2&referrer=' + encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')');
 
 
@@ -46,13 +55,17 @@ var HEADER = {
   instructions: "<strong>Reviewer Assignment Browser:</strong><br><a href='" + reviewersUrl + "'> Modify Reviewer Assignments</a>"
 };
 
+if (JOURNAL_REQUEST_ID) {
+  HEADER.instructions += "<br><br><strong>Journal Recruitment:</strong><br><a href=/forum?id=" + JOURNAL_REQUEST_ID + "> Recruit Reviewer</a>"
+}
+
 // Helpers
 var getInvitationId = function(number, name, prefix) {
   return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
 };
 
-var getReplies = function(submission, name) {
-  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
+var getReplies = function(submission, name, prefix) {
+  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
 var getRatingInvitations = function(invitationsById, number) {
@@ -109,11 +122,16 @@ var loadData = function() {
         }).then(function(invitations) {
           return _.keyBy(invitations, 'id');
         }),
+        Webfield2.api.getAll('/invitations', {
+          regex: ACTION_EDITOR_ID + '/-/(' + AVAILABILITY_NAME + '|' + CUSTOM_MAX_PAPERS_NAME + ')',
+          type: 'edges',
+          details: 'repliedEdges'
+        })
       );
     });
 };
 
-var formatData = function(reviewersByNumber, invitations, submissions, invitationsById) {
+var formatData = function(reviewersByNumber, invitations, submissions, invitationsById, customQuotaInvitations) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
 
   // build the rows
@@ -153,6 +171,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
     // Review approval by AE
     var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
     var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
+    // Reviewer assignment by AE
+    var reviewerAssignmentInvitation = invitationsById[getInvitationId(number, 'Assignment', REVIEWERS_NAME)];
     // Reviews by Reviewers
     var reviewInvitation = invitationsById[getInvitationId(number, REVIEW_NAME)];
     var reviewNotes = getReplies(submission, REVIEW_NAME);
@@ -181,6 +201,16 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         duedate: reviewApprovalInvitation.duedate,
         complete: reviewApprovalNotes.length > 0,
         replies: reviewApprovalNotes
+      });
+    }
+
+    if (reviewerAssignmentInvitation) {
+      tasks.push({
+        id: reviewerAssignmentInvitation.id,
+        cdate: reviewerAssignmentInvitation.cdate,
+        duedate: reviewerAssignmentInvitation.duedate,
+        complete: reviewers.length >= 3,
+        replies: reviewers
       });
     }
 
@@ -257,13 +287,24 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
 
     reviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
+      var assignmentAcknowledgement = getReplies(submission, reviewer.id + '/' + ASSIGNMENT_ACKNOWLEDGEMENT_NAME, REVIEWERS_NAME);
       var status = {};
+
+      if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
+        status.Acknowledged = 'Yes';
+      }
+
       if (completedReview) {
         var reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
-        status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
+        }
+        var reviewerRating = submission.details.replies.find(function (p) {
+          return p.replyto === completedReview.id && p.invitations.includes(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Reviewer_' + reviewer.anonId + '/-/Rating');
+        });
+        if(reviewerRating){
+          status.Rating = reviewerRating.content.rating.value;
         }
       }
       reviewerStatus[reviewer.anonId] = {
@@ -298,13 +339,13 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
-        actions: submission.content.venueid.value == UNDER_REVIEW_STATUS ? [
+        actions: (submission.content.venueid.value == UNDER_REVIEW_STATUS && reviewerAssignmentInvitation) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
             '&edit=' + REVIEWERS_ASSIGNMENT_ID +
-            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore&' +
-            'maxColumns=2&version=2'
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+            '&maxColumns=2&version=2'
           }
         ] : []
       },
@@ -321,12 +362,18 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
 
   return venueStatusData = {
     invitations: invitations,
-    rows: rows
+    rows: rows,
+    customQuotaInvitations: customQuotaInvitations
   };
 };
 
 // Render functions
 var renderData = function(venueStatusData) {
+
+  venueStatusData.customQuotaInvitations.forEach(function(invitation) {
+    Webfield2.ui.renderEdgeWidget('#invitation', invitation, { fieldName: invitation.edge.label ? 'label': 'weight' });  
+  });
+
   // Assigned Papers Tab
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
     headings: ['<input type="checkbox" class="select-all-papers">', '#', 'Paper Summary', 'Review Progress', 'Decision Status', 'Tasks', 'Status'],

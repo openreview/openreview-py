@@ -366,7 +366,8 @@ var getBlindedNotes = function() {
   return Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
     details: 'invitation,tags,original,replyCount,directReplies',
-    select: 'id,number,forum,content,details'
+    select: 'id,number,forum,content,details',
+    sort: 'number:asc'
   })
 };
 

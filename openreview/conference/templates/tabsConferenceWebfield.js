@@ -99,7 +99,8 @@ function load() {
   if (user && !_.startsWith(user.id, 'guest_')) {
     activityNotesP = Webfield.api.getSubmissions(WILDCARD_INVITATION, {
       pageSize: PAGE_SIZE,
-      details: 'forumContent,invitation,writable'
+      details: 'forumContent,invitation,writable',
+      sort: 'tmdate:desc'
     });
 
     userGroupsP = Webfield.getAll('/groups', { regex: CONFERENCE_ID + '/.*', member: user.id, web: true });

@@ -36,7 +36,7 @@ class TestReviewersConference():
         conference.set_reviewers(emails=['test@mail.com'])
 
         # Reviewer user
-        request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference", test_client.token, wait_for_element='invitation')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
@@ -52,7 +52,7 @@ class TestReviewersConference():
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
 
         # Guest user
-        request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference")
+        request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference", wait_for_element='invitation')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 0
@@ -66,7 +66,7 @@ class TestReviewersConference():
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
 
         # Reviewer console
-        request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference/Program_Committee", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=learningtheory.org/COLT/2019/Conference/Program_Committee", test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
 
@@ -116,7 +116,7 @@ class TestReviewersConference():
         invitations = conference.open_reviews()
         assert invitations
 
-        request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token)
+        request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token, by=By.CLASS_NAME, wait_for_element='reviewer-progress')
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
         assert len(reviews) == 1
@@ -124,7 +124,7 @@ class TestReviewersConference():
         assert headers
         assert headers[0].text == '0 of 2 Reviews Submitted'
 
-        request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#reviewer-status", client.token)
+        request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#reviewer-status", client.token, by=By.CLASS_NAME, wait_for_element='reviewer-progress')
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
         # assert len(reviews) == 5 temporally disable assert
@@ -147,7 +147,7 @@ class TestReviewersConference():
         review_note = reviewer_client.post_note(note)
         assert review_note
 
-        request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token)
+        request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token, by=By.CLASS_NAME, wait_for_element='reviewer-progress')
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews
         assert len(reviews) == 1
