@@ -129,6 +129,8 @@ def process(client, note, invitation):
                     submission_readers=[openreview.SubmissionStage.Readers.EVERYONE]
                 elif 'Release all submissions to the public' in forum_note.content['release_submissions']:
                     submission_readers=[openreview.SubmissionStage.Readers.EVERYONE]
+                elif 'No, I don\'t want to release any submissions' in forum_note.content['release_submissions']:
+                    submission_readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
             if 'submission_readers' in forum_note.content:
                 if 'Make accepted submissions public and hide rejected submissions' in forum_note.content['submission_readers']:
