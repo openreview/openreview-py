@@ -606,7 +606,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
-                            'description': f'Link to OpenReview page of a previously rejected {short_name} submission that this submission is derived from.',
+                            'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
@@ -2748,7 +2748,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
-                            'description': f'Link to OpenReview page of a previously rejected {short_name} submission that this submission is derived from.',
+                            'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
@@ -3245,7 +3245,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
                                 'optional': True
                             },
-                            'description': f'Link to OpenReview page of a previously rejected {short_name} submission that this submission is derived from.',
+                            'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
