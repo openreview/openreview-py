@@ -1195,8 +1195,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            for sub in submissions:
-                writer.writerow([sub.id, 'Reject', 'Not Good'])
+            writer.writerow([submissions[0].id, 'Reject', 'Not Good'])
+            writer.writerow([submissions[1].id, 'Accept', 'Good Good'])
 
         # Post a decision stage note
         now = datetime.datetime.utcnow()
@@ -1309,15 +1309,20 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        for sub in submissions:
-            sub_decision_note = test_client.get_notes(
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv')) as f:
+            sub_decisions = list(csv.reader(f))
+
+        for i in range(len(submissions)):
+            sub_decision_notes = test_client.get_notes(
                 invitation='{venue_id}/Paper{number}/-/Decision'.format(
-                    venue_id=venue['venue_id'], number=sub.number
+                    venue_id=venue['venue_id'], number=submissions[i].number
                 )
-            )[0]
+            )
+            assert len(sub_decision_notes) == 1
+            sub_decision_note = sub_decision_notes[0]
             assert sub_decision_note
-            assert sub_decision_note.content['decision'] == 'Reject'
-            assert sub_decision_note.content['comment'] == 'Not Good'
+            assert sub_decision_note.content['decision'] == sub_decisions[i][1]
+            assert sub_decision_note.content['comment'] == sub_decisions[i][2]
 
         #get post_decision invitation
         with pytest.raises(openreview.OpenReviewException) as openReviewError:

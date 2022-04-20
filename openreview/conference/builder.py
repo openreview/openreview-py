@@ -11,7 +11,7 @@ from io import StringIO
 from tqdm import tqdm
 import os
 import concurrent.futures
-from .. import openreview
+from .. import openreview, OpenReviewException
 from .. import tools
 from . import webfield
 from . import invitation
@@ -1538,6 +1538,15 @@ Program Chairs
 
     def post_decisions(self, decisions_file):
         decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
+        decision_notes = {
+            n.forum: n for n in self.client.get_all_notes(
+                invitation=self.get_invitation_id(self.decision_stage.name, '.*')
+            )}
+
+        paper_notes = {
+            n.forum: n for n in self.client.get_all_notes(
+                invitation=self.get_invitation_id('Blind_Submission')
+            )}
 
         def post_decision(paper_decision):
             if len(paper_decision) == 3:
@@ -1550,12 +1559,14 @@ Program Chairs
                     "Too many values provided in the decision file. Expected values are: paper_id, decision, comment"
                 )
 
-            paper_note = self.client.get_notes(id=paper_id.strip())[0]
-            paper_decision_notes = self.client.get_notes(
-                invitation='{}/Paper{}/-/Decision'.format(self.id, paper_note.number)
-            )
-            if paper_decision_notes:
-                paper_decision_note = paper_decision_notes[0]
+            paper_note = paper_notes.get(paper_id, None)
+            if not paper_note:
+                raise OpenReviewException(
+                    f"Paper with ID: {paper_id} not found. Please check the submitted paperIDs."
+                )
+
+            paper_decision_note = decision_notes.get(paper_id, None)
+            if paper_decision_note:
                 paper_decision_note.content = {
                     'title': 'Paper Decision',
                     'decision': decision.strip(),
