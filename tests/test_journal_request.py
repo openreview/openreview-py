@@ -304,6 +304,14 @@ TJ22 Editors-in-Chief
 
         helpers.await_queue(openreview_client)
 
+        recruitment_status_note = openreview_client.get_notes(invitation=inv, number=4)[0]
+        assert recruitment_status_note
+        assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in recruitment_status_note.content['comment']['value']
+
+        messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
+        assert len(messages) == 6
+        assert 'The user <a href="mailto:new_reviewer@mail.com">new_reviewer@mail.com</a> has declined an invitation to be a reviewer for TJ22.' in messages[0]['content']['text']
+
         helpers.create_user('ae_journal2@mail.com', 'Second', 'AE')
         ae2_client = OpenReviewClient(username='ae_journal2@mail.com', password='1234')
 
