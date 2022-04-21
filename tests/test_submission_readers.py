@@ -246,7 +246,6 @@ class TestSubmissionReaders():
         ))
         assert post_decision_note
         helpers.await_queue()
-        # conference.post_decision_stage(hide_rejected=True)
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 2

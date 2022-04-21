@@ -1477,7 +1477,7 @@ Program Chairs
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, hide_rejected=False, decision_heading_map=None, submission_readers=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
         submissions = self.get_submissions(details='original')
         decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
 
@@ -1490,8 +1490,7 @@ Program Chairs
         for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-            hide = hide_rejected and (not decision_note or decision_note and 'Reject' in decision_note.content['decision'])
-            submission.readers = self.submission_stage.get_readers(self, submission.number, hide)
+            submission.readers = self.submission_stage.get_readers(self, submission.number, decision_note)
             #double-blind
             if self.submission_stage.double_blind:
                 release_authors = is_release_authors(note_accepted)
@@ -1546,6 +1545,7 @@ class SubmissionStage(object):
         AREA_CHAIRS_ASSIGNED = 4
         REVIEWERS = 5
         REVIEWERS_ASSIGNED = 6
+        EVERYONE_BUT_REJECTED = 7
 
     def __init__(
             self,
@@ -1594,21 +1594,25 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
 
-    def get_readers(self, conference, number, hide=False):
+    def get_readers(self, conference, number, decision_note=None):
 
-        if (self.public or self.Readers.EVERYONE in self.readers) and not hide:
+        if self.Readers.EVERYONE in self.readers:
             return ['everyone']
         
         submission_readers=[conference.get_id()]
 
-        if hide:
-            if conference.use_senior_area_chairs:
-                submission_readers.append(conference.get_senior_area_chairs_id(number=number))
-            if conference.use_area_chairs:
-                submission_readers.append(conference.get_area_chairs_id(number=number))
-            submission_readers.append(conference.get_reviewers_id(number=number))
-            submission_readers.append(conference.get_authors_id(number=number))
-            return submission_readers
+        if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
+            hide = not decision_note or decision_note and 'Reject' in decision_note.content['decision']
+            if hide:
+                if conference.use_senior_area_chairs:
+                    submission_readers.append(conference.get_senior_area_chairs_id(number=number))
+                if conference.use_area_chairs:
+                    submission_readers.append(conference.get_area_chairs_id(number=number))
+                submission_readers.append(conference.get_reviewers_id(number=number))
+                submission_readers.append(conference.get_authors_id(number=number))
+                return submission_readers
+            else:
+                return ['everyone']
 
         if self.Readers.SENIOR_AREA_CHAIRS in self.readers and conference.use_senior_area_chairs:
             submission_readers.append(conference.get_senior_area_chairs_id())
