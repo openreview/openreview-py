@@ -273,6 +273,50 @@ def get_review_stage(client, request_forum):
         remove_fields = review_form_remove_options
     )
 
+def get_ethics_review_stage(client, request_forum):
+    review_start_date = request_forum.content.get('ethics_review_start_date', '').strip()
+    if review_start_date:
+        try:
+            review_start_date = datetime.datetime.strptime(review_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_start_date = datetime.datetime.strptime(review_start_date, '%Y/%m/%d')
+    else:
+        review_start_date = None
+
+    review_due_date = request_forum.content.get('ethics_review_deadline', '').strip()
+    if review_due_date:
+        try:
+            review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d')
+    else:
+        review_due_date = None
+
+    review_form_additional_options = request_forum.content.get('additional_ethics_review_form_options', {})
+
+    review_form_remove_options = request_forum.content.get('remove_ethics_review_form_options', '').replace(',', ' ').split()
+
+    readers_map = {
+        'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers': openreview.EthicsReviewStage.Readers.ALL_COMMITTEE,
+        'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers': openreview.EthicsReviewStage.Readers.ALL_ASSIGNED_COMMITTEE,
+        'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers': openreview.EthicsReviewStage.Readers.ASSIGNED_ETHICS_REVIEWERS,
+        'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review': openreview.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE
+    }
+    release_to_reviewers = readers_map.get(request_forum.content.get('release_ethics_reviews_to_reviewers', ''), openreview.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE)
+
+    flagged_submissions = request_forum.content.get('flagged_submissions', '').split(',')
+    
+    return openreview.EthicsReviewStage(
+        start_date = review_start_date,
+        due_date = review_due_date,
+        release_to_public = (request_forum.content.get('make_ethics_reviews_public', None) == 'Yes, ethics reviews should be revealed publicly when they are posted'),
+        release_to_authors = (request_forum.content.get('release_ethics_reviews_to_authors', '').startswith('Yes')),
+        release_to_reviewers = release_to_reviewers,
+        additional_fields = review_form_additional_options,
+        remove_fields = review_form_remove_options,
+        submission_numbers = flagged_submissions
+    )    
+
 def get_meta_review_stage(client, request_forum):
     meta_review_start_date = request_forum.content.get('meta_review_start_date', '').strip()
     if meta_review_start_date:

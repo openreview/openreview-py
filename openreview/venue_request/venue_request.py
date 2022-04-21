@@ -195,6 +195,107 @@ class VenueStages():
             }
         ))
 
+    def setup_ethics_review_stage(self):
+
+        ethics_review_stage_content = {
+            'ethics_review_start_date': {
+                'description': 'When does reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 1
+            },
+            'ethics_review_deadline': {
+                'description': 'When does reviewing of submissions end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': True,
+                'order': 2
+            },
+            'make_ethics_reviews_public': {
+                'description': "Should the ethics reviews be made public immediately upon posting? Note that selecting 'Yes' will automatically release any posted ethics reviews to the public if the submission is also public.",
+                'value-radio': [
+                    'Yes, ethics reviews should be revealed publicly when they are posted',
+                    'No, ethics reviews should NOT be revealed publicly when they are posted'
+                ],
+                'required': True,
+                'default': 'Yes, ethics reviews should be revealed publicly when they are posted',
+                'order': 3
+            },
+            'release_ethics_reviews_to_authors': {
+                'description': 'Should the ethics reviews be visible to paper\'s authors immediately upon posting? Default is "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors".',
+                'value-radio': [
+                    'Yes, ethics reviews should be revealed when they are posted to the paper\'s authors',
+                    'No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors'
+                ],
+                'required': True,
+                'default': 'No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'order': 4
+            },
+            'release_ethics_reviews_to_reviewers': {
+                'description': 'Should the reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have already submitted their own review or only the author of the review immediately upon posting?',
+                'value-radio': [
+                    'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers',
+                    'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers',
+                    'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers',
+                    'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review'
+                ],
+                'required': True,
+                'default': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'order': 5
+            },
+            'flagged_submissions': {
+                'order' : 6,
+                'value-regex': '.*',
+                'required': True,
+                'description': 'Comma separated values of submission numbers that ethics reviews must be enabled.'
+            },
+            'additional_ethics_review_form_options': {
+                'order' : 7,
+                'value-dict': {},
+                'required': False,
+                'description': 'Configure additional options in the ethics review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+            },
+            'remove_ethics_review_form_options': {
+                'order': 8,
+                'value-regex': r'^[^,]+(,\s*[^,]*)*$',
+                'required': False,
+                'description': 'Comma separated list of fields (recommendation, ethics_review) that you want removed from the review form.'
+            },
+            "release_submissions_to_ethics_reviewers": {
+                "description": "Confirm that you want to release the submissions to the ethics reviewers if they are no currently released.",
+                "order": 9,
+                "value-radio": [
+                    "We confirm we want to release the submissions to the ethics reviewers",
+                    "We confirm we want to release the submissions and reviews to the ethics reviewers"
+                ],
+                "required": True
+            }           
+        }
+
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Ethics_Review_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[self.venue_request.support_group.id],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                },
+                'content': ethics_review_stage_content
+            }
+        ))
+
+
     def setup_comment_stage(self):
 
         comment_stage_content = {
@@ -620,6 +721,7 @@ class VenueRequest():
         self.venue_revision_invitation = venue_stages.setup_venue_revision()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
         self.review_stage_super_invitation = venue_stages.setup_review_stage()
+        self.ethics_review_stage_super_invitation = venue_stages.setup_ethics_review_stage()
         self.comment_stage_super_invitation = venue_stages.setup_comment_stage()
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
         self.submission_revision_stage_super_invitation = venue_stages.setup_submission_revision_stage()

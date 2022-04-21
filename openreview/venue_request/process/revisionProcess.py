@@ -37,6 +37,9 @@ def process(client, note, invitation):
         elif invitation_type == 'Review_Stage':
             conference.set_review_stage(openreview.helpers.get_review_stage(client, forum_note))
 
+        elif invitation_type == 'Ethics_Review_Stage':
+            conference.set_ethics_review_stage(openreview.helpers.get_ethics_review_stage(client, forum_note))
+
         elif invitation_type == 'Meta_Review_Stage':
             conference.set_meta_review_stage(openreview.helpers.get_meta_review_stage(client, forum_note))
 

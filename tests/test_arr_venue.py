@@ -879,3 +879,52 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'This submission is no longer under review. No action is required from your end.' == error_message.text
+
+
+    def test_ethics_review_stage(self, test_client, client, helpers):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)        
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Briefly summarize the ethics concerns.",
+                        "required": True
+                    }                    
+                },
+                'flagged_submissions': '1,3',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        groups = client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/Ethics_Reviewers')
+        assert len(groups) == 2
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper1/Ethics_Reviewers')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper3/Ethics_Reviewers')
+
+        invitations = client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/-/Ethics_Review')     
+        assert len(invitations) == 2
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper1/-/Ethics_Review')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper3/-/Ethics_Review')

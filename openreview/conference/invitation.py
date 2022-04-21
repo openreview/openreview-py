@@ -897,6 +897,87 @@ class PaperReviewInvitation(openreview.Invitation):
             reply = reply
         )
 
+class EthicsReviewInvitation(openreview.Invitation):
+
+    def __init__(self, conference):
+        ethics_review_stage = conference.ethics_review_stage
+        content = invitations.ethics_review.copy()
+
+        for key in ethics_review_stage.additional_fields:
+            content[key] = ethics_review_stage.additional_fields[key]
+
+        for field in ethics_review_stage.remove_fields:
+            if field in content:
+                del content[field]
+
+        process_file = os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            file_content = file_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
+            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
+            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
+            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
+
+            super(EthicsReviewInvitation, self).__init__(id = conference.get_invitation_id(ethics_review_stage.name),
+                cdate = tools.datetime_millis(ethics_review_stage.start_date),
+                duedate = tools.datetime_millis(ethics_review_stage.due_date),
+                expdate = tools.datetime_millis(ethics_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if ethics_review_stage.due_date else None,
+                readers = ['everyone'],
+                writers = [conference.id],
+                signatures = [conference.id],
+                multiReply = False,
+                reply = {
+                    'content': content
+                },
+                process_string = file_content
+            )
+
+class PaperEthicsReviewInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+
+        ethics_review_stage = conference.ethics_review_stage
+        signature_regex = ethics_review_stage.get_signatures(conference, note.number)
+        readers = ethics_review_stage.get_readers(conference, note.number)
+        nonreaders = ethics_review_stage.get_nonreaders(conference, note.number)
+
+        reply = {
+            'forum': note.id,
+            'replyto': note.id,
+            'readers': {
+                'description': 'Select all user groups that should be able to read this comment.',
+                'values': readers
+            },
+            'nonreaders': {
+                'values': nonreaders
+            },
+            'writers': {
+                'values-copied': [conference.get_id(), '{signatures}'],
+                'description': 'How your identity will be displayed.'
+            },
+            'signatures': {
+                'values-regex': signature_regex,
+                'description': 'How your identity will be displayed.'
+            }
+        }
+
+        has_copies = [r for r in readers if r.startswith('{') and r.endswith('}')]
+        if has_copies:
+            reply['readers'] = {
+                'description': 'Select all user groups that should be able to read this comment.',
+                'values-copied': readers
+            }
+
+        super(PaperEthicsReviewInvitation, self).__init__(id = conference.get_invitation_id(ethics_review_stage.name, note.number),
+            super = conference.get_invitation_id(ethics_review_stage.name),
+            writers = [conference.id],
+            signatures = [conference.id],
+            invitees = [conference.get_ethics_reviewers_id(number = note.number), conference.get_program_chairs_id(), conference.support_user],
+            reply = reply
+        )                     
+
 class RebuttalInvitation(openreview.Invitation):
 
     def __init__(self, conference):
@@ -1517,6 +1598,18 @@ class InvitationBuilder(object):
             invitations.append(invitation)
 
         return invitations
+
+    def set_ethics_review_invitation(self, conference, notes):
+        print('post invitations')
+        invitations = []
+        self.client.post_invitation(EthicsReviewInvitation(conference))
+        print('post invitation notes')
+        for note in tqdm(notes, total=len(notes), desc='set_ethics_review_invitation'):
+            invitation = self.client.post_invitation(PaperEthicsReviewInvitation(conference, note))
+            self.__update_readers(note, invitation)
+            invitations.append(invitation)
+
+        return invitations        
 
     def set_review_rebuttal_invitation(self, conference, reviews):
         invitations = []

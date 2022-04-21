@@ -85,6 +85,7 @@ class Conference(object):
         self.bid_stages = {}
         self.expertise_selection_stage = ExpertiseSelectionStage()
         self.review_stage = ReviewStage()
+        self.ethics_review_stage = None
         self.review_rebuttal_stage = None
         self.review_revision_stage = None
         self.review_rating_stage = None
@@ -207,6 +208,30 @@ class Conference(object):
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
         return invitations
 
+    def __create_ethics_review_stage(self):
+
+        notes = list(self.get_submissions(number=','.join(self.ethics_review_stage.submission_numbers)))
+        ## TODO: make submissions and reviews visible to ethics reviewers
+        
+        ## Create ethics paper groups
+        for note in tqdm(notes):
+            ethics_reviewers_id=self.get_ethics_reviewers_id(number=note.number)
+            group = tools.get_group(self.client, id = ethics_reviewers_id)
+            if not group:
+                self.client.post_group(openreview.Group(id=ethics_reviewers_id,
+                    readers=[self.id, self.get_ethics_chairs_id(), ethics_reviewers_id],
+                    nonreaders=[self.get_authors_id(note.number)],
+                    deanonymizers=[self.id, self.get_ethics_chairs_id()],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    anonids=True,
+                    members=group.members if group else [])
+                )           
+
+        invitations = self.invitation_builder.set_ethics_review_invitation(self, notes)
+        return invitations        
+
     def __create_review_rebuttal_stage(self):
         invitation = self.get_invitation_id(self.review_stage.name, '.*')
         review_iterator = self.client.get_all_notes(invitation = invitation)
@@ -318,6 +343,10 @@ class Conference(object):
         self.review_stage = stage
         return self.__create_review_stage()
 
+    def set_ethics_review_stage(self, stage):
+        self.ethics_review_stage = stage
+        return self.__create_ethics_review_stage()        
+
     def set_review_rebuttal_stage(self, stage):
         self.review_rebuttal_stage = stage
         return self.__create_review_rebuttal_stage()
@@ -367,8 +396,9 @@ class Conference(object):
     def get_reviewers_id(self, number = None):
         return self.get_committee_id(self.reviewers_name, number)
 
-    def get_anon_reviewer_id(self, number=None, anon_id=None):
-        single_reviewer_name=self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+    def get_anon_reviewer_id(self, number=None, anon_id=None, name=None):
+        reviewers_name = name if name else self.reviewers_name
+        single_reviewer_name=reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name
         if self.legacy_anonids:
             return f'{self.id}/Paper{number}/AnonReviewer{anon_id}'
         return f'{self.id}/Paper{number}/{single_reviewer_name}_{anon_id}'
@@ -1884,6 +1914,105 @@ class ReviewStage(object):
             return '~.*|' + conference.get_program_chairs_id()
 
         return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
+
+
+class EthicsReviewStage(object):
+
+    class Readers(Enum):
+        ALL_COMMITTEE = 0
+        ALL_ASSIGNED_COMMITTEE = 1
+        ASSIGNED_ETHICS_REVIEWERS = 2
+        ETHICS_REVIEWER_SIGNATURE = 3
+
+    def __init__(self,
+        start_date = None,
+        due_date = None,
+        name = None,
+        release_to_public = False,
+        release_to_authors = False,
+        release_to_reviewers = Readers.ETHICS_REVIEWER_SIGNATURE,
+        additional_fields = {},
+        remove_fields = [],
+        submission_numbers = []
+    ):
+
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name if name else 'Ethics_Review'
+        self.release_to_public = release_to_public
+        self.release_to_authors = release_to_authors
+        self.release_to_reviewers = release_to_reviewers
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
+        self.submission_numbers = submission_numbers
+
+    def get_readers(self, conference, number):
+
+        if self.release_to_public:
+            return ['everyone']
+
+        readers = [ conference.get_program_chairs_id()]
+
+        if self.release_to_reviewers == self.Readers.ALL_COMMITTEE:
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id())
+
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id())
+
+            readers.append(self.get_reviewers_id())
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+
+            readers.append(conference.get_ethics_reviewers_id())                
+
+        if self.release_to_reviewers == self.Readers.ALL_ASSIGNED_COMMITTEE:
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id(number=number))
+
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id(number=number))
+
+            readers.append(conference.get_reviewers_id(number=number))
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id(number=number))
+
+            readers.append(self.get_ethics_reviewers_id(number=number)) 
+
+        if self.release_to_reviewers == self.Readers.ASSIGNED_ETHICS_REVIEWERS:
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id(number=number))
+
+            readers.append(self.get_ethics_reviewers_id(number=number)) 
+
+        if self.release_to_reviewers == self.Readers.ETHICS_REVIEWER_SIGNATURE:
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id(number=number))
+
+            readers.append('{signatures}')             
+
+
+        if self.release_to_authors:
+            readers.append(conference.get_authors_id(number = number))
+
+        return readers
+
+    def get_nonreaders(self, conference, number):
+
+        if self.release_to_public:
+            return []
+
+        if self.release_to_authors:
+            return []
+
+        return [conference.get_authors_id(number = number)]
+
+    def get_signatures(self, conference, number):
+        return conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name) + '|' +  conference.get_program_chairs_id()
 
 class ReviewRebuttalStage(object):
 
