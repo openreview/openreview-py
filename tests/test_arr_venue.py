@@ -14,7 +14,7 @@ class TestNeurIPSConference():
     @pytest.fixture(scope="class")
     def venue(self, client):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
         return conference
@@ -97,7 +97,7 @@ class TestNeurIPSConference():
     def test_recruit_actions_editors(self, client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
         ## Invite ~Area_CMUChair1 as AC
         reviewer_details = '''~Area_CMUChair1'''
@@ -291,7 +291,7 @@ class TestNeurIPSConference():
     def test_registration_tasks(self, client):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
 
         fields = {}
@@ -378,7 +378,7 @@ class TestNeurIPSConference():
     def test_submit_papers(self, test_client, client, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
-        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
         domains = ['gmail.com', 'facebook.com', 'yahoo.com', 'ucla.edu', 'mdu.edu', 'cornell.edu']
@@ -410,7 +410,7 @@ class TestNeurIPSConference():
 
         venue.set_area_chairs(['~Area_CMUChair1', '~Area_MITChair1', '~Area_AmazonChair1'])
 
-        submissions=venue.get_submissions()
+        submissions=venue.get_submissions(sort='tmdate')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/ac_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)

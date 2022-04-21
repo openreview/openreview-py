@@ -25,6 +25,7 @@ class Recruitment(object):
         }
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
+            invitee = invitee.lower() if '@' in invitee else invitee
             memberships = [g.id for g in self.client.get_groups(member=invitee, regex=action_editors_id)] if tools.get_group(self.client, invitee) else []
             if action_editors_id in memberships:
                 recruitment_status['already_member'].append(invitee)
@@ -70,6 +71,7 @@ class Recruitment(object):
         invited_members = self.client.get_group(reviewers_invited_id).members
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
+            invitee = invitee.lower() if '@' in invitee else invitee
             memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if tools.get_group(self.client, invitee) else []
             if reviewers_id in memberships:
                 recruitment_status['already_member'].append(invitee)
