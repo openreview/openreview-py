@@ -53,32 +53,31 @@ If you would like to change your decision, please click the Accept link in the p
 
         action = 'accepted' if response == 'Yes' else 'declined'
 
-        recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID))
-        print(len(recruitment_notes), 'recruitment notes')
-        for note in recruitment_notes:
-            invitee = note.content['invitee_email']['value'].strip()
-            print('invitee:', invitee)
-            id_or_email = user
-            if '~' in user:
-                profile = openreview.tools.get_profile(user)
-                id_or_email = profile.id
-            print('id_or_email:', id_or_email)
-            if invitee == id_or_email:
-                #post comment to journal request
-                comment_content = f'''The user {invitee} has {action} an invitation to be a reviewer for {SHORT_PHRASE}.'''
-                recruitment_inv = note.invitations[0]
-                comment = client.post_note_edit(invitation=recruitment_inv.replace('Reviewer_Recruitment_by_AE', 'Comment'),
-                    signatures=[VENUE_ID],
-                    note = openreview.api.Note(
-                        content = {
-                            'title': { 'value': 'New Recruitment Response'},
-                            'comment': { 'value': comment_content}
-                        },
-                        forum = JOURNAL_REQUEST_ID,
-                        replyto = JOURNAL_REQUEST_ID,
-                        readers = [SUPPORT_GROUP, VENUE_ID, VENUE_ID + '/Action_Editors']
-                    ))
-                break
+        if JOURNAL_REQUEST_ID:
+            recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID))
+            print(len(recruitment_notes), 'recruitment notes!')
+            for note in recruitment_notes:
+                invitee = note.content['invitee_email']['value'].strip()
+                id_or_email = user
+                if '~' in user:
+                    profile = openreview.tools.get_profile(user)
+                    id_or_email = profile.id
+                if invitee == id_or_email:
+                    #post comment to journal request
+                    comment_content = f'''The user {invitee} has {action} an invitation to be a reviewer for {SHORT_PHRASE}.'''
+                    recruitment_inv = note.invitations[0]
+                    comment = client.post_note_edit(invitation=recruitment_inv.replace('Reviewer_Recruitment_by_AE', 'Comment'),
+                        signatures=[VENUE_ID],
+                        note = openreview.api.Note(
+                            content = {
+                                'title': { 'value': 'New Recruitment Response'},
+                                'comment': { 'value': comment_content}
+                            },
+                            forum = JOURNAL_REQUEST_ID,
+                            replyto = JOURNAL_REQUEST_ID,
+                            readers = [SUPPORT_GROUP, VENUE_ID, VENUE_ID + '/Action_Editors']
+                        ))
+                    break
 
         return response
     else:
