@@ -1542,22 +1542,21 @@ Program Chairs
             n.forum: n for n in self.client.get_all_notes(
                 invitation=self.get_invitation_id(self.decision_stage.name, '.*')
             )}
-
-        paper_notes = {
-            n.forum: n for n in self.client.get_all_notes(
-                invitation=self.get_invitation_id('Blind_Submission')
-            )}
+        paper_notes = {n.forum: n for n in self.get_submissions()}
 
         def post_decision(paper_decision):
+            if len(paper_decision) < 2:
+                raise OpenReviewException(
+                    "Not enough values provided in the decision file. Expected values are: paper_id, decision, comment")
+            if len(paper_decision) > 3:
+                raise OpenReviewException(
+                    "Too many values provided in the decision file. Expected values are: paper_id, decision, comment"
+                )
             if len(paper_decision) == 3:
                 paper_id, decision, comment = paper_decision
             elif len(paper_decision) == 2:
                 paper_id, decision = paper_decision
                 comment = ''
-            else:
-                raise ValueError(
-                    "Too many values provided in the decision file. Expected values are: paper_id, decision, comment"
-                )
 
             paper_note = paper_notes.get(paper_id, None)
             if not paper_note:
@@ -1574,7 +1573,7 @@ Program Chairs
                 }
             else:
                 paper_decision_note = openreview.Note(
-                    invitation='{}/Paper{}/-/Decision'.format(self.id, paper_note.number),
+                    invitation=self.get_invitation_id(name=self.decision_stage.name, number=paper_note.number),
                     writers=[self.get_program_chairs_id()],
                     readers=self.decision_stage.get_readers(conference=self, number=paper_note.number),
                     nonreaders=self.decision_stage.get_nonreaders(conference=self, number=paper_note.number),
