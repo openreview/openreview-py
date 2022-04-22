@@ -254,5 +254,25 @@ class TestSubmissionReaders():
 
         assert blind_submissions[0].readers == [f'{venue_id}', f'{venue_id}/Paper1/Area_Chairs', f'{venue_id}/Paper1/Reviewers', f'{venue_id}/Paper1/Authors']
         assert blind_submissions[0].content['authors'] == ['Anonymous']
+        assert 'venue' in blind_submissions[0].content and blind_submissions[0].content['venue'] == 'Submitted to TestVenue@OR2040'
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[1].content['authors'] == ['Workshop Author', 'Workshop Author']
+        assert 'venue' in blind_submissions[1].content and blind_submissions[1].content['venue'] == 'TestVenue@OR2040 Oral'
+        assert 'venueid' in blind_submissions[1].content and blind_submissions[1].content['venueid'] == 'TEST.cc/2040/Conference'
+
+        #check venue and venueid are not overwritten
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.setup_post_submission_stage(force=True)
+
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert blind_submissions and len(blind_submissions) == 2
+
+        venue_id = venue['venue_id']
+
+        assert blind_submissions[0].readers == [f'{venue_id}', f'{venue_id}/Paper1/Area_Chairs', f'{venue_id}/Paper1/Reviewers', f'{venue_id}/Paper1/Authors']
+        assert blind_submissions[0].content['authors'] == ['Anonymous']
+        assert 'venue' in blind_submissions[0].content and blind_submissions[0].content['venue'] == 'Submitted to TestVenue@OR2040'
+        assert blind_submissions[1].readers == ['everyone']
+        assert blind_submissions[1].content['authors'] == ['Workshop Author', 'Workshop Author']
+        assert 'venue' in blind_submissions[1].content and blind_submissions[1].content['venue'] == 'TestVenue@OR2040 Oral'
+        assert 'venueid' in blind_submissions[1].content and blind_submissions[1].content['venueid'] == 'TEST.cc/2040/Conference'

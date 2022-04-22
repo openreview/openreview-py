@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from math import e
 
 import time
 import datetime
@@ -807,6 +808,13 @@ class Conference(object):
                 'authorids': [self.get_authors_id(number=note.number)],
                 '_bibtex': None
             }
+            if existing_blind_note:
+                if 'venueid' in existing_blind_note.content:
+                    blind_content['venueid'] = existing_blind_note.content['venueid']
+                if 'venue' in existing_blind_note.content:
+                    blind_content['venue'] = existing_blind_note.content['venue']
+                if '_bibtex' in existing_blind_note.content:
+                    blind_content['_bibtex'] = existing_blind_note.content['_bibtex']
 
             for field in hide_fields:
                 blind_content[field] = ''
@@ -827,7 +835,7 @@ class Conference(object):
 
                 blind_note = self.client.post_note(blind_note)
 
-                if self.submission_stage.public:
+                if self.submission_stage.public and blind_content['_bibtex'] is None:
                     blind_content['_bibtex'] = tools.get_bibtex(
                         note=note,
                         venue_fullname=self.name,

@@ -1457,7 +1457,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         due_date = now + datetime.timedelta(days=3)
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
-                'reveal_authors': 'Reveal author identities of all submissions to the public',
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
                 'submission_readers': 'Everyone (submissions are public)'
             },
             forum=venue['request_form_note'].forum,
@@ -1478,13 +1478,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
-        # Assert that submisions are not blind anymore
-        assert blind_submissions[0].content['authors'] == ['Venue Author']
-        assert blind_submissions[0].content['authorids'] == ['~Venue_Author1']
-        assert blind_submissions[1].content['authors'] == ['Venue Author']
-        assert blind_submissions[1].content['authorids'] == ['~Venue_Author2']
-        assert blind_submissions[2].content['authors'] == ['Venue Author', 'Melisa Bok']
-        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3', 'melisa@mail.com']
+        assert blind_submissions[0].content['authors'] == ['Anonymous']
+        assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
+        assert blind_submissions[1].content['authors'] == ['Anonymous']
+        assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
+        assert blind_submissions[2].content['authors'] == ['Anonymous']
+        assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
 
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']
@@ -1492,7 +1491,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert blind_submissions[2].readers == ['everyone']
 
         #check venue and venueid for accepted, venue for rejected
-        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert submissions and len(submissions) == 3
 
         assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
@@ -1531,18 +1530,29 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
-        # Assert that submisions are still not blind
-        assert blind_submissions[0].content['authors'] == ['Venue Author']
-        assert blind_submissions[0].content['authorids'] == ['~Venue_Author1']
-        assert blind_submissions[1].content['authors'] == ['Venue Author']
-        assert blind_submissions[1].content['authorids'] == ['~Venue_Author2']
-        assert blind_submissions[2].content['authors'] == ['Venue Author', 'Melisa Bok']
-        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3', 'melisa@mail.com']
+        assert blind_submissions[0].content['authors'] == ['Anonymous']
+        assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
+        assert blind_submissions[1].content['authors'] == ['Anonymous']
+        assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
+        assert blind_submissions[2].content['authors'] == ['Anonymous']
+        assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
 
         # Assert that submissions are still public
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
+
+        #Assert venue and venueid were not overwritten
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.setup_post_submission_stage(force=True)
+
+        submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert submissions and len(submissions) == 3
+
+        assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
+        assert 'venueid' not in submissions[0].content
+        assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
+        assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
 
         # Post revision note for a submission
         author_client = openreview.Client(username='venue_author3@mail.com', password='1234')
