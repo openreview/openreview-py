@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from math import e
 
 import time
 import datetime
@@ -1606,7 +1605,7 @@ class SubmissionStage(object):
 
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
-        
+
         submission_readers=[conference.get_id()]
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
