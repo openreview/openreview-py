@@ -212,61 +212,6 @@ var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerG
   };
 };
 
-var buildAreaChairGroupMaps = function(noteNumbers, areaChairGroups, anonAreaChairGroups) {
-  var noteMap = buildNoteMap(noteNumbers);
-  var areaChairMap = {};
-  var profileIds = [];
-
-  areaChairGroups.forEach(function(g) {
-    var num = getNumberfromGroup(g.id, 'Paper');
-    if (num in noteMap) {
-      g.members.forEach(function(member, index) {
-        var anonGroup = anonAreaChairGroups.find(function(grp) {
-          return grp.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Area_Chair_') && grp.members.length && grp.members[0] == member;
-        });
-        if (anonGroup) {
-          var anonId = getNumberfromGroup(anonGroup.id, 'Area_Chair_')
-          noteMap[num][anonId] = member;
-          if (!(member in areaChairMap)) {
-            areaChairMap[member] = [];
-          }
-          areaChairMap[member].push(num);
-          profileIds.push(member);
-        }
-      })
-    }
-  });
-
-  return {
-    byNotes: noteMap,
-    byAreaChairs: areaChairMap,
-    profileIds: profileIds
-  };
-};
-
-var buildSeniorAreaChairGroupMaps = function(noteNumbers, seniorAreaChairGroups) {
-  var noteMap = buildNoteMap(noteNumbers);
-  var seniorAreaChairMap = {};
-
-  seniorAreaChairGroups.forEach(function(g) {
-    var num = getNumberfromGroup(g.id, 'Paper');
-    if (num in noteMap) {
-      g.members.forEach(function(member, index) {
-        noteMap[num] = member;
-        if (!(member in seniorAreaChairMap)) {
-          seniorAreaChairMap[member] = [];
-        }
-        seniorAreaChairMap[member].push(num);
-      })
-    }
-  });
-
-  return {
-    byNotes: noteMap,
-    bySeniorAreaChairs: seniorAreaChairMap
-  };
-};
-
 var getOfficialReviews = function(notes) {
   var ratingExp = /^(\d+): .*/;
 
@@ -366,10 +311,10 @@ var getAllInvitations = function() {
 
 var formatData = function(groups, submissions, invitations, recruitmentGroups) {
 
-  var noteNumbers = getPaperNumbersfromGroups(groups.seniorAreaChairGroups);
+  var noteNumbers = getPaperNumbersfromGroups(groups.reviewerGroups);
   submissions = submissions.filter(function(s) { return noteNumbers.indexOf(s.number) >= 0; });
   var reviewerGroupMaps = buildReviewerGroupMaps(noteNumbers, groups.reviewerGroups, groups.anonReviewerGroups);
-  var allProfileIds = _.uniq(reviewerGroupMaps.profileIds).concat(areaChairGroupMaps.profileIds);
+  var allProfileIds = _.uniq(reviewerGroupMaps.profileIds);
 
   return getUserProfiles(allProfileIds)
   .then(function(profiles) {
@@ -395,7 +340,7 @@ var renderTasks = function(invitations) {
   var tasksOptions = {
     container: '#ethics-chair-tasks',
     emptyMessage: 'No outstanding tasks for this conference',
-    referrer: encodeURIComponent('[Ethics Chair Console](/group?id=' + CONFERENCE_ID + '/' + ETHICS_CHAIR_NAME + '#ethics-chair-tasks)')
+    referrer: encodeURIComponent('[Ethics Chair Console](/group?id=' + CONFERENCE_ID + '/' + ETHICS_CHAIRS_NAME + '#ethics-chair-tasks)')
   }
   $(tasksOptions.container).empty();
 
