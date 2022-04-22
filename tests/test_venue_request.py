@@ -1498,6 +1498,17 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'venueid' not in submissions[0].content
         assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
+
+        note_id = submissions[0].id
+        assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@inproceedings{
+anonymous2022test,
+title={test submission},
+author={Anonymous},
+booktitle={Submitted to Test 2030 Venue Updated},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id + '''},
+note={under review}
+}'''
         
         # Post another revision stage note
         now = datetime.datetime.utcnow()
@@ -1542,7 +1553,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
 
-        #Assert venue and venueid were not overwritten
+        #Assert venue, venueid and bibtex were not overwritten
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.setup_post_submission_stage(force=True)
 
@@ -1553,6 +1564,17 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'venueid' not in submissions[0].content
         assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
+
+        note_id = submissions[0].id
+        assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@inproceedings{
+anonymous2022test,
+title={test submission},
+author={Anonymous},
+booktitle={Submitted to Test 2030 Venue Updated},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id + '''},
+note={under review}
+}'''
 
         # Post revision note for a submission
         author_client = openreview.Client(username='venue_author3@mail.com', password='1234')

@@ -820,30 +820,28 @@ class Conference(object):
 
             blind_readers = self.submission_stage.get_readers(self, note.number)
 
-            if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
+            blind_note = openreview.Note(
+                id = existing_blind_note.id if existing_blind_note else None,
+                original= note.id,
+                invitation= self.get_blind_submission_id(),
+                forum=None,
+                signatures= [self.id],
+                writers= [self.id],
+                readers= blind_readers,
+                content= blind_content)
 
-                blind_note = openreview.Note(
-                    id = existing_blind_note.id if existing_blind_note else None,
-                    original= note.id,
-                    invitation= self.get_blind_submission_id(),
-                    forum=None,
-                    signatures= [self.id],
-                    writers= [self.id],
-                    readers= blind_readers,
-                    content= blind_content)
+            blind_note = self.client.post_note(blind_note)
+
+            if self.submission_stage.public and 'venue' not in blind_content:
+                blind_content['_bibtex'] = tools.get_bibtex(
+                    note=note,
+                    venue_fullname=self.name,
+                    url_forum=blind_note.id,
+                    year=str(self.get_year()))
+
+                blind_note.content = blind_content
 
                 blind_note = self.client.post_note(blind_note)
-
-                if self.submission_stage.public and blind_content['_bibtex'] is None:
-                    blind_content['_bibtex'] = tools.get_bibtex(
-                        note=note,
-                        venue_fullname=self.name,
-                        url_forum=blind_note.id,
-                        year=str(self.get_year()))
-
-                    blind_note.content = blind_content
-
-                    blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
 
         # Update PC console with double blind submissions
