@@ -37,6 +37,7 @@ class TestARRVenue():
         helpers.create_user('reviewer_arr3@ibm.com', 'Reviewer ARR', 'IBM', institution='ibm.com')
         helpers.create_user('reviewer_arr4@fb.com', 'Reviewer ARR', 'Facebook', institution='fb.com')
         helpers.create_user('reviewer_arr5@google.com', 'Reviewer ARR', 'Google', institution='google.com')
+        helpers.create_user('ethic_chair@arr.org', 'Ethics', 'Chair', institution='google.com')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',

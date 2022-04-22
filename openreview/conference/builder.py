@@ -211,6 +211,7 @@ class Conference(object):
     def __create_ethics_review_stage(self):
 
         self.set_ethics_reviewers()
+        self.set_ethics_chairs()
         
         numbers = ','.join(map(str, self.ethics_review_stage.submission_numbers))
         notes = list(self.get_submissions(number=numbers))
@@ -1197,6 +1198,18 @@ class Conference(object):
             additional_readers = readers)
 
         return self.webfield_builder.set_ethics_reviewer_page(self, ethics_reviewer_group)        
+
+    def set_ethics_chairs(self, emails = []):
+        readers = [self.id, self.get_ethics_chairs_id()]
+
+        ethics_reviewer_group = self.__create_group(
+            group_id = self.get_ethics_chairs_id(),
+            group_owner_id = self.id,
+            members = emails,
+            additional_readers = readers)
+
+        return self.webfield_builder.set_ethics_chairs_page(self, ethics_reviewer_group)        
+
 
     def set_authors(self):
         # Creating venue level authors group
