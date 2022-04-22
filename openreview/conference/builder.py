@@ -343,6 +343,10 @@ class Conference(object):
 
     def set_decision_stage(self, stage):
         self.decision_stage = stage
+
+        if self.decision_stage.decisions_file is not None:
+            decisions = self.client.get_attachment(id=self.request_form_id, field_name='upload_decisions')
+            self.post_decisions(decisions)
         return self.__create_decision_stage()
 
     def set_area_chairs_name(self, name):
@@ -1554,10 +1558,11 @@ Program Chairs
                 )
             if len(paper_decision) == 3:
                 paper_id, decision, comment = paper_decision
-            elif len(paper_decision) == 2:
+            else:
                 paper_id, decision = paper_decision
                 comment = ''
 
+            print(f"Posting Decision {decision} for Paper {paper_id}")
             paper_note = paper_notes.get(paper_id, None)
             if not paper_note:
                 raise OpenReviewException(
@@ -1587,6 +1592,7 @@ Program Chairs
                     replyto=paper_note.forum
                 )
             self.client.post_note(paper_decision_note)
+            print(f"Decision posted for Paper {paper_id}")
 
         tools.concurrent_requests(post_decision, decisions_data)
 

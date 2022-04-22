@@ -42,11 +42,6 @@ def process(client, note, invitation):
 
         elif invitation_type == 'Decision_Stage':
             conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))
-            decisions_file = forum_note.content.get('upload_decisions')
-
-            if decisions_file:
-                decisions = client.get_attachment(id=forum_note.id, field_name='upload_decisions')
-                conference.post_decisions(decisions)
 
             content = {}
 
