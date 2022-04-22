@@ -153,7 +153,7 @@ class TestSingleBlindPrivateConference():
 
     def test_post_decisions(self, conference, helpers, test_client, client, request_page, selenium):
 
-        conference.post_decision_stage(reveal_all_authors=False, reveal_authors_accepted=True, release_all_notes=False, release_notes_accepted=True, decision_heading_map={ 'Accept (Poster)': 'Poster', 'Accept (Oral)': 'Oral'})
+        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={ 'Accept (Poster)': 'Poster', 'Accept (Oral)': 'Oral'}, submission_readers=[openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
 
         submissions=conference.get_submissions(number=5)
         assert submissions[0].readers != ['everyone']

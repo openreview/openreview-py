@@ -814,36 +814,41 @@ class Conference(object):
                 'authorids': [self.get_authors_id(number=note.number)],
                 '_bibtex': None
             }
+            if existing_blind_note:
+                if 'venueid' in existing_blind_note.content:
+                    blind_content['venueid'] = existing_blind_note.content['venueid']
+                if 'venue' in existing_blind_note.content:
+                    blind_content['venue'] = existing_blind_note.content['venue']
+                if '_bibtex' in existing_blind_note.content:
+                    blind_content['_bibtex'] = existing_blind_note.content['_bibtex']
 
             for field in hide_fields:
                 blind_content[field] = ''
 
             blind_readers = self.submission_stage.get_readers(self, note.number)
 
-            if not existing_blind_note or existing_blind_note.content != blind_content or existing_blind_note.readers != blind_readers:
+            blind_note = openreview.Note(
+                id = existing_blind_note.id if existing_blind_note else None,
+                original= note.id,
+                invitation= self.get_blind_submission_id(),
+                forum=None,
+                signatures= [self.id],
+                writers= [self.id],
+                readers= blind_readers,
+                content= blind_content)
 
-                blind_note = openreview.Note(
-                    id = existing_blind_note.id if existing_blind_note else None,
-                    original= note.id,
-                    invitation= self.get_blind_submission_id(),
-                    forum=None,
-                    signatures= [self.id],
-                    writers= [self.id],
-                    readers= blind_readers,
-                    content= blind_content)
+            blind_note = self.client.post_note(blind_note)
+
+            if self.submission_stage.public and 'venue' not in blind_content:
+                blind_content['_bibtex'] = tools.get_bibtex(
+                    note=note,
+                    venue_fullname=self.name,
+                    url_forum=blind_note.id,
+                    year=str(self.get_year()))
+
+                blind_note.content = blind_content
 
                 blind_note = self.client.post_note(blind_note)
-
-                if self.submission_stage.public:
-                    blind_content['_bibtex'] = tools.get_bibtex(
-                        note=note,
-                        venue_fullname=self.name,
-                        url_forum=blind_note.id,
-                        year=str(self.get_year()))
-
-                    blind_note.content = blind_content
-
-                    blind_note = self.client.post_note(blind_note)
             blinded_notes.append(blind_note)
 
         # Update PC console with double blind submissions
@@ -1484,57 +1489,59 @@ Program Chairs
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, release_all_notes=False, release_notes_accepted=False, decision_heading_map=None):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
         submissions = self.get_submissions(details='original')
         decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
-
-        if (release_all_notes or release_notes_accepted) and not self.submission_stage.double_blind:
-            self.submission_stage.public = True
-            self.invitation_builder.set_submission_invitation(self)
-
-        def is_release_note(is_note_accepted):
-            return release_all_notes or (release_notes_accepted and is_note_accepted)
 
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
+        if submission_readers:
+            self.submission_stage.readers = submission_readers
+
         for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-            if is_release_note(note_accepted) or 'everyone' in submission.readers:
-                submission.readers = ['everyone']
-                if self.submission_stage.double_blind:
-                    release_authors = is_release_authors(note_accepted)
-                    submission.content = {
-                        '_bibtex': tools.get_bibtex(
-                                    openreview.Note.from_json(submission.details['original']),
-                                    venue_fullname=self.name,
-                                    year=str(self.year),
-                                    url_forum=submission.forum,
-                                    accepted=note_accepted,
-                                    anonymous=(not release_authors))
-                    }
-                    if not release_authors:
-                        submission.content['authors'] = ['Anonymous']
-                        submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
-                else:
-                    submission.content['_bibtex'] = tools.get_bibtex(
-                                    submission,
-                                    venue_fullname=self.name,
-                                    year=str(self.year),
-                                    url_forum=submission.forum,
-                                    accepted=note_accepted,
-                                    anonymous=False)
-                if note_accepted:
-                    decision = decision_note.content['decision'].replace('Accept', '')
-                    decision = re.sub(r'[()\W]+', '', decision)
-                    venueid = self.id
-                    venue = self.short_name
-                    if decision:
-                        venue += ' ' + decision
-                    submission.content['venueid'] = venueid
-                    submission.content['venue'] = venue
-                self.client.post_note(submission)
+            submission.readers = self.submission_stage.get_readers(self, submission.number, decision_note)
+            #double-blind
+            if self.submission_stage.double_blind:
+                release_authors = is_release_authors(note_accepted)
+                submission.content = {
+                    '_bibtex': tools.get_bibtex(
+                        openreview.Note.from_json(submission.details['original']),
+                        venue_fullname=self.name,
+                        year=str(self.year),
+                        url_forum=submission.forum,
+                        accepted=note_accepted,
+                        anonymous=(not release_authors)
+                    )
+                }
+                if not release_authors:
+                    submission.content['authors'] = ['Anonymous']
+                    submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
+            #single-blind
+            else:
+                submission.content['_bibtex'] = tools.get_bibtex(
+                    submission,
+                    venue_fullname=self.name,
+                    year=str(self.year),
+                    url_forum=submission.forum,
+                    accepted=note_accepted,
+                    anonymous=False
+                )
+            #add venue_id if note accepted
+            venue = self.short_name
+            if note_accepted:
+                decision = decision_note.content['decision'].replace('Accept', '')
+                decision = re.sub(r'[()\W]+', '', decision)
+                venueid = self.id
+                if decision:
+                    venue += ' ' + decision
+                submission.content['venueid'] = venueid
+                submission.content['venue'] = venue
+            else:
+                submission.content['venue'] = f'Submitted to {venue}'
+            self.client.post_note(submission)
 
         if decision_heading_map:
             self.set_homepage_decisions(decision_heading_map=decision_heading_map)
@@ -1607,6 +1614,7 @@ class SubmissionStage(object):
         AREA_CHAIRS_ASSIGNED = 4
         REVIEWERS = 5
         REVIEWERS_ASSIGNED = 6
+        EVERYONE_BUT_REJECTED = 7
 
     def __init__(
             self,
@@ -1655,12 +1663,25 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
 
-    def get_readers(self, conference, number):
+    def get_readers(self, conference, number, decision_note=None):
 
-        if self.public:
+        if self.Readers.EVERYONE in self.readers:
             return ['everyone']
 
         submission_readers=[conference.get_id()]
+
+        if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
+            hide = not decision_note or decision_note and 'Reject' in decision_note.content['decision']
+            if hide:
+                if conference.use_senior_area_chairs:
+                    submission_readers.append(conference.get_senior_area_chairs_id(number=number))
+                if conference.use_area_chairs:
+                    submission_readers.append(conference.get_area_chairs_id(number=number))
+                submission_readers.append(conference.get_reviewers_id(number=number))
+                submission_readers.append(conference.get_authors_id(number=number))
+                return submission_readers
+            else:
+                return ['everyone']
 
         if self.Readers.SENIOR_AREA_CHAIRS in self.readers and conference.use_senior_area_chairs:
             submission_readers.append(conference.get_senior_area_chairs_id())
@@ -1684,6 +1705,7 @@ class SubmissionStage(object):
         return submission_readers
 
     def get_invitation_readers(self, conference, under_submission):
+
 
         ## Rolling review should be release right away
         if self.create_groups:
