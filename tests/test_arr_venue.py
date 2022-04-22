@@ -881,7 +881,62 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         assert 'This submission is no longer under review. No action is required from your end.' == error_message.text
 
 
-    def test_ethics_review_stage(self, test_client, client, helpers):
+    def test_review_stage(self, venue, client, helpers):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        # Post a review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        review_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'remove_review_form_options': 'title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+            },
+            forum=request_form.forum,
+            invitation='{}/-/Request{}/Review_Stage'.format('openreview.net/Support', request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert review_stage_note
+        helpers.await_queue()
+
+        reviewer_client = openreview.Client(username='reviewer_arr4@fb.com', password='1234')
+        signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Reviewer_', signatory='reviewer_arr4@fb.com')
+        assert len(signatory_groups) == 1        
+
+        submissions=venue.get_submissions(number=5)
+
+        reviewer_client.post_note(openreview.Note(
+            invitation='aclweb.org/ACL/ARR/2021/September/Paper5/-/Official_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Area_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Reviewers/Submitted'],
+            nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
+            writers=['aclweb.org/ACL/ARR/2021/September', signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'review': 'This paper is ok',
+                'rating': '10: Top 5% of accepted papers, seminal paper',
+                'confidence': "1: The reviewer's evaluation is an educated guess"
+            }
+
+        ))
+
+        helpers.await_queue()        
+
+
+    
+    def test_ethics_review_stage(self, venue, client, helpers):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
         ## Need super user permission to add the venue to the active_venues group
@@ -906,7 +961,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
                         "required": True
                     }                    
                 },
-                'flagged_submissions': '1,3',
+                'flagged_submissions': '1,5',
                 'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
             },
             forum=request_form.forum,
@@ -922,9 +977,33 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         groups = client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/Ethics_Reviewers')
         assert len(groups) == 2
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper1/Ethics_Reviewers')
-        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper3/Ethics_Reviewers')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers')
 
         invitations = client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/-/Ethics_Review')     
         assert len(invitations) == 2
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper1/-/Ethics_Review')
-        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper3/-/Ethics_Review')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')
+
+        ## Assign ethics reviewer
+        ethics_reviewer_client = helpers.create_user('ethic_reviewer@arr.org', 'Ethics', 'Reviewer')
+        client.add_members_to_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers', '~Ethics_Reviewer1')
+
+        submissions=venue.get_submissions(number=5)
+
+        signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewer_', signatory='ethic_reviewer@arr.org')
+        assert len(signatory_groups) == 1        
+
+        ethics_reviewer_client.post_note(openreview.Note(
+            invitation='aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', signatory_groups[0].id],
+            nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
+            writers=['aclweb.org/ACL/ARR/2021/September', signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'ethics_concerns': 'This paper is ok',
+                'recommendation': '1: No serious ethical issues'
+            }
+
+        ))

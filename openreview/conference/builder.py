@@ -215,6 +215,13 @@ class Conference(object):
         
         ## Create ethics paper groups
         for note in tqdm(notes):
+
+            ## Release submission to ethics chairs and reviewers
+            if 'everyone' not in note.readers:
+                note.readers = note.readers + [self.get_ethics_chairs_id(), self.get_ethics_reviewers_id(number=note.number)]
+                self.client.post_note(note)            
+
+
             ethics_reviewers_id=self.get_ethics_reviewers_id(number=note.number)
             group = tools.get_group(self.client, id = ethics_reviewers_id)
             if not group:
@@ -229,6 +236,7 @@ class Conference(object):
                     members=group.members if group else [])
                 )           
 
+        self.invitation_builder.set_review_invitation(self, notes)
         invitations = self.invitation_builder.set_ethics_review_invitation(self, notes)
         return invitations        
 
@@ -1894,6 +1902,10 @@ class ReviewStage(object):
 
         readers.append(self._get_reviewer_readers(conference, number))
 
+        if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
+            readers.append(conference.get_ethics_chairs_id())
+            readers.append(conference.get_ethics_reviewers_id(number=number))
+
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
 
@@ -1977,21 +1989,21 @@ class EthicsReviewStage(object):
             readers.append(conference.get_reviewers_id(number=number))
 
             if conference.use_ethics_chairs:
-                readers.append(conference.get_ethics_chairs_id(number=number))
+                readers.append(conference.get_ethics_chairs_id())
 
             readers.append(self.get_ethics_reviewers_id(number=number)) 
 
         if self.release_to_reviewers == self.Readers.ASSIGNED_ETHICS_REVIEWERS:
 
             if conference.use_ethics_chairs:
-                readers.append(conference.get_ethics_chairs_id(number=number))
+                readers.append(conference.get_ethics_chairs_id())
 
             readers.append(self.get_ethics_reviewers_id(number=number)) 
 
         if self.release_to_reviewers == self.Readers.ETHICS_REVIEWER_SIGNATURE:
 
             if conference.use_ethics_chairs:
-                readers.append(conference.get_ethics_chairs_id(number=number))
+                readers.append(conference.get_ethics_chairs_id())
 
             readers.append('{signatures}')             
 
