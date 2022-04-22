@@ -418,6 +418,31 @@ class WebfieldBuilder(object):
             return self.__update_group(group, content)
 
 
+    def set_ethics_reviewer_page(self, conference, group):
+
+        reviewers_name = conference.ethics_reviewers_name
+
+        header = {
+            'title': reviewers_name.replace('_', ' ') + ' Console',
+            'instructions': '<p class="dark">This page provides information and status \
+            updates for the ' + conference.get_short_name() + '. It will be regularly updated as the conference \
+            progresses, so please check back frequently.</p>',
+            'schedule': ''
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/reviewerWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference.get_submission_id() + "';")
+            content = content.replace("var BLIND_SUBMISSION_ID = '';", "var BLIND_SUBMISSION_ID = '" + conference.get_blind_submission_id() + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var REVIEWER_NAME = '';", "var REVIEWER_NAME = '" + conference.ethics_reviewers_name + "';")
+            content = content.replace("var AREACHAIR_NAME = '';", "var AREACHAIR_NAME = '" + conference.area_chairs_name + "';")
+            content = content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.ethics_review_stage.name + "';")
+            content = content.replace("var CUSTOM_LOAD_INVITATION = '';", "var CUSTOM_LOAD_INVITATION = '" + conference.id + '/' + reviewers_name + '/-/Reduced_Load' + "';")
+            return self.__update_group(group, content)
+
+
     def set_area_chair_page(self, conference, group):
 
         area_chair_name = conference.area_chairs_name
