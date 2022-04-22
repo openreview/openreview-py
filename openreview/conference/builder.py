@@ -210,17 +210,13 @@ class Conference(object):
 
     def __create_ethics_review_stage(self):
 
-        notes = list(self.get_submissions(number=','.join(self.ethics_review_stage.submission_numbers)))
-        ## TODO: make submissions and reviews visible to ethics reviewers
+        numbers = ','.join(map(str, self.ethics_review_stage.submission_numbers))
+        notes = list(self.get_submissions(number=numbers))
         
+        self.create_blind_submissions(number=numbers)
+
         ## Create ethics paper groups
         for note in tqdm(notes):
-
-            ## Release submission to ethics chairs and reviewers
-            if 'everyone' not in note.readers:
-                note.readers = note.readers + [self.get_ethics_chairs_id(), self.get_ethics_reviewers_id(number=note.number)]
-                self.client.post_note(note)            
-
 
             ethics_reviewers_id=self.get_ethics_reviewers_id(number=note.number)
             group = tools.get_group(self.client, id = ethics_reviewers_id)
@@ -238,7 +234,7 @@ class Conference(object):
 
         self.invitation_builder.set_review_invitation(self, notes)
         invitations = self.invitation_builder.set_ethics_review_invitation(self, notes)
-        return invitations        
+        return invitations 
 
     def __create_review_rebuttal_stage(self):
         invitation = self.get_invitation_id(self.review_stage.name, '.*')
@@ -347,13 +343,13 @@ class Conference(object):
         self.bid_stages[stage.committee_id] = stage
         return self.__create_bid_stage(stage)
 
-    def set_review_stage(self, stage):
-        self.review_stage = stage
-        return self.__create_review_stage()
+    def create_review_stage(self):
+        if self.review_stage:
+            return self.__create_review_stage()
 
-    def set_ethics_review_stage(self, stage):
-        self.ethics_review_stage = stage
-        return self.__create_ethics_review_stage()        
+    def create_ethics_review_stage(self):
+        if self.ethics_review_stage:
+            return self.__create_ethics_review_stage()
 
     def set_review_rebuttal_stage(self, stage):
         self.review_rebuttal_stage = stage
@@ -843,7 +839,7 @@ class Conference(object):
         active_venues = self.client.get_group('active_venues')
         self.client.add_members_to_group(active_venues, self.id)
 
-    def create_blind_submissions(self, hide_fields=[]):
+    def create_blind_submissions(self, hide_fields=[], number=None):
 
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
@@ -855,7 +851,7 @@ class Conference(object):
         self.invitation_builder.set_blind_submission_invitation(self, hide_fields)
         blinded_notes = []
 
-        for note in tqdm(self.client.get_all_notes(invitation=self.get_submission_id(), sort='number:asc'), desc='create_blind_submissions'):
+        for note in tqdm(self.client.get_all_notes(invitation=self.get_submission_id(), sort='number:asc', number=number), desc='create_blind_submissions'):
             # If the note was either withdrawn or desk-rejected already, we should not create another blind copy
             if withdrawn_submissions_by_original.get(note.id) or desk_rejected_submissions_by_original.get(note.id):
                 continue
@@ -1690,6 +1686,10 @@ class SubmissionStage(object):
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
             submission_readers.append(conference.get_reviewers_id(number=number))
 
+        if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
+            submission_readers.append(conference.get_ethics_chairs_id())
+            submission_readers.append(conference.get_ethics_reviewers_id(number=number))            
+
         submission_readers.append(conference.get_authors_id(number=number))
         return submission_readers
 
@@ -2304,6 +2304,7 @@ class ConferenceBuilder(object):
         self.registration_stages = []
         self.bid_stages = []
         self.review_stage = None
+        self.ethics_review_stage = None
         self.review_rebuttal_stage = None
         self.comment_stage = None
         self.meta_review_stage = None
@@ -2472,8 +2473,8 @@ class ConferenceBuilder(object):
     def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False):
         self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions))
 
-    def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
-        self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
+    def set_review_stage(self, stage):
+        self.conference.review_stage = stage
 
     def set_review_rebuttal_stage(self, start_date = None, due_date = None, name = None,  email_pcs = False, additional_fields = {}):
         self.review_rebuttal_stage = ReviewRebuttalStage(start_date, due_date, name, email_pcs, additional_fields)
@@ -2493,6 +2494,9 @@ class ConferenceBuilder(object):
     def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, allow_author_reorder=False):
         self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted, allow_author_reorder)
 
+    def set_ethics_review_stage(self, stage):
+        self.conference.ethics_review_stage = stage
+    
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
 
@@ -2572,9 +2576,6 @@ class ConferenceBuilder(object):
 
         for s in self.registration_stages:
             self.conference.set_registration_stage(s)
-
-        if self.review_stage:
-            self.conference.set_review_stage(self.review_stage)
 
         if self.review_rebuttal_stage:
             self.conference.set_review_rebuttal_stage(self.review_rebuttal_stage)

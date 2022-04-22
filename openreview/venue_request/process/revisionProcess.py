@@ -35,10 +35,10 @@ def process(client, note, invitation):
                 conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_area_chairs_id()))
 
         elif invitation_type == 'Review_Stage':
-            conference.set_review_stage(openreview.helpers.get_review_stage(client, forum_note))
+            conference.create_review_stage()
 
         elif invitation_type == 'Ethics_Review_Stage':
-            conference.set_ethics_review_stage(openreview.helpers.get_ethics_review_stage(client, forum_note))
+            conference.create_ethics_review_stage()
 
         elif invitation_type == 'Meta_Review_Stage':
             conference.set_meta_review_stage(openreview.helpers.get_meta_review_stage(client, forum_note))

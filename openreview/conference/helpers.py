@@ -200,6 +200,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_reviewer_roles(note.content.get('reviewer_roles', ['Reviewers']))
     builder.set_area_chair_roles(note.content.get('area_chair_roles', ['Area_Chairs']))
     builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
+    builder.set_review_stage(get_review_stage(note))
+    builder.set_ethics_review_stage(get_ethics_review_stage(note))
 
     return builder
 
@@ -224,7 +226,7 @@ def get_bid_stage(client, request_forum, committee_id):
 
     return openreview.BidStage(committee_id if committee_id else request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
 
-def get_review_stage(client, request_forum):
+def get_review_stage(request_forum):
     review_start_date = request_forum.content.get('review_start_date', '').strip()
     if review_start_date:
         try:
@@ -273,7 +275,7 @@ def get_review_stage(client, request_forum):
         remove_fields = review_form_remove_options
     )
 
-def get_ethics_review_stage(client, request_forum):
+def get_ethics_review_stage(request_forum):
     review_start_date = request_forum.content.get('ethics_review_start_date', '').strip()
     if review_start_date:
         try:
@@ -304,7 +306,9 @@ def get_ethics_review_stage(client, request_forum):
     }
     release_to_reviewers = readers_map.get(request_forum.content.get('release_ethics_reviews_to_reviewers', ''), openreview.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE)
 
-    flagged_submissions = request_forum.content.get('flagged_submissions', '').split(',')
+    flagged_submissions = []
+    if request_forum.content.get('flagged_submissions'):
+        flagged_submissions = [int(number) for number in request_forum.content['flagged_submissions'].split(',')]
     
     return openreview.EthicsReviewStage(
         start_date = review_start_date,
