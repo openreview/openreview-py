@@ -1715,8 +1715,10 @@ class SubmissionStage(object):
             submission_readers.append(conference.get_reviewers_id(number=number))
 
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
-            submission_readers.append(conference.get_ethics_chairs_id())
-            submission_readers.append(conference.get_ethics_reviewers_id(number=number))            
+            if conference.use_ethics_chairs:
+                submission_readers.append(conference.get_ethics_chairs_id())
+            if conference.use_ethics_reviewers:
+                submission_readers.append(conference.get_ethics_reviewers_id(number=number))            
 
         submission_readers.append(conference.get_authors_id(number=number))
         return submission_readers
@@ -1931,8 +1933,10 @@ class ReviewStage(object):
         readers.append(self._get_reviewer_readers(conference, number))
 
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
-            readers.append(conference.get_ethics_chairs_id())
-            readers.append(conference.get_ethics_reviewers_id(number=number))
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+            if conference.use_ethics_reviewers:
+                readers.append(conference.get_ethics_reviewers_id(number=number))  
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
