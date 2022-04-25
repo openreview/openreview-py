@@ -213,6 +213,7 @@ class Conference(object):
         numbers = ','.join(map(str, self.ethics_review_stage.submission_numbers))
         notes = list(self.get_submissions(number=numbers))
         
+        ## Make submissions visible to the ethics committee
         self.create_blind_submissions(number=numbers)
 
         ## Create ethics paper groups
@@ -230,8 +231,13 @@ class Conference(object):
                     signatories=[self.id],
                     anonids=True,
                     members=group.members if group else [])
-                )           
+                )
 
+        ## Setup paper matching
+        self.setup_committee_matching(self.get_ethics_reviewers_id(), compute_affinity_scores=False, compute_conflicts=True)
+        self.invitation_builder.set_assignment_invitation(self, self.get_ethics_reviewers_id())      
+
+        ## Make reviews visible to the ethics committee
         self.invitation_builder.set_review_invitation(self, notes)
         invitations = self.invitation_builder.set_ethics_review_invitation(self, notes)
         return invitations 
@@ -418,6 +424,12 @@ class Conference(object):
             name=self.reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
+
+    def get_ethics_reviewers_name(self, pretty=True):
+        if pretty:
+            name=self.ethics_reviewers_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.ethics_reviewers_name
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:

@@ -367,7 +367,16 @@ class TestARRVenue():
         assert '1 users' in recruitment_status_notes[0].content['invited']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/Invited" in recruitment_status_notes[0].content['comment']
 
+        messages = client.get_messages(to = 'ethic_reviewer@arr.org', subject = '[ARR 2021 - September] Invitation to serve as Ethics Reviewer')
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
+        request_page(selenium, accept_url, alert=True)
+        helpers.await_queue()
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers')
+        assert len(accepted_group.members) == 1
+        assert 'ethic_reviewer@arr.org' in accepted_group.members
+        assert client.get_messages(to = 'ethic_reviewer@arr.org', subject = '[ARR 2021 - September] Ethics Reviewer Invitation accepted')  
 
     def test_registration_tasks(self, client):
 
@@ -985,11 +994,23 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper1/-/Ethics_Review')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')
 
+        submissions=venue.get_submissions(number=5)
+
         ## Assign ethics reviewer
         ethics_reviewer_client = helpers.create_user('ethic_reviewer@arr.org', 'Ethics', 'Reviewer')
-        client.add_members_to_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers', '~Ethics_Reviewer1')
+        
+        pc_client.post_edge(openreview.Edge(
+            invitation='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/-/Assignment',
+            readers=['aclweb.org/ACL/ARR/2021/September', '~Ethics_Reviewer1'],
+            writers=['aclweb.org/ACL/ARR/2021/September'],
+            head=submissions[0].id,
+            tail='~Ethics_Reviewer1',
+            signatures=['aclweb.org/ACL/ARR/2021/September/Program_Chairs']
+        ))
+        
+        helpers.await_queue()
 
-        submissions=venue.get_submissions(number=5)
+        assert '~Ethics_Reviewer1' in client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers').members
 
         submission = ethics_reviewer_client.get_note(submissions[0].id)
         assert 'aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers' in submission.readers

@@ -2083,6 +2083,22 @@ class InvitationBuilder(object):
         is_area_chair = committee_id == conference.get_area_chairs_id()
         is_senior_area_chair = committee_id == conference.get_senior_area_chairs_id()
         is_reviewer = committee_id == conference.get_reviewers_id()
+        is_ethics_reviewer = committee_id == conference.get_ethics_reviewers_id()
+
+        review_invitation_name = conference.review_stage.name
+        anon_regex = conference.get_anon_reviewer_id('{number}', '.*')
+        paper_group_id = conference.get_reviewers_id(number='{number}')
+        group_name = conference.get_reviewers_name(pretty=True)
+        if is_area_chair:
+            review_invitation_name = conference.meta_review_stage.name
+            anon_regex = conference.get_anon_area_chair_id('{number}', '.*')
+            paper_group_id = conference.get_area_chairs_id(number='{number}')
+            group_name = conference.get_area_chairs_name(pretty=True)
+        if is_ethics_reviewer:
+            review_invitation_name = conference.ethics_review_stage.name
+            anon_regex = conference.get_anon_reviewer_id('{number}', '.*', conference.ethics_reviewers_name)
+            paper_group_id = conference.get_ethics_reviewers_id(number='{number}')
+            group_name = conference.get_ethics_reviewers_name(pretty=True)
 
         if is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'templates/sac_assignment_post_process.py')) as post:
@@ -2096,15 +2112,15 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_pre_process.py')) as pre:
             pre_content = pre.read()
-            pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + conference.get_invitation_id(conference.meta_review_stage.name if is_area_chair else conference.review_stage.name, '{number}') + "'")
-            pre_content = pre_content.replace("ANON_REVIEWER_REGEX = ''", "ANON_REVIEWER_REGEX = '" + (conference.get_anon_area_chair_id('{number}', '.*') if is_area_chair else conference.get_anon_reviewer_id('{number}', '.*')) + "'")
+            pre_content = pre_content.replace("REVIEW_INVITATION_ID = ''", "REVIEW_INVITATION_ID = '" + conference.get_invitation_id(review_invitation_name, '{number}') + "'")
+            pre_content = pre_content.replace("ANON_REVIEWER_REGEX = ''", "ANON_REVIEWER_REGEX = '" + anon_regex + "'")
             with open(os.path.join(os.path.dirname(__file__), 'templates/assignment_post_process.py')) as post:
                 post_content = post.read()
                 post_content = post_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
                 post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}"')
-                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + (conference.get_area_chairs_id(number='{number}') if is_area_chair else conference.get_reviewers_id(number='{number}')) + "'")
-                post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + (conference.get_area_chairs_name(pretty=True) if is_area_chair else conference.get_reviewers_name(pretty=True)) + "'")
-                post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + (conference.get_area_chairs_id() if is_area_chair else conference.get_reviewers_id()) + "'")
+                post_content = post_content.replace("PAPER_GROUP_ID = ''", "PAPER_GROUP_ID = '" + paper_group_id + "'")
+                post_content = post_content.replace("GROUP_NAME = ''", "GROUP_NAME = '" + group_name + "'")
+                post_content = post_content.replace("GROUP_ID = ''", "GROUP_ID = '" + committee_id + "'")
                 if conference.use_senior_area_chairs and is_area_chair:
                     post_content = post_content.replace("SYNC_SAC_ID = ''", "SYNC_SAC_ID = '" + conference.get_senior_area_chairs_id(number='{number}') + "'")
                     post_content = post_content.replace("SAC_ASSIGNMENT_INVITATION_ID = ''", "SAC_ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(conference.get_senior_area_chairs_id(), deployed=True) + "'")
