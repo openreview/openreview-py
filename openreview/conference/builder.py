@@ -624,12 +624,6 @@ class Conference(object):
     def has_senior_area_chairs(self, has_senior_area_chairs):
         self.use_senior_area_chairs = has_senior_area_chairs
 
-    def has_ethics_chairs(self, has_ethics_chairs):
-        self.use_ethics_chairs = has_ethics_chairs
-
-    def has_ethics_reviewers(self, has_ethics_reviewers):
-        self.use_ethics_reviewers = has_ethics_reviewers                
-
     def has_secondary_area_chairs(self, has_secondary_area_chairs):
         self.use_secondary_area_chairs = has_secondary_area_chairs
 
@@ -2430,10 +2424,10 @@ class ConferenceBuilder(object):
         self.conference.has_senior_area_chairs(has_senior_area_chairs)
 
     def has_ethics_chairs(self, has_ethics_chairs):
-        self.conference.has_ethics_chairs(has_ethics_chairs)  
+        self.conference.use_ethics_chairs = has_ethics_chairs
 
     def has_ethics_reviewers(self, has_ethics_reviewers):
-        self.conference.has_ethics_reviewers(has_ethics_reviewers)                
+        self.conference.use_ethics_reviewers = has_ethics_reviewers
 
     def enable_reviewer_reassignment(self, enable):
         self.conference.enable_reviewer_reassignment = enable

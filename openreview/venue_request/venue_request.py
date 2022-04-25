@@ -788,7 +788,6 @@ class VenueRequest():
                 'description': 'Are you going to have Ethics reviews?. In case of yes, you need to recruit Ethics Chair and Reviewers',
                 'value-radio': [
                     'Yes, our venue has Ethics Chairs and Reviewers',
-                    'Yes, our venue has Ethics Reviewers only'
                     'No, our venue does not have Ethics Chairs and Reviewers'
                 ],
                 'required': False,

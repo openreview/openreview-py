@@ -100,9 +100,6 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         builder.has_ethics_chairs(True)
         builder.has_ethics_reviewers(True)
 
-    if note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Reviewers only':
-        builder.has_ethics_reviewers(True)
-
     double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
     readers_map = {
