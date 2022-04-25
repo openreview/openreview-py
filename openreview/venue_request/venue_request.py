@@ -241,11 +241,11 @@ class VenueStages():
                 'default': 'Review should not be revealed to any reviewer, except to the author of the review',
                 'order': 5
             },
-            'flagged_submissions': {
+            'ethics_review_submissions': {
                 'order' : 6,
                 'value-regex': '.*',
                 'required': True,
-                'description': 'Comma separated values of submission numbers that ethics reviews must be enabled.'
+                'description': 'Comma separated values of submission numbers that need ethics reviews.'
             },
             'additional_ethics_review_form_options': {
                 'order' : 7,

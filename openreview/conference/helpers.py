@@ -304,8 +304,8 @@ def get_ethics_review_stage(request_forum):
     release_to_reviewers = readers_map.get(request_forum.content.get('release_ethics_reviews_to_reviewers', ''), openreview.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE)
 
     flagged_submissions = []
-    if request_forum.content.get('flagged_submissions'):
-        flagged_submissions = [int(number) for number in request_forum.content['flagged_submissions'].split(',')]
+    if request_forum.content.get('ethics_review_submissions'):
+        flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
     
     return openreview.EthicsReviewStage(
         start_date = review_start_date,

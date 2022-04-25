@@ -246,7 +246,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         signatures = ['~Super_User1']
     ))
 
-    if (forum.content.get('ethics_chairs_and_reviewers')):
+    if (forum.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'):
         client.post_invitation(openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Ethics_Review_Stage',
             super = SUPPORT_GROUP + '/-/Ethics_Review_Stage',

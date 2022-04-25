@@ -962,7 +962,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
                         "required": True
                     }                    
                 },
-                'flagged_submissions': '1,5',
+                'ethics_review_submissions': '1,5',
                 'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
             },
             forum=request_form.forum,
