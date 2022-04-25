@@ -991,6 +991,15 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         submissions=venue.get_submissions(number=5)
 
+        submission = ethics_reviewer_client.get_note(submissions[0].id)
+        assert 'aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers' in submission.readers
+        assert 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs' in submission.readers
+
+        reviews = ethics_reviewer_client.get_notes(forum=submission.id, invitation='aclweb.org/ACL/ARR/2021/September/Paper5/-/Official_Review')
+        assert len(reviews) == 1
+        assert 'aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers' in reviews[0].readers
+        assert 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs' in reviews[0].readers
+
         signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewer_', signatory='ethic_reviewer@arr.org')
         assert len(signatory_groups) == 1        
 
@@ -1006,5 +1015,9 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
                 'ethics_concerns': 'This paper is ok',
                 'recommendation': '1: No serious ethical issues'
             }
-
         ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='ethic_reviewer@arr.org', subject="[ARR 2021 - September] Your ethics review has been received on your assigned Paper number: 5, Paper title: \"Paper title 5\"")
+        assert len(messages) == 1
