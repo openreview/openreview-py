@@ -547,6 +547,15 @@ class VenueStages():
                     'Reveal author identities of only accepted submissions to the public',
                     'No, I don\'t want to reveal any author identities.'],
                 'required': True
+            },
+            'send_decision_notifications': {
+                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
+                'value-radio': [
+                    'Yes, send an email notification to the authors',
+                    'No, I will send the emails to the authors'
+                ],
+                'required': True,
+                'default': 'No, I will send the emails to the authors'
             }
         }
 

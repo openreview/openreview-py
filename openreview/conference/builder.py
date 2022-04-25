@@ -1540,6 +1540,30 @@ Program Chairs
             self.set_homepage_decisions(decision_heading_map=decision_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
+    def send_decision_notifications(self, decision, message):
+        decision_notes = self.client.get_all_notes(
+            invitation=self.get_invitation_id(self.decision_stage.name, '.*'),
+            content={
+                'decision': decision
+            }
+        )
+        paper_notes = {n.forum: n for n in self.get_submissions()}
+
+        def send_notification(note):
+            paper_note = paper_notes[note.forum]
+            subject = "[{SHORT_NAME}] Decision notification for your submission {submission_number}: {submission_title}".format(
+                SHORT_NAME=self.get_short_name(),
+                submission_number=paper_note.number,
+                submission_title=paper_note.content['title']
+            )
+            final_message = message.format(
+                submission_title=paper_note.content['title'],
+                short_name=self.get_short_name()
+            )
+            self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
+
+        tools.concurrent_requests(send_notification, decision_notes)
+
 class SubmissionStage(object):
 
     class Readers(Enum):
