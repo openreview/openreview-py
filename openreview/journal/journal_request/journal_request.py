@@ -168,7 +168,7 @@ class JournalRequest():
                 writers = [],
                 signatures = ['~Super_User1'],
                 edit = {
-                    'signatures': { 'regex': f'~.*|{self.support_group_id}', 'type': 'group[]' },
+                    'signatures': { 'regex': f'~.*|{venue_id}|{self.support_group_id}', 'type': 'group[]' },
                     'writers': { 'const': [self.support_group_id, venue_id] },
                     'readers': { 'const': [self.support_group_id, venue_id] },
                     'note': {

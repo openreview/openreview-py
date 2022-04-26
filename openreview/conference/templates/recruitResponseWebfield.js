@@ -49,7 +49,7 @@ function render() {
       ].join('\n'));
     } else if (declined) {
       // Get invitation to request max load
-      Webfield.get('/invitations', { regex: REDUCED_LOAD_INVITATION_ID })
+      Webfield.get('/invitations', { id: REDUCED_LOAD_INVITATION_ID })
       .then(function(result) {
         if (result.hasOwnProperty('invitations') && result.invitations.length) {
           invitation = result.invitations[0];

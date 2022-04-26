@@ -245,10 +245,15 @@ class Journal(object):
     def get_submission_editable_id(self, number):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
-    def get_request_id(self):
+    def get_request_form(self):
         forum_note = self.client.get_notes(invitation='(openreview.net|OpenReview.net)/Support/-/Journal_Request$', content={'venue_id':self.venue_id})
         if forum_note:
-            return forum_note[0].id
+            return forum_note[0]
+
+    def get_support_group(self):
+        forum_note = self.get_request_form()
+        if forum_note:
+            return forum_note.invitations[0].split('/-/')[0]
 
     def setup(self, support_role, editors=[], assignment_delay=5):
         self.group_builder.set_groups(self, support_role, editors)
@@ -290,8 +295,8 @@ class Journal(object):
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
         return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
-        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo)
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reinvite=False):
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reinvite)
 
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
