@@ -8,6 +8,7 @@ def process(client, note, invitation):
     ACTION_EDITOR_DECLINED_ID = ''
     HASH_SEED = ''
     JOURNAL_REQUEST_ID = ''
+    SUPPORT_GROUP = ''
     VENUE_ID = ''
 
     if hasattr(note, 'note'):
@@ -53,7 +54,7 @@ If you would like to change your decision, please click the Accept link in the p
         action = 'accepted' if response == 'Yes' else 'declined'
 
         if JOURNAL_REQUEST_ID:
-            recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'.*/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID))
+            recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID))
             for note in recruitment_notes:
                 invitee = note.content['invitee_email']['value'].strip()
                 invitee_ids = [invitee]
@@ -65,7 +66,7 @@ If you would like to change your decision, please click the Accept link in the p
                     profile = openreview.tools.get_profile(client, user)
                     id_or_email = profile.id
                 if id_or_email in invitee_ids:
-                    comment_inv = client.get_invitations(regex='.*/Journal_Request.*/-/Comment', replyForum=JOURNAL_REQUEST_ID)[0]
+                    comment_inv = client.get_invitations(regex=f'{SUPPORT_GROUP}/Journal_Request.*/-/Comment', replyForum=JOURNAL_REQUEST_ID)[0]
                     #post comment to journal request
                     comment_content = f'''The user {invitee} has {action} an invitation to be a reviewer for {SHORT_PHRASE}.'''
                     recruitment_inv = note.invitations[0]
