@@ -486,7 +486,16 @@ var buildPaperTableRow = function(note) {
     showActivityModal: false,
     expandReviewerList: false,
     enableReviewerReassignment : false,
-    referrer: paperTableReferrerUrl
+    referrer: paperTableReferrerUrl,
+    actions: [
+      {
+        name: 'Edit Assignments',
+        url: '/edges/browse?start=staticList,type:head,ids:' + note.id +
+        '&traverse=' + ETHICS_REVIEWERS_ID + '/-/Assignment' +
+        '&edit=' + ETHICS_REVIEWERS_ID + '/-/Assignment' +
+        '&browse=' + ETHICS_REVIEWERS_ID + '/-/Affinity_Score' + ';' + ETHICS_REVIEWERS_ID + '/-/Conflict'
+      }
+    ]
   };
 
   return {
@@ -568,13 +577,9 @@ var displayPaperStatusTable = function() {
       paperNumbers.push(d.note.number);
 
       var numberHtml = '<strong class="note-number">' + d.note.number + '</strong>';
-      var checked = '<label><input type="checkbox" class="select-note-reviewers" data-note-id="' +
-        d.note.id + '" ' + (selectedNotesById[d.note.id] ? 'checked="checked"' : '') + '></label>';
       var numberHtml = '<strong class="note-number">' + d.note.number + '</strong>';
       var summaryHtml = Handlebars.templates.noteSummary(d.note);
       var reviewHtml = Handlebars.templates.noteReviewers(d.reviewProgressData);
-      var areachairHtml = Handlebars.templates.noteAreaChairs(d.areachairProgressData);
-      var decisionHtml = '<h4>' + (d.decision ? d.decision.content.decision : 'No Decision') + '</h4>';
 
       var rows = [numberHtml, summaryHtml, reviewHtml];
       return rows;

@@ -949,6 +949,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
     def test_ethics_review_stage(self, venue, client, helpers):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        ethics_chair_client=openreview.Client(username='ethic_chair@arr.org', password='1234')
         ## Need super user permission to add the venue to the active_venues group
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
 
@@ -999,13 +1000,14 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         ## Assign ethics reviewer
         ethics_reviewer_client = helpers.create_user('ethic_reviewer@arr.org', 'Ethics', 'Reviewer')
         
-        pc_client.post_edge(openreview.Edge(
+        ethics_chair_client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/-/Assignment',
-            readers=['aclweb.org/ACL/ARR/2021/September', '~Ethics_Reviewer1'],
-            writers=['aclweb.org/ACL/ARR/2021/September'],
+            readers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', '~Ethics_Reviewer1'],
+            nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
+            writers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs'],
             head=submissions[0].id,
             tail='~Ethics_Reviewer1',
-            signatures=['aclweb.org/ACL/ARR/2021/September/Program_Chairs']
+            signatures=['aclweb.org/ACL/ARR/2021/September/Ethics_Chairs']
         ))
         
         helpers.await_queue()
