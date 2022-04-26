@@ -341,7 +341,7 @@ def get_decision_stage(client, request_forum):
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
 
-    decisions_file = request_forum.content.get('upload_decisions')
+    decisions_file = request_forum.content.get('decisions_file')
 
     return openreview.DecisionStage(
         options = decision_options,

@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 
 import csv
+import json
 import time
 import datetime
 import re
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from io import StringIO
+from multiprocessing import cpu_count
 
 from tqdm import tqdm
 import os
@@ -343,11 +346,11 @@ class Conference(object):
 
     def set_decision_stage(self, stage):
         self.decision_stage = stage
+        self.__create_decision_stage()
 
-        if self.decision_stage.decisions_file is not None:
-            decisions = self.client.get_attachment(id=self.request_form_id, field_name='upload_decisions')
+        if self.decision_stage.decisions_file:
+            decisions = self.client.get_attachment(id=self.request_form_id, field_name='decisions_file')
             self.post_decisions(decisions)
-        return self.__create_decision_stage()
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -1554,6 +1557,7 @@ Program Chairs
                 invitation=self.get_invitation_id(self.decision_stage.name, '.*')
             )}
         paper_notes = {n.forum: n for n in self.get_submissions()}
+        forum_note = self.client.get_note(self.request_form_id)
 
         def post_decision(paper_decision):
             if len(paper_decision) < 2:
@@ -1601,7 +1605,49 @@ Program Chairs
             self.client.post_note(paper_decision_note)
             print(f"Decision posted for Paper {paper_id}")
 
-        tools.concurrent_requests(post_decision, decisions_data)
+        futures = []
+        futures_param_mapping = {}
+        gathering_responses = tqdm(total=len(decisions_data), desc='Gathering Responses')
+        results = []
+        errors = {}
+
+        with ThreadPoolExecutor(max_workers=min(6, cpu_count() - 1)) as executor:
+            for _decision in decisions_data:
+                _future = executor.submit(post_decision, _decision)
+                futures.append(_future)
+                futures_param_mapping[_future] = str(_decision)
+
+            for future in futures:
+                gathering_responses.update(1)
+                try:
+                    results.append(future.result())
+                except Exception as e:
+                    errors[futures_param_mapping[future]] = e.args[0] if isinstance(e, OpenReviewException) else repr(e)
+
+            gathering_responses.close()
+
+        error_status = ''
+        if errors:
+            error_status = f'''
+```python
+{json.dumps(errors, indent=2)}
+```
+'''
+        status_note = openreview.Note(
+            invitation=self.support_user + '/-/Request' + str(forum_note.number) + '/Decision_Upload_Status',
+            forum=self.request_form_id,
+            replyto=self.request_form_id,
+            readers=[self.get_program_chairs_id(), self.support_user],
+            writers=[],
+            signatures=[self.support_user],
+            content={
+                'title': 'Decision Upload Status',
+                'decision_posted': f'''{len(results)} Papers''',
+                'error': error_status
+            }
+        )
+
+        self.client.post_note(status_note)
 
 
 class SubmissionStage(object):
