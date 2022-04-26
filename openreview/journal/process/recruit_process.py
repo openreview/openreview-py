@@ -54,14 +54,17 @@ If you would like to change your decision, please click the Accept link in the p
 
         if JOURNAL_REQUEST_ID:
             recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'.*/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID))
-            print(len(recruitment_notes), 'recruitment notes!')
             for note in recruitment_notes:
                 invitee = note.content['invitee_email']['value'].strip()
+                invitee_ids = [invitee]
+                invitee_profile = openreview.tools.get_profile(client, invitee)
+                if invitee_profile:
+                    invitee_ids.append(invitee_profile.id)
                 id_or_email = user
                 if '~' in user:
-                    profile = openreview.tools.get_profile(user)
+                    profile = openreview.tools.get_profile(client, user)
                     id_or_email = profile.id
-                if invitee == id_or_email:
+                if id_or_email in invitee_ids:
                     comment_inv = client.get_invitations(regex='.*/Journal_Request.*/-/Comment', replyForum=JOURNAL_REQUEST_ID)[0]
                     #post comment to journal request
                     comment_content = f'''The user {invitee} has {action} an invitation to be a reviewer for {SHORT_PHRASE}.'''
