@@ -107,12 +107,13 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
         'Program chairs and paper authors only': [],
         'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
+        'Make accepted submissions public and hide rejected submissions': [openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
     }
 
     # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
     if 'submission_readers' in note.content:
         readers = readers_map[note.content.get('submission_readers')]
-        public = 'Everyone' in readers
+        public = 'Everyone (submissions are public)' in readers
     else:
         public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
         bidding_enabled = 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', '')
@@ -142,7 +143,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     create_review_invitation = create_groups and note.content.get('make_reviews_public', None)
 
     author_names_revealed = 'Reveal author identities of all submissions to the public' in note.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in note.content.get('reveal_authors', '')
-    papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '')
+    papers_released = 'Release all submissions to the public'in note.content.get('release_submissions', '') or 'Release only accepted submission to the public' in note.content.get('release_submissions', '') or 'Make accepted submissions public and hide rejected submissions' in note.content.get('submission_readers', '')
 
     email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
 

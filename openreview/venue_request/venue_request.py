@@ -12,6 +12,9 @@ class VenueStages():
             self.file_content = self.file_content.replace(
                 "GROUP_PREFIX = ''",
                  "GROUP_PREFIX = '" + self.venue_request.super_user + "'")
+        
+        with open(os.path.join(os.path.dirname(__file__), 'process/stage_pre_process.py'), 'r') as pre:
+            self.pre_process_file_content = pre.read()
 
     def setup_venue_revision(self):
 
@@ -178,6 +181,7 @@ class VenueStages():
             invitees=['everyone'],
             multiReply=True,
             process_string=self.file_content,
+            preprocess=self.pre_process_file_content,
             reply={
                 'readers': {
                     'values-copied': [
@@ -705,6 +709,7 @@ class VenueRequest():
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
         self.matching_process = os.path.join(os.path.dirname(__file__), 'process/matchingProcess.py')
         self.matching_pre_process = os.path.join(os.path.dirname(__file__), 'process/matching_pre_process.py')
+        self.stage_pre_process = os.path.join(os.path.dirname(__file__), 'process/stage_pre_process.py')
 
         # Setup for actions on the venue form
         self.setup_request_form()
@@ -1137,6 +1142,7 @@ class VenueRequest():
                 'value-radio': [
                     'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                     'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                    'Program chairs and paper authors only',
                     'Everyone (submissions are public)'
                 ],
                 'required': True
