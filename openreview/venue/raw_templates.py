@@ -5,82 +5,71 @@ submission_template = {
     'writers': ['OpenReview.net/Support'],
     'signatures': ['OpenReview.net/Support'],
     'edit': {
-        'readers': ['OpenReview.net/Support', '${params.venueid}'],
-        'writers': ['OpenReview.net/Support', '${params.venueid}'],
-        'signatures': ['${params.venueid.value}'],
-        'params': {
+        'readers': ['OpenReview.net/Support', '${content.venueid.value}'],
+        'writers': ['OpenReview.net/Support', '${content.venueid.value}'],
+        'signatures': ['${content.venueid.value}'],
+        'content': {
             'venueid': { 
                 'value': {
                     'param': {
-                        'memberOf': 'active_venues'
-                    }                    
+                        'description': 'Venue id',
+                        'memberOf': 'active_venues' ## any other validation? can we use any group id as venueid?
+                    }
                 },
-                'readers': ['everyone'],
-                'type': 'group',
-                'presentation': {
-                    'order': 1,
-                    'description': 'Venue id', 
-                    'markdown': True
-                }
-            }, ## any other validation? can we use any group id as venueid?
+                'order': 1,
+                'type': 'group'
+            }, 
             'name': { 
                 'value': {
                     'param': {
-                        'default': 'Submission'
+                        'regex': '.*',
+                        'description': 'Submission name.', 
                         'optional': True
                     }
                 },
-                'type': 'string',
-                'presentation': {
-                    'order': 2,
-                    'description': 'Submission name.', 
-                    'markdown': True
-                }
+                'order': 2,
+                'type': 'string'
             },
             'cdate': {
                 'value': {
                     'param': { 
-                        'range': [ 0, 9999999999999 ] 
+                        'range': [ 0, 9999999999999 ],
+                        'description': 'Activation date.'
                     },
                 },
+                'order': 3,
                 'type': 'date',
-                'presentation': {
-                    'order': 3,
-                    'description': 'Activation date.'
-                }                
             },
             'duedate': {
                 'value': {
                     'param': { 
+                        'description': 'Submission due date.',
                         'range': [ 0, 9999999999999 ] 
                     },
                 },
-                'type': 'date',
-                'presentation': {
-                    'order': 4,
-                    'description': 'Submission due date.'
-                }                
+                'order': 4,
+                'type': 'date'
             },      
         },
         'invitation': {
-            'id': '${../params.venueid}/-/${../params.name}',
-            'signatures': ['${../params.venueid}'],
+            'id': '${../content.venueid.value}/-/${../content.name.value}',
+            'signatures': ['${../content.venueid.value}'],
             'readers': ['everyone'],
             'writers': ['${signatures}'],
             'invitees': ['~'],
-            'cdate': { '${../params.cdate}' },
-            'duedate': { '${../params.duedate}' },
+            'cdate': { '${../content.cdate.value}' },
+            'duedate': { '${../content.duedate.value}' },
             'process': '''
 def process(client, edit, invitation):
-    ## 1. Create paper group: submission_group_id = f'{invitation.params.venueid}/${../params.name}{edit.note.number}' ## Example: TMLR/Submission1
+    ## 1. Create paper group: submission_group_id = f'{invitation.content.venueid.value}/${../content.name.value}{edit.note.number}' ## Example: TMLR/Submission1
     ## 2. Create author paper author_submission_group_id = f'{submission_group_id}/Authors' ## Example: TMLR/Submission1/Authors
     ## 3. Add authorids as members of the group
     ## 4. Send confirmation email to the author group
     ''',
             'edit': {
-                'signatures': { 'param': { 'regex': '~.*', 'type': 'group' }},
-                'readers': ['${../../params.venueid}', '${../../params.venueid}/${../../params.name}\\${note.number}/Authors'], ## note.number needs to be escaped. It is defined at note creation
-                'writers': ['${../..params.venueid}'],
+                'signatures': { 'param': { 'regex': '~.*' }},
+                'readers': ['${../../content.venueid.value}', '${../../content.venueid.value}/${../../content.name.value}\\${note.number}/Authors'], ## note.number needs to be escaped. It is defined at note creation
+                'writers': ['${../..content.venueid.value}'],
                 'note': {
                     'id': {
                         'param': {
@@ -88,51 +77,82 @@ def process(client, edit, invitation):
                             'optional': True
                         }
                     },
-                    'signatures': ['${../../../params.venueid}/${../../../params.name}\\${note.number}/Authors'],
-                    'readers': ['${../../../params.venueid}', '${../../../params.venueid}/${../../../params.name}\\${note.number}/Authors'],
-                    'writers': ['${../../../params.venueid}', '${../../../params.venueid}/${../../../params.name}\\${note.number}/Authors'],
+                    'signatures': ['${../../../content.venueid.value}/${../../../content.name.value}\\${note.number}/Authors'],
+                    'readers': ['${../../../content.venueid.value}', '${../../../content.venueid.value}/${../../../content.name.value}\\${note.number}/Authors'],
+                    'writers': ['${../../../content.venueid.value}', '${../../../content.venueid.value}/${../../../content.name.value}\\${note.number}/Authors'],
                     'content': {
                         'title': {
                             'order': 1, ## we store this value in the invitation edit but we don't store it in the note, should we assume that only 'value' and 'readers' will be saved in the note content?
-                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$', ## Same here.
-                            'value': { 'param': { 'type': 'string', 'regex': '.{1,250}' } }
+                            'type': 'string', 
+                            'value': { 
+                                'param': { 
+                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$', ## Same here.
+                                    'regex': '.{1,250}' 
+                                } 
+                            }
                         },
                         'authors': {
                             'order': 2,
-                            'description': 'Comma separated list of author names.',
-                            'presentation': {
-                                'hidden': True
+                            'type': 'string[]', 
+                            'value': { 
+                                'param': { 
+                                    'description': 'Comma separated list of author names.',
+                                    'regex': '[^;,\\n]+(,[^,\\n]+)*' 
+                                },
+                               'hidden': True
                             },
-                            'value': { 'param': { 'type': 'string[]', 'regex': '[^;,\\n]+(,[^,\\n]+)*' } },
-                            'readers': [ '${../../../../params.venueid}', '${../../../../params.venueid}/${../../../../.params.name}\\${note.number}/Authors']
+                            'readers': [ '${../../../../content.venueid.value}', '${../../../../content.venueid.value}/${../../../../.content.name.value}\\${note.number}/Authors']
                         },
                         'authorids': {
                             'order': 3,
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
-                            'value': { 'param': { 'type': 'group[]', 'regex': r'~.*' } },
-                            'readers': [ '${../../../../params.venueid}', '${../../../../params.venueid}/${../../../../params.name}\\${note.number}/Authors']
+                            'type': 'group[]',
+                            'value': { 
+                                'param': { 
+                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                                    'regex': r'~.*' 
+                                }
+                            },
+                            'readers': [ '${../../../../content.venueid.value}', '${../../../../content.venueid.value}/${../../../../content.name.value}\\${note.number}/Authors']
                         },
                         'keywords': {
                             'order': 4,
-                            'description': 'Comma separated list of keywords',
-                            'value': { 'param': { 'type': 'string[]', 'regex': '(^$)|[^;,\\n]+(,[^,\\n]+)*' }}
+                            'type': 'string[]', 
+                            'value': { 
+                                'param': { 
+                                    'description': 'Comma separated list of keywords',
+                                    'regex': '(^$)|[^;,\\n]+(,[^,\\n]+)*' 
+                                }
+                            }
                         },
                         'abstract': {
                             'order': 5,
-                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'value': { 'param': { 'type': 'string', 'regex': '^[\\S\\s]{1,5000}$', 'maxLength': 5000 }},
-                            'presentation': { 'markdown': True }
+                            'type': 'string', 
+                            'value': { 
+                                'param': { 
+                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                    'regex': '^[\\S\\s]{1,5000}$', 
+                                    'maxLength': 5000,
+                                    'markdown': True
+                                }
+                            }
                         },
                         'TL;DR': {
                             'order': 6,
-                            'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
-                            'value': { 'param': { 'type': 'string', 'regex': '^[\\S\\s]{1,500}$', 'maxLength': 500 }},
+                            'type': 'string', 
+                            'value': { 
+                                'param': { 
+                                    'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                                    'regex': '^[\\S\\s]{1,500}$', 
+                                    'maxLength': 500 
+                                }
+                            },
                         },
                         'pdf': {
                             'order': 7,
-                            'description': 'Upload a PDF file that ends with .pdf.',
+                            'type': 'file',
                             'value': {
                                 'param': {
+                                    'description': 'Upload a PDF file that ends with .pdf.',
                                     'value-file': {
                                         'fileTypes': ['pdf'],
                                         'size': 50
@@ -155,9 +175,9 @@ review_template = {
     'writers': ['OpenReview.net'],
     'signatures': ['OpenReview.net'],
     'edit': {
-        'readers': ['OpenReview.net/Support', '${params.venueid}'],
-        'writers': ['OpenReview.net/Support', '${params.venueid}'],
-        'signatures': ['${params.venueid}'],        
+        'readers': ['OpenReview.net/Support', '${content.venueid.value}'],
+        'writers': ['OpenReview.net/Support', '${content.venueid.value}'],
+        'signatures': ['${content.venueid.value}'],        
         'params': {
             'venueid': { 'type': 'group' }, ## any other validation? can we use any group id as venueid?
             'name': { 'type': 'string', 'default': 'Official_Review'},
@@ -166,8 +186,8 @@ review_template = {
             'duedate': { 'type': 'date', 'range': [ 0, 9999999999999 ] }       
         },
         'invitation': {
-            'id': '${../params.venueid}/-/${../params.name}',
-            'signatures': ['${../params.venueid}'],
+            'id': '${../content.venueid.value}/-/${../content.name.value}',
+            'signatures': ['${../content.venueid.value}'],
             'readers': ['${signatures}'],
             'writers': ['${signatures}'],
             'invitees': ['${signatures}'],
@@ -177,11 +197,11 @@ review_template = {
                 'dates': ['#{cdate}'],
                 'script': '''
 def process(client, invitation):
-    submissions = client.get_notes(invitation='${../../params.venueid}/-/${../../params.submission_name}')
+    submissions = client.get_notes(invitation='${../../content.venueid.value}/-/${../../params.submission_name}')
     ## Create review invitations for all the active submissions
     for submission in submissions:
         client.post_invitation_edit({
-            invitation: '${../../params.venueid}/-/${../../params.name}',
+            invitation: '${../../content.venueid.value}/-/${../../content.name.value}',
             params: {
                 noteId: submission.id,
                 noteNumber: submission.number
@@ -190,17 +210,17 @@ def process(client, invitation):
     '''
             }],        
             'edit': {
-                'signatures': ['${../../params.venueid}'],
+                'signatures': ['${../../content.venueid.value}'],
                 'readers': ['${signatures}'],
                 'writers': ['${signatures}'],
                 'params': {
-                    'noteId': { 'type': 'note', 'withInvitation': '${../../params.venueid}/-/${../../params.submission_name}' }, ## any other validation? use withInvitation?
+                    'noteId': { 'type': 'note', 'withInvitation': '${../../content.venueid.value}/-/${../../params.submission_name}' }, ## any other validation? use withInvitation?
                     'noteNumber': { 'type': 'integer'},
-                    'submissionGroupId': '${../../params.venueid}/${../../params.submission_name}${noteNumber}' ## constant so I can use it in several places
+                    'submissionGroupId': '${../../content.venueid.value}/${../../params.submission_name}${noteNumber}' ## constant so I can use it in several places
                 },                
                 'invitation': {
-                    'id': '${../../params.submissionGroupId}/-/${../../../params.name}',
-                    'signatures': ['${../../../params.venueid}'],
+                    'id': '${../../params.submissionGroupId}/-/${../../../content.name.value}',
+                    'signatures': ['${../../../content.venueid.value}'],
                     'readers': ['everyone'], ## everyone or just the reviewers?
                     'writers': ['${signatures}'],
                     'invitees': ['${../../params.submissionGroupId}/Reviewers'], ## should we parametrize the role names?
@@ -213,8 +233,8 @@ def process(client, edit, invitation):
                     ''',
                     'edit': {
                         'signatures': { 'param': { 'regex': '${../../../params.submissionGroupId}/Reviewer_', 'type': 'group' }},
-                        'readers': ['${../../../../params.venueid}', '${signatures}'], 
-                        'writers': ['${../../../../params.venueid}'],
+                        'readers': ['${../../../../content.venueid.value}', '${signatures}'], 
+                        'writers': ['${../../../../content.venueid.value}'],
                         'note': {
                             'id': {
                                 'param': {
@@ -225,8 +245,8 @@ def process(client, edit, invitation):
                             'forum': '${../../params.noteId}',
                             'replyto': '${../../params.noteId}',
                             'signatures': ['${../signatures}'], ## how to resolve this in the UI?
-                            'readers': ['${../../../../../params.venueid}', '${signatures}'],
-                            'writers': ['${../../../../../params.venueid}', '${signatures}'], ## only visible to the submitted reviewer, should we create another template if we want to have public reviews?
+                            'readers': ['${../../../../../content.venueid.value}', '${signatures}'],
+                            'writers': ['${../../../../../content.venueid.value}', '${signatures}'], ## only visible to the submitted reviewer, should we create another template if we want to have public reviews?
                             'content': {
                                 'title': {
                                     'order': 1, ## we store this value in the invitation edit but we don't store it in the note, should we assume that only 'value' and 'readers' will be saved in the note content?
@@ -295,9 +315,9 @@ submission_release_template = {
     'writers': ['OpenReview.net'],
     'signatures': ['OpenReview.net'],
     'edit': {
-        'readers': ['OpenReview.net/Support', '${params.venueid}'],
-        'writers': ['OpenReview.net/Support', '${params.venueid}'],
-        'signatures': ['${params.venueid}'],
+        'readers': ['OpenReview.net/Support', '${content.venueid.value}'],
+        'writers': ['OpenReview.net/Support', '${content.venueid.value}'],
+        'signatures': ['${content.venueid.value}'],
         'params': {
             'venueid': { 'type': 'group' }, ## any other validation? can we use any group id as venueid?
             'name': { 'type': 'string', 'default': 'Submission_Release'},
@@ -305,21 +325,21 @@ submission_release_template = {
             'cdate': { 'type': 'date', 'range': [ 0, 9999999999999 ] }       
         },
         'invitation': {
-            'id': '${../params.venueid}/-/${../params.name}',
-            'signatures': ['${../params.venueid}'],
+            'id': '${../content.venueid.value}/-/${../content.name.value}',
+            'signatures': ['${../content.venueid.value}'],
             'readers': ['everyone'],
             'writers': ['${signatures}'],
-            'invitees': ['${../params.venueid}'],
+            'invitees': ['${../content.venueid.value}'],
             'cdate': { '${../params.cdate}' },
             'dateprocesses': [{
                 'dates': ['#{cdate}'],
                 'script': '''
 def process(client, invitation):
-    submissions = client.get_notes(invitation='${../../params.venueid}/-/${../../params.submission_name}')
+    submissions = client.get_notes(invitation='${../../content.venueid.value}/-/${../../params.submission_name}')
     ## Set submissions to be under review
     for submission in submissions:
         client.post_invitation_edit({
-            invitation: '${../../params.venueid}/-/${../../params.name}',
+            invitation: '${../../content.venueid.value}/-/${../../content.name.value}',
             note: {
                 id: submission.id
             }
@@ -327,22 +347,22 @@ def process(client, invitation):
     '''
             }], 
             'edit': {
-                'signatures': ['${../..params.venueid}'],
-                'readers': ['${../../params.venueid}', '${../../params.venueid}/${../../params.name}\\${note.number}/Authors'], ## note.number needs to be escaped. It is defined at note creation
-                'writers': ['${../..params.venueid}'],
+                'signatures': ['${../..content.venueid.value}'],
+                'readers': ['${../../content.venueid.value}', '${../../content.venueid.value}/${../../content.name.value}\\${note.number}/Authors'], ## note.number needs to be escaped. It is defined at note creation
+                'writers': ['${../..content.venueid.value}'],
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': '${../../../../../params.venueid}/-/${../../../../../params.submission_name}'
+                            'withInvitation': '${../../../../../content.venueid.value}/-/${../../../../../params.submission_name}'
                         }
                     },
                     'readers': ['everyone'],  ## parametrize readers of have a template per readers combination?
                     'content': {
                         'venue': {
-                            'value': 'Under Review for ${../../../../params.venueid}'
+                            'value': 'Under Review for ${../../../../content.venueid.value}'
                         },
                         'venueid': {
-                            'value': '${../../../../params.venueid}/Under_Review'
+                            'value': '${../../../../content.venueid.value}/Under_Review'
                         }                                                                                             
                     }               
                 }       
