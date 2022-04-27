@@ -1510,6 +1510,10 @@ Best,
         assert blind_submissions[2].content['authors'] == ['Anonymous']
         assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
 
+        last_message = client.get_messages(to='venue_author1@mail.com')[-1]
+        assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message.subject
+        assert "Dear Venue Author,</p>\n<p>Thank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message.text
+
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
