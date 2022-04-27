@@ -64,10 +64,11 @@ def process_update(client, note, invitation, existing_note):
         else:
             forum_note.readers = committee
 
-        bibtex = openreview.tools.get_bibtex(
+        bibtex = openreview.tools.generate_bibtex(
             note=original_note if original_note is not None else forum_note,
             venue_fullname=CONFERENCE_NAME,
             url_forum=forum_note.id,
+            paper_status='rejected',
             year=CONFERENCE_YEAR,
             anonymous=not(REVEAL_AUTHORS_ON_WITHDRAW),
             baseurl='https://openreview.net')
