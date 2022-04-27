@@ -92,6 +92,8 @@ def process(client, note, invitation):
 Dear {{{{{{{{fullname}}}}}}}},
 
 Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at:
+{{forum_url}}
 
 Best,
 {{short_name}} Program Chairs
@@ -105,6 +107,8 @@ Best,
 Dear {{{{{{{{fullname}}}}}}}},
                         
 Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We regret to inform you that your submission was not accepted.
+You can find the final reviews for your paper on the submission page in OpenReview at:
+{{forum_url}}
 
 Best,
 {{short_name}} Program Chairs
@@ -118,6 +122,8 @@ Best,
 Dear {{{{{{{{fullname}}}}}}}},
 
 Thank you for submitting your paper, {{submission_title}}, to {{short_name}}.
+You can find the final reviews for your paper on the submission page in OpenReview at:
+{{forum_url}}
 
 Best,
 {{short_name}} Program Chairs
@@ -187,9 +193,11 @@ Best,
             if forum_note.content['send_decision_notifications'] == 'Yes, send an email notification to the authors':
                 decision_options = forum_note.content.get('decision_options')
                 decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
-                for decision in decision_options:
-                    email_message = note.content[f'{decision.lower().replace(" ", "_")}_email_content']
-                    conference.send_decision_notifications(decision, email_message)
+                email_messages = {
+                    decision: note.content[f'{decision.lower().replace(" ", "_")}_email_content']
+                    for decision in decision_options
+                }
+                conference.send_decision_notifications(decision_options, email_messages)
 
         submission_content = conference.submission_stage.get_content()
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')
