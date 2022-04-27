@@ -211,6 +211,10 @@ class InvitationBuilder(object):
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{reviewers_id}'")
             process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{reviewers_declined_id}'")
             process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{self.journal.secret_key}'")
+            if self.journal.get_request_form():
+                process_content = process_content.replace("JOURNAL_REQUEST_ID = ''", "JOURNAL_REQUEST_ID = '" + self.journal.get_request_form().id + "'")
+                process_content = process_content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.journal.get_support_group() + "'")
+            process_content = process_content.replace("VENUE_ID = ''", f"VENUE_ID = '{self.journal.venue_id}'")
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
