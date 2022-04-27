@@ -1529,14 +1529,12 @@ Best,
         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
 
         note_id = submissions[0].id
-        assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@inproceedings{
+        assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
 anonymous2022test,
 title={test submission},
 author={Anonymous},
-booktitle={Submitted to Test 2030 Venue Updated},
 year={2022},
-url={https://openreview.net/forum?id=''' + note_id + '''},
-note={under review}
+url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
         
         # Post another revision stage note
@@ -1595,14 +1593,12 @@ note={under review}
         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
 
         note_id = submissions[0].id
-        assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@inproceedings{
+        assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
 anonymous2022test,
 title={test submission},
 author={Anonymous},
-booktitle={Submitted to Test 2030 Venue Updated},
 year={2022},
-url={https://openreview.net/forum?id=''' + note_id + '''},
-note={under review}
+url={https://openreview.net/forum?id='''+ note_id + '''}
 }'''
 
         # Post revision note for a submission
