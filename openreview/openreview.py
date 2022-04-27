@@ -625,7 +625,7 @@ class Client(object):
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return groups, response.json()['count']
 
         return groups
@@ -739,7 +739,7 @@ class Client(object):
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return invitations, response.json()['count']
 
         return invitations
@@ -911,7 +911,7 @@ class Client(object):
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return notes, response.json()['count']
 
         return [Note.from_json(n) for n in response.json()['notes']]
@@ -1061,7 +1061,7 @@ class Client(object):
 
         references = [Note.from_json(n) for n in response.json()['references']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return references, response.json()['count']
 
         return references
@@ -1136,7 +1136,7 @@ class Client(object):
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return tags, response.json()['count']
 
         return tags
@@ -1194,7 +1194,7 @@ class Client(object):
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return edges, response.json()['count']
 
         return edges
