@@ -213,8 +213,10 @@ class TestClient():
         conference = builder.get_result()
         assert conference, 'conference is None'
 
+        invitation = conference.get_submission_id()
+
         author_client = openreview.Client(username='mbok@mail.com', password='1234')
-        note = openreview.Note(invitation = conference.get_submission_id(),
+        note = openreview.Note(invitation = invitation,
             readers = ['mbok@mail.com', 'andrew@mail.com'],
             writers = ['mbok@mail.com', 'andrew@mail.com'],
             signatures = ['~Melisa_Bok1'],
@@ -229,22 +231,22 @@ class TestClient():
         note = author_client.post_note(note)
         assert note
 
-        notes = client.get_notes(content = { 'title': 'Paper title'})
-        assert len(notes) == 4
+        notes = client.get_notes(invitation=invitation, content = { 'title': 'Paper title'})
+        assert len(notes) == 1
 
-        notes = client.get_notes(content = { 'title': 'Paper title3333'})
+        notes = client.get_notes(invitation=invitation, content = { 'title': 'Paper title3333'})
         assert len(notes) == 0
 
-        notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title'}))
-        assert len(notes) == 4
+        notes = list(openreview.tools.iterget_notes(client, invitation=invitation, content = { 'title': 'Paper title'}))
+        assert len(notes) == 1
 
-        notes = list(openreview.tools.iterget_notes(client, content = { 'title': 'Paper title333'}))
+        notes = list(openreview.tools.iterget_notes(client, invitation=invitation, content = { 'title': 'Paper title333'}))
         assert len(notes) == 0
 
-        notes = client.get_all_notes(content = { 'title': 'Paper title'})
-        assert len(notes) == 4
+        notes = client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title'})
+        assert len(notes) == 1
 
-        notes = client.get_all_notes(content = { 'title': 'Paper title333'})
+        notes = client.get_all_notes(invitation=invitation, content = { 'title': 'Paper title333'})
         assert len(notes) == 0
 
     def test_merge_profile(self, client):
@@ -380,4 +382,10 @@ class TestClient():
     def test_get_notes_by_ids(self, client):
         notes = client.get_notes_by_ids(ids = [])
         assert len(notes) == 0, 'notes is empty'
+
+    def test_infer_notes(self, client):
+        notes = client.get_notes(signature='openreview.net/Support')
+        assert notes
+        note = client.infer_note(notes[0].id)
+        assert note
 

@@ -35,8 +35,8 @@ class Journal(object):
         self.submission_group_name = 'Paper'
         self.submitted_venue_id = f'{venue_id}/Submitted'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
-        self.rejected_venue_id = f'{venue_id}/Rejection'
-        self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
+        self.rejected_venue_id = f'{venue_id}/Rejected'
+        self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
         self.retracted_venue_id = f'{venue_id}/Retracted_Acceptance'
         self.accepted_venue_id = venue_id
@@ -99,6 +99,9 @@ class Journal(object):
     def get_withdrawal_id(self, number=None):
         return self.__get_invitation_id(name='Withdrawal', number=number)
 
+    def get_desk_rejection_id(self, number=None):
+        return self.__get_invitation_id(name='Desk_Rejection', number=number)
+
     def get_retraction_id(self, number=None):
         return self.__get_invitation_id(name='Retraction', number=number)
 
@@ -114,8 +117,8 @@ class Journal(object):
     def get_under_review_id(self):
         return self.__get_invitation_id(name='Under_Review')
 
-    def get_desk_rejection_id(self):
-        return self.__get_invitation_id(name='Desk_Rejection')
+    def get_desk_rejected_id(self):
+        return self.__get_invitation_id(name='Desk_Rejected')
 
     def get_withdrawn_id(self):
         return self.__get_invitation_id(name='Withdrawn')
@@ -159,6 +162,9 @@ class Journal(object):
     def get_ae_custom_max_papers_id(self, number=None):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_action_editors_id(number=number))
 
+    def get_ae_availability_id(self):
+        return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_action_editors_id())
+
     def get_decision_approval_id(self, number=None):
         return self.__get_invitation_id(name='Decision_Approval', number=number)
 
@@ -168,11 +174,11 @@ class Journal(object):
     def get_review_rating_id(self, signature):
         return self.__get_invitation_id(name='Rating', prefix=signature)
 
-    def get_acceptance_id(self):
-        return self.__get_invitation_id(name='Acceptance')
+    def get_accepted_id(self):
+        return self.__get_invitation_id(name='Accepted')
 
-    def get_rejection_id(self):
-        return self.__get_invitation_id(name='Rejection')
+    def get_rejected_id(self):
+        return self.__get_invitation_id(name='Rejected')
 
     def get_reviewer_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation', number=number)
@@ -201,6 +207,9 @@ class Journal(object):
 
     def get_reviewer_custom_max_papers_id(self):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())
+
+    def get_reviewer_availability_id(self):
+        return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_reviewers_id())
 
     def get_reviewer_pending_review_id(self):
         return self.__get_invitation_id(name='Pending_Reviews', prefix=self.get_reviewers_id())
@@ -236,10 +245,15 @@ class Journal(object):
     def get_submission_editable_id(self, number):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
-    def get_request_id(self):
+    def get_request_form(self):
         forum_note = self.client.get_notes(invitation='(openreview.net|OpenReview.net)/Support/-/Journal_Request$', content={'venue_id':self.venue_id})
         if forum_note:
-            return forum_note[0].id
+            return forum_note[0]
+
+    def get_support_group(self):
+        forum_note = self.get_request_form()
+        if forum_note:
+            return forum_note.invitations[0].split('/-/')[0]
 
     def setup(self, support_role, editors=[], assignment_delay=5):
         self.group_builder.set_groups(self, support_role, editors)
@@ -281,14 +295,15 @@ class Journal(object):
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
         return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
-        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo)
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reinvite=False):
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reinvite)
 
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
         self.invitation_builder.set_revision_submission(note)
         self.invitation_builder.set_note_review_approval_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_note_withdrawal_invitation(note)
+        self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
 
@@ -439,22 +454,26 @@ class Journal(object):
         for invitee in invitation.invitees:
             if invitee not in [self.venue_id, self.get_editors_in_chief_id()]:
                 if invitee.startswith('~'):
-                    invitee_members.append(invitee)
+                    profile = self.client.get_profile(invitee)
+                    invitee_members.append(profile.id)
                 else:
                     invitee_members = invitee_members + self.client.get_group(invitee).members
 
+        ## Check replies and get signatures
         replies = self.client.get_notes(invitation=invitation.id, details='signatures')
 
         signature_members = []
         for reply in replies:
             for signature in reply.details['signatures']:
                 if signature['id'].startswith('~'):
-                    signature_members.append(signature)
+                    profile = self.client.get_profile(signature)
+                    signature_members.append(profile.id)
                 else:
                     signature_members = signature_members + signature['members']
             for signature in reply.signatures:
                 if signature.startswith('~'):
-                    signature_members.append(signature)
+                    profile = self.client.get_profile(signature)
+                    signature_members.append(profile.id)
 
         print('invitee_members', invitee_members)
         print('signature_members', signature_members)

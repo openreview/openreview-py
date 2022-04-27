@@ -210,7 +210,7 @@ class TestSingleBlindConference():
 
         conference.setup_final_deadline_stage()
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
         assert submissions[0].readers == ['everyone']
 
@@ -673,7 +673,7 @@ class TestSingleBlindConference():
         }
         conference.set_decision_stage(openreview.DecisionStage(public=True, additional_fields=decision_additional_fields))
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Decision',
             forum = submissions[0].id,
@@ -689,9 +689,9 @@ class TestSingleBlindConference():
         )
         note = client.post_note(note)
 
-        conference.post_decision_stage(release_notes_accepted=True)
+        conference.post_decision_stage(submission_readers=[openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
 
         valid_bibtex = '''@inproceedings{
@@ -720,7 +720,7 @@ url={https://openreview.net/forum?id='''
 
         conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]
@@ -749,7 +749,7 @@ url={https://openreview.net/forum?id='''
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]

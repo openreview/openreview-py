@@ -315,7 +315,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
     def test_post_submission_stage(self, conference, helpers, test_client, client):
         year = datetime.datetime.now().year
         conference.submission_stage.public = True
-        conference.submission_stage.submission_readers = [openreview.SubmissionStage.Readers.EVERYONE]
+        conference.submission_stage.readers = [openreview.SubmissionStage.Readers.EVERYONE]
         conference.setup_final_deadline_stage(force=True)
 
         submissions = conference.get_submissions(sort='number:desc')
@@ -341,7 +341,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
 
         helpers.await_queue()
 
-        withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Special_Submission')
+        withdrawn_notes = client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Withdrawn_Special_Submission', sort='tmdate')
         assert len(withdrawn_notes) == 2
         withdrawn_notes[0].readers == [
             'everyone'

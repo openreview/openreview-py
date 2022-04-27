@@ -250,7 +250,7 @@ class TestVenueRequest():
 
         comment_invitation = '{}/-/Request{}/Comment'.format(venue.support_group_id,
                                                              request_form_note.number)
-        last_comment = client.get_notes(invitation=comment_invitation)[-1]
+        last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[-1]
         assert 'TEST.cc/2021/Conference/Program_Chairs' in last_comment.readers
 
     def test_venue_revision_error(self, client, test_client, selenium, request_page, venue, helpers):
@@ -314,7 +314,7 @@ class TestVenueRequest():
 
         comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=comment_invitation)[0]
+        last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[0]
         error = last_comment.content['error']
         assert 'InvalidFieldError' in error
         assert 'The field value-regexx is not allowed' in error
@@ -434,7 +434,7 @@ class TestVenueRequest():
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         error_string = '{\n ' \
                        ' "KeyError(\'program\')": [\n' \
                        '    "reviewer_candidate1@email.com",\n' \
@@ -494,7 +494,7 @@ class TestVenueRequest():
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
@@ -550,7 +550,7 @@ class TestVenueRequest():
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=recruitment_status_invitation)[0]
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
 
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
@@ -598,7 +598,7 @@ class TestVenueRequest():
 
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=remind_recruitment_status_invitation)[0]
+        last_comment = client.get_notes(invitation=remind_recruitment_status_invitation, sort='tmdate')[0]
         assert '4 users' in last_comment.content['reminded']
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
@@ -631,7 +631,7 @@ class TestVenueRequest():
 
         comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
                                                              venue['request_form_note'].number)
-        last_comment = client.get_notes(invitation=comment_invitation)[0]
+        last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[0]
         error_string = '\n```python\nValueError(\'day is out of range for month\')'
         assert error_string in last_comment.content['error']
 
@@ -762,13 +762,13 @@ class TestVenueRequest():
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.' in matching_status.content['error']
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 2
 
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
@@ -793,7 +793,7 @@ class TestVenueRequest():
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers.' in matching_status.content['error']
 
@@ -820,7 +820,7 @@ class TestVenueRequest():
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert 'There was an error connecting with the expertise API' in matching_status.content['error']
 
@@ -888,7 +888,7 @@ class TestVenueRequest():
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert matching_status.content['without_profile'] == ['some_user@mail.com']
         assert '''
@@ -927,7 +927,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         helpers.await_queue()
 
         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum)[0]
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
         assert matching_status
         assert matching_status.content['comment'] == '''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the 'Reviewers Paper Assignment' link in the PC console: https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs
 
@@ -949,11 +949,11 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        review_stage_note = test_client.post_note(openreview.Note(
+        review_stage_note = openreview.Note(
             content={
                 'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
-                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'remove_review_form_options': 'title',
@@ -966,7 +966,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Reviews cannot be released to the public since all papers are private'):
+            review_stage_note=test_client.post_note(review_stage_note)
+
+        review_stage_note.content['make_reviews_public'] = 'No, reviews should NOT be revealed publicly when they are posted'
+        review_stage_note=test_client.post_note(review_stage_note)
+
         assert review_stage_note
         helpers.await_queue()
 
@@ -1026,7 +1033,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 2
 
         # Assert that ACs do not see the Submit button for meta reviews at this point
@@ -1112,7 +1119,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 2
 
         # Assert that official comment invitation is not available already
@@ -1185,7 +1192,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
 
-        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert submissions and len(submissions) == 2
         submission = submissions[0]
 
@@ -1258,7 +1265,34 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'suggestions' in decision_note.content
         helpers.await_queue()
 
-        process_logs = client.get_process_logs(id = decision_stage_note.id)
+        process_logs = client.get_process_logs(id = decision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        submission = submissions[1]
+
+        # Post another decision note using pc test_client
+        program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
+        area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
+        senior_area_chairs = '{}/Paper{}/Senior_Area_Chairs'.format(venue['venue_id'], submission.number)
+        decision_note = test_client.post_note(openreview.Note(
+            invitation='{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number),
+            writers=[program_chairs],
+            readers=[program_chairs, senior_area_chairs, area_chairs],
+            nonreaders=['{}/Paper{}/Authors'.format(venue['venue_id'], submission.number)],
+            signatures=[program_chairs],
+            content={
+                'title': 'Paper Decision',
+                'decision': 'Reject'
+            },
+            forum=submission.forum,
+            replyto=submission.forum
+        ))
+
+        assert decision_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = decision_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
@@ -1298,7 +1332,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         conference.setup_post_submission_stage(force=True)
 
         blind_submissions = author_client.get_notes(
-            invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+            invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 1
 
         # Post a revision stage note
@@ -1376,7 +1410,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         #assert messages[0]['content']['to'] == 'venue_author3@mail.com'
 
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 3
 
         # Assert that submissions are still blind
@@ -1423,8 +1457,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         due_date = now + datetime.timedelta(days=3)
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
-                'reveal_authors': 'Reveal author identities of all submissions to the public',
-                'release_submissions': 'Release all submissions to the public'
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
+                'submission_readers': 'Everyone (submissions are public)'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1444,19 +1478,36 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
-        # Assert that submisions are not blind anymore
-        assert blind_submissions[0].content['authors'] == ['Venue Author']
-        assert blind_submissions[0].content['authorids'] == ['~Venue_Author1']
-        assert blind_submissions[1].content['authors'] == ['Venue Author']
-        assert blind_submissions[1].content['authorids'] == ['~Venue_Author2']
-        assert blind_submissions[2].content['authors'] == ['Venue Author', 'Melisa Bok']
-        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3', 'melisa@mail.com']
+        assert blind_submissions[0].content['authors'] == ['Anonymous']
+        assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
+        assert blind_submissions[1].content['authors'] == ['Anonymous']
+        assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
+        assert blind_submissions[2].content['authors'] == ['Anonymous']
+        assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
 
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
 
+        #check venue and venueid for accepted, venue for rejected
+        submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert submissions and len(submissions) == 3
+
+        assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
+        assert 'venueid' not in submissions[0].content
+        assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
+        assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
+
+        note_id = submissions[0].id
+        assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
+anonymous2022test,
+title={test submission},
+author={Anonymous},
+year={2022},
+url={https://openreview.net/forum?id='''+ note_id + '''}
+}'''
+        
         # Post another revision stage note
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
@@ -1488,18 +1539,38 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
-        # Assert that submisions are still not blind
-        assert blind_submissions[0].content['authors'] == ['Venue Author']
-        assert blind_submissions[0].content['authorids'] == ['~Venue_Author1']
-        assert blind_submissions[1].content['authors'] == ['Venue Author']
-        assert blind_submissions[1].content['authorids'] == ['~Venue_Author2']
-        assert blind_submissions[2].content['authors'] == ['Venue Author', 'Melisa Bok']
-        assert blind_submissions[2].content['authorids'] == ['~Venue_Author3', 'melisa@mail.com']
+        assert blind_submissions[0].content['authors'] == ['Anonymous']
+        assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
+        assert blind_submissions[1].content['authors'] == ['Anonymous']
+        assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
+        assert blind_submissions[2].content['authors'] == ['Anonymous']
+        assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
 
         # Assert that submissions are still public
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
         assert blind_submissions[2].readers == ['everyone']
+
+        #Assert venue, venueid and bibtex were not overwritten
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.setup_post_submission_stage(force=True)
+
+        submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
+        assert submissions and len(submissions) == 3
+
+        assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
+        assert 'venueid' not in submissions[0].content
+        assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
+        assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
+
+        note_id = submissions[0].id
+        assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
+anonymous2022test,
+title={test submission},
+author={Anonymous},
+year={2022},
+url={https://openreview.net/forum?id='''+ note_id + '''}
+}'''
 
         # Post revision note for a submission
         author_client = openreview.Client(username='venue_author3@mail.com', password='1234')
@@ -1523,7 +1594,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     def test_venue_public_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 3
 
         # Post an official comment stage note

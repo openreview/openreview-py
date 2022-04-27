@@ -461,6 +461,7 @@ def post_group_parents(client, group, overwrite_parents=False):
 
     return posted_groups
 
+@deprecated(version='1.2.2', reason="Use generate_bibtex instead")
 def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anonymous=True, names_reversed = False, baseurl='https://openreview.net', editor=None):
     """
     Generates a bibtex field for a given Note.
@@ -566,6 +567,109 @@ def get_bibtex(note, venue_fullname, year, url_forum=None, accepted=False, anony
 
     return '\n'.join(bibtex)
 
+def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='under review', anonymous=True, names_reversed=False, baseurl='https://openreview.net', editor=None):
+    """
+    Generates a bibtex field for a given Note.
+
+    :param note: Note from which the bibtex is generated
+    :type note: Note
+    :param venue_fullname: Full name of the venue to be placed in the book title field
+    :type venue_fullname: str
+    :param year: Note year
+    :type year: str
+    :param url_forum: Forum id, if none is provided, it is obtained from the note parameter: note.forum
+    :type url_forum: str, optional
+    :param paper_status: Used to indicate the status of a paper: ["accepted", "rejected" or "under review"]
+    :type paper_status: string, optional
+    :param anonymous: Used to indicate whether or not the paper's authors should be revealed
+    :type anonymous: bool, optional
+    :param names_reversed: If true, it indicates that the last name is written before the first name
+    :type names_reversed: bool, optional
+    :param baseurl: Base url where the bibtex is from. Default https://openreview.net
+    :type baseurl: str, optional
+
+    :return: Note bibtex
+    :rtype: str
+    """
+
+    first_word = re.sub('[^a-zA-Z]', '', note.content['title'].split(' ')[0].lower())
+
+    forum = note.forum if not url_forum else url_forum
+
+    if anonymous:
+        first_author_last_name = 'anonymous'
+        authors = 'Anonymous'
+    else:
+        first_author_last_name = note.content['authors'][0].split(' ')[-1].lower()
+        if names_reversed:
+            # last, first
+            author_list = []
+            for name in note.content['authors']:
+                last = name.split(' ')[-1]
+                rest = (' ').join(name.split(' ')[:-1])
+                author_list.append(last+', '+rest)
+            authors = ' and '.join(author_list)
+        else:
+            authors = ' and '.join(note.content['authors'])
+
+    u = UnicodeToLatexEncoder(
+        conversion_rules=[
+            UnicodeToLatexConversionRule(
+                rule_type=RULE_REGEX,
+                rule=[
+                    (re.compile(r'[A-Z]{2,}'), r'{\g<0>}')
+                ]),
+            'defaults'
+        ]
+    )
+    bibtex_title = u.unicode_to_latex(note.content['title'])
+
+    if paper_status == 'under review':
+
+        under_review_bibtex = [
+            '@inproceedings{',
+            utf8tolatex(first_author_last_name + year + first_word + ','),
+            'title={' + bibtex_title + '},',
+            'author={' + utf8tolatex(authors) + '},',
+            'booktitle={Submitted to ' + utf8tolatex(venue_fullname) + '},',
+            'year={' + year + '},',
+            'url={'+baseurl+'/forum?id=' + forum + '},',
+            'note={under review}',
+            '}'
+        ]
+        return '\n'.join(under_review_bibtex)
+    
+    if paper_status == 'accepted':
+
+        accepted_bibtex = [
+            '@inproceedings{',
+            utf8tolatex(first_author_last_name + year + first_word + ','),
+            'title={' + bibtex_title + '},',
+            'author={' + utf8tolatex(authors) + '},',
+            'booktitle={' + utf8tolatex(venue_fullname) + '},'
+        ]
+        if editor:
+            accepted_bibtex.append('editor={' + utf8tolatex(editor) + '},')
+
+        accepted_bibtex = accepted_bibtex + [
+            'year={' + year + '},',
+            'url={'+baseurl+'/forum?id=' + forum + '}',
+            '}'
+        ]
+        return '\n'.join(accepted_bibtex)
+
+    if paper_status == 'rejected':
+
+        rejected_bibtex = [
+            '@misc{',
+            utf8tolatex(first_author_last_name + year + first_word + ','),
+            'title={' + bibtex_title + '},',
+            'author={' + utf8tolatex(authors) + '},',
+            'year={' + year + '},',
+            'url={'+baseurl+'/forum?id=' + forum + '}',
+            '}'
+        ]
+        return '\n'.join(rejected_bibtex)
 
 @run_once
 def load_duplicate_domains():
