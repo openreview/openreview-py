@@ -1458,7 +1458,32 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
-                'submission_readers': 'Everyone (submissions are public)'
+                'submission_readers': 'Everyone (submissions are public)',
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+
+Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We are delighted to inform you that your submission has been accepted. Congratulations!
+
+Best,
+{{short_name}} Program Chairs
+''',
+                'reject_email_content': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+                        
+Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We regret to inform you that your submission was not accepted.
+
+Best,
+{{short_name}} Program Chairs
+''',
+                'revision_needed_email_content': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+
+Thank you for submitting your paper, {{submission_title}}, to {{short_name}}.
+
+Best,
+{{short_name}} Program Chairs
+'''
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),

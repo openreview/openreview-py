@@ -85,30 +85,43 @@ def process(client, note, invitation):
 
             for decision in decision_options:
                 if 'Accept' in decision:
-                    content[f'{decision.replace(" ", "_")}_email_content'] = {
+                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': '''
-                        Dear {{fullname}},
-                        
-                        Thank you for submitting your paper, {submission_title}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
-                        
-                        Best,
-                        {short_name} Program Chairs
-                        '''
+                        'default': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+
+Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We are delighted to inform you that your submission has been accepted. Congratulations!
+
+Best,
+{{short_name}} Program Chairs
+'''
                     }
-                if 'Reject' in decision:
-                    content[f'{decision.replace(" ", "_")}_email_content'] = {
+                elif 'Reject' in decision:
+                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': '''
-                        Dear {{fullname}},
+                        'default': f'''
+Dear {{{{{{{{fullname}}}}}}}},
                         
-                        Thank you for submitting your paper, {submission_title}, to {short_name}. We regret to inform you that your submission was not accepted.
-                        
-                        Best,
-                        {short_name} Program Chairs
-                        '''
+Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We regret to inform you that your submission was not accepted.
+
+Best,
+{{short_name}} Program Chairs
+'''
+                    }
+                else:
+                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
+                        'value-regex': '[\\S\\s]{1,10000}',
+                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                        'default': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+
+Thank you for submitting your paper, {{submission_title}}, to {{short_name}}.
+
+Best,
+{{short_name}} Program Chairs
+'''
                     }
 
             content['home_page_tab_names'] = {
@@ -173,8 +186,9 @@ def process(client, note, invitation):
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
             if forum_note.content['send_decision_notifications'] == 'Yes, send an email notification to the authors':
                 decision_options = forum_note.content.get('decision_options')
+                decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
                 for decision in decision_options:
-                    email_message = forum_note.content[f'{decision.replace(" ", "_")}_email_content']
+                    email_message = note.content[f'{decision.lower().replace(" ", "_")}_email_content']
                     conference.send_decision_notifications(decision, email_message)
 
         submission_content = conference.submission_stage.get_content()

@@ -1556,10 +1556,10 @@ Program Chairs
                 submission_number=paper_note.number,
                 submission_title=paper_note.content['title']
             )
-            final_message = message.format(
+            final_message = f'''{message.format(
                 submission_title=paper_note.content['title'],
                 short_name=self.get_short_name()
-            )
+            )}'''
             self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
 
         tools.concurrent_requests(send_notification, decision_notes)
