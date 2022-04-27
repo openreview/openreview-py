@@ -52,7 +52,7 @@ def format_params(params):
 
     return params
 
-def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1)):
+def concurrent_requests(request_func, params):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -66,6 +66,7 @@ def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1
     :return: A list of results given for each func value execution
     :rtype: list
     """
+    max_workers=min(6, cpu_count() - 1)
     futures = []
     gathering_responses = tqdm(total=len(params), desc='Gathering Responses')
     results = []
@@ -800,39 +801,46 @@ def concurrent_get(client, get_function, **params):
     """
     max_workers = min(cpu_count() - 1, 6)
 
-    if params.get('limit') or float('inf') <= client.limit:
+    if (params.get('limit') or float('inf')) <= client.limit:
         docs = get_function(**params)
         return docs
     else:
-        current_offset = params.get('offset')
-        if current_offset is not None:
-            params.pop('offset')
-        params['with_count'] = True
-        current_limit = params.get('limit')
-        params['limit'] = 1
-        _, count = get_function(**params)
+        get_count_params = params.copy()
+        if get_count_params.get('offset') is not None:
+            get_count_params.pop('offset')
+        get_count_params['with_count'] = True
+        get_count_params['limit'] = 1
+        _, count = get_function(**get_count_params)
 
     params['with_count'] = False
-    if current_offset is not None:
-        params['offset'] = current_offset
-    if current_limit is None:
-        params.pop('limit')
-    else:
-        params['limit'] = current_limit
 
+    limit = params.get('limit')
+    if (limit or client.limit) > client.limit:
+        params.pop('limit')
     docs = get_function(**params)
 
-    if count <= client.limit:
+    offset = params.get('offset') or 0
+
+    if (count - offset) <= client.limit:
         return docs
 
-    offset_list = list(range(params.get('offset', 0) + client.limit, min(params.get('limit') or count, count), client.limit))
+    start = offset + client.limit
+
+    if limit is None:
+        end = count
+    else:
+        end = min(offset + limit, count)
+
+    offset_list = list(range(start, end, client.limit))
 
     futures = []
     gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for offset in offset_list:
+        for count, offset in enumerate(offset_list):
             params['offset'] = offset
+            if (count + 1) == len(offset_list) and (end - offset) > 0:
+                params['limit'] = end - offset
             futures.append(executor.submit(get_function, **params))
 
         for future in futures:
