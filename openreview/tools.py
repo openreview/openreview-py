@@ -800,21 +800,32 @@ def concurrent_get(client, get_function, **params):
     """
     max_workers = min(cpu_count() - 1, 6)
 
-    params.update({
-        'offset': params.get('offset') or 0,
-        'with_count': True
-    })
-
-    docs, count = get_function(**params)
     if params.get('limit') or float('inf') <= client.limit:
+        docs = get_function(**params)
         return docs
+    else:
+        current_offset = params.get('offset')
+        if current_offset is not None:
+            params.pop('offset')
+        params['with_count'] = True
+        current_limit = params.get('limit')
+        params['limit'] = 1
+        _, count = get_function(**params)
+
+    params['with_count'] = False
+    if current_offset is not None:
+        params['offset'] = current_offset
+    if current_limit is None:
+        params.pop('limit')
+    else:
+        params['limit'] = current_limit
+
+    docs = get_function(**params)
 
     if count <= client.limit:
         return docs
 
-    params['with_count'] = False
-
-    offset_list = list(range(client.limit, min(params.get('limit') or count, count), client.limit))
+    offset_list = list(range(params.get('offset', 0) + client.limit, min(params.get('limit') or count, count), client.limit))
 
     futures = []
     gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
