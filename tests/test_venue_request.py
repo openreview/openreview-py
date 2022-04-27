@@ -1212,8 +1212,18 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            writer.writerow([submissions[0].id, 'Reject', 'Not Good'])
-            writer.writerow([submissions[1].id, 'Accept', 'Good Good'])
+            writer.writerow([submissions[0].id, 'Accept', 'Good Paper'])
+            writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow(["qwerty", 'Accept', 'Good Paper'])
+            writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_decision.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].id, 'Test', 'Good Paper'])
+            writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
 
         # Post a decision stage note
         now = datetime.datetime.utcnow()
@@ -1382,6 +1392,103 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert decision_status
         assert decision_status.content['decision_posted'] == '0 Papers'
         assert '\"Not enough values provided in the decision file. Expected values are: paper_id, decision, comment\"' in decision_status.content['error']
+
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'),
+                                         decision_stage_invitation, 'decisions_file')
+
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'value-regex': '[\\S\\s]{1,5000}',
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'required': False,
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        assert decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
+                                                                              venue['request_form_note'].number)
+        decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
+                                           forum=venue['request_form_note'].forum, sort='tmdate')[0]
+
+        assert decision_status
+        assert decision_status.content['decision_posted'] == '1 Papers'
+        assert '\"Paper with ID: qwerty not found. Please check the submitted paperIDs.\"' in \
+               decision_status.content['error']
+
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_decision.csv'),
+                                         decision_stage_invitation, 'decisions_file')
+
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'value-regex': '[\\S\\s]{1,5000}',
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'required': False,
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        assert decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
+                                                                              venue['request_form_note'].number)
+        decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
+                                           forum=venue['request_form_note'].forum, sort='tmdate')[0]
+
+        assert decision_status
+        assert decision_status.content['decision_posted'] == '1 Papers'
+        assert '\"The value Test in field decision does not match the invitation definition\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'),
                                          decision_stage_invitation, 'decisions_file')
