@@ -82,7 +82,7 @@ def process(client, note, invitation):
                 'required': True,
                 'default': 'No, I will send the emails to the authors'
             }
-
+            short_name = conference.get_short_name()
             for decision in decision_options:
                 if 'Accept' in decision:
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
@@ -91,12 +91,12 @@ def process(client, note, invitation):
                         'default': f'''
 Dear {{{{{{{{fullname}}}}}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We are delighted to inform you that your submission has been accepted. Congratulations!
+Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
 You can find the final reviews for your paper on the submission page in OpenReview at:
 {{forum_url}}
 
 Best,
-{{short_name}} Program Chairs
+{short_name} Program Chairs
 '''
                     }
                 elif 'Reject' in decision:
@@ -106,12 +106,12 @@ Best,
                         'default': f'''
 Dear {{{{{{{{fullname}}}}}}}},
                         
-Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We regret to inform you that your submission was not accepted.
+Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at:
 {{forum_url}}
 
 Best,
-{{short_name}} Program Chairs
+{short_name} Program Chairs
 '''
                     }
                 else:
@@ -121,12 +121,12 @@ Best,
                         'default': f'''
 Dear {{{{{{{{fullname}}}}}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {{short_name}}.
+Thank you for submitting your paper, {{submission_title}}, to {short_name}.
 You can find the final reviews for your paper on the submission page in OpenReview at:
 {{forum_url}}
 
 Best,
-{{short_name}} Program Chairs
+{short_name} Program Chairs
 '''
                     }
 
@@ -191,7 +191,10 @@ Best,
 
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
             if forum_note.content['send_decision_notifications'] == 'Yes, send an email notification to the authors':
-                decision_options = forum_note.content.get('decision_options')
+                decision_options = forum_note.content.get(
+                    'decision_options',
+                    'Accept (Oral), Accept (Poster), Reject'
+                )
                 decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
                 email_messages = {
                     decision: note.content[f'{decision.lower().replace(" ", "_")}_email_content']

@@ -1455,6 +1455,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+        short_name = 'TestVenue@OR\'2030'
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
@@ -1463,26 +1464,26 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'accept_email_content': f'''
 Dear {{{{{{{{fullname}}}}}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We are delighted to inform you that your submission has been accepted. Congratulations!
+Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
 
 Best,
-{{short_name}} Program Chairs
+{short_name} Program Chairs
 ''',
                 'reject_email_content': f'''
 Dear {{{{{{{{fullname}}}}}}}},
                         
-Thank you for submitting your paper, {{submission_title}}, to {{short_name}}. We regret to inform you that your submission was not accepted.
+Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted.
 
 Best,
-{{short_name}} Program Chairs
+{short_name} Program Chairs
 ''',
                 'revision_needed_email_content': f'''
 Dear {{{{{{{{fullname}}}}}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {{short_name}}.
+Thank you for submitting your paper, {{submission_title}}, to {short_name}.
 
 Best,
-{{short_name}} Program Chairs
+{short_name} Program Chairs
 '''
             },
             forum=venue['request_form_note'].forum,

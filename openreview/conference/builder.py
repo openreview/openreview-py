@@ -1556,7 +1556,6 @@ Program Chairs
             )
             final_message = f'''{message.format(
                 submission_title=paper_note.content['title'],
-                short_name=self.get_short_name(),
                 forum_url=f'https://openreview.net/forum?id={paper_note.id}'
             )}'''
             self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
