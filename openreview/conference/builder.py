@@ -365,6 +365,10 @@ class Conference(object):
         self.bid_stages[stage.committee_id] = stage
         return self.__create_bid_stage(stage)
 
+    def set_review_stage(self, stage):
+        self.review_stage = stage
+        self.create_review_stage()
+
     def create_review_stage(self):
         if self.review_stage:
             return self.__create_review_stage()
