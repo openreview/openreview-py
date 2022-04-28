@@ -296,8 +296,12 @@ var getRegistrationForms = function() {
   var prefixes = [ REVIEWERS_ID, AREA_CHAIRS_ID ];
   var promises = _.map(prefixes, function(prefix) {
     return Webfield.getAll('/notes', {
-      invitation: prefix + '/-/.*Form'
-    });
+      invitation: prefix + '/-/.*',
+      signature: CONFERENCE_ID
+    })
+    .then(function(notes) {
+      return notes.filter(function(note) { return note.invitation.endsWith('Form'); })
+    })
   });
 
   return $.when.apply($, promises).then(function() {
