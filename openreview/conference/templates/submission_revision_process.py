@@ -47,12 +47,12 @@ To view your submission, click here: https://openreview.net/forum?id={}'''.forma
                 bibtex_note.content['authors'] = ['Anonymous']
                 bibtex_note.content['authorids'] = [CONFERENCE_ID + '/Paper' + str(bibtex_note.number) + '/' + AUTHORS_NAME]
 
-        bibtex_note.content['_bibtex'] = openreview.tools.get_bibtex(
+        bibtex_note.content['_bibtex'] = openreview.tools.generate_bibtex(
             note,
             venue_fullname=CONFERENCE_NAME,
             year=CONFERENCE_YEAR,
             url_forum=bibtex_note.id,
-            accepted=True,
+            paper_status='accepted',
             anonymous=bibtex_note.content.get('authors', []) == ['Anonymous']
         )
         client.post_note(bibtex_note)
