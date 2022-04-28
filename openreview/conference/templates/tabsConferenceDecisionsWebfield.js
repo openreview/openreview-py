@@ -144,11 +144,13 @@ function groupNotesByDecision(notes, withdrawnNotes, deskRejectedNotes) {
 
   notes.forEach(function(note) {
     var decisionNote = _.find(note.details.directReplies, ['invitation', CONFERENCE_ID + '/Paper' + note.number + '/-/' + DECISION_NAME]);
-    var tabName = DECISION_HEADING_MAP[decisionNote.content.decision];
-    if (tabName) {
-      var decisionKey = getElementId(tabName);
-      papersByDecision[decisionKey].push(note);
-    }    
+    if (decisionNote) {
+      var tabName = DECISION_HEADING_MAP[decisionNote.content.decision];
+      if (tabName) {
+        var decisionKey = getElementId(tabName);
+        papersByDecision[decisionKey].push(note);
+      }    
+    }
   })
   
   if (DECISION_HEADING_MAP['Reject']) {
