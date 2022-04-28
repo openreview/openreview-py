@@ -1044,3 +1044,46 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         messages = client.get_messages(to='ethic_reviewer@arr.org', subject="[ARR 2021 - September] Your ethics review has been received on your assigned Paper number: 5, Paper title: \"Paper title 5\"")
         assert len(messages) == 1
+
+        ## unflag papers
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Briefly summarize the ethics concerns.",
+                        "required": True
+                    }                    
+                },
+                'ethics_review_submissions': '4,3',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        groups = client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/Ethics_Reviewers')
+        assert len(groups) == 3
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper3/Ethics_Reviewers')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper4/Ethics_Reviewers')
+        ## Paper 5 stays because there is already an assigned reviewer and a review
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers')
+
+        invitations = client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/-/Ethics_Review')     
+        assert len(invitations) == 3
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper3/-/Ethics_Review')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper4/-/Ethics_Review')               
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')

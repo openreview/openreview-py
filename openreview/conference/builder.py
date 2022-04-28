@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from queue import Empty
 
 import time
 import datetime
@@ -211,11 +212,23 @@ class Conference(object):
     def __create_ethics_review_stage(self):
 
         numbers = ','.join(map(str, self.ethics_review_stage.submission_numbers))
+        print('flagged submissions', numbers)
         notes = list(self.get_submissions(number=numbers))
         
-        ## Make submissions visible to the ethics committee
-        self.create_blind_submissions(number=numbers)
-
+        ## Unflag existing papers with no assigned reviewers
+        groups = self.client.get_groups(regex=self.get_ethics_reviewers_id(number='.*'))
+        for group in groups:
+            print('process group', group.id)
+            if len(group.members) == 0:
+                number = self.get_number_from_committee(group.id)
+                if number and number not in self.ethics_review_stage.submission_numbers:
+                    ## Delete group
+                    self.client.delete_group(group.id)
+                    ## Expire the invitation
+                    invitation = tools.get_invitation(self.client, self.get_invitation_id(self.ethics_review_stage.name, number))
+                    invitation.expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                    self.client.post_invitation(invitation)
+        
         ## Create ethics paper groups
         for note in tqdm(notes):
 
@@ -232,6 +245,9 @@ class Conference(object):
                     anonids=True,
                     members=group.members if group else [])
                 )
+
+        ## Make submissions visible to the ethics committee
+        self.create_blind_submissions(number=numbers)
 
         ## Setup paper matching
         self.setup_committee_matching(self.get_ethics_reviewers_id(), compute_affinity_scores=False, compute_conflicts=True)
@@ -502,6 +518,14 @@ class Conference(object):
         else:
             committee_id = committee_id + name
         return committee_id
+
+    def get_number_from_committee(self, committee_id):
+        tokens = committee_id.split('/')
+        for token in tokens:
+            if token.startswith('Paper'):
+                token = token.replace('Paper', '')
+                return int(token)
+        return None
 
     def get_committee_name(self, committee_id, pretty=False):
         name = committee_id.split('/')[-1]
