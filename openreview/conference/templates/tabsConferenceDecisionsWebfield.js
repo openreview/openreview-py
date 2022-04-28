@@ -14,11 +14,12 @@ var PARENT_GROUP_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var WITHDRAWN_SUBMISSION_ID = '';
 var DESK_REJECTED_SUBMISSION_ID = '';
-var DECISION_INVITATION_REGEX = '';
 var DECISION_HEADING_MAP = {};
 var PAGE_SIZE = 25;
 
 var HEADER = {};
+
+var DECISION_NAME = 'Decision';
 
 var paperDisplayOptions = {
   pdfLink: true,
@@ -48,7 +49,7 @@ function main() {
 function load() {
   var notesP = Webfield.getAll('/notes', {
     invitation: BLIND_SUBMISSION_ID,
-    details: 'replyCount,invitation,original'
+    details: 'replyCount,invitation,original,directReplies'
   });
 
   var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.getAll('/notes', {
@@ -60,10 +61,6 @@ function load() {
     invitation: DESK_REJECTED_SUBMISSION_ID,
     details: 'replyCount,invitation,original'
   }) : $.Deferred().resolve([]);
-
-  var decisionNotesP = Webfield.getAll('/notes', {
-    invitation: DECISION_INVITATION_REGEX,
-  });
 
   var userGroupsP;
   if (!user || _.startsWith(user.id, 'guest_')) {
@@ -82,7 +79,7 @@ function load() {
     });
   }
 
-  return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP, userGroupsP);
+  return $.when(notesP, withdrawnNotesP, deskRejectedNotesP, userGroupsP);
 }
 
 function renderConferenceHeader() {
@@ -138,26 +135,22 @@ function createConsoleLinks(allGroups) {
   });
 }
 
-function groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejectedNotes) {
-  // Categorize notes into buckets defined by DECISION_HEADING_MAP
-  var notesDict = _.keyBy(notes, 'id');
-
+function groupNotesByDecision(notes, withdrawnNotes, deskRejectedNotes) {
+  
   var papersByDecision = {};
   for (var decision in DECISION_HEADING_MAP) {
     papersByDecision[getElementId(DECISION_HEADING_MAP[decision])] = [];
   }
 
-  decisionNotes.forEach(function(d) {
-    var tabName = DECISION_HEADING_MAP[d.content.decision];
+  notes.forEach(function(note) {
+    var decisionNote = _.find(note.details.directReplies, ['invitation', CONFERENCE_ID + '/Paper' + note.number + '/-/' + DECISION_NAME]);
+    var tabName = DECISION_HEADING_MAP[decisionNote.content.decision];
     if (tabName) {
       var decisionKey = getElementId(tabName);
-      if (notesDict[d.forum] && papersByDecision[decisionKey]) {
-        papersByDecision[decisionKey].push(notesDict[d.forum]);
-      }
-    }
-
-  });
-
+      papersByDecision[decisionKey].push(note);
+    }    
+  })
+  
   if (DECISION_HEADING_MAP['Reject']) {
     var decisionKey = getElementId(DECISION_HEADING_MAP['Reject']);
     papersByDecision[decisionKey] = papersByDecision[decisionKey].concat(withdrawnNotes.concat(deskRejectedNotes));
