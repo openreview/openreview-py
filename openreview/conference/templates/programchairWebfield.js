@@ -296,8 +296,13 @@ var getRegistrationForms = function() {
   var prefixes = [ REVIEWERS_ID, AREA_CHAIRS_ID ];
   var promises = _.map(prefixes, function(prefix) {
     return Webfield.getAll('/notes', {
-      invitation: prefix + '/-/.*Form'
-    });
+      invitation: prefix + '/-/.*',
+      signature: CONFERENCE_ID,
+      select: 'id,invitation,content.title'
+    })
+    .then(function(notes) {
+      return notes.filter(function(note) { return note.invitation.endsWith('Form'); })
+    })
   });
 
   return $.when.apply($, promises).then(function() {
@@ -1228,7 +1233,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
     html += '<div class="col-md-4 col-xs-6">'
     html += '<h4>Registration Forms:</h4><ul style="padding-left: 15px">';
     registrationForms.forEach(function(form) {
-      html += '<li><a href="/forum?id=' + form.forum + '">' + form.content.title + '</a></li>';
+      html += '<li><a href="/forum?id=' + form.id + '">' + form.content.title + '</a></li>';
     })
     html += '</ul>';
     html += '</div>';
