@@ -54,7 +54,7 @@ If you would like to change your decision, please click the Accept link in the p
         action = 'accepted' if response == 'Yes' else 'declined'
 
         if JOURNAL_REQUEST_ID:
-            recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID))
+            recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID, sort='number:desc'))
             for note in recruitment_notes:
                 invitee = note.content['invitee_email']['value'].strip()
                 invitee_ids = [invitee]
@@ -78,7 +78,7 @@ If you would like to change your decision, please click the Accept link in the p
                                 'comment': { 'value': comment_content}
                             },
                             forum = JOURNAL_REQUEST_ID,
-                            replyto = JOURNAL_REQUEST_ID,
+                            replyto = note.id,
                             readers = comment_inv.edit['note']['readers']['enum']
                         ))
                     break
