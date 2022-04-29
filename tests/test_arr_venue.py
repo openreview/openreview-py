@@ -985,6 +985,9 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         helpers.await_queue()
 
+        ## ethics chairs should be able to add ethics reviewers manually
+        ethics_chair_client.add_members_to_group('aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers', 'another@ethics_reviewer.org')
+
         groups = client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/Ethics_Reviewers')
         assert len(groups) == 2
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper1/Ethics_Reviewers')

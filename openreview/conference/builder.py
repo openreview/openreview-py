@@ -1234,7 +1234,7 @@ class Conference(object):
 
         ethics_reviewer_group = self.__create_group(
             group_id = self.get_ethics_reviewers_id(),
-            group_owner_id = self.id,
+            group_owner_id = self.get_ethics_chairs_id(),
             members = emails,
             additional_readers = readers)
 
