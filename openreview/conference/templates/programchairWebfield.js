@@ -342,15 +342,9 @@ var getInvitationMap = function() {
     });
   }
 
-  var assignmentInvitationsP = Webfield.getAll('/invitations', {
-    regex: CONFERENCE_ID + '.*/-/Assignment_Configuration',
-    expired: true,
-    type: 'notes'
-  });
-
-  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP, assignmentInvitationsP)
-  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations, assignmentInvitations) {
-    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations).concat(assignmentInvitations);
+  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP)
+  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations) {
+    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations);
     return _.keyBy(allInvitations, 'id');
   });
 };
