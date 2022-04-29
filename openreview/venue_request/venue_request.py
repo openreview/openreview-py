@@ -494,7 +494,7 @@ class VenueStages():
                     'Yes, send an email notification to the authors',
                     'No, I will send the emails to the authors'
                 ],
-                'required': True,
+                'required': False,
                 'hidden': True,
                 'default': 'No, I will send the emails to the authors',
                 'order': 35
