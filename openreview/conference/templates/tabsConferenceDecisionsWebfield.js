@@ -136,7 +136,6 @@ function createConsoleLinks(allGroups) {
 }
 
 function groupNotesByDecision(notes, withdrawnNotes, deskRejectedNotes) {
-  
   var papersByDecision = {};
   for (var decision in DECISION_HEADING_MAP) {
     papersByDecision[getElementId(DECISION_HEADING_MAP[decision])] = [];
@@ -144,14 +143,14 @@ function groupNotesByDecision(notes, withdrawnNotes, deskRejectedNotes) {
 
   notes.forEach(function(note) {
     var decisionNote = _.find(note.details.directReplies, ['invitation', CONFERENCE_ID + '/Paper' + note.number + '/-/' + DECISION_NAME]);
-    if (decisionNote) {
-      var tabName = DECISION_HEADING_MAP[decisionNote.content.decision];
-      if (tabName) {
-        var decisionKey = getElementId(tabName);
-        papersByDecision[decisionKey].push(note);
-      }    
-    }
-  })
+    if (!decisionNote) return;
+    
+    var tabName = DECISION_HEADING_MAP[decisionNote.content.decision];
+    if (!tabName) return;
+    
+    var decisionKey = getElementId(tabName);
+    papersByDecision[decisionKey].push(note);
+  });
   
   if (DECISION_HEADING_MAP['Reject']) {
     var decisionKey = getElementId(DECISION_HEADING_MAP['Reject']);
