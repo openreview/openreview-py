@@ -100,7 +100,8 @@ The {journal.short_name} Editors-in-Chief
                 weight = 1
             ))
 
-        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
+        review_period_length = journal.get_review_period_length(note)
+        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = review_period_length)
 
         ## Update review invitation duedate
         invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=note.number),
@@ -127,7 +128,7 @@ The {journal.short_name} Editors-in-Chief
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.content['title']['value']}'''
         message=f'''Hi {{{{fullname}}}},
 
-With this email, we request that you submit, within 2 weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within {review_period_length} weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit['invitation']['id']}
 
