@@ -1448,7 +1448,19 @@ Program Chairs
             if invitations:
                 for option in invitations[0].reply['content']['decision']['value-radio']:
                     decision_heading_map[option] = option + ' Papers'
-        options['decision_heading_map'] = decision_heading_map
+
+        #change decision for venueId
+        venue = self.short_name
+        venue_map = {}
+        for entry in decision_heading_map.keys():
+            if 'Accept' in entry:
+                decision = entry.replace('Accept', '')
+                decision = re.sub(r'[()\W]+', '', decision)
+                venueId = venue + ' ' + decision 
+                venue_map[venueId] = decision_heading_map[entry]
+            if 'Reject' in entry:
+                venue_map[f'Submitted to {venue}'] = decision_heading_map[entry]
+        options['decision_heading_map'] = venue_map
 
         self.webfield_builder.set_home_page(conference = self, group = home_group, layout = 'decisions', options = options)
 

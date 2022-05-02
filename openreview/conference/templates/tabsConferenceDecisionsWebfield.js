@@ -14,7 +14,6 @@ var PARENT_GROUP_ID = '';
 var BLIND_SUBMISSION_ID = '';
 var WITHDRAWN_SUBMISSION_ID = '';
 var DESK_REJECTED_SUBMISSION_ID = '';
-var DECISION_INVITATION_REGEX = '';
 var DECISION_HEADING_MAP = {};
 var PAGE_SIZE = 25;
 
@@ -27,6 +26,7 @@ var paperDisplayOptions = {
 };
 
 var sections = [];
+var venueIds = [];
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
@@ -46,10 +46,22 @@ function main() {
 
 // Load makes all the API calls needed to get the data to render the page
 function load() {
-  var notesP = Webfield.getAll('/notes', {
-    invitation: BLIND_SUBMISSION_ID,
-    details: 'replyCount,invitation,original'
-  });
+
+  var getNotes = function() {
+    var promises = [];
+    _.forEach(venueIds, function(venueId) {
+      promises.push(Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+        pageSize: PAGE_SIZE,
+        'content.venue': venueId,
+        details: 'replyCount',
+        includeCount: true
+      }));
+    });
+
+    return $.when.apply($, promises).then(function() {
+      return _.toArray(arguments);
+    });
+  };
 
   var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.getAll('/notes', {
     invitation: WITHDRAWN_SUBMISSION_ID,
@@ -60,10 +72,6 @@ function load() {
     invitation: DESK_REJECTED_SUBMISSION_ID,
     details: 'replyCount,invitation,original'
   }) : $.Deferred().resolve([]);
-
-  var decisionNotesP = Webfield.getAll('/notes', {
-    invitation: DECISION_INVITATION_REGEX,
-  });
 
   var userGroupsP;
   if (!user || _.startsWith(user.id, 'guest_')) {
@@ -82,7 +90,7 @@ function load() {
     });
   }
 
-  return $.when(notesP, decisionNotesP, withdrawnNotesP, deskRejectedNotesP, userGroupsP);
+  return $.when(getNotes(), withdrawnNotesP, deskRejectedNotesP, userGroupsP);
 }
 
 function renderConferenceHeader() {
@@ -103,17 +111,20 @@ function renderConferenceTabs() {
     heading: 'Your Consoles',
     id: 'your-consoles',
   });
-  var tabNames = new Set();
-  for (var decision in DECISION_HEADING_MAP) {
-    tabNames.add(DECISION_HEADING_MAP[decision]);
-  }
-  var tabArray = Array.from(tabNames);
-  tabArray.forEach(function(tabName) {
+
+  var tabNames = []
+
+  Object.keys(DECISION_HEADING_MAP).forEach(function(key) {
+    venueIds.push(key)
+    tabNames.push(DECISION_HEADING_MAP[key])
+  })
+
+  tabNames.forEach(function(tabName) {
     sections.push({
       heading: tabName,
       id: getElementId(tabName)
-    });
-  })
+    })
+  });
 
   Webfield.ui.tabPanel(sections, {
     container: '#notes',
@@ -138,35 +149,52 @@ function createConsoleLinks(allGroups) {
   });
 }
 
-function groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejectedNotes) {
-  // Categorize notes into buckets defined by DECISION_HEADING_MAP
-  var notesDict = _.keyBy(notes, 'id');
+function renderNotesbyDecision(submissionCount, submissions, venueId) {
+    
+  var container = '#' + getElementId(DECISION_HEADING_MAP[venueId])
 
-  var papersByDecision = {};
-  for (var decision in DECISION_HEADING_MAP) {
-    papersByDecision[getElementId(DECISION_HEADING_MAP[decision])] = [];
+  $(container).empty();
+  if (submissionCount) {
+    var SearchResultsListOptions = _.assign({}, paperDisplayOptions, {
+      container: container,
+      autoLoad: false
+    });
+
+    Webfield.ui.submissionList(submissions, {
+      heading: null,
+      container: container,
+      search: {
+        enabled: true,
+        localSearch: false,
+        venue: venueId,
+        onResults: function(searchResults) {
+          Webfield.ui.searchResults(searchResults, SearchResultsListOptions);
+        },
+        onReset: function() {
+          Webfield.ui.searchResults(submissions, SearchResultsListOptions);
+          $(container).append(view.paginationLinks(submissionCount, PAGE_SIZE, 1));
+        }
+      },
+      displayOptions: paperDisplayOptions,
+      autoLoad: false,
+      noteCount: submissionCount,
+      pageSize: PAGE_SIZE,
+      onPageClick: function(offset) {
+        return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+          'content.venue': venueId,
+          details: 'replyCount',
+          pageSize: PAGE_SIZE,
+          offset: offset
+        });
+      },
+      fadeIn: false
+    });
+  } else {
+    $('.tabs-container a[href="'+container+'"]').parent().hide();
   }
-
-  decisionNotes.forEach(function(d) {
-    var tabName = DECISION_HEADING_MAP[d.content.decision];
-    if (tabName) {
-      var decisionKey = getElementId(tabName);
-      if (notesDict[d.forum] && papersByDecision[decisionKey]) {
-        papersByDecision[decisionKey].push(notesDict[d.forum]);
-      }
-    }
-
-  });
-
-  if (DECISION_HEADING_MAP['Reject']) {
-    var decisionKey = getElementId(DECISION_HEADING_MAP['Reject']);
-    papersByDecision[decisionKey] = papersByDecision[decisionKey].concat(withdrawnNotes.concat(deskRejectedNotes));
-  }
-  return papersByDecision;
 }
 
-function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, userGroups) {
-  var papersByDecision = groupNotesByDecision(notes, decisionNotes, withdrawnNotes, deskRejectedNotes);
+function renderContent(notes, withdrawnNotes, deskRejectedNotes, userGroups) {
 
   // Your Consoles Tab
   if (userGroups && userGroups.length) {
@@ -179,31 +207,35 @@ function renderContent(notes, decisionNotes, withdrawnNotes, deskRejectedNotes, 
     $('.tabs-container a[href="#your-consoles"]').parent().hide();
   }
 
-  // Register event handlers
-  $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
-    var containerSelector = $(e.target).attr('href');
-    var containerId = containerSelector.substring(1);
-    if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
-      return;
-    }
+  for (var arrayIdx = 0; arrayIdx < notes.length; arrayIdx++) {	
+    renderNotesbyDecision(notes[arrayIdx].count, notes[arrayIdx].notes, venueIds[arrayIdx]);
+  }
 
-    setTimeout(function() {
-      Webfield.ui.searchResults(
-        papersByDecision[containerId],
-        Object.assign({}, paperDisplayOptions, { showTags: false, container: containerSelector })
-      );
-    }, 150);
-  });
+//   // Register event handlers
+//   $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
+//     var containerSelector = $(e.target).attr('href');
+//     var containerId = containerSelector.substring(1);
+//     if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
+//       return;
+//     }
 
-  $('#group-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
-    var containerSelector = $(e.target).attr('href');
-    var containerId = containerSelector.substring(1);
-    if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
-      return;
-    }
+//     setTimeout(function() {
+//       Webfield.ui.searchResults(
+//         papersByDecision[containerId],
+//         Object.assign({}, paperDisplayOptions, { showTags: false, container: containerSelector })
+//       );
+//     }, 150);
+//   });
 
-    Webfield.ui.spinner(containerSelector, { inline: true });
-  });
+//   $('#group-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
+//     var containerSelector = $(e.target).attr('href');
+//     var containerId = containerSelector.substring(1);
+//     if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
+//       return;
+//     }
+
+//     Webfield.ui.spinner(containerSelector, { inline: true });
+//   });
 
   $('#notes > .spinner-container').remove();
   $('.tabs-container').show();
