@@ -16,7 +16,8 @@ function(){
     forumNote.then(function(result) {
       var forum = result.notes[0];
       var promises = [];
-      var reviewName = OFFICIAL_REVIEW_NAME.replace('_', ' ').toLocaleLowerCase();
+      var capitalReviewName = OFFICIAL_REVIEW_NAME.replace('_', ' ');
+      var reviewName = capitalReviewName.toLocaleLowerCase();
 
       var AUTHORS_ID = CONFERENCE_ID + '/Paper' + forum.number + '/' + AUTHORS_NAME;
       //TODO: use the variable instead, when we have anonymous groups integrated
@@ -48,7 +49,7 @@ function(){
         var areachair_mail = {
           groups: [AREA_CHAIRS_ID],
           ignoreGroups: ignoreGroups,
-          subject : '[' + SHORT_PHRASE + '] ' + reviewName + ' posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          subject : '[' + SHORT_PHRASE + '] ' + capitalReviewName + ' posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
           message: 'A submission to ' + SHORT_PHRASE + ', for which you are an official area chair, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, areachair_mail, 'POST', token ));
@@ -59,7 +60,7 @@ function(){
         var reviewer_mail = {
           groups: [REVIEWERS_ID],
           ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] ' + reviewName + ' posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          subject: '[' + SHORT_PHRASE + '] ' + capitalReviewName + ' posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
           message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
@@ -67,7 +68,7 @@ function(){
         var reviewer_mail = {
           groups: [reviewers_submitted],
           ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] ' + reviewName + ' posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          subject: '[' + SHORT_PHRASE + '] ' + capitalReviewName + ' posted to your assigned Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
           message: 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + forum.number + '\n\nPaper title: ' + forum.content.title + '\n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, reviewer_mail, 'POST', token ));
@@ -77,7 +78,7 @@ function(){
         var author_mail = {
           groups: [AUTHORS_ID],
           ignoreGroups: ignoreGroups,
-          subject: '[' + SHORT_PHRASE + '] ' + reviewName +' posted to your submission - Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
+          subject: '[' + SHORT_PHRASE + '] ' + capitalReviewName +' posted to your submission - Paper number: ' + forum.number + ', Paper title: "' + forum.content.title + '"',
           message: 'Your submission to ' + SHORT_PHRASE + ' has received a review. \n\n' + content
         };
         promises.push(or3client.or3request( or3client.mailUrl, author_mail, 'POST', token ));

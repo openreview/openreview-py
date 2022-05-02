@@ -831,7 +831,7 @@ class ReviewInvitation(openreview.Invitation):
             file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
             file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
             file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
-            file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + review_stage.name + "';")
+            file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + ('Review' if 'Official' in review_stage.name else review_stage.name) + "';")
             file_content = file_content.replace("var ADD_SUBMITED = false;", "var ADD_SUBMITED = true;")
 
 
