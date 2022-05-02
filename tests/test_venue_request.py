@@ -27,6 +27,7 @@ class TestVenueRequest():
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
+        withdraw_due_date = due_date + datetime.timedelta(days=1)
 
         # Post the request form note
         request_form_note = openreview.Note(
@@ -64,7 +65,8 @@ class TestVenueRequest():
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'reviewer_identity': ['Program Chairs'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair']
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'withdraw_submission_deadline': withdraw_due_date.strftime('%Y/%m/%d'),
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -144,6 +146,7 @@ class TestVenueRequest():
         start_date = now - datetime.timedelta(days=2)
         abstract_due_date = now + datetime.timedelta(minutes=15)
         due_date = now + datetime.timedelta(minutes=30)
+        withdraw_due_date = now + datetime.timedelta(hours=1)
 
         request_form_note = client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
@@ -175,6 +178,7 @@ class TestVenueRequest():
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'withdraw_submission_deadline': withdraw_due_date.strftime('%Y/%m/%d'),
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
                 'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',

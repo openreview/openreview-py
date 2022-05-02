@@ -319,9 +319,12 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
         if reveal_submission:
             readers = {'values': ['everyone']}
 
+        due_date = tools.datetime_millis(conference.submission_stage.withdraw_submission_due_date) if conference.submission_stage.withdraw_submission_due_date else None
         super(WithdrawnSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_withdrawn_submission_id(conference),
             cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
+            duedate=due_date,
+            expdate=tools.datetime_millis(conference.submission_stage.withdraw_submission_due_date + datetime.timedelta(minutes= SHORT_BUFFER_MIN)) if due_date else None,
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
@@ -416,9 +419,8 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
+                super=conference.submission_stage.get_withdrawn_submission_id(conference),
                 cdate=None,
-                duedate = None,
-                expdate =None,
                 invitees=[conference.get_authors_id(note.number), conference.support_user],
                 readers=['everyone'],
                 writers=[conference.get_id()],

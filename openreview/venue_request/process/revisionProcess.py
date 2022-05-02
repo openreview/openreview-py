@@ -28,6 +28,21 @@ def process(client, note, invitation):
                 if matching_invitation:
                     matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
                     client.post_invitation(matching_invitation)
+            withdraw_submission_deadline = forum_note.content.get('withdraw_submission_deadline')
+            if withdraw_submission_deadline:
+                try:
+                    withdraw_submission_deadline = datetime.datetime.strptime(withdraw_submission_deadline, '%Y/%m/%d %H:%M')
+                except ValueError:
+                    withdraw_submission_deadline = datetime.datetime.strptime(withdraw_submission_deadline, '%Y/%m/%d')
+                withdraw_submission_invitation = openreview.tools.get_invitation(
+                    client, conference.submission_stage.get_withdrawn_submission_id(conference)
+                )
+                if withdraw_submission_invitation:
+                    withdraw_submission_invitation.duedate = openreview.tools.datetime_millis(withdraw_submission_deadline)
+                    withdraw_submission_invitation.expdate = openreview.tools.datetime_millis(
+                        withdraw_submission_deadline + datetime.timedelta(minutes=30)
+                    )
+                    client.post_invitation(withdraw_submission_invitation)
 
         elif invitation_type == 'Bid_Stage':
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
