@@ -385,7 +385,7 @@ class TestSingleBlindConference():
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -397,7 +397,7 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['pc2@mail.com'])
         conference.set_area_chairs(emails = ['ac2@mail.com'])
@@ -509,7 +509,7 @@ class TestSingleBlindConference():
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -521,7 +521,7 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        }, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
 
         # Author user

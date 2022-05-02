@@ -1062,7 +1062,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, email_pcs = True)
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, email_pcs = True))
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_area_chairs(emails = ['ac@mail.com'])
@@ -1847,7 +1847,7 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         builder.get_result()
 
-        builder.set_review_stage(public=True)
+        builder.set_review_stage(openreview.ReviewStage(public=True))
         builder.get_result()
 
         reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')

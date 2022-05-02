@@ -266,10 +266,7 @@ class VenueStages():
             "release_submissions_to_ethics_reviewers": {
                 "description": "Confirm that you want to release the submissions to the ethics reviewers if they are no currently released.",
                 "order": 9,
-                "value-radio": [
-                    "We confirm we want to release the submissions to the ethics reviewers",
-                    "We confirm we want to release the submissions and reviews to the ethics reviewers"
-                ],
+                "value-checkbox": "We confirm we want to release the submissions and reviews to the ethics reviewers",
                 "required": True
             }           
         }
