@@ -1757,10 +1757,36 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
+        short_name = 'TestVenue@OR\'2030'
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
-                'submission_readers': 'Everyone (submissions are public)'
+                'submission_readers': 'Everyone (submissions are public)',
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+
+Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+                        
+Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted.
+
+Best,
+{short_name} Program Chairs
+''',
+                'revision_needed_email_content': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+
+Thank you for submitting your paper, {{submission_title}}, to {short_name}.
+
+Best,
+{short_name} Program Chairs
+'''
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1786,6 +1812,10 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
         assert blind_submissions[2].content['authors'] == ['Anonymous']
         assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+
+        last_message = client.get_messages(to='venue_author1@mail.com')[-1]
+        assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
+        assert "Dear Venue Author,</p>\n<p>Thank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message['content']['text']
 
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']

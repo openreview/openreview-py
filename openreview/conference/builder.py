@@ -1550,6 +1550,28 @@ Program Chairs
             self.set_homepage_decisions(decision_heading_map=decision_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
+    def send_decision_notifications(self, decision_options, messages):
+        decision_notes = self.client.get_all_notes(
+            invitation=self.get_invitation_id(self.decision_stage.name, '.*'),
+        )
+        paper_notes = {n.forum: n for n in self.get_submissions()}
+
+        def send_notification(note):
+            paper_note = paper_notes[note.forum]
+            message = messages[note.content['decision']]
+            subject = "[{SHORT_NAME}] Decision notification for your submission {submission_number}: {submission_title}".format(
+                SHORT_NAME=self.get_short_name(),
+                submission_number=paper_note.number,
+                submission_title=paper_note.content['title']
+            )
+            final_message = f'''{message.format(
+                submission_title=paper_note.content['title'],
+                forum_url=f'https://openreview.net/forum?id={paper_note.id}'
+            )}'''
+            self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
+
+        tools.concurrent_requests(send_notification, decision_notes)
+
     def post_decisions(self, decisions_file):
         decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
         decision_notes = {
