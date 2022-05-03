@@ -1,14 +1,20 @@
 from __future__ import absolute_import
 
+import csv
+import json
 import time
 import datetime
 import re
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
+from io import StringIO
+from multiprocessing import cpu_count
+
 from tqdm import tqdm
 import os
 import concurrent.futures
-from .. import openreview
+from .. import openreview, OpenReviewException
 from .. import tools
 from . import webfield
 from . import invitation
@@ -340,7 +346,11 @@ class Conference(object):
 
     def set_decision_stage(self, stage):
         self.decision_stage = stage
-        return self.__create_decision_stage()
+        self.__create_decision_stage()
+
+        if self.decision_stage.decisions_file:
+            decisions = self.client.get_attachment(id=self.request_form_id, field_name='decisions_file')
+            self.post_decisions(decisions)
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -1540,6 +1550,106 @@ Program Chairs
             self.set_homepage_decisions(decision_heading_map=decision_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
+    def post_decisions(self, decisions_file):
+        decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
+        decision_notes = {
+            n.forum: n for n in self.client.get_all_notes(
+                invitation=self.get_invitation_id(self.decision_stage.name, '.*')
+            )}
+        paper_notes = {n.forum: n for n in self.get_submissions()}
+        forum_note = self.client.get_note(self.request_form_id)
+
+        def post_decision(paper_decision):
+            if len(paper_decision) < 2:
+                raise OpenReviewException(
+                    "Not enough values provided in the decision file. Expected values are: paper_id, decision, comment")
+            if len(paper_decision) > 3:
+                raise OpenReviewException(
+                    "Too many values provided in the decision file. Expected values are: paper_id, decision, comment"
+                )
+            if len(paper_decision) == 3:
+                paper_id, decision, comment = paper_decision
+            else:
+                paper_id, decision = paper_decision
+                comment = ''
+
+            print(f"Posting Decision {decision} for Paper {paper_id}")
+            paper_note = paper_notes.get(paper_id, None)
+            if not paper_note:
+                raise OpenReviewException(
+                    f"Paper with ID: {paper_id} not found. Please check the submitted paperIDs."
+                )
+
+            paper_decision_note = decision_notes.get(paper_id, None)
+            if paper_decision_note:
+                paper_decision_note.content = {
+                    'title': 'Paper Decision',
+                    'decision': decision.strip(),
+                    'comment': comment,
+                }
+            else:
+                paper_decision_note = openreview.Note(
+                    invitation=self.get_invitation_id(name=self.decision_stage.name, number=paper_note.number),
+                    writers=[self.get_program_chairs_id()],
+                    readers=self.decision_stage.get_readers(conference=self, number=paper_note.number),
+                    nonreaders=self.decision_stage.get_nonreaders(conference=self, number=paper_note.number),
+                    signatures=[self.get_program_chairs_id()],
+                    content={
+                        'title': 'Paper Decision',
+                        'decision': decision.strip(),
+                        'comment': comment,
+                    },
+                    forum=paper_note.forum,
+                    replyto=paper_note.forum
+                )
+            self.client.post_note(paper_decision_note)
+            print(f"Decision posted for Paper {paper_id}")
+
+        futures = []
+        futures_param_mapping = {}
+        gathering_responses = tqdm(total=len(decisions_data), desc='Gathering Responses')
+        results = []
+        errors = {}
+
+        with ThreadPoolExecutor(max_workers=min(6, cpu_count() - 1)) as executor:
+            for _decision in decisions_data:
+                _future = executor.submit(post_decision, _decision)
+                futures.append(_future)
+                futures_param_mapping[_future] = str(_decision)
+
+            for future in futures:
+                gathering_responses.update(1)
+                try:
+                    results.append(future.result())
+                except Exception as e:
+                    errors[futures_param_mapping[future]] = e.args[0] if isinstance(e, OpenReviewException) else repr(e)
+
+            gathering_responses.close()
+
+        error_status = ''
+        if errors:
+            error_status = f'''
+```python
+{json.dumps(errors, indent=2)}
+```
+'''
+        status_note = openreview.Note(
+            invitation=self.support_user + '/-/Request' + str(forum_note.number) + '/Decision_Upload_Status',
+            forum=self.request_form_id,
+            replyto=self.request_form_id,
+            readers=[self.get_program_chairs_id(), self.support_user],
+            writers=[],
+            signatures=[self.support_user],
+            content={
+                'title': 'Decision Upload Status',
+                'decision_posted': f'''{len(results)} Papers''',
+                'error': error_status
+            }
+        )
+
+        self.client.post_note(status_note)
+
+
 class SubmissionStage(object):
 
     class Readers(Enum):
@@ -2082,7 +2192,7 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -2095,6 +2205,7 @@ class DecisionStage(object):
         self.release_to_area_chairs = release_to_area_chairs
         self.email_authors = email_authors
         self.additional_fields = additional_fields
+        self.decisions_file = decisions_file
 
     def get_readers(self, conference, number):
 
