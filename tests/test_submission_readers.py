@@ -234,7 +234,8 @@ class TestSubmissionReaders():
         post_decision_note=client.post_note(openreview.Note(
             content= {
                 'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
-                'submission_readers': 'Make accepted submissions public and hide rejected submissions'
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'send_decision_notifications': 'No, I will send the emails to the authors'
             },
             forum= venue['request_form_note'].id,
             invitation= 'openreview.net/Support/-/Request{}/Post_Decision_Stage'.format(venue['request_form_note'].number),

@@ -494,7 +494,8 @@ class VenueStages():
                     'Yes, send an email notification to the authors',
                     'No, I will send the emails to the authors'
                 ],
-                'required': True,
+                'required': False,
+                'hidden': True,
                 'default': 'No, I will send the emails to the authors',
                 'order': 35
             },
@@ -504,7 +505,71 @@ class VenueStages():
                 'required': False,
                 'description': 'Configure additional options in the decision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
+            'decisions_file': {
+                'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_id, decision, comment). Please do not add the column names as the first row',
+                'order': 37,
+                'value-file': {
+                    'fileTypes': ['csv'],
+                    'size': 50
+                },
+                'required': False
+            }
         }
+
+        decisions_upload_status_content = {
+            'title': {
+                'value': 'Decision Upload Status',
+                'required': True,
+                'order': 1
+            },
+            'decision_posted': {
+                'value-regex': '.*',
+                'description': 'No. of papers decision was posted for',
+                'required': True,
+                'markdown': True,
+                'order': 2
+            },
+            'error': {
+                'value-regex': '[\\S\\s]{0,200000}',
+                'description': 'List of papers whose decision were not posted due to an error',
+                'required': False,
+                'markdown': True,
+                'order': 5
+            },
+            'comment': {
+                'order': 6,
+                'value-regex': '[\\S\\s]{1,200000}',
+                'description': 'Your comment or reply (max 200000 characters).',
+                'required': False,
+                'markdown': True
+            }
+        }
+
+        with open(self.venue_request.decision_upload_status_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.venue_request.super_user + "'")
+            self.venue_request.decision_upload_super_invitation = self.venue_request.client.post_invitation(
+                openreview.Invitation(
+                    id=self.venue_request.support_group.id + '/-/Decision_Upload_Status',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.venue_request.support_group.id],
+                    invitees=[self.venue_request.support_group.id],
+                    process_string=file_content,
+                    multiReply=True,
+                    reply={
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'writers': {
+                            'values': [],
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                        },
+                        'content': decisions_upload_status_content
+                    }
+                ))
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
             id='{}/-/Decision_Stage'.format(self.venue_request.support_group.id),
@@ -530,6 +595,7 @@ class VenueStages():
                 'content': decision_stage_content
             }
         ))
+
     def setup_post_decision_stage(self):
         post_decision_content = {
             'release_submissions': {
@@ -547,6 +613,15 @@ class VenueStages():
                     'Reveal author identities of only accepted submissions to the public',
                     'No, I don\'t want to reveal any author identities.'],
                 'required': True
+            },
+            'send_decision_notifications': {
+                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
+                'value-radio': [
+                    'Yes, send an email notification to the authors',
+                    'No, I will send the emails to the authors'
+                ],
+                'required': True,
+                'default': 'No, I will send the emails to the authors'
             }
         }
 
@@ -603,6 +678,7 @@ class VenueRequest():
         self.error_status_process = os.path.join(os.path.dirname(__file__), 'process/error_status_process.py')
         self.matching_status_process = os.path.join(os.path.dirname(__file__), 'process/matching_status_process.py')
         self.recruitment_status_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_status_process.py')
+        self.decision_upload_status_process = os.path.join(os.path.dirname(__file__), 'process/decision_upload_status_process.py')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
