@@ -19,6 +19,8 @@ var PAGE_SIZE = 25;
 
 var HEADER = {};
 
+var DECISION_NAME = 'Decision';
+
 var paperDisplayOptions = {
   pdfLink: true,
   replyCount: true,
@@ -63,6 +65,7 @@ function load() {
     });
   };
 
+
   var withdrawnNotesP = WITHDRAWN_SUBMISSION_ID ? Webfield.getAll('/notes', {
     invitation: WITHDRAWN_SUBMISSION_ID,
     details: 'replyCount,invitation,original'
@@ -89,6 +92,7 @@ function load() {
       return groups.map(function(g) { return g.id; });
     });
   }
+
 
   return $.when(getNotes(), withdrawnNotesP, deskRejectedNotesP, userGroupsP);
 }

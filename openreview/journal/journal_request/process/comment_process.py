@@ -12,7 +12,8 @@ def process(client, edit, invitation):
         
 To view the comment, click here: https://openreview.net/forum?id={edit.note.forum}&noteId={edit.note.id}'''
 
-        client.post_message(subject, edit.note.readers, message)
+        recruitment_note = client.get_note(edit.note.replyto)
+        client.post_message(subject, recruitment_note.signatures, message)
 
     else:
         subject_eic = f'Comment posted to your journal request: {full_name}'

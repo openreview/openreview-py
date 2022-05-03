@@ -833,7 +833,7 @@ class Conference(object):
             blind_note = self.client.post_note(blind_note)
 
             if self.submission_stage.public and 'venue' not in blind_content:
-                blind_content['_bibtex'] = tools.get_bibtex(
+                blind_content['_bibtex'] = tools.generate_bibtex(
                     note=note,
                     venue_fullname=self.name,
                     url_forum=blind_note.id,
@@ -1512,12 +1512,12 @@ Program Chairs
             if self.submission_stage.double_blind:
                 release_authors = is_release_authors(note_accepted)
                 submission.content = {
-                    '_bibtex': tools.get_bibtex(
+                    '_bibtex': tools.generate_bibtex(
                         openreview.Note.from_json(submission.details['original']),
                         venue_fullname=self.name,
                         year=str(self.year),
                         url_forum=submission.forum,
-                        accepted=note_accepted,
+                        paper_status = 'accepted' if note_accepted else 'rejected',
                         anonymous=(not release_authors)
                     )
                 }
@@ -1526,12 +1526,12 @@ Program Chairs
                     submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
             #single-blind
             else:
-                submission.content['_bibtex'] = tools.get_bibtex(
+                submission.content['_bibtex'] = tools.generate_bibtex(
                     submission,
                     venue_fullname=self.name,
                     year=str(self.year),
                     url_forum=submission.forum,
-                    accepted=note_accepted,
+                    paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=False
                 )
             #add venue_id if note accepted

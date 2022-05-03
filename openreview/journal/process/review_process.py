@@ -153,7 +153,7 @@ The {journal.short_name} Editors-in-Chief
             subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Now that 3 reviews have been submitted for submission {submission.content['title']['value']}, all reviews have been made public. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
+Now that 3 reviews have been submitted for submission {submission.content['title']['value']}, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 
