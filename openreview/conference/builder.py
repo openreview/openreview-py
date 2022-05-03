@@ -2370,11 +2370,15 @@ class ConferenceBuilder(object):
 
         host = self.client.get_group(id = 'host')
         root_id = groups[0].id
+        home_group = groups[-1]
         if root_id == root_id.lower():
             root_id = groups[1].id
         writable = host.details.get('writable') if host.details else True
         if writable:
             self.client.add_members_to_group(host, root_id)
+            home_group.host = root_id
+            self.client.post_group(home_group)
+            self.client.add_members_to_group('venues', home_group.id)
 
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
@@ -2388,7 +2392,6 @@ class ConferenceBuilder(object):
         if self.conference.use_area_chairs:
             self.conference.set_area_chairs()
 
-        home_group = groups[-1]
         parent_group_id = groups[-2].id if len(groups) > 1 else ''
         groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
 
