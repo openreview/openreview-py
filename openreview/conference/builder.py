@@ -1441,26 +1441,7 @@ Program Chairs
         home_group = self.client.get_group(self.id)
         options = {}
         options['decision_invitation_regex'] = self.get_invitation_id(invitation_name, '.*')
-
-        if not decision_heading_map:
-            decision_heading_map = {}
-            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), expired=True, limit = 1)
-            if invitations:
-                for option in invitations[0].reply['content']['decision']['value-radio']:
-                    decision_heading_map[option] = option + ' Papers'
-
-        #change decision for venueId
-        venue = self.short_name
-        venue_map = {}
-        for entry in decision_heading_map.keys():
-            if 'Accept' in entry:
-                decision = entry.replace('Accept', '')
-                decision = re.sub(r'[()\W]+', '', decision)
-                venueId = venue + ' ' + decision.strip()
-                venue_map[venueId] = decision_heading_map[entry]
-            if 'Reject' in entry:
-                venue_map[f'Submitted to {venue}'] = decision_heading_map[entry]
-        options['decision_heading_map'] = venue_map
+        options['decision_heading_map'] = decision_heading_map
 
         self.webfield_builder.set_home_page(conference = self, group = home_group, layout = 'decisions', options = options)
 
@@ -1495,6 +1476,7 @@ Program Chairs
             result = future.result()
 
     def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
+        venue_heading_map = {}
         submissions = self.get_submissions(details='original')
         decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
 
@@ -1534,8 +1516,12 @@ Program Chairs
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=False
                 )
-            #add venue_id if note accepted
+            #add venue_id if note accepted and build venue_heading_map
             venue = self.short_name
+            decision_option = decision_note.content['decision'] if decision_note else None
+            tabName = None
+            if decision_heading_map:
+                tabName = decision_heading_map[decision_option] if decision_option else None
             if note_accepted:
                 decision = decision_note.content['decision'].replace('Accept', '')
                 decision = re.sub(r'[()\W]+', '', decision)
@@ -1543,13 +1529,18 @@ Program Chairs
                 if decision:
                     venue += ' ' + decision
                 submission.content['venueid'] = venueid
-                submission.content['venue'] = venue
+                submission.content['venue'] = venue.strip()
             else:
-                submission.content['venue'] = f'Submitted to {venue}'
+                venue = f'Submitted to {venue}'
+                submission.content['venue'] = venue
             self.client.post_note(submission)
+            print('Venue:', venue)
+            print('TabName:', tabName)
+            if venue not in venue_heading_map and tabName:
+                venue_heading_map[venue] = tabName
 
-        if decision_heading_map:
-            self.set_homepage_decisions(decision_heading_map=decision_heading_map)
+        if venue_heading_map:
+            self.set_homepage_decisions(decision_heading_map=venue_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
 class SubmissionStage(object):

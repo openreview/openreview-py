@@ -158,7 +158,7 @@ function renderNotesbyDecision(submissionCount, submissions, venueId) {
 
   $(container).empty();
   if (submissionCount) {
-    var SearchResultsListOptions = _.assign({}, paperDisplayOptions, {
+    var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
       container: container,
       autoLoad: false
     });
@@ -171,10 +171,10 @@ function renderNotesbyDecision(submissionCount, submissions, venueId) {
         localSearch: false,
         venue: venueId,
         onResults: function(searchResults) {
-          Webfield.ui.searchResults(searchResults, SearchResultsListOptions);
+          Webfield.ui.searchResults(searchResults, searchResultsListOptions);
         },
         onReset: function() {
-          Webfield.ui.searchResults(submissions, SearchResultsListOptions);
+          Webfield.ui.searchResults(submissions, searchResultsListOptions);
           $(container).append(view.paginationLinks(submissionCount, PAGE_SIZE, 1));
         }
       },

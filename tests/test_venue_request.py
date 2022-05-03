@@ -1458,7 +1458,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
-                'submission_readers': 'Everyone (submissions are public)'
+                'submission_readers': 'Everyone (submissions are public)',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Reject'
+                }
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1717,3 +1722,32 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         assert all(x not in revision_invitations[0].reply['content'] for x in ['title','authors', 'authorids','abstract','keywords', 'TL;DR'])
         assert revision_invitations[0].duedate
         assert revision_invitations[0].expdate
+
+        #Post a post decision note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        post_decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
+                'submission_readers': 'Everyone (submissions are public)',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Reject'
+                }
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
