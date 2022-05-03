@@ -1456,7 +1456,7 @@ Program Chairs
             if 'Accept' in entry:
                 decision = entry.replace('Accept', '')
                 decision = re.sub(r'[()\W]+', '', decision)
-                venueId = venue + ' ' + decision 
+                venueId = venue + ' ' + decision.strip()
                 venue_map[venueId] = decision_heading_map[entry]
             if 'Reject' in entry:
                 venue_map[f'Submitted to {venue}'] = decision_heading_map[entry]

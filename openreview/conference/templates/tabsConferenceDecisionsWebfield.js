@@ -49,7 +49,7 @@ function main() {
 // Load makes all the API calls needed to get the data to render the page
 function load() {
 
-  var getNotes = function() {
+  var getNotesByVenueId = function() {
     var promises = [];
     _.forEach(venueIds, function(venueId) {
       promises.push(Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
@@ -93,8 +93,7 @@ function load() {
     });
   }
 
-
-  return $.when(getNotes(), withdrawnNotesP, deskRejectedNotesP, userGroupsP);
+  return $.when(getNotesByVenueId(), withdrawnNotesP, deskRejectedNotesP, userGroupsP);
 }
 
 function renderConferenceHeader() {
@@ -198,7 +197,7 @@ function renderNotesbyDecision(submissionCount, submissions, venueId) {
   }
 }
 
-function renderContent(notes, withdrawnNotes, deskRejectedNotes, userGroups) {
+function renderContent(notesArray, withdrawnNotes, deskRejectedNotes, userGroups) {
 
   // Your Consoles Tab
   if (userGroups && userGroups.length) {
@@ -211,35 +210,9 @@ function renderContent(notes, withdrawnNotes, deskRejectedNotes, userGroups) {
     $('.tabs-container a[href="#your-consoles"]').parent().hide();
   }
 
-  for (var arrayIdx = 0; arrayIdx < notes.length; arrayIdx++) {	
-    renderNotesbyDecision(notes[arrayIdx].count, notes[arrayIdx].notes, venueIds[arrayIdx]);
-  }
-
-//   // Register event handlers
-//   $('#group-container').on('shown.bs.tab', 'ul.nav-tabs li a', function(e) {
-//     var containerSelector = $(e.target).attr('href');
-//     var containerId = containerSelector.substring(1);
-//     if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
-//       return;
-//     }
-
-//     setTimeout(function() {
-//       Webfield.ui.searchResults(
-//         papersByDecision[containerId],
-//         Object.assign({}, paperDisplayOptions, { showTags: false, container: containerSelector })
-//       );
-//     }, 150);
-//   });
-
-//   $('#group-container').on('hidden.bs.tab', 'ul.nav-tabs li a', function(e) {
-//     var containerSelector = $(e.target).attr('href');
-//     var containerId = containerSelector.substring(1);
-//     if (!papersByDecision.hasOwnProperty(containerId) || !$(containerSelector).length) {
-//       return;
-//     }
-
-//     Webfield.ui.spinner(containerSelector, { inline: true });
-//   });
+  _.forEach(notesArray, function(notes, index) {
+    renderNotesbyDecision(notes.count, notes.notes, venueIds[index]);
+  });
 
   $('#notes > .spinner-container').remove();
   $('.tabs-container').show();
