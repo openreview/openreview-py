@@ -456,3 +456,16 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         },
         signatures=['~Super_User1']
     ))
+
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Decision_Upload_Status',
+        super=SUPPORT_GROUP + '/-/Decision_Upload_Status',
+        reply={
+            'forum': forum.id,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
