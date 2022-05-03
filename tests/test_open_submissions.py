@@ -42,6 +42,7 @@ class TestOpenSubmissions():
         builder.enable_reviewer_reassignment(enable = True)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@aclweb.org'])
+        conference.create_review_stage()
         return conference
 
 

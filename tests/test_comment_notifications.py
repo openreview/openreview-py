@@ -339,6 +339,7 @@ class TestCommentNotification():
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
+        conference.create_review_stage()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = [conference.id, '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
