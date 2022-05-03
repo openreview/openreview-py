@@ -27,7 +27,7 @@ class TestVenueRequest():
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        withdraw_due_date = due_date + datetime.timedelta(days=1)
+        withdraw_exp_date = due_date + datetime.timedelta(days=1)
 
         # Post the request form note
         request_form_note = openreview.Note(
@@ -66,7 +66,7 @@ class TestVenueRequest():
                 'reviewer_identity': ['Program Chairs'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'withdraw_submission_deadline': withdraw_due_date.strftime('%Y/%m/%d'),
+                'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -146,7 +146,7 @@ class TestVenueRequest():
         start_date = now - datetime.timedelta(days=2)
         abstract_due_date = now + datetime.timedelta(minutes=15)
         due_date = now + datetime.timedelta(minutes=30)
-        withdraw_due_date = now + datetime.timedelta(hours=1)
+        withdraw_exp_date = now + datetime.timedelta(hours=1)
 
         request_form_note = client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
@@ -178,7 +178,7 @@ class TestVenueRequest():
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
-                'withdraw_submission_deadline': withdraw_due_date.strftime('%Y/%m/%d'),
+                'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
                 'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
@@ -952,8 +952,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        withdraw_due_date = now.date() + datetime.timedelta(days=1)
-        withdraw_due_date = datetime.datetime.combine(withdraw_due_date, datetime.datetime.min.time())
+        withdraw_exp_date = now.date() + datetime.timedelta(days=1)
+        withdraw_exp_date = datetime.datetime.combine(withdraw_exp_date, datetime.datetime.min.time())
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
@@ -967,7 +967,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
-                'withdraw_submission_deadline': withdraw_due_date.strftime('%Y/%m/%d'),
+                'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -987,8 +987,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         withdraw_invitation = openreview.tools.get_invitation(client, conference.submission_stage.get_withdrawn_submission_id(conference))
-        assert openreview.tools.datetime_millis(withdraw_due_date) == openreview.tools.datetime_millis(withdraw_invitation.duedate)
-        assert openreview.tools.datetime_millis(withdraw_due_date + datetime.timedelta(minutes=30)) == openreview.tools.datetime_millis(withdraw_invitation.expdate)
+        assert withdraw_invitation.duedate is None
+        assert openreview.tools.datetime_millis(withdraw_exp_date) == openreview.tools.datetime_millis(withdraw_invitation.expdate)
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
