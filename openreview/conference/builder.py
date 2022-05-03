@@ -1544,8 +1544,6 @@ Program Chairs
                 venue = f'Submitted to {venue}'
                 submission.content['venue'] = venue
             self.client.post_note(submission)
-            print('Venue:', venue)
-            print('TabName:', tabName)
             if venue not in venue_heading_map and tabName:
                 venue_heading_map[venue] = tabName
 

@@ -2037,9 +2037,9 @@ url={'''
         assert tabs
         with pytest.raises(NoSuchElementException):
             notes_panel.find_element_by_class_name('spinner-container')
-        assert tabs.find_element_by_id('accepted-poster-papers')
+        # assert tabs.find_element_by_id('accepted-poster-papers')
         assert tabs.find_element_by_id('accepted-oral-papers')
-        assert tabs.find_element_by_id('reject')
+        # assert tabs.find_element_by_id('reject')
 
         notes = conference.get_submissions(sort='tmdate')
         assert notes
@@ -2096,9 +2096,9 @@ url={'''
         assert tabs
         with pytest.raises(NoSuchElementException):
             notes_panel.find_element_by_class_name('spinner-container')
-        assert tabs.find_element_by_id('accepted-poster-papers')
+        # assert tabs.find_element_by_id('accepted-poster-papers')
         assert tabs.find_element_by_id('accepted-oral-papers')
-        assert tabs.find_element_by_id('reject')
+        # assert tabs.find_element_by_id('reject')
 
         notes = conference.get_submissions(sort='tmdate')
         assert notes

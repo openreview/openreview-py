@@ -2016,7 +2016,8 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
                     'Accept': 'Accept',
                     'Revision Needed': 'Revision Needed',
                     'Reject': 'Reject'
-                }
+                },
+                'send_decision_notifications': 'No, I will send the emails to the authors'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -2032,3 +2033,19 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         process_logs = client.get_process_logs(id = post_decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        request_page(selenium, "http://localhost:3030/group?id=TEST.cc/2030/Conference", wait_for_element='reject')
+        notes_panel = selenium.find_element_by_id('notes')
+        assert notes_panel
+        tabs = notes_panel.find_element_by_class_name('tabs-container')
+        assert tabs
+        accepted_panel = selenium.find_element_by_id('accept')
+        assert accepted_panel
+        accepted_notes = accepted_panel.find_elements_by_class_name('note')
+        assert accepted_notes
+        assert len(accepted_notes) == 1
+        rejected_panel = selenium.find_element_by_id('reject')
+        assert rejected_panel
+        rejected_notes = rejected_panel.find_elements_by_class_name('note')
+        assert rejected_notes
+        assert len(rejected_notes) == 2
