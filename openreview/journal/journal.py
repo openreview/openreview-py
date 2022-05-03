@@ -257,7 +257,7 @@ class Journal(object):
 
     def get_review_period_length(self, note):
         if 'submission_length' in note.content:
-            if 'Regular submission' in note.content.get(['submission_length']['value']:
+            if 'Regular submission' in note.content['submission_length']['value']:
                 return 2 ## weeks
             if 'Long submission' in note.content['submission_length']['value']:
                 return 4 ## weeks
