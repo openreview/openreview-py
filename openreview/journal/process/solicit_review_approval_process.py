@@ -17,7 +17,8 @@ def process(client, edit, invitation):
         journal.assign_reviewer(submission, solicit_request.signatures[0], solicit=True)
 
         print('Send email to solicit reviewer')
-        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
+        review_period_length = journal.get_review_period_length(submission)
+        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = review_period_length)
 
         client.post_message(
             recipients=solicit_request.signatures,
@@ -26,7 +27,7 @@ def process(client, edit, invitation):
 
 This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.content['title']['value']} has been accepted by the Action Editor (AE).
 
-You are required to submit your review within 2 weeks ({duedate.strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
+You are required to submit your review within {review_period_length} weeks ({duedate.strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
 
 To submit your review, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={journal.get_review_id(number=submission.number)} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers
 

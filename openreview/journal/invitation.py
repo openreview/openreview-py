@@ -401,7 +401,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'order': 2,
                                     'value': {
                                         'type': "string",
-                                        'enum': ['I understand that TMLR has a strict 6 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
+                                        'enum': ['I understand that TMLR has a strict 6 week review process (for submissions of at most 12 pages of main content), and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
                                     },
                                     'presentation': {
                                         'input': 'checkbox'
@@ -591,6 +591,17 @@ If you have questions after reviewing the points below that are not answered on 
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
+                        'submission_length': {
+                            'value': {
+                                'type': 'string',
+                                'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)']
+                            },
+                            'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                            'order': 6,
+                            'presentation': {
+                                'input': 'radio'
+                            }
+                        },                        
                         "supplementary_material": {
                             'value': {
                                 'type': 'file',
@@ -599,7 +610,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 "optional": True
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 6,
+                            "order": 7,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, reviewers_value, authors_value]
                             }
@@ -611,7 +622,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
-                            'order': 7,
+                            'order': 8,
                         },
                         'changes_since_last_submission': {
                             'value': {
@@ -620,7 +631,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 8,
+                            'order': 9,
                             'presentation': {
                                 'markdown': True
                             }
@@ -631,7 +642,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                            'order': 9,
+                            'order': 10,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, authors_value]
                             }
@@ -642,7 +653,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                            'order': 10,
+                            'order': 11,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, authors_value]
                             }
@@ -2733,6 +2744,17 @@ If you have questions after reviewing the points below that are not answered on 
                             'description': 'Upload a PDF file that ends with .pdf',
                             'order': 5,
                         },
+                        'submission_length': {
+                            'value': {
+                                'type': 'string',
+                                'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)']
+                            },
+                            'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                            'order': 6,
+                            'presentation': {
+                                'input': 'radio'
+                            }
+                        },                         
                         "supplementary_material": {
                             'value': {
                                 'type': 'file',
@@ -2741,7 +2763,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 "optional": True
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 6,
+                            "order": 7,
                             'readers': {
                                 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                             }
@@ -2753,7 +2775,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
-                            'order': 7,
+                            'order': 8,
                         },
                         'changes_since_last_submission': {
                             'value': {
@@ -2762,7 +2784,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 8,
+                            'order': 9,
                             'presentation': {
                                 'markdown': True
                             }
@@ -2773,7 +2795,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                            'order': 9,
+                            'order': 10,
                             'readers': {
                                 'const': [ venue_id, paper_action_editors_id, paper_authors_id]
                             }
@@ -2784,7 +2806,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                            'order': 10,
+                            'order': 11,
                             'readers': {
                                 'const': [ venue_id, paper_action_editors_id, paper_authors_id]
                             }
