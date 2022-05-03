@@ -256,10 +256,12 @@ class Journal(object):
             return forum_note.invitations[0].split('/-/')[0]
 
     def get_review_period_length(self, note):
-        if 'Regular submission' in note.content['submission_length']['value']:
-            return 2 ## weeks
-        if 'Long submission' in note.content['submission_length']['value']:
-            return 4 ## weeks
+        if 'submission_length' in note.content:
+            if 'Regular submission' in note.content.get(['submission_length']['value']:
+                return 2 ## weeks
+            if 'Long submission' in note.content['submission_length']['value']:
+                return 4 ## weeks
+        return 2 ## weeks
     
     def setup(self, support_role, editors=[], assignment_delay=5):
         self.group_builder.set_groups(self, support_role, editors)
