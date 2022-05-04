@@ -1831,7 +1831,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -1857,6 +1857,7 @@ class Group(object):
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
+        self.host = host
         self.details = details
 
     def __repr__(self):
@@ -1890,6 +1891,7 @@ class Group(object):
             'anonids': self.anonids,
             'deanonymizers': self.deanonymizers,
             'web': self.web,
+            'host': self.host,
             'details': self.details
         }
 
@@ -1921,6 +1923,7 @@ class Group(object):
             anonids=g.get('anonids'),
             deanonymizers=g.get('deanonymizers'),
             impersonators=g.get('impersonators'),
+            host=g.get('host'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']

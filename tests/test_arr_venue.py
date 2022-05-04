@@ -90,7 +90,9 @@ class TestARRVenue():
 
         helpers.await_queue()
 
-        assert client.get_group('aclweb.org/ACL/ARR/2021/September')
+        group = client.get_group('aclweb.org/ACL/ARR/2021/September')
+        assert group
+        assert group.host == 'aclweb.org/ACL'
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Program_Chairs')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Area_Chairs')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Reviewers')
