@@ -282,6 +282,7 @@ class CommentInvitation(openreview.Invitation):
                     preprocess=pre_content if conference.comment_stage.check_mandatory_readers and conference.comment_stage.reader_selection else None
                 )
 
+
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
     def __init__(self, conference, reveal_authors, reveal_submission, hide_fields=[]):
@@ -319,12 +320,9 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
         if reveal_submission:
             readers = {'values': ['everyone']}
 
-        exp_date = tools.datetime_millis(conference.submission_stage.withdraw_submission_exp_date) if conference.submission_stage.withdraw_submission_exp_date else None
         super(WithdrawnSubmissionInvitation, self).__init__(
             id=conference.submission_stage.get_withdrawn_submission_id(conference),
             cdate=tools.datetime_millis(conference.submission_stage.due_date) if conference.submission_stage.due_date else None,
-            duedate=None,
-            expdate=exp_date,
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=[conference.get_id()],
@@ -337,6 +335,37 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
                 'content': content
             }
         )
+
+
+class PaperWithdrawSuperInvitation(openreview.Invitation):
+
+    def __init__(self, conference):
+        content = invitations.withdraw.copy()
+        exp_date = tools.datetime_millis(conference.submission_stage.withdraw_submission_exp_date) if conference.submission_stage.withdraw_submission_exp_date else None
+        super(PaperWithdrawSuperInvitation, self).__init__(
+            id=conference.get_invitation_id("Paper_Withdraw"),
+            cdate=None,
+            duedate=None,
+            expdate=exp_date,
+            readers=['everyone'],
+            writers=[conference.support_user],
+            signatures=[conference.support_user],
+            reply={
+                'forum': None,
+                'replyto': None,
+                'readers': {
+                        'values': ['everyone']
+                    },
+                'writers': {
+                    'values': [],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(conference.support_user)
+                },
+                'content': content
+            }
+        )
+
 
 class PaperWithdrawInvitation(openreview.Invitation):
 
@@ -419,7 +448,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
-                super=conference.submission_stage.get_withdrawn_submission_id(conference),
+                super=conference.get_invitation_id('Paper_Withdraw'),
                 cdate=None,
                 invitees=[conference.get_authors_id(note.number), conference.support_user],
                 readers=['everyone'],
@@ -1491,7 +1520,7 @@ class InvitationBuilder(object):
         invitations = []
 
         self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
-
+        self.client.post_invitation(PaperWithdrawSuperInvitation(conference))
         notes = list(conference.get_submissions())
         for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
             invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)))

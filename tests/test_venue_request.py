@@ -952,8 +952,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        withdraw_exp_date = now.date() + datetime.timedelta(days=1)
-        withdraw_exp_date = datetime.datetime.combine(withdraw_exp_date, datetime.datetime.min.time())
+        withdraw_exp_date = now + datetime.timedelta(days=1)
+        withdraw_exp_date = withdraw_exp_date.strftime('%Y/%m/%d')
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
                 'title': '{} Updated'.format(venue['request_form_note'].content['title']),
@@ -967,7 +967,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
-                'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
+                'withdraw_submission_expiration': withdraw_exp_date,
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -986,9 +986,10 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                                                                                  venue['request_form_note'].number)
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        withdraw_invitation = openreview.tools.get_invitation(client, conference.submission_stage.get_withdrawn_submission_id(conference))
-        assert withdraw_invitation.duedate is None
-        assert openreview.tools.datetime_millis(withdraw_exp_date) == openreview.tools.datetime_millis(withdraw_invitation.expdate)
+        paper_withdraw_super_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id("Paper_Withdraw"))
+        withdraw_exp_date = datetime.datetime.strptime(withdraw_exp_date, '%Y/%m/%d')
+        assert paper_withdraw_super_invitation.duedate is None
+        assert openreview.tools.datetime_millis(withdraw_exp_date) == openreview.tools.datetime_millis(paper_withdraw_super_invitation.expdate)
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 

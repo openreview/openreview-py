@@ -34,12 +34,12 @@ def process(client, note, invitation):
                     withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d %H:%M')
                 except ValueError:
                     withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d')
-                withdraw_submission_invitation = openreview.tools.get_invitation(
-                    client, conference.submission_stage.get_withdrawn_submission_id(conference)
+                paper_withdraw_super_invitation = openreview.tools.get_invitation(
+                    client, conference.get_invitation_id('Paper_Withdraw')
                 )
-                if withdraw_submission_invitation:
-                    withdraw_submission_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
-                    client.post_invitation(withdraw_submission_invitation)
+                if paper_withdraw_super_invitation:
+                    paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
+                    client.post_invitation(paper_withdraw_super_invitation)
 
         elif invitation_type == 'Bid_Stage':
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
