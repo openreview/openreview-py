@@ -1491,17 +1491,6 @@ Program Chairs
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
-        def decision_to_venue(decision_option):
-            venue = self.short_name
-            if 'Accept' in decision_option:
-                decision = decision_option.replace('Accept', '')
-                decision = re.sub(r'[()\W]+', '', decision)
-                if decision:
-                    venue += ' ' + decision.strip()
-            else:
-                venue = f'Submitted to {venue}'
-            return venue
-
         if submission_readers:
             self.submission_stage.readers = submission_readers
 
@@ -1535,25 +1524,19 @@ Program Chairs
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=False
                 )
-            #add venue_id if note accepted
+            #add venue_id if note accepted and venue to all notes
             venue = self.short_name
+            decision_option = decision_note.content['decision'] if decision_note else ''
+            submission.content['venue'] = tools.decision_to_venue(venue, decision_option)
             if note_accepted:
-                decision = decision_note.content['decision'].replace('Accept', '')
-                decision = re.sub(r'[()\W]+', '', decision)
                 venueid = self.id
-                if decision:
-                    venue += ' ' + decision
                 submission.content['venueid'] = venueid
-                submission.content['venue'] = venue.strip()
-            else:
-                venue = f'Submitted to {venue}'
-                submission.content['venue'] = venue
             self.client.post_note(submission)
 
         venue_heading_map = {}
         if decision_heading_map:
             for decision, tab_name in decision_heading_map.items():
-                venue_heading_map[decision_to_venue(decision)] = tab_name
+                venue_heading_map[tools.decision_to_venue(venue, decision)] = tab_name
         
         if venue_heading_map:
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
