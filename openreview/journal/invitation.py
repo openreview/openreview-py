@@ -2697,6 +2697,7 @@ If you have questions after reviewing the points below that are not answered on 
         paper_authors_id = self.journal.get_authors_id(number=note.number)
         paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
         revision_invitation_id = self.journal.get_revision_id(number=note.number)
         invitation = Invitation(id=revision_invitation_id,
@@ -2711,7 +2712,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'optional': True,
                     'nullable': True
                 },
-                'signatures': { 'const': [paper_authors_id] },
+                'signatures': { 'regex': f'{paper_authors_id}|{editors_in_chief_id}', 'type': 'group[]' },
                 'readers': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
                 'writers': { 'const': [ venue_id, paper_authors_id]},
                 'note': {
