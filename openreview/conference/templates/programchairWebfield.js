@@ -1126,9 +1126,10 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   // Config
   var requestForm = conferenceStatusData.requestForm;
-  var senior_area_chair_roles = requestForm && requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs']
-  var area_chair_roles = requestForm && requestForm.content['area_chair_roles'] || ['Area_Chairs']
-  var reviewer_roles = requestForm && requestForm.content['reviewer_roles'] || ['Reviewers']
+  var sacRoles = requestForm && requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs'];
+  var acRoles = requestForm && requestForm.content['area_chair_roles'] || ['Area_Chairs'];
+  var reviewerRoles = requestForm && requestForm.content['reviewer_roles'] || ['Reviewers'];
+  var hasEthicsChairs = requestForm && requestForm.content['ethics_chairs_and_reviewers'] && requestForm.content['ethics_chairs_and_reviewers'].includes('Yes');
 
   html += '<div class="row" style="margin-top: .5rem;">';
   if (requestForm) {
@@ -1164,7 +1165,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   if (SENIOR_AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding');
-    senior_area_chair_roles.forEach(function(role) {
+    sacRoles.forEach(function(role) {
       if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
         notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
       }
@@ -1173,13 +1174,13 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   if (AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding');
     pushToDatedArrays(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation');
-    area_chair_roles.forEach(function(role) {
+    acRoles.forEach(function(role) {
       if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
         notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
       }
     })
   }
-  reviewer_roles.forEach(function(role) {
+  reviewerRoles.forEach(function(role) {
     if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
       notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
     }
@@ -1205,20 +1206,31 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
     '<li><a href="/group/edit?id=' + PROGRAM_CHAIRS_ID + '">Program Chairs</a></li>';
   if (SENIOR_AREA_CHAIRS_ID) {
-    senior_area_chair_roles.forEach(function(role) {
+    sacRoles.forEach(function(role) {
       html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
     })
   }
   if (AREA_CHAIRS_ID) {
-    area_chair_roles.forEach(function(role) {
+    acRoles.forEach(function(role) {
       html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
     })
   }
-  reviewer_roles.forEach(function(role) {
+
+  if (hasEthicsChairs) {
+    html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Chairs' + '">Ethics Chairs</a> (' +
+    '<a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Chairs' + '/Invited">Invited</a>, ' +
+    '<a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Chairs' + '/Declined">Declined</a>)</li>';
+
+    html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Reviewers' + '">Ethics Reviewers</a> (' +
+    '<a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Reviewers' + '/Invited">Invited</a>, ' +
+    '<a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Reviewers' + '/Declined">Declined</a>)</li>';
+  }
+
+  reviewerRoles.forEach(function(role) {
     html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
       '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
       '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
