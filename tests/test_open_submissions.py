@@ -36,12 +36,13 @@ class TestOpenSubmissions():
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_reveal_authors=True
         )
-        builder.set_review_stage(public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True)
+        builder.set_review_stage(openreview.ReviewStage(public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True))
         builder.set_comment_stage(allow_public_comments=True, email_pcs=True, reader_selection=True, authors=True)
         builder.set_decision_stage(public=True, due_date=now + datetime.timedelta(minutes = 40), options = ['Accept', 'Reject'], email_authors=True)
         builder.enable_reviewer_reassignment(enable = True)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@aclweb.org'])
+        conference.create_review_stage()
         return conference
 
 
