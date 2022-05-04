@@ -220,7 +220,7 @@ Best,
                     submission_readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
-            if forum_note.content['send_decision_notifications'] == 'Yes, send an email notification to the authors':
+            if note.content.get('send_decision_notifications') == 'Yes, send an email notification to the authors':
                 decision_options = forum_note.content.get(
                     'decision_options',
                     'Accept (Oral), Accept (Poster), Reject'
