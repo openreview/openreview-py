@@ -41,13 +41,43 @@ def process(client, note, invitation):
                     paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
                     client.post_invitation(paper_withdraw_super_invitation)
 
+            if conference.use_ethics_chairs or conference.use_ethics_reviewers:
+                client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Ethics_Review_Stage',
+                    super = SUPPORT_GROUP + '/-/Ethics_Review_Stage',
+                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                    reply = {
+                        'forum': forum_note.id,
+                        'referent': forum_note.id,
+                        'readers': {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                        }
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+                recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
+                if recruitment_invitation:
+                    recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(recruitment_invitation)
+
+                remind_recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Remind_Recruitment')
+                if remind_recruitment_invitation:
+                    remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(remind_recruitment_invitation)
+
+
         elif invitation_type == 'Bid_Stage':
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
             if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
                 conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_area_chairs_id()))
 
         elif invitation_type == 'Review_Stage':
-            conference.set_review_stage(openreview.helpers.get_review_stage(client, forum_note))
+            conference.create_review_stage()
+
+        elif invitation_type == 'Ethics_Review_Stage':
+            conference.create_ethics_review_stage()
 
         elif invitation_type == 'Meta_Review_Stage':
             conference.set_meta_review_stage(openreview.helpers.get_meta_review_stage(client, forum_note))
