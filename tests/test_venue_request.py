@@ -253,6 +253,40 @@ class TestVenueRequest():
         last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[-1]
         assert 'TEST.cc/2021/Conference/Program_Chairs' in last_comment.readers
 
+        #test revision pre-process
+
+        venue_revision_note = openreview.Note(
+        content={
+            'title': '{} Updated'.format(request_form_note.content['title']),
+            'Official Venue Name': '{} Updated'.format(request_form_note.content['title']),
+            'Abbreviated Venue Name': request_form_note.content['Abbreviated Venue Name'],
+            'Official Website URL': request_form_note.content['Official Website URL'],
+            'program_chair_emails': request_form_note.content['program_chair_emails'],
+            'Expected Submissions': '100',
+            'How did you hear about us?': 'ML conferences',
+            'Location': 'Virtual',
+            'Submission Deadline': request_form_note.content['Submission Deadline'],
+            'Venue Start Date': request_form_note.content['Venue Start Date'],
+            'contact_email': request_form_note.content['contact_email'],
+            'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+            'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
+
+        },
+        forum=request_form_note.forum,
+        invitation='{}/-/Request{}/Revision'.format(support_group_id, request_form_note.number),
+        readers=['{}/Program_Chairs'.format(deploy_note.content['venue_id']), support_group_id],
+        referent=request_form_note.forum,
+        replyto=request_form_note.forum,
+        signatures=['~NewFirstName_User1'],
+        writers=[]
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Author identities of desk-rejected submissions can only be anonymized for double-blind submissions'):
+            client.post_note(venue_revision_note)
+
+        venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
+        venue_revision_note=client.post_note(venue_revision_note)
+
     def test_venue_revision_error(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
