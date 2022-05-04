@@ -9,7 +9,7 @@ import re
 import csv
 import random
 
-class TestNeurIPSConference():
+class TestARRVenue():
 
     @pytest.fixture(scope="class")
     def venue(self, client):
@@ -37,6 +37,7 @@ class TestNeurIPSConference():
         helpers.create_user('reviewer_arr3@ibm.com', 'Reviewer ARR', 'IBM', institution='ibm.com')
         helpers.create_user('reviewer_arr4@fb.com', 'Reviewer ARR', 'Facebook', institution='fb.com')
         helpers.create_user('reviewer_arr5@google.com', 'Reviewer ARR', 'Google', institution='google.com')
+        helpers.create_user('ethic_chair@arr.org', 'Ethics', 'Chair', institution='google.com')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -55,6 +56,7 @@ class TestNeurIPSConference():
                 'contact_email': 'pc@aclrollingreview.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
@@ -95,6 +97,8 @@ class TestNeurIPSConference():
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Area_Chairs')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Reviewers')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Authors')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Ethics_Chairs')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers')
 
     def test_recruit_actions_editors(self, client, helpers, request_page, selenium):
 
@@ -289,6 +293,92 @@ class TestNeurIPSConference():
         assert '1 users' in recruitment_status_notes[0].content['invited']
         assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers/Invited" in recruitment_status_notes[0].content['comment']
 
+
+    def test_recruit_ethic_chairs(self, client, helpers, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        reviewer_details = '''ethic_chair@arr.org, Ethics Chair'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Ethics_Chairs',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert '1 users' in recruitment_status_notes[0].content['invited']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Ethics_Chairs/Invited" in recruitment_status_notes[0].content['comment']
+
+        ## Accept to be an Ethics Chair
+        messages = client.get_messages(to = 'ethic_chair@arr.org', subject = '[ARR 2021 - September] Invitation to serve as Ethics Chair')
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        request_page(selenium, accept_url, alert=True)
+        helpers.await_queue()
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Ethics_Chairs')
+        assert len(accepted_group.members) == 1
+        assert 'ethic_chair@arr.org' in accepted_group.members
+        assert client.get_messages(to = 'ethic_chair@arr.org', subject = '[ARR 2021 - September] Ethics Chair Invitation accepted')        
+
+    def test_recruit_ethic_reviewers(self, client, helpers, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        ## Invite ~Area_CMUChair1 as AC
+        reviewer_details = '''ethic_reviewer@arr.org, Ethics Reviewer'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Ethics_Reviewers',
+                'allow_role_overlap': 'Yes',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
+                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        recruitment_status_notes=client.get_notes(forum=recruitment_note.forum, replyto=recruitment_note.id)
+        assert len(recruitment_status_notes) == 1
+        assert '1 users' in recruitment_status_notes[0].content['invited']
+        assert "Please check the invitee group to see more details: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/Invited" in recruitment_status_notes[0].content['comment']
+
+        messages = client.get_messages(to = 'ethic_reviewer@arr.org', subject = '[ARR 2021 - September] Invitation to serve as Ethics Reviewer')
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+
+        request_page(selenium, accept_url, alert=True)
+        helpers.await_queue()
+        accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers')
+        assert len(accepted_group.members) == 1
+        assert 'ethic_reviewer@arr.org' in accepted_group.members
+        assert client.get_messages(to = 'ethic_reviewer@arr.org', subject = '[ARR 2021 - September] Ethics Reviewer Invitation accepted')  
 
     def test_registration_tasks(self, client):
 
@@ -801,3 +891,204 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'This submission is no longer under review. No action is required from your end.' == error_message.text
+
+
+    def test_review_stage(self, venue, client, helpers):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        # Post a review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        review_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'remove_review_form_options': 'title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+            },
+            forum=request_form.forum,
+            invitation='{}/-/Request{}/Review_Stage'.format('openreview.net/Support', request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert review_stage_note
+        helpers.await_queue()
+
+        reviewer_client = openreview.Client(username='reviewer_arr4@fb.com', password='1234')
+        signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Reviewer_', signatory='reviewer_arr4@fb.com')
+        assert len(signatory_groups) == 1        
+
+        submissions=venue.get_submissions(number=5)
+
+        reviewer_client.post_note(openreview.Note(
+            invitation='aclweb.org/ACL/ARR/2021/September/Paper5/-/Official_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Area_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Reviewers/Submitted'],
+            nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
+            writers=['aclweb.org/ACL/ARR/2021/September', signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'review': 'This paper is ok',
+                'rating': '10: Top 5% of accepted papers, seminal paper',
+                'confidence': "1: The reviewer's evaluation is an educated guess"
+            }
+
+        ))
+
+        helpers.await_queue()        
+
+
+    
+    def test_ethics_review_stage(self, venue, client, helpers):
+
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        ethics_chair_client=openreview.Client(username='ethic_chair@arr.org', password='1234')
+        ## Need super user permission to add the venue to the active_venues group
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)        
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Briefly summarize the ethics concerns.",
+                        "required": True
+                    }                    
+                },
+                'ethics_review_submissions': '1,5',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        ## ethics chairs should be able to add ethics reviewers manually
+        ethics_chair_client.add_members_to_group('aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers', 'another@ethics_reviewer.org')
+
+        groups = client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/Ethics_Reviewers')
+        assert len(groups) == 2
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper1/Ethics_Reviewers')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers')
+
+        invitations = client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/-/Ethics_Review')     
+        assert len(invitations) == 2
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper1/-/Ethics_Review')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')
+
+        submissions=venue.get_submissions(number=5)
+
+        ## Assign ethics reviewer
+        ethics_reviewer_client = helpers.create_user('ethic_reviewer@arr.org', 'Ethics', 'Reviewer')
+        
+        ethics_chair_client.post_edge(openreview.Edge(
+            invitation='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/-/Assignment',
+            readers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', '~Ethics_Reviewer1'],
+            nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
+            writers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs'],
+            head=submissions[0].id,
+            tail='~Ethics_Reviewer1',
+            signatures=['aclweb.org/ACL/ARR/2021/September/Ethics_Chairs']
+        ))
+        
+        helpers.await_queue()
+
+        assert '~Ethics_Reviewer1' in client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers').members
+
+        submission = ethics_reviewer_client.get_note(submissions[0].id)
+        assert 'aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers' in submission.readers
+        assert 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs' in submission.readers
+
+        reviews = ethics_reviewer_client.get_notes(forum=submission.id, invitation='aclweb.org/ACL/ARR/2021/September/Paper5/-/Official_Review')
+        assert len(reviews) == 1
+        assert 'aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers' in reviews[0].readers
+        assert 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs' in reviews[0].readers
+
+        signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewer_', signatory='ethic_reviewer@arr.org')
+        assert len(signatory_groups) == 1        
+
+        ethics_reviewer_client.post_note(openreview.Note(
+            invitation='aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review',
+            forum=submissions[0].id,
+            replyto=submissions[0].id,
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', signatory_groups[0].id],
+            nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
+            writers=['aclweb.org/ACL/ARR/2021/September', signatory_groups[0].id],
+            signatures=[signatory_groups[0].id],
+            content={
+                'ethics_concerns': 'This paper is ok',
+                'recommendation': '1: No serious ethical issues'
+            }
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='ethic_reviewer@arr.org', subject="[ARR 2021 - September] Your ethics review has been received on your assigned Paper number: 5, Paper title: \"Paper title 5\"")
+        assert len(messages) == 1
+
+        ## unflag papers
+        stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'ethics_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'ethics_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_ethics_reviews_public': 'No, ethics reviews should NOT be revealed publicly when they are posted',
+                'release_ethics_reviews_to_authors': "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors",
+                'release_ethics_reviews_to_reviewers': 'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review',
+                'remove_ethics_review_form_options': 'ethics_review',
+                'additional_ethics_review_form_options': {
+                    "ethics_concerns": {
+                        "order": 1,
+                        "value-regex": "[\\S\\s]{1,200000}",
+                        "description": "Briefly summarize the ethics concerns.",
+                        "required": True
+                    }                    
+                },
+                'ethics_review_submissions': '4,3',
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+            },
+            forum=request_form.forum,
+            referent=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number),
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        groups = client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/Ethics_Reviewers')
+        assert len(groups) == 3
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper3/Ethics_Reviewers')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper4/Ethics_Reviewers')
+        ## Paper 5 stays because there is already an assigned reviewer and a review
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers')
+
+        invitations = client.get_invitations(regex='aclweb.org/ACL/ARR/2021/September/Paper.*/-/Ethics_Review')     
+        assert len(invitations) == 3
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper3/-/Ethics_Review')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper4/-/Ethics_Review')               
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')
