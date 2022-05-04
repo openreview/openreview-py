@@ -192,8 +192,6 @@ function renderNotesbyDecision(submissionCount, submissions, venueId) {
       },
       fadeIn: false
     });
-  } else {
-    $('.tabs-container a[href="'+container+'"]').parent().hide();
   }
 }
 
