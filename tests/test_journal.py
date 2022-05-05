@@ -965,7 +965,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
             signatures=['~David_K_Belanger1'],
             note=Note(
                 content={
-                    'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.' }
+                    'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.' }
                 }
             )
         )
@@ -980,7 +980,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>David Belanger posted an assignment acknowledgement on a submission for which you are an Action Editor.</p>
 <p>Submission: Paper title UPDATED<br>
-Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.</p>
+Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.</p>
 <p>To view the acknowledgement, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}</a></p>
 '''
 

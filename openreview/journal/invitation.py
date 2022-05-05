@@ -496,7 +496,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'order': 1,
                                     'value': {
                                         'type': "string",
-                                        'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${params.reviewDuedate}.']
+                                        'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${params.reviewDuedate} UTC time.']
                                     },
                                     'presentation': {
                                         'input': 'checkbox'
