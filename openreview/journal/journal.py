@@ -309,21 +309,24 @@ class Journal(object):
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
         self.invitation_builder.set_revision_submission(note)
-        self.invitation_builder.set_note_review_approval_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)
-        self.invitation_builder.set_ae_recommendation_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
+        self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
 
 
     def setup_under_review_submission(self, note):
-        self.invitation_builder.set_review_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = self.get_review_period_length(note))))
+        self.invitation_builder.set_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_comment_invitation(note)
         self.setup_reviewer_assignment(note)
 
     def assign_reviewer(self, note, reviewer, solicit):
         self.assignment.assign_reviewer(note, reviewer, solicit)
+
+    def get_due_date(self, days=0, weeks=0):
+        due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
+        return due_date
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
 

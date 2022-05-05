@@ -6,7 +6,7 @@ def process(client, edit, invitation):
     submission = client.get_note(edit.note.forum)
 
     ## Notify readers
-    duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
+    duedate = journal.get_due_date(weeks = 1)
     journal.invitation_builder.set_note_solicit_review_approval_invitation(submission, solicit_note, duedate)
 
     client.post_message(

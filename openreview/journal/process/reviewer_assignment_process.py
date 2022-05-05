@@ -38,7 +38,7 @@ def process_update(client, edge, invitation, existing_edge):
     if len(tail_assignment_edges) == 1 and not edge.ddate:
         print('Enable reviewer responsibility task for', edge.tail)
         responsiblity_invitation_edit = client.post_invitation_edit(invitations=journal.get_reviewer_responsibility_id(),
-            params={ 'reviewerId': edge.tail, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)) },
+            params={ 'reviewerId': edge.tail, 'duedate': openreview.tools.datetime_millis(journal.get_due_date(weeks = 1)) },
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id]
@@ -101,7 +101,7 @@ The {journal.short_name} Editors-in-Chief
             ))
 
         review_period_length = journal.get_review_period_length(note)
-        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = review_period_length)
+        duedate = journal.get_due_date(weeks = review_period_length)
 
         ## Update review invitation duedate
         invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=note.number),
@@ -115,7 +115,7 @@ The {journal.short_name} Editors-in-Chief
                 'noteId': note.id,
                 'noteNumber': note.number,
                 'reviewerId': edge.tail,
-                'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 2)),
+                'duedate': openreview.tools.datetime_millis(journal.get_due_date(days = 2)),
                 'reviewDuedate': duedate.strftime("%b %d, %Y")
              },
             readers=[venue_id],

@@ -97,15 +97,12 @@ def process(client, edit, invitation):
 
         ## Enable official recommendation
         print('Enable official recommendations')
-        cdate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
+        cdate = journal.get_due_date(weeks = 2)
         duedate = cdate + datetime.timedelta(weeks = 2)
         journal.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
 
         ## Send email notifications to authors
         print('Send emails to authors')
-        now = datetime.datetime.utcnow()
-        duedate = now + datetime.timedelta(weeks = 2)
-        late_duedate = now + datetime.timedelta(weeks = 4)
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
@@ -113,7 +110,7 @@ def process(client, edit, invitation):
 
 Now that 3 reviews have been submitted for your submission  {submission.content['title']['value']}, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
-You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({duedate.strftime("%b %d")}), and no later than 4 weeks ({late_duedate.strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({cdate.strftime("%b %d")}), and no later than 4 weeks ({duedate.strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission.id}
 
