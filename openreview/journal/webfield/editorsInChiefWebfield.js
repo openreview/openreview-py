@@ -765,6 +765,7 @@ var renderTable = function(container, rows) {
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
+      replyTo: 'tmlr-editors@jmlr.org',
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
