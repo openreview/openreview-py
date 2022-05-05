@@ -36,30 +36,35 @@ class VenueStages():
             'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location. Valid JSON expected.'
         }
 
-        return self.venue_request.client.post_invitation(openreview.Invitation(
-            id='{}/-/Revision'.format(self.venue_request.support_group.id),
-            readers=['everyone'],
-            writers=[],
-            signatures=[self.venue_request.super_user],
-            invitees=['everyone'],
-            multiReply=True,
-            process_string=self.file_content,
-            reply={
-                'readers': {
-                    'values-copied': [
-                        self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
-                    ]
-                },
-                'writers': {
-                    'values':[],
-                },
-                'signatures': {
-                    'values-regex': '~.*'
-                },
-                'content': revision_content
-            }
-        ))
+        with open(os.path.join(os.path.dirname(__file__), 'process/revision_pre_process.py')) as pre:
+            pre_process_file_content = pre.read()
+
+            revision_inv = self.venue_request.client.post_invitation(openreview.Invitation(
+                id='{}/-/Revision'.format(self.venue_request.support_group.id),
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.venue_request.super_user],
+                invitees=['everyone'],
+                multiReply=True,
+                preprocess=pre_process_file_content,
+                process_string=self.file_content,
+                reply={
+                    'readers': {
+                        'values-copied': [
+                            self.venue_request.support_group.id,
+                            '{content["program_chair_emails"]}'
+                        ]
+                    },
+                    'writers': {
+                        'values':[],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*'
+                    },
+                    'content': revision_content
+                }
+            ))
+        return revision_inv
 
     def setup_bidding_stage(self):
 
