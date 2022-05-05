@@ -147,7 +147,7 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
 
     if as_dict:
         for profile in profiles:
-            for name in profile.content.get("names", {}):
+            for name in profile.content.get("names", []):
                 if name.get("username") in ids:
                     profiles_as_dict[name.get("username")] = profile
                     continue
