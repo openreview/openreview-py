@@ -48,14 +48,13 @@ function main() {
 function load() {
 
   var getNotesByVenueId = function() {
-    var promises = [];
-    _.forEach(venueIds, function(venueId) {
-      promises.push(Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+    var promises = venueIds.map(function(venueId) {
+      return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
         pageSize: PAGE_SIZE,
         'content.venue': venueId,
         details: 'replyCount',
         includeCount: true
-      }));
+      });
     });
 
     return $.when.apply($, promises).then(function() {
@@ -116,15 +115,11 @@ function renderConferenceTabs() {
   var tabNames = []
 
   Object.keys(DECISION_HEADING_MAP).forEach(function(key) {
-    venueIds.push(key)
-    tabNames.push(DECISION_HEADING_MAP[key])
-  })
-
-  tabNames.forEach(function(tabName) {
+    venueIds.push(key);
     sections.push({
-      heading: tabName,
-      id: getElementId(tabName)
-    })
+      heading: DECISION_HEADING_MAP[key],
+      id: getElementId(DECISION_HEADING_MAP[key])
+    });
   });
 
   Webfield.ui.tabPanel(sections, {
@@ -155,42 +150,42 @@ function renderNotesbyDecision(submissionCount, submissions, venueId) {
   var container = '#' + getElementId(DECISION_HEADING_MAP[venueId])
 
   $(container).empty();
-  if (submissionCount) {
-    var searchResultsListOptions = _.assign({}, paperDisplayOptions, {
-      container: container,
-      autoLoad: false
-    });
+  if (!submissionCount) return;
 
-    Webfield.ui.submissionList(submissions, {
-      heading: null,
-      container: container,
-      search: {
-        enabled: true,
-        localSearch: false,
-        venue: venueId,
-        onResults: function(searchResults) {
-          Webfield.ui.searchResults(searchResults, searchResultsListOptions);
-        },
-        onReset: function() {
-          Webfield.ui.searchResults(submissions, searchResultsListOptions);
-          $(container).append(view.paginationLinks(submissionCount, PAGE_SIZE, 1));
-        }
+  var searchResultsListOptions = Object.assign({}, paperDisplayOptions, {
+    container: container,
+    autoLoad: false
+  });
+
+  Webfield.ui.submissionList(submissions, {
+    heading: null,
+    container: container,
+    search: {
+      enabled: true,
+      localSearch: false,
+      venue: venueId,
+      onResults: function(searchResults) {
+        Webfield.ui.searchResults(searchResults, searchResultsListOptions);
       },
-      displayOptions: paperDisplayOptions,
-      autoLoad: false,
-      noteCount: submissionCount,
-      pageSize: PAGE_SIZE,
-      onPageClick: function(offset) {
-        return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
-          'content.venue': venueId,
-          details: 'replyCount',
-          pageSize: PAGE_SIZE,
-          offset: offset
-        });
-      },
-      fadeIn: false
-    });
-  }
+      onReset: function() {
+        Webfield.ui.searchResults(submissions, searchResultsListOptions);
+        $(container).append(view.paginationLinks(submissionCount, PAGE_SIZE, 1));
+      }
+    },
+    displayOptions: paperDisplayOptions,
+    autoLoad: false,
+    noteCount: submissionCount,
+    pageSize: PAGE_SIZE,
+    onPageClick: function(offset) {
+      return Webfield.api.getSubmissions(BLIND_SUBMISSION_ID, {
+        'content.venue': venueId,
+        details: 'replyCount',
+        pageSize: PAGE_SIZE,
+        offset: offset
+      });
+    },
+    fadeIn: false
+  });
 }
 
 function renderContent(notesArray, withdrawnNotes, deskRejectedNotes, userGroups) {
@@ -206,8 +201,8 @@ function renderContent(notesArray, withdrawnNotes, deskRejectedNotes, userGroups
     $('.tabs-container a[href="#your-consoles"]').parent().hide();
   }
 
-  _.forEach(notesArray, function(notes, index) {
-    renderNotesbyDecision(notes.count, notes.notes, venueIds[index]);
+  notesArray.forEach(function(notes, index) {
+    renderNotesbyDecision(notes.count, notes.notes, venueIds[index])
   });
 
   $('#notes > .spinner-container').remove();
