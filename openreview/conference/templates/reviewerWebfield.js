@@ -128,18 +128,19 @@ var buildNoteMap = function(noteNumbers) {
 
 // AJAX functions
 var getReviewerNoteNumbers = function() {
+  var singularName = REVIEWER_NAME.endsWith('s') ? REVIEWER_NAME.slice(0, -1) : REVIEWER_NAME;
   return Webfield.getAll('/groups', {
     regex: WILDCARD_INVITATION,
     member: user.id
   }).then(function(groups) {
 
-    var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Reviewer_'); });
+    var anonGroups = _.filter(groups, function(g) { return g.id.includes('/' + singularName + '_'); });
     var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/' + REVIEWER_NAME); });
 
     var groupByNumber = {};
     _.forEach(reviewerGroups, function(reviewerGroup) {
       var num = getNumberFromGroup(reviewerGroup.id, 'Paper');
-      var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_'); });
+      var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/' + singularName + '_'); });
       if (anonGroup) {
         groupByNumber[num] = anonGroup.id;
       }

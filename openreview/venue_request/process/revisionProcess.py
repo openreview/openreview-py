@@ -29,13 +29,43 @@ def process(client, note, invitation):
                     matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
                     client.post_invitation(matching_invitation)
 
+            if conference.use_ethics_chairs or conference.use_ethics_reviewers:
+                client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Ethics_Review_Stage',
+                    super = SUPPORT_GROUP + '/-/Ethics_Review_Stage',
+                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                    reply = {
+                        'forum': forum_note.id,
+                        'referent': forum_note.id,
+                        'readers': {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                        }
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+                recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
+                if recruitment_invitation:
+                    recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(recruitment_invitation)
+
+                remind_recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Remind_Recruitment')
+                if remind_recruitment_invitation:
+                    remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(remind_recruitment_invitation)
+
+
         elif invitation_type == 'Bid_Stage':
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
             if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
                 conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_area_chairs_id()))
 
         elif invitation_type == 'Review_Stage':
-            conference.set_review_stage(openreview.helpers.get_review_stage(client, forum_note))
+            conference.create_review_stage()
+
+        elif invitation_type == 'Ethics_Review_Stage':
+            conference.create_ethics_review_stage()
 
         elif invitation_type == 'Meta_Review_Stage':
             conference.set_meta_review_stage(openreview.helpers.get_meta_review_stage(client, forum_note))
@@ -190,7 +220,7 @@ Best,
                     submission_readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
-            if forum_note.content['send_decision_notifications'] == 'Yes, send an email notification to the authors':
+            if note.content.get('send_decision_notifications') == 'Yes, send an email notification to the authors':
                 decision_options = forum_note.content.get(
                     'decision_options',
                     'Accept (Oral), Accept (Poster), Reject'

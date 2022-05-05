@@ -46,7 +46,7 @@ The {journal.short_name} Editors-in-Chief
     if note.content['decision']['value'] == 'No, I decline the solicit review.':
 
         solicit_request = client.get_note(note.replyto)
-        client.add_members_to_group(journal.get_solicit_reviewers_id(number=note.number, declined=True), solicit_request.signatures)
+        client.add_members_to_group(journal.get_solicit_reviewers_id(number=submission.number, declined=True), solicit_request.signatures)
         client.post_message(
             recipients=solicit_request.signatures,
             subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" was not accepted''',
