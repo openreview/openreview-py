@@ -146,8 +146,14 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         profiles.extend(batch_profiles)
 
     if as_dict:
-        for i, profile in enumerate(profiles):
-            profiles_as_dict[ids[i]] = profile
+        for profile in profiles:
+            for name in profile.content.get("names", {}):
+                if name.get("username") in ids:
+                    profiles_as_dict[name.get("username")] = profile
+                    continue
+        for id in ids:
+            if id not in profiles_as_dict:
+                profiles_as_dict[id] = None
 
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
