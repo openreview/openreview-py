@@ -1750,6 +1750,11 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             content={
                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
                 'submission_readers': 'Everyone (submissions are public)',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Reject'
+                },
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
                 'accept_email_content': f'''
 Dear {{{{{{{{fullname}}}}}}}},
@@ -2038,36 +2043,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         assert revision_invitations[0].duedate
         assert revision_invitations[0].expdate
 
-        #Post a post decision note
-        now = datetime.datetime.utcnow()
-        start_date = now - datetime.timedelta(days=2)
-        due_date = now + datetime.timedelta(days=3)
-        post_decision_stage_note = test_client.post_note(openreview.Note(
-            content={
-                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
-                'submission_readers': 'Everyone (submissions are public)',
-                'home_page_tab_names': {
-                    'Accept': 'Accept',
-                    'Revision Needed': 'Revision Needed',
-                    'Reject': 'Reject'
-                },
-                'send_decision_notifications': 'No, I will send the emails to the authors'
-            },
-            forum=venue['request_form_note'].forum,
-            invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-            referent=venue['request_form_note'].forum,
-            replyto=venue['request_form_note'].forum,
-            signatures=['~SomeFirstName_User1'],
-            writers=[]
-        ))
-        assert post_decision_stage_note
-        helpers.await_queue()
-
-        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-
+        #make sure homepage webfield was not overwritten after doing get_conference()
         request_page(selenium, "http://localhost:3030/group?id=TEST.cc/2030/Conference", wait_for_element='reject')
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel

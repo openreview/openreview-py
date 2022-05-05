@@ -201,6 +201,11 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_review_stage(get_review_stage(note))
     builder.set_ethics_review_stage(get_ethics_review_stage(note))
 
+    decision_heading_map = note.content.get('home_page_tab_names')
+    if decision_heading_map:
+        builder.set_homepage_layout('decisions')
+        builder.set_venue_heading_map(decision_heading_map)
+
     return builder
 
 def get_bid_stage(client, request_forum, committee_id):

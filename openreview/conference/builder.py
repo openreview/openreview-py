@@ -101,6 +101,7 @@ class Conference(object):
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
+        self.venue_heading_map = {}
         self.enable_reviewer_reassignment = False
         self.default_reviewer_load = {}
         self.reviewer_identity_readers = []
@@ -660,6 +661,12 @@ class Conference(object):
 
     def set_homepage_layout(self, layout):
         self.layout = layout
+
+    def set_venue_heading_map(self, decision_heading_map):
+        venue_heading_map = {}
+        for decision, tab_name in decision_heading_map.items():
+            venue_heading_map[tools.decision_to_venue(self.short_name, decision)] = tab_name
+        self.venue_heading_map = venue_heading_map
 
     def has_area_chairs(self, has_area_chairs):
         self.use_area_chairs = has_area_chairs
@@ -2604,6 +2611,9 @@ class ConferenceBuilder(object):
     def set_homepage_layout(self, layout):
         self.conference.set_homepage_layout(layout)
 
+    def set_venue_heading_map(self, decision_heading_map):
+        self.conference.set_venue_heading_map(decision_heading_map)
+
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
@@ -2771,7 +2781,8 @@ class ConferenceBuilder(object):
             self.conference.set_area_chairs()
 
         parent_group_id = groups[-2].id if len(groups) > 1 else ''
-        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
+        venue_heading_map = self.conference.venue_heading_map
+        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id, 'decision_heading_map': venue_heading_map })
 
         self.conference.set_conference_groups(groups)
         if self.conference.use_senior_area_chairs:

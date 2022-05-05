@@ -19,8 +19,6 @@ var PAGE_SIZE = 25;
 
 var HEADER = {};
 
-var DECISION_NAME = 'Decision';
-
 var paperDisplayOptions = {
   pdfLink: true,
   replyCount: true,
