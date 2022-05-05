@@ -404,10 +404,10 @@ class TestTools():
 
     def test_get_profiles_as_dict(self, client):
         profiles = openreview.tools.get_profiles(
-            client, ids_or_emails=['~SomeFirstName_User1', 'user@gmail.com', 'test_user@mail.com'], as_dict=True
+            client, ids_or_emails=['~Another_Name1', 'user@gmail.com', 'test_user@mail.com'], as_dict=True
         )
         print(profiles)
         assert isinstance(profiles, dict)
-        assert profiles['~SomeFirstName_User1']
+        assert profiles['~Another_Name1']
         assert profiles['user@gmail.com']
         assert profiles['test_user@mail.com'] is None
