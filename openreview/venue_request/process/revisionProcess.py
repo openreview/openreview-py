@@ -35,7 +35,7 @@ def process(client, note, invitation):
                 except ValueError:
                     withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d')
                 paper_withdraw_super_invitation = openreview.tools.get_invitation(
-                    client, conference.get_invitation_id('Paper_Withdraw')
+                    client, conference.get_invitation_id('Withdraw')
                 )
                 if paper_withdraw_super_invitation:
                     paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)

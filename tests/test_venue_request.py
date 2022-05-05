@@ -1020,7 +1020,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                                                                                  venue['request_form_note'].number)
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        paper_withdraw_super_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id("Paper_Withdraw"))
+        paper_withdraw_super_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id("Withdraw"))
         withdraw_exp_date = datetime.datetime.strptime(withdraw_exp_date, '%Y/%m/%d')
         assert paper_withdraw_super_invitation.duedate is None
         assert openreview.tools.datetime_millis(withdraw_exp_date) == openreview.tools.datetime_millis(paper_withdraw_super_invitation.expdate)
