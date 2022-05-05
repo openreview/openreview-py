@@ -337,13 +337,13 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
         )
 
 
-class PaperWithdrawSuperInvitation(openreview.Invitation):
+class WithdrawSuperInvitation(openreview.Invitation):
 
     def __init__(self, conference):
         content = invitations.withdraw.copy()
         exp_date = tools.datetime_millis(conference.submission_stage.withdraw_submission_exp_date) if conference.submission_stage.withdraw_submission_exp_date else None
-        super(PaperWithdrawSuperInvitation, self).__init__(
-            id=conference.get_invitation_id("Paper_Withdraw"),
+        super(WithdrawSuperInvitation, self).__init__(
+            id=conference.get_invitation_id("Withdraw"),
             cdate=None,
             duedate=None,
             expdate=exp_date,
@@ -370,8 +370,6 @@ class PaperWithdrawSuperInvitation(openreview.Invitation):
 class PaperWithdrawInvitation(openreview.Invitation):
 
     def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
-
-        content = invitations.withdraw.copy()
 
         withdraw_process_file = 'templates/withdraw_process.py'
 
@@ -448,7 +446,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
 
             super(PaperWithdrawInvitation, self).__init__(
                 id=conference.get_invitation_id('Withdraw', note.number),
-                super=conference.get_invitation_id('Paper_Withdraw'),
+                super=conference.get_invitation_id('Withdraw'),
                 cdate=None,
                 invitees=[conference.get_authors_id(note.number), conference.support_user],
                 readers=['everyone'],
@@ -469,7 +467,6 @@ class PaperWithdrawInvitation(openreview.Invitation):
                         'values': [conference.get_authors_id(note.number)],
                         'description': 'How your identity will be displayed.'
                     },
-                    'content': content
                 },
                 process_string=file_content
             )
@@ -1605,7 +1602,7 @@ class InvitationBuilder(object):
         invitations = []
 
         self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
-        self.client.post_invitation(PaperWithdrawSuperInvitation(conference))
+        self.client.post_invitation(WithdrawSuperInvitation(conference))
         notes = list(conference.get_submissions())
         for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
             invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)))
