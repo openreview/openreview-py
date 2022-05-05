@@ -737,6 +737,8 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-edito
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
         ## Poster a comment without EIC as readers
         with pytest.raises(openreview.OpenReviewException, match=r'Editors In Chief must be readers of the comment'):
             comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
@@ -753,7 +755,32 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-edito
                 )
             )
 
+        ## Post an official comment from the reviewer to the EIC only
+        comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                signatures=[david_anon_groups[0].id],
+                readers=['TMLR/Editors_In_Chief', david_anon_groups[0].id],
+                forum=note_id_1,
+                replyto=comment_note['note']['id'],
+                content={
+                    'title': { 'value': 'I have a conflict with this paper' },
+                    'comment': { 'value': 'I know the authors and I can not review this paper.' }
+                }
+            )
+        )
+
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
+        assert len(messages) == 1        
+        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
+<p>An official comment has been posted on a submission that is only visible to you.</p>
+<p>Submission: Paper title UPDATED<br>
+Title: I have a conflict with this paper<br>
+Comment: I know the authors and I can not review this paper.</p>
+<p>To view the official comment, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note['note']['id']}</a></p>
+'''
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',

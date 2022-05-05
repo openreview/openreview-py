@@ -565,3 +565,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {content}
             '''
             self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+
+
+        if self.get_editors_in_chief_id() in readers and len(readers) == 2:
+            message = f'''Hi {{{{fullname}}}},
+
+{before_invitation} {lower_formatted_invitation} has been {action} on a submission that is only visible to you.
+{content}
+            '''
+            self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+
