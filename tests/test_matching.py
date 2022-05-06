@@ -81,7 +81,7 @@ class TestMatching():
         # conference.client = pc_client
         return conference
 
-    def test_setup_matching(self, conference, pc_client, test_client, helpers):
+    def test_setup_matching(self, conference, client, pc_client, test_client, helpers):
 
         ## setup matching with no reviewers
         with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
@@ -167,6 +167,12 @@ class TestMatching():
         # Set up reviewer matching
         conference.setup_matching(committee_id=conference.get_area_chairs_id())
         conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
+
+        #check assignment process is set when invitation is created
+        assignment_inv = client.get_invitation(conference.get_paper_assignment_id(group_id=conference.get_reviewers_id(), deployed=True))
+        assert assignment_inv
+        assert assignment_inv.process
+        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
         blinded_notes = conference.get_submissions(sort='tmdate')
 
@@ -715,7 +721,7 @@ class TestMatching():
         assert 1 == len(ac1_s2_subject_scores)
         assert ac1_s2_subject_scores[0].weight ==  1
 
-    def test_set_assigments(self, conference, pc_client, test_client, helpers):
+    def test_set_assigments(self, conference, client, pc_client, test_client, helpers):
 
         conference.client = pc_client
 
@@ -822,6 +828,14 @@ class TestMatching():
         assert '~Reviewer_One1' in revs_paper2.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('r3@fb.com')+1)).members == ['r3@fb.com']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('~Reviewer_One1')+1)).members == ['~Reviewer_One1']
+
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
+
+        #check assignment process is still set after deployment and setting up matching again
+        assignment_inv = client.get_invitation(conference.get_paper_assignment_id(group_id=conference.get_reviewers_id(), deployed=True))
+        assert assignment_inv
+        assert assignment_inv.process
+        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
