@@ -1058,9 +1058,10 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 
         ## All the comments should be public now
         comments = openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Official_Comment', sort= 'number:asc')
-        assert len(comments) == 2
+        assert len(comments) == 3
         assert comments[0].readers == ['everyone']
         assert comments[1].readers == ['everyone']
+        assert comments[2].readers != ['everyone']
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1
