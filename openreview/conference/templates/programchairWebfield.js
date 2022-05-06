@@ -1174,7 +1174,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
       }
     })
   }
-  reviewer_roles.forEach(function(role) {
+  reviewerRoles.forEach(function(role) {
     notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
   })
   pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing');
