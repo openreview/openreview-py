@@ -782,6 +782,26 @@ Comment: I know the authors and I can not review this paper.</p>
 <p>To view the official comment, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note['note']['id']}</a></p>
 '''
 
+        ## Post an official comment from the EIC to the EIC only
+        comment_note = raia_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=['TMLR/Editors_In_Chief'],
+            note=Note(
+                signatures=['TMLR/Editors_In_Chief'],
+                readers=['TMLR/Editors_In_Chief'],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'title': { 'value': 'Do not approve this yet' },
+                    'comment': { 'value': 'pending moderation, please do not approve.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
+        assert len(messages) == 1        
+
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
             signatures=['~Peter_Snow1'],
@@ -1058,10 +1078,11 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 
         ## All the comments should be public now
         comments = openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Official_Comment', sort= 'number:asc')
-        assert len(comments) == 3
+        assert len(comments) == 4
         assert comments[0].readers == ['everyone']
         assert comments[1].readers == ['everyone']
         assert comments[2].readers != ['everyone']
+        assert comments[3].readers != ['everyone']
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1

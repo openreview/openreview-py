@@ -522,7 +522,7 @@ To view the {lower_formatted_invitation}, click here: https://openreview.net/for
 '''
 
         ## Notify author of the note
-        if action == 'posted':
+        if action == 'posted' and self.get_editors_in_chief_id() not in note.signatures:
             message = f'''Hi {{{{fullname}}}},
 
 Your {lower_formatted_invitation} on a submission has been {action}

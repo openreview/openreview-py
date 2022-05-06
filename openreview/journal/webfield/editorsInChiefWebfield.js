@@ -621,6 +621,13 @@ var formatData = function(
         tableWidth: '100%'
       },
       tasks: { invitations: tasks, forumId: submission.id },
+      eicComments: { 
+        comments: submission.details.replies.filter(function(r) { 
+          return r.readers.length == 1 && r.readers[0] == EDITORS_IN_CHIEF_ID; 
+        }).sort(function(a, b) {
+          return a.tcdate - b.tcdate;
+        })
+      },
       status: submission.content.venue.value
     });
   });
@@ -711,6 +718,7 @@ var renderTable = function(container, rows) {
       'Review Progress',
       'Action Editor Decision',
       'Tasks',
+      'EIC Comments',
       'Status'
     ],
     renders: [
@@ -728,6 +736,16 @@ var renderTable = function(container, rows) {
         return Webfield2.ui.eicTaskList(data.invitations, data.forumId, {
           referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
         });
+      },
+      function(data) {
+        var html = '<div>';
+        data.comments.forEach(function(c) {
+          html += '<strong>' + view.forumDate(c.tcdate) + ': </strong>';
+          html += '<a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + c.content.title.value + '</a>';
+          html += '<p>' + c.content.comment.value + '</p>';
+        })
+        html += '</div>';
+        return html;
       },
       function(data) {
         return '<h4>' + data + '</h4>';
@@ -872,10 +890,11 @@ var renderTable = function(container, rows) {
       $('#' + container + ' .console-table th').eq(0).css('width', '2%');  // [ ]
       $('#' + container + ' .console-table th').eq(1).css('width', '3%');  // #
       $('#' + container + ' .console-table th').eq(2).css('width', '20%'); // Paper Summary
-      $('#' + container + ' .console-table th').eq(3).css('width', '22%'); // Review Progress
-      $('#' + container + ' .console-table th').eq(4).css('width', '22%'); // Action Editor Decision
+      $('#' + container + ' .console-table th').eq(3).css('width', '20%'); // Review Progress
+      $('#' + container + ' .console-table th').eq(4).css('width', '20%'); // Action Editor Decision
       $('#' + container + ' .console-table th').eq(5).css('width', '20%'); // Tasks
-      $('#' + container + ' .console-table th').eq(6).css('width', '11%'); // Status
+      $('#' + container + ' .console-table th').eq(6).css('width', '15%'); // EIC comments
+      $('#' + container + ' .console-table th').eq(7).css('width', '11%'); // Status
     }
   });
 };
