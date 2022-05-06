@@ -96,6 +96,10 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     if note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs':
         builder.has_senior_area_chairs(True)
 
+    if note.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers':
+        builder.has_ethics_chairs(True)
+        builder.has_ethics_reviewers(True)
+
     double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
     readers_map = {
@@ -194,6 +198,13 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_reviewer_roles(note.content.get('reviewer_roles', ['Reviewers']))
     builder.set_area_chair_roles(note.content.get('area_chair_roles', ['Area_Chairs']))
     builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
+    builder.set_review_stage(get_review_stage(note))
+    builder.set_ethics_review_stage(get_ethics_review_stage(note))
+
+    decision_heading_map = note.content.get('home_page_tab_names')
+    if decision_heading_map:
+        builder.set_homepage_layout('decisions')
+        builder.set_venue_heading_map(decision_heading_map)
 
     return builder
 
@@ -218,7 +229,7 @@ def get_bid_stage(client, request_forum, committee_id):
 
     return openreview.BidStage(committee_id if committee_id else request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
 
-def get_review_stage(client, request_forum):
+def get_review_stage(request_forum):
     review_start_date = request_forum.content.get('review_start_date', '').strip()
     if review_start_date:
         try:
@@ -266,6 +277,52 @@ def get_review_stage(client, request_forum):
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options
     )
+
+def get_ethics_review_stage(request_forum):
+    review_start_date = request_forum.content.get('ethics_review_start_date', '').strip()
+    if review_start_date:
+        try:
+            review_start_date = datetime.datetime.strptime(review_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_start_date = datetime.datetime.strptime(review_start_date, '%Y/%m/%d')
+    else:
+        review_start_date = None
+
+    review_due_date = request_forum.content.get('ethics_review_deadline', '').strip()
+    if review_due_date:
+        try:
+            review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d')
+    else:
+        review_due_date = None
+
+    review_form_additional_options = request_forum.content.get('additional_ethics_review_form_options', {})
+
+    review_form_remove_options = request_forum.content.get('remove_ethics_review_form_options', '').replace(',', ' ').split()
+
+    readers_map = {
+        'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers': openreview.EthicsReviewStage.Readers.ALL_COMMITTEE,
+        'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers': openreview.EthicsReviewStage.Readers.ALL_ASSIGNED_COMMITTEE,
+        'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers': openreview.EthicsReviewStage.Readers.ASSIGNED_ETHICS_REVIEWERS,
+        'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review': openreview.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE
+    }
+    release_to_reviewers = readers_map.get(request_forum.content.get('release_ethics_reviews_to_reviewers', ''), openreview.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE)
+
+    flagged_submissions = []
+    if request_forum.content.get('ethics_review_submissions'):
+        flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
+    
+    return openreview.EthicsReviewStage(
+        start_date = review_start_date,
+        due_date = review_due_date,
+        release_to_public = (request_forum.content.get('make_ethics_reviews_public', None) == 'Yes, ethics reviews should be revealed publicly when they are posted'),
+        release_to_authors = (request_forum.content.get('release_ethics_reviews_to_authors', '').startswith('Yes')),
+        release_to_reviewers = release_to_reviewers,
+        additional_fields = review_form_additional_options,
+        remove_fields = review_form_remove_options,
+        submission_numbers = flagged_submissions
+    )    
 
 def get_meta_review_stage(client, request_forum):
     meta_review_start_date = request_forum.content.get('meta_review_start_date', '').strip()
@@ -337,30 +394,24 @@ def get_decision_stage(client, request_forum):
 
     decision_options = request_forum.content.get('decision_options', '').strip()
     decision_form_additional_options = request_forum.content.get('additional_decision_form_options', {})
+
     if decision_options:
         decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
-        return openreview.DecisionStage(
-            options = decision_options,
-            start_date = decision_start_date,
-            due_date = decision_due_date,
-            public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
-            release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
-            release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
-            release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
-            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'),
-            additional_fields=decision_form_additional_options
-        )
-    else:
-        return openreview.DecisionStage(
-            start_date = decision_start_date,
-            due_date = decision_due_date,
-            public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
-            release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
-            release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
-            release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
-            email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'),
-            additional_fields=decision_form_additional_options
-        )
+
+    decisions_file = request_forum.content.get('decisions_file')
+
+    return openreview.DecisionStage(
+        options = decision_options,
+        start_date = decision_start_date,
+        due_date = decision_due_date,
+        public = request_forum.content.get('make_decisions_public', '').startswith('Yes'),
+        release_to_authors = request_forum.content.get('release_decisions_to_authors', '').startswith('Yes'),
+        release_to_reviewers = request_forum.content.get('release_decisions_to_reviewers', '').startswith('Yes'),
+        release_to_area_chairs = request_forum.content.get('release_decisions_to_area_chairs', '').startswith('Yes'),
+        email_authors = request_forum.content.get('notify_authors', '').startswith('Yes'),
+        additional_fields=decision_form_additional_options,
+        decisions_file=decisions_file
+    )
 
 def get_submission_revision_stage(client, request_forum):
     revision_name = request_forum.content.get('submission_revision_name', '').strip()

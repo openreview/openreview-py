@@ -1,14 +1,21 @@
 from __future__ import absolute_import
+from queue import Empty
 
+import csv
+import json
 import time
 import datetime
 import re
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
+from io import StringIO
+from multiprocessing import cpu_count
+
 from tqdm import tqdm
 import os
 import concurrent.futures
-from .. import openreview
+from .. import openreview, OpenReviewException
 from .. import tools
 from . import webfield
 from . import invitation
@@ -54,6 +61,8 @@ class Conference(object):
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_secondary_area_chairs = False
+        self.use_ethics_chairs = False
+        self.use_ethics_reviewers = False
         self.legacy_anonids = False
         self.legacy_invitation_id = False
         self.groups = []
@@ -75,12 +84,15 @@ class Conference(object):
         self.area_chairs_name = 'Area_Chairs'
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.secondary_area_chairs_name = 'Secondary_Area_Chair'
+        self.ethics_chairs_name = 'Ethics_Chairs'
+        self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.program_chairs_name = 'Program_Chairs'
         self.recommendation_name = 'Recommendation'
         self.submission_stage = SubmissionStage()
         self.bid_stages = {}
         self.expertise_selection_stage = ExpertiseSelectionStage()
         self.review_stage = ReviewStage()
+        self.ethics_review_stage = None
         self.review_rebuttal_stage = None
         self.review_revision_stage = None
         self.review_rating_stage = None
@@ -89,6 +101,7 @@ class Conference(object):
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
+        self.venue_heading_map = {}
         self.enable_reviewer_reassignment = False
         self.default_reviewer_load = {}
         self.reviewer_identity_readers = []
@@ -203,6 +216,55 @@ class Conference(object):
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
         return invitations
 
+    def __create_ethics_review_stage(self):
+
+        numbers = ','.join(map(str, self.ethics_review_stage.submission_numbers))
+        print('flagged submissions', numbers)
+        notes = list(self.get_submissions(number=numbers))
+        
+        ## Unflag existing papers with no assigned reviewers
+        groups = self.client.get_groups(regex=self.get_ethics_reviewers_id(number='.*'))
+        for group in groups:
+            print('process group', group.id)
+            if len(group.members) == 0:
+                number = self.get_number_from_committee(group.id)
+                if number and number not in self.ethics_review_stage.submission_numbers:
+                    ## Delete group
+                    self.client.delete_group(group.id)
+                    ## Expire the invitation
+                    invitation = tools.get_invitation(self.client, self.get_invitation_id(self.ethics_review_stage.name, number))
+                    invitation.expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                    self.client.post_invitation(invitation)
+        
+        ## Create ethics paper groups
+        for note in tqdm(notes):
+
+            ethics_reviewers_id=self.get_ethics_reviewers_id(number=note.number)
+            group = tools.get_group(self.client, id = ethics_reviewers_id)
+            if not group:
+                self.client.post_group(openreview.Group(id=ethics_reviewers_id,
+                    readers=[self.id, self.get_ethics_chairs_id(), ethics_reviewers_id],
+                    nonreaders=[self.get_authors_id(note.number)],
+                    deanonymizers=[self.id, self.get_ethics_chairs_id()],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    anonids=True,
+                    members=group.members if group else [])
+                )
+
+        ## Make submissions visible to the ethics committee
+        self.create_blind_submissions(number=numbers)
+
+        ## Setup paper matching
+        self.setup_committee_matching(self.get_ethics_reviewers_id(), compute_affinity_scores=False, compute_conflicts=True)
+        self.invitation_builder.set_assignment_invitation(self, self.get_ethics_reviewers_id())      
+
+        ## Make reviews visible to the ethics committee
+        self.invitation_builder.set_review_invitation(self, notes)
+        invitations = self.invitation_builder.set_ethics_review_invitation(self, notes)
+        return invitations 
+
     def __create_review_rebuttal_stage(self):
         invitation = self.get_invitation_id(self.review_stage.name, '.*')
         review_iterator = self.client.get_all_notes(invitation = invitation)
@@ -312,7 +374,15 @@ class Conference(object):
 
     def set_review_stage(self, stage):
         self.review_stage = stage
-        return self.__create_review_stage()
+        self.create_review_stage()
+
+    def create_review_stage(self):
+        if self.review_stage:
+            return self.__create_review_stage()
+
+    def create_ethics_review_stage(self):
+        if self.ethics_review_stage:
+            return self.__create_ethics_review_stage()
 
     def set_review_rebuttal_stage(self, stage):
         self.review_rebuttal_stage = stage
@@ -340,7 +410,11 @@ class Conference(object):
 
     def set_decision_stage(self, stage):
         self.decision_stage = stage
-        return self.__create_decision_stage()
+        self.__create_decision_stage()
+
+        if self.decision_stage.decisions_file:
+            decisions = self.client.get_attachment(id=self.request_form_id, field_name='decisions_file')
+            self.post_decisions(decisions)
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -363,8 +437,9 @@ class Conference(object):
     def get_reviewers_id(self, number = None):
         return self.get_committee_id(self.reviewers_name, number)
 
-    def get_anon_reviewer_id(self, number=None, anon_id=None):
-        single_reviewer_name=self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+    def get_anon_reviewer_id(self, number=None, anon_id=None, name=None):
+        reviewers_name = name if name else self.reviewers_name
+        single_reviewer_name=reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name
         if self.legacy_anonids:
             return f'{self.id}/Paper{number}/AnonReviewer{anon_id}'
         return f'{self.id}/Paper{number}/{single_reviewer_name}_{anon_id}'
@@ -380,6 +455,12 @@ class Conference(object):
             name=self.reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
+
+    def get_ethics_reviewers_name(self, pretty=True):
+        if pretty:
+            name=self.ethics_reviewers_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.ethics_reviewers_name
 
     def get_area_chairs_name(self, pretty=True):
         if pretty:
@@ -403,6 +484,12 @@ class Conference(object):
 
     def get_senior_area_chairs_id(self, number = None):
         return self.get_committee_id(self.senior_area_chairs_name, number)
+
+    def get_ethics_chairs_id(self, number = None):
+        return self.get_committee_id(self.ethics_chairs_name, number)
+
+    def get_ethics_reviewers_id(self, number = None):
+        return self.get_committee_id(self.ethics_reviewers_name, number)
 
     def get_secondary_area_chairs_id(self, number=None):
         return self.get_committee_id(self.secondary_area_chairs_name, number)
@@ -447,6 +534,14 @@ class Conference(object):
             committee_id = committee_id + name
         return committee_id
 
+    def get_number_from_committee(self, committee_id):
+        tokens = committee_id.split('/')
+        for token in tokens:
+            if token.startswith('Paper'):
+                token = token.replace('Paper', '')
+                return int(token)
+        return None
+
     def get_committee_name(self, committee_id, pretty=False):
         name = committee_id.split('/')[-1]
 
@@ -462,6 +557,11 @@ class Conference(object):
             roles = self.reviewer_roles + self.area_chair_roles
         if self.use_senior_area_chairs:
             roles = roles + self.senior_area_chair_roles
+        if self.use_ethics_chairs:
+            roles = roles + [self.ethics_chairs_name]
+        if self.use_ethics_reviewers:
+            roles = roles + [self.ethics_reviewers_name]
+
         return roles
 
     def get_submission_id(self):
@@ -561,6 +661,12 @@ class Conference(object):
 
     def set_homepage_layout(self, layout):
         self.layout = layout
+
+    def set_venue_heading_map(self, decision_heading_map):
+        venue_heading_map = {}
+        for decision, tab_name in decision_heading_map.items():
+            venue_heading_map[tools.decision_to_venue(self.short_name, decision)] = tab_name
+        self.venue_heading_map = venue_heading_map
 
     def has_area_chairs(self, has_area_chairs):
         self.use_area_chairs = has_area_chairs
@@ -784,7 +890,7 @@ class Conference(object):
         active_venues = self.client.get_group('active_venues')
         self.client.add_members_to_group(active_venues, self.id)
 
-    def create_blind_submissions(self, hide_fields=[]):
+    def create_blind_submissions(self, hide_fields=[], number=None):
 
         if not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Conference is not double blind')
@@ -796,7 +902,7 @@ class Conference(object):
         self.invitation_builder.set_blind_submission_invitation(self, hide_fields)
         blinded_notes = []
 
-        for note in tqdm(self.client.get_all_notes(invitation=self.get_submission_id(), sort='number:asc'), desc='create_blind_submissions'):
+        for note in tqdm(self.client.get_all_notes(invitation=self.get_submission_id(), sort='number:asc', number=number), desc='create_blind_submissions'):
             # If the note was either withdrawn or desk-rejected already, we should not create another blind copy
             if withdrawn_submissions_by_original.get(note.id) or desk_rejected_submissions_by_original.get(note.id):
                 continue
@@ -1062,6 +1168,26 @@ class Conference(object):
         else:
             raise openreview.OpenReviewException('Conference "has_area_chairs" setting is disabled')
 
+    def set_ethics_reviewer_recruitment_groups(self):
+        parent_group_id = self.get_ethics_reviewers_id()
+        parent_group_declined_id = parent_group_id + '/Declined'
+        parent_group_invited_id = parent_group_id + '/Invited'
+
+        pcs_id = self.get_ethics_chairs_id()
+        self.set_ethics_reviewers()
+        self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
+        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True) 
+
+    def set_ethics_chair_recruitment_groups(self):
+        parent_group_id = self.get_ethics_chairs_id()
+        parent_group_declined_id = parent_group_id + '/Declined'
+        parent_group_invited_id = parent_group_id + '/Invited'
+
+        pcs_id = self.get_program_chairs_id()
+        self.set_ethics_chairs()
+        self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
+        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)                
+
     def set_reviewer_recruitment_groups(self):
         parent_group_id = self.get_reviewers_id()
         parent_group_declined_id = parent_group_id + '/Declined'
@@ -1119,6 +1245,29 @@ class Conference(object):
             additional_readers = readers)
 
         return self.__set_reviewer_page()
+
+    def set_ethics_reviewers(self, emails = []):
+        readers = [self.id, self.get_ethics_chairs_id()]
+
+        ethics_reviewer_group = self.__create_group(
+            group_id = self.get_ethics_reviewers_id(),
+            group_owner_id = self.get_ethics_chairs_id(),
+            members = emails,
+            additional_readers = readers)
+
+        return self.webfield_builder.set_ethics_reviewer_page(self, ethics_reviewer_group)        
+
+    def set_ethics_chairs(self, emails = []):
+        readers = [self.id, self.get_ethics_chairs_id()]
+
+        ethics_reviewer_group = self.__create_group(
+            group_id = self.get_ethics_chairs_id(),
+            group_owner_id = self.id,
+            members = emails,
+            additional_readers = readers)
+
+        return self.webfield_builder.set_ethics_chairs_page(self, ethics_reviewer_group)        
+
 
     def set_authors(self):
         # Creating venue level authors group
@@ -1440,14 +1589,6 @@ Program Chairs
     def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
         home_group = self.client.get_group(self.id)
         options = {}
-        options['decision_invitation_regex'] = self.get_invitation_id(invitation_name, '.*')
-
-        if not decision_heading_map:
-            decision_heading_map = {}
-            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), expired=True, limit = 1)
-            if invitations:
-                for option in invitations[0].reply['content']['decision']['value-radio']:
-                    decision_heading_map[option] = option + ' Papers'
         options['decision_heading_map'] = decision_heading_map
 
         self.webfield_builder.set_home_page(conference = self, group = home_group, layout = 'decisions', options = options)
@@ -1522,23 +1663,145 @@ Program Chairs
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=False
                 )
-            #add venue_id if note accepted
+            #add venue_id if note accepted and venue to all notes
             venue = self.short_name
+            decision_option = decision_note.content['decision'] if decision_note else ''
+            submission.content['venue'] = tools.decision_to_venue(venue, decision_option)
             if note_accepted:
-                decision = decision_note.content['decision'].replace('Accept', '')
-                decision = re.sub(r'[()\W]+', '', decision)
                 venueid = self.id
-                if decision:
-                    venue += ' ' + decision
                 submission.content['venueid'] = venueid
-                submission.content['venue'] = venue
-            else:
-                submission.content['venue'] = f'Submitted to {venue}'
             self.client.post_note(submission)
 
+        venue_heading_map = {}
         if decision_heading_map:
-            self.set_homepage_decisions(decision_heading_map=decision_heading_map)
+            for decision, tab_name in decision_heading_map.items():
+                venue_heading_map[tools.decision_to_venue(venue, decision)] = tab_name
+        
+        if venue_heading_map:
+            self.set_homepage_decisions(decision_heading_map=venue_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
+
+    def send_decision_notifications(self, decision_options, messages):
+        decision_notes = self.client.get_all_notes(
+            invitation=self.get_invitation_id(self.decision_stage.name, '.*'),
+        )
+        paper_notes = {n.forum: n for n in self.get_submissions()}
+
+        def send_notification(note):
+            paper_note = paper_notes[note.forum]
+            message = messages[note.content['decision']]
+            subject = "[{SHORT_NAME}] Decision notification for your submission {submission_number}: {submission_title}".format(
+                SHORT_NAME=self.get_short_name(),
+                submission_number=paper_note.number,
+                submission_title=paper_note.content['title']
+            )
+            final_message = f'''{message.format(
+                submission_title=paper_note.content['title'],
+                forum_url=f'https://openreview.net/forum?id={paper_note.id}'
+            )}'''
+            self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
+
+        tools.concurrent_requests(send_notification, decision_notes)
+
+    def post_decisions(self, decisions_file):
+        decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
+        decision_notes = {
+            n.forum: n for n in self.client.get_all_notes(
+                invitation=self.get_invitation_id(self.decision_stage.name, '.*')
+            )}
+        paper_notes = {n.forum: n for n in self.get_submissions()}
+        forum_note = self.client.get_note(self.request_form_id)
+
+        def post_decision(paper_decision):
+            if len(paper_decision) < 2:
+                raise OpenReviewException(
+                    "Not enough values provided in the decision file. Expected values are: paper_id, decision, comment")
+            if len(paper_decision) > 3:
+                raise OpenReviewException(
+                    "Too many values provided in the decision file. Expected values are: paper_id, decision, comment"
+                )
+            if len(paper_decision) == 3:
+                paper_id, decision, comment = paper_decision
+            else:
+                paper_id, decision = paper_decision
+                comment = ''
+
+            print(f"Posting Decision {decision} for Paper {paper_id}")
+            paper_note = paper_notes.get(paper_id, None)
+            if not paper_note:
+                raise OpenReviewException(
+                    f"Paper with ID: {paper_id} not found. Please check the submitted paperIDs."
+                )
+
+            paper_decision_note = decision_notes.get(paper_id, None)
+            if paper_decision_note:
+                paper_decision_note.content = {
+                    'title': 'Paper Decision',
+                    'decision': decision.strip(),
+                    'comment': comment,
+                }
+            else:
+                paper_decision_note = openreview.Note(
+                    invitation=self.get_invitation_id(name=self.decision_stage.name, number=paper_note.number),
+                    writers=[self.get_program_chairs_id()],
+                    readers=self.decision_stage.get_readers(conference=self, number=paper_note.number),
+                    nonreaders=self.decision_stage.get_nonreaders(conference=self, number=paper_note.number),
+                    signatures=[self.get_program_chairs_id()],
+                    content={
+                        'title': 'Paper Decision',
+                        'decision': decision.strip(),
+                        'comment': comment,
+                    },
+                    forum=paper_note.forum,
+                    replyto=paper_note.forum
+                )
+            self.client.post_note(paper_decision_note)
+            print(f"Decision posted for Paper {paper_id}")
+
+        futures = []
+        futures_param_mapping = {}
+        gathering_responses = tqdm(total=len(decisions_data), desc='Gathering Responses')
+        results = []
+        errors = {}
+
+        with ThreadPoolExecutor(max_workers=min(6, cpu_count() - 1)) as executor:
+            for _decision in decisions_data:
+                _future = executor.submit(post_decision, _decision)
+                futures.append(_future)
+                futures_param_mapping[_future] = str(_decision)
+
+            for future in futures:
+                gathering_responses.update(1)
+                try:
+                    results.append(future.result())
+                except Exception as e:
+                    errors[futures_param_mapping[future]] = e.args[0] if isinstance(e, OpenReviewException) else repr(e)
+
+            gathering_responses.close()
+
+        error_status = ''
+        if errors:
+            error_status = f'''
+```python
+{json.dumps(errors, indent=2)}
+```
+'''
+        status_note = openreview.Note(
+            invitation=self.support_user + '/-/Request' + str(forum_note.number) + '/Decision_Upload_Status',
+            forum=self.request_form_id,
+            replyto=self.request_form_id,
+            readers=[self.get_program_chairs_id(), self.support_user],
+            writers=[],
+            signatures=[self.support_user],
+            content={
+                'title': 'Decision Upload Status',
+                'decision_posted': f'''{len(results)} Papers''',
+                'error': error_status
+            }
+        )
+
+        self.client.post_note(status_note)
+
 
 class SubmissionStage(object):
 
@@ -1636,6 +1899,12 @@ class SubmissionStage(object):
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
             submission_readers.append(conference.get_reviewers_id(number=number))
+
+        if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
+            if conference.use_ethics_chairs:
+                submission_readers.append(conference.get_ethics_chairs_id())
+            if conference.use_ethics_reviewers:
+                submission_readers.append(conference.get_ethics_reviewers_id(number=number))            
 
         submission_readers.append(conference.get_authors_id(number=number))
         return submission_readers
@@ -1850,6 +2119,12 @@ class ReviewStage(object):
 
         readers.append(self._get_reviewer_readers(conference, number))
 
+        if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+            if conference.use_ethics_reviewers:
+                readers.append(conference.get_ethics_reviewers_id(number=number))  
+
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
 
@@ -1870,6 +2145,105 @@ class ReviewStage(object):
             return '~.*|' + conference.get_program_chairs_id()
 
         return conference.get_anon_reviewer_id(number=number, anon_id='.*') + '|' +  conference.get_program_chairs_id()
+
+
+class EthicsReviewStage(object):
+
+    class Readers(Enum):
+        ALL_COMMITTEE = 0
+        ALL_ASSIGNED_COMMITTEE = 1
+        ASSIGNED_ETHICS_REVIEWERS = 2
+        ETHICS_REVIEWER_SIGNATURE = 3
+
+    def __init__(self,
+        start_date = None,
+        due_date = None,
+        name = None,
+        release_to_public = False,
+        release_to_authors = False,
+        release_to_reviewers = Readers.ETHICS_REVIEWER_SIGNATURE,
+        additional_fields = {},
+        remove_fields = [],
+        submission_numbers = []
+    ):
+
+        self.start_date = start_date
+        self.due_date = due_date
+        self.name = name if name else 'Ethics_Review'
+        self.release_to_public = release_to_public
+        self.release_to_authors = release_to_authors
+        self.release_to_reviewers = release_to_reviewers
+        self.additional_fields = additional_fields
+        self.remove_fields = remove_fields
+        self.submission_numbers = submission_numbers
+
+    def get_readers(self, conference, number):
+
+        if self.release_to_public:
+            return ['everyone']
+
+        readers = [ conference.get_program_chairs_id()]
+
+        if self.release_to_reviewers == self.Readers.ALL_COMMITTEE:
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id())
+
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id())
+
+            readers.append(self.get_reviewers_id())
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+
+            readers.append(conference.get_ethics_reviewers_id())                
+
+        if self.release_to_reviewers == self.Readers.ALL_ASSIGNED_COMMITTEE:
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id(number=number))
+
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id(number=number))
+
+            readers.append(conference.get_reviewers_id(number=number))
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+
+            readers.append(self.get_ethics_reviewers_id(number=number)) 
+
+        if self.release_to_reviewers == self.Readers.ASSIGNED_ETHICS_REVIEWERS:
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+
+            readers.append(self.get_ethics_reviewers_id(number=number)) 
+
+        if self.release_to_reviewers == self.Readers.ETHICS_REVIEWER_SIGNATURE:
+
+            if conference.use_ethics_chairs:
+                readers.append(conference.get_ethics_chairs_id())
+
+            readers.append('{signatures}')             
+
+
+        if self.release_to_authors:
+            readers.append(conference.get_authors_id(number = number))
+
+        return readers
+
+    def get_nonreaders(self, conference, number):
+
+        if self.release_to_public:
+            return []
+
+        if self.release_to_authors:
+            return []
+
+        return [conference.get_authors_id(number = number)]
+
+    def get_signatures(self, conference, number):
+        return conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name) + '|' +  conference.get_program_chairs_id()
 
 class ReviewRebuttalStage(object):
 
@@ -2082,7 +2456,7 @@ class MetaReviewStage(object):
 
 class DecisionStage(object):
 
-    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}):
+    def __init__(self, options = None, start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs = False, email_authors = False, additional_fields = {}, decisions_file=None):
         if not options:
             options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
         self.options = options
@@ -2095,6 +2469,7 @@ class DecisionStage(object):
         self.release_to_area_chairs = release_to_area_chairs
         self.email_authors = email_authors
         self.additional_fields = additional_fields
+        self.decisions_file = decisions_file
 
     def get_readers(self, conference, number):
 
@@ -2149,6 +2524,7 @@ class ConferenceBuilder(object):
         self.registration_stages = []
         self.bid_stages = []
         self.review_stage = None
+        self.ethics_review_stage = None
         self.review_rebuttal_stage = None
         self.comment_stage = None
         self.meta_review_stage = None
@@ -2235,11 +2611,20 @@ class ConferenceBuilder(object):
     def set_homepage_layout(self, layout):
         self.conference.set_homepage_layout(layout)
 
+    def set_venue_heading_map(self, decision_heading_map):
+        self.conference.set_venue_heading_map(decision_heading_map)
+
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
     def has_senior_area_chairs(self, has_senior_area_chairs):
         self.conference.has_senior_area_chairs(has_senior_area_chairs)
+
+    def has_ethics_chairs(self, has_ethics_chairs):
+        self.conference.use_ethics_chairs = has_ethics_chairs
+
+    def has_ethics_reviewers(self, has_ethics_reviewers):
+        self.conference.use_ethics_reviewers = has_ethics_reviewers
 
     def enable_reviewer_reassignment(self, enable):
         self.conference.enable_reviewer_reassignment = enable
@@ -2311,8 +2696,8 @@ class ConferenceBuilder(object):
     def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False):
         self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions))
 
-    def set_review_stage(self, start_date = None, due_date = None, name = None, allow_de_anonymization = False, public = False, release_to_authors = False, release_to_reviewers = ReviewStage.Readers.REVIEWER_SIGNATURE, email_pcs = False, additional_fields = {}, remove_fields = []):
-        self.review_stage = ReviewStage(start_date, due_date, name, allow_de_anonymization, public, release_to_authors, release_to_reviewers, email_pcs, additional_fields, remove_fields)
+    def set_review_stage(self, stage):
+        self.conference.review_stage = stage
 
     def set_review_rebuttal_stage(self, start_date = None, due_date = None, name = None,  email_pcs = False, additional_fields = {}):
         self.review_rebuttal_stage = ReviewRebuttalStage(start_date, due_date, name, email_pcs, additional_fields)
@@ -2332,6 +2717,9 @@ class ConferenceBuilder(object):
     def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, allow_author_reorder=False):
         self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted, allow_author_reorder)
 
+    def set_ethics_review_stage(self, stage):
+        self.conference.ethics_review_stage = stage
+    
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
 
@@ -2370,11 +2758,15 @@ class ConferenceBuilder(object):
 
         host = self.client.get_group(id = 'host')
         root_id = groups[0].id
+        home_group = groups[-1]
         if root_id == root_id.lower():
             root_id = groups[1].id
         writable = host.details.get('writable') if host.details else True
         if writable:
             self.client.add_members_to_group(host, root_id)
+            home_group.host = root_id
+            self.client.post_group(home_group)
+            self.client.add_members_to_group('venues', home_group.id)
 
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
@@ -2388,15 +2780,19 @@ class ConferenceBuilder(object):
         if self.conference.use_area_chairs:
             self.conference.set_area_chairs()
 
-        home_group = groups[-1]
         parent_group_id = groups[-2].id if len(groups) > 1 else ''
-        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
+        venue_heading_map = self.conference.venue_heading_map
+        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id, 'decision_heading_map': venue_heading_map })
 
         self.conference.set_conference_groups(groups)
         if self.conference.use_senior_area_chairs:
             self.conference.set_senior_area_chair_recruitment_groups()
         if self.conference.use_area_chairs:
             self.conference.set_area_chair_recruitment_groups()
+        if self.conference.use_ethics_chairs:
+            self.conference.set_ethics_chair_recruitment_groups()
+        if self.conference.use_ethics_reviewers:
+            self.conference.set_ethics_reviewer_recruitment_groups()                       
         self.conference.set_reviewer_recruitment_groups()
 
         for s in self.bid_stages:
@@ -2407,9 +2803,6 @@ class ConferenceBuilder(object):
 
         for s in self.registration_stages:
             self.conference.set_registration_stage(s)
-
-        if self.review_stage:
-            self.conference.set_review_stage(self.review_stage)
 
         if self.review_rebuttal_stage:
             self.conference.set_review_rebuttal_stage(self.review_rebuttal_stage)

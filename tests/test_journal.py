@@ -151,7 +151,8 @@ class TestJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 
@@ -208,7 +209,8 @@ class TestJournal():
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
         helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
@@ -241,7 +243,8 @@ class TestJournal():
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
-                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
+                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                                            'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                                         }
                                     ))
 
@@ -265,7 +268,8 @@ class TestJournal():
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
-                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
+                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                                            'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                                         }
                                     ))
 
@@ -1045,7 +1049,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>Now that 3 reviews have been submitted for submission Paper title UPDATED, all reviews have been made public. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in <strong>2 weeks</strong>.</p>
+<p>Now that 3 reviews have been submitted for submission Paper title UPDATED, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in <strong>2 weeks</strong>.</p>
 <p>You will find the OpenReview page for this submission at this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>
@@ -1613,7 +1617,8 @@ note={Retracted after acceptance}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
                 }
             ))
 
@@ -1657,6 +1662,16 @@ note={Retracted after acceptance}
         ))
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title 4')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
+<p>With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title 4&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
+<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement</a></p>
+<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
+'''
 
         ## Assign Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1770,7 +1785,7 @@ note={Retracted after acceptance}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Peter Snow,</p>
 <p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 4 has been accepted by the Action Editor (AE).</p>
-<p>You are required to submit your review within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.</p>
+<p>You are required to submit your review within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.</p>
 <p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers\">https://openreview.net/group?id=TMLR/Reviewers</a></p>
 <p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your contribution to TMLR!</p>
@@ -2059,7 +2074,8 @@ note={Rejected}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 
@@ -2335,7 +2351,8 @@ note={Rejected}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 
@@ -2615,7 +2632,8 @@ note={Withdrawn}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
                 }
             ))
 
@@ -2707,7 +2725,8 @@ note={Withdrawn}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
                 }
             ))
 
@@ -2779,7 +2798,8 @@ note={Withdrawn}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 

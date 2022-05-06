@@ -35,9 +35,10 @@ class TestLegacyInvitations():
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_public=True,
             desk_rejected_submission_reveal_authors=True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 40)))
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         conference = builder.get_result()
+        conference.create_review_stage()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],

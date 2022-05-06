@@ -117,7 +117,8 @@ class TestJournal():
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Martinez1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 
