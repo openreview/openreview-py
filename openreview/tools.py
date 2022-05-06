@@ -1909,7 +1909,7 @@ def get_neurips_profile_info(profile, n_years=3):
 
     ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
-        if 'intern' not in h.get('position','').lower():
+        if 'intern' not in h.get('position', '').lower():
             if h.get('end') is None or int(h.get('end')) > cut_off_year:
                 domain = h.get('institution', {}).get('domain', '')
                 domains.update(openreview.tools.subdomains(domain))

@@ -373,7 +373,20 @@ class TestTools():
             }
         )
 
-        conflicts = openreview.tools.get_conflicts([profile1], profile2)
+        intern_profile = openreview.Profile(
+            id='Test_Conflict3',
+            content={
+                'emails': ['user3@345.com'],
+                'history': [{
+                    'position': 'Intern',
+                    'institution': {
+                        'domain': 'user3@cmu.edu'
+                    }
+                }]
+            }
+        )
+
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2)
         assert len(conflicts) == 1
         assert conflicts[0] == 'cmu.edu'
 
