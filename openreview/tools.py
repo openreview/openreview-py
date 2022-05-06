@@ -22,6 +22,24 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
+def decision_to_venue(venue_id, decision_option):
+    """
+    Returns the venue for a submission based on its decision
+
+    :param venue_id: venue's short name (i.e., ICLR 2022)
+    :type venue_id: string
+    :param decision_option: paper decision (i.e., Accept, Reject)
+    :type decision_option: string
+    """
+    venue = venue_id
+    if 'Accept' in decision_option:
+        decision = decision_option.replace('Accept', '')
+        decision = re.sub(r'[()\W]+', '', decision)
+        if decision:
+            venue += ' ' + decision.strip()
+    else:
+        venue = f'Submitted to {venue}'
+    return venue
 
 def run_once(f):
     """
