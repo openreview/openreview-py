@@ -342,15 +342,9 @@ var getInvitationMap = function() {
     });
   }
 
-  var assignmentInvitationsP = Webfield.getAll('/invitations', {
-    regex: CONFERENCE_ID + '.*/-/Assignment_Configuration',
-    expired: true,
-    type: 'notes'
-  });
-
-  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP, assignmentInvitationsP)
-  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations, assignmentInvitations) {
-    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations).concat(assignmentInvitations);
+  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP)
+  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations) {
+    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations);
     return _.keyBy(allInvitations, 'id');
   });
 };
@@ -1180,10 +1174,8 @@ var displayStatsAndConfiguration = function(conferenceStats) {
       }
     })
   }
-  reviewerRoles.forEach(function(role) {
-    if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
-      notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
-    }
+  reviewer_roles.forEach(function(role) {
+    notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
   })
   pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing');
   pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting');
