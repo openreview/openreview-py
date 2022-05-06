@@ -403,12 +403,19 @@ class TestTools():
         assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 
     def test_get_profiles_as_dict(self, client):
+        client.add_members_to_group(client.get_group('~SomeFirstName_User1'), 'alternate@mail.com')
+        client.add_members_to_group(client.get_group('alternate@mail.com'), '~SomeFirstName_User1')
         profiles = openreview.tools.get_profiles(
-            client, ids_or_emails=['~Another_Name1', 'user@gmail.com', 'test_user@mail.com', '~Test_Name1'], as_dict=True
+            client, ids_or_emails=['~SomeFirstName_User1', '~Another_Name1', 'user@gmail.com', 'test_user@mail.com', 'test@mail.com', 'alternate@mail.com', '~Test_Name1'], as_dict=True
         )
 
         assert isinstance(profiles, dict)
+        assert profiles['~SomeFirstName_User1']
         assert profiles['~Another_Name1']
+        assert profiles['~SomeFirstName_User1'].id == profiles['~Another_Name1'].id
         assert profiles['user@gmail.com']
+        assert profiles['test@mail.com']
+        assert profiles['alternate@mail.com']
+        assert profiles['alternate@mail.com'].id == profiles['test@mail.com'].id
         assert profiles['test_user@mail.com'] is None
         assert profiles['~Test_Name1'] is None

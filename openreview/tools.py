@@ -146,14 +146,13 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         profiles.extend(batch_profiles)
 
     if as_dict:
+        profiles_by_name = {}
         for profile in profiles:
             for name in profile.content.get("names", []):
-                if name.get("username") in ids:
-                    profiles_as_dict[name.get("username")] = profile
-                    continue
+                profiles_by_name[name.get("username")] = profile
+
         for id in ids:
-            if id not in profiles_as_dict:
-                profiles_as_dict[id] = None
+            profiles_as_dict[id] = profiles_by_name.get(id)
 
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
@@ -161,10 +160,13 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         profile_by_email.update(batch_profile_by_email)
 
     if as_dict:
-        profiles_as_dict.update(profile_by_email)
+        _profiles_by_email = {}
+        for profile in profile_by_email.values():
+            for email in profile.content.get('emailsConfirmed', []):
+                _profiles_by_email[email] = profile
+
         for email in emails:
-            if email not in profiles_as_dict:
-                profiles_as_dict[email] = None
+            profiles_as_dict[email] = _profiles_by_email.get(email)
 
     for email in emails:
         profiles.append(profile_by_email.get(email, openreview.Profile(
