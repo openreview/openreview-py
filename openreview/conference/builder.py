@@ -101,6 +101,7 @@ class Conference(object):
         self.meta_review_stage = MetaReviewStage()
         self.decision_stage = DecisionStage()
         self.layout = 'tabs'
+        self.venue_heading_map = {}
         self.enable_reviewer_reassignment = False
         self.default_reviewer_load = {}
         self.reviewer_identity_readers = []
@@ -660,6 +661,12 @@ class Conference(object):
 
     def set_homepage_layout(self, layout):
         self.layout = layout
+
+    def set_venue_heading_map(self, decision_heading_map):
+        venue_heading_map = {}
+        for decision, tab_name in decision_heading_map.items():
+            venue_heading_map[tools.decision_to_venue(self.short_name, decision)] = tab_name
+        self.venue_heading_map = venue_heading_map
 
     def has_area_chairs(self, has_area_chairs):
         self.use_area_chairs = has_area_chairs
@@ -1582,14 +1589,6 @@ Program Chairs
     def set_homepage_decisions(self, invitation_name = 'Decision', decision_heading_map = None):
         home_group = self.client.get_group(self.id)
         options = {}
-        options['decision_invitation_regex'] = self.get_invitation_id(invitation_name, '.*')
-
-        if not decision_heading_map:
-            decision_heading_map = {}
-            invitations = self.client.get_invitations(regex = self.get_invitation_id(invitation_name, '.*'), expired=True, limit = 1)
-            if invitations:
-                for option in invitations[0].reply['content']['decision']['value-radio']:
-                    decision_heading_map[option] = option + ' Papers'
         options['decision_heading_map'] = decision_heading_map
 
         self.webfield_builder.set_home_page(conference = self, group = home_group, layout = 'decisions', options = options)
@@ -1664,22 +1663,22 @@ Program Chairs
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=False
                 )
-            #add venue_id if note accepted
+            #add venue_id if note accepted and venue to all notes
             venue = self.short_name
+            decision_option = decision_note.content['decision'] if decision_note else ''
+            submission.content['venue'] = tools.decision_to_venue(venue, decision_option)
             if note_accepted:
-                decision = decision_note.content['decision'].replace('Accept', '')
-                decision = re.sub(r'[()\W]+', '', decision)
                 venueid = self.id
-                if decision:
-                    venue += ' ' + decision
                 submission.content['venueid'] = venueid
-                submission.content['venue'] = venue
-            else:
-                submission.content['venue'] = f'Submitted to {venue}'
             self.client.post_note(submission)
 
+        venue_heading_map = {}
         if decision_heading_map:
-            self.set_homepage_decisions(decision_heading_map=decision_heading_map)
+            for decision, tab_name in decision_heading_map.items():
+                venue_heading_map[tools.decision_to_venue(venue, decision)] = tab_name
+        
+        if venue_heading_map:
+            self.set_homepage_decisions(decision_heading_map=venue_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
     def send_decision_notifications(self, decision_options, messages):
@@ -2612,6 +2611,9 @@ class ConferenceBuilder(object):
     def set_homepage_layout(self, layout):
         self.conference.set_homepage_layout(layout)
 
+    def set_venue_heading_map(self, decision_heading_map):
+        self.conference.set_venue_heading_map(decision_heading_map)
+
     def has_area_chairs(self, has_area_chairs):
         self.conference.has_area_chairs(has_area_chairs)
 
@@ -2779,7 +2781,8 @@ class ConferenceBuilder(object):
             self.conference.set_area_chairs()
 
         parent_group_id = groups[-2].id if len(groups) > 1 else ''
-        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id })
+        venue_heading_map = self.conference.venue_heading_map
+        groups[-1] = self.webfield_builder.set_home_page(conference = self.conference, group = home_group, layout = self.conference.layout, options = { 'parent_group_id': parent_group_id, 'decision_heading_map': venue_heading_map })
 
         self.conference.set_conference_groups(groups)
         if self.conference.use_senior_area_chairs:
