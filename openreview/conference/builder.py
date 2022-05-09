@@ -301,6 +301,12 @@ class Conference(object):
         invitation = tools.get_invitation(self.client, self.get_submission_id())
         if invitation:
             notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted, details='original')
+            if self.submission_revision_stage.only_accepted:
+                all_notes = self.get_submissions(details='original')
+                accepted_note_ids = [note.id for note in notes]
+                non_accepted_notes = [note for note in all_notes if note.id in accepted_note_ids]
+                expire_invitation_ids = [self.get_invitation_id(self.submission_revision_stage.name, note.number) for note in non_accepted_notes]
+                tools.concurrent_requests(self.__expire_invitation, expire_invitation_ids)
             return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
 
     ## Deprecated, use this only for manual assignments
