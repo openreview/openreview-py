@@ -20,7 +20,7 @@ class TestTools():
                     readers = ['everyone'],
                     writers =['NewGroup']
                 ))
-        
+
         params = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         results = openreview.tools.concurrent_requests(post_random_group, params)
         assert len(results) == len(params)
@@ -365,11 +365,18 @@ class TestTools():
             id = 'Test_Conflict2',
             content = {
                 'emails': ['user2@126.com'],
-                'history': [{
-                    'institution': {
-                        'domain': 'user2@cmu.edu'
+                'history': [
+                    {
+                        'institution': {
+                            'domain': 'user2@cmu.edu'
+                        }
+                    },
+                    {
+                        'institution': {
+                            'domain': 'user2@umass.edu'
+                        }
                     }
-                }]
+                ]
             }
         )
 
@@ -380,15 +387,20 @@ class TestTools():
                 'history': [{
                     'position': 'Intern',
                     'institution': {
-                        'domain': 'user3@cmu.edu'
+                        'domain': 'user3@umass.edu'
                     }
                 }]
             }
         )
 
         conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2)
-        assert len(conflicts) == 1
-        assert conflicts[0] == 'cmu.edu'
+        assert len(conflicts) == 2
+        assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
+
+        neurips_conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy='neurips')
+        assert len(neurips_conflicts) == 1
+        assert neurips_conflicts[0] == 'cmu.edu'
 
     def test_add_assignments(self, client):
 
