@@ -967,6 +967,7 @@ class Matching(object):
                 self.client.post_invitation(invitation)
 
         self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, deployed=True))
+        self.conference.invitation_builder.set_assignment_invitation(self.conference, self.match_group.id)
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
