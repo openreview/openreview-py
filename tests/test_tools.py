@@ -355,7 +355,7 @@ class TestTools():
                 'emails': ['user@cmu.edu'],
                 'history': [{
                     'institution': {
-                        'domain': 'user@126.com'
+                        'domain': '126.com'
                     }
                 }]
             }
@@ -368,12 +368,12 @@ class TestTools():
                 'history': [
                     {
                         'institution': {
-                            'domain': 'user2@cmu.edu'
+                            'domain': 'cmu.edu'
                         }
                     },
                     {
                         'institution': {
-                            'domain': 'user2@umass.edu'
+                            'domain': 'umass.edu'
                         }
                     }
                 ]
@@ -387,7 +387,7 @@ class TestTools():
                 'history': [{
                     'position': 'Intern',
                     'institution': {
-                        'domain': 'user3@umass.edu'
+                        'domain': 'umass.edu'
                     }
                 }]
             }
@@ -398,9 +398,8 @@ class TestTools():
         assert 'cmu.edu' in conflicts
         assert 'umass.edu' in conflicts
 
-        neurips_conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy='neurips')
-        assert len(neurips_conflicts) == 1
-        assert neurips_conflicts[0] == 'cmu.edu'
+        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
+        assert len(neurips_conflicts) == 0
 
     def test_add_assignments(self, client):
 
