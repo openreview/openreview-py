@@ -137,7 +137,8 @@ def get_profile(client, value, with_publications=False):
             raise e
     return profile
 
-def get_profiles(client, ids_or_emails, with_publications=False):
+
+def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
@@ -152,6 +153,7 @@ def get_profiles(client, ids_or_emails, with_publications=False):
 
     profiles = []
     profile_by_email = {}
+    profiles_as_dict = {}
 
     batch_size = 100
     for i in range(0, len(ids), batch_size):
@@ -159,10 +161,28 @@ def get_profiles(client, ids_or_emails, with_publications=False):
         batch_profiles = client.search_profiles(ids=batch_ids)
         profiles.extend(batch_profiles)
 
+    if as_dict:
+        profiles_by_name = {}
+        for profile in profiles:
+            for name in profile.content.get("names", []):
+                profiles_by_name[name.get("username")] = profile
+
+        for id in ids:
+            profiles_as_dict[id] = profiles_by_name.get(id)
+
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
         batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
         profile_by_email.update(batch_profile_by_email)
+
+    if as_dict:
+        _profiles_by_email = {}
+        for profile in profile_by_email.values():
+            for email in profile.content.get('emailsConfirmed', []):
+                _profiles_by_email[email] = profile
+
+        for email in emails:
+            profiles_as_dict[email] = _profiles_by_email.get(email)
 
     for email in emails:
         profiles.append(profile_by_email.get(email, openreview.Profile(
@@ -174,7 +194,9 @@ def get_profiles(client, ids_or_emails, with_publications=False):
                 'names': []
             })))
 
-    if with_publications:
+    if as_dict and with_publications:
+        print("Getting profiles as dictionary is not supported with publications right now. Returning profiles without plublications.")
+    elif with_publications:
         baseurl_v1 = 'http://localhost:3000'
         baseurl_v2 = 'http://localhost:3001'
 
@@ -199,7 +221,10 @@ def get_profiles(client, ids_or_emails, with_publications=False):
             else:
                 profiles[idx].content['publications'] = publications
 
+    if as_dict:
+        return profiles_as_dict
     return profiles
+
 
 def get_group(client, id):
     """
