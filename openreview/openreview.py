@@ -1785,7 +1785,7 @@ class Client(object):
     def get_expertise_status(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/status', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1793,7 +1793,7 @@ class Client(object):
     def get_expertise_results(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/results', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
