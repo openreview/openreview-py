@@ -111,14 +111,14 @@ var main = function() {
     title: HEADER.title,
     instructions: HEADER.instructions,
     tabs: [
-      'Overview', 
-      'Submitted', 
-      'Under Review', 
+      'Overview',
+      'Submitted',
+      'Under Review',
       'Under Discussion',
-      'Under Decision', 
-      'Camera Ready', 
-      'Submission Complete', 
-      'Action Editor Status', 
+      'Under Decision',
+      'Camera Ready',
+      'Submission Complete',
+      'Action Editor Status',
       'Reviewer Status'
     ],
     referrer: args && args.referrer,
@@ -621,9 +621,9 @@ var formatData = function(
         tableWidth: '100%'
       },
       tasks: { invitations: tasks, forumId: submission.id },
-      eicComments: { 
-        comments: submission.details.replies.filter(function(r) { 
-          return r.readers.length == 1 && r.readers[0] == EDITORS_IN_CHIEF_ID; 
+      eicComments: {
+        comments: submission.details.replies.filter(function(r) {
+          return r.readers.length == 1 && r.readers[0] == EDITORS_IN_CHIEF_ID;
         }).sort(function(a, b) {
           return a.tcdate - b.tcdate;
         })
@@ -738,14 +738,16 @@ var renderTable = function(container, rows) {
         });
       },
       function(data) {
-        var html = '<div>';
-        data.comments.forEach(function(c) {
-          html += '<strong>' + view.forumDate(c.tcdate) + ': </strong>';
-          html += '<a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + c.content.title.value + '</a>';
-          html += '<p>' + c.content.comment.value + '</p>';
-        })
-        html += '</div>';
-        return html;
+        var html = data.comments.map(function(c) {
+          return (
+            '<li class="mb-3">' +
+              '<p class="text-muted mb-1">' + view.forumDate(c.tcdate) + ': </p>' +
+              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + c.content.title.value + '</a></strong></p>' +
+              '<p style="word-break: break-word;">' + c.content.comment.value + '</p>' +
+            '</li>'
+          );
+        });
+        return  '<ul class="list-unstyled">' + html.join('\n') + '</ul>';
       },
       function(data) {
         return '<h4>' + data + '</h4>';
