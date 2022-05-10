@@ -3,7 +3,7 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
-    duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1))
+    duedate = journal.get_due_date(weeks = 1)
 
     submission = client.get_note(edit.note.id)
 

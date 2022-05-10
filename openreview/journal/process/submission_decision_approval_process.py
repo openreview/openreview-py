@@ -3,8 +3,6 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
-    duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4))
-
     decision_approval = client.get_note(edit.note.id)
     decision = client.get_note(edit.note.replyto)
 
@@ -80,7 +78,7 @@ def process(client, edit, invitation):
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')
-    journal.invitation_builder.set_camera_ready_revision_invitation(submission, decision, duedate)
+    journal.invitation_builder.set_camera_ready_revision_invitation(submission, decision, journal.get_due_date(weeks = 4))
 
     ## Send email to authors
     print('Send email to authors')
