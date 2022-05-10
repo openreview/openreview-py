@@ -378,6 +378,10 @@ class WithdrawSuperInvitation(openreview.Invitation):
                 'BLIND_SUBMISSION_ID = \'\'',
                 'BLIND_SUBMISSION_ID = \'' + conference.get_blind_submission_id() + '\'')
             file_content = file_content.replace(
+                'SUBMISSION_READERS = []',
+                str.format('SUBMISSION_READERS = {}', conference.submission_stage.get_readers(conference=conference, number='{number}'))
+            )
+            file_content = file_content.replace(
                 'CONFERENCE_NAME = \'\'',
                 'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
             file_content = file_content.replace(
