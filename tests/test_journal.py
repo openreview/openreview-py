@@ -775,7 +775,7 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-edito
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
         assert len(messages) == 1        
         assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
-<p>An official comment has been posted on a submission that is only visible to you.</p>
+<p>An official comment has been posted on a submission for which you are serving as Editor-In-Chief.</p>
 <p>Submission: Paper title UPDATED<br>
 Title: I have a conflict with this paper<br>
 Comment: I know the authors and I can not review this paper.</p>

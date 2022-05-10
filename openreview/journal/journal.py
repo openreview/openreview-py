@@ -570,7 +570,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
         if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation:
             message = f'''Hi {{{{fullname}}}},
 
-{before_invitation} {lower_formatted_invitation} has been {action} on a submission that is only visible to you.
+{before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are serving as Editor-In-Chief.
 {content}
             '''
             self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
