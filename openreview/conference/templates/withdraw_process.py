@@ -11,11 +11,17 @@ def process_update(client, note, invitation, existing_note):
     PROGRAM_CHAIRS_ID = ''
     WITHDRAWN_SUBMISSION_ID = ''
     BLIND_SUBMISSION_ID = ''
-    SUBMISSION_READERS = []
     REVEAL_AUTHORS_ON_WITHDRAW = False
     REVEAL_SUBMISSIONS_ON_WITHDRAW = False
     EMAIL_PROGRAM_CHAIRS = False
     HIDE_FIELDS = []
+
+    forum_note = client.get_note(note.forum)
+    SUBMISSION_READERS = note.readers
+    PAPER_AUTHORS_ID = PAPER_AUTHORS_ID.format(number=forum_note.number)
+    PAPER_REVIEWERS_ID = PAPER_REVIEWERS_ID.format(number=forum_note.number)
+    PAPER_AREA_CHAIRS_ID = PAPER_AREA_CHAIRS_ID.format(number=forum_note.number)
+    PAPER_SENIOR_AREA_CHAIRS_ID = PAPER_SENIOR_AREA_CHAIRS_ID.format(numbers=forum_note.number)
 
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
@@ -23,8 +29,6 @@ def process_update(client, note, invitation, existing_note):
     if PAPER_SENIOR_AREA_CHAIRS_ID:
         committee.append(PAPER_SENIOR_AREA_CHAIRS_ID)
     committee.append(PROGRAM_CHAIRS_ID)
-
-    forum_note = client.get_note(note.forum)
 
     if note.ddate:
         ## Undo withdraw submission
