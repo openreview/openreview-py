@@ -296,12 +296,16 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_decision_invitation(self, notes)
 
-    def __create_submission_revision_stage(self, expire_revision_stage_name=None):
+    def __create_submission_revision_stage(self):
         invitation = tools.get_invitation(self.client, self.get_submission_id())
         if invitation:
             notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted, details='original')
-            if expire_revision_stage_name:
-                self.__expire_invitations(expire_revision_stage_name)
+            if self.submission_revision_stage.only_accepted:
+                all_notes = self.get_submissions(details='original')
+                accepted_note_ids = [note.id for note in notes]
+                non_accepted_notes = [note for note in all_notes if note.id not in accepted_note_ids]
+                expire_invitation_ids = [self.get_invitation_id(self.submission_revision_stage.name, note.number) for note in non_accepted_notes]
+                tools.concurrent_requests(self.__expire_invitation, expire_invitation_ids)
             return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
 
     ## Deprecated, use this only for manual assignments
@@ -406,9 +410,8 @@ class Conference(object):
         return self.__create_meta_review_stage()
 
     def set_submission_revision_stage(self, stage):
-        prev_revision_name = self.submission_revision_stage.name if self.submission_revision_stage else None
         self.submission_revision_stage = stage
-        return self.__create_submission_revision_stage(expire_revision_stage_name=prev_revision_name)
+        return self.__create_submission_revision_stage()
 
     def set_decision_stage(self, stage):
         self.decision_stage = stage
