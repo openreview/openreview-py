@@ -300,7 +300,20 @@ class Conference(object):
         invitation = tools.get_invitation(self.client, self.get_submission_id())
         if invitation:
             notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted, details='original')
-            if self.submission_revision_stage.only_accepted:
+            request_form = self.client.get_note(self.request_form_id)
+            submission_revision_stage_notes = self.client.get_references(
+                referent=self.request_form_id,
+                invitation='OpenReview.net/Support/-/Request{number}/Submission_Revision_Stage'.format(number=request_form.number),
+                limit=1
+            )
+            if submission_revision_stage_notes:
+                last_submission_revision_stage_note = submission_revision_stage_notes[0]
+                expire_revision_stage_name = last_submission_revision_stage_note.content.get('submission_revision_name', 'Revision')
+            else:
+                expire_revision_stage_name = 'Revision'
+            if expire_revision_stage_name != self.submission_revision_stage.name:
+                self.__expire_invitations(expire_revision_stage_name)
+            elif self.submission_revision_stage.only_accepted:
                 all_notes = self.get_submissions(details='original')
                 accepted_note_ids = [note.id for note in notes]
                 non_accepted_notes = [note for note in all_notes if note.id not in accepted_note_ids]
