@@ -194,6 +194,20 @@ Best,
             ))
 
         elif invitation_type == 'Submission_Revision_Stage':
+            submission_revision_stage_notes = client.get_references(
+                referent=forum_note.id,
+                invitation='{support_group}/-/Request{number}/Submission_Revision_Stage'.format(
+                    support_group=SUPPORT_GROUP, number=forum_note.number),
+                limit=2
+            )
+            if len(submission_revision_stage_notes) > 1:
+                last_submission_revision_stage_note = submission_revision_stage_notes[-1]
+                expire_revision_stage_name = last_submission_revision_stage_note.content.get('submission_revision_name',
+                                                                                             'Revision')
+            else:
+                expire_revision_stage_name = 'Revision'
+            if expire_revision_stage_name != forum_note.content.get('submission_revision_name', '').strip():
+                conference._Conference__expire_invitations(expire_revision_stage_name)
             conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 
         elif invitation_type == 'Comment_Stage':
