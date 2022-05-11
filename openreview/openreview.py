@@ -71,7 +71,7 @@ class Client(object):
         self.user = None
         self.headers = {
             'User-Agent': self.user_agent,
-            'Accept': 'application/json'
+            'Accept': 'application/json',
         }
 
         if self.token:
@@ -522,7 +522,7 @@ class Client(object):
             response = requests.put(self.baseurl + '/attachment', files=(
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
-                ('file', (file_path, f))
+                ('file', (file_path, f, tools.get_mimetype(file_path))),
             ), headers = headers)
 
         response = self.__handle_response(response)
