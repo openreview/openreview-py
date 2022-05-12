@@ -1640,8 +1640,12 @@ Program Chairs
             #double-blind
             if self.submission_stage.double_blind:
                 release_authors = is_release_authors(note_accepted)
-                submission.content = {
-                    '_bibtex': tools.generate_bibtex(
+                submission.content = {}
+                if not release_authors:
+                    submission.content['authors'] = ['Anonymous']
+                    submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
+
+                bibtex = tools.generate_bibtex(
                         openreview.Note.from_json(submission.details['original']),
                         venue_fullname=self.name,
                         year=str(self.year),
@@ -1649,13 +1653,9 @@ Program Chairs
                         paper_status = 'accepted' if note_accepted else 'rejected',
                         anonymous=(not release_authors)
                     )
-                }
-                if not release_authors:
-                    submission.content['authors'] = ['Anonymous']
-                    submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
             #single-blind
             else:
-                submission.content['_bibtex'] = tools.generate_bibtex(
+                bibtex = tools.generate_bibtex(
                     submission,
                     venue_fullname=self.name,
                     year=str(self.year),
@@ -1663,19 +1663,33 @@ Program Chairs
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=False
                 )
-            #add venue_id if note accepted and venue to all notes
+
+            self.client.post_note(submission)
+
+            #add venue_id, venue and bibtex revision to all notes
             venue = self.short_name
             decision_option = decision_note.content['decision'] if decision_note else ''
-            submission.content['venue'] = tools.decision_to_venue(venue, decision_option)
-            if note_accepted:
-                venueid = self.id
-                submission.content['venueid'] = venueid
-            self.client.post_note(submission)
+            venue = tools.decision_to_venue(venue, decision_option)
+
+            original_id = submission.id if not self.submission_stage.double_blind else submission.details['original']['id']
+            revision_note = self.client.post_note(openreview.Note(
+                invitation = 'OpenReview.net/Support/-/Venue_Revision',
+                forum = original_id,
+                referent = original_id,
+                readers = ['everyone'],
+                writers = [self.id],
+                signatures = [self.id],
+                content = {
+                    'venue': venue,
+                    'venueid': self.id,
+                    '_bibtex': bibtex
+                }
+            ))
 
         venue_heading_map = {}
         if decision_heading_map:
             for decision, tab_name in decision_heading_map.items():
-                venue_heading_map[tools.decision_to_venue(venue, decision)] = tab_name
+                venue_heading_map[tools.decision_to_venue(self.short_name, decision)] = tab_name
         
         if venue_heading_map:
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
