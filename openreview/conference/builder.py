@@ -160,7 +160,7 @@ class Conference(object):
         if recommendation_invitation:
             return self.webfield_builder.set_recommendation_page(self, recommendation_invitation, assignment_title, score_ids, conflict_id, total_recommendations)
 
-    def __expire_invitation(self, invitation_id):
+    def expire_invitation(self, invitation_id):
         # Get invitation
         invitation = tools.get_invitation(self.client, id = invitation_id)
 
@@ -305,7 +305,7 @@ class Conference(object):
                 accepted_note_ids = [note.id for note in notes]
                 non_accepted_notes = [note for note in all_notes if note.id not in accepted_note_ids]
                 expire_invitation_ids = [self.get_invitation_id(self.submission_revision_stage.name, note.number) for note in non_accepted_notes]
-                tools.concurrent_requests(self.__expire_invitation, expire_invitation_ids)
+                tools.concurrent_requests(self.expire_invitation, expire_invitation_ids)
             return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
 
     ## Deprecated, use this only for manual assignments
@@ -1052,9 +1052,9 @@ class Conference(object):
         return self.__create_bid_stage()
 
     def close_bids(self):
-        self.__expire_invitation(self.get_bid_id(self.get_reviewers_id()))
+        self.expire_invitation(self.get_bid_id(self.get_reviewers_id()))
         if self.use_area_chairs:
-            self.__expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
+            self.expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
 
     def open_recommendations(self, assignment_title, start_date = None, due_date = None, total_recommendations = 7):
 

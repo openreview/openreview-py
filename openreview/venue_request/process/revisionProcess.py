@@ -207,7 +207,7 @@ Best,
             else:
                 expire_revision_stage_name = 'Revision'
             if expire_revision_stage_name != forum_note.content.get('submission_revision_name', '').strip():
-                conference._Conference__expire_invitations(expire_revision_stage_name)
+                conference.expire_invitation(conference.get_invitation_id(expire_revision_stage_name))
             conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 
         elif invitation_type == 'Comment_Stage':
