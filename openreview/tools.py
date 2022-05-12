@@ -798,17 +798,21 @@ def replace_members_with_ids(client, group):
     :rtype: Group
     """
     updated_members = []
+    without_profile_ids = []
 
     member_profiles = get_profiles(client, group.members, as_dict=True)
 
-    for member, profile in member_profiles.items():
+    for member in group.members:
+        profile = member_profiles.get(member)
         if profile is not None:
             updated_members.append(profile.id)
         elif member.startswith('~'):
-            raise openreview.OpenReviewException(f"Profile Not Found for {member}")
+            without_profile_ids.append(member)
         else:
             updated_members.append(member)
 
+    if without_profile_ids:
+        raise openreview.OpenReviewException(f"Profile Not Found for {without_profile_ids}")
     group.members = updated_members
 
     return client.post_group(group)
