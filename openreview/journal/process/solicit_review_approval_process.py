@@ -18,7 +18,7 @@ def process(client, edit, invitation):
 
         print('Send email to solicit reviewer')
         review_period_length = journal.get_review_period_length(submission)
-        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = review_period_length)
+        duedate = journal.get_due_date(weeks = review_period_length)
 
         client.post_message(
             recipients=solicit_request.signatures,

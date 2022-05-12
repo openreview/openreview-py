@@ -33,6 +33,9 @@ The {journal.short_name} Editors-in-Chief
         print(f'Add member {edge.tail} to {group.id}')
         client.add_members_to_group(group.id, edge.tail)
 
+        print('Enable review approval invitation')
+        journal.invitation_builder.set_note_review_approval_invitation(note, journal.get_due_date(weeks=1))
+
         recipients=[edge.tail]
         subject=f'[{journal.short_name}] Assignment to new {journal.short_name} submission {note.content["title"]["value"]}'
 

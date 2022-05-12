@@ -111,14 +111,14 @@ var main = function() {
     title: HEADER.title,
     instructions: HEADER.instructions,
     tabs: [
-      'Overview', 
-      'Submitted', 
-      'Under Review', 
+      'Overview',
+      'Submitted',
+      'Under Review',
       'Under Discussion',
-      'Under Decision', 
-      'Camera Ready', 
-      'Submission Complete', 
-      'Action Editor Status', 
+      'Under Decision',
+      'Camera Ready',
+      'Submission Complete',
+      'Action Editor Status',
       'Reviewer Status'
     ],
     referrer: args && args.referrer,
@@ -588,7 +588,8 @@ var formatData = function(
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&version=2'
           }
-        ] : []
+        ] : [],
+        duedate: reviewInvitation && reviewInvitation.duedate || 0
       },
       actionEditorProgressData: {
         recommendation: metaReview && metaReview.content.recommendation,
@@ -602,6 +603,7 @@ var formatData = function(
         referrer: referrerUrl,
         reviewPending: reviewInvitation && reviewNotes.length < 3,
         recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3,
+        ratingPending: reviewerRatingInvitations.length && reviewerRatingReplies.length < reviewNotes.length,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
         cameraReadyPending: (cameraReadyTask && !cameraReadyTask.complete) || (cameraReadyVerificationTask && !cameraReadyVerificationTask.complete),
         metaReviewName: 'Decision',
@@ -619,6 +621,13 @@ var formatData = function(
         tableWidth: '100%'
       },
       tasks: { invitations: tasks, forumId: submission.id },
+      eicComments: {
+        comments: submission.details.replies.filter(function(r) {
+          return r.readers.length == 1 && r.readers[0] == EDITORS_IN_CHIEF_ID;
+        }).sort(function(a, b) {
+          return a.tcdate - b.tcdate;
+        })
+      },
       status: submission.content.venue.value
     });
   });
@@ -636,7 +645,7 @@ var formatData = function(
   });
   var underDecisionStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
-      && row.actionEditorProgressData.decisionApprovalPending;
+      && (row.actionEditorProgressData.ratingPending || row.actionEditorProgressData.decisionApprovalPending);
   });
   var cameraReadyStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
@@ -709,6 +718,7 @@ var renderTable = function(container, rows) {
       'Review Progress',
       'Action Editor Decision',
       'Tasks',
+      'EIC Comments',
       'Status'
     ],
     renders: [
@@ -728,6 +738,18 @@ var renderTable = function(container, rows) {
         });
       },
       function(data) {
+        var html = data.comments.map(function(c) {
+          return (
+            '<li class="mb-3">' +
+              '<p class="text-muted mb-1">' + view.forumDate(c.tcdate) + ': </p>' +
+              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + c.content.title.value + '</a></strong></p>' +
+              '<p style="word-break: break-word;">' + c.content.comment.value + '</p>' +
+            '</li>'
+          );
+        });
+        return  '<ul class="list-unstyled">' + html.join('\n') + '</ul>';
+      },
+      function(data) {
         return '<h4>' + data + '</h4>';
       }
     ],
@@ -740,7 +762,8 @@ var renderTable = function(container, rows) {
       Number_of_Recommendations_Submitted: function(row) { return row.reviewProgressData.numSubmittedRecommendations; },
       Number_of_Recommendations_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedRecommendations; },
       Decision: function(row) { return row.actionEditorProgressData.recommendation; },
-      Status: function(row) { return row.status; }
+      Status: function(row) { return row.status; },
+      Review_Due_Date: function(row) { return row.reviewProgressData.duedate; }
     },
     searchProperties: {
       number: ['submissionNumber.number'],
@@ -763,6 +786,7 @@ var renderTable = function(container, rows) {
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
+      replyTo: 'tmlr-editors@jmlr.org',
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
@@ -868,10 +892,11 @@ var renderTable = function(container, rows) {
       $('#' + container + ' .console-table th').eq(0).css('width', '2%');  // [ ]
       $('#' + container + ' .console-table th').eq(1).css('width', '3%');  // #
       $('#' + container + ' .console-table th').eq(2).css('width', '20%'); // Paper Summary
-      $('#' + container + ' .console-table th').eq(3).css('width', '22%'); // Review Progress
-      $('#' + container + ' .console-table th').eq(4).css('width', '22%'); // Action Editor Decision
+      $('#' + container + ' .console-table th').eq(3).css('width', '20%'); // Review Progress
+      $('#' + container + ' .console-table th').eq(4).css('width', '20%'); // Action Editor Decision
       $('#' + container + ' .console-table th').eq(5).css('width', '20%'); // Tasks
-      $('#' + container + ' .console-table th').eq(6).css('width', '11%'); // Status
+      $('#' + container + ' .console-table th').eq(6).css('width', '15%'); // EIC comments
+      $('#' + container + ' .console-table th').eq(7).css('width', '11%'); // Status
     }
   });
 };
