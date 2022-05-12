@@ -1673,7 +1673,7 @@ Program Chairs
 
             original_id = submission.id if not self.submission_stage.double_blind else submission.details['original']['id']
             revision_note = self.client.post_note(openreview.Note(
-                invitation = 'OpenReview.net/Support/-/Venue_Revision',
+                invitation = f'{self.support_user}/-/Venue_Revision',
                 forum = original_id,
                 referent = original_id,
                 readers = ['everyone'],
