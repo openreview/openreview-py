@@ -419,3 +419,8 @@ class TestTools():
         assert profiles['alternate@mail.com'].id == profiles['test@mail.com'].id
         assert profiles['test_user@mail.com'] is None
         assert profiles['~Test_Name1'] is None
+
+    def test_get_mimetype(self):
+        assert openreview.tools.get_mimetype('somepath/some name.pdf') == 'application/pdf'
+        assert openreview.tools.get_mimetype('somepath/some name.zip') == 'application/zip'
+        assert openreview.tools.get_mimetype('somepath/some name.unknown extension') == 'text/plain'
