@@ -784,6 +784,7 @@ def get_paperhash(first_author, title):
     first_author = re.sub(strip_punctuation, '', first_author)
     return (first_author + '|' + title).lower()
 
+
 def replace_members_with_ids(client, group):
     """
     Given a Group object, iterates through the Group's members and, for any member represented by an email address, attempts to find a profile associated with that email address. If a profile is found, replaces the email with the profile id.
@@ -796,37 +797,26 @@ def replace_members_with_ids(client, group):
     :return: Group with the emails replaced by Profile ids
     :rtype: Group
     """
-    ids = []
-    emails = []
+    updated_members = []
+    without_profile_ids = []
 
-    def classify_members(member):
-        if '@' in member:
-            try:
-                profile = client.get_profile(member.lower())
-                return 'ids', profile.id
-            except openreview.OpenReviewException as e:
-                if 'Profile Not Found' in e.args[0]:
-                    return 'emails', member.lower()
-                else:
-                    raise e
-        elif '~' in member:
-            profile = client.get_profile(member)
-            return 'ids', profile.id
+    member_profiles = get_profiles(client, group.members, as_dict=True)
+
+    for member in group.members:
+        profile = member_profiles.get(member)
+        if profile is not None:
+            updated_members.append(profile.id)
+        elif member.startswith('~'):
+            without_profile_ids.append(member)
         else:
-            _group = client.get_group(member)
-            return 'ids', _group.id
+            updated_members.append(member)
 
-    results = concurrent_requests(classify_members, group.members)
-
-    for key, member in results:
-        if key == 'ids':
-            ids.append(member)
-        elif key == 'emails':
-            emails.append(member)
-
-    group.members = ids + emails
+    if without_profile_ids:
+        raise openreview.OpenReviewException(f"Profile Not Found for {without_profile_ids}")
+    group.members = updated_members
 
     return client.post_group(group)
+
 
 def concurrent_get(client, get_function, **params):
     """
