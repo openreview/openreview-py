@@ -204,9 +204,10 @@ Best,
                 last_submission_revision_stage_note = submission_revision_stage_notes[-1]
                 expire_revision_stage_name = last_submission_revision_stage_note.content.get('submission_revision_name',
                                                                                              'Revision')
+                expire_revision_stage_name = expire_revision_stage_name.replace(" ", "_")
             else:
                 expire_revision_stage_name = 'Revision'
-            if expire_revision_stage_name != forum_note.content.get('submission_revision_name', '').strip():
+            if expire_revision_stage_name != forum_note.content.get('submission_revision_name', '').strip().replace(" ", "_"):
                 conference.expire_invitation(conference.get_invitation_id(expire_revision_stage_name))
             conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 
