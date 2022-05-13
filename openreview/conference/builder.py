@@ -911,15 +911,7 @@ class Conference(object):
             blind_content = {
                 'authors': ['Anonymous'],
                 'authorids': [self.get_authors_id(number=note.number)],
-                '_bibtex': None
             }
-            if existing_blind_note:
-                if 'venueid' in existing_blind_note.content:
-                    blind_content['venueid'] = existing_blind_note.content['venueid']
-                if 'venue' in existing_blind_note.content:
-                    blind_content['venue'] = existing_blind_note.content['venue']
-                if '_bibtex' in existing_blind_note.content:
-                    blind_content['_bibtex'] = existing_blind_note.content['_bibtex']
 
             for field in hide_fields:
                 blind_content[field] = ''
@@ -939,15 +931,23 @@ class Conference(object):
             blind_note = self.client.post_note(blind_note)
 
             if self.submission_stage.public and 'venue' not in blind_content:
-                blind_content['_bibtex'] = tools.generate_bibtex(
+                bibtex = tools.generate_bibtex(
                     note=note,
                     venue_fullname=self.name,
                     url_forum=blind_note.id,
                     year=str(self.get_year()))
 
-                blind_note.content = blind_content
-
-                blind_note = self.client.post_note(blind_note)
+                revision_note = self.client.post_note(openreview.Note(
+                    invitation = f'{self.support_user}/-/Venue_Revision',
+                    forum = note.id,
+                    referent = note.id,
+                    readers = ['everyone'],
+                    writers = [self.id],
+                    signatures = [self.id],
+                    content = {
+                        '_bibtex': bibtex
+                    }
+                ))
             blinded_notes.append(blind_note)
 
         # Update PC console with double blind submissions

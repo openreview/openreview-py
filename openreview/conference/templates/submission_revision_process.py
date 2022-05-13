@@ -5,6 +5,7 @@ def process_update(client, note, invitation, existing_note):
     AUTHORS_NAME = ''
     CONFERENCE_NAME = ''
     CONFERENCE_YEAR = ''
+    SUPPORT_GROUP = ''
 
     action = 'posted'
     if existing_note:
@@ -36,23 +37,30 @@ To view your submission, click here: https://openreview.net/forum?id={}'''.forma
     if CONFERENCE_NAME and CONFERENCE_YEAR and note.content.get('title') and note.content.get('authors'):
         bibtex_note=forum
         notes=client.get_notes(original=forum.id)
+        anonymous_note=False
         if notes:
             bibtex_note=notes[0]
             anonymous_note = bibtex_note.content.get('authors') == ['Anonymous']
-            bibtex_note.content = {
-                'venue': bibtex_note.content.get('venue'),
-                'venueid': bibtex_note.content.get('venueid')
-            }
-            if anonymous_note:
-                bibtex_note.content['authors'] = ['Anonymous']
-                bibtex_note.content['authorids'] = [CONFERENCE_ID + '/Paper' + str(bibtex_note.number) + '/' + AUTHORS_NAME]
 
-        bibtex_note.content['_bibtex'] = openreview.tools.generate_bibtex(
-            note,
+        bibtex = openreview.tools.generate_bibtex(
+            forum,
             venue_fullname=CONFERENCE_NAME,
             year=CONFERENCE_YEAR,
             url_forum=bibtex_note.id,
             paper_status='accepted',
-            anonymous=bibtex_note.content.get('authors', []) == ['Anonymous']
+            anonymous=anonymous_note
         )
-        client.post_note(bibtex_note)
+
+        revision_note = client.post_note(openreview.Note(
+            invitation = f'{SUPPORT_GROUP}/-/Venue_Revision',
+            forum = forum.id,
+            referent = forum.id,
+            readers = ['everyone'],
+            writers = [CONFERENCE_ID],
+            signatures = [CONFERENCE_ID],
+            content = {
+                'venue': forum.content.get('venue'),
+                'venueid': forum.content.get('venueid'),
+                '_bibtex': bibtex
+            }
+        ))

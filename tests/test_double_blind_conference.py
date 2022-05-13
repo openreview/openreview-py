@@ -1595,7 +1595,7 @@ class TestDoubleBlindConference():
         posted_note = test_client.post_note(note)
         assert posted_note
 
-        assert len(test_client.get_references(referent = notes[0].original)) == 2
+        assert len(test_client.get_references(referent = notes[0].original)) == 3
 
     def test_withdraw_submission(self, client, test_client, helpers):
 
