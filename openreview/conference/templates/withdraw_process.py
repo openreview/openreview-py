@@ -24,7 +24,7 @@ def process_update(client, note, invitation, existing_note):
     PAPER_AUTHORS_ID = PAPER_AUTHORS_ID.format(number=forum_note.number)
     PAPER_REVIEWERS_ID = PAPER_REVIEWERS_ID.format(number=forum_note.number)
     PAPER_AREA_CHAIRS_ID = PAPER_AREA_CHAIRS_ID.format(number=forum_note.number)
-    PAPER_SENIOR_AREA_CHAIRS_ID = PAPER_SENIOR_AREA_CHAIRS_ID.format(numbers=forum_note.number)
+    PAPER_SENIOR_AREA_CHAIRS_ID = PAPER_SENIOR_AREA_CHAIRS_ID.format(number=forum_note.number)
 
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
