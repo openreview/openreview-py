@@ -379,9 +379,12 @@ class TestClient():
         messages = openreview.tools.iterget_messages(client, status='sent')
         assert messages
 
-    # def test_get_notes_by_ids(self, client):
-    #     notes = client.get_notes_by_ids(ids = [])
-    #     assert len(notes) == 0, 'notes is empty'
+    def test_get_notes_by_ids(self, client):
+        notes = client.get_notes(invitation='Test.ws/2019/Conference/-/Submission', content = { 'title': 'Paper title'})
+        assert len(notes) == 1        
+       
+        notes = client.get_notes_by_ids(ids = [notes[0].id])
+        assert len(notes) == 1, 'notes is not empty'
 
     def test_infer_notes(self, client):
         notes = client.get_notes(signature='openreview.net/Support')
