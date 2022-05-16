@@ -800,7 +800,7 @@ class Conference(object):
 
         return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission, hide_fields=hide_fields)
 
-    def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False, overwrite=False):
+    def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False, senior_area_chairs=False, overwrite=False):
 
         notes_iterator = self.get_submissions(sort='number:asc', details='original')
         author_group_ids = []
@@ -874,7 +874,7 @@ class Conference(object):
                         ))
 
             # Senior Area Chairs Paper group
-            if self.use_senior_area_chairs:
+            if self.use_senior_area_chairs and senior_area_chairs:
                 senior_area_chairs_id=self.get_senior_area_chairs_id(number=n.number)
                 group = tools.get_group(self.client, id = senior_area_chairs_id)
                 if not group or overwrite:
@@ -974,7 +974,19 @@ class Conference(object):
                     s.readers = final_readers
                     self.client.post_note(s)
 
-        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        self.create_paper_groups(authors=True, reviewers=False, area_chairs=False)
+
+        self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
+            start_date=None if force else self.submission_stage.due_date,
+            due_date=self.submission_stage.second_due_date,
+            additional_fields=self.submission_stage.additional_fields,
+            remove_fields=self.submission_stage.remove_fields,
+            only_accepted=False,
+            multiReply=False,
+            allow_author_reorder=allow_author_reorder
+        )
+        self.__create_submission_revision_stage()
+
         self.create_withdraw_invitations(
             reveal_authors=not self.submission_stage.double_blind,
             reveal_submission=False,
@@ -989,16 +1001,6 @@ class Conference(object):
             force=True
         )
 
-        self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
-            start_date=None if force else self.submission_stage.due_date,
-            due_date=self.submission_stage.second_due_date,
-            additional_fields=self.submission_stage.additional_fields,
-            remove_fields=self.submission_stage.remove_fields,
-            only_accepted=False,
-            multiReply=False,
-            allow_author_reorder=allow_author_reorder
-        )
-        self.__create_submission_revision_stage()
 
     def setup_final_deadline_stage(self, force=False, hide_fields=[]):
 
