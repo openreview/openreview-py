@@ -453,7 +453,7 @@ class TestVenueRequest():
 
         invite = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
 
-        assert invite.reply['content']['invitee_details']['description'] == 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1'
+        assert invite.reply['content']['invitee_details']['description'] == 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee".'
 
         helpers.await_queue()
         process_logs = client.get_process_logs(id=recruitment_note.id)
@@ -508,7 +508,7 @@ class TestVenueRequest():
 
         invite = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
 
-        assert invite.reply['content']['invitee_details']['description'] == 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1'
+        assert invite.reply['content']['invitee_details']['description'] == 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee".'
 
         helpers.await_queue()
         process_logs = client.get_process_logs(id=recruitment_note.id)
@@ -1631,6 +1631,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = test_client.post_note(openreview.Note(
             content={
+                'submission_revision_name': 'Revision',
                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
@@ -1698,6 +1699,42 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         messages = client.get_messages(subject='{} has received a new revision of your submission titled revised test submission 3'.format(venue['request_form_note'].content['Abbreviated Venue Name']))
         assert messages and len(messages) == 2
         #assert messages[0]['content']['to'] == 'venue_author3@mail.com'
+
+    def test_venue_submission_revision_stage_accepted_papers_only(self, client, test_client, selenium, request_page, helpers, venue):
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        conference.setup_post_submission_stage(force=True)
+
+        # Post a revision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        revision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Revision',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for accepted submissions only',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_remove_options': ['keywords']
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=revision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        blind_submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
+        revision_invitation = test_client.get_invitation('{}/Paper{}/-/Revision'.format(venue['venue_id'], blind_submissions[0].number))
+        assert revision_invitation.expdate < round(time.time() * 1000)
 
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
@@ -1860,6 +1897,10 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         process_logs = client.get_process_logs(id=revision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        revision_invitations = client.get_all_invitations(regex='{}/Paper.*/-/Revision'.format(venue['venue_id']))
+        for invitation in revision_invitations:
+            assert invitation.expdate < round(time.time() * 1000)
 
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
