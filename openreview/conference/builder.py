@@ -974,7 +974,7 @@ class Conference(object):
                     s.readers = final_readers
                     self.client.post_note(s)
 
-        self.create_paper_groups(authors=True, reviewers=False, area_chairs=False)
+        self.create_paper_groups(authors=True, reviewers=False, area_chairs=False, senior_area_chairs=False)
 
         self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
             start_date=None if force else self.submission_stage.due_date,
