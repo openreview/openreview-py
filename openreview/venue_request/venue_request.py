@@ -165,54 +165,27 @@ class VenueStages():
                 'order': 27
             },
             'review_rating_field_name': {
-                'description': "Name of the rating field for the review invitation, default is \'Rating\'",
+                'description': "Name of the rating field for the review invitation, default is \'rating\'. Please follow the format number: description if you want to customize options and add one option per line \'Additional Review Form Options\'.",
                 'value-regex': '.*',
                 'required': False,
-                'default': 'Rating',
+                'default': 'rating',
                 'order': 28
             },
-            'review_rating_options': {
-                'description': "Rating options for reviewers to assign to the submissions. Please follow the format number: description if you want to customize options and add one option per line.",
-                'value-regex': '[\\S\\s]{1,200000}',
-                'required': False,
-                'default': "10: Top 5% of accepted papers, seminal paper \n"
-                           "9: Top 15% of accepted papers, strong accept \n"
-                           "8: Top 50% of accepted papers, clear accept \n"
-                           "7: Good paper, accept \n"
-                           "6: Marginally above acceptance threshold \n"
-                           "5: Marginally below acceptance threshold \n"
-                           "4: Ok but not good enough - rejection \n"
-                           "3: Clear rejection \n"
-                           "2: Strong rejection \n"
-                           "1: Trivial or wrong",
-                'order': 29
-            },
             'review_confidence_field_name': {
-                'description': "Name of the confidence field for the review invitation, default is \'Confidence\'",
+                'description': "Name of the confidence field for the review invitation, default is \'confidence\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'.",
                 'value-regex': '.*',
                 'required': False,
-                'default': 'Confidence',
-                'order': 30
-            },
-            'review_confidence_options': {
-                'description': "Confidence options for reviewers to assign to their reviews. Please follow the format \'number: description\' if you want to customize options and add one option per line.",
-                'value-regex': '[\\S\\s]{1,200000}',
-                'required': False,
-                'default': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature \n'
-                           '4: The reviewer is confident but not absolutely certain that the evaluation is correct \n'
-                           '3: The reviewer is fairly confident that the evaluation is correct \n'
-                           '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper \n'
-                           '1: The reviewer\'s evaluation is an educated guess \n',
-                'order': 31
+                'default': 'confidence',
+                'order': 29
             },
             'additional_review_form_options': {
-                'order': 32,
+                'order': 30,
                 'value-dict': {},
                 'required': False,
                 'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'remove_review_form_options': {
-                'order': 33,
+                'order': 31,
                 'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
