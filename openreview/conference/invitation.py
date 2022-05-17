@@ -822,10 +822,10 @@ class ReviewInvitation(openreview.Invitation):
             confidence_options = review_stage.confidence_options.strip().split("\n")
             content['confidence']['value-radio'] = confidence_options
 
-        if review_stage.rating_field_name.strip().lower() != 'rating':
+        if review_stage.rating_field_name and review_stage.rating_field_name.strip().lower() != 'rating':
             content[review_stage.rating_field_name.strip().lower().replace(" ", "_")] = content['rating']
             content.pop('rating')
-        if review_stage.confidence_field_name.strip().lower() != 'confidence':
+        if review_stage.confidence_field_name and review_stage.confidence_field_name.strip().lower() != 'confidence':
             content[review_stage.confidence_field_name.strip().lower().replace(" ", "_")] = content['confidence']
             content.pop('confidence')
 
