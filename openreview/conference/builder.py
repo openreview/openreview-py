@@ -1740,6 +1740,8 @@ Program Chairs
 
             paper_decision_note = decision_notes.get(paper_id, None)
             if paper_decision_note:
+                paper_decision_note.readers = self.decision_stage.get_readers(conference=self, number=paper_note.number)
+                paper_decision_note.nonreaders = self.decision_stage.get_nonreaders(conference=self, number=paper_note.number)
                 paper_decision_note.content = {
                     'title': 'Paper Decision',
                     'decision': decision.strip(),
