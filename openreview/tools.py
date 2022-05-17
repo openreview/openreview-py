@@ -1940,11 +1940,12 @@ def get_neurips_profile_info(profile, n_years=3):
     curr_year = datetime.datetime.now().year
     cut_off_year = curr_year - n_years - 1
 
-    ## Institution section, get history within the last n years
+    ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
-        if h.get('end') is None or int(h.get('end')) > cut_off_year:
-            domain = h.get('institution', {}).get('domain', '')
-            domains.update(openreview.tools.subdomains(domain))
+        if 'intern' not in h.get('position', '').lower():
+            if h.get('end') is None or int(h.get('end')) > cut_off_year:
+                domain = h.get('institution', {}).get('domain', '')
+                domains.update(openreview.tools.subdomains(domain))
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
@@ -1993,7 +1994,6 @@ def get_neurips_profile_info(profile, n_years=3):
         'relations': relations,
         'publications': publications
     }
-
 
 
 def post_bulk_edges (client, edges, batch_size = 50000):

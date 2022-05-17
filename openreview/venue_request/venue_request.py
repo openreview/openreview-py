@@ -1337,7 +1337,7 @@ class VenueRequest():
             },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
-                'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
+                'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee".',
                 'required': True,
                 'order': 5
             },
