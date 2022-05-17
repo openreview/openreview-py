@@ -815,6 +815,20 @@ class ReviewInvitation(openreview.Invitation):
         review_stage = conference.review_stage
         content = invitations.review.copy()
 
+        if review_stage.rating_options:
+            rating_options = review_stage.rating_options.strip().split("\n")
+            content['rating']['value-dropdown'] = rating_options
+        if review_stage.confidence_options:
+            confidence_options = review_stage.confidence_options.strip().split("\n")
+            content['confidence']['value-radio'] = confidence_options
+
+        if review_stage.rating_field_name.strip().lower() != 'rating':
+            content[review_stage.rating_field_name.strip().lower().replace(" ", "_")] = content['rating']
+            content.pop('rating')
+        if review_stage.confidence_field_name.strip().lower() != 'confidence':
+            content[review_stage.confidence_field_name.strip().lower().replace(" ", "_")] = content['confidence']
+            content.pop('confidence')
+
         for key in review_stage.additional_fields:
             content[key] = review_stage.additional_fields[key]
 

@@ -2080,6 +2080,9 @@ class ReviewStage(object):
         additional_fields = {},
         remove_fields = [],
         rating_field_name = None,
+        rating_options = None,
+        confidence_field_name = None,
+        confidence_options = None,
         process_path = None
     ):
 
@@ -2096,6 +2099,9 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
+        self.rating_options = rating_options
+        self.confidence_field_name = confidence_field_name
+        self.confidence_options = confidence_options
         self.process_path = process_path
 
     def _get_reviewer_readers(self, conference, number):
