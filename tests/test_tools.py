@@ -20,7 +20,7 @@ class TestTools():
                     readers = ['everyone'],
                     writers =['NewGroup']
                 ))
-        
+
         params = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         results = openreview.tools.concurrent_requests(post_random_group, params)
         assert len(results) == len(params)
@@ -355,7 +355,7 @@ class TestTools():
                 'emails': ['user@cmu.edu'],
                 'history': [{
                     'institution': {
-                        'domain': 'user@126.com'
+                        'domain': '126.com'
                     }
                 }]
             }
@@ -365,17 +365,41 @@ class TestTools():
             id = 'Test_Conflict2',
             content = {
                 'emails': ['user2@126.com'],
+                'history': [
+                    {
+                        'institution': {
+                            'domain': 'cmu.edu'
+                        }
+                    },
+                    {
+                        'institution': {
+                            'domain': 'umass.edu'
+                        }
+                    }
+                ]
+            }
+        )
+
+        intern_profile = openreview.Profile(
+            id='Test_Conflict3',
+            content={
+                'emails': ['user3@345.com'],
                 'history': [{
+                    'position': 'Intern',
                     'institution': {
-                        'domain': 'user2@cmu.edu'
+                        'domain': 'umass.edu'
                     }
                 }]
             }
         )
 
-        conflicts = openreview.tools.get_conflicts([profile1], profile2)
-        assert len(conflicts) == 1
-        assert conflicts[0] == 'cmu.edu'
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2)
+        assert len(conflicts) == 2
+        assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
+
+        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
+        assert len(neurips_conflicts) == 0
 
     def test_add_assignments(self, client):
 
