@@ -488,6 +488,8 @@ class TestARRVenue():
             )
             note = test_client.post_note(note)
 
+            helpers.await_queue()
+
         conference.setup_post_submission_stage(force=True)
 
         blinded_notes = test_client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/-/Blind_Submission')

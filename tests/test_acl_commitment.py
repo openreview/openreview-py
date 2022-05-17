@@ -94,7 +94,7 @@ class TestACLCommitment():
                 "required": True
             }
         },
-        remove_fields=['authors', 'authorids', 'abstract', 'keywords', 'pdf', 'TL;DR'])
+        remove_fields=['abstract', 'keywords', 'pdf', 'TL;DR'])
 
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['pcs.acl2022@gmail.com'])
@@ -104,8 +104,8 @@ class TestACLCommitment():
 
         invitation = client.get_invitation(conference.get_submission_id())
 
-        assert ['aclweb.org/ACL/2022/Conference', '{signatures}'] == invitation.reply['readers']['values-copied']
-        assert ['aclweb.org/ACL/2022/Conference', '{signatures}'] == invitation.reply['writers']['values-copied']
+        assert ['aclweb.org/ACL/2022/Conference', '{content.authorids}', '{signatures}'] == invitation.reply['readers']['values-copied']
+        assert ['aclweb.org/ACL/2022/Conference', '{content.authorids}', '{signatures}'] == invitation.reply['writers']['values-copied']
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~SomeFirstName_User1', 'aclweb.org/ACL/2022/Conference'],
@@ -113,6 +113,8 @@ class TestACLCommitment():
             signatures = ['~SomeFirstName_User1'],
             content = {
                 'title': 'ARR Paper title',
+                'authors': ['SomeFirstName User'],
+                'authorids': ['~SomeFirstName_User1'],
                 'paper_link': 'https://openreview.net/forum?id=sdfjenxw',
                 'paper_type': 'Long paper (up to eight pages of content + unlimited references and appendices)',
                 'track': 'Question Answering',

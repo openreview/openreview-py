@@ -24,7 +24,7 @@ class Agora(object):
             writers=[support_group_id],
             signatures=[support_group_id],
             signatories=[],
-            members=[],
+            members=[support_group_id],
         )
 
         covid_editors = '{}/Editors'.format(covid_group_id)
@@ -106,6 +106,16 @@ class Agora(object):
             members=[],
         )
         client.post_group(covid_group_editor)
+
+        covid_group_reviewers_suggested = openreview.Group(
+            id='{}/Reviewers_Suggested'.format(covid_group_id),
+            readers=['everyone'],
+            writers=[support_group_id, covid_editors],
+            signatures=[support_group_id],
+            signatories=[],
+            members=[],
+        )
+        client.post_group(covid_group_reviewers_suggested)        
 
         content = {
             'title': {

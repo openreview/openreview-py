@@ -10,6 +10,11 @@ def process_update(client, note, invitation, existing_note):
     if existing_note:
         action = 'deleted' if note.ddate else 'updated'
 
+    if action == 'deleted':
+        client.remove_members_from_group('-Agora/COVID-19/Reviewers_Suggested', note.signatures)
+    else:
+        client.add_members_to_group('-Agora/COVID-19/Reviewers_Suggested', note.signatures)
+
     client.post_message(subject='[Agora/COVID-19] Your suggestion has been {action} on the article titled "{title}"'.format(action=action, title=submission.content['title']),
         recipients=note.signatures,
         message='''Your reviewer suggestion has been {action} on the article titled "{title}".
