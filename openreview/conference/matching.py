@@ -664,12 +664,12 @@ class Matching(object):
                 if call_count == 1440: ## one day to wait the completion or trigger a timeout
                     break
                 time.sleep(60)
-                status_response = self.client.get_expertise_status(job_id['job_id'])
+                status_response = self.client.get_expertise_status(job_id['jobId'])
                 status = status_response.get('status')
                 desc = status_response.get('description')
                 call_count += 1
             if 'Completed' in status:
-                result = self.client.get_expertise_results(job_id['job_id'])
+                result = self.client.get_expertise_results(job_id['jobId'])
                 matching_status['no_profiles'] = result['metadata']['no_profile']
                 matching_status['no_publications'] = result['metadata']['no_publications']
 
