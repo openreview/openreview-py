@@ -63,7 +63,7 @@ function load() {
     })
     .then(function(notes){
       return notes.filter(function(note){
-        return !(note.original) && note.readers.includes('everyone');
+        return note.readers.includes('everyone');
       });
     });
 
