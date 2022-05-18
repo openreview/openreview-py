@@ -1701,6 +1701,7 @@ Program Chairs
                 submission_title=paper_note.content['title']
             )
             final_message = f'''{message.format(
+                fullname='{{fullname}}',
                 submission_title=paper_note.content['title'],
                 forum_url=f'https://openreview.net/forum?id={paper_note.id}'
             )}'''

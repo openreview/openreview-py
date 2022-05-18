@@ -118,8 +118,7 @@ def process(client, note, invitation):
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                        'default': f'''Dear {{fullname}},
 
 Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
 You can find the final reviews for your paper on the submission page in OpenReview at:
@@ -133,8 +132,7 @@ Best,
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                        'default': f'''Dear {{fullname}},
                         
 Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted.
 You can find the final reviews for your paper on the submission page in OpenReview at:
@@ -148,8 +146,7 @@ Best,
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                        'default': f'''Dear {{fullname}},
 
 Thank you for submitting your paper, {{submission_title}}, to {short_name}.
 You can find the final reviews for your paper on the submission page in OpenReview at:
