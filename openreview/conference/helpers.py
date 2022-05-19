@@ -276,8 +276,8 @@ def get_review_stage(request_forum):
         email_pcs = (request_forum.content.get('email_program_chairs_about_reviews', '').startswith('Yes')),
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options,
-        rating_field_name=request_forum.content.get('review_rating_field_name', 'rating').strip().lower().replace(" ", "_"),
-        confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence').strip().lower().replace(" ", "_"),
+        rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
+        confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence')
     )
 
 def get_ethics_review_stage(request_forum):

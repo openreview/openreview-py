@@ -165,14 +165,14 @@ class VenueStages():
                 'order': 27
             },
             'review_rating_field_name': {
-                'description': "Name of the rating field for the review invitation, default is \'rating\'. Please follow the format number: description if you want to customize options and add one option per line \'Additional Review Form Options\'.",
+                'description': "Name of the rating field for the review invitation, default is \'rating\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'. For reference, please see: https://docs.openreview.net/reference/default-forms/default-review-form",
                 'value-regex': '.*',
                 'required': False,
                 'default': 'rating',
                 'order': 28
             },
             'review_confidence_field_name': {
-                'description': "Name of the confidence field for the review invitation, default is \'confidence\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'.",
+                'description': "Name of the confidence field for the review invitation, default is \'confidence\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'. For reference, please see: https://docs.openreview.net/reference/default-forms/default-review-form",
                 'value-regex': '.*',
                 'required': False,
                 'default': 'confidence',
