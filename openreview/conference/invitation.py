@@ -282,6 +282,7 @@ class CommentInvitation(openreview.Invitation):
                     preprocess=pre_content if conference.comment_stage.check_mandatory_readers and conference.comment_stage.reader_selection else None
                 )
 
+
 class WithdrawnSubmissionInvitation(openreview.Invitation):
 
     def __init__(self, conference, reveal_authors, reveal_submission, hide_fields=[]):
@@ -335,24 +336,14 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
             }
         )
 
-class PaperWithdrawInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
+class WithdrawSuperInvitation(openreview.Invitation):
 
+    def __init__(self, conference, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
         content = invitations.withdraw.copy()
+        exp_date = tools.datetime_millis(conference.submission_stage.withdraw_submission_exp_date) if conference.submission_stage.withdraw_submission_exp_date else None
 
         withdraw_process_file = 'templates/withdraw_process.py'
-
-
-        if reveal_submission:
-            readers = {
-                'description': 'User groups that will be able to read this withdraw note.',
-                'values': ['everyone']
-            }
-        else:
-            readers = {
-                'values': conference.get_committee(with_authors=True, number=note.number)
-            }
 
         with open(os.path.join(os.path.dirname(__file__), withdraw_process_file)) as f:
             file_content = f.read()
@@ -365,18 +356,18 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 'CONFERENCE_SHORT_NAME = \'' + conference.get_short_name() + '\'')
             file_content = file_content.replace(
                 'PAPER_AUTHORS_ID = \'\'',
-                'PAPER_AUTHORS_ID = \'' + conference.get_authors_id(number=note.number) + '\'')
+                'PAPER_AUTHORS_ID = \'' + conference.get_authors_id(number='{number}') + '\'')
             file_content = file_content.replace(
                 'PAPER_REVIEWERS_ID = \'\'',
-                'PAPER_REVIEWERS_ID = \'' + conference.get_reviewers_id(number=note.number) + '\'')
+                'PAPER_REVIEWERS_ID = \'' + conference.get_reviewers_id(number='{number}') + '\'')
             if conference.use_area_chairs:
                 file_content = file_content.replace(
                     'PAPER_AREA_CHAIRS_ID = \'\'',
-                    'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number=note.number) + '\'')
+                    'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number='{number}') + '\'')
             if conference.use_senior_area_chairs:
                 file_content = file_content.replace(
                     'PAPER_SENIOR_AREA_CHAIRS_ID = \'\'',
-                    'PAPER_SENIOR_AREA_CHAIRS_ID = \'' + conference.get_senior_area_chairs_id(number=note.number) + '\'')
+                    'PAPER_SENIOR_AREA_CHAIRS_ID = \'' + conference.get_senior_area_chairs_id(number='{number}') + '\'')
             file_content = file_content.replace(
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
@@ -388,7 +379,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 'BLIND_SUBMISSION_ID = \'' + conference.get_blind_submission_id() + '\'')
             file_content = file_content.replace(
                 'SUBMISSION_READERS = []',
-                str.format('SUBMISSION_READERS = {}', note.readers)
+                str.format('SUBMISSION_READERS = {}', conference.submission_stage.get_readers(conference=conference, number='{number}'))
             )
             file_content = file_content.replace(
                 'CONFERENCE_NAME = \'\'',
@@ -414,34 +405,70 @@ class PaperWithdrawInvitation(openreview.Invitation):
                     str.format('HIDE_FIELDS = {}', hide_fields)
                 )
 
-            super(PaperWithdrawInvitation, self).__init__(
-                id=conference.get_invitation_id('Withdraw', note.number),
+            super(WithdrawSuperInvitation, self).__init__(
+                id=conference.get_invitation_id("Withdraw"),
                 cdate=None,
-                duedate = None,
-                expdate =None,
-                invitees=[conference.get_authors_id(note.number), conference.support_user],
+                duedate=None,
+                expdate=exp_date,
                 readers=['everyone'],
-                writers=[conference.get_id()],
-                signatures=['~Super_User1'],
-                multiReply=False,
+                writers=[conference.support_user],
+                signatures=[conference.support_user],
                 reply={
-                    'forum': note.id,
-                    'replyto': note.id,
-                    'readers': readers,
+                    'forum': None,
+                    'replyto': None,
+                    'readers': {
+                            'values': ['everyone']
+                        },
                     'writers': {
-                        'values-copied': [
-                            conference.get_id(),
-                            '{signatures}'
-                        ]
+                        'values': [],
                     },
                     'signatures': {
-                        'values': [conference.get_authors_id(note.number)],
-                        'description': 'How your identity will be displayed.'
+                        'values-regex': '~.*|{}'.format(conference.support_user)
                     },
-                    'content': content
+                    'content': content,
                 },
                 process_string=file_content
             )
+
+
+class PaperWithdrawInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note, reveal_submission):
+        if reveal_submission:
+            readers = {
+                'description': 'User groups that will be able to read this withdraw note.',
+                'values': ['everyone']
+            }
+        else:
+            readers = {
+                'values': conference.get_committee(with_authors=True, number=note.number)
+            }
+
+        super(PaperWithdrawInvitation, self).__init__(
+            id=conference.get_invitation_id('Withdraw', note.number),
+            super=conference.get_invitation_id('Withdraw'),
+            cdate=None,
+            invitees=[conference.get_authors_id(note.number), conference.support_user],
+            readers=['everyone'],
+            writers=[conference.get_id()],
+            signatures=['~Super_User1'],
+            multiReply=False,
+            reply={
+                'forum': note.id,
+                'replyto': note.id,
+                'readers': readers,
+                'writers': {
+                    'values-copied': [
+                        conference.get_id(),
+                        '{signatures}'
+                    ]
+                },
+                'signatures': {
+                    'values': [conference.get_authors_id(note.number)],
+                    'description': 'How your identity will be displayed.'
+                },
+            }
+        )
 
 class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
@@ -1574,10 +1601,10 @@ class InvitationBuilder(object):
         invitations = []
 
         self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
-
+        self.client.post_invitation(WithdrawSuperInvitation(conference, reveal_authors, reveal_submission, email_pcs, hide_fields))
         notes = list(conference.get_submissions())
         for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)))
+            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_submission)))
 
         return invitations
 
