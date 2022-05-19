@@ -29,13 +29,43 @@ def process(client, note, invitation):
                     matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
                     client.post_invitation(matching_invitation)
 
+            if conference.use_ethics_chairs or conference.use_ethics_reviewers:
+                client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Ethics_Review_Stage',
+                    super = SUPPORT_GROUP + '/-/Ethics_Review_Stage',
+                    invitees = [conference.get_program_chairs_id(), SUPPORT_GROUP],
+                    reply = {
+                        'forum': forum_note.id,
+                        'referent': forum_note.id,
+                        'readers': {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                        }
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+                recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
+                if recruitment_invitation:
+                    recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(recruitment_invitation)
+
+                remind_recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Remind_Recruitment')
+                if remind_recruitment_invitation:
+                    remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(remind_recruitment_invitation)
+
+
         elif invitation_type == 'Bid_Stage':
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
             if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
                 conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_area_chairs_id()))
 
         elif invitation_type == 'Review_Stage':
-            conference.set_review_stage(openreview.helpers.get_review_stage(client, forum_note))
+            conference.create_review_stage()
+
+        elif invitation_type == 'Ethics_Review_Stage':
+            conference.create_ethics_review_stage()
 
         elif invitation_type == 'Meta_Review_Stage':
             conference.set_meta_review_stage(openreview.helpers.get_meta_review_stage(client, forum_note))
@@ -72,6 +102,64 @@ def process(client, note, invitation):
                 decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
             else:
                 decision_options = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
+
+            content['send_decision_notifications'] = {
+                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
+                'value-radio': [
+                    'Yes, send an email notification to the authors',
+                    'No, I will send the emails to the authors'
+                ],
+                'required': True,
+                'default': 'No, I will send the emails to the authors'
+            }
+            short_name = conference.get_short_name()
+            for decision in decision_options:
+                if 'Accept' in decision:
+                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
+                        'value-regex': '[\\S\\s]{1,10000}',
+                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                        'default': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+
+Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at:
+{{forum_url}}
+
+Best,
+{short_name} Program Chairs
+'''
+                    }
+                elif 'Reject' in decision:
+                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
+                        'value-regex': '[\\S\\s]{1,10000}',
+                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                        'default': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+                        
+Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted.
+You can find the final reviews for your paper on the submission page in OpenReview at:
+{{forum_url}}
+
+Best,
+{short_name} Program Chairs
+'''
+                    }
+                else:
+                    content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
+                        'value-regex': '[\\S\\s]{1,10000}',
+                        'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                        'default': f'''
+Dear {{{{{{{{fullname}}}}}}}},
+
+Thank you for submitting your paper, {{submission_title}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at:
+{{forum_url}}
+
+Best,
+{short_name} Program Chairs
+'''
+                    }
+
             content['home_page_tab_names'] = {
                 'description': 'Change the name of the tab that you would like to use to list the papers by decision, please note the key must match with the decision options',
                 'value-dict': {},
@@ -106,6 +194,21 @@ def process(client, note, invitation):
             ))
 
         elif invitation_type == 'Submission_Revision_Stage':
+            submission_revision_stage_notes = client.get_references(
+                referent=forum_note.id,
+                invitation='{support_group}/-/Request{number}/Submission_Revision_Stage'.format(
+                    support_group=SUPPORT_GROUP, number=forum_note.number),
+                limit=2
+            )
+            if len(submission_revision_stage_notes) > 1:
+                last_submission_revision_stage_note = submission_revision_stage_notes[-1]
+                expire_revision_stage_name = last_submission_revision_stage_note.content.get('submission_revision_name',
+                                                                                             'Revision')
+                expire_revision_stage_name = expire_revision_stage_name.replace(" ", "_")
+            else:
+                expire_revision_stage_name = 'Revision'
+            if expire_revision_stage_name != forum_note.content.get('submission_revision_name', '').strip().replace(" ", "_"):
+                conference.expire_invitation(conference.get_invitation_id(expire_revision_stage_name))
             conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 
         elif invitation_type == 'Comment_Stage':
@@ -132,6 +235,17 @@ def process(client, note, invitation):
                     submission_readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
+            if note.content.get('send_decision_notifications') == 'Yes, send an email notification to the authors':
+                decision_options = forum_note.content.get(
+                    'decision_options',
+                    'Accept (Oral), Accept (Poster), Reject'
+                )
+                decision_options = [s.translate(str.maketrans('', '', '"\'')).strip() for s in decision_options.split(',')]
+                email_messages = {
+                    decision: note.content[f'{decision.lower().replace(" ", "_")}_email_content']
+                    for decision in decision_options
+                }
+                conference.send_decision_notifications(decision_options, email_messages)
 
         submission_content = conference.submission_stage.get_content()
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')

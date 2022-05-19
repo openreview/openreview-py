@@ -100,6 +100,7 @@ class Matching(object):
         self.is_reviewer = conference.get_reviewers_id() == match_group.id
         self.is_area_chair = conference.get_area_chairs_id() == match_group.id
         self.is_senior_area_chair = conference.get_senior_area_chairs_id() == match_group.id
+        self.is_ethics_reviewer = conference.get_ethics_reviewers_id() == match_group.id
         self.should_read_by_area_chair = conference.get_reviewers_id() == match_group.id and conference.use_area_chairs
 
 
@@ -128,6 +129,7 @@ class Matching(object):
 
         edge_invitees = [self.conference.get_id(), self.conference.support_user]
         edge_readers = [self.conference.get_id()]
+        invitation_readers = [self.conference.get_id()]
         edge_writers = [self.conference.get_id()]
         edge_signatures = [self.conference.get_id() + '$', self.conference.get_program_chairs_id()]
         edge_nonreaders = {
@@ -136,8 +138,10 @@ class Matching(object):
         if self.is_reviewer:
             if self.conference.use_senior_area_chairs:
                 edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+                invitation_readers.append(self.conference.get_senior_area_chairs_id())
             if self.conference.use_area_chairs:
                 edge_readers.append(self.conference.get_area_chairs_id(number=paper_number))
+                invitation_readers.append(self.conference.get_area_chairs_id())
 
             if is_assignment_invitation:
                 if self.conference.use_senior_area_chairs:
@@ -157,6 +161,8 @@ class Matching(object):
         if self.is_area_chair:
             if self.conference.use_senior_area_chairs:
                 edge_readers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
+                invitation_readers.append(self.conference.get_senior_area_chairs_id())
+
 
             if is_assignment_invitation:
                 if self.conference.use_senior_area_chairs:
@@ -167,6 +173,21 @@ class Matching(object):
                 edge_nonreaders = {
                     'values': [self.conference.get_authors_id(number=paper_number)]
                 }
+
+        if self.is_ethics_reviewer:
+            if self.conference.use_ethics_chairs:
+                edge_readers.append(self.conference.get_ethics_chairs_id())
+                invitation_readers.append(self.conference.get_ethics_chairs_id())
+
+            if is_assignment_invitation:
+                if self.conference.use_ethics_chairs:
+                    edge_invitees.append(self.conference.get_ethics_chairs_id())
+                    edge_writers.append(self.conference.get_ethics_chairs_id())
+                    edge_signatures.append(self.conference.get_ethics_chairs_id())
+
+                edge_nonreaders = {
+                    'values': [self.conference.get_authors_id(number=paper_number)]
+                }                               
 
         readers = {
             'values-copied': edge_readers + ['{tail}']
@@ -233,7 +254,7 @@ class Matching(object):
         invitation = openreview.Invitation(
             id=edge_id,
             invitees=edge_invitees,
-            readers=[self.conference.get_id(), self.conference.get_senior_area_chairs_id(), self.conference.get_area_chairs_id()],
+            readers=invitation_readers,
             writers=[self.conference.get_id()],
             signatures=[self.conference.get_id()],
             reply={
@@ -643,12 +664,12 @@ class Matching(object):
                 if call_count == 1440: ## one day to wait the completion or trigger a timeout
                     break
                 time.sleep(60)
-                status_response = self.client.get_expertise_status(job_id['job_id'])
+                status_response = self.client.get_expertise_status(job_id['jobId'])
                 status = status_response.get('status')
                 desc = status_response.get('description')
                 call_count += 1
             if 'Completed' in status:
-                result = self.client.get_expertise_results(job_id['job_id'])
+                result = self.client.get_expertise_results(job_id['jobId'])
                 matching_status['no_profiles'] = result['metadata']['no_profile']
                 matching_status['no_publications'] = result['metadata']['no_publications']
 
@@ -946,6 +967,7 @@ class Matching(object):
                 self.client.post_invitation(invitation)
 
         self._create_edge_invitation(self.conference.get_paper_assignment_id(self.match_group.id, deployed=True))
+        self.conference.invitation_builder.set_assignment_invitation(self.conference, self.match_group.id)
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))

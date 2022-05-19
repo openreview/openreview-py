@@ -36,30 +36,35 @@ class VenueStages():
             'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location. Valid JSON expected.'
         }
 
-        return self.venue_request.client.post_invitation(openreview.Invitation(
-            id='{}/-/Revision'.format(self.venue_request.support_group.id),
-            readers=['everyone'],
-            writers=[],
-            signatures=[self.venue_request.super_user],
-            invitees=['everyone'],
-            multiReply=True,
-            process_string=self.file_content,
-            reply={
-                'readers': {
-                    'values-copied': [
-                        self.venue_request.support_group.id,
-                        '{content["program_chair_emails"]}'
-                    ]
-                },
-                'writers': {
-                    'values':[],
-                },
-                'signatures': {
-                    'values-regex': '~.*'
-                },
-                'content': revision_content
-            }
-        ))
+        with open(os.path.join(os.path.dirname(__file__), 'process/revision_pre_process.py')) as pre:
+            pre_process_file_content = pre.read()
+
+            revision_inv = self.venue_request.client.post_invitation(openreview.Invitation(
+                id='{}/-/Revision'.format(self.venue_request.support_group.id),
+                readers=['everyone'],
+                writers=[],
+                signatures=[self.venue_request.super_user],
+                invitees=['everyone'],
+                multiReply=True,
+                preprocess=pre_process_file_content,
+                process_string=self.file_content,
+                reply={
+                    'readers': {
+                        'values-copied': [
+                            self.venue_request.support_group.id,
+                            '{content["program_chair_emails"]}'
+                        ]
+                    },
+                    'writers': {
+                        'values':[],
+                    },
+                    'signatures': {
+                        'values-regex': '~.*'
+                    },
+                    'content': revision_content
+                }
+            ))
+        return revision_inv
 
     def setup_bidding_stage(self):
 
@@ -198,6 +203,104 @@ class VenueStages():
                 'content': review_stage_content
             }
         ))
+
+    def setup_ethics_review_stage(self):
+
+        ethics_review_stage_content = {
+            'ethics_review_start_date': {
+                'description': 'When does reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 1
+            },
+            'ethics_review_deadline': {
+                'description': 'When does reviewing of submissions end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': True,
+                'order': 2
+            },
+            'make_ethics_reviews_public': {
+                'description': "Should the ethics reviews be made public immediately upon posting? Note that selecting 'Yes' will automatically release any posted ethics reviews to the public if the submission is also public.",
+                'value-radio': [
+                    'Yes, ethics reviews should be revealed publicly when they are posted',
+                    'No, ethics reviews should NOT be revealed publicly when they are posted'
+                ],
+                'required': True,
+                'default': 'Yes, ethics reviews should be revealed publicly when they are posted',
+                'order': 3
+            },
+            'release_ethics_reviews_to_authors': {
+                'description': 'Should the ethics reviews be visible to paper\'s authors immediately upon posting? Default is "No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors".',
+                'value-radio': [
+                    'Yes, ethics reviews should be revealed when they are posted to the paper\'s authors',
+                    'No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors'
+                ],
+                'required': True,
+                'default': 'No, ethics reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'order': 4
+            },
+            'release_ethics_reviews_to_reviewers': {
+                'description': 'Should the reviews be visible to all reviewers, all assigned reviewers, assigned reviewers who have already submitted their own review or only the author of the review immediately upon posting?',
+                'value-radio': [
+                    'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers',
+                    'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers',
+                    'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers',
+                    'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review'
+                ],
+                'required': True,
+                'default': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'order': 5
+            },
+            'ethics_review_submissions': {
+                'order' : 6,
+                'value-regex': '.*',
+                'required': True,
+                'description': 'Comma separated values of submission numbers that need ethics reviews.'
+            },
+            'additional_ethics_review_form_options': {
+                'order' : 7,
+                'value-dict': {},
+                'required': False,
+                'description': 'Configure additional options in the ethics review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+            },
+            'remove_ethics_review_form_options': {
+                'order': 8,
+                'value-regex': r'^[^,]+(,\s*[^,]*)*$',
+                'required': False,
+                'description': 'Comma separated list of fields (recommendation, ethics_review) that you want removed from the review form.'
+            },
+            "release_submissions_to_ethics_reviewers": {
+                "description": "Confirm that you want to release the submissions to the ethics reviewers if they are no currently released.",
+                "order": 9,
+                "value-checkbox": "We confirm we want to release the submissions and reviews to the ethics reviewers",
+                "required": True
+            }           
+        }
+
+        return self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Ethics_Review_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[self.venue_request.support_group.id],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content["program_chair_emails"]}'
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                },
+                'content': ethics_review_stage_content
+            }
+        ))
+
 
     def setup_comment_stage(self):
 
@@ -494,7 +597,8 @@ class VenueStages():
                     'Yes, send an email notification to the authors',
                     'No, I will send the emails to the authors'
                 ],
-                'required': True,
+                'required': False,
+                'hidden': True,
                 'default': 'No, I will send the emails to the authors',
                 'order': 35
             },
@@ -504,7 +608,71 @@ class VenueStages():
                 'required': False,
                 'description': 'Configure additional options in the decision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
+            'decisions_file': {
+                'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_id, decision, comment). Please do not add the column names as the first row',
+                'order': 37,
+                'value-file': {
+                    'fileTypes': ['csv'],
+                    'size': 50
+                },
+                'required': False
+            }
         }
+
+        decisions_upload_status_content = {
+            'title': {
+                'value': 'Decision Upload Status',
+                'required': True,
+                'order': 1
+            },
+            'decision_posted': {
+                'value-regex': '.*',
+                'description': 'No. of papers decision was posted for',
+                'required': True,
+                'markdown': True,
+                'order': 2
+            },
+            'error': {
+                'value-regex': '[\\S\\s]{0,200000}',
+                'description': 'List of papers whose decision were not posted due to an error',
+                'required': False,
+                'markdown': True,
+                'order': 5
+            },
+            'comment': {
+                'order': 6,
+                'value-regex': '[\\S\\s]{1,200000}',
+                'description': 'Your comment or reply (max 200000 characters).',
+                'required': False,
+                'markdown': True
+            }
+        }
+
+        with open(self.venue_request.decision_upload_status_process, 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.venue_request.super_user + "'")
+            self.venue_request.decision_upload_super_invitation = self.venue_request.client.post_invitation(
+                openreview.Invitation(
+                    id=self.venue_request.support_group.id + '/-/Decision_Upload_Status',
+                    readers=['everyone'],
+                    writers=[],
+                    signatures=[self.venue_request.support_group.id],
+                    invitees=[self.venue_request.support_group.id],
+                    process_string=file_content,
+                    multiReply=True,
+                    reply={
+                        'readers': {
+                            'values': ['everyone']
+                        },
+                        'writers': {
+                            'values': [],
+                        },
+                        'signatures': {
+                            'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                        },
+                        'content': decisions_upload_status_content
+                    }
+                ))
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
             id='{}/-/Decision_Stage'.format(self.venue_request.support_group.id),
@@ -530,6 +698,7 @@ class VenueStages():
                 'content': decision_stage_content
             }
         ))
+
     def setup_post_decision_stage(self):
         post_decision_content = {
             'release_submissions': {
@@ -547,6 +716,15 @@ class VenueStages():
                     'Reveal author identities of only accepted submissions to the public',
                     'No, I don\'t want to reveal any author identities.'],
                 'required': True
+            },
+            'send_decision_notifications': {
+                'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
+                'value-radio': [
+                    'Yes, send an email notification to the authors',
+                    'No, I will send the emails to the authors'
+                ],
+                'required': True,
+                'default': 'No, I will send the emails to the authors'
             }
         }
 
@@ -603,6 +781,7 @@ class VenueRequest():
         self.error_status_process = os.path.join(os.path.dirname(__file__), 'process/error_status_process.py')
         self.matching_status_process = os.path.join(os.path.dirname(__file__), 'process/matching_status_process.py')
         self.recruitment_status_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_status_process.py')
+        self.decision_upload_status_process = os.path.join(os.path.dirname(__file__), 'process/decision_upload_status_process.py')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
@@ -625,6 +804,7 @@ class VenueRequest():
         self.venue_revision_invitation = venue_stages.setup_venue_revision()
         self.bid_stage_super_invitation = venue_stages.setup_bidding_stage()
         self.review_stage_super_invitation = venue_stages.setup_review_stage()
+        self.ethics_review_stage_super_invitation = venue_stages.setup_ethics_review_stage()
         self.comment_stage_super_invitation = venue_stages.setup_comment_stage()
         self.meta_review_stage_super_invitation = venue_stages.setup_meta_review_stage()
         self.submission_revision_stage_super_invitation = venue_stages.setup_submission_revision_stage()
@@ -686,6 +866,15 @@ class VenueRequest():
                 ],
                 'required': False,
                 'order': 8
+            },
+            'ethics_chairs_and_reviewers': {
+                'description': 'Are you going to have Ethics reviews?. In case of yes, you need to recruit Ethics Chair and Reviewers',
+                'value-radio': [
+                    'Yes, our venue has Ethics Chairs and Reviewers',
+                    'No, our venue does not have Ethics Chairs and Reviewers'
+                ],
+                'required': False,
+                'order': 9
             },
             'Submission Start Date': {
                 'description': 'When would you (ideally) like to have your OpenReview submission portal opened? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Skip this if only requesting paper matching service)',
@@ -1107,7 +1296,7 @@ class VenueRequest():
             },
             'invitee_details': {
                 'value-regex': '[\\S\\s]{1,50000}',
-                'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
+                'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee".',
                 'required': True,
                 'order': 5
             },

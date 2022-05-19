@@ -151,7 +151,8 @@ class TestJournal():
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 
@@ -185,9 +186,9 @@ class TestJournal():
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 10
+        assert len(invitations) == 9
         assert f"{venue_id}/-/Submission" not in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Review_Approval" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Desk_Rejection"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision" in [i.id for i in invitations]
@@ -208,7 +209,8 @@ class TestJournal():
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
-                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
         helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
@@ -241,7 +243,8 @@ class TestJournal():
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
-                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
+                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                                            'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                                         }
                                     ))
 
@@ -265,7 +268,8 @@ class TestJournal():
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
-                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' }
+                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                                            'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                                         }
                                     ))
 
@@ -338,6 +342,7 @@ class TestJournal():
         invitation = openreview_client.get_invitation(id='TMLR/Paper1/Action_Editors/-/Recommendation')
         assert invitation.expdate is not None
         assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert openreview_client.get_invitation('TMLR/Paper1/-/Review_Approval')
 
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper1/-/Review_Approval',
@@ -401,7 +406,16 @@ note={Under review}
         assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
 
         ## Assign Action editor to submission 2
-        raia_client.add_members_to_group(f'{venue_id}/Paper2/Action_Editors', '~Joelle_Pineau1')
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_2,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)     
 
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper2/-/Review_Approval',
@@ -723,6 +737,8 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-edito
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
         ## Poster a comment without EIC as readers
         with pytest.raises(openreview.OpenReviewException, match=r'Editors In Chief must be readers of the comment'):
             comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
@@ -739,7 +755,52 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-edito
                 )
             )
 
+        ## Post an official comment from the reviewer to the EIC only
+        comment_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                signatures=[david_anon_groups[0].id],
+                readers=['TMLR/Editors_In_Chief', david_anon_groups[0].id],
+                forum=note_id_1,
+                replyto=comment_note['note']['id'],
+                content={
+                    'title': { 'value': 'I have a conflict with this paper' },
+                    'comment': { 'value': 'I know the authors and I can not review this paper.' }
+                }
+            )
+        )
+
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
+        assert len(messages) == 1        
+        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
+<p>An official comment has been posted on a submission for which you are serving as Editor-In-Chief.</p>
+<p>Submission: Paper title UPDATED<br>
+Title: I have a conflict with this paper<br>
+Comment: I know the authors and I can not review this paper.</p>
+<p>To view the official comment, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note['note']['id']}</a></p>
+'''
+
+        ## Post an official comment from the EIC to the EIC only
+        comment_note = raia_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+            signatures=['TMLR/Editors_In_Chief'],
+            note=Note(
+                signatures=['TMLR/Editors_In_Chief'],
+                readers=['TMLR/Editors_In_Chief'],
+                forum=note_id_1,
+                replyto=note_id_1,
+                content={
+                    'title': { 'value': 'Do not approve this yet' },
+                    'comment': { 'value': 'pending moderation, please do not approve.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
+
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
+        assert len(messages) == 1        
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
@@ -951,7 +1012,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
             signatures=['~David_K_Belanger1'],
             note=Note(
                 content={
-                    'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.' }
+                    'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.' }
                 }
             )
         )
@@ -966,7 +1027,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>David Belanger posted an assignment acknowledgement on a submission for which you are an Action Editor.</p>
 <p>Submission: Paper title UPDATED<br>
-Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date}.</p>
+Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.</p>
 <p>To view the acknowledgement, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}</a></p>
 '''
 
@@ -1017,15 +1078,17 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 
         ## All the comments should be public now
         comments = openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Official_Comment', sort= 'number:asc')
-        assert len(comments) == 2
+        assert len(comments) == 4
         assert comments[0].readers == ['everyone']
         assert comments[1].readers == ['everyone']
+        assert comments[2].readers != ['everyone']
+        assert comments[3].readers != ['everyone']
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
 <p>Now that 3 reviews have been submitted for your submission  Paper title UPDATED, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.</p>
-<p>You will have at least 2 weeks to respond to the reviewers. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.</p>
+<p>You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.</p>
 <p>Visit the following link to respond to the reviews: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -1045,7 +1108,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>Now that 3 reviews have been submitted for submission Paper title UPDATED, all reviews have been made public. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in <strong>2 weeks</strong>.</p>
+<p>Now that 3 reviews have been submitted for submission Paper title UPDATED, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in <strong>2 weeks</strong>.</p>
 <p>You will find the OpenReview page for this submission at this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>
@@ -1229,7 +1292,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 <p>All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:</p>
 <ul>
 <li>Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.</li>
-<li>Rate the quality of the reviews submitted by the reviewers. <strong>You will not be able to submit your decision until these ratings have been submitted</strong>. To rate a review, go on the submission’s page and click on button “Rating” for each of the reviews.</li>
+<li>Rate the quality of the reviews submitted by the reviewers. <strong>You will not be able to submit your decision until these ratings have been submitted</strong>. To rate a review, go on the submission's page and click on button &quot;Rating&quot; for each of the reviews.</li>
 </ul>
 <p>We ask that you submit your decision <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Decision">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Decision</a></p>
 <p>The possible decisions are:</p>
@@ -1613,7 +1676,8 @@ note={Retracted after acceptance}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
                 }
             ))
 
@@ -1657,6 +1721,16 @@ note={Retracted after acceptance}
         ))
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title 4')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
+<p>With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title 4&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
+<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement</a></p>
+<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
+<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
+<p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
+'''
 
         ## Assign Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1770,7 +1844,7 @@ note={Retracted after acceptance}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Peter Snow,</p>
 <p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 4 has been accepted by the Action Editor (AE).</p>
-<p>You are required to submit your review within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.</p>
+<p>You are required to submit your review within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.</p>
 <p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers\">https://openreview.net/group?id=TMLR/Reviewers</a></p>
 <p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your contribution to TMLR!</p>
@@ -2059,7 +2133,8 @@ note={Rejected}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 
@@ -2335,7 +2410,8 @@ note={Rejected}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 
@@ -2615,7 +2691,8 @@ note={Withdrawn}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
                 }
             ))
 
@@ -2707,7 +2784,8 @@ note={Withdrawn}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'}
                 }
             ))
 
@@ -2779,7 +2857,8 @@ note={Withdrawn}
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 

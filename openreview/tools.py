@@ -20,6 +20,24 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
+def decision_to_venue(venue_id, decision_option):
+    """
+    Returns the venue for a submission based on its decision
+
+    :param venue_id: venue's short name (i.e., ICLR 2022)
+    :type venue_id: string
+    :param decision_option: paper decision (i.e., Accept, Reject)
+    :type decision_option: string
+    """
+    venue = venue_id
+    if 'Accept' in decision_option:
+        decision = decision_option.replace('Accept', '')
+        decision = re.sub(r'[()\W]+', '', decision)
+        if decision:
+            venue += ' ' + decision.strip()
+    else:
+        venue = f'Submitted to {venue}'
+    return venue
 
 def run_once(f):
     """
@@ -120,7 +138,8 @@ def get_profile(client, value, with_publications=False):
             raise e
     return profile
 
-def get_profiles(client, ids_or_emails, with_publications=False):
+
+def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
@@ -135,6 +154,7 @@ def get_profiles(client, ids_or_emails, with_publications=False):
 
     profiles = []
     profile_by_email = {}
+    profiles_as_dict = {}
 
     batch_size = 100
     for i in range(0, len(ids), batch_size):
@@ -142,10 +162,28 @@ def get_profiles(client, ids_or_emails, with_publications=False):
         batch_profiles = client.search_profiles(ids=batch_ids)
         profiles.extend(batch_profiles)
 
+    if as_dict:
+        profiles_by_name = {}
+        for profile in profiles:
+            for name in profile.content.get("names", []):
+                profiles_by_name[name.get("username")] = profile
+
+        for id in ids:
+            profiles_as_dict[id] = profiles_by_name.get(id)
+
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
         batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
         profile_by_email.update(batch_profile_by_email)
+
+    if as_dict:
+        _profiles_by_email = {}
+        for profile in profile_by_email.values():
+            for email in profile.content.get('emailsConfirmed', []):
+                _profiles_by_email[email] = profile
+
+        for email in emails:
+            profiles_as_dict[email] = _profiles_by_email.get(email)
 
     for email in emails:
         profiles.append(profile_by_email.get(email, openreview.Profile(
@@ -157,7 +195,9 @@ def get_profiles(client, ids_or_emails, with_publications=False):
                 'names': []
             })))
 
-    if with_publications:
+    if as_dict and with_publications:
+        print("Getting profiles as dictionary is not supported with publications right now. Returning profiles without plublications.")
+    elif with_publications:
         baseurl_v1 = 'http://localhost:3000'
         baseurl_v2 = 'http://localhost:3001'
 
@@ -182,7 +222,10 @@ def get_profiles(client, ids_or_emails, with_publications=False):
             else:
                 profiles[idx].content['publications'] = publications
 
+    if as_dict:
+        return profiles_as_dict
     return profiles
+
 
 def get_group(client, id):
     """
@@ -742,6 +785,7 @@ def get_paperhash(first_author, title):
     first_author = re.sub(strip_punctuation, '', first_author)
     return (first_author + '|' + title).lower()
 
+
 def replace_members_with_ids(client, group):
     """
     Given a Group object, iterates through the Group's members and, for any member represented by an email address, attempts to find a profile associated with that email address. If a profile is found, replaces the email with the profile id.
@@ -754,37 +798,26 @@ def replace_members_with_ids(client, group):
     :return: Group with the emails replaced by Profile ids
     :rtype: Group
     """
-    ids = []
-    emails = []
+    updated_members = []
+    without_profile_ids = []
 
-    def classify_members(member):
-        if '@' in member:
-            try:
-                profile = client.get_profile(member.lower())
-                return 'ids', profile.id
-            except openreview.OpenReviewException as e:
-                if 'Profile Not Found' in e.args[0]:
-                    return 'emails', member.lower()
-                else:
-                    raise e
-        elif '~' in member:
-            profile = client.get_profile(member)
-            return 'ids', profile.id
+    member_profiles = get_profiles(client, group.members, as_dict=True)
+
+    for member in group.members:
+        profile = member_profiles.get(member)
+        if profile is not None:
+            updated_members.append(profile.id)
+        elif member.startswith('~'):
+            without_profile_ids.append(member)
         else:
-            _group = client.get_group(member)
-            return 'ids', _group.id
+            updated_members.append(member)
 
-    results = concurrent_requests(classify_members, group.members)
-
-    for key, member in results:
-        if key == 'ids':
-            ids.append(member)
-        elif key == 'emails':
-            emails.append(member)
-
-    group.members = ids + emails
+    if without_profile_ids:
+        raise openreview.OpenReviewException(f"Profile Not Found for {without_profile_ids}")
+    group.members = updated_members
 
     return client.post_group(group)
+
 
 def concurrent_get(client, get_function, **params):
     """
@@ -1926,11 +1959,12 @@ def get_neurips_profile_info(profile, n_years=3):
     curr_year = datetime.datetime.now().year
     cut_off_year = curr_year - n_years - 1
 
-    ## Institution section, get history within the last n years
+    ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
-        if h.get('end') is None or int(h.get('end')) > cut_off_year:
-            domain = h.get('institution', {}).get('domain', '')
-            domains.update(openreview.tools.subdomains(domain))
+        if 'intern' not in h.get('position', '').lower():
+            if h.get('end') is None or int(h.get('end')) > cut_off_year:
+                domain = h.get('institution', {}).get('domain', '')
+                domains.update(openreview.tools.subdomains(domain))
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
@@ -1979,7 +2013,6 @@ def get_neurips_profile_info(profile, n_years=3):
         'relations': relations,
         'publications': publications
     }
-
 
 
 def post_bulk_edges (client, edges, batch_size = 50000):
@@ -2049,3 +2082,18 @@ def export_committee(client, committee_id, file_name):
         csvwriter = csv.writer(outfile, delimiter=',')
         for profile in tqdm(profiles):
             s = csvwriter.writerow([profile.get_preferred_email(), profile.get_preferred_name(pretty=True)])
+
+
+@run_once
+def load_mimetypes():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(dir_path, 'mimetypes.json')) as f:
+        mimetypes = json.load(f)
+
+    f.close()
+    return mimetypes
+
+def get_mimetype(file_path):
+    mimetypes = load_mimetypes()
+    extension = os.path.splitext(file_path)[1][1:]
+    return mimetypes.get(extension) or 'text/plain'

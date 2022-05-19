@@ -130,7 +130,7 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                 },
                 'invitee_details': {
                     'value-regex': '[\\S\\s]{1,50000}',
-                    'description': 'Enter a list of invitees with one per line. Either tilde IDs or email,name pairs expected. E.g. captain_rogers@marvel.com, Captain America or ∼Captain_America1',
+                    'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee".',
                     'required': True,
                     'order': 5
                 },
@@ -245,6 +245,22 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
         },
         signatures = ['~Super_User1']
     ))
+
+    if (forum.content.get('ethics_chairs_and_reviewers') == 'Yes, our venue has Ethics Chairs and Reviewers'):
+        client.post_invitation(openreview.Invitation(
+            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Ethics_Review_Stage',
+            super = SUPPORT_GROUP + '/-/Ethics_Review_Stage',
+            invitees = readers,
+            reply = {
+                'forum': forum.id,
+                'referent': forum.id,
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values' : readers
+                }
+            },
+            signatures = ['~Super_User1']
+        ))    
 
     if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
         client.post_invitation(openreview.Invitation(
@@ -447,6 +463,19 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     client.post_invitation(openreview.Invitation(
         id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Stage_Error_Status',
         super=SUPPORT_GROUP + '/-/Stage_Error_Status',
+        reply={
+            'forum': forum.id,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': readers
+            }
+        },
+        signatures=['~Super_User1']
+    ))
+
+    client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Decision_Upload_Status',
+        super=SUPPORT_GROUP + '/-/Decision_Upload_Status',
         reply={
             'forum': forum.id,
             'readers': {
