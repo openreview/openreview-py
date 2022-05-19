@@ -1622,14 +1622,13 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        decision_notes = test_client.get_notes(
+        decision_note = test_client.get_notes(
             invitation='{venue_id}/Paper.*/-/Decision'.format(venue_id=venue['venue_id'])
-        )
+        )[0]
 
-        for note in decision_notes:
-            assert f'TEST.cc/2030/Conference/Paper{note.number}/Authors' in note.readers
-            assert f'TEST.cc/2030/Conference/Paper{note.number}/Reviewers' in note.readers
-            assert not note.nonreaders
+        assert f'TEST.cc/2030/Conference/Paper1/Authors' in decision_note.readers
+        assert f'TEST.cc/2030/Conference/Paper1/Reviewers' in decision_note.readers
+        assert not decision_note.nonreaders
 
         #get post_decision invitation
         with pytest.raises(openreview.OpenReviewException) as openReviewError:
