@@ -581,7 +581,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return groups, response.json()['count']
 
         return groups
@@ -713,7 +713,7 @@ class OpenReviewClient(object):
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return invitations, response.json()['count']
 
         return invitations
@@ -919,7 +919,7 @@ class OpenReviewClient(object):
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return notes, response.json()['count']
 
         return notes
@@ -1045,7 +1045,7 @@ class OpenReviewClient(object):
 
         edits = [Edit.from_json(n) for n in response.json()['edits']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return edits, response.json()['count']
 
         return edits
@@ -1085,7 +1085,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
-        if with_count:
+        if with_count and params.get('offset') is None:
             return tags, response.json()['count']
 
         return tags
@@ -1142,7 +1142,7 @@ class OpenReviewClient(object):
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return edges, response.json()['count']
 
         return edges
