@@ -2748,6 +2748,9 @@ class ConferenceBuilder(object):
     def set_request_form_id(self, id):
         self.conference.request_form_id = id
 
+    def set_support_user(self, support_user):
+        self.conference.support_user = support_user
+
     def set_default_reviewers_load(self, default_load):
         # Required to render a default load in the WebField template
         self.conference.set_default_load(default_load, self.conference.reviewers_name)

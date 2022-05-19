@@ -17,8 +17,11 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     if not note.content.get('venue_id') and not note.content.get('conference_id'):
         raise openreview.OpenReviewException('venue_id is not set')
 
+    support_user = note.invitation.split('/-/')[0]
     builder = openreview.conference.ConferenceBuilder(client, support_user)
     builder.set_request_form_id(request_form_id)
+    # support_user = note.invitation.split('/-/')[0]
+    # builder.set_support_user(support_user)
 
     conference_start_date_str = 'TBD'
     conference_start_date = None
