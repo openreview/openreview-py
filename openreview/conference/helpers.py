@@ -132,6 +132,12 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     withdrawn_submission_public = 'Yes' in note.content.get('withdrawn_submissions_visibility', '')
     email_pcs_on_withdraw = 'Yes' in note.content.get('email_pcs_for_withdrawn_submissions', '')
     desk_rejected_submission_public = 'Yes' in note.content.get('desk_rejected_submissions_visibility', '')
+    withdraw_submission_exp_date = note.content.get('withdraw_submission_expiration')
+    if withdraw_submission_exp_date:
+        try:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d')
 
     # Authors can not be anonymized only if venue is double-blind
     withdrawn_submission_reveal_authors = 'Yes' in note.content.get('withdrawn_submissions_author_anonymity', '')
@@ -161,6 +167,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         email_pcs=email_pcs,
         create_groups=create_groups,
         create_review_invitation=create_review_invitation,
+        withdraw_submission_exp_date=withdraw_submission_exp_date,
         withdrawn_submission_public=withdrawn_submission_public,
         withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
         email_pcs_on_withdraw=email_pcs_on_withdraw,

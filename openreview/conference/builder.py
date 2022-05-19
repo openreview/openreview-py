@@ -1835,6 +1835,7 @@ class SubmissionStage(object):
             create_groups=False,
             # We need to assume the Official Review super invitation is already created and active
             create_review_invitation=False,
+            withdraw_submission_exp_date=None,
             withdrawn_submission_public=False,
             withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=False,
@@ -1857,6 +1858,7 @@ class SubmissionStage(object):
         self.email_pcs = email_pcs
         self.create_groups = create_groups
         self.create_review_invitation = create_review_invitation
+        self.withdraw_submission_exp_date = withdraw_submission_exp_date
         self.withdrawn_submission_public = withdrawn_submission_public
         self.withdrawn_submission_reveal_authors = withdrawn_submission_reveal_authors
         self.email_pcs_on_withdraw = email_pcs_on_withdraw
@@ -2648,6 +2650,7 @@ class ConferenceBuilder(object):
             email_pcs=False,
             create_groups=False,
             create_review_invitation=False,
+            withdraw_submission_exp_date=None,
             withdrawn_submission_public=False,
             withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=False,
@@ -2680,6 +2683,7 @@ class ConferenceBuilder(object):
             email_pcs,
             create_groups,
             create_review_invitation,
+            withdraw_submission_exp_date,
             withdrawn_submission_public,
             withdrawn_submission_reveal_authors,
             email_pcs_on_withdraw,
