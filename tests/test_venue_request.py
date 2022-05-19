@@ -1793,26 +1793,26 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                     'Reject': 'Reject'
                 },
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
-                'accept_email_content': f'''Dear {{fullname}},
+                'accept_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
-You can find the final reviews for your paper on the submission page in OpenReview at: {{forum_url}}
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
 ''',
-                'reject_email_content': f'''Dear {{fullname}},
+                'reject_email_content': f'''Dear {{{{fullname}}}},
                         
-Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted. 
-You can find the final reviews for your paper on the submission page in OpenReview at: {{forum_url}}
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
 ''',
-                'revision_needed_email_content': f'''Dear {{fullname}},
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {short_name}.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{forum_url}}
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
