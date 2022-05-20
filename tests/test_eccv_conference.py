@@ -21,7 +21,7 @@ class TestECCVConference():
     def conference(self, client):
         now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
@@ -286,7 +286,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_create_conference(self, client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
