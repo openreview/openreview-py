@@ -75,6 +75,13 @@ class TestJournal():
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
+            notes = selenium.find_element_by_id("notes")
+            assert notes
+            messages = notes.find_elements_by_tag_name("h3")
+            assert messages
+            assert 'Thank you for accepting this invitation from Transactions of Machine Learning Research' == messages[0].text
+
+
         helpers.await_queue(openreview_client)
 
         group = openreview_client.get_group('TMLR/Action_Editors')
@@ -97,6 +104,13 @@ class TestJournal():
             text = message['content']['text']
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
+
+            notes = selenium.find_element_by_id("notes")
+            assert notes
+            messages = notes.find_elements_by_tag_name("h3")
+            assert messages
+            assert 'Thank you for accepting this invitation from Transactions of Machine Learning Research' == messages[0].text
+
 
         helpers.await_queue(openreview_client)
 
