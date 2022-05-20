@@ -1997,7 +1997,10 @@ class SubmissionStage(object):
         return content
 
     def is_under_submission(self):
+        if self.double_blind:
+            return True
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
+
 
 class ExpertiseSelectionStage(object):
 
