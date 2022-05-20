@@ -1904,7 +1904,7 @@ Best,
         assert submissions and len(submissions) == 3
 
         assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
-        assert 'venueid' not in submissions[0].content
+        assert 'venueid' in submissions[0].content and 'TEST.cc/2030/Conference' in submissions[0].content['venueid']
         assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
 
@@ -1972,7 +1972,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         assert submissions and len(submissions) == 3
 
         assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
-        assert 'venueid' not in submissions[0].content
+        assert 'venueid' in submissions[0].content and 'TEST.cc/2030/Conference' in submissions[0].content['venueid']
         assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
 
