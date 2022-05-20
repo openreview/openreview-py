@@ -5,7 +5,8 @@ def process_update(client, note, invitation, existing_note):
     AUTHORS_NAME = ''
     CONFERENCE_NAME = ''
     CONFERENCE_YEAR = ''
-    SUPPORT_GROUP = ''
+    REVISION_INVITATION = ''
+
 
     action = 'posted'
     if existing_note:
@@ -52,7 +53,7 @@ To view your submission, click here: https://openreview.net/forum?id={}'''.forma
         )
 
         revision_note = client.post_note(openreview.Note(
-            invitation = f'{SUPPORT_GROUP}/-/Venue_Revision',
+            invitation = f'{REVISION_INVITATION}',
             forum = forum.id,
             referent = forum.id,
             readers = ['everyone'],

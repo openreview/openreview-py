@@ -57,6 +57,7 @@ class Conference(object):
         self.client = client
         self.request_form_id = None
         self.support_user = 'OpenReview.net/Support'
+        self.venue_revision_name = 'Venue_Revision'
         self.new = False
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
@@ -935,7 +936,9 @@ class Conference(object):
 
             blind_note = self.client.post_note(blind_note)
 
-            if self.submission_stage.public and 'venue' not in blind_content:
+            generate_bibtex = not existing_blind_note or existing_blind_note and 'venue' not in existing_blind_note.content
+
+            if self.submission_stage.public and generate_bibtex:
                 bibtex = tools.generate_bibtex(
                     note=note,
                     venue_fullname=self.name,
@@ -943,7 +946,7 @@ class Conference(object):
                     year=str(self.get_year()))
 
                 revision_note = self.client.post_note(openreview.Note(
-                    invitation = f'{self.support_user}/-/Venue_Revision',
+                    invitation = f'{self.support_user}/-/{self.venue_revision_name}',
                     forum = note.id,
                     referent = note.id,
                     readers = ['everyone'],
@@ -1678,7 +1681,7 @@ Program Chairs
 
             original_id = submission.id if not self.submission_stage.double_blind else submission.details['original']['id']
             revision_note = self.client.post_note(openreview.Note(
-                invitation = f'{self.support_user}/-/Venue_Revision',
+                invitation = f'{self.support_user}/-/{self.venue_revision_name}',
                 forum = original_id,
                 referent = original_id,
                 readers = ['everyone'],

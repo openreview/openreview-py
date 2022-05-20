@@ -658,7 +658,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             if accepted_only:
                 file_content = file_content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.name + "'")
                 file_content = file_content.replace("CONFERENCE_YEAR = ''", "CONFERENCE_YEAR = '" + str(conference.year) + "'")
-                file_content = file_content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + conference.support_user + "'")
+                file_content = file_content.replace("REVISION_INVITATION = ''", "REVISION_INVITATION = '" + conference.support_user + "/-/" + conference.venue_revision_name + "'")
 
             super(SubmissionRevisionInvitation, self).__init__(
                 id=conference.get_invitation_id(submission_revision_stage.name),

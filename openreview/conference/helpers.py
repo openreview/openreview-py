@@ -20,8 +20,6 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     support_user = note.invitation.split('/-/')[0]
     builder = openreview.conference.ConferenceBuilder(client, support_user)
     builder.set_request_form_id(request_form_id)
-    # support_user = note.invitation.split('/-/')[0]
-    # builder.set_support_user(support_user)
 
     conference_start_date_str = 'TBD'
     conference_start_date = None
