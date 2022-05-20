@@ -13,7 +13,7 @@ class TestBuilderConsoles():
             before_keyword, keyword, after_keyword = after_keyword.partition(";")
             return before_keyword
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('PcConsoleTest.org/2020/Conference')
