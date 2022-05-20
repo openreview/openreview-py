@@ -8,7 +8,7 @@ class TestBibtex():
 
     def test_regular_names(self, client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2020/Workshop/MLITS')

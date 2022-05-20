@@ -18,7 +18,7 @@ class TestDoubleBlindConference():
 
     def test_create_conference(self, client):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -66,7 +66,7 @@ class TestDoubleBlindConference():
 
     def test_create_conference_with_name(self, client):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -117,7 +117,7 @@ class TestDoubleBlindConference():
 
     def test_create_conference_with_headers(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -201,7 +201,7 @@ class TestDoubleBlindConference():
 
     def test_enable_submissions(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -267,7 +267,7 @@ class TestDoubleBlindConference():
 
     def test_post_submissions(self, client, test_client, peter_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -405,7 +405,7 @@ class TestDoubleBlindConference():
 
     def test_recruit_reviewers(self, client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -690,7 +690,7 @@ class TestDoubleBlindConference():
 
     def test_set_program_chairs(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -743,7 +743,7 @@ class TestDoubleBlindConference():
 
     def test_close_submission(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -788,7 +788,7 @@ class TestDoubleBlindConference():
 
     def test_create_blind_submissions(self, client, test_client):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -915,7 +915,7 @@ class TestDoubleBlindConference():
 
     def test_author_groups_inorder(self, client):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -930,7 +930,7 @@ class TestDoubleBlindConference():
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -951,7 +951,7 @@ class TestDoubleBlindConference():
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -975,7 +975,7 @@ class TestDoubleBlindConference():
         reviewer2_client = helpers.create_user('reviewer@domain.com', 'Reviewer', 'Domain')
         ac_client = helpers.create_user('ac@mail.com', 'AreaChair', 'DoubleBlind')
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1055,7 +1055,7 @@ class TestDoubleBlindConference():
         now = datetime.datetime.utcnow()
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1150,7 +1150,7 @@ class TestDoubleBlindConference():
         now = datetime.datetime.utcnow()
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer2@mail.com', password='1234')
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1221,7 +1221,7 @@ class TestDoubleBlindConference():
         ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='ac@mail.com', password='1234')
         assert ac_client is not None, "Client is none"
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1262,7 +1262,7 @@ class TestDoubleBlindConference():
         ac_client = helpers.create_user('meta_additional@mail.com', 'MetaAdditionalFirstName', 'User')
         assert ac_client is not None, "Client is none"
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1305,7 +1305,7 @@ class TestDoubleBlindConference():
         ac_client = openreview.Client(baseurl = 'http://localhost:3000', username='meta_additional@mail.com', password='1234')
         assert ac_client is not None, "Client is none"
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1357,7 +1357,7 @@ class TestDoubleBlindConference():
 
     def test_open_decisions(self, client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1469,7 +1469,7 @@ class TestDoubleBlindConference():
 
     def test_consoles(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1540,7 +1540,7 @@ class TestDoubleBlindConference():
 
     def test_open_revise_submissions(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1595,11 +1595,11 @@ class TestDoubleBlindConference():
         posted_note = test_client.post_note(note)
         assert posted_note
 
-        assert len(test_client.get_references(referent = notes[0].original)) == 2
+        assert len(test_client.get_references(referent = notes[0].original)) == 3
 
     def test_withdraw_submission(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1687,7 +1687,7 @@ class TestDoubleBlindConference():
 
     def test_desk_reject_submission(self, client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1776,7 +1776,7 @@ class TestDoubleBlindConference():
 
     def test_paper_ranking(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1796,7 +1796,7 @@ class TestDoubleBlindConference():
 
     def test_edit_revision_as_pc(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         now = datetime.datetime.utcnow()
@@ -1836,7 +1836,7 @@ class TestDoubleBlindConference():
 
     def test_release_reviews(self, client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1859,7 +1859,7 @@ class TestDoubleBlindConference():
 
     def test_release_meta_reviews(self, client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1896,7 +1896,7 @@ class TestDoubleBlindConference():
 
     def test_release_decisions(self, client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -1915,7 +1915,7 @@ class TestDoubleBlindConference():
 
     def test_submission_revision_stage(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -2009,7 +2009,7 @@ url={'''
         assert 'venueid' in note.content and not note.content['venueid']
 
     def test_release_accepted_notes_without_revealing_authors(self, client, request_page, selenium):
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -2069,7 +2069,7 @@ url={'''
 
     def test_release_accepted_notes(self, client, request_page, selenium):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
@@ -2126,7 +2126,7 @@ url={'''
 
     def test_enable_camera_ready_revisions(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
