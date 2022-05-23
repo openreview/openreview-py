@@ -15,7 +15,7 @@ class TestBuilder():
 
     def test_override_homepage(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('test.org/2019/Conference')
@@ -39,7 +39,7 @@ class TestBuilder():
 
 
     def test_web_set_landing_page(self, client):
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id("ds.cs.umass.edu/Test_I/2019/Conference")
         conference = builder.get_result()
         group = client.get_group(id='ds.cs.umass.edu/Test_I/2019')
@@ -65,7 +65,7 @@ class TestBuilder():
 
     def test_modify_review_form(self, client, test_client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('test.org/2019/Conference')
@@ -171,7 +171,7 @@ class TestBuilder():
 
     def test_PC_console_sort_by_options(self, client, test_client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('sortTest.org/2019/Conference')

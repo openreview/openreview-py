@@ -57,6 +57,7 @@ class Conference(object):
         self.client = client
         self.request_form_id = None
         self.support_user = 'OpenReview.net/Support'
+        self.venue_revision_name = 'Venue_Revision'
         self.new = False
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
@@ -935,15 +936,7 @@ class Conference(object):
             blind_content = {
                 'authors': ['Anonymous'],
                 'authorids': [self.get_authors_id(number=note.number)],
-                '_bibtex': None
             }
-            if existing_blind_note:
-                if 'venueid' in existing_blind_note.content:
-                    blind_content['venueid'] = existing_blind_note.content['venueid']
-                if 'venue' in existing_blind_note.content:
-                    blind_content['venue'] = existing_blind_note.content['venue']
-                if '_bibtex' in existing_blind_note.content:
-                    blind_content['_bibtex'] = existing_blind_note.content['_bibtex']
 
             for field in hide_fields:
                 blind_content[field] = ''
@@ -962,16 +955,26 @@ class Conference(object):
 
             blind_note = self.client.post_note(blind_note)
 
-            if self.submission_stage.public and 'venue' not in blind_content:
-                blind_content['_bibtex'] = tools.generate_bibtex(
+            generate_bibtex = not existing_blind_note or existing_blind_note and 'venue' not in existing_blind_note.content
+
+            if self.submission_stage.public and generate_bibtex:
+                bibtex = tools.generate_bibtex(
                     note=note,
                     venue_fullname=self.name,
                     url_forum=blind_note.id,
                     year=str(self.get_year()))
 
-                blind_note.content = blind_content
-
-                blind_note = self.client.post_note(blind_note)
+                revision_note = self.client.post_note(openreview.Note(
+                    invitation = f'{self.support_user}/-/{self.venue_revision_name}',
+                    forum = note.id,
+                    referent = note.id,
+                    readers = ['everyone'],
+                    writers = [self.id],
+                    signatures = [self.id],
+                    content = {
+                        '_bibtex': bibtex
+                    }
+                ))
             blinded_notes.append(blind_note)
 
         # Update PC console with double blind submissions
@@ -1666,8 +1669,12 @@ Program Chairs
             #double-blind
             if self.submission_stage.double_blind:
                 release_authors = is_release_authors(note_accepted)
-                submission.content = {
-                    '_bibtex': tools.generate_bibtex(
+                submission.content = {}
+                if not release_authors:
+                    submission.content['authors'] = ['Anonymous']
+                    submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
+
+                bibtex = tools.generate_bibtex(
                         openreview.Note.from_json(submission.details['original']),
                         venue_fullname=self.name,
                         year=str(self.year),
@@ -1675,13 +1682,9 @@ Program Chairs
                         paper_status = 'accepted' if note_accepted else 'rejected',
                         anonymous=(not release_authors)
                     )
-                }
-                if not release_authors:
-                    submission.content['authors'] = ['Anonymous']
-                    submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
             #single-blind
             else:
-                submission.content['_bibtex'] = tools.generate_bibtex(
+                bibtex = tools.generate_bibtex(
                     submission,
                     venue_fullname=self.name,
                     year=str(self.year),
@@ -1689,19 +1692,33 @@ Program Chairs
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=False
                 )
-            #add venue_id if note accepted and venue to all notes
+
+            self.client.post_note(submission)
+
+            #add venue_id, venue and bibtex revision to all notes
             venue = self.short_name
             decision_option = decision_note.content['decision'] if decision_note else ''
-            submission.content['venue'] = tools.decision_to_venue(venue, decision_option)
-            if note_accepted:
-                venueid = self.id
-                submission.content['venueid'] = venueid
-            self.client.post_note(submission)
+            venue = tools.decision_to_venue(venue, decision_option)
+
+            original_id = submission.id if not self.submission_stage.double_blind else submission.details['original']['id']
+            revision_note = self.client.post_note(openreview.Note(
+                invitation = f'{self.support_user}/-/{self.venue_revision_name}',
+                forum = original_id,
+                referent = original_id,
+                readers = ['everyone'],
+                writers = [self.id],
+                signatures = [self.id],
+                content = {
+                    'venue': venue,
+                    'venueid': self.id,
+                    '_bibtex': bibtex
+                }
+            ))
 
         venue_heading_map = {}
         if decision_heading_map:
             for decision, tab_name in decision_heading_map.items():
-                venue_heading_map[tools.decision_to_venue(venue, decision)] = tab_name
+                venue_heading_map[tools.decision_to_venue(self.short_name, decision)] = tab_name
         
         if venue_heading_map:
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
@@ -1856,6 +1873,7 @@ class SubmissionStage(object):
             create_groups=False,
             # We need to assume the Official Review super invitation is already created and active
             create_review_invitation=False,
+            withdraw_submission_exp_date=None,
             withdrawn_submission_public=False,
             withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=False,
@@ -1878,6 +1896,7 @@ class SubmissionStage(object):
         self.email_pcs = email_pcs
         self.create_groups = create_groups
         self.create_review_invitation = create_review_invitation
+        self.withdraw_submission_exp_date = withdraw_submission_exp_date
         self.withdrawn_submission_public = withdrawn_submission_public
         self.withdrawn_submission_reveal_authors = withdrawn_submission_reveal_authors
         self.email_pcs_on_withdraw = email_pcs_on_withdraw
@@ -2669,6 +2688,7 @@ class ConferenceBuilder(object):
             email_pcs=False,
             create_groups=False,
             create_review_invitation=False,
+            withdraw_submission_exp_date=None,
             withdrawn_submission_public=False,
             withdrawn_submission_reveal_authors=False,
             email_pcs_on_withdraw=False,
@@ -2701,6 +2721,7 @@ class ConferenceBuilder(object):
             email_pcs,
             create_groups,
             create_review_invitation,
+            withdraw_submission_exp_date,
             withdrawn_submission_public,
             withdrawn_submission_reveal_authors,
             email_pcs_on_withdraw,
@@ -2754,6 +2775,9 @@ class ConferenceBuilder(object):
 
     def set_request_form_id(self, id):
         self.conference.request_form_id = id
+
+    def set_support_user(self, support_user):
+        self.conference.support_user = support_user
 
     def set_default_reviewers_load(self, default_load):
         # Required to render a default load in the WebField template
