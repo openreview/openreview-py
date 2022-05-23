@@ -92,6 +92,25 @@ class Helpers:
             weight = weight
         ))
 
+    @staticmethod
+    def respond_invitation(selenium, request_page, url, accept):
+
+        request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
+
+        container = selenium.find_element_by_class_name('note_editor')
+
+        buttons = container.find_elements_by_tag_name("button")
+        assert len(buttons) == 2
+
+        if accept:
+            buttons[0].click()
+        else:
+            buttons[1].click()
+
+        time.sleep(1)
+
+        Helpers.await_queue()        
+
 @pytest.fixture(scope="class")
 def helpers():
     return Helpers

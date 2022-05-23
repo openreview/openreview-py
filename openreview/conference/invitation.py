@@ -1810,6 +1810,14 @@ class InvitationBuilder(object):
 
         reduced_load = options.get('reduced_load_on_decline', None)
 
+        if reduced_load:
+            reply['content']['quota'] = {
+                "description": "Please select the number of submissions that you would be comfortable reviewing.",
+                "required": False,
+                "value-dropdown": reduced_load,
+                "order": 6
+            }
+
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
                 pre_content = pre.read()

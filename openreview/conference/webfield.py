@@ -323,30 +323,53 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             return self.__update_invitation(invitation, content)
 
-    def set_recruit_page(self, conference_id, invitation, options = {}, reduced_load_id=None):
+    def set_recruit_page(self, conference, invitation):
 
-        default_header = {
-            'title': conference_id,
-            'subtitle': conference_id,
-            'location': 'TBD',
-            'date': 'TBD',
-            'website': 'nourl',
-            'instructions': '',
-            'deadline': 'TBD'
-        }
+        #accept_message = f"### Thank you for accepting this invitation from {conference.get_homepage_options().get('title')}.\n- Log in to your OpenReview account. If you do not already have an account, you can sign up (here)[https://openreview.net/signup]\n- Ensure that the email address [TODO] that received this invitation is linked to your profile page and has been confirmed.\n- Complete your pending (tasks)[https://openreview.net/tasks] (if any) for {conference.short_name}"
+        accept_message = f'### Thank you for accepting this invitation from {conference.get_homepage_options().get("title")}.\n\n- Log in to your OpenReview account. If you do not already have an account, you can sign up [here](https://openreview.net/signup).\n\n- Ensure that the email address [TODO] that received this invitation is linked to your profile page and has been confirmed.\n\n- Complete your pending [tasks](https://openreview.net/tasks) (if any) for {conference.short_name}.'
 
-        header = self.__build_options(default_header, options)
+# ## Please complete the following steps now:
+# - Log in to your OpenReview account. If you do not already have an account, you can sign up (here)[https://openreview.net/signup]
+# - Ensure that the email address [TODO] that received this invitation is linked to your profile page and has been confirmed.
+# - Complete your pending (tasks)[https://openreview.net/tasks] (if any) for {conference_id}
+# '''
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitResponseWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-            if reduced_load_id:
-                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + reduced_load_id + "';")
-            else:
-                ## Reduce load is disabled, so we should set an invalid invitation
-                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/no_name' + "';")
-            return self.__update_invitation(invitation, content)
+        decline_message = f"### You have declined the invitation from {conference.get_homepage_options().get('title')}."
+
+        quota_message = "### In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking the option below:"
+
+        properties = ''
+
+        if 'quota' in invitation.reply['content']:
+            properties = '''
+    quotaMessage: ''' + json.dumps(quota_message) + ''',
+    allowReducedQuota: true            
+'''
+        
+        new_webfield_content = '''// Webfield component
+return {
+  component: 'RecruitmentForm',
+  version: 1,
+  properties: {
+    header: ''' + json.dumps(conference.get_homepage_options(), indent=2) + ''',
+    acceptMessage: ''' + json.dumps(accept_message) + ''',
+    declineMessage: ''' + json.dumps(decline_message) + ''',
+    ''' + properties + '''
+  }
+}        
+'''
+        return self.__update_invitation(invitation, new_webfield_content)
+
+        # with open(os.path.join(os.path.dirname(__file__), 'templates/recruitResponseWebfield.js')) as f:
+        #     content = f.read()
+        #     content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
+        #     content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+        #     if reduced_load_id:
+        #         content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + reduced_load_id + "';")
+        #     else:
+        #         ## Reduce load is disabled, so we should set an invalid invitation
+        #         content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/no_name' + "';")
+        #     return self.__update_invitation(invitation, content)
 
     def set_paper_recruitment_page(self, conference, invitation):
 

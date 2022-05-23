@@ -192,13 +192,10 @@ class TestARRVenue():
         ## Accept to be a reviewer
         messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
-        # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        # decline_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         decline_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, accept_url, alert=True)
-        helpers.await_queue()
+        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers')
         assert len(accepted_group.members) == 1
         assert '~Area_CMUChair1' in accepted_group.members
@@ -207,19 +204,16 @@ class TestARRVenue():
         ## Accept to be an AC
         messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as Area Chair')
         text = messages[0]['content']['text']
-        # accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, accept_url, alert=True)
-        helpers.await_queue()
+        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
         assert len(accepted_group.members) == 1
         assert '~Area_CMUChair1' in accepted_group.members
         assert client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Area Chair Invitation accepted')
 
         ## Decline to be a reviewer
-        request_page(selenium, decline_url, alert=True)
-        helpers.await_queue()
+        helpers.respond_invitation(selenium, request_page, decline_url, accept=False)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers')
         assert len(accepted_group.members) == 0
         declined_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers/Declined')
@@ -330,8 +324,7 @@ class TestARRVenue():
         text = messages[0]['content']['text']
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, accept_url, alert=True)
-        helpers.await_queue()
+        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Ethics_Chairs')
         assert len(accepted_group.members) == 1
         assert 'ethic_chair@arr.org' in accepted_group.members
@@ -373,8 +366,7 @@ class TestARRVenue():
         text = messages[0]['content']['text']
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, accept_url, alert=True)
-        helpers.await_queue()
+        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers')
         assert len(accepted_group.members) == 1
         assert 'ethic_reviewer@arr.org' in accepted_group.members

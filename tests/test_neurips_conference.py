@@ -154,17 +154,19 @@ class TestNeurIPSConference():
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
         assert messages[0]['content']['text'].startswith('<p>Dear SAC One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
-
+        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
+        
         messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2021] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
         assert messages[0]['content']['text'].startswith('<p>Dear SAC Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
 
-        helpers.await_queue()
-        assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@google.com', 'sac2@gmail.com']
+        sac_group = client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs')
+        assert len(sac_group.members) == 2
+        assert 'sac1@google.com' in sac_group.members
+        assert 'sac2@gmail.com' in sac_group.members
 
         sac_client = openreview.Client(username='sac1@google.com', password='1234')
         request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token, wait_for_element='notes')
@@ -199,7 +201,7 @@ class TestNeurIPSConference():
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, accept_url, alert=True)
+        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(accepted_group.members) == 1
         assert 'ac1@mit.edu' in accepted_group.members
@@ -212,13 +214,13 @@ class TestNeurIPSConference():
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 0
 
-        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        helpers.respond_invitation(selenium, request_page, reject_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
-        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
+        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking the option below:' == messages[1].text
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 1
         assert 'ac1@mit.edu' in rejected_group.members
@@ -463,13 +465,13 @@ class TestNeurIPSConference():
         assert 'pc@neurips.cc' in messages[0]['content']['text']
         reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
 
-        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
-        assert notes
+        helpers.respond_invitation(selenium, request_page, reject_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
+        assert notes        
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
-        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
+        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking the option below:' == messages[1].text
 
         assert len(client.get_group('NeurIPS.cc/2021/Conference/Reviewers').members) == 0
 
@@ -530,7 +532,7 @@ class TestNeurIPSConference():
         assert messages[0]['content']['subject'] == 'Reminder: [NeurIPS 2021] Invitation to serve as Reviewer'
         assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
         reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, reject_url, alert=True)
+        helpers.respond_invitation(selenium, request_page, reject_url, accept=False)
 
         helpers.await_queue()
 
@@ -629,7 +631,7 @@ class TestNeurIPSConference():
         messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to serve as Ethics Reviewer')
         assert messages and len(messages) == 1
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
 
         helpers.await_queue()
 
@@ -1165,7 +1167,7 @@ class TestNeurIPSConference():
         now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         email_template='''
-As an Area Chair for NeurIPS 2021, I’d like to ask for your expert review of a submission, titled: {title}:
+As an Area Chair for NeurIPS 2021, I'd like to ask for your expert review of a submission, titled: {title}:
 
 {abstract}
 
