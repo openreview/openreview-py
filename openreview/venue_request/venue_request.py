@@ -164,14 +164,28 @@ class VenueStages():
                 'default': 'No, do not email program chairs about received reviews',
                 'order': 27
             },
+            'review_rating_field_name': {
+                'description': "Name of the rating field for the review invitation, default is \'rating\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'. For reference, please see: https://docs.openreview.net/reference/default-forms/default-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'rating',
+                'order': 28
+            },
+            'review_confidence_field_name': {
+                'description': "Name of the confidence field for the review invitation, default is \'confidence\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'. For reference, please see: https://docs.openreview.net/reference/default-forms/default-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'confidence',
+                'order': 29
+            },
             'additional_review_form_options': {
-                'order' : 28,
+                'order': 30,
                 'value-dict': {},
                 'required': False,
                 'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'remove_review_form_options': {
-                'order': 29,
+                'order': 31,
                 'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
@@ -998,13 +1012,19 @@ class VenueRequest():
                 'default': 'No, wait until the submission deadline has passed to make them public.',
                 'order': 24
             },
+            'withdraw_submission_expiration': {
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'required': False,
+                'order': 25,
+            },
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
                 'value-radio': [
                     'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
-                'order': 25
+                'order': 26
             },
             'withdrawn_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1012,7 +1032,7 @@ class VenueRequest():
                     'Yes, author identities of withdrawn submissions should be revealed.',
                     'No, author identities of withdrawn submissions should not be revealed.'],
                 'default': 'No, author identities of withdrawn submissions should not be revealed.',
-                'order': 26
+                'order': 27
             },
             'email_pcs_for_withdrawn_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
@@ -1021,7 +1041,7 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 27
+                'order': 28
             },
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
@@ -1029,7 +1049,7 @@ class VenueRequest():
                     'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
-                'order': 28
+                'order': 29
             },
             'desk_rejected_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1037,12 +1057,12 @@ class VenueRequest():
                     'Yes, author identities of desk rejected submissions should be revealed.',
                     'No, author identities of desk rejected submissions should not be revealed.'],
                 'default': 'No, author identities of desk rejected submissions should not be revealed.',
-                'order': 29
+                'order': 30
             },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 30
+                'order': 31
             },
             'email_pcs_for_new_submissions': {
                 'description': 'Do you want email notifications to PCs when there is a new submission?',
@@ -1051,44 +1071,44 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 31
+                'order': 32
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 32
+                'order': 33
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 33
+                'order': 34
             },
             'submission_name': {
                 'value-regex': '\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
-                'order':34,
+                'order': 35,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'reviewer_roles': {
                 'values-regex': '.*',
                 'default': ['Reviewers'],
-                'order':35,
+                'order': 36,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Area_Chairs'],
-                'order':36,
+                'order': 37,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'senior_area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Senior_Area_Chairs'],
-                'order':37,
+                'order': 38,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }

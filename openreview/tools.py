@@ -834,28 +834,46 @@ def concurrent_get(client, get_function, **params):
     """
     max_workers = min(cpu_count() - 1, 6)
 
-    params.update({
-        'offset': params.get('offset') or 0,
-        'with_count': True
-    })
-
-    docs, count = get_function(**params)
-    if params.get('limit') or float('inf') <= client.limit:
+    if (params.get('limit') or float('inf')) <= client.limit:
+        docs = get_function(**params)
         return docs
-
-    if count <= client.limit:
-        return docs
+    else:
+        get_count_params = params.copy()
+        if get_count_params.get('offset') is not None:
+            get_count_params.pop('offset')
+        get_count_params['with_count'] = True
+        get_count_params['limit'] = 1
+        _, count = get_function(**get_count_params)
 
     params['with_count'] = False
 
-    offset_list = list(range(client.limit, min(params.get('limit') or count, count), client.limit))
+    limit = params.get('limit')
+    if (limit or client.limit) > client.limit:
+        params.pop('limit')
+    docs = get_function(**params)
+
+    offset = params.get('offset') or 0
+
+    if (count - offset) <= client.limit:
+        return docs
+
+    start = offset + client.limit
+
+    if limit is None:
+        end = count
+    else:
+        end = min(offset + limit, count)
+
+    offset_list = list(range(start, end, client.limit))
 
     futures = []
     gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for offset in offset_list:
+        for count, offset in enumerate(offset_list):
             params['offset'] = offset
+            if (count + 1) == len(offset_list) and (end - offset) > 0:
+                params['limit'] = end - offset
             futures.append(executor.submit(get_function, **params))
 
         for future in futures:

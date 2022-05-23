@@ -155,7 +155,7 @@ class Assignment(object):
                 group_id=committee_id,
                 paper_id=note.id,
                 model='specter+mfr')
-            job_id = job.get('job_id')
+            job_id = job.get('jobId')
             response = self.client.get_expertise_results(job_id, wait_for_complete=True)
             return response.get('results', [])
         except Exception as e:

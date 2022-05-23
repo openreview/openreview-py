@@ -625,7 +625,7 @@ class Client(object):
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return groups, response.json()['count']
 
         return groups
@@ -655,12 +655,12 @@ class Client(object):
 
         params = {
             'id': id,
-            'regex': id,
-            'member': id,
-            'signatory': id,
-            'web': id,
-            'limit': id,
-            'offset': id,
+            'regex': regex,
+            'member': member,
+            'signatory': signatory,
+            'web': web,
+            'limit': limit,
+            'offset': offset,
             'with_count': with_count
         }
         return tools.concurrent_get(self, self.get_groups, **params)
@@ -739,7 +739,7 @@ class Client(object):
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return invitations, response.json()['count']
 
         return invitations
@@ -911,7 +911,7 @@ class Client(object):
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return notes, response.json()['count']
 
         return [Note.from_json(n) for n in response.json()['notes']]
@@ -1061,7 +1061,7 @@ class Client(object):
 
         references = [Note.from_json(n) for n in response.json()['references']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return references, response.json()['count']
 
         return references
@@ -1136,7 +1136,7 @@ class Client(object):
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return tags, response.json()['count']
 
         return tags
@@ -1194,7 +1194,7 @@ class Client(object):
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return edges, response.json()['count']
 
         return edges
@@ -1785,7 +1785,7 @@ class Client(object):
     def get_expertise_status(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/status', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1793,7 +1793,7 @@ class Client(object):
     def get_expertise_results(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/results', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()

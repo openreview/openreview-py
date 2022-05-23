@@ -17,14 +17,21 @@ def process_update(client, note, invitation, existing_note):
     EMAIL_PROGRAM_CHAIRS = False
     HIDE_FIELDS = []
 
+    forum_note = client.get_note(note.forum)
+    for i in range(len(SUBMISSION_READERS)):
+        SUBMISSION_READERS[i] = SUBMISSION_READERS[i].format(number=forum_note.number)
+
+    PAPER_AUTHORS_ID = PAPER_AUTHORS_ID.format(number=forum_note.number)
+    PAPER_REVIEWERS_ID = PAPER_REVIEWERS_ID.format(number=forum_note.number)
+    PAPER_AREA_CHAIRS_ID = PAPER_AREA_CHAIRS_ID.format(number=forum_note.number)
+    PAPER_SENIOR_AREA_CHAIRS_ID = PAPER_SENIOR_AREA_CHAIRS_ID.format(number=forum_note.number)
+
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
         committee.append(PAPER_AREA_CHAIRS_ID)
     if PAPER_SENIOR_AREA_CHAIRS_ID:
         committee.append(PAPER_SENIOR_AREA_CHAIRS_ID)
     committee.append(PROGRAM_CHAIRS_ID)
-
-    forum_note = client.get_note(note.forum)
 
     if note.ddate:
         ## Undo withdraw submission
