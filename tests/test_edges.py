@@ -5,7 +5,7 @@ import time
 class TestEdges:
 
     def test_save_bulk (self, client, test_client):
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2020/Workshop/MLITS')
