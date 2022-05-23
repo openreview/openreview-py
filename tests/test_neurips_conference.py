@@ -156,6 +156,13 @@ class TestNeurIPSConference():
         assert messages[0]['content']['text'].startswith('<p>Dear SAC One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
+
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Senior Area Chair Invitation accepted')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''<p>Thank you for accepting the invitation to be a Senior Area Chair for NeurIPS 2021.</p>
+<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>
+<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>
+'''
         
         messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2021] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
@@ -484,7 +491,7 @@ class TestNeurIPSConference():
         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'].startswith('<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
+        assert messages[0]['content']['text'] == '<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n'
 
         notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Recruit_Reviewers', content={'user': 'reviewer1@umass.edu'})
         assert notes
@@ -545,7 +552,7 @@ class TestNeurIPSConference():
         messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2021] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'].startswith('<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
+        assert messages[0]['content']['text'] =='<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n'
 
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 

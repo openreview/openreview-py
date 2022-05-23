@@ -1819,8 +1819,9 @@ class InvitationBuilder(object):
                 "order": 6
             }
 
+        post_proces_template = 'recruit_reviewers_post_process.py' if conference.use_recruitment_template else 'legacy_recruit_reviewers_post_process.py'
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/' + post_proces_template)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
                 pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")
