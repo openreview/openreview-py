@@ -177,6 +177,13 @@ var loadData = function() {
   );
 };
 
+var updateEarlyLateTaskDuedate = function(earlylateTaskDueDate, task) {
+  if ((earlylateTaskDueDate == 0 || earlylateTaskDueDate > task.duedate) && !task.complete) {
+    earlylateTaskDueDate = task.duedate;
+  }
+  return earlylateTaskDueDate;
+}
+
 var formatData = function(
   aeByNumber,
   reviewersByNumber,
@@ -328,95 +335,111 @@ var formatData = function(
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
     var cameraReadyTask = null;
     var cameraReadyVerificationTask = null;
+    var earlylateTaskDueDate = 0;
 
     if (aeRecommendationInvitation) {
       var recommendationCount = aeRecommendations[submission.id] || 0;
-      tasks.push({
+      var task = {
         id: aeRecommendationInvitation.id,
         cdate: aeRecommendationInvitation.cdate,
         duedate: aeRecommendationInvitation.duedate,
         complete: recommendationCount >= 3,
         replies: Array(recommendationCount).fill(1)
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);
     }
 
     if (reviewApprovalInvitation) {
-      tasks.push({
+      var task = {
         id: reviewApprovalInvitation.id,
         cdate: reviewApprovalInvitation.cdate,
         duedate: reviewApprovalInvitation.duedate,
         complete: reviewApprovalNotes.length > 0,
         replies: reviewApprovalNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);
     }
 
     if (reviewerAssignmentInvitation) {
       var reviewers = reviewersByNumber[number] || [];
-      tasks.push({
+      var task = {
         id: reviewerAssignmentInvitation.id,
         cdate: reviewerAssignmentInvitation.cdate,
         duedate: reviewerAssignmentInvitation.duedate,
         complete: reviewers.length >= 3,
         replies: reviewers
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);     
     }
 
     if (reviewInvitation) {
-      tasks.push({
+      var task = {
         id: reviewInvitation.id,
         cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
         complete: reviewNotes.length >= 3,
         replies: reviewNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);         
     }
 
     if (officialRecommendationInvitation) {
-      tasks.push({
+      var task = {
         id: officialRecommendationInvitation.id,
         cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
         complete: officialRecommendationNotes.length >= 3,
         replies: officialRecommendationNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);       
     }
 
     if (reviewerRatingInvitations.length) {
-      tasks.push({
+      var task = {
         id: getInvitationId(number, 'Reviewer_Rating'),
         cdate: reviewerRatingInvitations[0].cdate,
         duedate: reviewerRatingInvitations[0].duedate,
         complete: reviewerRatingReplies.length == reviewNotes.length,
         replies: reviewerRatingReplies
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);      
     }
 
     if (decisionInvitation) {
-      tasks.push({
+      var task = {
         id: decisionInvitation.id,
         cdate: decisionInvitation.cdate,
         duedate: decisionInvitation.duedate,
         complete: decisionNotes.length > 0,
         replies: decisionNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);      
     }
 
     if (decisionApprovalInvitation) {
-      var tempTask = {
+      var task = {
         id: decisionApprovalInvitation.id,
         cdate: decisionApprovalInvitation.cdate,
         duedate: decisionApprovalInvitation.duedate,
         complete: decisionApprovalNotes.length > 0,
         replies: decisionApprovalNotes
       };
-      tasks.push(tempTask);
-      if (!tempTask.complete) {
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);      
+      if (!task.complete) {
         incompleteEicTasks.push([
           {
             id: formattedSubmission.id,
             title: formattedSubmission.content.title || formattedSubmission.number
           },
-          tempTask
+          task
         ]);
       }
     }
@@ -430,7 +453,8 @@ var formatData = function(
         complete: complete,
         replies: complete ? [1] : []
       };
-      tasks.push(cameraReadyTask);
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, cameraReadyTask);
+      tasks.push(cameraReadyTask);      
     }
 
     if (cameraReadyVerificationInvitation) {
@@ -441,7 +465,8 @@ var formatData = function(
         complete: cameraReadyVerificationNotes.length > 0,
         replies: cameraReadyVerificationNotes
       };
-      tasks.push(cameraReadyVerificationTask);
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, cameraReadyVerificationTask);
+      tasks.push(cameraReadyVerificationTask);      
     }
 
     var reviews = reviewNotes;
@@ -604,8 +629,10 @@ var formatData = function(
         reviewPending: reviewInvitation && reviewNotes.length < 3,
         recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3,
         ratingPending: reviewerRatingInvitations.length && reviewerRatingReplies.length < reviewNotes.length,
+        decisionPending: decisionInvitation && decisionNotes.length == 0,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
         cameraReadyPending: (cameraReadyTask && !cameraReadyTask.complete) || (cameraReadyVerificationTask && !cameraReadyVerificationTask.complete),
+        earlylateTaskDueDate: earlylateTaskDueDate,
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
         actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
@@ -645,7 +672,7 @@ var formatData = function(
   });
   var underDecisionStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
-      && (row.actionEditorProgressData.ratingPending || row.actionEditorProgressData.decisionApprovalPending);
+      && (row.actionEditorProgressData.ratingPending || row.actionEditorProgressData.decisionPending || row.actionEditorProgressData.decisionApprovalPending);
   });
   var cameraReadyStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
@@ -763,7 +790,8 @@ var renderTable = function(container, rows) {
       Number_of_Recommendations_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedRecommendations; },
       Decision: function(row) { return row.actionEditorProgressData.recommendation; },
       Status: function(row) { return row.status; },
-      Review_Due_Date: function(row) { return row.reviewProgressData.duedate; }
+      Review_Due_Date: function(row) { return row.reviewProgressData.duedate; },
+      Earliest_Late_Due_Date: function(row) { return row.actionEditorProgressData.earlylateTaskDueDate; }
     },
     searchProperties: {
       number: ['submissionNumber.number'],

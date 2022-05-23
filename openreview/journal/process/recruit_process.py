@@ -27,6 +27,7 @@ def process(client, note, invitation):
 
     if (hashkey == key and client.get_groups(id=ACTION_EDITOR_INVITED_ID, member=user)):
         if (response == 'Yes'):
+            action = 'accepted'
             client.remove_members_from_group(ACTION_EDITOR_DECLINED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_ACCEPTED_ID, user)
 
@@ -38,7 +39,8 @@ If you would like to change your decision, please click the Decline link in the 
 
             response =  client.post_message(subject, [user], message, parentGroup=ACTION_EDITOR_ACCEPTED_ID)
 
-        if (response == 'No'):
+        elif (response == 'No'):
+            action = 'declined'
             client.remove_members_from_group(ACTION_EDITOR_ACCEPTED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_DECLINED_ID, user)
 
@@ -50,8 +52,6 @@ If you would like to change your decision, please click the Accept link in the p
 '''.format(ACTION_EDITOR_NAME=ACTION_EDITOR_NAME, SHORT_PHRASE=SHORT_PHRASE)
 
             response =  client.post_message(subject, [user], message, parentGroup=ACTION_EDITOR_DECLINED_ID)
-
-        action = 'accepted' if response == 'Yes' else 'declined'
 
         if JOURNAL_REQUEST_ID:
             recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID, sort='number:desc'))

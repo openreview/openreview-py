@@ -11,7 +11,7 @@ class TestLegacyInvitations():
 
     def test_single_blind_conference(self, client, test_client, selenium, request_page, helpers) :
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2019/Workshop/MLITS')

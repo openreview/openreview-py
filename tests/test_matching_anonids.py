@@ -22,7 +22,7 @@ class TestMatchingWithAnonIds():
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
         pc_client = helpers.create_user('pc1@uai.com', 'PCFirstName', 'UAI')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id('auai.org/UAI/2021/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
         builder.set_conference_short_name('UAI 2021')

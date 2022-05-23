@@ -28,6 +28,18 @@ def process(client, note, invitation):
                 if matching_invitation:
                     matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
                     client.post_invitation(matching_invitation)
+            withdraw_submission_expiration = forum_note.content.get('withdraw_submission_expiration')
+            if withdraw_submission_expiration:
+                try:
+                    withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d %H:%M')
+                except ValueError:
+                    withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d')
+                paper_withdraw_super_invitation = openreview.tools.get_invitation(
+                    client, conference.get_invitation_id('Withdraw')
+                )
+                if paper_withdraw_super_invitation:
+                    paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
+                    client.post_invitation(paper_withdraw_super_invitation)
 
             if conference.use_ethics_chairs or conference.use_ethics_reviewers:
                 client.post_invitation(openreview.Invitation(

@@ -17,6 +17,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     if not note.content.get('venue_id') and not note.content.get('conference_id'):
         raise openreview.OpenReviewException('venue_id is not set')
 
+    support_user = note.invitation.split('/-/')[0]
     builder = openreview.conference.ConferenceBuilder(client, support_user)
     builder.set_request_form_id(request_form_id)
 
@@ -132,6 +133,12 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     withdrawn_submission_public = 'Yes' in note.content.get('withdrawn_submissions_visibility', '')
     email_pcs_on_withdraw = 'Yes' in note.content.get('email_pcs_for_withdrawn_submissions', '')
     desk_rejected_submission_public = 'Yes' in note.content.get('desk_rejected_submissions_visibility', '')
+    withdraw_submission_exp_date = note.content.get('withdraw_submission_expiration')
+    if withdraw_submission_exp_date:
+        try:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            withdraw_submission_exp_date = datetime.datetime.strptime(withdraw_submission_exp_date, '%Y/%m/%d')
 
     # Authors can not be anonymized only if venue is double-blind
     withdrawn_submission_reveal_authors = 'Yes' in note.content.get('withdrawn_submissions_author_anonymity', '')
@@ -161,6 +168,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         email_pcs=email_pcs,
         create_groups=create_groups,
         create_review_invitation=create_review_invitation,
+        withdraw_submission_exp_date=withdraw_submission_exp_date,
         withdrawn_submission_public=withdrawn_submission_public,
         withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
         email_pcs_on_withdraw=email_pcs_on_withdraw,
@@ -275,7 +283,9 @@ def get_review_stage(request_forum):
         release_to_reviewers = release_to_reviewers,
         email_pcs = (request_forum.content.get('email_program_chairs_about_reviews', '').startswith('Yes')),
         additional_fields = review_form_additional_options,
-        remove_fields = review_form_remove_options
+        remove_fields = review_form_remove_options,
+        rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
+        confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence')
     )
 
 def get_ethics_review_stage(request_forum):
@@ -312,7 +322,7 @@ def get_ethics_review_stage(request_forum):
     flagged_submissions = []
     if request_forum.content.get('ethics_review_submissions'):
         flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
-    
+
     return openreview.EthicsReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
@@ -322,7 +332,7 @@ def get_ethics_review_stage(request_forum):
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options,
         submission_numbers = flagged_submissions
-    )    
+    )
 
 def get_meta_review_stage(client, request_forum):
     meta_review_start_date = request_forum.content.get('meta_review_start_date', '').strip()
