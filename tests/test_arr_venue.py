@@ -113,8 +113,8 @@ class TestARRVenue():
                 'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{name}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -141,8 +141,8 @@ class TestARRVenue():
                 'invitee_role': 'Reviewers',
                 'invitee_details': reviewer_details,
                 'allow_role_overlap': 'Yes',
-                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{name}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -169,8 +169,8 @@ class TestARRVenue():
                 'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{name}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -247,8 +247,8 @@ class TestARRVenue():
                 'invitee_role': 'Area_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{name}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -274,8 +274,8 @@ class TestARRVenue():
                 'invitee_role': 'Reviewers',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{name}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -306,8 +306,8 @@ class TestARRVenue():
                 'invitee_role': 'Ethics_Chairs',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{name}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -350,8 +350,8 @@ class TestARRVenue():
                 'invitee_role': 'Ethics_Reviewers',
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{name}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,

@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import os
+import string
 
 from deprecated.sphinx import deprecated
 import sys
@@ -1689,12 +1690,18 @@ def recruit_reviewer(client, user, first,
     )
 
     # format the message defined above
-    personalized_message = recruit_message.format(
-        name = first,
-        accept_url = url + "Yes",
-        decline_url = url + "No",
-        contact_info = contact_info
-    )
+    personalized_message = recruit_message.replace("{{fullname}}", first) if first else recruit_message
+    personalized_message = personalized_message.replace("{{accept_url}}", url+"Yes")
+    personalized_message = personalized_message.replace("{{decline_url}}", url+"No")
+    personalized_message = personalized_message.replace("{{contact_info}}", contact_info)
+    # personalized_message = recruit_message.format(
+    #     name = first,
+    #     accept_url = url + "Yes",
+    #     decline_url = url + "No",
+    #     contact_info = contact_info
+    # )
+    print(personalized_message)
+    personalized_message.format()
 
     client.add_members_to_group(reviewers_invited_id, [user])
 
