@@ -655,12 +655,12 @@ class Client(object):
 
         params = {
             'id': id,
-            'regex': id,
-            'member': id,
-            'signatory': id,
-            'web': id,
-            'limit': id,
-            'offset': id,
+            'regex': regex,
+            'member': member,
+            'signatory': signatory,
+            'web': web,
+            'limit': limit,
+            'offset': offset,
             'with_count': with_count
         }
         return tools.concurrent_get(self, self.get_groups, **params)

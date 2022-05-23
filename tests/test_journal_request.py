@@ -380,3 +380,15 @@ TJ22 Editors-in-Chief
         assert len(messages) == 3
         assert messages[2]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22 by Second AE.</p>')
         assert messages[2]['content']['replyTo'] == 'ae_journal2@mail.com'
+
+        #accept reviewer invitation
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue(openreview_client)
+
+        #check recruitment response posted as reply of lastest recruitment note
+        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
+        assert recruitment_response
+        assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response.content['comment']['value']
