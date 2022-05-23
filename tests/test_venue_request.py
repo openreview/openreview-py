@@ -1637,6 +1637,50 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             assert sub_decision_note.content['decision'] == sub_decisions[i][1]
             assert sub_decision_note.content['comment'] == sub_decisions[i][2]
 
+        # reveal decisions to authors
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'value-regex': '[\\S\\s]{1,5000}',
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'required': False,
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        assert decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        decision_note = test_client.get_notes(
+            invitation='{venue_id}/Paper.*/-/Decision'.format(venue_id=venue['venue_id'])
+        )[0]
+
+        assert f'TEST.cc/2030/Conference/Paper1/Authors' in decision_note.readers
+        assert f'TEST.cc/2030/Conference/Paper1/Reviewers' in decision_note.readers
+        assert not decision_note.nonreaders
+
         #get post_decision invitation
         with pytest.raises(openreview.OpenReviewException) as openReviewError:
             post_decision_invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
