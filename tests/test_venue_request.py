@@ -27,6 +27,7 @@ class TestVenueRequest():
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
+        withdraw_exp_date = due_date + datetime.timedelta(days=1)
 
         # Post the request form note
         request_form_note = openreview.Note(
@@ -64,7 +65,8 @@ class TestVenueRequest():
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'reviewer_identity': ['Program Chairs'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair']
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -144,6 +146,7 @@ class TestVenueRequest():
         start_date = now - datetime.timedelta(days=2)
         abstract_due_date = now + datetime.timedelta(minutes=15)
         due_date = now + datetime.timedelta(minutes=30)
+        withdraw_exp_date = now + datetime.timedelta(hours=1)
 
         request_form_note = client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
@@ -175,6 +178,7 @@ class TestVenueRequest():
                 'Author and Reviewer Anonymity': 'Single-blind (Reviewers are anonymous)',
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
                 'email_pcs_for_withdrawn_submissions': 'Yes, email PCs.',
@@ -422,6 +426,7 @@ class TestVenueRequest():
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, End: ' + submission_due_date_str + ' UTC-0'
+        assert openreview.tools.get_invitation(client, conference.submission_stage.get_withdrawn_submission_id(conference)) is None
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -977,6 +982,49 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         last_message = client.get_messages(to='test@mail.com')[-1]
         assert 'Paper Matching Setup Status' in last_message['content']['subject']
 
+    def test_update_withdraw_submission_due_date(self, client, test_client, selenium, request_page, helpers, venue):
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        withdraw_exp_date = now + datetime.timedelta(days=1)
+        withdraw_exp_date = withdraw_exp_date.strftime('%Y/%m/%d')
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'withdraw_submission_expiration': withdraw_exp_date,
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=venue_revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'],
+                                                                                 venue['request_form_note'].number)
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        paper_withdraw_super_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id("Withdraw"))
+        withdraw_exp_date = datetime.datetime.strptime(withdraw_exp_date, '%Y/%m/%d')
+        assert paper_withdraw_super_invitation.duedate is None
+        assert openreview.tools.datetime_millis(withdraw_exp_date) == openreview.tools.datetime_millis(paper_withdraw_super_invitation.expdate)
+
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
         # Post a review stage note
@@ -1062,7 +1110,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(sac_groups) == 2
         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
         assert 'TEST.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
-
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -1861,7 +1908,7 @@ Best,
         assert submissions and len(submissions) == 3
 
         assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
-        assert 'venueid' not in submissions[0].content
+        assert 'venueid' in submissions[0].content and 'TEST.cc/2030/Conference' in submissions[0].content['venueid']
         assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
 
@@ -1929,7 +1976,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         assert submissions and len(submissions) == 3
 
         assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
-        assert 'venueid' not in submissions[0].content
+        assert 'venueid' in submissions[0].content and 'TEST.cc/2030/Conference' in submissions[0].content['venueid']
         assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
 
