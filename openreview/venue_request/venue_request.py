@@ -164,14 +164,28 @@ class VenueStages():
                 'default': 'No, do not email program chairs about received reviews',
                 'order': 27
             },
+            'review_rating_field_name': {
+                'description': "Name of the rating field for the review invitation, default is \'rating\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'. For reference, please see: https://docs.openreview.net/reference/default-forms/default-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'rating',
+                'order': 28
+            },
+            'review_confidence_field_name': {
+                'description': "Name of the confidence field for the review invitation, default is \'confidence\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'. For reference, please see: https://docs.openreview.net/reference/default-forms/default-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'confidence',
+                'order': 29
+            },
             'additional_review_form_options': {
-                'order' : 28,
+                'order': 30,
                 'value-dict': {},
                 'required': False,
                 'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'remove_review_form_options': {
-                'order': 29,
+                'order': 31,
                 'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
