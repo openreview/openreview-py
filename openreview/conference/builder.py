@@ -1435,7 +1435,7 @@ class Conference(object):
 
         role = reviewers_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
-        recruit_message = f'''Dear {{name}},
+        recruit_message = f'''Dear {{{{fullname}}}},
 
 You have been nominated by the program chair committee of {self.get_short_name()} to serve as {role}. As a respected researcher in the area, we hope you will accept and help us make {self.get_short_name()} a success.
 
@@ -1445,17 +1445,17 @@ We will be using OpenReview.net with the intention of have an engaging reviewing
 
 To ACCEPT the invitation, please click on the following link:
 
-{{accept_url}}
+{{{{accept_url}}}}
 
 To DECLINE the invitation, please click on the following link:
 
-{{decline_url}}
+{{{{decline_url}}}}
 
 Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact {{contact_info}}.
+If you have any questions, please contact {{{{contact_info}}}}.
 
 Cheers!
 
@@ -1479,7 +1479,7 @@ Program Chairs
                 if reviewers_id not in memberships and reviewers_declined_id not in memberships:
                     reviewer_name = 'invitee'
                     if reviewer_id.startswith('~') :
-                        reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                        reviewer_name = None
                     elif (reviewer_id in invitees) and invitee_names:
                         reviewer_name = invitee_names[invitees.index(reviewer_id)]
                     try:
@@ -1545,8 +1545,8 @@ Program Chairs
                 recruitment_status['already_member'][member_group_id].append(email)
             else:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                # if not name:
-                #     name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
+                if not name and not email.startswith('~'):
+                    name = 'invitee'
                 try:
                     tools.recruit_reviewer(self.client, email, name,
                         hash_seed,
