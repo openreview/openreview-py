@@ -1039,7 +1039,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'remove_review_form_options': 'title',
-                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
+                'review_rating_field_name': 'review_rating'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1079,6 +1080,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 2
         assert 'title' not in review_invitations[0].reply['content']
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        assert conference.review_stage.rating_field_name == 'review_rating'
 
         reviewer_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Reviewers$')
         assert len(reviewer_groups) == 2

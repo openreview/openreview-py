@@ -209,12 +209,20 @@ class Conference(object):
 
         notes = list(self.get_submissions())
         invitations = self.invitation_builder.set_review_invitation(self, notes)
+
         if self.review_stage.rating_field_name:
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_program_chairs_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             if self.use_area_chairs:
                 self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_area_chairs_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_reviewers_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
+
+        if self.review_stage.confidence_field_name:
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_program_chairs_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+            if self.use_area_chairs:
+                self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_area_chairs_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+
         return invitations
 
     def __create_ethics_review_stage(self):
@@ -2122,6 +2130,7 @@ class ReviewStage(object):
         additional_fields = {},
         remove_fields = [],
         rating_field_name = None,
+        confidence_field_name = None,
         process_path = None
     ):
 
@@ -2138,6 +2147,7 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
+        self.confidence_field_name = confidence_field_name
         self.process_path = process_path
 
     def _get_reviewer_readers(self, conference, number):

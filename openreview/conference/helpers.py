@@ -283,7 +283,9 @@ def get_review_stage(request_forum):
         release_to_reviewers = release_to_reviewers,
         email_pcs = (request_forum.content.get('email_program_chairs_about_reviews', '').startswith('Yes')),
         additional_fields = review_form_additional_options,
-        remove_fields = review_form_remove_options
+        remove_fields = review_form_remove_options,
+        rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
+        confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence')
     )
 
 def get_ethics_review_stage(request_forum):
@@ -320,7 +322,7 @@ def get_ethics_review_stage(request_forum):
     flagged_submissions = []
     if request_forum.content.get('ethics_review_submissions'):
         flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
-    
+
     return openreview.EthicsReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
@@ -330,7 +332,7 @@ def get_ethics_review_stage(request_forum):
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options,
         submission_numbers = flagged_submissions
-    )    
+    )
 
 def get_meta_review_stage(client, request_forum):
     meta_review_start_date = request_forum.content.get('meta_review_start_date', '').strip()
