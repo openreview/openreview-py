@@ -1746,10 +1746,8 @@ Program Chairs
                 submission_number=paper_note.number,
                 submission_title=paper_note.content['title']
             )
-            final_message = f'''{message.format(
-                submission_title=paper_note.content['title'],
-                forum_url=f'https://openreview.net/forum?id={paper_note.id}'
-            )}'''
+            final_message = message.replace("{{submission_title}}", paper_note.content['title'])
+            final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={paper_note.id}')
             self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
 
         tools.concurrent_requests(send_notification, decision_notes)
