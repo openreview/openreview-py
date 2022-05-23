@@ -64,6 +64,7 @@ class Conference(object):
         self.use_secondary_area_chairs = False
         self.use_ethics_chairs = False
         self.use_ethics_reviewers = False
+        self.use_recruitment_template = False
         self.legacy_anonids = False
         self.legacy_invitation_id = False
         self.groups = []
@@ -1452,7 +1453,7 @@ class Conference(object):
             invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
 
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
-        invitation = self.webfield_builder.set_recruit_page(self, invitation)
+        invitation = self.webfield_builder.set_recruit_page(self, invitation, options['reduced_load_id'])
 
         role = reviewers_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
@@ -2791,6 +2792,9 @@ class ConferenceBuilder(object):
 
     def set_senior_area_chair_identity_readers(self, readers):
         self.conference.senior_area_chair_identity_readers = readers
+
+    def use_recruitment_template(self, use_template):
+        self.conference.use_recruitment_template = True
 
     def get_result(self):
 

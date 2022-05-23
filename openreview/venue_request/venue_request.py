@@ -879,28 +879,28 @@ class VenueRequest():
             'Submission Start Date': {
                 'description': 'When would you (ideally) like to have your OpenReview submission portal opened? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Skip this if only requesting paper matching service)',
                 'value-regex': '.*',
-                'order': 9
+                'order': 10
             },
             'abstract_registration_deadline': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'description': 'By when do authors need to register their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59) (Skip this if there is no abstract registration deadline)',
-                'order': 9
+                'order': 11
             },
             'Submission Deadline': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'description': 'By when do authors need to submit their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
-                'order': 10
+                'order': 12
             },
             'Venue Start Date': {
                 'description': 'What date does the venue start? Please use the following format: YYYY/MM/DD (e.g. 2019/01/31)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 11,
+                'order': 13,
                 'required': True
             },
             'Location': {
                 'description': 'Where is the event being held. For example: Amherst, Massachusetts, United States',
                 'value-regex': '.*',
-                'order': 16
+                'order': 14
             },
             'Paper Matching': {
                 'description': 'Choose options for assigning papers to reviewers (and ACs, if present). If using the OpenReview Paper Matching System, see the top of the page for a description of each feature type. If you want to make manual assignments, do not select any options.',
@@ -909,7 +909,7 @@ class VenueRequest():
                     'Reviewer Recommendation Scores',
                     'OpenReview Affinity'
                 ],
-                'order': 17,
+                'order': 15,
                 'required': False
             },
             'Author and Reviewer Anonymity': {
@@ -919,7 +919,7 @@ class VenueRequest():
                     'Single-blind (Reviewers are anonymous)',
                     'No anonymity'
                 ],
-                'order': 18,
+                'order': 16,
                 'required': True
             },
             'reviewer_identity': {
@@ -934,7 +934,7 @@ class VenueRequest():
                     'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs'],
-                'order': 19,
+                'order': 17,
                 'required': False
             },
             'area_chair_identity': {
@@ -949,7 +949,7 @@ class VenueRequest():
                     'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'order': 20,
+                'order': 18,
                 'required': False,
             },
             'senior_area_chair_identity': {
@@ -964,7 +964,7 @@ class VenueRequest():
                     'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'order': 21,
+                'order': 19,
                 'required': False,
             },
             'Open Reviewing Policy': {
@@ -974,7 +974,7 @@ class VenueRequest():
                     'Submissions should be public, but reviews should be private.',
                     'Submissions and reviews should both be public.'
                 ],
-                'order': 22,
+                'order': 20,
                 'required': False,
                 'hidden': True
             },
@@ -986,7 +986,7 @@ class VenueRequest():
                     'Program chairs and paper authors only',
                     'Everyone (submissions are public)'
                 ],
-                'order': 23,
+                'order': 21,
                 'default': ['Program chairs and paper authors only'],
                 'required': True
             },
@@ -996,13 +996,13 @@ class VenueRequest():
                     'Yes, submissions should be immediately revealed to the public.',
                     'No, wait until the submission deadline has passed to make them public.'],
                 'default': 'No, wait until the submission deadline has passed to make them public.',
-                'order': 24
+                'order': 22
             },
             'withdraw_submission_expiration': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
                 'required': False,
-                'order': 25,
+                'order': 23,
             },
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
@@ -1010,7 +1010,7 @@ class VenueRequest():
                     'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
-                'order': 26
+                'order': 24
             },
             'withdrawn_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1018,7 +1018,7 @@ class VenueRequest():
                     'Yes, author identities of withdrawn submissions should be revealed.',
                     'No, author identities of withdrawn submissions should not be revealed.'],
                 'default': 'No, author identities of withdrawn submissions should not be revealed.',
-                'order': 27
+                'order': 25
             },
             'email_pcs_for_withdrawn_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
@@ -1027,7 +1027,7 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 28
+                'order': 26
             },
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
@@ -1035,7 +1035,7 @@ class VenueRequest():
                     'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
-                'order': 29
+                'order': 27
             },
             'desk_rejected_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1043,12 +1043,12 @@ class VenueRequest():
                     'Yes, author identities of desk rejected submissions should be revealed.',
                     'No, author identities of desk rejected submissions should not be revealed.'],
                 'default': 'No, author identities of desk rejected submissions should not be revealed.',
-                'order': 30
+                'order': 28
             },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 31
+                'order': 29
             },
             'email_pcs_for_new_submissions': {
                 'description': 'Do you want email notifications to PCs when there is a new submission?',
@@ -1057,44 +1057,51 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 32
+                'order': 30
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 33
+                'order': 31
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 34
+                'order': 32
             },
             'submission_name': {
                 'value-regex': '\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
-                'order': 35,
+                'order': 33,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'reviewer_roles': {
                 'values-regex': '.*',
                 'default': ['Reviewers'],
-                'order': 36,
+                'order': 34,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Area_Chairs'],
-                'order': 37,
+                'order': 35,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'senior_area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Senior_Area_Chairs'],
-                'order': 38,
+                'order': 36,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
+            },
+            'use_recruitment_template': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'Yes',
+                'order': 37,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }
