@@ -66,7 +66,7 @@ If you would like to change your decision, please click the Accept link in the p
                     profile = openreview.tools.get_profile(client, user)
                     id_or_email = profile.id
                 if id_or_email in invitee_ids:
-                    recruitment_response_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request.*/-/Comment', replyto=note.id, sort='number:desc'))
+                    recruitment_response_notes = list(openreview.tools.iterget_notes(client, replyto=note.id, sort='number:desc'))
                     if recruitment_response_notes:
                         if action in recruitment_response_notes[0].content['comment']['value']:
                             break
