@@ -134,7 +134,7 @@ TJ22 Editors-in-Chief
         assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment']
 
         invitation = test_client.get_invitation(id='{}/Journal_Request{}/-/Reviewer_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']))
-        assert 'Hi {name},\n\nGreetings! You have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['presentation']['default']
+        assert 'Hi {{fullname}},\n\nGreetings! You have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['presentation']['default']
 
         helpers.create_user('reviewer_journal2@mail.com', 'Second', 'Reviewer')
 
@@ -150,7 +150,7 @@ TJ22 Editors-in-Chief
                     'title': { 'value': 'Recruitment' },
                     'invitee_details': reviewer_details,
                     'email_subject': { 'value': '[' + journal['journal_request_note']['content']['abbreviated_venue_name']['value'] + '] Invitation to serve as Reviewer for ' +  journal['journal_request_note']['content']['abbreviated_venue_name']['value']},
-                    'email_content': {'value': 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.\n\nACCEPT LINK:\n{accept_url}\n\nDECLINE LINK:\n{decline_url}\n\nCheers!'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!'}
                 },
                 forum = journal['journal_request_note']['forum'],
                 replyto = journal['journal_request_note']['forum'],
@@ -194,7 +194,7 @@ TJ22 Editors-in-Chief
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
         invitation = test_client.get_invitation(id='{}/Journal_Request{}/-/Action_Editor_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']))
-        assert 'Dear {name},\n\nYou have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['presentation']['default']
+        assert 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['presentation']['default']
 
         #add ae to invited group
         openreview_client.add_members_to_group(journal['journal_request_note']['content']['venue_id']['value']+ '/Action_Editors/Invited', 'ae_journal1@mail.com')
