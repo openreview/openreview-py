@@ -1888,26 +1888,26 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                     'Reject': 'Reject'
                 },
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
-                'accept_email_content': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                'accept_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
 ''',
-                'reject_email_content': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                'reject_email_content': f'''Dear {{{{fullname}}}},
                         
-Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted.
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
 ''',
-                'revision_needed_email_content': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {short_name}.
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
@@ -1941,6 +1941,7 @@ Best,
         last_message = client.get_messages(to='venue_author1@mail.com')[-1]
         assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
         assert "Dear Venue Author,</p>\n<p>Thank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message['content']['text']
+        assert f"https://openreview.net/forum?id={blind_submissions[0].id}" in last_message['content']['text']
 
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']
