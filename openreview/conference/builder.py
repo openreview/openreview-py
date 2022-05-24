@@ -1534,8 +1534,8 @@ Program Chairs
                 memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
                 if reviewers_id not in memberships:
                     reviewer_name = 'invitee'
-                    if reviewer_id.startswith('~') :
-                        reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                    if reviewer_id.startswith('~'):
+                        reviewer_name = None
                     elif (reviewer_id in invitees) and invitee_names:
                         reviewer_name = invitee_names[invitees.index(reviewer_id)]
                     try:
