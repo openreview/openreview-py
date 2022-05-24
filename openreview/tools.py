@@ -1156,7 +1156,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
+def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -1164,6 +1164,8 @@ def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, mi
     :type client: Client
     :param id: an Invitation ID. If provided, returns invitations whose "id" value is this Invitation ID.
     :type id: str, optional
+    :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+    :type ids: str, optional
     :param invitee: Essentially, invitees field in an Invitation object contains Group Ids being invited using the invitation. If provided, returns invitations whose "invitee" field contains the given string.
     :type invitee: str, optional
     :param regex: a regular expression string to match Invitation IDs. If provided, returns invitations whose "id" value matches the given regex.
@@ -1198,6 +1200,8 @@ def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, mi
     params = {}
     if id is not None:
         params['id'] = id
+    if ids is not None:
+        params['ids'] = ids
     if invitee is not None:
         params['invitee'] = invitee
     if regex is not None:
