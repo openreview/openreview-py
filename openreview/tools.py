@@ -1694,13 +1694,7 @@ def recruit_reviewer(client, user, first,
     personalized_message = personalized_message.replace("{{accept_url}}", url+"Yes")
     personalized_message = personalized_message.replace("{{decline_url}}", url+"No")
     personalized_message = personalized_message.replace("{{contact_info}}", contact_info)
-    # personalized_message = recruit_message.format(
-    #     name = first,
-    #     accept_url = url + "Yes",
-    #     decline_url = url + "No",
-    #     contact_info = contact_info
-    # )
-    print(personalized_message)
+
     personalized_message.format()
 
     client.add_members_to_group(reviewers_invited_id, [user])
