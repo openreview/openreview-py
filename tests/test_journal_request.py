@@ -389,6 +389,32 @@ TJ22 Editors-in-Chief
         helpers.await_queue(openreview_client)
 
         #check recruitment response posted as reply of lastest recruitment note
-        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
-        assert recruitment_response
-        assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response.content['comment']['value']
+        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
+        assert recruitment_response and len(recruitment_response) == 2
+        assert recruitment_response[1].content['title']['value'] == 'Recruitment Status'
+        assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
+
+        #accept reviewer invitation again
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue(openreview_client)
+
+        #check recruitment response not posted as decision did not change
+        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
+        assert recruitment_response and len(recruitment_response) == 2
+
+        #decline reviewer invitation
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        request_page(selenium, accept_url, alert=True)
+
+        #check recruitment response posted as reply of lastest recruitment note
+        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
+        assert recruitment_response and len(recruitment_response) == 3
+        assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert recruitment_response[1].content['title']['value'] == 'New Recruitment Response'
+        assert recruitment_response[2].content['title']['value'] == 'Recruitment Status'
+        assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
