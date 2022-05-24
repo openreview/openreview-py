@@ -674,7 +674,7 @@ class Matching(object):
                 matching_status['no_publications'] = result['metadata']['no_publications']
 
                 if self.alternate_matching_group:
-                    scores = [[entry['submission_member'], entry['match_member'], entry['score']] for entry in result['results']]
+                    scores = [[entry['match_member'], entry['submission_member'], entry['score']] for entry in result['results']]
                     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 
                 scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
