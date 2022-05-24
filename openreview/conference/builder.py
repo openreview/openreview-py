@@ -209,12 +209,20 @@ class Conference(object):
 
         notes = list(self.get_submissions())
         invitations = self.invitation_builder.set_review_invitation(self, notes)
+
         if self.review_stage.rating_field_name:
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_program_chairs_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             if self.use_area_chairs:
                 self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_area_chairs_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_reviewers_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
+
+        if self.review_stage.confidence_field_name:
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_program_chairs_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+            if self.use_area_chairs:
+                self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_area_chairs_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+
         return invitations
 
     def __create_ethics_review_stage(self):
@@ -801,7 +809,7 @@ class Conference(object):
 
         return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission, hide_fields=hide_fields)
 
-    def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False, overwrite=False):
+    def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False, senior_area_chairs=False, overwrite=False):
 
         notes_iterator = self.get_submissions(sort='number:asc', details='original')
         author_group_ids = []
@@ -809,13 +817,20 @@ class Conference(object):
         if self.use_area_chairs:
             paper_area_chair_group_invitation=self.invitation_builder.set_paper_group_invitation(self, self.get_area_chairs_id())
 
+        group_by_id = { g.id: g for g in self.client.get_all_groups(regex=f'{self.id}/Paper.*') }
+
         for n in tqdm(list(notes_iterator), desc='create_paper_groups'):
             # Paper group
-            self.__create_group(
-                group_id = '{conference_id}/Paper{number}'.format(conference_id=self.id, number=n.number),
-                group_owner_id = self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
-                is_signatory = False
-            )
+            group_id = '{conference_id}/Paper{number}'.format(conference_id=self.id, number=n.number)
+            group = group_by_id.get(group_id)
+            if not group or overwrite:
+                self.client.post_group(openreview.Group(id=group_id,
+                    readers=[self.id],
+                    writers=[self.id],
+                    signatures=[self.id],
+                    signatories=[self.id],
+                    members=group.members if group else []
+                ))            
 
             # Author Paper group
             if authors:
@@ -834,7 +849,7 @@ class Conference(object):
                         is_signatory = False)
                 else:
                     reviewers_id=self.get_reviewers_id(number=n.number)
-                    group = tools.get_group(self.client, id = reviewers_id)
+                    group = group_by_id.get(reviewers_id)
                     if not group or overwrite:
                         self.client.post_group(openreview.Group(id=reviewers_id,
                             invitation=paper_reviewer_group_invitation.id,
@@ -849,10 +864,22 @@ class Conference(object):
                         ))
 
                 # Reviewers Submitted Paper group
-                self.__create_group(
-                    self.get_reviewers_id(number=n.number) + '/Submitted',
-                    self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
-                    is_signatory = False)
+                reviewers_submitted_id = self.get_reviewers_id(number=n.number) + '/Submitted'
+                group = group_by_id.get(reviewers_submitted_id)
+                if not group or overwrite:
+                    readers=[self.id]
+                    if self.use_senior_area_chairs:
+                        readers.append(self.get_senior_area_chairs_id(n.number))
+                    if self.use_area_chairs:
+                        readers.append(self.get_area_chairs_id(n.number))
+                    readers.append(reviewers_submitted_id)                    
+                    self.client.post_group(openreview.Group(id=reviewers_submitted_id,
+                        readers=readers,
+                        writers=[self.id],
+                        signatures=[self.id],
+                        signatories=[self.id],
+                        members=group.members if group else []
+                    ))
 
             # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
@@ -860,7 +887,7 @@ class Conference(object):
                     self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
                 else:
                     area_chairs_id=self.get_area_chairs_id(number=n.number)
-                    group = tools.get_group(self.client, id = area_chairs_id)
+                    group = group_by_id.get(area_chairs_id)
                     if not group or overwrite:
                         self.client.post_group(openreview.Group(id=area_chairs_id,
                             invitation=paper_area_chair_group_invitation.id,
@@ -875,9 +902,9 @@ class Conference(object):
                         ))
 
             # Senior Area Chairs Paper group
-            if self.use_senior_area_chairs:
+            if self.use_senior_area_chairs and senior_area_chairs:
                 senior_area_chairs_id=self.get_senior_area_chairs_id(number=n.number)
-                group = tools.get_group(self.client, id = senior_area_chairs_id)
+                group = group_by_id.get(senior_area_chairs_id)
                 if not group or overwrite:
                     self.client.post_group(openreview.Group(id=senior_area_chairs_id,
                         readers=self.get_senior_area_chair_identity_readers(n.number),
@@ -977,7 +1004,19 @@ class Conference(object):
                     s.readers = final_readers
                     self.client.post_note(s)
 
-        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True, senior_area_chairs=True)
+
+        self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
+            start_date=None if force else self.submission_stage.due_date,
+            due_date=self.submission_stage.second_due_date,
+            additional_fields=self.submission_stage.additional_fields,
+            remove_fields=self.submission_stage.remove_fields,
+            only_accepted=False,
+            multiReply=False,
+            allow_author_reorder=allow_author_reorder
+        )
+        self.__create_submission_revision_stage()
+
         self.create_withdraw_invitations(
             reveal_authors=not self.submission_stage.double_blind,
             reveal_submission=False,
@@ -992,16 +1031,6 @@ class Conference(object):
             force=True
         )
 
-        self.submission_revision_stage = SubmissionRevisionStage(name='Revision',
-            start_date=None if force else self.submission_stage.due_date,
-            due_date=self.submission_stage.second_due_date,
-            additional_fields=self.submission_stage.additional_fields,
-            remove_fields=self.submission_stage.remove_fields,
-            only_accepted=False,
-            multiReply=False,
-            allow_author_reorder=allow_author_reorder
-        )
-        self.__create_submission_revision_stage()
 
     def setup_final_deadline_stage(self, force=False, hide_fields=[]):
 
@@ -1016,7 +1045,7 @@ class Conference(object):
                     note.readers = final_readers
                     self.client.post_note(note)
 
-        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True)
+        self.create_paper_groups(authors=True, reviewers=True, area_chairs=True, senior_area_chairs=True)
         self.create_withdraw_invitations(
             reveal_authors=self.submission_stage.withdrawn_submission_reveal_authors,
             reveal_submission=self.submission_stage.withdrawn_submission_public,
@@ -1717,10 +1746,8 @@ Program Chairs
                 submission_number=paper_note.number,
                 submission_title=paper_note.content['title']
             )
-            final_message = f'''{message.format(
-                submission_title=paper_note.content['title'],
-                forum_url=f'https://openreview.net/forum?id={paper_note.id}'
-            )}'''
+            final_message = message.replace("{{submission_title}}", paper_note.content['title'])
+            final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={paper_note.id}')
             self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
 
         tools.concurrent_requests(send_notification, decision_notes)
@@ -1757,6 +1784,8 @@ Program Chairs
 
             paper_decision_note = decision_notes.get(paper_id, None)
             if paper_decision_note:
+                paper_decision_note.readers = self.decision_stage.get_readers(conference=self, number=paper_note.number)
+                paper_decision_note.nonreaders = self.decision_stage.get_nonreaders(conference=self, number=paper_note.number)
                 paper_decision_note.content = {
                     'title': 'Paper Decision',
                     'decision': decision.strip(),
@@ -2102,6 +2131,7 @@ class ReviewStage(object):
         additional_fields = {},
         remove_fields = [],
         rating_field_name = None,
+        confidence_field_name = None,
         process_path = None
     ):
 
@@ -2118,6 +2148,7 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
+        self.confidence_field_name = confidence_field_name
         self.process_path = process_path
 
     def _get_reviewer_readers(self, conference, number):

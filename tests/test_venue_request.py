@@ -1039,7 +1039,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
                 'remove_review_form_options': 'title',
-                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
+                'review_rating_field_name': 'review_rating'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1079,6 +1080,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 2
         assert 'title' not in review_invitations[0].reply['content']
+
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        assert conference.review_stage.rating_field_name == 'review_rating'
 
         reviewer_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Reviewers$')
         assert len(reviewer_groups) == 2
@@ -1633,6 +1637,50 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             assert sub_decision_note.content['decision'] == sub_decisions[i][1]
             assert sub_decision_note.content['comment'] == sub_decisions[i][2]
 
+        # reveal decisions to authors
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'value-regex': '[\\S\\s]{1,5000}',
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'required': False,
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        assert decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        decision_note = test_client.get_notes(
+            invitation='{venue_id}/Paper.*/-/Decision'.format(venue_id=venue['venue_id'])
+        )[0]
+
+        assert f'TEST.cc/2030/Conference/Paper1/Authors' in decision_note.readers
+        assert f'TEST.cc/2030/Conference/Paper1/Reviewers' in decision_note.readers
+        assert not decision_note.nonreaders
+
         #get post_decision invitation
         with pytest.raises(openreview.OpenReviewException) as openReviewError:
             post_decision_invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
@@ -1840,26 +1888,26 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                     'Reject': 'Reject'
                 },
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
-                'accept_email_content': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                'accept_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
 ''',
-                'reject_email_content': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                'reject_email_content': f'''Dear {{{{fullname}}}},
                         
-Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted.
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
 ''',
-                'revision_needed_email_content': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {short_name}.
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
@@ -1893,6 +1941,7 @@ Best,
         last_message = client.get_messages(to='venue_author1@mail.com')[-1]
         assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
         assert "Dear Venue Author,</p>\n<p>Thank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message['content']['text']
+        assert f"https://openreview.net/forum?id={blind_submissions[0].id}" in last_message['content']['text']
 
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']

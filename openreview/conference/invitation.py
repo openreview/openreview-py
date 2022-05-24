@@ -1699,13 +1699,12 @@ class InvitationBuilder(object):
         return invitations
 
     def set_revise_submission_invitation(self, conference, notes, content):
-
-        invitations = []
         self.client.post_invitation(SubmissionRevisionInvitation(conference, content))
-        for note in tqdm(notes, total=len(notes), desc='set_revise_submission_invitation'):
-            invitations.append(self.client.post_invitation(PaperSubmissionRevisionInvitation(conference, note, content)))
-
-        return invitations
+        return tools.concurrent_requests(
+            lambda note : self.client.post_invitation(PaperSubmissionRevisionInvitation(conference, note, content)),
+            notes,
+            desc='set_revise_submission_invitation'
+        )
 
     def set_reviewer_reduced_load_invitation(self, conference, options = {}):
 
