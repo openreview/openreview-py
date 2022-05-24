@@ -587,8 +587,8 @@ class Matching(object):
         for row in tqdm(score_handle, desc='_build_scores'):
             edges.append(Edge(
                 invitation=invitation.id,
-                head=row[0],
-                tail=row[1],
+                head=row[1],
+                tail=row[0],
                 weight=str(max(round(float(row[2]), 4), 0)),
                 readers=self._get_edge_readers(tail=row[1]),
                 writers=[self.conference.id],
