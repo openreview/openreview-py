@@ -71,7 +71,7 @@ def format_params(params):
 
     return params
 
-def concurrent_requests(request_func, params):
+def concurrent_requests(request_func, params, desc='Gathering Responses'):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -85,9 +85,9 @@ def concurrent_requests(request_func, params):
     :return: A list of results given for each func value execution
     :rtype: list
     """
-    max_workers=min(6, cpu_count() - 1)
+    max_workers = min(6, cpu_count() - 1)
     futures = []
-    gathering_responses = tqdm(total=len(params), desc='Gathering Responses')
+    gathering_responses = tqdm(total=len(params), desc=desc)
     results = []
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
