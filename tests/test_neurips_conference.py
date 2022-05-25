@@ -884,10 +884,21 @@ class TestNeurIPSConference():
         conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
         assert len(conflicts) == 3
 
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[0].id)
+        assert len(conflicts) == 1
+        assert '~Area_GoogleChair1' == conflicts[0].tail ## reviewer and one author are from google
+
         conference.set_matching_alternate_conflicts(committee_id=conference.get_area_chairs_id(), source_committee_id=conference.get_senior_area_chairs_id(), source_assignment_title='sac-matching')
         
         conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
         assert len(conflicts) == 13
+
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[0].id)
+        assert len(conflicts) == 3
+        assert '~Area_GoogleChair1' == conflicts[0].tail ## reviewer and one author are from google
+        assert '~Area_IBMChair1' == conflicts[0].tail ## assgined SAC is from google
+        assert '~Area_UMassChair1' == conflicts[0].tail ## assigned SAC is from google
+
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
