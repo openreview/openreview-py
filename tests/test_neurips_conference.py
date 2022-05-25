@@ -34,6 +34,7 @@ class TestNeurIPSConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
 
+        helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
         helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair')
         helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
@@ -585,9 +586,7 @@ class TestNeurIPSConference():
         assert pc_client.get_group('NeurIPS.cc/2021/Conference/Ethics_Chairs')      
         assert pc_client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
 
-        assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))     
-    
-    
+        assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))
     
     def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
 
@@ -779,27 +778,26 @@ class TestNeurIPSConference():
             content = {
                 'title': 'Paper title 5' ,
                 'abstract': 'This is an abstract 5 Rev',
-                'authorids': ['test@mail.com', 'peter@mail.com', 'sac1@google.com'],
-                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'SeniorArea GoogleChair']
+                'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Another Andrew']
             }
         )
         note = test_client.post_note(note)
-        print(note)
 
         updated_note=test_client.get_note(submissions[0].id)
         assert updated_note
-        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'sac1@google.com', '~SomeFirstName_User1']
-        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'sac1@google.com', '~SomeFirstName_User1']
+        assert updated_note.readers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~SomeFirstName_User1']
+        assert updated_note.writers == ['NeurIPS.cc/2021/Conference', 'test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu', '~SomeFirstName_User1']
 
         helpers.await_queue()
 
         author_group=test_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Authors')
         assert author_group
-        assert author_group.members == ['test@mail.com', 'peter@mail.com', 'sac1@google.com']
+        assert author_group.members == ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu']
 
-        sac_client = openreview.Client(username='sac1@google.com', password='1234')
+        sac_client = openreview.Client(username='another_andrew@mit.edu', password='1234')
         sac_notes = sac_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
-        assert len(sac_notes) == 2
+        assert len(sac_notes) == 1
         assert sac_notes[0].id == note.forum
 
 
