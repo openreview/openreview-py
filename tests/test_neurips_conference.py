@@ -897,9 +897,9 @@ class TestNeurIPSConference():
         conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
         assert len(conflicts) == 3
         tails = [c.tail for c in conflicts]
-        assert '~Area_GoogleChair1' == tails ## reviewer and one author are from google
-        assert '~Area_IBMChair1' == tails ## assgined SAC is from google
-        assert '~Area_UMassChair1' == tails ## assigned SAC is from google
+        assert '~Area_GoogleChair1' in tails ## reviewer and one author are from google
+        assert '~Area_IBMChair1' in tails ## assgined SAC is from google
+        assert '~Area_UMassChair1' in tails ## assigned SAC is from google
 
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
