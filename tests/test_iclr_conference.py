@@ -437,7 +437,7 @@ Thank you for responding to our invitation to serve as a reviewer for ICLR 2021.
 If you would now like to ACCEPT the invitation, please click on the following link:
 
 
-{accept_url}
+{{accept_url}}
 
 
 We would appreciate an answer by Friday September 4th (in 7 days).
