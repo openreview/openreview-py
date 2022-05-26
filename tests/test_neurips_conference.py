@@ -683,12 +683,12 @@ class TestNeurIPSConference():
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Desk_Reject')
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Revision')
 
-        # expire the abstract submission deadline
+        # expire the abstract submission deadline and update the submission deadline
         pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
-        due_date = now + datetime.timedelta(days=3)
+        due_date = now + datetime.timedelta(days=4)
         first_date = now + datetime.timedelta(days=-1)
 
         venue_revision_note = pc_client.post_note(openreview.Note(
@@ -717,6 +717,9 @@ class TestNeurIPSConference():
         ))
 
         helpers.await_queue()
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
         ## Add supplementary material
         submissions=conference.get_submissions(details='original')
