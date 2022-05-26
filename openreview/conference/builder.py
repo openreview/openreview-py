@@ -591,6 +591,11 @@ class Conference(object):
     def get_registration_id(self, committee_id):
         return self.get_invitation_id(name = 'Registration', prefix = committee_id)
 
+    def get_recruitment_id(self, committee_id):
+        if self.use_recruitment_template:
+            return self.get_invitation_id('Recruitment', prefix=committee_id)
+        return self.get_invitation_id('Recruit_' + self.get_committee_name(committee_id))
+
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
         if prefix:

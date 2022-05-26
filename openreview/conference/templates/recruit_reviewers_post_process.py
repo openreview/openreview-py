@@ -1,4 +1,4 @@
-def process(client, note, invitation):
+def process_update(client, note, invitation, existing_note):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
     SHORT_PHRASE = ''
@@ -12,6 +12,11 @@ def process(client, note, invitation):
     HASH_SEED = ''
     REDUCED_LOAD_INVITATION_NAME = ''
 
+    note = client.get_note(note.id)
+
+    if note.ddate:
+        return
+    
     user = urllib.parse.unquote(note.content['user'])
 
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
@@ -34,13 +39,14 @@ def process(client, note, invitation):
             client.remove_members_from_group(REVIEWERS_DECLINED_ID, members_to_remove)
             client.add_members_to_group(REVIEWERS_ACCEPTED_ID, user)
 
-            reduced_quota = note.content.get('quota')
+            reduced_quota = note.content.get('reduced_quota')
             reduced_quota_subject = ' with reduced quota' if reduced_quota else ''
-            reduced_quota_text = f'You have selected a reduced quota of {reduced_quota} submission to review.' if reduced_quota else ''
+            reduced_quota_text = f'''
+You have selected a reduced quota of {reduced_quota} submissions to review.''' if reduced_quota else ''
 
             subject = f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation accepted{reduced_quota_subject}'
-            message = f'''Thank you for accepting the invitation to be a {REVIEWER_NAME} for {SHORT_PHRASE}.
-{reduced_quota_text}
+            message = f'''Thank you for accepting the invitation to be a {REVIEWER_NAME} for {SHORT_PHRASE}.{reduced_quota_text}
+
 The {SHORT_PHRASE} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
 If you would like to change your decision, please follow link in the previous invitation email and click on the "Decline" button.'''

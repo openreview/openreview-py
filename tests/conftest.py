@@ -93,7 +93,7 @@ class Helpers:
         ))
 
     @staticmethod
-    def respond_invitation(selenium, request_page, url, accept):
+    def respond_invitation(selenium, request_page, url, accept, quota=None):
 
         request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
 
@@ -102,7 +102,19 @@ class Helpers:
         buttons = container.find_elements_by_tag_name("button")
         assert len(buttons) == 2
 
-        if accept:
+        if quota:
+            buttons[1].click() ## Decline
+            time.sleep(0.5)
+            dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
+            dropdown.click()
+            time.sleep(0.5)
+            values = selenium.find_elements_by_class_name('dropdown-select__option')
+            assert len(values) > 0
+            values[0].click()
+            time.sleep(0.5)
+            button = selenium.find_element_by_xpath('//button[text()="Accept with Reduced Quota"]')
+            button.click()
+        elif accept:
             buttons[0].click()
         else:
             buttons[1].click()

@@ -1806,17 +1806,17 @@ class InvitationBuilder(object):
         }
         reply = self.__build_options(default_reply, options.get('reply', {}))
 
-        invitation_id=conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers'))
+        invitation_id=conference.get_recruitment_id(conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers')))
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
         reduced_load = options.get('reduced_load_on_decline', None)
 
         if reduced_load and conference.use_recruitment_template:
-            reply['content']['quota'] = {
+            reply['content']['reduced_quota'] = {
                 "description": "Please select the number of submissions that you would be comfortable reviewing.",
                 "required": False,
                 "value-dropdown": reduced_load,
-                "order": 6
+                "order": 5
             }
 
         post_proces_template = 'recruit_reviewers_post_process.py' if conference.use_recruitment_template else 'legacy_recruit_reviewers_post_process.py'

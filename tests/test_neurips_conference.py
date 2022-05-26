@@ -229,6 +229,7 @@ class TestNeurIPSConference():
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
         assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking the option below:' == messages[1].text
+        
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 1
         assert 'ac1@mit.edu' in rejected_group.members
@@ -236,28 +237,36 @@ class TestNeurIPSConference():
         accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(accepted_group.members) == 0
 
-        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Recruit_Area_Chairs', content={'user': 'ac1@mit.edu', 'response': 'No'})
-        assert notes
-        assert len(notes) == 1
-
-        client.post_note(openreview.Note(
-            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Reduced_Load',
-            readers=['NeurIPS.cc/2021/Conference', 'ac1@mit.edu'],
-            writers=['NeurIPS.cc/2021/Conference'],
-            signatures=['(anonymous)'],
-            content={
-                'user': 'ac1@mit.edu',
-                'key': notes[0].content['key'],
-                'response': 'Yes',
-                'reviewer_load': '3'
-            }
-        ))
-
+        ## Accept with reduced quota
+        dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
+        dropdown.click()
+        time.sleep(0.5)
+        values = selenium.find_elements_by_class_name('dropdown-select__option')
+        assert len(values) > 0
+        values[1].click()
+        time.sleep(0.5)
+        button = selenium.find_element_by_xpath('//button[text()="Accept with Reduced Quota"]')
+        button.click()
+        time.sleep(0.5)
         helpers.await_queue()
 
         area_chairs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(area_chairs.members) == 1
         assert 'ac1@mit.edu' in area_chairs.members
+
+        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Recruitment', content={'user': 'ac1@mit.edu', 'response': 'Yes'}, sort='tcdate:desc')
+        assert notes
+        assert len(notes) == 2
+        assert notes[0].content['reduced_quota'] == '3'
+
+        messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2021] Area Chair Invitation accepted with reduced quota')
+        assert len(messages) == 1
+        messages[0]['content']['text'] == '''<p>Thank you for accepting the invitation to be a Area Chair for NeurIPS 2021.<br>
+You have selected a reduced quota of 3 submissions to review.</p>
+<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>
+<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>
+'''
+
 
     def test_sac_matching(self, client, conference, helpers, request_page, selenium):
 
@@ -429,7 +438,7 @@ class TestNeurIPSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.ID, wait_for_element='note_{}'.format(request_form.id))
         recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -493,28 +502,34 @@ class TestNeurIPSConference():
         assert len(messages)
         assert messages[0]['content']['text'] == '<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n'
 
-        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Recruit_Reviewers', content={'user': 'reviewer1@umass.edu'})
+        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Recruitment', content={'user': 'reviewer1@umass.edu'})
         assert notes
         assert len(notes) == 1
 
-        client.post_note(openreview.Note(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Reduced_Load',
-            readers=['NeurIPS.cc/2021/Conference', 'reviewer1@umass.edu'],
-            writers=['NeurIPS.cc/2021/Conference'],
-            signatures=['(anonymous)'],
-            content={
-                'user': 'reviewer1@umass.edu',
-                'key': notes[0].content['key'],
-                'response': 'Yes',
-                'reviewer_load': '4'
-            }
-        ))
-
-        helpers.await_queue()
+        ## Accept with reduced quota
+        dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
+        dropdown.click()
+        time.sleep(0.5)
+        values = selenium.find_elements_by_class_name('dropdown-select__option')
+        assert len(values) > 0
+        values[2].click()
+        time.sleep(0.5)
+        button = selenium.find_element_by_xpath('//button[text()="Accept with Reduced Quota"]')
+        button.click()
+        time.sleep(0.5)
+        helpers.await_queue()        
 
         reviewers_group=client.get_group('NeurIPS.cc/2021/Conference/Reviewers')
         assert len(reviewers_group.members) == 1
         assert 'reviewer1@umass.edu' in reviewers_group.members
+
+        messages = client.get_messages(to = 'reviewer1@umass.edu', subject = '[NeurIPS 2021] Reviewer Invitation accepted with reduced quota')
+        assert len(messages) == 1
+        messages[0]['content']['text'] == '''<p>Thank you for accepting the invitation to be a Reviewer for NeurIPS 2021.<br>
+You have selected a reduced quota of 3 submissions to review.</p>
+<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>
+<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>
+'''        
 
         ## Remind reviewers
         recruitment_note = pc_client.post_note(openreview.Note(

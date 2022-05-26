@@ -334,10 +334,9 @@ class WebfieldBuilder(object):
 
             properties = ''
 
-            if 'quota' in invitation.reply['content']:
+            if 'reduced_quota' in invitation.reply['content']:
                 properties = '''
-    quotaMessage: ''' + json.dumps(quota_message) + ''',
-    allowReducedQuota: true            
+    quotaMessage: ''' + json.dumps(quota_message) + '''
 '''
         
             new_webfield_content = '''// Webfield component
