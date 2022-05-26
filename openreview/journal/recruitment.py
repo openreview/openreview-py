@@ -36,7 +36,7 @@ class Recruitment(object):
                 invitee = profile.id if profile else invitee
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
+                    name = profile.get_preferred_name(pretty=True) if profile else 'invitee'
                 try:
                     r=tools.recruit_reviewer(self.client, invitee, name,
                         hash_seed,
@@ -82,7 +82,7 @@ class Recruitment(object):
                 invitee = profile.id if profile else invitee
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
+                    name = profile.get_preferred_name(pretty=True) if profile else 'invitee'
                 try:
                     r=tools.recruit_reviewer(self.client, invitee, name,
                         hash_seed,

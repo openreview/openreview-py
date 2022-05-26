@@ -210,12 +210,20 @@ class Conference(object):
 
         notes = list(self.get_submissions())
         invitations = self.invitation_builder.set_review_invitation(self, notes)
+
         if self.review_stage.rating_field_name:
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_program_chairs_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             if self.use_area_chairs:
                 self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_area_chairs_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_reviewers_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
             self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_RATING_NAME', self.review_stage.rating_field_name)
+
+        if self.review_stage.confidence_field_name:
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_program_chairs_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+            if self.use_area_chairs:
+                self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_area_chairs_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+            self.webfield_builder.edit_web_string_value(self.client.get_group(self.get_authors_id()), 'REVIEW_CONFIDENCE_NAME', self.review_stage.confidence_field_name)
+
         return invitations
 
     def __create_ethics_review_stage(self):
@@ -1462,7 +1470,7 @@ class Conference(object):
 
         role = reviewers_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
-        recruit_message = f'''Dear {{name}},
+        recruit_message = f'''Dear {{{{fullname}}}},
 
 You have been nominated by the program chair committee of {self.get_short_name()} to serve as {role}. As a respected researcher in the area, we hope you will accept and help us make {self.get_short_name()} a success.
 
@@ -1472,17 +1480,17 @@ We will be using OpenReview.net with the intention of have an engaging reviewing
 
 To ACCEPT the invitation, please click on the following link:
 
-{{accept_url}}
+{{{{accept_url}}}}
 
 To DECLINE the invitation, please click on the following link:
 
-{{decline_url}}
+{{{{decline_url}}}}
 
 Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact {{contact_info}}.
+If you have any questions, please contact {{{{contact_info}}}}.
 
 Cheers!
 
@@ -1506,7 +1514,7 @@ Program Chairs
                 if reviewers_id not in memberships and reviewers_declined_id not in memberships:
                     reviewer_name = 'invitee'
                     if reviewer_id.startswith('~') :
-                        reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                        reviewer_name = None
                     elif (reviewer_id in invitees) and invitee_names:
                         reviewer_name = invitee_names[invitees.index(reviewer_id)]
                     try:
@@ -1532,8 +1540,8 @@ Program Chairs
                 memberships = [g.id for g in self.client.get_groups(member=reviewer_id, regex=reviewers_id)] if tools.get_group(self.client, reviewer_id) else []
                 if reviewers_id not in memberships:
                     reviewer_name = 'invitee'
-                    if reviewer_id.startswith('~') :
-                        reviewer_name =  re.sub('[0-9]+', '', reviewer_id.replace('~', '').replace('_', ' '))
+                    if reviewer_id.startswith('~'):
+                        reviewer_name = None
                     elif (reviewer_id in invitees) and invitee_names:
                         reviewer_name = invitee_names[invitees.index(reviewer_id)]
                     try:
@@ -1572,8 +1580,8 @@ Program Chairs
                 recruitment_status['already_member'][member_group_id].append(email)
             else:
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-                if not name:
-                    name = re.sub('[0-9]+', '', email.replace('~', '').replace('_', ' ')) if email.startswith('~') else 'invitee'
+                if not name and not email.startswith('~'):
+                    name = 'invitee'
                 try:
                     tools.recruit_reviewer(self.client, email, name,
                         hash_seed,
@@ -1744,10 +1752,8 @@ Program Chairs
                 submission_number=paper_note.number,
                 submission_title=paper_note.content['title']
             )
-            final_message = f'''{message.format(
-                submission_title=paper_note.content['title'],
-                forum_url=f'https://openreview.net/forum?id={paper_note.id}'
-            )}'''
+            final_message = message.replace("{{submission_title}}", paper_note.content['title'])
+            final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={paper_note.id}')
             self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
 
         tools.concurrent_requests(send_notification, decision_notes)
@@ -1784,6 +1790,8 @@ Program Chairs
 
             paper_decision_note = decision_notes.get(paper_id, None)
             if paper_decision_note:
+                paper_decision_note.readers = self.decision_stage.get_readers(conference=self, number=paper_note.number)
+                paper_decision_note.nonreaders = self.decision_stage.get_nonreaders(conference=self, number=paper_note.number)
                 paper_decision_note.content = {
                     'title': 'Paper Decision',
                     'decision': decision.strip(),
@@ -1961,13 +1969,11 @@ class SubmissionStage(object):
         return submission_readers
 
     def get_invitation_readers(self, conference, under_submission):
-
-
-        ## Rolling review should be release right away
+        # Rolling review should be release right away
         if self.create_groups:
             return {'values': ['everyone']}
 
-        if under_submission:
+        if under_submission or self.double_blind:
             has_authorids = 'authorids' in self.get_content()
             readers = {
                 'values-copied': [
@@ -2042,6 +2048,7 @@ class SubmissionStage(object):
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
+
 
 class ExpertiseSelectionStage(object):
 
@@ -2126,6 +2133,7 @@ class ReviewStage(object):
         additional_fields = {},
         remove_fields = [],
         rating_field_name = None,
+        confidence_field_name = None,
         process_path = None
     ):
 
@@ -2142,6 +2150,7 @@ class ReviewStage(object):
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.rating_field_name = rating_field_name
+        self.confidence_field_name = confidence_field_name
         self.process_path = process_path
 
     def _get_reviewer_readers(self, conference, number):
