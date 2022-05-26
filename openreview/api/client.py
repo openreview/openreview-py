@@ -623,6 +623,7 @@ class OpenReviewClient(object):
 
     def get_invitations(self,
         id = None,
+        ids = None,
         invitee = None,
         replytoNote = None,
         replyForum = None,
@@ -646,6 +647,8 @@ class OpenReviewClient(object):
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -683,6 +686,8 @@ class OpenReviewClient(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
         if invitee is not None:
             params['invitee'] = invitee
         if replytoNote is not None:
@@ -720,6 +725,7 @@ class OpenReviewClient(object):
 
     def get_all_invitations(self,
         id = None,
+        ids = None,
         invitee = None,
         replytoNote = None,
         replyForum = None,
@@ -743,6 +749,8 @@ class OpenReviewClient(object):
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -779,6 +787,7 @@ class OpenReviewClient(object):
         """
         params = {
             'id': id,
+            'ids': ids,
             'invitee': invitee,
             'replytoNote': replytoNote,
             'replyForum': replyForum,
