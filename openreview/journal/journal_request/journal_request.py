@@ -213,15 +213,15 @@ class JournalRequest():
         short_name = note.content['abbreviated_venue_name']['value']
         venue_id = note.content['venue_id']['value']
 
-        default_recruitment_template = '''Dear {name},
+        default_recruitment_template = '''Dear {{fullname}},
 
-You have been nominated by the program chair committee of {short_name} to serve as {role}.
+You have been nominated by the program chair committee of {short_name} to serve as {{role}}.
 
 ACCEPT LINK:
-{accept_url}
+{{accept_url}}
 
 DECLINE LINK:
-{decline_url}
+{{decline_url}}
 
 Cheers!'''.replace('{short_name}', short_name)
 
@@ -249,7 +249,7 @@ Cheers!'''.replace('{short_name}', short_name)
                     'regex': '.*'
                 },
                 'presentation': {
-                    'default': '[{short_name}] Invitation to serve as {role} for {short_name}'.replace('{short_name}', short_name)
+                    'default': '[{short_name}] Invitation to serve as {{role}} for {short_name}'.replace('{short_name}', short_name)
                 }
             },
             'email_content': {
@@ -333,18 +333,18 @@ Cheers!'''.replace('{short_name}', short_name)
         note = self.client.get_note(note_id)
         short_name = note.content['abbreviated_venue_name']['value']
         venue_id = note.content['venue_id']['value']
-        recruitment_email_template = '''Dear {name},
+        recruitment_email_template = '''Dear {{fullname}},
 
-You have been nominated to serve as a reviewer for {short_name} by {inviter}.
+You have been nominated to serve as a reviewer for {short_name} by {{inviter}}.
 
 ACCEPT LINK:
-{accept_url}
+{{accept_url}}
 
 DECLINE LINK:
-{decline_url}
+{{decline_url}}
 
 Cheers!
-{inviter}'''.replace('{short_name}', short_name)
+{{inviter}}'''.replace('{short_name}', short_name)
 
         if template:
             recruitment_email_template = template
