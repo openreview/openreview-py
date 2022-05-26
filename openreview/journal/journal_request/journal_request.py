@@ -157,12 +157,13 @@ class JournalRequest():
 
         note = self.client.get_note(note_id)
         venue_id = note.content['venue_id']['value']
+        request_comment_invitation_id =  f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Comment'
 
         with open(os.path.join(os.path.dirname(__file__), 'process/comment_process.py')) as f:
             content = f.read()
             content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
             invitation = openreview.api.Invitation(
-                id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Comment',
+                id = request_comment_invitation_id,
                 invitees = ['everyone'],
                 readers = ['everyone'],
                 writers = [],
@@ -172,6 +173,10 @@ class JournalRequest():
                     'writers': { 'const': [self.support_group_id, venue_id] },
                     'readers': { 'const': [self.support_group_id, venue_id] },
                     'note': {
+                        'id': {
+                            'withInvitation': request_comment_invitation_id,
+                            'optional': True
+                        },
                         'signatures': { 'const': ['${signatures}'] },
                         'readers': { 'enum': [self.support_group_id, venue_id, action_editors_id], 'type': 'group[]' },
                         'writers': { 'const': [self.support_group_id, venue_id]},
