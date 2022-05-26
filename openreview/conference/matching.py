@@ -913,7 +913,7 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
-    def compute_alternate_conflicts(self, assignment_title, build_conflicts='neurips'):
+    def compute_alternate_conflicts(self, assignment_title, conflict_label='Conflict', build_conflicts='neurips'):
         if not self.alternate_matching_group:
             raise openreview.OpenReviewException('No alternate group selected')
 
@@ -943,7 +943,7 @@ class Matching(object):
                         head=submission.id,
                         tail=member,
                         weight=-1,
-                        label='Alternate Conflict',
+                        label=conflict_label,
                         readers=self._get_edge_readers(tail=member),
                         writers=[self.conference.id],
                         signatures=[self.conference.id]

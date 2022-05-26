@@ -889,7 +889,7 @@ class TestNeurIPSConference():
         assert len(conflicts) == 1
         assert '~Area_GoogleChair1' == conflicts[0].tail ## reviewer and one author are from google
 
-        conference.set_matching_alternate_conflicts(committee_id=conference.get_area_chairs_id(), source_committee_id=conference.get_senior_area_chairs_id(), source_assignment_title='sac-matching')
+        conference.set_matching_alternate_conflicts(committee_id=conference.get_area_chairs_id(), source_committee_id=conference.get_senior_area_chairs_id(), source_assignment_title='sac-matching', conflict_label='SAC Conflict')
         
         conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
         assert len(conflicts) == 13

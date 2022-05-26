@@ -1346,9 +1346,9 @@ class Conference(object):
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
         return conference_matching.append_note_conflicts(profile_id, build_conflicts)
 
-    def set_matching_alternate_conflicts(self, committee_id, source_committee_id, source_assignment_title):
+    def set_matching_alternate_conflicts(self, committee_id, source_committee_id, source_assignment_title, conflict_label):
         conference_matching = matching.Matching(self, self.client.get_group(source_committee_id), committee_id)
-        conference_matching.compute_alternate_conflicts(source_assignment_title)
+        conference_matching.compute_alternate_conflicts(source_assignment_title, conflict_label)
 
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
