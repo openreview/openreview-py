@@ -1968,13 +1968,11 @@ class SubmissionStage(object):
         return submission_readers
 
     def get_invitation_readers(self, conference, under_submission):
-
-
-        ## Rolling review should be release right away
+        # Rolling review should be release right away
         if self.create_groups:
             return {'values': ['everyone']}
 
-        if under_submission:
+        if under_submission or self.double_blind:
             has_authorids = 'authorids' in self.get_content()
             readers = {
                 'values-copied': [
@@ -2049,6 +2047,7 @@ class SubmissionStage(object):
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
+
 
 class ExpertiseSelectionStage(object):
 
