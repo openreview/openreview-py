@@ -134,7 +134,7 @@ class TestNeurIPSConference():
                 'invitee_role': 'Senior_Area_Chairs',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -155,8 +155,9 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
         assert messages[0]['content']['text'].startswith('<p>Dear SAC One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        print('invitation_url', invitation_url)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Senior Area Chair Invitation accepted')
         assert messages and len(messages) == 1
@@ -169,8 +170,8 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
         assert messages[0]['content']['text'].startswith('<p>Dear SAC Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         sac_group = client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs')
         assert len(sac_group.members) == 2
@@ -207,10 +208,9 @@ class TestNeurIPSConference():
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of NeurIPS 2021 to serve as Area Chair' in text
 
-        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
-        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(accepted_group.members) == 1
         assert 'ac1@mit.edu' in accepted_group.members
@@ -223,7 +223,7 @@ class TestNeurIPSConference():
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 0
 
-        helpers.respond_invitation(selenium, request_page, reject_url, accept=False)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
         notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
@@ -455,7 +455,7 @@ You have selected a reduced quota of 3 submissions to review.</p>
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -481,9 +481,9 @@ You have selected a reduced quota of 3 submissions to review.</p>
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Reviewer'
         assert messages[0]['content']['text'].startswith('<p>Dear Reviewer UMass,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
         assert 'pc@neurips.cc' in messages[0]['content']['text']
-        reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
-        helpers.respond_invitation(selenium, request_page, reject_url, accept=False)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
         notes = selenium.find_element_by_class_name("note_editor")
         assert notes        
         messages = notes.find_elements_by_tag_name("h3")
@@ -539,7 +539,7 @@ You have selected a reduced quota of 3 submissions to review.</p>
                 'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -555,8 +555,8 @@ You have selected a reduced quota of 3 submissions to review.</p>
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == 'Reminder: [NeurIPS 2021] Invitation to serve as Reviewer'
         assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
-        reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        helpers.respond_invitation(selenium, request_page, reject_url, accept=False)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
         helpers.await_queue()
 
@@ -631,7 +631,7 @@ You have selected a reduced quota of 3 submissions to review.</p>
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -652,8 +652,8 @@ You have selected a reduced quota of 3 submissions to review.</p>
 
         messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to serve as Ethics Reviewer')
         assert messages and len(messages) == 1
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue()
 

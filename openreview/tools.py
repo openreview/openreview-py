@@ -1686,7 +1686,7 @@ def recruit_reviewer(client, user, first,
     baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
     # build the URL to send in the message
-    url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
+    url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}'.format(
         baseurl = baseurl if baseurl else client.baseurl,
         recruitment_inv = recruit_reviewers_id,
         user = urlparse.quote(user),
@@ -1695,8 +1695,9 @@ def recruit_reviewer(client, user, first,
 
     # format the message defined above
     personalized_message = recruit_message.replace("{{fullname}}", first) if first else recruit_message
-    personalized_message = personalized_message.replace("{{accept_url}}", url+"Yes")
-    personalized_message = personalized_message.replace("{{decline_url}}", url+"No")
+    personalized_message = personalized_message.replace("{{accept_url}}", url + "&response=Yes")
+    personalized_message = personalized_message.replace("{{decline_url}}", url + "&response=No")
+    personalized_message = personalized_message.replace("{{invitation_url}}", url)
     personalized_message = personalized_message.replace("{{contact_info}}", contact_info)
 
     personalized_message.format()
