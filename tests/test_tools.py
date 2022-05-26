@@ -500,7 +500,7 @@ class TestTools():
                 {
                     'position': None,
                     'institution': {
-                        'domain': 'umass.edu'
+                        'domain': 'cmu.edu'
                     }
                 }
                 ]
@@ -513,7 +513,8 @@ class TestTools():
         assert 'umass.edu' in conflicts
 
         neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
-        assert len(neurips_conflicts) == 0
+        assert len(neurips_conflicts) == 1
+        assert 'cmu.edu' in conflicts
 
     def test_add_assignments(self, client):
 
