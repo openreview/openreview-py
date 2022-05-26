@@ -12,7 +12,7 @@ class VenueStages():
             self.file_content = self.file_content.replace(
                 "GROUP_PREFIX = ''",
                  "GROUP_PREFIX = '" + self.venue_request.super_user + "'")
-        
+
         with open(os.path.join(os.path.dirname(__file__), 'process/stage_pre_process.py'), 'r') as pre:
             self.pre_process_file_content = pre.read()
 
@@ -287,7 +287,7 @@ class VenueStages():
                 "order": 9,
                 "value-checkbox": "We confirm we want to release the submissions and reviews to the ethics reviewers",
                 "required": True
-            }           
+            }
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
@@ -1325,16 +1325,16 @@ class VenueRequest():
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
                 'order': 6,
                 'required': True,
-                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
+                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
                 'order': 7,
                 'required': True,
-                'default': '''Dear {name},
+                'default': '''Dear {{fullname}},
 
-        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
+        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
 
         You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
 
@@ -1342,11 +1342,11 @@ class VenueRequest():
 
         To ACCEPT the invitation, please click on the following link:
 
-        {accept_url}
+        {{accept_url}}
 
         To DECLINE the invitation, please click on the following link:
 
-        {decline_url}
+        {{decline_url}}
 
         Please answer within 10 days.
 
@@ -1358,7 +1358,7 @@ class VenueRequest():
 
         Program Chairs
         '''
-        }}
+            }}
 
         with open(self.recruitment_process, 'r') as f:
             file_content = f.read()
