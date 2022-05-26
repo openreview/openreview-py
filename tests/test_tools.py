@@ -457,7 +457,7 @@ class TestTools():
         assert "You do not have the required permissions as some emails are obfuscated" in error.value.args[0]
 
         profile1 = openreview.Profile(
-            id = 'Test_Conflict1',
+            id = '~Test_Conflict1',
             content = {
                 'emails': ['user@cmu.edu'],
                 'history': [{
@@ -469,7 +469,7 @@ class TestTools():
         )
 
         profile2 = openreview.Profile(
-            id = 'Test_Conflict2',
+            id = '~Test_Conflict2',
             content = {
                 'emails': ['user2@126.com'],
                 'history': [
@@ -488,7 +488,7 @@ class TestTools():
         )
 
         intern_profile = openreview.Profile(
-            id='Test_Conflict3',
+            id='~Test_Conflict3',
             content={
                 'emails': ['user3@345.com'],
                 'history': [{
@@ -496,7 +496,14 @@ class TestTools():
                     'institution': {
                         'domain': 'umass.edu'
                     }
-                }]
+                },
+                {
+                    'position': None,
+                    'institution': {
+                        'domain': 'umass.edu'
+                    }
+                }
+                ]
             }
         )
 
