@@ -34,6 +34,7 @@ class TestNeurIPSConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
 
+        helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
         helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair')
         helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
@@ -585,9 +586,7 @@ class TestNeurIPSConference():
         assert pc_client.get_group('NeurIPS.cc/2021/Conference/Ethics_Chairs')      
         assert pc_client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
 
-        assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))     
-    
-    
+        assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))
     
     def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
 
@@ -684,6 +683,41 @@ class TestNeurIPSConference():
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Desk_Reject')
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Revision')
 
+        # expire the abstract submission deadline
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        first_date = now + datetime.timedelta(days=-1)
+
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
         ## Add supplementary material
         submissions=conference.get_submissions(details='original')
         for submission in submissions:
@@ -745,7 +779,7 @@ class TestNeurIPSConference():
                 'title': 'Paper title 5' ,
                 'abstract': 'This is an abstract 5 Rev',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
-                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Another Andrew']
             }
         )
         note = test_client.post_note(note)
@@ -760,6 +794,11 @@ class TestNeurIPSConference():
         author_group=test_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Authors')
         assert author_group
         assert author_group.members == ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu']
+
+        sac_client = openreview.Client(username='another_andrew@mit.edu', password='1234')
+        sac_notes = sac_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
+        assert len(sac_notes) == 1
+        assert sac_notes[0].id == note.forum
 
 
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
