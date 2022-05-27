@@ -1088,6 +1088,8 @@ class Matching(object):
                 post_content = post_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
                 pre_content = pre_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
                 post_content = post_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
+                if self.conference.use_recruitment_template:
+                    post_content = post_content.replace("USE_RECRUITMENT_TEMPLATE = False", "USE_RECRUITMENT_TEMPLATE = True")
 
                 invitation.preprocess=pre_content
                 invitation.process=post_content

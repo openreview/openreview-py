@@ -1235,9 +1235,7 @@ As an Area Chair for NeurIPS 2021, I'd like to ask for your expert review of a s
 
 If you accept, you will not be added to the general list of NeurIPS reviewers and will not be assigned additional submissions unless you explicitly agree to review them.
 
-To accept this request, please follow this link: {accept_url}
-
-To decline, follow this link: {decline_url}
+To respond this request, please follow this link: {invitation_url}
 
 If you accept, I would need the review by Friday, July 16.
 
@@ -1301,15 +1299,16 @@ Thank you,
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        invalid_accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('user=~External_Reviewer_Amazon1', 'user=~External_Reviewer_Amazon2').replace('&amp;', '&')
-        request_page(selenium, invalid_accept_url, alert=True, by=By.CLASS_NAME, wait_for_element='important_message')
+        invalid_accept_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1].replace('user=~External_Reviewer_Amazon1', 'user=~External_Reviewer_Amazon2').replace('&amp;', '&')
+        helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
-        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        print('invitation_url', invitation_url)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_id("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
