@@ -1157,7 +1157,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
+def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -1165,6 +1165,8 @@ def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, mi
     :type client: Client
     :param id: an Invitation ID. If provided, returns invitations whose "id" value is this Invitation ID.
     :type id: str, optional
+    :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+    :type ids: str, optional
     :param invitee: Essentially, invitees field in an Invitation object contains Group Ids being invited using the invitation. If provided, returns invitations whose "invitee" field contains the given string.
     :type invitee: str, optional
     :param regex: a regular expression string to match Invitation IDs. If provided, returns invitations whose "id" value matches the given regex.
@@ -1199,6 +1201,8 @@ def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, mi
     params = {}
     if id is not None:
         params['id'] = id
+    if ids is not None:
+        params['ids'] = ids
     if invitee is not None:
         params['invitee'] = invitee
     if regex is not None:
@@ -1962,14 +1966,19 @@ def get_neurips_profile_info(profile, n_years=3):
 
     ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
-        if 'intern' not in h.get('position', '').lower():
-            if h.get('end') is None or int(h.get('end')) > cut_off_year:
+        position = h.get('position')
+        if not position or (isinstance(position, str) and 'intern' not in position.lower()):
+            try:
+                end = int(h.get('end', 0) or 0)
+            except:
+                end = 0
+            if not end or (int(end) > cut_off_year):
                 domain = h.get('institution', {}).get('domain', '')
                 domains.update(openreview.tools.subdomains(domain))
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
-        if r.get('relation', '') in ['Coauthor','Coworker']:
+        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
             if r.get('end') is None or int(r.get('end')) > cut_off_year:
                 relations.add(r['email'])
         else:
