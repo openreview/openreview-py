@@ -553,9 +553,8 @@ class TestTools():
         assert profiles['~Another_Name1']
         assert profiles['~SomeFirstName_User1'].id == profiles['~Another_Name1'].id
         assert profiles['user@gmail.com']
-        assert profiles['test@mail.com']
-        assert profiles['alternate@mail.com']
-        assert profiles['alternate@mail.com'].id == profiles['test@mail.com'].id
+        assert profiles['test@mail.com'].id == '~SomeFirstName_User1'
+        assert profiles['alternate@mail.com'].id == '~SomeFirstName_User1'
         assert profiles['test_user@mail.com'].id == 'test_user@mail.com'
         assert profiles['~Test_Name1'].id == '~Test_Name1'
 
