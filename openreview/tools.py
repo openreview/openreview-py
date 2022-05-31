@@ -153,33 +153,48 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         else:
             emails.append(member)
 
-    profiles = []
-    profile_by_email = {}
+    profile_by_id = {}
+    profile_by_id_or_email = {}
+
+    def process_profile(profile):
+        profile_by_id[profile.id] = profile
+        for name in profile.content.get("names", []):
+            if name.get("username"):
+                profile_by_id_or_email[name.get("username")] = profile
+        for confirmed_email in profile.content.get('emailsConfirmed', []):
+            profile_by_id_or_email[confirmed_email] = profile        
 
     batch_size = 100
     ## Get profiles by id and add them to the profiles list
     for i in range(0, len(ids), batch_size):
         batch_ids = ids[i:i+batch_size]
         batch_profiles = client.search_profiles(ids=batch_ids)
-        profiles.extend(batch_profiles)
+        for profile in batch_profiles:
+            process_profile(profile)
 
     ## Get profiles by email and add them to the profiles list
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
         batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
-        profile_by_email.update(batch_profile_by_email)
+        for email, profile in batch_profile_by_email.items():
+            process_profile(profile)            
 
     for email in emails:
-        profiles.append(profile_by_email.get(email, openreview.Profile(
-            id=email,
-            content={
-                'emails': [email],
-                'preferredEmail': email,
-                'emailsConfirmed': [email],
-                'names': []
-            })))        
+        if email not in profile_by_id_or_email:
+            profile = openreview.Profile(
+                id=email,
+                content={
+                    'emails': [email],
+                    'preferredEmail': email,
+                    'emailsConfirmed': [email],
+                    'names': []
+                })
+            profile_by_id[profile.id] = profile
+            profile_by_id_or_email[email] = profile
+ 
 
     ## Get publications for all the profiles
+    profiles = list(profile_by_id.values())
     if with_publications:
         baseurl_v1 = 'http://localhost:3000'
         baseurl_v2 = 'http://localhost:3001'
@@ -208,19 +223,11 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
 
     if as_dict:
         profiles_as_dict = {}
-        profiles_by_name = {}
-        profiles_by_email = {}
-        for profile in profiles:
-            for name in profile.content.get("names", []):
-                profiles_by_name[name.get("username")] = profile
-            for confirmed_email in profile.content.get('emailsConfirmed', []):
-                profiles_by_email[confirmed_email] = profile
-
         for id in ids:
-            profiles_as_dict[id] = profiles_by_name.get(id)
+            profiles_as_dict[id] = profile_by_id_or_email.get(id)
 
         for email in emails:
-            profiles_as_dict[email] = profiles_by_email.get(email)
+            profiles_as_dict[email] = profile_by_id_or_email.get(email)
 
         return profiles_as_dict
 
