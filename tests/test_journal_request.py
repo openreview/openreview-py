@@ -389,6 +389,53 @@ TJ22 Editors-in-Chief
         helpers.await_queue(openreview_client)
 
         #check recruitment response posted as reply of lastest recruitment note
-        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
-        assert recruitment_response
-        assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response.content['comment']['value']
+        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
+        assert recruitment_response and len(recruitment_response) == 2
+        assert recruitment_response[1].content['title']['value'] == 'Recruitment Status'
+        assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
+
+        #check AC was notified
+        ae_messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
+        assert len(ae_messages) == 2
+        assert ae_messages[1]['content']['to'] == 'ae_journal2@mail.com'
+        assert 'The user <a href="mailto:new_reviewer@mail.com">new_reviewer@mail.com</a> has accepted an invitation to be a reviewer for TJ22.' in ae_messages[1]['content']['text']
+
+        #accept reviewer invitation again
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue(openreview_client)
+
+        # #check no new note was posted
+        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
+        assert recruitment_response and len(recruitment_response) == 2
+        assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
+        references = openreview_client.get_note_edits(recruitment_response[0].id)
+        assert references and len(references) == 2
+
+        #check AC was NOT notified
+        ae_messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
+        assert len(ae_messages) == 2
+
+        #decline reviewer invitation
+        text = messages[0]['content']['text']
+        accept_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        request_page(selenium, accept_url, alert=True)
+
+        #check recruitment response was updated
+        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
+        assert recruitment_response and len(recruitment_response) == 2
+        assert recruitment_response[1].content['title']['value'] == 'Recruitment Status'
+        assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
+        references = openreview_client.get_note_edits(recruitment_response[0].id)
+        assert references and len(references) == 3
+
+        #check AC was notified
+        ae_messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
+        assert len(ae_messages) == 3
+        assert ae_messages[2]['content']['to'] == 'ae_journal2@mail.com'
+        assert 'The user <a href="mailto:new_reviewer@mail.com">new_reviewer@mail.com</a> has declined an invitation to be a reviewer for TJ22.' in ae_messages[2]['content']['text']
