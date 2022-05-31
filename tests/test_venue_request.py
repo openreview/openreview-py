@@ -398,7 +398,8 @@ class TestVenueRequest():
                     'preprint': {
                         'value-regex': '.*'
                     }
-                }
+                },
+                'reviewer_roles': ['Reviewers', 'Expert Reviewers']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -427,6 +428,18 @@ class TestVenueRequest():
         submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, End: ' + submission_due_date_str + ' UTC-0'
         assert openreview.tools.get_invitation(client, conference.submission_stage.get_withdrawn_submission_id(conference)) is None
+
+    def test_multiple_reviewer_roles(self, client, test_client, selenium, request_page, venue, helpers):
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+
+        recruitment_invitation = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
+        assert 'Expert Reviewers' in recruitment_invitation.reply['content']['invitee_role']['value-dropdown']
+
+        remind_recruitment_invitation = client.get_invitation('{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
+        assert 'Expert Reviewers' in remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown']
+
+        paper_matching_invitaion = client.get_invitation('{}/-/Request{}/Paper_Matching_Setup'.format(venue['support_group_id'], venue['request_form_note'].number))
+        assert conference.get_committee_id('Expert Reviewers') in paper_matching_invitaion.reply['content']['matching_group']['value-dropdown']
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
