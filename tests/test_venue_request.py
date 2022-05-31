@@ -1830,6 +1830,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         blind_submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']))
         revision_invitation = test_client.get_invitation('{}/Paper{}/-/Revision'.format(venue['venue_id'], blind_submissions[0].number))
         assert revision_invitation.expdate < round(time.time() * 1000)
+        raise Exception
 
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
