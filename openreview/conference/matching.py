@@ -587,8 +587,8 @@ class Matching(object):
         for row in tqdm(score_handle, desc='_build_scores'):
             edges.append(Edge(
                 invitation=invitation.id,
-                head=row[0],
-                tail=row[1],
+                head=row[1],
+                tail=row[0],
                 weight=str(max(round(float(row[2]), 4), 0)),
                 readers=self._get_edge_readers(tail=row[1]),
                 writers=[self.conference.id],
@@ -664,17 +664,17 @@ class Matching(object):
                 if call_count == 1440: ## one day to wait the completion or trigger a timeout
                     break
                 time.sleep(60)
-                status_response = self.client.get_expertise_status(job_id['job_id'])
+                status_response = self.client.get_expertise_status(job_id['jobId'])
                 status = status_response.get('status')
                 desc = status_response.get('description')
                 call_count += 1
             if 'Completed' in status:
-                result = self.client.get_expertise_results(job_id['job_id'])
+                result = self.client.get_expertise_results(job_id['jobId'])
                 matching_status['no_profiles'] = result['metadata']['no_profile']
                 matching_status['no_publications'] = result['metadata']['no_publications']
 
                 if self.alternate_matching_group:
-                    scores = [[entry['submission_member'], entry['match_member'], entry['score']] for entry in result['results']]
+                    scores = [[entry['match_member'], entry['submission_member'], entry['score']] for entry in result['results']]
                     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 
                 scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]

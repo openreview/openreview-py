@@ -17,10 +17,10 @@ def process(client, edit, invitation):
     if len(recommendations) == 3:
 
         submission = client.get_note(note.forum)
-        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
+        duedate = journal.get_due_date(weeks = 1)
 
         print('Enable review rating')
-        journal.invitation_builder.set_review_rating_invitation(submission, openreview.tools.datetime_millis(duedate))
+        journal.invitation_builder.set_review_rating_invitation(submission, duedate)
 
         ## send email to action editors
         print('Send email to AEs')
@@ -34,7 +34,7 @@ Thank you for overseeing the review process for {journal.short_name} submission 
 All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:
 
 - Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.
-- Rate the quality of the reviews submitted by the reviewers. **You will not be able to submit your decision until these ratings have been submitted**. To rate a review, go on the submission’s page and click on button “Rating” for each of the reviews.
+- Rate the quality of the reviews submitted by the reviewers. **You will not be able to submit your decision until these ratings have been submitted**. To rate a review, go on the submission's page and click on button "Rating" for each of the reviews.
 
 We ask that you submit your decision **within 1 week** ({duedate.strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={journal.get_ae_decision_id(number=submission.number)}
 

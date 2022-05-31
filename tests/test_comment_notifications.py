@@ -17,7 +17,7 @@ class TestCommentNotification():
 
     def test_notify_all(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('MIDL.io/2019/Conference')
         builder.set_conference_name('Medical Imaging with Deep Learning')
@@ -306,7 +306,7 @@ class TestCommentNotification():
 
     def test_notify_submitted_reviewers(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id('auai.org/UAI/2020/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
         builder.set_conference_short_name('UAI 2020')
@@ -600,7 +600,7 @@ class TestCommentNotification():
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2018/Conference')
         builder.set_conference_name('Conference on Learning Theory')
@@ -889,7 +889,7 @@ class TestCommentNotification():
 
     def test_notify_except_program_chairs(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2017/Conference')
         builder.set_conference_name('Conference on Learning Theory')
@@ -1106,7 +1106,7 @@ class TestCommentNotification():
 
     def test_notify_except_authors_are_program_chairs(self, client, helpers, test_client):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2017/Conference')
         builder.set_conference_name('Conference on Learning Theory')

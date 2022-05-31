@@ -581,7 +581,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return groups, response.json()['count']
 
         return groups
@@ -623,6 +623,7 @@ class OpenReviewClient(object):
 
     def get_invitations(self,
         id = None,
+        ids = None,
         invitee = None,
         replytoNote = None,
         replyForum = None,
@@ -646,6 +647,8 @@ class OpenReviewClient(object):
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -683,6 +686,8 @@ class OpenReviewClient(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
         if invitee is not None:
             params['invitee'] = invitee
         if replytoNote is not None:
@@ -713,13 +718,14 @@ class OpenReviewClient(object):
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return invitations, response.json()['count']
 
         return invitations
 
     def get_all_invitations(self,
         id = None,
+        ids = None,
         invitee = None,
         replytoNote = None,
         replyForum = None,
@@ -743,6 +749,8 @@ class OpenReviewClient(object):
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -779,6 +787,7 @@ class OpenReviewClient(object):
         """
         params = {
             'id': id,
+            'ids': ids,
             'invitee': invitee,
             'replytoNote': replytoNote,
             'replyForum': replyForum,
@@ -919,7 +928,7 @@ class OpenReviewClient(object):
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return notes, response.json()['count']
 
         return notes
@@ -1045,7 +1054,7 @@ class OpenReviewClient(object):
 
         edits = [Edit.from_json(n) for n in response.json()['edits']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return edits, response.json()['count']
 
         return edits
@@ -1085,7 +1094,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
-        if with_count:
+        if with_count and params.get('offset') is None:
             return tags, response.json()['count']
 
         return tags
@@ -1142,7 +1151,7 @@ class OpenReviewClient(object):
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return edges, response.json()['count']
 
         return edges
@@ -1764,7 +1773,7 @@ class OpenReviewClient(object):
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
             return { 'status': 'Completed' }
-        response = requests.get(base_url + '/expertise/status', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1795,7 +1804,7 @@ class OpenReviewClient(object):
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
-            response = requests.get(base_url + '/expertise/results', params = {'job_id': job_id}, headers = self.headers)
+            response = requests.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
 
             return response.json()
@@ -2074,7 +2083,7 @@ class Invitation(object):
         self.bulk = bulk
         self.details = details
         self.reply_forum_views = reply_forum_views
-        self.web = None
+        self.web = web
         self.process = process
         self.preprocess = preprocess
         self.date_processes = date_processes
@@ -2329,7 +2338,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -2346,6 +2355,7 @@ class Group(object):
         self.anonids = anonids
         self.web=None
         self.impersonators = impersonators
+        self.host = host
         if web is not None:
             with open(web) as f:
                 self.web = f.read()
@@ -2388,6 +2398,7 @@ class Group(object):
             'anonids': self.anonids,
             'deanonymizers': self.deanonymizers,
             'web': self.web,
+            'host': self.host,
             'details': self.details
         }
 
@@ -2419,6 +2430,7 @@ class Group(object):
             anonids=g.get('anonids'),
             deanonymizers=g.get('deanonymizers'),
             impersonators=g.get('impersonators'),
+            host=g.get('host'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']

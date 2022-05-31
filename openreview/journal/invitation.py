@@ -496,7 +496,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'order': 1,
                                     'value': {
                                         'type': "string",
-                                        'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${params.reviewDuedate}.']
+                                        'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${params.reviewDuedate} UTC time.']
                                     },
                                     'presentation': {
                                         'input': 'checkbox'
@@ -576,7 +576,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'type': "group[]",
                                 'regex': r'~.*'
                             },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, authors_value]
@@ -689,13 +689,8 @@ If you have questions after reviewing the points below that are not answered on 
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
         action_editors_id = self.journal.get_action_editors_id()
         authors_id = self.journal.get_authors_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${{head}.number}')
         paper_authors_id = self.journal.get_authors_id(number='${{head}.number}')
 
-        conflict_ae_invitation_id=f'{action_editors_id}/-/Conflict'
-        custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
-
-        now = datetime.datetime.utcnow()
         invitation = Invitation(
             id=self.journal.get_ae_conflict_id(),
             invitees=[venue_id],
@@ -1365,7 +1360,7 @@ If you have questions after reviewing the points below that are not answered on 
 
     def set_note_review_approval_invitation(self, note, duedate):
         return self.client.post_invitation_edit(invitations=self.journal.get_review_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': duedate },
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate) },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2086,7 +2081,7 @@ If you have questions after reviewing the points below that are not answered on 
         if not ae_recommendation_invitation:
             invitation = Invitation(
                 id=ae_recommendation_invitation_id,
-                duedate=duedate,
+                duedate=openreview.tools.datetime_millis(duedate),
                 invitees=[authors_id],
                 readers=[venue_id, authors_id],
                 writers=[venue_id],
@@ -2358,7 +2353,7 @@ If you have questions after reviewing the points below that are not answered on 
     def set_review_invitation(self, note, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_review_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': duedate },
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate) },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -3098,7 +3093,7 @@ If you have questions after reviewing the points below that are not answered on 
         decision_approval_invitation_id = self.journal.get_decision_approval_id(number=note.number)
 
         invitation = Invitation(id=decision_approval_invitation_id,
-            duedate=duedate,
+            duedate=openreview.tools.datetime_millis(duedate),
             invitees=[venue_id, editors_in_chief_id],
             noninvitees=[paper_authors_id],
             readers=['everyone'],
@@ -3165,7 +3160,7 @@ If you have questions after reviewing the points below that are not answered on 
                 rating_invitation=openreview.tools.get_invitation(self.client, rating_invitation_id)
                 if not rating_invitation:
                     invitation = Invitation(id=rating_invitation_id,
-                        duedate=duedate,
+                        duedate=openreview.tools.datetime_millis(duedate),
                         invitees=[venue_id, paper_action_editors_id],
                         readers=[venue_id, paper_action_editors_id],
                         writers=[venue_id],
@@ -3219,7 +3214,7 @@ If you have questions after reviewing the points below that are not answered on 
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
-            duedate=duedate,
+            duedate=openreview.tools.datetime_millis(duedate),
             edit={
                 'signatures': { 'const': [paper_authors_id] },
                 'readers': { 'const': ['everyone']},
@@ -3343,11 +3338,11 @@ If you have questions after reviewing the points below that are not answered on 
 
         camera_ready_verification_invitation_id = self.journal.get_camera_ready_verification_id(number=note.number)
         invitation = Invitation(id=camera_ready_verification_invitation_id,
-            duedate=duedate,
+            duedate=openreview.tools.datetime_millis(duedate),
             invitees=[venue_id, paper_action_editors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[editors_in_chief_id],
+            signatures=[venue_id],
             edit={
                 'signatures': { 'const': [ paper_action_editors_id ] },
                 'readers': { 'const': [ venue_id, paper_action_editors_id ] },

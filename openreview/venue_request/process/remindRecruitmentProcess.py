@@ -23,8 +23,8 @@ def process(client, note, invitation):
     pretty_role = role_name.replace('_', ' ')
     pretty_role = pretty_role[:-1] if pretty_role.endswith('s') else pretty_role
 
-    note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{invitee_role}', pretty_role)
-    note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{invitee_role}', pretty_role)
+    note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{{invitee_role}}', pretty_role)
+    note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{{invitee_role}}', pretty_role)
 
     recruitment_status=conference.recruit_reviewers(
         reviewers_name = role_name,

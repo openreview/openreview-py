@@ -6,7 +6,7 @@ def process(client, edit, invitation):
 
     journal.setup_under_review_submission(note)
 
-    duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)
+    duedate = journal.get_due_date(weeks = 1)
 
     journal.invitation_builder.set_reviewer_assignment_invitation(note, duedate)
 

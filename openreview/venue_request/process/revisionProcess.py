@@ -28,6 +28,18 @@ def process(client, note, invitation):
                 if matching_invitation:
                     matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
                     client.post_invitation(matching_invitation)
+            withdraw_submission_expiration = forum_note.content.get('withdraw_submission_expiration')
+            if withdraw_submission_expiration:
+                try:
+                    withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d %H:%M')
+                except ValueError:
+                    withdraw_submission_expiration = datetime.datetime.strptime(withdraw_submission_expiration, '%Y/%m/%d')
+                paper_withdraw_super_invitation = openreview.tools.get_invitation(
+                    client, conference.get_invitation_id('Withdraw')
+                )
+                if paper_withdraw_super_invitation:
+                    paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
+                    client.post_invitation(paper_withdraw_super_invitation)
 
             if conference.use_ethics_chairs or conference.use_ethics_reviewers:
                 client.post_invitation(openreview.Invitation(
@@ -118,12 +130,10 @@ def process(client, note, invitation):
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                        'default': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
-You can find the final reviews for your paper on the submission page in OpenReview at:
-{{forum_url}}
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
 
 Best,
 {short_name} Program Chairs
@@ -133,12 +143,10 @@ Best,
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                        'default': f'''Dear {{{{fullname}}}},
                         
-Thank you for submitting your paper, {{submission_title}}, to {short_name}. We regret to inform you that your submission was not accepted.
-You can find the final reviews for your paper on the submission page in OpenReview at:
-{{forum_url}}
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
 
 Best,
 {short_name} Program Chairs
@@ -148,12 +156,10 @@ Best,
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
-                        'default': f'''
-Dear {{{{{{{{fullname}}}}}}}},
+                        'default': f'''Dear {{{{fullname}}}},
 
-Thank you for submitting your paper, {{submission_title}}, to {short_name}.
-You can find the final reviews for your paper on the submission page in OpenReview at:
-{{forum_url}}
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
 
 Best,
 {short_name} Program Chairs
@@ -194,6 +200,21 @@ Best,
             ))
 
         elif invitation_type == 'Submission_Revision_Stage':
+            submission_revision_stage_notes = client.get_references(
+                referent=forum_note.id,
+                invitation='{support_group}/-/Request{number}/Submission_Revision_Stage'.format(
+                    support_group=SUPPORT_GROUP, number=forum_note.number),
+                limit=2
+            )
+            if len(submission_revision_stage_notes) > 1:
+                last_submission_revision_stage_note = submission_revision_stage_notes[-1]
+                expire_revision_stage_name = last_submission_revision_stage_note.content.get('submission_revision_name',
+                                                                                             'Revision')
+                expire_revision_stage_name = expire_revision_stage_name.replace(" ", "_")
+            else:
+                expire_revision_stage_name = 'Revision'
+            if expire_revision_stage_name != forum_note.content.get('submission_revision_name', '').strip().replace(" ", "_"):
+                conference.expire_invitation(conference.get_invitation_id(expire_revision_stage_name))
             conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 
         elif invitation_type == 'Comment_Stage':
