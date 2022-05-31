@@ -29,8 +29,10 @@ def process(client, note, invitation):
                     matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
                     client.post_invitation(matching_invitation)
                 revision_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Revision'))
-                if revision_invitation:
-                    conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
+                if revision_invitation and conference.submission_stage.second_due_date:
+                    revision_invitation.duedate = openreview.tools.datetime_millis(submission_deadline)
+                    revision_invitation.expdate = openreview.tools.datetime_millis(submission_deadline + datetime.timedelta(minutes=openreview.conference.invitation.SHORT_BUFFER_MIN))
+                    client.post_invitation(revision_invitation)
             withdraw_submission_expiration = forum_note.content.get('withdraw_submission_expiration')
             if withdraw_submission_expiration:
                 try:
