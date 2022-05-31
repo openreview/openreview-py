@@ -556,7 +556,7 @@ class TestTools():
         assert profiles['test@mail.com'].id == '~SomeFirstName_User1'
         assert profiles['alternate@mail.com'].id == '~SomeFirstName_User1'
         assert profiles['test_user@mail.com'].id == 'test_user@mail.com'
-        assert profiles['~Test_Name1'].id == '~Test_Name1'
+        assert profiles['~Test_Name1'] is None
 
     def test_get_mimetype(self):
         assert openreview.tools.get_mimetype('somepath/some name.pdf') == 'application/pdf'
