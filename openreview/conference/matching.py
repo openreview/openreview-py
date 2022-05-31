@@ -861,7 +861,7 @@ class Matching(object):
                         'hidden': True
                     },
                     'solver': {
-                        'value-radio': ['MinMax', 'FairFlow', 'Randomized'],
+                        'value-radio': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence'],
                         'default': 'MinMax',
                         'required': True,
                         'order': 17
