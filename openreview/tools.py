@@ -1967,14 +1967,19 @@ def get_neurips_profile_info(profile, n_years=3):
 
     ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
-        if 'intern' not in h.get('position', '').lower():
-            if h.get('end') is None or int(h.get('end')) > cut_off_year:
+        position = h.get('position')
+        if not position or (isinstance(position, str) and 'intern' not in position.lower()):
+            try:
+                end = int(h.get('end', 0) or 0)
+            except:
+                end = 0
+            if not end or (int(end) > cut_off_year):
                 domain = h.get('institution', {}).get('domain', '')
                 domains.update(openreview.tools.subdomains(domain))
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
-        if r.get('relation', '') in ['Coauthor','Coworker']:
+        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
             if r.get('end') is None or int(r.get('end')) > cut_off_year:
                 relations.add(r['email'])
         else:

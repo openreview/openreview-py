@@ -3342,7 +3342,7 @@ If you have questions after reviewing the points below that are not answered on 
             invitees=[venue_id, paper_action_editors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[editors_in_chief_id],
+            signatures=[venue_id],
             edit={
                 'signatures': { 'const': [ paper_action_editors_id ] },
                 'readers': { 'const': [ venue_id, paper_action_editors_id ] },
