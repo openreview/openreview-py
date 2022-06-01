@@ -213,7 +213,7 @@ var buildReviewerGroupMaps = function(noteNumbers, reviewerGroups, anonReviewerG
 };
 
 var getOfficialReviews = function(notes) {
-  var ratingExp = /^(\d+): .*/;
+  var ratingExp = /^(\d*[.]?\d+): .*/;
 
   var reviewByAnonId = {};
 
@@ -221,9 +221,9 @@ var getOfficialReviews = function(notes) {
     var anonId = getNumberfromGroup(n.signatures[0], singularReviewersName + '_');
     // Need to parse rating and confidence strings into ints
     ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
-    n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
+    n.rating = ratingNumber ? parseFloat(ratingNumber) : null;
     confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
-    n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
+    n.confidence = confidenceMatch ? parseFloat(confidenceMatch[1]) : null;
     reviewByAnonId[anonId] = n;
   });
 

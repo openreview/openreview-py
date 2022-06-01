@@ -551,7 +551,7 @@ var buildOfficialReviewMap = function(noteNumbers, notes) {
     return noteMap;
   }
 
-  var ratingExp = /^(\d+): .*/;
+  var ratingExp = /^(\d*[.]?\d+): .*/;
   notes.forEach(function(n) {
     if (n.signatures[0].charAt(0) === '~') {
       var num = getNumberfromGroup(n.invitation, 'Paper');
@@ -563,9 +563,9 @@ var buildOfficialReviewMap = function(noteNumbers, notes) {
 
     if (num && num in noteMap) {
       ratingNumber = n.content[REVIEW_RATING_NAME] ? n.content[REVIEW_RATING_NAME].substring(0, n.content[REVIEW_RATING_NAME].indexOf(':')) : null;
-      n.rating = ratingNumber ? parseInt(ratingNumber, 10) : null;
+      n.rating = ratingNumber ? parseFloat(ratingNumber) : null;
       confidenceMatch = n.content[REVIEW_CONFIDENCE_NAME] && n.content[REVIEW_CONFIDENCE_NAME].match(ratingExp);
-      n.confidence = confidenceMatch ? parseInt(confidenceMatch[1], 10) : null;
+      n.confidence = confidenceMatch ? parseFloat(confidenceMatch[1]) : null;
       noteMap[num][index] = n;
     }
   });
