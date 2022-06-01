@@ -133,7 +133,7 @@ def process(client, note, invitation):
                         'default': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
@@ -146,7 +146,7 @@ Best,
                         'default': f'''Dear {{{{fullname}}}},
                         
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
@@ -159,7 +159,7 @@ Best,
                         'default': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
