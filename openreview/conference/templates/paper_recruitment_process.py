@@ -17,6 +17,7 @@ def process(client, note, invitation):
     INVITED_LABEL = ''
     ACCEPTED_LABEL = ''
     DECLINED_LABEL = ''
+    USE_RECRUITMENT_TEMPLATE = False
 
     user = urllib.parse.unquote(note.content['user'])
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
@@ -57,6 +58,8 @@ def process(client, note, invitation):
 
         print('Invitation accepted', edge.tail, submission.number)
 
+        decline_instructions = 'If you would like to change your decision, please follow link in the previous invitation email and click on the "Decline" button.' if USE_RECRUITMENT_TEMPLATE else 'If you would like to change your decision, please click the Decline link in the previous invitation email.'
+
         if not user_profile or user_profile.active == False:
             edge.label='Pending Sign Up'
             client.post_edge(edge)
@@ -69,7 +72,7 @@ Thank you for accepting the invitation to review the paper number: {submission.n
 Please signup in OpenReview using the email address {edge.tail} and complete your profile.
 Confirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.
 
-If you would like to change your decision, please click the Decline link in the previous invitation email.
+{decline_instructions}
 
 OpenReview Team'''
             response = client.post_message(subject, [edge.tail], message)
@@ -174,7 +177,7 @@ Thank you for accepting the invitation to review the paper number: {submission.n
 
 {instructions}
 
-If you would like to change your decision, please click the Decline link in the previous invitation email.
+{decline_instructions}
 
 OpenReview Team'''
 
@@ -195,6 +198,8 @@ OpenReview Team'''
     elif (note.content['response'] == 'No'):
 
         print('Invitation declined', edge.tail, submission.number)
+        accept_instructions = 'If you would like to change your decision, please follow link in the previous invitation email and click on the "Accept" button.' if USE_RECRUITMENT_TEMPLATE else 'If you would like to change your decision, please click the Accept link in the previous invitation email.'
+
         ## I'm not sure if we should remove it because they could have been invite to more than one paper
         #client.remove_members_from_group(EXTERNAL_COMMITTEE_ID, edge.tail)
         if EXTERNAL_PAPER_COMMITTEE_ID:
@@ -218,7 +223,7 @@ OpenReview Team'''
         message =f'''Hi {preferred_name},
 You have declined the invitation to review the paper number: {submission.number}, title: {submission.content['title']}.
 
-If you would like to change your decision, please click the Accept link in the previous invitation email.
+{accept_instructions}
 
 OpenReview Team'''
 

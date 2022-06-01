@@ -1459,6 +1459,10 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                 else:
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
 
+                if conference.use_recruitment_template:
+                    post_content = post_content.replace("USE_RECRUITMENT_TEMPLATE = False", "USE_RECRUITMENT_TEMPLATE = True")
+
+                
                 edge_readers = []
                 edge_writers = []
                 #if committee_id.endswith(conference.area_chairs_name):

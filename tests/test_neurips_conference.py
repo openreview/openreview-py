@@ -1339,7 +1339,7 @@ Thank you,
         # Confirmation email to the reviewer
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Amazon,<br>\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Amazon,<br>\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         # Confirmation email to the ac
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon accepted to review paper 5')
@@ -1375,7 +1375,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Amazon,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Amazon,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         response_note=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment', content={ 'submission_id': submission.id, 'user': '~External_Reviewer_Amazon1', 'response': 'No'})[0]
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon declined to review paper 5')
@@ -1497,7 +1497,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Adobe,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Adobe,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Adobe1')
         assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Adobe1')
@@ -1560,7 +1560,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5, assignment pending')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi <a href=\"mailto:external_reviewer4@gmail.com\">external_reviewer4@gmail.com</a>,<br>\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>Please signup in OpenReview using the email address <a href=\"mailto:external_reviewer4@gmail.com\">external_reviewer4@gmail.com</a> and complete your profile.<br>\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi <a href=\"mailto:external_reviewer4@gmail.com\">external_reviewer4@gmail.com</a>,<br>\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>Please signup in OpenReview using the email address <a href=\"mailto:external_reviewer4@gmail.com\">external_reviewer4@gmail.com</a> and complete your profile.<br>\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer external_reviewer4@gmail.com accepted to review paper 5, assignment pending')
         assert messages and len(messages) == 1
@@ -1648,7 +1648,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi <a href=\"mailto:external_reviewer5@gmail.com\">external_reviewer5@gmail.com</a>,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi <a href=\"mailto:external_reviewer5@gmail.com\">external_reviewer5@gmail.com</a>,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n<p>OpenReview Team</p>\n'
         ## Invite external reviewer with wrong tilde id
         with pytest.raises(openreview.OpenReviewException) as openReviewError:
             posted_edge=ac_client.post_edge(openreview.Edge(
@@ -2088,7 +2088,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi External Reviewer MIT,<br>\nThank you for accepting the invitation to review the paper number: 4, title: Paper title 4.</p>\n<p>Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: <a href=\"https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers\">https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers</a></p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi External Reviewer MIT,<br>\nThank you for accepting the invitation to review the paper number: 4, title: Paper title 4.</p>\n<p>Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: <a href=\"https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers\">https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers</a></p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
         assert messages and len(messages) == 1
@@ -2181,7 +2181,7 @@ Thank you,
 
         messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi Reviewer Amazon,<br>\nThank you for accepting the invitation to review the paper number: 4, title: Paper title 4.</p>\n<p>Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: <a href=\"https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers\">https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers</a></p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi Reviewer Amazon,<br>\nThank you for accepting the invitation to review the paper number: 4, title: Paper title 4.</p>\n<p>Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: <a href=\"https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers\">https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers</a></p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers/Invited', member='~Reviewer_Amazon1')
         assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers', member='~Reviewer_Amazon1')
