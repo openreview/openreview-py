@@ -1306,9 +1306,8 @@ Thank you,
 
         invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
-        print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        notes = selenium.find_element_by_id("note_editor")
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -1349,9 +1348,9 @@ Thank you,
 
 
         ## External reviewer declines the invitation, assignment rollback
-        decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -1392,9 +1391,9 @@ Thank you,
 
 
         ## External reviewer accepts the invitation again
-        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -1475,10 +1474,9 @@ Thank you,
         ## External reviewer declines the invitation
         messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
-        reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-
-        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -1542,10 +1540,9 @@ Thank you,
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        decline_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -1579,8 +1576,8 @@ Thank you,
         ## External reviewer creates a profile and accepts the invitation again
         external_reviewer=helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
 
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -1594,7 +1591,7 @@ Thank you,
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'
 
-        request_page(selenium, decline_url, alert=True)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
         helpers.await_queue()
 
@@ -1631,9 +1628,9 @@ Thank you,
         ## External reviewer declines the invitation
         messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
-        reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -2061,9 +2058,9 @@ Thank you,
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')
         assert messages and len(messages) == 1
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -2160,9 +2157,9 @@ Thank you,
 
         messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')
         assert messages and len(messages) == 1
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages

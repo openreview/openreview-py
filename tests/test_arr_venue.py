@@ -115,7 +115,7 @@ class TestARRVenue():
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -143,7 +143,7 @@ class TestARRVenue():
                 'invitee_details': reviewer_details,
                 'allow_role_overlap': 'Yes',
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -171,7 +171,7 @@ class TestARRVenue():
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -193,10 +193,9 @@ class TestARRVenue():
         ## Accept to be a reviewer
         messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        decline_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        reviewer_invitation_url = re.search('href="https://.*">', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, reviewer_invitation_url, accept=True)
 
-        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers')
         assert len(accepted_group.members) == 1
         assert '~Area_CMUChair1' in accepted_group.members
@@ -205,16 +204,16 @@ class TestARRVenue():
         ## Accept to be an AC
         messages = client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Invitation to serve as Area Chair')
         text = messages[0]['content']['text']
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        ac_invitation_url = re.search('href="https://.*">', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, ac_invitation_url, accept=True)
 
-        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Area_Chairs')
         assert len(accepted_group.members) == 1
         assert '~Area_CMUChair1' in accepted_group.members
         assert client.get_messages(to = 'ac1@gmail.com', subject = '[ARR 2021 - September] Area Chair Invitation accepted')
 
         ## Decline to be a reviewer
-        helpers.respond_invitation(selenium, request_page, decline_url, accept=False)
+        helpers.respond_invitation(selenium, request_page, reviewer_invitation_url, accept=False)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers')
         assert len(accepted_group.members) == 0
         declined_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Reviewers/Declined')
@@ -243,7 +242,7 @@ class TestARRVenue():
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -270,7 +269,7 @@ class TestARRVenue():
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -302,7 +301,7 @@ class TestARRVenue():
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -323,9 +322,9 @@ class TestARRVenue():
         ## Accept to be an Ethics Chair
         messages = client.get_messages(to = 'ethic_chair@arr.org', subject = '[ARR 2021 - September] Invitation to serve as Ethics Chair')
         text = messages[0]['content']['text']
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        invitation_url = re.search('href="https://.*">', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Ethics_Chairs')
         assert len(accepted_group.members) == 1
         assert 'ethic_chair@arr.org' in accepted_group.members
@@ -345,7 +344,7 @@ class TestARRVenue():
                 'allow_role_overlap': 'Yes',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[ARR 2021 - September] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -365,9 +364,9 @@ class TestARRVenue():
 
         messages = client.get_messages(to = 'ethic_reviewer@arr.org', subject = '[ARR 2021 - September] Invitation to serve as Ethics Reviewer')
         text = messages[0]['content']['text']
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        invitation_url = re.search('href="https://.*">', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        helpers.respond_invitation(selenium, request_page, accept_url, accept=True)
         accepted_group = client.get_group(id='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers')
         assert len(accepted_group.members) == 1
         assert 'ethic_reviewer@arr.org' in accepted_group.members
@@ -640,10 +639,9 @@ class TestARRVenue():
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id('notes')
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name('note_editor')
         assert notes
         messages = notes.find_elements_by_tag_name('h3')
         assert messages
@@ -692,10 +690,9 @@ Thank you for accepting the invitation to serve as area chair for the paper numb
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name('note_editor')
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -742,10 +739,9 @@ You have declined the invitation to serve as area chair for the paper number: 4,
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name('note_editor')
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -797,10 +793,9 @@ The Reviewer Reviewer ARR Facebook(<a href=\"mailto:reviewer_arr4@fb.com\">revie
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        # decline_url = re.search('https://.*response=No', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name('note_editor')
         assert notes
         messages = notes.find_elements_by_tag_name("h3")
         assert messages
@@ -876,12 +871,8 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         assert messages and len(messages) == 1
         invitation_message = messages[0]['content']['text']
 
-        # accept_url = re.search('https://.*response=Yes', invitation_message).group(0).replace('https://openreview.net', 'http://localhost:3030')
-        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace(
-            'https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-
-        request_page(selenium, accept_url, alert=True, by='class name', wait_for_element='important_message')
-
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'This submission is no longer under review. No action is required from your end.' == error_message.text
 
