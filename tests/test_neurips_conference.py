@@ -34,8 +34,9 @@ class TestNeurIPSConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
 
+        helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
-        helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair')
+        helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair', institution='fb.com')
         helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
         helpers.create_user('ac2@gmail.com', 'Area', 'GoogleChair', institution='google.com')
         helpers.create_user('ac3@umass.edu', 'Area', 'UMassChair', institution='umass.edu')
@@ -131,8 +132,8 @@ class TestNeurIPSConference():
                 'title': 'Recruitment',
                 'invitee_role': 'Senior_Area_Chairs',
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -281,14 +282,9 @@ class TestNeurIPSConference():
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
 
-        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
+        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=False, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
         now = datetime.datetime.utcnow()
         conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score']))
-
-        edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Conflict')
-        assert len(edges) == 1
-        assert edges[0].head == '~Area_GoogleChair1'
-        assert edges[0].tail == '~SeniorArea_GoogleChair1'
 
         edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
         assert len(edges) == 6
@@ -434,8 +430,8 @@ class TestNeurIPSConference():
                 'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nIf you have any questions, please contact {contact_info}.\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -512,8 +508,8 @@ class TestNeurIPSConference():
                 'title': 'Remind Recruitment',
                 'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
-                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -585,9 +581,7 @@ class TestNeurIPSConference():
         assert pc_client.get_group('NeurIPS.cc/2021/Conference/Ethics_Chairs')      
         assert pc_client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
 
-        assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))     
-    
-    
+        assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))
     
     def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
 
@@ -606,8 +600,8 @@ class TestNeurIPSConference():
                 'invitee_role': 'Ethics_Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nIf you have any questions, please contact {contact_info}.\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -684,6 +678,41 @@ class TestNeurIPSConference():
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Desk_Reject')
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Revision')
 
+        # expire the abstract submission deadline
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        first_date = now + datetime.timedelta(days=-1)
+
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
         ## Add supplementary material
         submissions=conference.get_submissions(details='original')
         for submission in submissions:
@@ -745,7 +774,7 @@ class TestNeurIPSConference():
                 'title': 'Paper title 5' ,
                 'abstract': 'This is an abstract 5 Rev',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
-                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Another Andrew']
             }
         )
         note = test_client.post_note(note)
@@ -760,6 +789,11 @@ class TestNeurIPSConference():
         author_group=test_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Authors')
         assert author_group
         assert author_group.members == ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu']
+
+        sac_client = openreview.Client(username='another_andrew@mit.edu', password='1234')
+        sac_notes = sac_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
+        assert len(sac_notes) == 1
+        assert sac_notes[0].id == note.forum
 
 
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
@@ -885,6 +919,27 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
 
         conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
+        assert len(conflicts) == 3
+
+        ## Paper 4 conflicts
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
+        assert len(conflicts) == 1
+        assert '~Area_GoogleChair1' == conflicts[0].tail ## reviewer and one author are from google
+
+        conference.set_matching_alternate_conflicts(committee_id=conference.get_area_chairs_id(), source_committee_id=conference.get_senior_area_chairs_id(), source_assignment_title='sac-matching', conflict_label='SAC Conflict')
+        
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
+        assert len(conflicts) == 13
+
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
+        assert len(conflicts) == 3
+        tails = [c.tail for c in conflicts]
+        assert '~Area_GoogleChair1' in tails ## reviewer and one author are from google
+        assert '~Area_IBMChair1' in tails ## assgined SAC is from google
+        assert '~Area_UMassChair1' in tails ## assigned SAC is from google
+
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)

@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import os
+import string
 
 from deprecated.sphinx import deprecated
 import sys
@@ -70,7 +71,7 @@ def format_params(params):
 
     return params
 
-def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1)):
+def concurrent_requests(request_func, params, desc='Gathering Responses'):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -84,8 +85,9 @@ def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1
     :return: A list of results given for each func value execution
     :rtype: list
     """
+    max_workers = min(6, cpu_count() - 1)
     futures = []
-    gathering_responses = tqdm(total=len(params), desc='Gathering Responses')
+    gathering_responses = tqdm(total=len(params), desc=desc)
     results = []
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -833,28 +835,46 @@ def concurrent_get(client, get_function, **params):
     """
     max_workers = min(cpu_count() - 1, 6)
 
-    params.update({
-        'offset': params.get('offset') or 0,
-        'with_count': True
-    })
-
-    docs, count = get_function(**params)
-    if params.get('limit') or float('inf') <= client.limit:
+    if (params.get('limit') or float('inf')) <= client.limit:
+        docs = get_function(**params)
         return docs
-
-    if count <= client.limit:
-        return docs
+    else:
+        get_count_params = params.copy()
+        if get_count_params.get('offset') is not None:
+            get_count_params.pop('offset')
+        get_count_params['with_count'] = True
+        get_count_params['limit'] = 1
+        _, count = get_function(**get_count_params)
 
     params['with_count'] = False
 
-    offset_list = list(range(client.limit, min(params.get('limit') or count, count), client.limit))
+    limit = params.get('limit')
+    if (limit or client.limit) > client.limit:
+        params.pop('limit')
+    docs = get_function(**params)
+
+    offset = params.get('offset') or 0
+
+    if (count - offset) <= client.limit:
+        return docs
+
+    start = offset + client.limit
+
+    if limit is None:
+        end = count
+    else:
+        end = min(offset + limit, count)
+
+    offset_list = list(range(start, end, client.limit))
 
     futures = []
     gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for offset in offset_list:
+        for count, offset in enumerate(offset_list):
             params['offset'] = offset
+            if (count + 1) == len(offset_list) and (end - offset) > 0:
+                params['limit'] = end - offset
             futures.append(executor.submit(get_function, **params))
 
         for future in futures:
@@ -1137,7 +1157,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
+def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -1145,6 +1165,8 @@ def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, mi
     :type client: Client
     :param id: an Invitation ID. If provided, returns invitations whose "id" value is this Invitation ID.
     :type id: str, optional
+    :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+    :type ids: str, optional
     :param invitee: Essentially, invitees field in an Invitation object contains Group Ids being invited using the invitation. If provided, returns invitations whose "invitee" field contains the given string.
     :type invitee: str, optional
     :param regex: a regular expression string to match Invitation IDs. If provided, returns invitations whose "id" value matches the given regex.
@@ -1179,6 +1201,8 @@ def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, mi
     params = {}
     if id is not None:
         params['id'] = id
+    if ids is not None:
+        params['ids'] = ids
     if invitee is not None:
         params['invitee'] = invitee
     if regex is not None:
@@ -1670,12 +1694,12 @@ def recruit_reviewer(client, user, first,
     )
 
     # format the message defined above
-    personalized_message = recruit_message.format(
-        name = first,
-        accept_url = url + "Yes",
-        decline_url = url + "No",
-        contact_info = contact_info
-    )
+    personalized_message = recruit_message.replace("{{fullname}}", first) if first else recruit_message
+    personalized_message = personalized_message.replace("{{accept_url}}", url+"Yes")
+    personalized_message = personalized_message.replace("{{decline_url}}", url+"No")
+    personalized_message = personalized_message.replace("{{contact_info}}", contact_info)
+
+    personalized_message.format()
 
     client.add_members_to_group(reviewers_invited_id, [user])
 
@@ -1942,14 +1966,19 @@ def get_neurips_profile_info(profile, n_years=3):
 
     ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
-        if 'intern' not in h.get('position', '').lower():
-            if h.get('end') is None or int(h.get('end')) > cut_off_year:
+        position = h.get('position')
+        if not position or (isinstance(position, str) and 'intern' not in position.lower()):
+            try:
+                end = int(h.get('end', 0) or 0)
+            except:
+                end = 0
+            if not end or (int(end) > cut_off_year):
                 domain = h.get('institution', {}).get('domain', '')
                 domains.update(openreview.tools.subdomains(domain))
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
-        if r.get('relation', '') in ['Coauthor','Coworker']:
+        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
             if r.get('end') is None or int(r.get('end')) > cut_off_year:
                 relations.add(r['email'])
         else:

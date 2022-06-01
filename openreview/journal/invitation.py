@@ -576,7 +576,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'type': "group[]",
                                 'regex': r'~.*'
                             },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, authors_value]
@@ -3342,7 +3342,7 @@ If you have questions after reviewing the points below that are not answered on 
             invitees=[venue_id, paper_action_editors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[editors_in_chief_id],
+            signatures=[venue_id],
             edit={
                 'signatures': { 'const': [ paper_action_editors_id ] },
                 'readers': { 'const': [ venue_id, paper_action_editors_id ] },

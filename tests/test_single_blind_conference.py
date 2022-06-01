@@ -11,7 +11,7 @@ class TestSingleBlindConference():
 
     def test_create_single_blind_conference(self, client, selenium, request_page) :
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -87,7 +87,7 @@ class TestSingleBlindConference():
     def test_enable_submissions(self, client, selenium, request_page):
 
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -143,7 +143,7 @@ class TestSingleBlindConference():
 
     def test_post_submissions(self, client, test_client, peter_client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -290,7 +290,7 @@ class TestSingleBlindConference():
 
     def test_close_submission(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -315,7 +315,7 @@ class TestSingleBlindConference():
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -335,7 +335,7 @@ class TestSingleBlindConference():
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -375,7 +375,7 @@ class TestSingleBlindConference():
         assert group
         assert group.members == ['~Reviewer_SomeLastName1']
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
@@ -503,7 +503,7 @@ class TestSingleBlindConference():
     def test_consoles(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -659,7 +659,7 @@ class TestSingleBlindConference():
 
     def test_post_decisions(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -711,7 +711,7 @@ url={https://openreview.net/forum?id='''
 
     def test_enable_camera_ready_revisions(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')

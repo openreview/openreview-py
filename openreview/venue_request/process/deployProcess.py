@@ -67,10 +67,10 @@ The OpenReview Team
     ))
 
 
-    recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
-    recruitment_email_body = '''Dear {name},
+    recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
+    recruitment_email_body = '''Dear {{fullname}},
 
-You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
+You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
 
 You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
 
@@ -78,17 +78,17 @@ We will be using OpenReview.net with the intention of have an engaging reviewing
 
 To ACCEPT the invitation, please click on the following link:
 
-{accept_url}
+{{accept_url}}
 
 To DECLINE the invitation, please click on the following link:
 
-{decline_url}
+{{decline_url}}
 
 Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact {contact_info}.
+If you have any questions, please contact {{contact_info}}.
 
 Cheers!
 

@@ -15,7 +15,7 @@ class TestReviewersConference():
 
     def test_set_reviewers_name(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('learningtheory.org/COLT/2019/Conference')
@@ -72,7 +72,7 @@ class TestReviewersConference():
 
     def test_allow_review_de_anonymization(self, client, test_client, helpers, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('eswc-conferences.org/ESWC/2019/Workshop/KGB')
         builder.set_conference_name('Knowledge Graph Building Workshop')

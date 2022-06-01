@@ -625,7 +625,7 @@ class Client(object):
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return groups, response.json()['count']
 
         return groups
@@ -655,22 +655,24 @@ class Client(object):
 
         params = {
             'id': id,
-            'regex': id,
-            'member': id,
-            'signatory': id,
-            'web': id,
-            'limit': id,
-            'offset': id,
+            'regex': regex,
+            'member': member,
+            'signatory': signatory,
+            'web': web,
+            'limit': limit,
+            'offset': offset,
             'with_count': with_count
         }
         return tools.concurrent_get(self, self.get_groups, **params)
 
-    def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -708,6 +710,8 @@ class Client(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
         if invitee is not None:
             params['invitee'] = invitee
         if replytoNote is not None:
@@ -739,17 +743,19 @@ class Client(object):
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return invitations, response.json()['count']
 
         return invitations
     
-    def get_all_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -787,6 +793,7 @@ class Client(object):
         
         params = {
             'id': id,
+            'ids': ids,
             'invitee': invitee,
             'replytoNote': replytoNote,
             'replyForum': replyForum,
@@ -911,7 +918,7 @@ class Client(object):
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return notes, response.json()['count']
 
         return [Note.from_json(n) for n in response.json()['notes']]
@@ -1061,7 +1068,7 @@ class Client(object):
 
         references = [Note.from_json(n) for n in response.json()['references']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return references, response.json()['count']
 
         return references
@@ -1136,7 +1143,7 @@ class Client(object):
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return tags, response.json()['count']
 
         return tags
@@ -1194,7 +1201,7 @@ class Client(object):
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return edges, response.json()['count']
 
         return edges
@@ -1785,7 +1792,7 @@ class Client(object):
     def get_expertise_status(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/status', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1793,7 +1800,7 @@ class Client(object):
     def get_expertise_results(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/results', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()

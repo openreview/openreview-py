@@ -18,7 +18,7 @@ class TestJournal():
         venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password='1234')
         fabian_client.impersonate('TMLR/Editors_In_Chief')
-        journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
+        journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
         return journal
 
     def test_setup(self, openreview_client, helpers):
@@ -55,15 +55,15 @@ class TestJournal():
         melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
         celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
 
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
 
-        journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
         invited_group = openreview_client.get_group('TMLR/Action_Editors/Invited')
         assert invited_group.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
@@ -75,6 +75,13 @@ class TestJournal():
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
+            notes = selenium.find_element_by_id("notes")
+            assert notes
+            messages = notes.find_elements_by_tag_name("h3")
+            assert messages
+            assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research' == messages[0].text
+
+
         helpers.await_queue(openreview_client)
 
         group = openreview_client.get_group('TMLR/Action_Editors')
@@ -84,9 +91,9 @@ class TestJournal():
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions of Machine Learning Research', short_name='TMLR', submission_name='Submission')
+        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
 
-        journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
+        journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1'])
         invited_group = openreview_client.get_group('TMLR/Reviewers/Invited')
         assert invited_group.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallum1', '~Hugo_Larochelle1']
 
@@ -97,6 +104,13 @@ class TestJournal():
             text = message['content']['text']
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
+
+            notes = selenium.find_element_by_id("notes")
+            assert notes
+            messages = notes.find_elements_by_tag_name("h3")
+            assert messages
+            assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research' == messages[0].text
+
 
         helpers.await_queue(openreview_client)
 
@@ -367,7 +381,7 @@ class TestJournal():
 anonymouspaper,
 title={Paper title {UPDATED}},
 author={Anonymous},
-journal={Submitted to Transactions of Machine Learning Research},
+journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
@@ -501,7 +515,7 @@ note={Under review}
 anonymouspaper,
 title={Paper title 3},
 author={Anonymous},
-journal={Submitted to Transactions of Machine Learning Research},
+journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_3 + '''},
 note={Withdrawn}
@@ -1483,8 +1497,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
-                signatures=[venue_id]
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000
             )
         )
 
@@ -1549,7 +1562,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 userpaper,
 title={Paper title {VERSION} 2},
 author={Test User and Melisa Bok},
-journal={Transactions of Machine Learning Research},
+journal={Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
@@ -1635,7 +1648,7 @@ note={Featured Certification, Reproducibility Certification}
 userpaper,
 title={Paper title {VERSION} 2},
 author={Test User and Melisa Bok},
-journal={Submitted to Transactions of Machine Learning Research},
+journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Retracted after acceptance}
@@ -2050,7 +2063,7 @@ note={Retracted after acceptance}
 anonymouspaper,
 title={Paper title 4},
 author={Anonymous},
-journal={Submitted to Transactions of Machine Learning Research},
+journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_4 + '''},
 note={Rejected}
@@ -2084,7 +2097,7 @@ note={Rejected}
 userpaper,
 title={Paper title 4},
 author={Test User and Melisa Bok},
-journal={Submitted to Transactions of Machine Learning Research},
+journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_4 + '''},
 note={Rejected}
@@ -2664,7 +2677,7 @@ note={Rejected}
 userpaper,
 title={Paper title 6},
 author={Test User and Melisa Bok},
-journal={Submitted to Transactions of Machine Learning Research},
+journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_6 + '''},
 note={Withdrawn}

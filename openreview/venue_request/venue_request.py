@@ -12,7 +12,7 @@ class VenueStages():
             self.file_content = self.file_content.replace(
                 "GROUP_PREFIX = ''",
                  "GROUP_PREFIX = '" + self.venue_request.super_user + "'")
-        
+
         with open(os.path.join(os.path.dirname(__file__), 'process/stage_pre_process.py'), 'r') as pre:
             self.pre_process_file_content = pre.read()
 
@@ -70,11 +70,11 @@ class VenueStages():
 
         bid_stage_content = {
             'bid_start_date': {
-                'description': 'When does bidding on submissions begin? Please use the format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does bidding on submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$'
             },
             'bid_due_date': {
-                'description': 'When does bidding on submissions end? Please use the format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does bidding on submissions end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True
             },
@@ -113,12 +113,12 @@ class VenueStages():
 
         review_stage_content = {
             'review_start_date': {
-                'description': 'When does reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does reviewing of submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 10
             },
             'review_deadline': {
-                'description': 'When does reviewing of submissions end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does reviewing of submissions end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
                 'order': 11
@@ -164,14 +164,28 @@ class VenueStages():
                 'default': 'No, do not email program chairs about received reviews',
                 'order': 27
             },
+            'review_rating_field_name': {
+                'description': "Name of the rating field for the review invitation, default is \'rating\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'. For reference, please see: https://docs.openreview.net/reference/default-forms/default-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'rating',
+                'order': 28
+            },
+            'review_confidence_field_name': {
+                'description': "Name of the confidence field for the review invitation, default is \'confidence\'. Please follow the format number: description if you want to customize options and add one option per line under \'Additional Review Form Options\'. For reference, please see: https://docs.openreview.net/reference/default-forms/default-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'confidence',
+                'order': 29
+            },
             'additional_review_form_options': {
-                'order' : 28,
+                'order': 30,
                 'value-dict': {},
                 'required': False,
                 'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'remove_review_form_options': {
-                'order': 29,
+                'order': 31,
                 'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
@@ -208,12 +222,12 @@ class VenueStages():
 
         ethics_review_stage_content = {
             'ethics_review_start_date': {
-                'description': 'When does reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does reviewing of submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 1
             },
             'ethics_review_deadline': {
-                'description': 'When does reviewing of submissions end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does reviewing of submissions end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
                 'order': 2
@@ -273,7 +287,7 @@ class VenueStages():
                 "order": 9,
                 "value-checkbox": "We confirm we want to release the submissions and reviews to the ethics reviewers",
                 "required": True
-            }           
+            }
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
@@ -306,12 +320,12 @@ class VenueStages():
 
         comment_stage_content = {
             'commentary_start_date': {
-                'description': 'When does official and/or public commentary begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does official and/or public commentary begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 27
             },
             'commentary_end_date': {
-                'description': 'When does official and/or public commentary end? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'description': 'When does official and/or public commentary end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 28
             },
@@ -371,12 +385,12 @@ class VenueStages():
 
         meta_review_stage_content = {
             'meta_review_start_date': {
-                'description': 'When does the meta reviewing of submissions begin? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have Area Chairs)',
+                'description': 'When does the meta reviewing of submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have Area Chairs)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 12
             },
             'meta_review_deadline': {
-                'description': 'By when should the meta-reviews be in the system? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have Area Chairs)',
+                'description': 'By when should the meta-reviews be in the system? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have Area Chairs)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 13
             },
@@ -466,12 +480,12 @@ class VenueStages():
                 'default':'Revision'
             },
             'submission_revision_start_date': {
-                'description': 'When should the authors start revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
+                'description': 'When should the authors start revising submissions? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 2
             },
             'submission_revision_deadline': {
-                'description': 'By when should the authors finish revising submissions? Please use the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
+                'description': 'By when should the authors finish revising submissions? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'required': True,
                 'order': 3
@@ -537,12 +551,12 @@ class VenueStages():
 
         decision_stage_content = {
             'decision_start_date': {
-                'description': 'When will the program chairs start posting decisions? Please use the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'description': 'When will the program chairs start posting decisions? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 14
             },
             'decision_deadline': {
-                'description': 'By when should all the decisions be in the system? Please use the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'description': 'By when should all the decisions be in the system? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 15,
                 'required': True
@@ -892,7 +906,7 @@ class VenueRequest():
                 'order': 10
             },
             'Venue Start Date': {
-                'description': 'What date does the venue start? Please use the following format: YYYY/MM/DD (e.g. 2019/01/31)',
+                'description': 'What date does the venue start? Please enter a time and date in GMT using the following format: YYYY/MM/DD (e.g. 2019/01/31)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'order': 11,
                 'required': True
@@ -998,13 +1012,19 @@ class VenueRequest():
                 'default': 'No, wait until the submission deadline has passed to make them public.',
                 'order': 24
             },
+            'withdraw_submission_expiration': {
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'required': False,
+                'order': 25,
+            },
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
                 'value-radio': [
                     'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
-                'order': 25
+                'order': 26
             },
             'withdrawn_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1012,7 +1032,7 @@ class VenueRequest():
                     'Yes, author identities of withdrawn submissions should be revealed.',
                     'No, author identities of withdrawn submissions should not be revealed.'],
                 'default': 'No, author identities of withdrawn submissions should not be revealed.',
-                'order': 26
+                'order': 27
             },
             'email_pcs_for_withdrawn_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
@@ -1021,7 +1041,7 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 27
+                'order': 28
             },
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
@@ -1029,7 +1049,7 @@ class VenueRequest():
                     'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
-                'order': 28
+                'order': 29
             },
             'desk_rejected_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1037,12 +1057,12 @@ class VenueRequest():
                     'Yes, author identities of desk rejected submissions should be revealed.',
                     'No, author identities of desk rejected submissions should not be revealed.'],
                 'default': 'No, author identities of desk rejected submissions should not be revealed.',
-                'order': 29
+                'order': 30
             },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 30
+                'order': 31
             },
             'email_pcs_for_new_submissions': {
                 'description': 'Do you want email notifications to PCs when there is a new submission?',
@@ -1051,44 +1071,44 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 31
+                'order': 32
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 32
+                'order': 33
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 33
+                'order': 34
             },
             'submission_name': {
                 'value-regex': '\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
-                'order':34,
+                'order': 35,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'reviewer_roles': {
                 'values-regex': '.*',
                 'default': ['Reviewers'],
-                'order':35,
+                'order': 36,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Area_Chairs'],
-                'order':36,
+                'order': 37,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'senior_area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Senior_Area_Chairs'],
-                'order':37,
+                'order': 38,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }
@@ -1305,16 +1325,16 @@ class VenueRequest():
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
                 'order': 6,
                 'required': True,
-                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
+                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
                 'order': 7,
                 'required': True,
-                'default': '''Dear {name},
+                'default': '''Dear {{fullname}},
 
-        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
+        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
 
         You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
 
@@ -1322,11 +1342,11 @@ class VenueRequest():
 
         To ACCEPT the invitation, please click on the following link:
 
-        {accept_url}
+        {{accept_url}}
 
         To DECLINE the invitation, please click on the following link:
 
-        {decline_url}
+        {{decline_url}}
 
         Please answer within 10 days.
 
@@ -1338,7 +1358,7 @@ class VenueRequest():
 
         Program Chairs
         '''
-        }}
+            }}
 
         with open(self.recruitment_process, 'r') as f:
             file_content = f.read()
@@ -1452,16 +1472,16 @@ class VenueRequest():
                 'description': 'Please carefully review the email subject for the reminder emails. Make sure not to remove the parenthesized tokens.',
                 'order': 3,
                 'required': True,
-                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
+                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out reminder emails. Make sure not to remove the parenthesized tokens.',
                 'order': 4,
                 'required': True,
-                'default': '''Dear {name},
+                'default': '''Dear {{fullname}},
 
-        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
+        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
 
         You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
 
@@ -1469,11 +1489,11 @@ class VenueRequest():
 
         To ACCEPT the invitation, please click on the following link:
 
-        {accept_url}
+        {{accept_url}}
 
         To DECLINE the invitation, please click on the following link:
 
-        {decline_url}
+        {{decline_url}}
 
         Please answer within 10 days.
 
