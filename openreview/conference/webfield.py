@@ -325,36 +325,9 @@ class WebfieldBuilder(object):
 
     def set_recruit_page(self, conference, invitation, reduced_load_id=None):
 
-        if conference.use_recruitment_template:
-            accept_message = f'### Thank you for accepting this invitation from {conference.get_homepage_options().get("title")}.\n\n- Log in to your OpenReview account. If you do not already have an account, you can sign up [here](https://openreview.net/signup).\n\n- Ensure that the email address [TODO] that received this invitation is linked to your profile page and has been confirmed.\n\n- Complete your pending [tasks](https://openreview.net/tasks) (if any) for {conference.short_name}.'
-
-            decline_message = f"### You have declined the invitation from {conference.get_homepage_options().get('title')}."
-
-            quota_message = "### In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking the option below:"
-
-            properties = ''
-
-            if 'reduced_quota' in invitation.reply['content']:
-                properties = '''
-    quotaMessage: ''' + json.dumps(quota_message) + '''
-'''
-        
-            new_webfield_content = '''// Webfield component
-return {
-    component: 'RecruitmentForm',
-    version: 1,
-    properties: {
-        header: ''' + json.dumps(conference.get_homepage_options(), indent=2) + ''',
-        acceptMessage: ''' + json.dumps(accept_message) + ''',
-        declineMessage: ''' + json.dumps(decline_message) + ''',
-        ''' + properties + '''
-    }
-}        
-'''
-            return self.__update_invitation(invitation, new_webfield_content)
-
-        ## Legacy recruitment webfield
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitResponseWebfield.js')) as f:
+        ## recruitment webfield
+        template_name = 'recruitResponseWebfield.js' if conference.use_recruitment_template else 'legacyRecruitResponseWebfield.js'
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_name}')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(conference.get_homepage_options()) + ";")
@@ -363,6 +336,8 @@ return {
             else:
                 ## Reduce load is disabled, so we should set an invalid invitation
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference.id + '/-/no_name' + "';")
+            if 'reduced_quota' in invitation.reply['content']:
+                content = content.replace("var USE_REDUCED_QUOTA = false;", "var USE_REDUCED_QUOTA = true;")
             return self.__update_invitation(invitation, content)
 
     def set_paper_recruitment_page(self, conference, invitation):
