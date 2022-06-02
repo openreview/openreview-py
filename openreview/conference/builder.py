@@ -1858,6 +1858,11 @@ Program Chairs
 
         self.client.post_note(status_note)
 
+    def expire_recruitment_invitaions(self):
+        recruitment_invitaions = self.client.get_invitations(regex=self.get_invitation_id('Recruit_*'))
+        recruitment_invitaion_ids = [inv.id for inv in recruitment_invitaions]
+        tools.concurrent_requests(self.expire_invitation, recruitment_invitaion_ids)
+
 
 class SubmissionStage(object):
 
