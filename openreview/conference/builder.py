@@ -2830,7 +2830,13 @@ class ConferenceBuilder(object):
             self.client.add_members_to_group(host, root_id)
             home_group.host = root_id
             self.client.post_group(home_group)
+
+        venues = self.client.get_group(id = 'venues', details='writable')
+        if venues.details.get('writable'):
+            print(f'Add to venues: {home_group.id}')
             self.client.add_members_to_group('venues', home_group.id)
+        else:
+            print(f'No venues writer to add {home_group.id}')
 
         if self.submission_stage:
             self.conference.set_submission_stage(self.submission_stage)
