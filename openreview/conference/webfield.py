@@ -331,13 +331,14 @@ class WebfieldBuilder(object):
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(conference.get_homepage_options()) + ";")
+            content = content.replace("var ROLE_NAME = '';", "var ROLE_NAME = '" + conference.get_committee_name(committee_id=invitation.id.split('/-/')[0], pretty=True) + "';")
             if reduced_load_id:
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + reduced_load_id + "';")
             else:
                 ## Reduce load is disabled, so we should set an invalid invitation
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference.id + '/-/no_name' + "';")
-            if 'reduced_quota' in invitation.reply['content']:
-                content = content.replace("var USE_REDUCED_QUOTA = false;", "var USE_REDUCED_QUOTA = true;")
+            if 'reduced_load' in invitation.reply['content']:
+                content = content.replace("var USE_REDUCED_LOAD = false;", "var USE_REDUCED_LOAD = true;")
             return self.__update_invitation(invitation, content)
 
     def set_paper_recruitment_page(self, conference, invitation):

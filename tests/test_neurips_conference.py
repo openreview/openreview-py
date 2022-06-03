@@ -240,6 +240,9 @@ class TestNeurIPSConference():
         assert len(accepted_group.members) == 0
 
         ## Accept with reduced quota
+        link = selenium.find_element_by_class_name('reduced-quota-link')
+        link.click()
+        time.sleep(0.5)
         dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
         dropdown.click()
         time.sleep(0.5)
@@ -247,7 +250,7 @@ class TestNeurIPSConference():
         assert len(values) > 0
         values[1].click()
         time.sleep(0.5)
-        button = selenium.find_element_by_xpath('//button[text()="Accept with Reduced Quota"]')
+        button = selenium.find_element_by_xpath('//button[text()="Submit"]')
         button.click()
         time.sleep(0.5)
         helpers.await_queue()
@@ -259,7 +262,7 @@ class TestNeurIPSConference():
         notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Recruitment', content={'user': 'ac1@mit.edu', 'response': 'Yes'}, sort='tcdate:desc')
         assert notes
         assert len(notes) == 2
-        assert notes[0].content['reduced_quota'] == '3'
+        assert notes[0].content['reduced_load'] == '3'
 
         messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2021] Area Chair Invitation accepted with reduced quota')
         assert len(messages) == 1
@@ -505,14 +508,17 @@ You have selected a reduced quota of 3 submissions to review.</p>
         assert len(notes) == 1
 
         ## Accept with reduced quota
+        link = selenium.find_element_by_class_name('reduced-quota-link')
+        link.click()
+        time.sleep(0.5)
         dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
         dropdown.click()
         time.sleep(0.5)
         values = selenium.find_elements_by_class_name('dropdown-select__option')
         assert len(values) > 0
-        values[2].click()
+        values[1].click()
         time.sleep(0.5)
-        button = selenium.find_element_by_xpath('//button[text()="Accept with Reduced Quota"]')
+        button = selenium.find_element_by_xpath('//button[text()="Submit"]')
         button.click()
         time.sleep(0.5)
         helpers.await_queue()        

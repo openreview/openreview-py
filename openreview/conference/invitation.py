@@ -1815,7 +1815,7 @@ class InvitationBuilder(object):
         reduced_load = options.get('reduced_load_on_decline', None)
 
         if reduced_load and conference.use_recruitment_template:
-            reply['content']['reduced_quota'] = {
+            reply['content']['reduced_load'] = {
                 "description": "Please select the number of submissions that you would be comfortable reviewing.",
                 "required": False,
                 "value-dropdown": reduced_load,

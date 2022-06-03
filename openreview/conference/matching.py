@@ -694,7 +694,7 @@ class Matching(object):
         if self.conference.use_recruitment_template:
             reduced_load_notes = self.client.get_all_notes(invitation=self.conference.get_recruitment_id(self.match_group.id), sort='tcdate:asc')
             for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
-                reduced_loads[note.content['user']] = note.content.get('reduced_quota')
+                reduced_loads[note.content['user']] = note.content.get('reduced_load')
         else:
             reduced_load_notes = self.client.get_all_notes(invitation=self.conference.get_invitation_id('Reduced_Load', prefix = self.match_group.id), sort='tcdate:asc')
             for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
