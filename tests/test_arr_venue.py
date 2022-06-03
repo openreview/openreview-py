@@ -643,7 +643,7 @@ class TestARRVenue():
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         notes = selenium.find_element_by_class_name('note_editor')
         assert notes
-        messages = notes.find_elements_by_tag_name('h3')
+        messages = notes.find_elements_by_tag_name('h4')
         assert messages
         assert 'Thank you for accepting this invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -694,7 +694,7 @@ Thank you for accepting the invitation to serve as area chair for the paper numb
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
         notes = selenium.find_element_by_class_name('note_editor')
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'You have declined the invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -743,7 +743,7 @@ You have declined the invitation to serve as area chair for the paper number: 4,
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         notes = selenium.find_element_by_class_name('note_editor')
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'Thank you for accepting this invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
@@ -797,7 +797,7 @@ The Reviewer Reviewer ARR Facebook(<a href=\"mailto:reviewer_arr4@fb.com\">revie
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
         notes = selenium.find_element_by_class_name('note_editor')
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'You have declined the invitation from ACL Rolling Review - September 2021.' == messages[0].text
 
