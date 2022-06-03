@@ -342,25 +342,9 @@ class WebfieldBuilder(object):
 
     def set_paper_recruitment_page(self, conference, invitation):
 
-        if conference.use_recruitment_template:
-            accept_message = f'### Thank you for accepting this invitation from {conference.get_homepage_options().get("title")}.\n\n- Log in to your OpenReview account. If you do not already have an account, you can sign up [here](https://openreview.net/signup).\n\n- Ensure that the email address [TODO] that received this invitation is linked to your profile page and has been confirmed.\n\n- Complete your pending [tasks](https://openreview.net/tasks) (if any) for {conference.short_name}.'
+        template_name = 'paperRecruitResponseWebfield.js' if conference.use_recruitment_template else 'legacPaperRecruitResponseWebfield.js'
 
-            decline_message = f"### You have declined the invitation from {conference.get_homepage_options().get('title')}."
-
-            new_webfield_content = '''// Webfield component
-return {
-    component: 'RecruitmentForm',
-    version: 1,
-    properties: {
-        header: ''' + json.dumps(conference.get_homepage_options(), indent=2) + ''',
-        acceptMessage: ''' + json.dumps(accept_message) + ''',
-        declineMessage: ''' + json.dumps(decline_message) + '''
-    }
-}        
-'''        
-            return self.__update_invitation(invitation, new_webfield_content)
-
-        with open(os.path.join(os.path.dirname(__file__), 'templates/paperRecruitResponseWebfield.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_name}')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(conference.get_homepage_options()) + ";")
@@ -407,7 +391,7 @@ return {
 
         # Build reduced load invitation ID
         conf_id = conference.get_id()
-        reduced_load_id = conf_id + '/' + reviewers_name + '/-/Reduced_Load'
+        reduced_load_id = conference.get_recruitment_id(conference.get_committee_id(name=reviewers_name)) if conference.use_recruitment_template else conf_id + '/' + reviewers_name + '/-/Reduced_Load'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()

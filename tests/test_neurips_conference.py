@@ -522,11 +522,19 @@ You have selected a reduced quota of 3 submissions to review.</p>
         messages = client.get_messages(to = 'reviewer1@umass.edu', subject = '[NeurIPS 2021] Reviewer Invitation accepted with reduced quota')
         assert len(messages) == 1
         messages[0]['content']['text'] == '''<p>Thank you for accepting the invitation to be a Reviewer for NeurIPS 2021.<br>
-You have selected a reduced quota of 3 submissions to review.</p>
+You have selected a reduced quota of 4 submissions to review.</p>
 <p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>
 <p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>
 '''        
 
+        ## Check reviewers console quota
+        reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers', reviewer_client.token, by=By.ID, wait_for_element='header')
+        header = selenium.find_element_by_id('header')
+        strong_elements = header.find_elements_by_tag_name('strong')
+        assert len(strong_elements) == 1
+        strong_elements[0].text == '4 papers'
+        
         ## Remind reviewers
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
