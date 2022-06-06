@@ -8,8 +8,27 @@ return {
   version: 1,
   properties: {
     header: HEADER,
-    invitationMessage: "#### You were invited by the organizers of " + HEADER.title + " to serve as a *" + ROLE_NAME +"*.\n ##### Please reply to this invitation clicking the response below:",    acceptMessage: "#### Thank you for accepting this invitation from " + HEADER.title + ".\n &nbsp; \n- Log in to your OpenReview account. If you do not already have an account, you can sign up [here](https://openreview.net/signup).\n\n- Ensure that the email address {{user}} that received this invitation is linked to your profile page and has been confirmed.\n\n- Complete your pending [tasks](https://openreview.net/tasks) (if any) for " + HEADER.subtitle + ".",
-    declineMessage: "#### You have declined the invitation from " + HEADER.title + ".",
-    reducedLoadMessage: USE_REDUCED_LOAD && "In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking the option below:"
+    invitationMessage: `
+#### You have been invited by the organizers of ${HEADER.title} to serve as a *${ROLE_NAME}*.
+
+##### Would you like to accept or decline this invitation?
+`,
+    acceptMessage: `
+#### Thank you for accepting this invitation from ${HEADER.title}.
+
+##### Next steps:
+
+- Log in to your OpenReview account. If you do not already have an account, you can sign up [here](https://openreview.net/signup)
+- Ensure that the email address {{user}} that received this invitation is added to your profile page and has been confirmed.
+- Complete your [pending tasks](https://openreview.net/tasks) (if any) for ${HEADER.subtitle}.
+`,
+    declineMessage: `
+#### You have declined the invitation from ${HEADER.title}.
+`,
+    reducedLoadMessage: USE_REDUCED_LOAD && `
+If you chose to decline the invitation because the paper load is too high, you can request to reduce your load.
+Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will
+accumulate a positive score. You can request a reduced reviewer load below:
+`
   }
-} 
+}
