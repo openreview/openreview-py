@@ -2815,6 +2815,31 @@ If you have questions after reviewing the points below that are not answered on 
 
         self.save_invitation(invitation)
 
+    
+    def release_submission_history(self, note):
+
+        ## Change revision invitation to make the edits public
+        revision_invitation_id = self.journal.get_revision_id(number=note.number)
+        self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id],
+            invitation=Invitation(
+                id=revision_invitation_id,
+                edit={
+                    'readers': {
+                        'const': ['everyone']
+                    }
+                }
+            )
+        )
+
+        ## Make the edit public
+        for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tcdate:asc'):
+            edit.readers = ['everyone']
+            edit.note.mdate = None
+            self.client.post_edit(edit)
+    
     def set_comment_invitation(self, note):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
