@@ -158,13 +158,14 @@ var loadData = function() {
     Webfield2.api.getAll('/invitations', {
       regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
-      select: 'id,cdate,duedate,expdate'
+      select: 'id,cdate,duedate,expdate',
+      sort: 'cdate:asc'
     }).then(function(invitations) {
       return _.keyBy(invitations, 'id');
     }),
-    Webfield2.api.getAll('/invitations', { regex: VENUE_ID + '/-/.*', select: 'id', expired: true }),
-    Webfield2.api.getAll('/invitations', { regex: REVIEWERS_ID + '/-/.*', select: 'id', expired: true }),
-    Webfield2.api.getAll('/invitations', { regex: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true }),
+    Webfield2.api.getAll('/invitations', { regex: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
+    Webfield2.api.getAll('/invitations', { regex: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
+    Webfield2.api.getAll('/invitations', { regex: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
     Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count'})
     .then(function(response) {
       var groupedEdges = response.groupedEdges;
