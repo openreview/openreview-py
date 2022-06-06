@@ -18,9 +18,9 @@ return {
 
 ##### Next steps:
 
-- Log in to your OpenReview account. If you do not already have an account, you can sign up [here](https://openreview.net/signup)
+- Log in to your OpenReview account. If you do not already have an account, you can sign up [here](/signup)
 - Ensure that the email address {{user}} that received this invitation is added to your profile page and has been confirmed.
-- Complete your [pending tasks](https://openreview.net/tasks) (if any) for ${HEADER.subtitle}.
+- Complete your [pending tasks](/tasks) (if any) for ${HEADER.subtitle}.
 `,
     declineMessage: `
 #### You have declined the invitation from ${HEADER.title}.
