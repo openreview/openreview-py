@@ -343,16 +343,16 @@ class Journal(object):
 
         first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
         bibtex_title = u.unicode_to_latex(note.content['title']['value'])
+        year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
         if new_venue_id == self.under_review_venue_id:
 
             first_author_last_name = 'anonymous'
             authors = 'Anonymous'
-            year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -372,11 +372,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -397,11 +396,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -417,11 +415,10 @@ class Journal(object):
             first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
             first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
             authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={' + self.full_name + '},',
@@ -441,11 +438,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
