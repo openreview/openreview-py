@@ -399,7 +399,7 @@ class TestVenueRequest():
                         'value-regex': '.*'
                     }
                 },
-                'reviewer_roles': ['Reviewers', 'Expert Reviewers']
+                'reviewer_roles': ['Reviewers', 'Expert_Reviewers']
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),

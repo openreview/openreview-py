@@ -41,7 +41,7 @@ def process(client, note, invitation):
                     paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
                     client.post_invitation(paper_withdraw_super_invitation)
 
-            if len(conference.reviewer_roles) > 1:
+            if max(len(conference.reviewer_roles), len(conference.area_chair_roles), len(conference.senior_area_chair_roles)) > 1:
                 recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
                 if recruitment_invitation:
                     recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
