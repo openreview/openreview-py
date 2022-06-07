@@ -118,6 +118,7 @@ var loadData = function() {
           regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
           type: 'all',
           select: 'id,cdate,duedate,expdate',
+          sort: 'cdate:asc'
           // expired: true
         }).then(function(invitations) {
           return _.keyBy(invitations, 'id');

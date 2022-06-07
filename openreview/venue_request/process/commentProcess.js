@@ -11,9 +11,9 @@ function(){
 
     var message = {
       groups: note.readers,
-      ignoreGroups: [note.tauthor, SUPPORT_GROUP],
+      ignoreGroups: [SUPPORT_GROUP],
       subject: 'Comment posted to your request for service: ' + forumNote.content.title,
-      message: 'A comment was posted to your service request. \n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id
+      message: 'A comment was posted to your service request. \n\nComment title: ' + note.content.title + '\n\nComment: ' + note.content.comment + '\n\nTo view the comment, click here: ' + baseUrl + '/forum?id=' + note.forum + '&noteId=' + note.id + '\n\nPlease note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'
     };
 
     var support_message = {
