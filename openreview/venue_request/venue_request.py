@@ -1062,7 +1062,8 @@ class VenueRequest():
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 31
+                'order': 31,
+                'required': True
             },
             'email_pcs_for_new_submissions': {
                 'description': 'Do you want email notifications to PCs when there is a new submission?',
@@ -1472,16 +1473,16 @@ class VenueRequest():
                 'description': 'Please carefully review the email subject for the reminder emails. Make sure not to remove the parenthesized tokens.',
                 'order': 3,
                 'required': True,
-                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {invitee_role}'
+                'default': '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'
             },
             'invitation_email_content': {
                 'value-regex': '[\\S\\s]{1,10000}',
                 'description': 'Please carefully review the template below before you click submit to send out reminder emails. Make sure not to remove the parenthesized tokens.',
                 'order': 4,
                 'required': True,
-                'default': '''Dear {name},
+                'default': '''Dear {{fullname}},
 
-        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {invitee_role}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
+        You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
 
         You are also welcome to submit papers, so please also consider submitting to {Abbreviated_Venue_Name}.
 
@@ -1489,11 +1490,11 @@ class VenueRequest():
 
         To ACCEPT the invitation, please click on the following link:
 
-        {accept_url}
+        {{accept_url}}
 
         To DECLINE the invitation, please click on the following link:
 
-        {decline_url}
+        {{decline_url}}
 
         Please answer within 10 days.
 
