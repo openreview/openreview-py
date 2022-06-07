@@ -1679,7 +1679,32 @@ class TestDoubleBlindConference():
 
         # Withdraw again
         posted_note.ddate = None
-        test_client.post_note(posted_note)
+        posted_note = test_client.post_note(posted_note)
+
+        helpers.await_queue()
+        submission_note = client.get_note(withdrawal_note.forum)
+        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Withdrawn_Submission'
+        print(posted_note)
+
+        # Undo withdraw using pc client
+        pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc@mail.com', password='1234')
+
+        withdraw_note = pc_client.get_note(posted_note.id)
+        withdraw_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        withdraw_note.signatures = [conference.get_program_chairs_id()]
+        withdraw_note.writers = [conference.id, conference.get_program_chairs_id()]
+        print(withdraw_note)
+        withdraw_note = pc_client.post_note(withdraw_note)
+
+        helpers.await_queue()
+
+        submission_note = client.get_note(withdrawal_note.forum)
+        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Blind_Submission'
+        assert submission_note.readers == ['everyone']
+
+        # Withdraw again
+        withdraw_note.ddate = None
+        pc_client.post_note(withdraw_note)
 
         helpers.await_queue()
         submission_note = client.get_note(withdrawal_note.forum)
