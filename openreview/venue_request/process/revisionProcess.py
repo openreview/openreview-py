@@ -252,7 +252,6 @@ Best,
                     for decision in decision_options
                 }
                 conference.send_decision_notifications(decision_options, email_messages)
-            conference.expire_recruitment_invitaions()
 
         submission_content = conference.submission_stage.get_content()
         submission_revision_invitation = client.get_invitation(SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Submission_Revision_Stage')

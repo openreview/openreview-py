@@ -1929,7 +1929,8 @@ Best,
         assert process_logs[0]['status'] == 'ok'
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        recruitment_invitations = client.get_invitations(regex=conference.get_invitation_id('Recruit_*'))
+        recruitment_invitations = client.get_invitations(regex=conference.get_invitation_id('Recruit_*'), expired=True)
+        assert recruitment_invitations
         for inv in recruitment_invitations:
             assert inv.duedate < round(time.time() * 1000)
 
