@@ -433,13 +433,13 @@ class TestVenueRequest():
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
 
         recruitment_invitation = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
-        assert 'Expert Reviewers' in recruitment_invitation.reply['content']['invitee_role']['value-dropdown']
+        assert 'Expert_Reviewers' in recruitment_invitation.reply['content']['invitee_role']['value-dropdown']
 
         remind_recruitment_invitation = client.get_invitation('{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
-        assert 'Expert Reviewers' in remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown']
+        assert 'Expert_Reviewers' in remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown']
 
         paper_matching_invitaion = client.get_invitation('{}/-/Request{}/Paper_Matching_Setup'.format(venue['support_group_id'], venue['request_form_note'].number))
-        assert conference.get_committee_id('Expert Reviewers') in paper_matching_invitaion.reply['content']['matching_group']['value-dropdown']
+        assert conference.get_committee_id('Expert_Reviewers') in paper_matching_invitaion.reply['content']['matching_group']['value-dropdown']
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
