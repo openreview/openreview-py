@@ -46,6 +46,22 @@ def process(client, note, invitation):
                     paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
                     client.post_invitation(paper_withdraw_super_invitation)
 
+            if max(len(conference.reviewer_roles), len(conference.area_chair_roles), len(conference.senior_area_chair_roles)) > 1:
+                recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
+                if recruitment_invitation:
+                    recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(recruitment_invitation)
+
+                remind_recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Remind_Recruitment')
+                if remind_recruitment_invitation:
+                    remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(remind_recruitment_invitation)
+
+                paper_matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
+                if paper_matching_invitation:
+                    paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = [conference.get_committee_id(r) for r in conference.reviewer_roles]
+                    client.post_invitation(paper_matching_invitation)
+
             if conference.use_ethics_chairs or conference.use_ethics_reviewers:
                 client.post_invitation(openreview.Invitation(
                     id = SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Ethics_Review_Stage',
