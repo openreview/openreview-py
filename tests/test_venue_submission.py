@@ -59,21 +59,13 @@ class TestVenueSubmission():
             readers = ['everyone'],
             writers = [conference_id],
             edit = {
-                'content': {
-                    'signatures': {
-                        'type': 'group[]',
-                        'value': {
-                            'param': { 'regex': '^.+$'}
-                        }
-                    }
-                },
-                'signatures': ['${2/content/signatures/value}'],
-                'readers': [conference_id, '${2/content/signatures/value}', conference_id + '/Paper${2/note/number}/Authors'],
+                'signatures': { 'param': { 'regex': '^.+$' } },
+                'readers': [conference_id, '${2/signatures}', conference_id + '/Paper${2/note/number}/Authors'],
                 'writers': [conference_id],
                 'note': {
                     'signatures': [ conference_id + '/Paper${2/number}/Authors' ],
-                    'readers': [conference_id, '${3/content/signatures/value}', conference_id + '/Paper${2/number}/Authors'],
-                    'writers': [conference_id, '${3/content/signatures/value}', conference_id + '/Paper${2/number}/Authors'],
+                    'readers': [conference_id, '${2/signatures}', conference_id + '/Paper${2/number}/Authors'],
+                    'writers': [conference_id, '${2/signatures}', conference_id + '/Paper${2/number}/Authors'],
                     'content': {
                         'title': {
                             'order': 1,
@@ -94,7 +86,7 @@ class TestVenueSubmission():
                                     'hidden': True
                                 }
                             },
-                            'readers': [ conference_id, '${5/content/signatures/value}', conference_id + '/Paper${4/number}/Authors' ]
+                            'readers': [ conference_id, '${5/signatures}', conference_id + '/Paper${4/number}/Authors' ]
                         },
                         'authorids': {
                             'order': 3,
@@ -105,7 +97,7 @@ class TestVenueSubmission():
                                      'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.'
                                 }
                             },
-                            'readers': [ conference_id, '${5/content/signatures/value}', conference_id + '/Paper${4/number}/Authors' ]
+                            'readers': [ conference_id, '${5/signatures}', conference_id + '/Paper${4/number}/Authors' ]
                         },
                         'abstract': {
                             'order': 4,
@@ -181,4 +173,18 @@ class TestVenueSubmission():
 
         assert submission_invitation
 
-        celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste', 'Martinez')
+        helpers.create_user('celeste@mailnine.com', 'Celeste', 'Martinez')
+        author_client = OpenReviewClient(username='celeste@mailnine.com', password='1234')
+
+        submission_note_1 = author_client.post_note_edit(
+            invitation=f'{conference_id}/-/Submission',
+            signatures= ['~Celeste_Martinez1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper 1 Title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Celeste Martinez']},
+                    'authorids': { 'value': ['~Celeste_Martinez1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                }
+            ))

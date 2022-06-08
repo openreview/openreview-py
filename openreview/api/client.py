@@ -1647,12 +1647,12 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_note_edit(self, invitation, content, note=None, readers=None, writers=None):
+    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None):
         """
         """
         edit_json = {
             'invitation': invitation,
-            'content': content,
+            'signatures': signatures,
             'note': note.to_json() if note else {}
         }
 
