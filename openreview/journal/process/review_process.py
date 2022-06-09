@@ -128,9 +128,7 @@ The {journal.short_name} Editors-in-Chief
             subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Thank you for submitting your review for {journal.short_name} submission "{submission.content['title']['value']}".
-
-Now that 3 reviews have been submitted for the submission, all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
+There are now 3 reviews that have been submitted for your assigned submission "{submission.content['title']['value']}" and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 

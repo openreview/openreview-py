@@ -252,7 +252,7 @@ class GroupBuilder(object):
         if not reviewers_group:
             reviewers_group=self.client.post_group(Group(id=reviewers_group_id,
                 readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                deanonymizers=[venue_id, action_editors_group_id],
+                deanonymizers=[venue_id, action_editors_group_id, reviewers_group_id],
                 nonreaders=[authors_group_id],
                 writers=[venue_id, action_editors_group_id],
                 signatures=[venue_id],
