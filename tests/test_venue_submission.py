@@ -59,21 +59,24 @@ class TestVenueSubmission():
             readers = ['everyone'],
             writers = [conference_id],
             edit = {
-                'signatures': { 'param': { 'regex': '^.+$' } },
-                'readers': [conference_id, '${2/signatures}', conference_id + '/Paper${2/note/number}/Authors'],
+                'signatures': { 'param': { 'regex': '~.*' } },
+                # 'readers': [conference_id, '${2/signatures}', conference_id + '/Paper${2/note/number}/Authors'],
+                'readers': [conference_id, conference_id + '/Paper${2/note/number}/Action_Editors', conference_id + '/Paper${2/note/number}/Authors'],
                 'writers': [conference_id],
                 'note': {
                     'signatures': [ conference_id + '/Paper${2/number}/Authors' ],
-                    'readers': [conference_id, '${2/signatures}', conference_id + '/Paper${2/number}/Authors'],
-                    'writers': [conference_id, '${2/signatures}', conference_id + '/Paper${2/number}/Authors'],
+                    # 'readers': [conference_id, '${3/signatures}', conference_id + '/Paper${2/number}/Authors'],
+                    # 'writers': [conference_id, '${3/signatures}', conference_id + '/Paper${2/number}/Authors'],
+                    'readers': [conference_id, conference_id + '/Paper${2/number}/Action_Editors', conference_id + '/Paper${2/number}/Authors'],
+                    'writers': [conference_id, conference_id + '/Paper${2/number}/Action_Editors', conference_id + '/Paper${2/number}/Authors'],
                     'content': {
                         'title': {
                             'order': 1,
                             'type': 'string',
+                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'value': { 
                                 'param': { 
-                                    'regex': '^.{1,250}$',
-                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.'
+                                    'regex': '^.{1,250}$'
                                 }
                             }
                         },
@@ -86,26 +89,28 @@ class TestVenueSubmission():
                                     'hidden': True
                                 }
                             },
-                            'readers': [ conference_id, '${5/signatures}', conference_id + '/Paper${4/number}/Authors' ]
+                            # 'readers': [ conference_id, '${5/signatures}', conference_id + '/Paper${4/number}/Authors' ]
+                            'readers': [conference_id, conference_id + '/Paper${4/number}/Action_Editors', conference_id + '/Paper${4/number}/Authors']
                         },
                         'authorids': {
                             'order': 3,
                             'type': 'group[]',
+                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'value': {
                                 'param': {
-                                    'regex': '~.*',
-                                     'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.'
+                                    'regex': '~.*'
                                 }
                             },
-                            'readers': [ conference_id, '${5/signatures}', conference_id + '/Paper${4/number}/Authors' ]
+                            # 'readers': [ conference_id, '${5/signatures}', conference_id + '/Paper${4/number}/Authors' ]
+                            'readers': [conference_id, conference_id + '/Paper${4/number}/Action_Editors', conference_id + '/Paper${4/number}/Authors']
                         },
                         'abstract': {
                             'order': 4,
                             'type': 'string',
+                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'value': {
                                 'param': {
                                     'regex': '^[\\S\\s]{1,5000}$',
-                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                     'markdown': True
                                 }
                             }
@@ -113,32 +118,32 @@ class TestVenueSubmission():
                         'pdf': {
                             'order': 5,
                             'type': 'file',
+                            'description': 'Upload a PDF file that ends with .pdf.',
                             'value': {
                                 'param': {
                                     'maxSize': 50,
-                                    'extensions': ['pdf'],
-                                    'description': 'Upload a PDF file that ends with .pdf.'
+                                    'extensions': ['pdf']
                                 }
                             }
                         },
                         "previous_submission_url": {
                             'order': 6,
                             'type': 'string',
+                            'description': 'If a version of this submission was previously rejected, give the OpenReview link to the original submission (which must still be anonymous) and describe the changes below.',
                             'value':{
                                 'param': {
                                     'regex': 'https:\\/\\/openreview\\.net\\/forum\\?id=.*',
-                                    'optional': True,
-                                    'description': 'If a version of this submission was previously rejected, give the OpenReview link to the original submission (which must still be anonymous) and describe the changes below.'
+                                    'optional': True
                                 }
                             }
                         },
                         'changes_since_last_submission': {
                             'order': 7,
                             'type': 'string',
+                            'description': 'Describe changes since last submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'value': {
                                 'param': {
                                     'regex': '^[\\S\\s]{1,5000}$',
-                                    'description': 'Describe changes since last TMLR submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -147,6 +152,7 @@ class TestVenueSubmission():
                         "submission_length": {
                             'order': 8,
                             'type': 'string[]',
+                            'description': 'Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.',
                             'value': {
                                 'param': {
                                     'enum': [
@@ -154,7 +160,6 @@ class TestVenueSubmission():
                                         'Long submission (more than 12 pages of main content)'
                                     ],
                                     'input': 'radio',
-                                    'description': 'Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.',
                                     'optional': True
                                 }
                             }
