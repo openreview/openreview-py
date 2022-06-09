@@ -9,11 +9,17 @@
 // Constants
 var VENUE_ID = '';
 var SHORT_PHRASE = '';
-var SUBMISSION_ID = '';
 var EDITORS_IN_CHIEF_NAME = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
+var SUBMITTED_STATUS = '';
+var UNDER_REVIEW_STATUS = '';
+var DESK_REJECTED_STATUS = '';
+var WITHDRAWN_STATUS = '';
+var REJECTED_STATUS = '';
+var ACCEPTED_STATUS = '';
+var RETRACTED_STATUS = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
@@ -53,12 +59,6 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
-var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
-var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
-var WITHDRAWN_STATUS = VENUE_ID + '/Withdrawn_Submission';
-var RETRACTED_STATUS = VENUE_ID + '/Retracted_Acceptance';
-var REJECTED_STATUS = VENUE_ID + '/Rejected';
-var DESK_REJECTED_STATUS = VENUE_ID + '/Desk_Rejected'
 
 var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')');
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
@@ -151,8 +151,8 @@ var loadData = function() {
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
-    Webfield2.api.getAllSubmissions(SUBMISSION_ID),
-    Webfield2.api.getAllSubmissions(REVIEWERS_ID + '/-/.*/' + RESPONSIBILITY_ACK_NAME, { details: {} }),
+    Webfield2.api.getAllSubmissions(VENUE_ID),
+    Webfield2.api.getAll('/notes', { invitation: REVIEWERS_ID + '/-/.*/' + RESPONSIBILITY_ACK_NAME }),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
@@ -295,7 +295,7 @@ var formatData = function(
 
     // Track number of submissions per author
     if (
-      formattedSubmission.content.venueid === UNDER_REVIEW_STATUS &&
+      formattedSubmission.content.venue === UNDER_REVIEW_STATUS &&
       formattedSubmission.content.authorids &&
       formattedSubmission.content.authorids.length
     ) {
@@ -605,7 +605,7 @@ var formatData = function(
         expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
-        actions: ([UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) && reviewerAssignmentInvitation) ? [
+        actions: ([UNDER_REVIEW_STATUS].includes(submission.content.venue.value) && reviewerAssignmentInvitation) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
@@ -636,7 +636,7 @@ var formatData = function(
         earlylateTaskDueDate: earlylateTaskDueDate,
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
-        actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
+        actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venue.value) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
@@ -661,37 +661,37 @@ var formatData = function(
   });
 
   var submissionStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === SUBMITTED_STATUS;
+    return row.submission.content.venue === SUBMITTED_STATUS;
   });
   var underReviewStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+    return row.submission.content.venue === UNDER_REVIEW_STATUS
       && row.actionEditorProgressData.reviewPending;
   });
   var underDiscussionStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+    return row.submission.content.venue === UNDER_REVIEW_STATUS
       && row.actionEditorProgressData.recommendationPending;
   });
   var underDecisionStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+    return row.submission.content.venue === UNDER_REVIEW_STATUS
       && (row.actionEditorProgressData.ratingPending || row.actionEditorProgressData.decisionPending || row.actionEditorProgressData.decisionApprovalPending);
   });
   var cameraReadyStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+    return row.submission.content.venue === UNDER_REVIEW_STATUS
       && row.actionEditorProgressData.cameraReadyPending;
   });
   var completeSubmissionStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid !== SUBMITTED_STATUS
-      && row.submission.content.venueid !== UNDER_REVIEW_STATUS;
+    return row.submission.content.venue !== SUBMITTED_STATUS
+      && row.submission.content.venue !== UNDER_REVIEW_STATUS;
   });
   var withdrawnStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === WITHDRAWN_STATUS;
+    return row.submission.content.venue === WITHDRAWN_STATUS;
   });
   var retractedStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === RETRACTED_STATUS;
+    return row.submission.content.venue === RETRACTED_STATUS;
   });
   var rejectedStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === REJECTED_STATUS
-      || row.submission.content.venueid === DESK_REJECTED_STATUS;
+    return row.submission.content.venue === REJECTED_STATUS
+      || row.submission.content.venue === DESK_REJECTED_STATUS;
   });
 
   // Generate journal stats for overview tab
@@ -883,7 +883,7 @@ var renderTable = function(container, rows) {
             return {
               groups: selectedIds.includes(row.submission.id)
                 ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
-                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && !r.completedReview;
+                    return row.submission.content.venue === UNDER_REVIEW_STATUS && !r.completedReview;
                   })
                 : [],
               forumUrl: 'https://openreview.net/forum?' + $.param({
@@ -903,7 +903,7 @@ var renderTable = function(container, rows) {
             return {
               groups: selectedIds.includes(row.submission.id)
                 ? Object.values(row.reviewProgressData.reviewers).filter(function(r) {
-                    return row.submission.content.venueid === UNDER_REVIEW_STATUS && r.hasRecommendationStarted && !r.completedRecommendation;
+                    return row.submission.content.venue === UNDER_REVIEW_STATUS && r.hasRecommendationStarted && !r.completedRecommendation;
                   })
                 : [],
               forumUrl: 'https://openreview.net/forum?' + $.param({

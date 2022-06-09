@@ -3,8 +3,9 @@
 
 // Constants
 var VENUE_ID = '';
+var SUBMITTED_STATUS = '';
+var UNDER_REVIEW_STATUS = '';
 var SHORT_PHRASE = '';
-var SUBMISSION_ID = '';
 var ACTION_EDITOR_NAME = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
@@ -35,8 +36,6 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
-var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
-var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
@@ -113,7 +112,7 @@ var loadData = function() {
       return $.when(
         Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
         Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
-        Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
+        Webfield2.api.getAll(VENUE_ID, { numbers: Object.keys(assignedGroups) }),
         Webfield2.api.getAll('/invitations', {
           regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
           type: 'all',

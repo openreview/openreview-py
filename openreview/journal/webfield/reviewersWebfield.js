@@ -9,7 +9,6 @@
 var VENUE_ID = '';
 var SHORT_PHRASE = '';
 var WEBSITE = '';
-var SUBMISSION_ID = '';
 var HEADER = {
   title: SHORT_PHRASE + ' Reviewer Console',
   instructions: 'Visit the <a href="https://' + WEBSITE + '" target="_blank" rel="nofollow"> ' + SHORT_PHRASE + ' website</a> for the reviewer guidelines.'
@@ -50,7 +49,7 @@ var loadData = function() {
       assignedGroups,
       Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITORS_NAME),
       Webfield2.api.getAssignedInvitations(VENUE_ID, REVIEWERS_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
-      Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)}),
+      Webfield2.api.getAllSubmissions(VENUE_ID, { numbers: Object.keys(assignedGroups)}),
       Webfield2.api.getAll('/invitations', {
         regex: REVIEWERS_ID + '/-/(' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME + '|' + REVIEWERS_AVAILABILITY_NAME + ')',
         type: 'edges',

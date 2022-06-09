@@ -10,7 +10,6 @@
 var VENUE_ID = '';
 var SHORT_PHRASE = '';
 var WEBSITE = '';
-var SUBMISSION_ID = '';
 var SUBMISSION_GROUP_NAME = 'Paper';
 
 var HEADER = {
@@ -44,7 +43,7 @@ function main() {
 var loadData = function() {
   var notesP = Webfield2.getAll('/notes', {
     'content.authorids': user.profile.id,
-    invitation: SUBMISSION_ID,
+    'content.venueid': VENUE_ID,
     details: 'replies',
     sort: 'number:asc'
   });

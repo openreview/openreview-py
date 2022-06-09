@@ -661,7 +661,7 @@ If you have questions after reviewing the points below that are not answered on 
                         'venue': {
                             'value': {
                                 'type': "string",
-                                'const': f'Submitted to {short_name}',
+                                'const': self.journal.submitted_venue_id,
                             },
                             'presentation': {
                                 'hidden': True,
@@ -670,7 +670,7 @@ If you have questions after reviewing the points below that are not answered on 
                         'venueid': {
                             'value': {
                                 'type': "string",
-                                'const': self.journal.submitted_venue_id,
+                                'const': self.journal.venue_id,
                             },
                             'presentation': {
                                 'hidden': True,
@@ -982,7 +982,7 @@ If you have questions after reviewing the points below that are not answered on 
 
     def set_reviewer_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
-        author_submission_id = self.journal.get_author_submission_id()
+        under_review_id = self.journal.get_under_review_id()
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
         action_editors_id = self.journal.get_action_editors_id()
         reviewers_id = self.journal.get_reviewers_id()
@@ -1020,7 +1020,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'head': {
                     'type': 'note',
-                    'withInvitation': author_submission_id
+                    'withInvitation': under_review_id
                 },
                 'tail': {
                     'type': 'profile'
@@ -1068,7 +1068,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'head': {
                     'type': 'note',
-                    'withInvitation': author_submission_id
+                    'withInvitation': under_review_id
                 },
                 'tail': {
                     'type': 'profile'
@@ -1119,7 +1119,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'head': {
                     'type': 'note',
-                    'withInvitation': author_submission_id ## keep this to make the edge browser work
+                    'withInvitation': under_review_id ## keep this to make the edge browser work
                 },
                 'tail': {
                     'type': 'profile',
@@ -1740,12 +1740,6 @@ If you have questions after reviewing the points below that are not answered on 
                         'venue': {
                             'value': {
                                 'type': 'string',
-                                'const': f'Under review for {self.journal.short_name}'
-                            }
-                        },
-                        'venueid': {
-                            'value': {
-                                'type': 'string',
                                 'const': self.journal.under_review_venue_id
                             }
                         }
@@ -1790,13 +1784,6 @@ If you have questions after reviewing the points below that are not answered on 
                             'order': 2,
                             'value': {
                                 'type': 'string',
-                                'const': f'Desk rejected by {self.journal.short_name}'
-                            }
-                        },
-                        'venueid': {
-                            'order': 3,
-                            'value': {
-                                'type': 'string',
                                 'const': self.journal.desk_rejected_venue_id
                             }
                         }
@@ -1834,12 +1821,6 @@ If you have questions after reviewing the points below that are not answered on 
                         'venue': {
                             'value': {
                                 'type': 'string',
-                                'const': 'Withdrawn by Authors'
-                            }
-                        },
-                        'venueid': {
-                            'value': {
-                                'type': 'string',
                                 'const': self.journal.withdrawn_venue_id
                             }
                         }
@@ -1874,12 +1855,6 @@ If you have questions after reviewing the points below that are not answered on 
                             }
                         },
                         'venue': {
-                            'value': {
-                                'type': 'string',
-                                'const': 'Retracted by Authors'
-                            }
-                        },
-                        'venueid': {
                             'value': {
                                 'type': 'string',
                                 'const': self.journal.retracted_venue_id
@@ -1921,12 +1896,6 @@ If you have questions after reviewing the points below that are not answered on 
                             }
                         },
                         'venue': {
-                            'value': {
-                                'type': 'string',
-                                'const': f'Rejected by {self.journal.short_name}'
-                            }
-                        },
-                        'venueid': {
                             'value': {
                                 'type': 'string',
                                 'const': self.journal.rejected_venue_id
@@ -1974,16 +1943,9 @@ If you have questions after reviewing the points below that are not answered on 
                         'venue': {
                             'value': {
                                 'type': 'string',
-                                'const': 'Accepted by ' + self.journal.short_name
-                            },
-                            'order': 1
-                        },
-                        'venueid': {
-                            'value': {
-                                'type': 'string',
                                 'const': self.journal.accepted_venue_id
                             },
-                            'order': 2
+                            'order': 1
                         },
                         'certifications': {
                             'order': 3,
@@ -2839,6 +2801,14 @@ If you have questions after reviewing the points below that are not answered on 
             edit.readers = ['everyone']
             edit.note.mdate = None
             self.client.post_edit(edit)
+
+        ## Make the first edit public too
+        for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tcdate:asc'):
+            edit.invitation = self.journal.get_meta_invitation_id()
+            edit.signatures = [self.journal.venue_id]
+            edit.readers = ['everyone']
+            edit.note.mdate = None
+            self.client.post_edit(edit)            
     
     def set_comment_invitation(self, note):
         venue_id = self.journal.venue_id

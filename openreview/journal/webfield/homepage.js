@@ -11,11 +11,13 @@
 // Constants
 var VENUE_ID = '';
 var SUBMISSION_ID = '';
-var SUBMITTED_ID = '';
-var UNDER_REVIEW_ID = '';
-var DESK_REJECTED_ID = '';
-var WITHDRAWN_ID = '';
-var REJECTED_ID = '';
+var SUBMITTED_STATUS = '';
+var UNDER_REVIEW_STATUS = '';
+var DESK_REJECTED_STATUS = '';
+var WITHDRAWN_STATUS = '';
+var REJECTED_STATUS = '';
+var ACCEPTED_STATUS = '';
+var RETRACTED_STATUS = '';
 var HEADER = {};
 
 var WILDCARD_INVITATION = VENUE_ID + '/.*';
@@ -74,45 +76,45 @@ function main() {
 // It returns a jQuery deferred object: https://api.jquery.com/category/deferred-object/
 function load() {
 
-  var acceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': VENUE_ID,
+  var acceptedNotesP = Webfield2.api.get(VENUE_ID, {
+    'content.venue': ACCEPTED_STATUS,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var featuredAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': VENUE_ID,
+  var featuredAcceptedNotesP = Webfield2.api.getSubmissions(VENUE_ID, {
+    'content.venue': ACCEPTED_STATUS,
     'content.certifications': 'Featured Certification',
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var reproducibilityAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': VENUE_ID,
+  var reproducibilityAcceptedNotesP = Webfield2.api.getSubmissions(VENUE_ID, {
+    'content.venue': ACCEPTED_STATUS,
     'content.certifications': 'Reproducibility Certification',
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var surveyAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': VENUE_ID,
+  var surveyAcceptedNotesP = Webfield2.api.getSubmissions(VENUE_ID, {
+    'content.venue': ACCEPTED_STATUS,
     'content.certifications': 'Survey Certification',
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var underReviewNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
-    'content.venueid': UNDER_REVIEW_ID,
+  var underReviewNotesP = Webfield2.api.getSubmissions(VENUE_ID, {
+    'content.venue': UNDER_REVIEW_STATUS,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
   });
 
-  var allNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
+  var allNotesP = Webfield2.api.getSubmissions(VENUE_ID, {
     pageSize: PAGE_SIZE,
     details: 'replyCount',
     includeCount: true
@@ -173,26 +175,26 @@ function renderContent(acceptedResponse, featuredResponse, reproducibilityRespon
     pageSize: PAGE_SIZE
   }
 
-  Webfield2.ui.renderSubmissionList('#accepted-papers', SUBMISSION_ID, acceptedResponse.notes, acceptedResponse.count,
-  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID }}));
+  Webfield2.ui.renderSubmissionList('#accepted-papers', VENUE_ID, acceptedResponse.notes, acceptedResponse.count,
+  Object.assign({}, options, { query: { 'content.venue': ACCEPTED_STATUS, }}));
 
-  Webfield2.ui.renderSubmissionList('#under-review-submissions', SUBMISSION_ID, underReviewResponse.notes, underReviewResponse.count,
-  Object.assign({}, options, { query: {'content.venueid': UNDER_REVIEW_ID } } ));
+  Webfield2.ui.renderSubmissionList('#under-review-submissions', VENUE_ID, underReviewResponse.notes, underReviewResponse.count,
+  Object.assign({}, options, { query: {'content.venue': UNDER_REVIEW_STATUS } } ));
 
-  Webfield2.ui.renderSubmissionList('#all-submissions', SUBMISSION_ID, allResponse.notes, allResponse.count, options);
+  Webfield2.ui.renderSubmissionList('#all-submissions', VENUE_ID, allResponse.notes, allResponse.count, options);
 
-  Webfield2.ui.renderSubmissionList('#outstanding-certification', SUBMISSION_ID, [], 0, options);
+  Webfield2.ui.renderSubmissionList('#outstanding-certification', VENUE_ID, [], 0, options);
 
-  Webfield2.ui.renderSubmissionList('#featured-certification', SUBMISSION_ID, featuredResponse.notes, featuredResponse.count,
-  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Featured Certification' }}));
+  Webfield2.ui.renderSubmissionList('#featured-certification', VENUE_ID, featuredResponse.notes, featuredResponse.count,
+  Object.assign({}, options, { query: { 'content.venue': ACCEPTED_STATUS, 'content.certifications': 'Featured Certification' }}));
 
-  Webfield2.ui.renderSubmissionList('#expert-reviewer-certification', SUBMISSION_ID, [], 0, options);
+  Webfield2.ui.renderSubmissionList('#expert-reviewer-certification', VENUE_ID, [], 0, options);
 
-  Webfield2.ui.renderSubmissionList('#reproducibility-certification', SUBMISSION_ID, reproducibilityResponse.notes, reproducibilityResponse.count,
-  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Reproducibility Certification' }}));
+  Webfield2.ui.renderSubmissionList('#reproducibility-certification', VENUE_ID, reproducibilityResponse.notes, reproducibilityResponse.count,
+  Object.assign({}, options, { query: { 'content.venue': ACCEPTED_STATUS, 'content.certifications': 'Reproducibility Certification' }}));
 
-  Webfield2.ui.renderSubmissionList('#survey-certification', SUBMISSION_ID, surveyResponse.notes, surveyResponse.count,
-  Object.assign({}, options, { query: { 'content.venueid': VENUE_ID, 'content.certifications': 'Survey Certification' }}));
+  Webfield2.ui.renderSubmissionList('#survey-certification', VENUE_ID, surveyResponse.notes, surveyResponse.count,
+  Object.assign({}, options, { query: { 'content.venue': ACCEPTED_STATUS, 'content.certifications': 'Survey Certification' }}));
 
   $('#notes .spinner-container').remove();
   $('.tabs-container').show();
