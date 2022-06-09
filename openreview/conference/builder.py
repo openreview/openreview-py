@@ -789,7 +789,7 @@ class Conference(object):
         return readers
 
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False,
-                                    hide_fields=None, force=False):
+                                    hide_fields=[], force=False):
         if not force and reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
 
