@@ -151,7 +151,7 @@ class TestVenueSubmission():
                         },
                         "submission_length": {
                             'order': 8,
-                            'type': 'string[]',
+                            'type': 'string',
                             'description': 'Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.',
                             'value': {
                                 'param': {
@@ -159,8 +159,7 @@ class TestVenueSubmission():
                                         'Regular submission (no more than 12 pages of main content)',
                                         'Long submission (more than 12 pages of main content)'
                                     ],
-                                    'input': 'radio',
-                                    'optional': True
+                                    'input': 'radio'
                                 }
                             }
                         }
@@ -191,5 +190,6 @@ class TestVenueSubmission():
                     'authors': { 'value': ['Celeste Martinez']},
                     'authorids': { 'value': ['~Celeste_Martinez1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
                 }
             ))
