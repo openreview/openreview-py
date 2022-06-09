@@ -27,8 +27,7 @@ return {
 `,
     reducedLoadMessage: USE_REDUCED_LOAD && `
 If you chose to decline the invitation because the paper load is too high, you can request to reduce your load.
-Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will
-accumulate a positive score. You can request a reduced reviewer load below:
+You can request a reduced reviewer load below:
 `
   }
 }
