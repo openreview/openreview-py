@@ -2822,16 +2822,18 @@ class ConferenceBuilder(object):
         for i, g in enumerate(groups[:-1]):
             self.webfield_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        host = self.client.get_group(id = 'host')
+        host = self.client.get_group(id = 'host', details='writable')
         root_id = groups[0].id
         home_group = groups[-1]
         if root_id == root_id.lower():
             root_id = groups[1].id
-        writable = host.details.get('writable') if host.details else True
-        if writable:
+        if host.details.get('writable'):
             self.client.add_members_to_group(host, root_id)
             home_group.host = root_id
             self.client.post_group(home_group)
+
+        venues = self.client.get_group(id = 'venues', details='writable')
+        if venues.details.get('writable'):
             self.client.add_members_to_group('venues', home_group.id)
 
         if self.submission_stage:
