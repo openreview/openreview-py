@@ -1604,8 +1604,12 @@ class InvitationBuilder(object):
         self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
         self.client.post_invitation(WithdrawSuperInvitation(conference, reveal_authors, reveal_submission, email_pcs, hide_fields))
         notes = list(conference.get_submissions())
-        for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_submission)))
+
+        def post_invitation(note):
+            withdraw_invitation = PaperWithdrawInvitation(conference, note, reveal_submission)
+            return self.client.post_invitation(withdraw_invitation)
+
+        invitations = tools.concurrent_requests(post_invitation, notes, desc='set_withdraw_invitation')
 
         return invitations
 
