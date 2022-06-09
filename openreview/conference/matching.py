@@ -871,7 +871,7 @@ class Matching(object):
                         'hidden': True
                     },
                     'solver': {
-                        'value-radio': ['MinMax', 'FairFlow', 'Randomized'],
+                        'value-radio': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence'],
                         'default': 'MinMax',
                         'required': True,
                         'order': 17
@@ -923,6 +923,46 @@ class Matching(object):
             })
         self.client.post_invitation(config_inv)
 
+    def compute_alternate_conflicts(self, assignment_title, conflict_label='Conflict', build_conflicts='neurips'):
+        if not self.alternate_matching_group:
+            raise openreview.OpenReviewException('No alternate group selected')
+
+        ## Compute conflicts for the matching group
+        submissions = self.conference.client.get_all_notes(invitation=self.conference.get_blind_submission_id(), details='original')
+        user_profiles = tools.get_profiles(self.client, self.match_group.members, with_publications=build_conflicts)
+        self._build_note_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if build_conflicts == 'neurips' else openreview.tools.get_profile_info)
+
+        ## Get proposed assignments and conflicts from both groups: match and alternate groups
+        proposed_assignment_edges =  { e['id']['head']: [v['tail'] for v in e['values']][0] for e in self.client.get_grouped_edges(invitation=self.conference.get_paper_assignment_id(self.match_group.id),
+            label=assignment_title, groupby='head', select='tail')}
+        match_group_conflict_edges =  { e['id']['head']: [v['tail'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=self.conference.get_conflict_score_id(self.match_group.id), groupby='head', select='tail')}
+        alternate_group_conflict_edges =  { e['id']['head']: [v['tail'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=self.conference.get_conflict_score_id(self.alternate_matching_group), groupby='head', select='tail')}
+        alternate_group_members = self.client.get_group(self.alternate_matching_group).members
+
+        edges = []
+
+        for submission in tqdm(submissions, total=len(submissions), desc='compute_alternate_conflicts'):
+            submission_alternate_group_conflicts = alternate_group_conflict_edges.get(submission.id, [])
+            submission_match_group_conflicts = match_group_conflict_edges.get(submission.id, [])
+            for member in alternate_group_members:       
+                if member not in submission_alternate_group_conflicts:
+                    assigned_match_group = proposed_assignment_edges[member]
+                    if assigned_match_group in submission_match_group_conflicts:
+                        edges.append(Edge(
+                        invitation=self.conference.get_conflict_score_id(self.alternate_matching_group),
+                        head=submission.id,
+                        tail=member,
+                        weight=-1,
+                        label=conflict_label,
+                        readers=self._get_edge_readers(tail=member),
+                        writers=[self.conference.id],
+                        signatures=[self.conference.id]
+                    ))
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+        print(f'Poster {len(edges)} alternate conflict edges')
+    
+    
     def setup(self, compute_affinity_scores=False, tpms_score_file=None, elmo_score_file=None, build_conflicts=None):
         '''
         Build all the invitations and edges necessary to run a match

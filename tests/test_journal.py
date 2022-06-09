@@ -378,7 +378,7 @@ class TestJournal():
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
         assert note.content['_bibtex']['value'] == '''@article{
-anonymouspaper,
+anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {UPDATED}},
 author={Anonymous},
 journal={Submitted to Transactions on Machine Learning Research},
@@ -512,7 +512,7 @@ note={Under review}
         assert note.content['venue']['value'] == 'Withdrawn by Authors'
         assert note.content['venueid']['value'] == 'TMLR/Withdrawn_Submission'
         assert note.content['_bibtex']['value'] == '''@article{
-anonymouspaper,
+anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 3},
 author={Anonymous},
 journal={Submitted to Transactions on Machine Learning Research},
@@ -1090,6 +1090,10 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         assert reviews[2].readers == ['everyone']
         assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
+        ## Reviewers should see other reviewer's identity
+        anon_groups = carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_')
+        assert len(anon_groups) == 3
+
         ## All the comments should be public now
         comments = openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Official_Comment', sort= 'number:asc')
         assert len(comments) == 4
@@ -1111,8 +1115,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         messages = openreview_client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
-<p>Thank you for submitting your review for TMLR submission &quot;Paper title UPDATED&quot;.</p>
-<p>Now that 3 reviews have been submitted for the submission, all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need <strong>within the next 2 weeks</strong> to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.</p>
+<p>There are now 3 reviews that have been submitted for your assigned submission &quot;Paper title UPDATED&quot; and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need <strong>within the next 2 weeks</strong> to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.</p>
 <p>You will find the OpenReview page for this submission at this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
 <p>We thank you for your essential contribution to TMLR!</p>
@@ -1559,7 +1562,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-userpaper,
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Test User and Melisa Bok},
 journal={Transactions on Machine Learning Research},
@@ -1645,7 +1648,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-userpaper,
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
 author={Test User and Melisa Bok},
 journal={Submitted to Transactions on Machine Learning Research},
@@ -2060,7 +2063,7 @@ note={Retracted after acceptance}
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-anonymouspaper,
+anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 4},
 author={Anonymous},
 journal={Submitted to Transactions on Machine Learning Research},
@@ -2094,7 +2097,7 @@ note={Rejected}
         assert note.content['title']['value'] == 'Paper title 4'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-userpaper,
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 4},
 author={Test User and Melisa Bok},
 journal={Submitted to Transactions on Machine Learning Research},
@@ -2674,7 +2677,7 @@ note={Rejected}
         assert note.content['title']['value'] == 'Paper title 6'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-userpaper,
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 6},
 author={Test User and Melisa Bok},
 journal={Submitted to Transactions on Machine Learning Research},

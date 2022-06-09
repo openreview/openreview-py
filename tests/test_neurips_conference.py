@@ -36,7 +36,7 @@ class TestNeurIPSConference():
 
         helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
-        helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair')
+        helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair', institution='fb.com')
         helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
         helpers.create_user('ac2@gmail.com', 'Area', 'GoogleChair', institution='google.com')
         helpers.create_user('ac3@umass.edu', 'Area', 'UMassChair', institution='umass.edu')
@@ -282,14 +282,9 @@ class TestNeurIPSConference():
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
 
-        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
+        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=False, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
         now = datetime.datetime.utcnow()
         conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score']))
-
-        edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Conflict')
-        assert len(edges) == 1
-        assert edges[0].head == '~Area_GoogleChair1'
-        assert edges[0].tail == '~SeniorArea_GoogleChair1'
 
         edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
         assert len(edges) == 6
@@ -683,12 +678,12 @@ class TestNeurIPSConference():
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Desk_Reject')
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Revision')
 
-        # expire the abstract submission deadline
+        # expire the abstract submission deadline and update the submission deadline
         pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         now = datetime.datetime.utcnow()
-        due_date = now + datetime.timedelta(days=3)
+        due_date = now + datetime.timedelta(days=4)
         first_date = now + datetime.timedelta(days=-1)
 
         venue_revision_note = pc_client.post_note(openreview.Note(
@@ -717,6 +712,9 @@ class TestNeurIPSConference():
         ))
 
         helpers.await_queue()
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
         ## Add supplementary material
         submissions=conference.get_submissions(details='original')
@@ -924,6 +922,27 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
 
         conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
+        assert len(conflicts) == 3
+
+        ## Paper 4 conflicts
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
+        assert len(conflicts) == 1
+        assert '~Area_GoogleChair1' == conflicts[0].tail ## reviewer and one author are from google
+
+        conference.set_matching_alternate_conflicts(committee_id=conference.get_area_chairs_id(), source_committee_id=conference.get_senior_area_chairs_id(), source_assignment_title='sac-matching', conflict_label='SAC Conflict')
+        
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
+        assert len(conflicts) == 13
+
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
+        assert len(conflicts) == 3
+        tails = [c.tail for c in conflicts]
+        assert '~Area_GoogleChair1' in tails ## reviewer and one author are from google
+        assert '~Area_IBMChair1' in tails ## assgined SAC is from google
+        assert '~Area_UMassChair1' in tails ## assigned SAC is from google
+
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -2624,3 +2643,77 @@ Thank you,
                 'NeurIPS.cc/2021/Conference/Paper4/Authors'
                 ]
         assert submission_note.content['keywords'] == ''
+
+    def test_submission_revision_deadline(self, conference, helpers, test_client, client, selenium, request_page):
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=-1)
+        first_date = now + datetime.timedelta(days=-1)
+
+        # expire submission deadlne
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+
+        # Post a submission revision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=1)
+        due_date = now + datetime.timedelta(days=3)
+        revision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Revision',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_remove_options': ['keywords']
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+
+        # Update revision note and test revision invitation duedate is not updated
+        venue_revision_note.content['Location'] = 'Amherst, MA'
+        pc_client.post_note(revision_stage_note)
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))

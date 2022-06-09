@@ -51,7 +51,8 @@ class TestSubmissionReaders():
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'reviewer_identity': ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair']
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'Expected Submissions': '1000'
             })
 
         request_form_note=test_client.post_note(request_form_note)

@@ -1012,7 +1012,8 @@ def iterget_edges (client,
                    head = None,
                    tail = None,
                    label = None,
-                   limit = None):
+                   limit = None, 
+                   trash = None):
     params = {}
     if invitation is not None:
         params['invitation'] = invitation
@@ -1024,6 +1025,8 @@ def iterget_edges (client,
         params['label'] = label
     if limit is not None:
         params['limit'] = limit
+    if trash == True:
+        params['trash']=True
     return iterget(client.get_edges, **params)
 
 def iterget_grouped_edges(
