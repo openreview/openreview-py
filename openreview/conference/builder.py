@@ -1247,26 +1247,28 @@ class Conference(object):
         self.__create_group(parent_group_invited_id, self.id, exclude_self_reader=True)
 
         ## create groups per submissions
+        def create_paper_group(submission):
+            paper_group_id = self.get_committee_id(name=name, number=submission.number)
+            self.client.post_group(openreview.Group(
+                id=paper_group_id,
+                readers=[self.id, paper_group_id],
+                writers=[self.id],
+                signatures=[self.id],
+                signatories=[self.id],
+                members=[]
+            ))
+            paper_invited_group_id = self.get_committee_id(name=name + '/Invited', number=submission.number)
+            return self.client.post_group(openreview.Group(
+                id=paper_invited_group_id,
+                readers=[self.id],
+                writers=[self.id],
+                signatures=[self.id],
+                signatories=[self.id],
+                members=[]
+            ))
+
         if create_paper_groups:
-            for submission in tqdm(self.get_submissions()):
-                paper_group_id = self.get_committee_id(name=name, number=submission.number)
-                self.client.post_group(openreview.Group(
-                    id=paper_group_id,
-                    readers=[self.id, paper_group_id],
-                    writers=[self.id],
-                    signatures=[self.id],
-                    signatories=[self.id],
-                    members=[]
-                ))
-                paper_invited_group_id = self.get_committee_id(name=name + '/Invited', number=submission.number)
-                self.client.post_group(openreview.Group(
-                    id=paper_invited_group_id,
-                    readers=[self.id],
-                    writers=[self.id],
-                    signatures=[self.id],
-                    signatories=[self.id],
-                    members=[]
-                ))
+            tools.concurrent_requests(create_paper_group, self.get_submissions(), desc='Creating paper groups')
 
     def set_reviewers(self, emails = []):
         readers = []
