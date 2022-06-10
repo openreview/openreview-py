@@ -1625,7 +1625,7 @@ class TestDoubleBlindConference():
             forum = notes[0].forum,
             replyto = notes[0].forum,
             readers = ['everyone'],
-            writers = [conference.id + '/Paper{number}/Authors'.format(number = notes[0].number), conference.id],
+            writers = [conference.id],
             signatures = [conference.id + '/Paper{number}/Authors'.format(number = notes[0].number)],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -1666,25 +1666,10 @@ class TestDoubleBlindConference():
         assert 'AKBC.ws/2019/Conference/Paper3/Authors' not in author_group.members
 
         posted_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
-        test_client.post_note(posted_note)
 
-        helpers.await_queue()
-
-        submission_note = client.get_note(withdrawal_note.forum)
-        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Blind_Submission'
-        assert submission_note.readers == ['everyone']
-
-        author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
-        assert 'AKBC.ws/2019/Conference/Paper2/Authors' in author_group.members
-
-        # Withdraw again
-        posted_note.ddate = None
-        posted_note = test_client.post_note(posted_note)
-
-        helpers.await_queue()
-        submission_note = client.get_note(withdrawal_note.forum)
-        assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Withdrawn_Submission'
-        print(posted_note)
+        with pytest.raises(openreview.OpenReviewException) as ex:
+            test_client.post_note(posted_note)
+        assert ex.value.args[0].get('name') == 'ForbiddenError'
 
         # Undo withdraw using pc client
         pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc@mail.com', password='1234')
