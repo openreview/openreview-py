@@ -458,7 +458,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 'replyto': note.id,
                 'readers': readers,
                 'writers': {
-                    'values-copied': [
+                    'values': [
                         conference.get_id(), conference.get_program_chairs_id()
                     ]
                 },

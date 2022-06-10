@@ -1038,7 +1038,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
                 'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
                 'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',

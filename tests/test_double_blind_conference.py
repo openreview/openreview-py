@@ -1625,7 +1625,7 @@ class TestDoubleBlindConference():
             forum = notes[0].forum,
             replyto = notes[0].forum,
             readers = ['everyone'],
-            writers = [conference.id],
+            writers = [conference.id, conference.get_program_chairs_id()],
             signatures = [conference.id + '/Paper{number}/Authors'.format(number = notes[0].number)],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
