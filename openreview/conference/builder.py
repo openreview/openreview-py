@@ -789,7 +789,7 @@ class Conference(object):
         return readers
 
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False,
-                                    hide_fields=None, force=False):
+                                    hide_fields=[], force=False):
         if not force and reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
 
@@ -1247,26 +1247,28 @@ class Conference(object):
         self.__create_group(parent_group_invited_id, self.id, exclude_self_reader=True)
 
         ## create groups per submissions
+        def create_paper_group(submission):
+            paper_group_id = self.get_committee_id(name=name, number=submission.number)
+            self.client.post_group(openreview.Group(
+                id=paper_group_id,
+                readers=[self.id, paper_group_id],
+                writers=[self.id],
+                signatures=[self.id],
+                signatories=[self.id],
+                members=[]
+            ))
+            paper_invited_group_id = self.get_committee_id(name=name + '/Invited', number=submission.number)
+            return self.client.post_group(openreview.Group(
+                id=paper_invited_group_id,
+                readers=[self.id],
+                writers=[self.id],
+                signatures=[self.id],
+                signatories=[self.id],
+                members=[]
+            ))
+
         if create_paper_groups:
-            for submission in tqdm(self.get_submissions()):
-                paper_group_id = self.get_committee_id(name=name, number=submission.number)
-                self.client.post_group(openreview.Group(
-                    id=paper_group_id,
-                    readers=[self.id, paper_group_id],
-                    writers=[self.id],
-                    signatures=[self.id],
-                    signatories=[self.id],
-                    members=[]
-                ))
-                paper_invited_group_id = self.get_committee_id(name=name + '/Invited', number=submission.number)
-                self.client.post_group(openreview.Group(
-                    id=paper_invited_group_id,
-                    readers=[self.id],
-                    writers=[self.id],
-                    signatures=[self.id],
-                    signatories=[self.id],
-                    members=[]
-                ))
+            tools.concurrent_requests(create_paper_group, self.get_submissions(), desc='Creating paper groups')
 
     def set_reviewers(self, emails = []):
         readers = []
@@ -2828,16 +2830,18 @@ class ConferenceBuilder(object):
         for i, g in enumerate(groups[:-1]):
             self.webfield_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        host = self.client.get_group(id = 'host')
+        host = self.client.get_group(id = 'host', details='writable')
         root_id = groups[0].id
         home_group = groups[-1]
         if root_id == root_id.lower():
             root_id = groups[1].id
-        writable = host.details.get('writable') if host.details else True
-        if writable:
+        if host.details.get('writable'):
             self.client.add_members_to_group(host, root_id)
             home_group.host = root_id
             self.client.post_group(home_group)
+
+        venues = self.client.get_group(id = 'venues', details='writable')
+        if venues.details.get('writable'):
             self.client.add_members_to_group('venues', home_group.id)
 
         if self.submission_stage:

@@ -222,7 +222,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_group(self, id):
+    def get_group(self, id, details=None):
         """
         Get a single Group by id if available
 
@@ -236,7 +236,7 @@ class Client(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.groups_url, params = {'id': id, 'details': details}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         return Group.from_json(g)
@@ -1175,7 +1175,7 @@ class Client(object):
 
         return tools.concurrent_get(self, self.get_tags, **params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1195,6 +1195,7 @@ class Client(object):
         params['limit'] = limit
         params['offset'] = offset
         params['sort'] = sort
+        params['trash'] = trash
 
         response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1206,7 +1207,7 @@ class Client(object):
 
         return edges
 
-    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False):
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1225,7 +1226,8 @@ class Client(object):
             'limit': limit,
             'offset': offset,
             'sort': sort,
-            'with_count': with_count
+            'with_count': with_count,
+            'trash': trash
         }
 
         return tools.concurrent_get(self, self.get_edges, **params)

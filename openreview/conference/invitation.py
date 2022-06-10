@@ -1604,8 +1604,12 @@ class InvitationBuilder(object):
         self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
         self.client.post_invitation(WithdrawSuperInvitation(conference, reveal_authors, reveal_submission, email_pcs, hide_fields))
         notes = list(conference.get_submissions())
-        for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_submission)))
+
+        def post_invitation(note):
+            withdraw_invitation = PaperWithdrawInvitation(conference, note, reveal_submission)
+            return self.client.post_invitation(withdraw_invitation)
+
+        invitations = tools.concurrent_requests(post_invitation, notes, desc='set_withdraw_invitation')
 
         return invitations
 
@@ -1624,10 +1628,13 @@ class InvitationBuilder(object):
     def set_review_invitation(self, conference, notes):
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
-        for note in tqdm(notes, total=len(notes), desc='set_reviewinvitation'):
+
+        def set_review_invitation(note):
             invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
             self.__update_readers(note, invitation)
-            invitations.append(invitation)
+            return invitation
+
+        invitations = tools.concurrent_requests(set_review_invitation, notes, desc='set_review_invitation')
 
         return invitations
 
