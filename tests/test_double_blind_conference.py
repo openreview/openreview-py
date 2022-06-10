@@ -2035,7 +2035,7 @@ url={'''
         conference.post_decision_stage(decision_heading_map={'Accept (Poster)': 'Accepted poster papers',
                                                              'Accept (Oral)': 'Accepted oral papers',
                                                              'Reject': 'Reject'})
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='reject')
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", by=By.ID, wait_for_element='header')
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
