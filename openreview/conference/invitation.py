@@ -1627,10 +1627,13 @@ class InvitationBuilder(object):
     def set_review_invitation(self, conference, notes):
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
-        for note in tqdm(notes, total=len(notes), desc='set_reviewinvitation'):
+
+        def set_review_invitation(note):
             invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
             self.__update_readers(note, invitation)
-            invitations.append(invitation)
+            return invitation
+
+        invitations = tools.concurrent_requests(set_review_invitation, notes, desc='set_review_invitation')
 
         return invitations
 
