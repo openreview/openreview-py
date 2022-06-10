@@ -1013,7 +1013,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(author_group.members) == 4
         assert 'thecvf.com/ECCV/2020/Conference/Paper5/Authors' not in author_group.members
 
-        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -1075,7 +1075,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(author_group.members) == 3
         assert 'thecvf.com/ECCV/2020/Conference/Paper4/Authors' not in author_group.members
 
-        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
