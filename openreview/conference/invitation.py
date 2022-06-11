@@ -448,7 +448,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
             id=conference.get_invitation_id('Withdraw', note.number),
             super=conference.get_invitation_id('Withdraw'),
             cdate=None,
-            invitees=[conference.get_authors_id(note.number), conference.support_user],
+            invitees=[conference.get_authors_id(note.number), conference.support_user, conference.get_program_chairs_id()],
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=['~Super_User1'],
@@ -458,13 +458,12 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 'replyto': note.id,
                 'readers': readers,
                 'writers': {
-                    'values-copied': [
-                        conference.get_id(),
-                        '{signatures}'
+                    'values': [
+                        conference.get_id(), conference.get_program_chairs_id()
                     ]
                 },
                 'signatures': {
-                    'values': [conference.get_authors_id(note.number)],
+                    'values-regex': '{}|{}'.format(conference.get_program_chairs_id(), conference.get_authors_id(number=note.number)),
                     'description': 'How your identity will be displayed.'
                 },
             }
