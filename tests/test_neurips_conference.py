@@ -2633,7 +2633,7 @@ Thank you,
                 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',

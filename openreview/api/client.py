@@ -1126,7 +1126,7 @@ class OpenReviewClient(object):
 
         return tools.concurrent_get(self, self.get_tags, **params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False, trash=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1145,6 +1145,7 @@ class OpenReviewClient(object):
         params['label'] = label
         params['limit'] = limit
         params['offset'] = offset
+        params['trash'] = trash
 
         response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1156,7 +1157,7 @@ class OpenReviewClient(object):
 
         return edges
 
-    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False):
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False, trash=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1174,7 +1175,8 @@ class OpenReviewClient(object):
             'label': label,
             'limit': limit,
             'offset': offset,
-            'with_count': with_count
+            'with_count': with_count,
+            'trash': trash
         }
 
         return tools.concurrent_get(self, self.get_edges, **params)
