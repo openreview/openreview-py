@@ -20,10 +20,12 @@ class GroupBuilder(object):
                         writers=[venue_id],
                         signatures=['~Super_User1'],
                         signatories=[venue_id],
-                        members=[support_role]
+                        members=[support_role],
+                        host=venue_id
                         ))
 
         self.client.add_members_to_group('host', venue_id)
+        self.client.add_members_to_group('venues', venue_id)
 
         ## editor in chief
         editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
@@ -250,7 +252,7 @@ class GroupBuilder(object):
         if not reviewers_group:
             reviewers_group=self.client.post_group(Group(id=reviewers_group_id,
                 readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                deanonymizers=[venue_id, action_editors_group_id],
+                deanonymizers=[venue_id, action_editors_group_id, reviewers_group_id],
                 nonreaders=[authors_group_id],
                 writers=[venue_id, action_editors_group_id],
                 signatures=[venue_id],

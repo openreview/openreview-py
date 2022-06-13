@@ -15,7 +15,7 @@ class TestReviewersConference():
 
     def test_set_reviewers_name(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('learningtheory.org/COLT/2019/Conference')
@@ -72,7 +72,7 @@ class TestReviewersConference():
 
     def test_allow_review_de_anonymization(self, client, test_client, helpers, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('eswc-conferences.org/ESWC/2019/Workshop/KGB')
         builder.set_conference_name('Knowledge Graph Building Workshop')
@@ -88,8 +88,9 @@ class TestReviewersConference():
         })
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True, withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
+        conference.create_review_stage()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = [conference.id, '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],

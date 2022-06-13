@@ -21,7 +21,7 @@ class TestECCVConference():
     def conference(self, client):
         now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
@@ -286,7 +286,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
     def test_create_conference(self, client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('thecvf.com/ECCV/2020/Conference')
@@ -1013,7 +1013,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(author_group.members) == 4
         assert 'thecvf.com/ECCV/2020/Conference/Paper5/Authors' not in author_group.members
 
-        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -1038,7 +1038,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 'thecvf.com/ECCV/2020/Conference/Paper4/Reviewers',
                 'thecvf.com/ECCV/2020/Conference/Paper4/Area_Chairs',
                 'thecvf.com/ECCV/2020/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['thecvf.com/ECCV/2020/Conference/Paper4/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -1075,7 +1075,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert len(author_group.members) == 3
         assert 'thecvf.com/ECCV/2020/Conference/Paper4/Authors' not in author_group.members
 
-        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Authors", test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')

@@ -118,6 +118,7 @@ var loadData = function() {
           regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
           type: 'all',
           select: 'id,cdate,duedate,expdate',
+          sort: 'cdate:asc'
           // expired: true
         }).then(function(invitations) {
           return _.keyBy(invitations, 'id');
@@ -347,7 +348,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&maxColumns=2&version=2'
           }
-        ] : []
+        ] : [],
+        duedate: reviewInvitation && reviewInvitation.duedate || 0
       },
       actionEditorData: {
         committeeName: 'Action Editor',
@@ -403,7 +405,8 @@ var renderData = function(venueStatusData) {
       Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
       Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
       Recommendation: function(row) { return row.actionEditorData.recommendation; },
-      Status: function(row) { return row.status; }
+      Status: function(row) { return row.status; },
+      Review_Due_Date: function(row) { return row.reviewProgressData.duedate; }
     },
     searchProperties: {
       number: ['submissionNumber.number'],
@@ -424,6 +427,7 @@ var renderData = function(venueStatusData) {
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the review page:\n\n{{forumUrl}}' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
+      replyTo: user && user.id,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',

@@ -193,10 +193,10 @@ class TestClient():
         assert len(invitations) == 5
 
         invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
-        assert len(invitations) == 11
+        assert len(invitations) == 22
 
         invitations = client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')
-        assert len(invitations) == 3
+        assert len(invitations) == 10
 
         invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
         assert len(invitations) == 0
@@ -204,7 +204,7 @@ class TestClient():
     def test_get_notes_by_content(self, client, test_client):
 
         now = datetime.datetime.utcnow()
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('Test.ws/2019/Conference')
@@ -380,8 +380,11 @@ class TestClient():
         assert messages
 
     def test_get_notes_by_ids(self, client):
-        notes = client.get_notes_by_ids(ids = [])
-        assert len(notes) == 0, 'notes is empty'
+        notes = client.get_notes(invitation='Test.ws/2019/Conference/-/Submission', content = { 'title': 'Paper title'})
+        assert len(notes) == 1        
+       
+        notes = client.get_notes_by_ids(ids = [notes[0].id])
+        assert len(notes) == 1, 'notes is not empty'
 
     def test_infer_notes(self, client):
         notes = client.get_notes(signature='openreview.net/Support')

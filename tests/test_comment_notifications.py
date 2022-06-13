@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
+from openreview.conference.builder import ReviewStage
 import pytest
 import requests
 import datetime
@@ -16,7 +17,7 @@ class TestCommentNotification():
 
     def test_notify_all(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('MIDL.io/2019/Conference')
         builder.set_conference_name('Medical Imaging with Deep Learning')
@@ -305,7 +306,7 @@ class TestCommentNotification():
 
     def test_notify_submitted_reviewers(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id('auai.org/UAI/2020/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
         builder.set_conference_short_name('UAI 2020')
@@ -334,10 +335,11 @@ class TestCommentNotification():
             "Algorithms: Exact Inference",
         ])
         builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
-        builder.set_review_stage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        builder.set_review_stage(openreview.ReviewStage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
+        conference.create_review_stage()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = [conference.id, '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
@@ -598,7 +600,7 @@ class TestCommentNotification():
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2018/Conference')
         builder.set_conference_name('Conference on Learning Theory')
@@ -887,7 +889,7 @@ class TestCommentNotification():
 
     def test_notify_except_program_chairs(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2017/Conference')
         builder.set_conference_name('Conference on Learning Theory')
@@ -1104,7 +1106,7 @@ class TestCommentNotification():
 
     def test_notify_except_authors_are_program_chairs(self, client, helpers, test_client):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2017/Conference')
         builder.set_conference_name('Conference on Learning Theory')

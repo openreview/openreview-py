@@ -11,7 +11,7 @@ class TestLegacyInvitations():
 
     def test_single_blind_conference(self, client, test_client, selenium, request_page, helpers) :
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2019/Workshop/MLITS')
@@ -35,9 +35,10 @@ class TestLegacyInvitations():
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_public=True,
             desk_rejected_submission_reveal_authors=True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 40)))
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         conference = builder.get_result()
+        conference.create_review_stage()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],

@@ -255,6 +255,14 @@ class Journal(object):
         if forum_note:
             return forum_note.invitations[0].split('/-/')[0]
 
+    def get_review_period_length(self, note):
+        if 'submission_length' in note.content:
+            if 'Regular submission' in note.content['submission_length']['value']:
+                return 2 ## weeks
+            if 'Long submission' in note.content['submission_length']['value']:
+                return 4 ## weeks
+        return 2 ## weeks
+    
     def setup(self, support_role, editors=[], assignment_delay=5):
         self.group_builder.set_groups(self, support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
@@ -301,21 +309,24 @@ class Journal(object):
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
         self.invitation_builder.set_revision_submission(note)
-        self.invitation_builder.set_note_review_approval_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)
-        self.invitation_builder.set_ae_recommendation_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
+        self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
 
 
     def setup_under_review_submission(self, note):
-        self.invitation_builder.set_review_invitation(note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)))
+        self.invitation_builder.set_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_comment_invitation(note)
         self.setup_reviewer_assignment(note)
 
     def assign_reviewer(self, note, reviewer, solicit):
         self.assignment.assign_reviewer(note, reviewer, solicit)
+
+    def get_due_date(self, days=0, weeks=0):
+        due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
+        return due_date
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
 
@@ -332,16 +343,16 @@ class Journal(object):
 
         first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
         bibtex_title = u.unicode_to_latex(note.content['title']['value'])
+        year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
         if new_venue_id == self.under_review_venue_id:
 
             first_author_last_name = 'anonymous'
             authors = 'Anonymous'
-            year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -361,11 +372,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -386,11 +396,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -406,11 +415,10 @@ class Journal(object):
             first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
             first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
             authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={' + self.full_name + '},',
@@ -430,11 +438,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -511,7 +518,7 @@ To view the {lower_formatted_invitation}, click here: https://openreview.net/for
 '''
 
         ## Notify author of the note
-        if action == 'posted':
+        if action == 'posted' and self.get_editors_in_chief_id() not in note.signatures:
             message = f'''Hi {{{{fullname}}}},
 
 Your {lower_formatted_invitation} on a submission has been {action}
@@ -554,3 +561,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {content}
             '''
             self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+
+
+        if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation:
+            message = f'''Hi {{{{fullname}}}},
+
+{before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are serving as Editor-In-Chief.
+{content}
+            '''
+            self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+

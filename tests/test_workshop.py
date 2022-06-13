@@ -18,7 +18,7 @@ class TestWorkshop():
     def conference(self, client):
         now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
@@ -596,7 +596,7 @@ class TestWorkshop():
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
-            writers = [conference.get_id(), 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',

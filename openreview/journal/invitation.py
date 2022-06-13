@@ -401,7 +401,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'order': 2,
                                     'value': {
                                         'type': "string",
-                                        'enum': ['I understand that TMLR has a strict 6 week review process, and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
+                                        'enum': ['I understand that TMLR has a strict 6 week review process (for submissions of at most 12 pages of main content), and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
                                     },
                                     'presentation': {
                                         'input': 'checkbox'
@@ -496,7 +496,7 @@ If you have questions after reviewing the points below that are not answered on 
                                     'order': 1,
                                     'value': {
                                         'type': "string",
-                                        'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${params.reviewDuedate}.']
+                                        'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${params.reviewDuedate} UTC time.']
                                     },
                                     'presentation': {
                                         'input': 'checkbox'
@@ -576,7 +576,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'type': "group[]",
                                 'regex': r'~.*'
                             },
-                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.',
+                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, authors_value]
@@ -591,6 +591,17 @@ If you have questions after reviewing the points below that are not answered on 
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
+                        'submission_length': {
+                            'value': {
+                                'type': 'string',
+                                'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)']
+                            },
+                            'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                            'order': 6,
+                            'presentation': {
+                                'input': 'radio'
+                            }
+                        },                        
                         "supplementary_material": {
                             'value': {
                                 'type': 'file',
@@ -599,7 +610,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 "optional": True
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 6,
+                            "order": 7,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, reviewers_value, authors_value]
                             }
@@ -611,7 +622,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
-                            'order': 7,
+                            'order': 8,
                         },
                         'changes_since_last_submission': {
                             'value': {
@@ -620,7 +631,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 8,
+                            'order': 9,
                             'presentation': {
                                 'markdown': True
                             }
@@ -631,7 +642,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                            'order': 9,
+                            'order': 10,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, authors_value]
                             }
@@ -642,7 +653,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                            'order': 10,
+                            'order': 11,
                             'readers': {
                                 'const': [ venue_id, action_editors_value, authors_value]
                             }
@@ -678,13 +689,8 @@ If you have questions after reviewing the points below that are not answered on 
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
         action_editors_id = self.journal.get_action_editors_id()
         authors_id = self.journal.get_authors_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${{head}.number}')
         paper_authors_id = self.journal.get_authors_id(number='${{head}.number}')
 
-        conflict_ae_invitation_id=f'{action_editors_id}/-/Conflict'
-        custom_papers_ae_invitation_id=f'{action_editors_id}/-/Custom_Max_Papers'
-
-        now = datetime.datetime.utcnow()
         invitation = Invitation(
             id=self.journal.get_ae_conflict_id(),
             invitees=[venue_id],
@@ -1354,7 +1360,7 @@ If you have questions after reviewing the points below that are not answered on 
 
     def set_note_review_approval_invitation(self, note, duedate):
         return self.client.post_invitation_edit(invitations=self.journal.get_review_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': duedate },
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate) },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2075,7 +2081,7 @@ If you have questions after reviewing the points below that are not answered on 
         if not ae_recommendation_invitation:
             invitation = Invitation(
                 id=ae_recommendation_invitation_id,
-                duedate=duedate,
+                duedate=openreview.tools.datetime_millis(duedate),
                 invitees=[authors_id],
                 readers=[venue_id, authors_id],
                 writers=[venue_id],
@@ -2347,7 +2353,7 @@ If you have questions after reviewing the points below that are not answered on 
     def set_review_invitation(self, note, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_review_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': duedate },
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate) },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2686,6 +2692,7 @@ If you have questions after reviewing the points below that are not answered on 
         paper_authors_id = self.journal.get_authors_id(number=note.number)
         paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
         paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
         revision_invitation_id = self.journal.get_revision_id(number=note.number)
         invitation = Invitation(id=revision_invitation_id,
@@ -2700,7 +2707,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'optional': True,
                     'nullable': True
                 },
-                'signatures': { 'const': [paper_authors_id] },
+                'signatures': { 'regex': f'{paper_authors_id}|{editors_in_chief_id}', 'type': 'group[]' },
                 'readers': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
                 'writers': { 'const': [ venue_id, paper_authors_id]},
                 'note': {
@@ -2733,6 +2740,17 @@ If you have questions after reviewing the points below that are not answered on 
                             'description': 'Upload a PDF file that ends with .pdf',
                             'order': 5,
                         },
+                        'submission_length': {
+                            'value': {
+                                'type': 'string',
+                                'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)']
+                            },
+                            'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                            'order': 6,
+                            'presentation': {
+                                'input': 'radio'
+                            }
+                        },                         
                         "supplementary_material": {
                             'value': {
                                 'type': 'file',
@@ -2741,7 +2759,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 "optional": True
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 6,
+                            "order": 7,
                             'readers': {
                                 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                             }
@@ -2753,7 +2771,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
-                            'order': 7,
+                            'order': 8,
                         },
                         'changes_since_last_submission': {
                             'value': {
@@ -2762,7 +2780,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'optional': True
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 8,
+                            'order': 9,
                             'presentation': {
                                 'markdown': True
                             }
@@ -2773,7 +2791,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                            'order': 9,
+                            'order': 10,
                             'readers': {
                                 'const': [ venue_id, paper_action_editors_id, paper_authors_id]
                             }
@@ -2784,7 +2802,7 @@ If you have questions after reviewing the points below that are not answered on 
                                 'regex': '^[\\S\\s]{1,5000}$'
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                            'order': 10,
+                            'order': 11,
                             'readers': {
                                 'const': [ venue_id, paper_action_editors_id, paper_authors_id]
                             }
@@ -3075,7 +3093,7 @@ If you have questions after reviewing the points below that are not answered on 
         decision_approval_invitation_id = self.journal.get_decision_approval_id(number=note.number)
 
         invitation = Invitation(id=decision_approval_invitation_id,
-            duedate=duedate,
+            duedate=openreview.tools.datetime_millis(duedate),
             invitees=[venue_id, editors_in_chief_id],
             noninvitees=[paper_authors_id],
             readers=['everyone'],
@@ -3142,7 +3160,7 @@ If you have questions after reviewing the points below that are not answered on 
                 rating_invitation=openreview.tools.get_invitation(self.client, rating_invitation_id)
                 if not rating_invitation:
                     invitation = Invitation(id=rating_invitation_id,
-                        duedate=duedate,
+                        duedate=openreview.tools.datetime_millis(duedate),
                         invitees=[venue_id, paper_action_editors_id],
                         readers=[venue_id, paper_action_editors_id],
                         writers=[venue_id],
@@ -3196,7 +3214,7 @@ If you have questions after reviewing the points below that are not answered on 
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
-            duedate=duedate,
+            duedate=openreview.tools.datetime_millis(duedate),
             edit={
                 'signatures': { 'const': [paper_authors_id] },
                 'readers': { 'const': ['everyone']},
@@ -3320,11 +3338,11 @@ If you have questions after reviewing the points below that are not answered on 
 
         camera_ready_verification_invitation_id = self.journal.get_camera_ready_verification_id(number=note.number)
         invitation = Invitation(id=camera_ready_verification_invitation_id,
-            duedate=duedate,
+            duedate=openreview.tools.datetime_millis(duedate),
             invitees=[venue_id, paper_action_editors_id],
             readers=['everyone'],
             writers=[venue_id],
-            signatures=[editors_in_chief_id],
+            signatures=[venue_id],
             edit={
                 'signatures': { 'const': [ paper_action_editors_id ] },
                 'readers': { 'const': [ venue_id, paper_action_editors_id ] },

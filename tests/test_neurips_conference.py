@@ -34,8 +34,9 @@ class TestNeurIPSConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@neurips.cc', 'Program', 'NeurIPSChair')
 
+        helpers.create_user('another_andrew@mit.edu', 'Another', 'Andrew')
         helpers.create_user('sac1@google.com', 'SeniorArea', 'GoogleChair', institution='google.com')
-        helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair')
+        helpers.create_user('sac2@gmail.com', 'SeniorArea', 'NeurIPSChair', institution='fb.com')
         helpers.create_user('ac1@mit.edu', 'Area', 'IBMChair', institution='ibm.com')
         helpers.create_user('ac2@gmail.com', 'Area', 'GoogleChair', institution='google.com')
         helpers.create_user('ac3@umass.edu', 'Area', 'UMassChair', institution='umass.edu')
@@ -131,8 +132,8 @@ class TestNeurIPSConference():
                 'title': 'Recruitment',
                 'invitee_role': 'Senior_Area_Chairs',
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -281,14 +282,9 @@ class TestNeurIPSConference():
 
         conference=openreview.helpers.get_conference(pc_client, request_form.id)
 
-        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=True, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
+        conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=False, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
         now = datetime.datetime.utcnow()
         conference.set_bid_stage(openreview.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score']))
-
-        edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Conflict')
-        assert len(edges) == 1
-        assert edges[0].head == '~Area_GoogleChair1'
-        assert edges[0].tail == '~SeniorArea_GoogleChair1'
 
         edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
         assert len(edges) == 6
@@ -434,8 +430,8 @@ class TestNeurIPSConference():
                 'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
-                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nIf you have any questions, please contact {contact_info}.\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -512,8 +508,8 @@ class TestNeurIPSConference():
                 'title': 'Remind Recruitment',
                 'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
-                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {invitee_role}',
-                'invitation_email_content': 'Dear {name},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {invitee_role}.\n\nACCEPT LINK:\n\n{accept_url}\n\nDECLINE LINK:\n\n{decline_url}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -546,15 +542,77 @@ class TestNeurIPSConference():
 
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
+    def test_enable_ethics_reviewers(self, client, helpers):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0] 
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        first_date = now + datetime.timedelta(days=1)               
+
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        
+        helpers.await_queue()
+
+        assert pc_client.get_group('NeurIPS.cc/2021/Conference/Ethics_Chairs')      
+        assert pc_client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
+
+        assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))
+    
     def test_recruit_ethics_reviewers(self, client, request_page, selenium, helpers):
 
         ## Need super user permission to add the venue to the active_venues group
+        pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
 
-        result = conference.recruit_reviewers(invitees = ['reviewer2@mit.edu'], title = 'Ethics Review invitation', message = '{accept_url}, {decline_url}', reviewers_name = 'Ethics_Reviewers')
-        assert result['invited'] == ['reviewer2@mit.edu']
+        # result = conference.recruit_reviewers(invitees = ['reviewer2@mit.edu'], title = 'Ethics Review invitation', message = '{accept_url}, {decline_url}', reviewers_name = 'Ethics_Reviewers')
+        # assert result['invited'] == ['reviewer2@mit.edu']
 
+        reviewer_details = '''reviewer2@mit.edu, Reviewer MIT'''
+        recruitment_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Ethics_Reviewers',
+                'invitee_reduced_load': ['2', '3', '4'],
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+        helpers.await_queue()        
+              
         assert client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers')
         assert client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers/Declined')
         group = client.get_group('NeurIPS.cc/2021/Conference/Ethics_Reviewers/Invited')
@@ -562,7 +620,7 @@ class TestNeurIPSConference():
         assert len(group.members) == 1
         assert 'reviewer2@mit.edu' in group.members
 
-        messages = client.get_messages(to='reviewer2@mit.edu', subject='Ethics Review invitation')
+        messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to serve as Ethics Reviewer')
         assert messages and len(messages) == 1
         accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
@@ -619,6 +677,44 @@ class TestNeurIPSConference():
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Withdraw')
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Desk_Reject')
         assert client.get_invitation('NeurIPS.cc/2021/Conference/Paper5/-/Revision')
+
+        # expire the abstract submission deadline and update the submission deadline
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=4)
+        first_date = now + datetime.timedelta(days=-1)
+
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
         ## Add supplementary material
         submissions=conference.get_submissions(details='original')
@@ -681,7 +777,7 @@ class TestNeurIPSConference():
                 'title': 'Paper title 5' ,
                 'abstract': 'This is an abstract 5 Rev',
                 'authorids': ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu'],
-                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc']
+                'authors': ['SomeFirstName User', 'Peter SomeLastName', 'Another Andrew']
             }
         )
         note = test_client.post_note(note)
@@ -696,6 +792,11 @@ class TestNeurIPSConference():
         author_group=test_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Authors')
         assert author_group
         assert author_group.members == ['test@mail.com', 'peter@mail.com', 'another_andrew@mit.edu']
+
+        sac_client = openreview.Client(username='another_andrew@mit.edu', password='1234')
+        sac_notes = sac_client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Submission')
+        assert len(sac_notes) == 1
+        assert sac_notes[0].id == note.forum
 
 
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
@@ -806,6 +907,90 @@ class TestNeurIPSConference():
 
             }))
 
+    def test_update_withdraw_desk_reject_invitations(self, conference, client, helpers):
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=-1)
+        first_date = now + datetime.timedelta(days=-2)
+
+        # expire submission deadlne
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
+                'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
+                'email_pcs_for_withdrawn_submissions': 'No, do not email PCs.',
+                'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
+                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.'
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        withdraw_super_invitation = client.get_invitation(conference.get_invitation_id('Withdraw'))
+        assert 'REVEAL_AUTHORS_ON_WITHDRAW = True' in withdraw_super_invitation.process
+        assert 'REVEAL_SUBMISSIONS_ON_WITHDRAW = False' in withdraw_super_invitation.process
+
+        # update withdraw submissions author anonymity
+        venue_revision_note.content['withdrawn_submissions_author_anonymity'] = 'No, author identities of withdrawn submissions should not be revealed.'
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
+                'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
+                'email_pcs_for_withdrawn_submissions': 'No, do not email PCs.',
+                'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
+                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.'
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        withdraw_super_invitation = client.get_invitation(conference.get_invitation_id('Withdraw'))
+        assert 'REVEAL_AUTHORS_ON_WITHDRAW = False' in withdraw_super_invitation.process
+
     def test_setup_matching(self, conference, client, helpers):
 
         now = datetime.datetime.utcnow()
@@ -821,6 +1006,27 @@ class TestNeurIPSConference():
                 writer.writerow([submission.id, '~Area_UMassChair1', round(random.random(), 2)])
 
         conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
+        
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
+        assert len(conflicts) == 3
+
+        ## Paper 4 conflicts
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
+        assert len(conflicts) == 1
+        assert '~Area_GoogleChair1' == conflicts[0].tail ## reviewer and one author are from google
+
+        conference.set_matching_alternate_conflicts(committee_id=conference.get_area_chairs_id(), source_committee_id=conference.get_senior_area_chairs_id(), source_assignment_title='sac-matching', conflict_label='SAC Conflict')
+        
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
+        assert len(conflicts) == 13
+
+        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
+        assert len(conflicts) == 3
+        tails = [c.tail for c in conflicts]
+        assert '~Area_GoogleChair1' in tails ## reviewer and one author are from google
+        assert '~Area_IBMChair1' in tails ## assgined SAC is from google
+        assert '~Area_UMassChair1' in tails ## assigned SAC is from google
+
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -2427,7 +2633,7 @@ Thank you,
                 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -2521,3 +2727,77 @@ Thank you,
                 'NeurIPS.cc/2021/Conference/Paper4/Authors'
                 ]
         assert submission_note.content['keywords'] == ''
+
+    def test_submission_revision_deadline(self, conference, helpers, test_client, client, selenium, request_page):
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=-1)
+        first_date = now + datetime.timedelta(days=-1)
+
+        # expire submission deadlne
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100'
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+
+        # Post a submission revision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=1)
+        due_date = now + datetime.timedelta(days=3)
+        revision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Revision',
+                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_remove_options': ['keywords']
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+
+        # Update revision note and test revision invitation duedate is not updated
+        venue_revision_note.content['Location'] = 'Amherst, MA'
+        pc_client.post_note(revision_stage_note)
+
+        revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
+        assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))

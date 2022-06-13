@@ -71,7 +71,7 @@ class Client(object):
         self.user = None
         self.headers = {
             'User-Agent': self.user_agent,
-            'Accept': 'application/json'
+            'Accept': 'application/json',
         }
 
         if self.token:
@@ -222,7 +222,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_group(self, id):
+    def get_group(self, id, details=None):
         """
         Get a single Group by id if available
 
@@ -236,7 +236,7 @@ class Client(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.groups_url, params = {'id': id, 'details': details}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         return Group.from_json(g)
@@ -522,7 +522,7 @@ class Client(object):
             response = requests.put(self.baseurl + '/attachment', files=(
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
-                ('file', (file_path, f))
+                ('file', (file_path, f, tools.get_mimetype(file_path))),
             ), headers = headers)
 
         response = self.__handle_response(response)
@@ -625,7 +625,7 @@ class Client(object):
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return groups, response.json()['count']
 
         return groups
@@ -655,22 +655,24 @@ class Client(object):
 
         params = {
             'id': id,
-            'regex': id,
-            'member': id,
-            'signatory': id,
-            'web': id,
-            'limit': id,
-            'offset': id,
+            'regex': regex,
+            'member': member,
+            'signatory': signatory,
+            'web': web,
+            'limit': limit,
+            'offset': offset,
             'with_count': with_count
         }
         return tools.concurrent_get(self, self.get_groups, **params)
 
-    def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -708,6 +710,8 @@ class Client(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
         if invitee is not None:
             params['invitee'] = invitee
         if replytoNote is not None:
@@ -739,17 +743,19 @@ class Client(object):
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return invitations, response.json()['count']
 
         return invitations
     
-    def get_all_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -787,6 +793,7 @@ class Client(object):
         
         params = {
             'id': id,
+            'ids': ids,
             'invitee': invitee,
             'replytoNote': replytoNote,
             'replyForum': replyForum,
@@ -911,7 +918,7 @@ class Client(object):
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return notes, response.json()['count']
 
         return [Note.from_json(n) for n in response.json()['notes']]
@@ -1061,7 +1068,7 @@ class Client(object):
 
         references = [Note.from_json(n) for n in response.json()['references']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return references, response.json()['count']
 
         return references
@@ -1136,7 +1143,7 @@ class Client(object):
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return tags, response.json()['count']
 
         return tags
@@ -1168,7 +1175,7 @@ class Client(object):
 
         return tools.concurrent_get(self, self.get_tags, **params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1188,18 +1195,19 @@ class Client(object):
         params['limit'] = limit
         params['offset'] = offset
         params['sort'] = sort
+        params['trash'] = trash
 
         response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
 
-        if with_count:
+        if with_count and params.get('offset') is None:
             return edges, response.json()['count']
 
         return edges
 
-    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False):
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1218,7 +1226,8 @@ class Client(object):
             'limit': limit,
             'offset': offset,
             'sort': sort,
-            'with_count': with_count
+            'with_count': with_count,
+            'trash': trash
         }
 
         return tools.concurrent_get(self, self.get_edges, **params)
@@ -1785,7 +1794,7 @@ class Client(object):
     def get_expertise_status(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/status', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1793,7 +1802,7 @@ class Client(object):
     def get_expertise_results(self, job_id, baseurl=None):
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.get(base_url + '/expertise/results', params = {'job_id': job_id}, headers = self.headers)
+        response = requests.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1831,7 +1840,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -1857,6 +1866,7 @@ class Group(object):
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
+        self.host = host
         self.details = details
 
     def __repr__(self):
@@ -1890,6 +1900,7 @@ class Group(object):
             'anonids': self.anonids,
             'deanonymizers': self.deanonymizers,
             'web': self.web,
+            'host': self.host,
             'details': self.details
         }
 
@@ -1921,6 +1932,7 @@ class Group(object):
             anonids=g.get('anonids'),
             deanonymizers=g.get('deanonymizers'),
             impersonators=g.get('impersonators'),
+            host=g.get('host'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']

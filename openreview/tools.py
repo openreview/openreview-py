@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import os
+import string
 
 from deprecated.sphinx import deprecated
 import sys
@@ -20,6 +21,24 @@ import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
+def decision_to_venue(venue_id, decision_option):
+    """
+    Returns the venue for a submission based on its decision
+
+    :param venue_id: venue's short name (i.e., ICLR 2022)
+    :type venue_id: string
+    :param decision_option: paper decision (i.e., Accept, Reject)
+    :type decision_option: string
+    """
+    venue = venue_id
+    if 'Accept' in decision_option:
+        decision = decision_option.replace('Accept', '')
+        decision = re.sub(r'[()\W]+', '', decision)
+        if decision:
+            venue += ' ' + decision.strip()
+    else:
+        venue = f'Submitted to {venue}'
+    return venue
 
 def run_once(f):
     """
@@ -52,7 +71,7 @@ def format_params(params):
 
     return params
 
-def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1)):
+def concurrent_requests(request_func, params, desc='Gathering Responses'):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -66,8 +85,9 @@ def concurrent_requests(request_func, params, max_workers=min(6, cpu_count() - 1
     :return: A list of results given for each func value execution
     :rtype: list
     """
+    max_workers = min(6, cpu_count() - 1)
     futures = []
-    gathering_responses = tqdm(total=len(params), desc='Gathering Responses')
+    gathering_responses = tqdm(total=len(params), desc=desc)
     results = []
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -119,7 +139,8 @@ def get_profile(client, value, with_publications=False):
             raise e
     return profile
 
-def get_profiles(client, ids_or_emails, with_publications=False):
+
+def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
     '''
     Helper function that repeatedly queries for profiles, given IDs and emails.
     Useful for getting more Profiles than the server will return by default (1000)
@@ -134,6 +155,7 @@ def get_profiles(client, ids_or_emails, with_publications=False):
 
     profiles = []
     profile_by_email = {}
+    profiles_as_dict = {}
 
     batch_size = 100
     for i in range(0, len(ids), batch_size):
@@ -141,10 +163,28 @@ def get_profiles(client, ids_or_emails, with_publications=False):
         batch_profiles = client.search_profiles(ids=batch_ids)
         profiles.extend(batch_profiles)
 
+    if as_dict:
+        profiles_by_name = {}
+        for profile in profiles:
+            for name in profile.content.get("names", []):
+                profiles_by_name[name.get("username")] = profile
+
+        for id in ids:
+            profiles_as_dict[id] = profiles_by_name.get(id)
+
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
         batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
         profile_by_email.update(batch_profile_by_email)
+
+    if as_dict:
+        _profiles_by_email = {}
+        for profile in profile_by_email.values():
+            for email in profile.content.get('emailsConfirmed', []):
+                _profiles_by_email[email] = profile
+
+        for email in emails:
+            profiles_as_dict[email] = _profiles_by_email.get(email)
 
     for email in emails:
         profiles.append(profile_by_email.get(email, openreview.Profile(
@@ -156,7 +196,9 @@ def get_profiles(client, ids_or_emails, with_publications=False):
                 'names': []
             })))
 
-    if with_publications:
+    if as_dict and with_publications:
+        print("Getting profiles as dictionary is not supported with publications right now. Returning profiles without plublications.")
+    elif with_publications:
         baseurl_v1 = 'http://localhost:3000'
         baseurl_v2 = 'http://localhost:3001'
 
@@ -181,7 +223,10 @@ def get_profiles(client, ids_or_emails, with_publications=False):
             else:
                 profiles[idx].content['publications'] = publications
 
+    if as_dict:
+        return profiles_as_dict
     return profiles
+
 
 def get_group(client, id):
     """
@@ -741,6 +786,7 @@ def get_paperhash(first_author, title):
     first_author = re.sub(strip_punctuation, '', first_author)
     return (first_author + '|' + title).lower()
 
+
 def replace_members_with_ids(client, group):
     """
     Given a Group object, iterates through the Group's members and, for any member represented by an email address, attempts to find a profile associated with that email address. If a profile is found, replaces the email with the profile id.
@@ -753,37 +799,26 @@ def replace_members_with_ids(client, group):
     :return: Group with the emails replaced by Profile ids
     :rtype: Group
     """
-    ids = []
-    emails = []
+    updated_members = []
+    without_profile_ids = []
 
-    def classify_members(member):
-        if '@' in member:
-            try:
-                profile = client.get_profile(member.lower())
-                return 'ids', profile.id
-            except openreview.OpenReviewException as e:
-                if 'Profile Not Found' in e.args[0]:
-                    return 'emails', member.lower()
-                else:
-                    raise e
-        elif '~' in member:
-            profile = client.get_profile(member)
-            return 'ids', profile.id
+    member_profiles = get_profiles(client, group.members, as_dict=True)
+
+    for member in group.members:
+        profile = member_profiles.get(member)
+        if profile is not None:
+            updated_members.append(profile.id)
+        elif member.startswith('~'):
+            without_profile_ids.append(member)
         else:
-            _group = client.get_group(member)
-            return 'ids', _group.id
+            updated_members.append(member)
 
-    results = concurrent_requests(classify_members, group.members)
-
-    for key, member in results:
-        if key == 'ids':
-            ids.append(member)
-        elif key == 'emails':
-            emails.append(member)
-
-    group.members = ids + emails
+    if without_profile_ids:
+        raise openreview.OpenReviewException(f"Profile Not Found for {without_profile_ids}")
+    group.members = updated_members
 
     return client.post_group(group)
+
 
 def concurrent_get(client, get_function, **params):
     """
@@ -800,28 +835,46 @@ def concurrent_get(client, get_function, **params):
     """
     max_workers = min(cpu_count() - 1, 6)
 
-    params.update({
-        'offset': params.get('offset') or 0,
-        'with_count': True
-    })
-
-    docs, count = get_function(**params)
-    if params.get('limit') or float('inf') <= client.limit:
+    if (params.get('limit') or float('inf')) <= client.limit:
+        docs = get_function(**params)
         return docs
-
-    if count <= client.limit:
-        return docs
+    else:
+        get_count_params = params.copy()
+        if get_count_params.get('offset') is not None:
+            get_count_params.pop('offset')
+        get_count_params['with_count'] = True
+        get_count_params['limit'] = 1
+        _, count = get_function(**get_count_params)
 
     params['with_count'] = False
 
-    offset_list = list(range(client.limit, min(params.get('limit') or count, count), client.limit))
+    limit = params.get('limit')
+    if (limit or client.limit) > client.limit:
+        params.pop('limit')
+    docs = get_function(**params)
+
+    offset = params.get('offset') or 0
+
+    if (count - offset) <= client.limit:
+        return docs
+
+    start = offset + client.limit
+
+    if limit is None:
+        end = count
+    else:
+        end = min(offset + limit, count)
+
+    offset_list = list(range(start, end, client.limit))
 
     futures = []
     gathering_responses = tqdm(total=len(offset_list), desc='Gathering Responses')
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for offset in offset_list:
+        for count, offset in enumerate(offset_list):
             params['offset'] = offset
+            if (count + 1) == len(offset_list) and (end - offset) > 0:
+                params['limit'] = end - offset
             futures.append(executor.submit(get_function, **params))
 
         for future in futures:
@@ -953,7 +1006,8 @@ def iterget_edges (client,
                    head = None,
                    tail = None,
                    label = None,
-                   limit = None):
+                   limit = None, 
+                   trash = None):
     params = {}
     if invitation is not None:
         params['invitation'] = invitation
@@ -965,6 +1019,8 @@ def iterget_edges (client,
         params['label'] = label
     if limit is not None:
         params['limit'] = limit
+    if trash == True:
+        params['trash']=True
     return iterget(client.get_edges, **params)
 
 def iterget_grouped_edges(
@@ -1104,7 +1160,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
-def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
+def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
 
@@ -1112,6 +1168,8 @@ def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, mi
     :type client: Client
     :param id: an Invitation ID. If provided, returns invitations whose "id" value is this Invitation ID.
     :type id: str, optional
+    :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+    :type ids: str, optional
     :param invitee: Essentially, invitees field in an Invitation object contains Group Ids being invited using the invitation. If provided, returns invitations whose "invitee" field contains the given string.
     :type invitee: str, optional
     :param regex: a regular expression string to match Invitation IDs. If provided, returns invitations whose "id" value matches the given regex.
@@ -1146,6 +1204,8 @@ def iterget_invitations(client, id=None, invitee=None, regex=None, tags=None, mi
     params = {}
     if id is not None:
         params['id'] = id
+    if ids is not None:
+        params['ids'] = ids
     if invitee is not None:
         params['invitee'] = invitee
     if regex is not None:
@@ -1637,12 +1697,12 @@ def recruit_reviewer(client, user, first,
     )
 
     # format the message defined above
-    personalized_message = recruit_message.format(
-        name = first,
-        accept_url = url + "Yes",
-        decline_url = url + "No",
-        contact_info = contact_info
-    )
+    personalized_message = recruit_message.replace("{{fullname}}", first) if first else recruit_message
+    personalized_message = personalized_message.replace("{{accept_url}}", url+"Yes")
+    personalized_message = personalized_message.replace("{{decline_url}}", url+"No")
+    personalized_message = personalized_message.replace("{{contact_info}}", contact_info)
+
+    personalized_message.format()
 
     client.add_members_to_group(reviewers_invited_id, [user])
 
@@ -1907,15 +1967,21 @@ def get_neurips_profile_info(profile, n_years=3):
     curr_year = datetime.datetime.now().year
     cut_off_year = curr_year - n_years - 1
 
-    ## Institution section, get history within the last n years
+    ## Institution section, get history within the last n years, excluding internships
     for h in profile.content.get('history', []):
-        if h.get('end') is None or int(h.get('end')) > cut_off_year:
-            domain = h.get('institution', {}).get('domain', '')
-            domains.update(openreview.tools.subdomains(domain))
+        position = h.get('position')
+        if not position or (isinstance(position, str) and 'intern' not in position.lower()):
+            try:
+                end = int(h.get('end', 0) or 0)
+            except:
+                end = 0
+            if not end or (int(end) > cut_off_year):
+                domain = h.get('institution', {}).get('domain', '')
+                domains.update(openreview.tools.subdomains(domain))
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
     for r in profile.content.get('relations', []):
-        if r.get('relation', '') in ['Coauthor','Coworker']:
+        if (r.get('relation', '') or '') in ['Coauthor','Coworker']:
             if r.get('end') is None or int(r.get('end')) > cut_off_year:
                 relations.add(r['email'])
         else:
@@ -1960,7 +2026,6 @@ def get_neurips_profile_info(profile, n_years=3):
         'relations': relations,
         'publications': publications
     }
-
 
 
 def post_bulk_edges (client, edges, batch_size = 50000):
@@ -2030,3 +2095,18 @@ def export_committee(client, committee_id, file_name):
         csvwriter = csv.writer(outfile, delimiter=',')
         for profile in tqdm(profiles):
             s = csvwriter.writerow([profile.get_preferred_email(), profile.get_preferred_name(pretty=True)])
+
+
+@run_once
+def load_mimetypes():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(dir_path, 'mimetypes.json')) as f:
+        mimetypes = json.load(f)
+
+    f.close()
+    return mimetypes
+
+def get_mimetype(file_path):
+    mimetypes = load_mimetypes()
+    extension = os.path.splitext(file_path)[1][1:]
+    return mimetypes.get(extension) or 'text/plain'

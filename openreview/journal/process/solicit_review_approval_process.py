@@ -17,7 +17,8 @@ def process(client, edit, invitation):
         journal.assign_reviewer(submission, solicit_request.signatures[0], solicit=True)
 
         print('Send email to solicit reviewer')
-        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
+        review_period_length = journal.get_review_period_length(submission)
+        duedate = journal.get_due_date(weeks = review_period_length)
 
         client.post_message(
             recipients=solicit_request.signatures,
@@ -26,7 +27,7 @@ def process(client, edit, invitation):
 
 This is to inform you that your request to act as a reviewer for {journal.short_name} submission {submission.content['title']['value']} has been accepted by the Action Editor (AE).
 
-You are required to submit your review within 2 weeks ({duedate.strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
+You are required to submit your review within {review_period_length} weeks ({duedate.strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
 
 To submit your review, please follow this link: https://openreview.net/forum?id={submission.id}&invitationId={journal.get_review_id(number=submission.number)} or check your tasks in the Reviewers Console: https://openreview.net/group?id={journal.venue_id}/Reviewers
 
@@ -45,7 +46,7 @@ The {journal.short_name} Editors-in-Chief
     if note.content['decision']['value'] == 'No, I decline the solicit review.':
 
         solicit_request = client.get_note(note.replyto)
-        client.add_members_to_group(journal.get_solicit_reviewers_id(number=note.number, declined=True), solicit_request.signatures)
+        client.add_members_to_group(journal.get_solicit_reviewers_id(number=submission.number, declined=True), solicit_request.signatures)
         client.post_message(
             recipients=solicit_request.signatures,
             subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.content['title']['value']}" was not accepted''',

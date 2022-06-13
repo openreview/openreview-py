@@ -7,12 +7,21 @@ def process(client, edit, invitation):
     editors = forum.content['editors']['value']
 
     if edit.note.content['title']['value'] == 'New Recruitment Response':
+        #if response did not change, return
+        references = client.get_note_edits(note_id=edit.note.id)
+        if len(references) > 1 :
+            previous_reference = references[1]
+            if edit.note.content['comment']['value'] == previous_reference.note.content['comment']['value']:
+                return
+
+
         subject = f'A new recruitment response has been posted to your journal request: {full_name}'
         message = f'''Comment: {edit.note.content['comment']['value']}
         
 To view the comment, click here: https://openreview.net/forum?id={edit.note.forum}&noteId={edit.note.id}'''
 
-        client.post_message(subject, edit.note.readers, message)
+        recruitment_note = client.get_note(edit.note.replyto)
+        client.post_message(subject, recruitment_note.signatures, message)
 
     else:
         subject_eic = f'Comment posted to your journal request: {full_name}'

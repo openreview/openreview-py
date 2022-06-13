@@ -32,10 +32,12 @@ jobs:
       - run: mkdir ~/openreview/files
       - run: mkdir ~/openreview/files/attachments
       - run: mkdir ~/openreview/files/pdfs
+      - run: mkdir ~/openreview/files/temp
       - run: mkdir ~/openreview-v2/logs
       - run: mkdir ~/openreview-v2/files
       - run: mkdir ~/openreview-v2/files/attachments
       - run: mkdir ~/openreview-v2/files/pdfs
+      - run: mkdir ~/openreview-v2/files/temp
       - run: mkdir ~/openreview-py-repo/coverage
       - run:
           name: install api

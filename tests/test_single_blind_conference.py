@@ -11,7 +11,7 @@ class TestSingleBlindConference():
 
     def test_create_single_blind_conference(self, client, selenium, request_page) :
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -87,7 +87,7 @@ class TestSingleBlindConference():
     def test_enable_submissions(self, client, selenium, request_page):
 
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -143,7 +143,7 @@ class TestSingleBlindConference():
 
     def test_post_submissions(self, client, test_client, peter_client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -290,7 +290,7 @@ class TestSingleBlindConference():
 
     def test_close_submission(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -315,7 +315,7 @@ class TestSingleBlindConference():
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -335,7 +335,7 @@ class TestSingleBlindConference():
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -375,7 +375,7 @@ class TestSingleBlindConference():
         assert group
         assert group.members == ['~Reviewer_SomeLastName1']
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
@@ -385,7 +385,7 @@ class TestSingleBlindConference():
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -397,11 +397,12 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['pc2@mail.com'])
         conference.set_area_chairs(emails = ['ac2@mail.com'])
         conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
+        conference.create_review_stage()
 
         conference.set_assignment('ac2@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
@@ -502,14 +503,14 @@ class TestSingleBlindConference():
     def test_consoles(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -521,8 +522,9 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        }, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
+        conference.create_review_stage()
 
         # Author user
         request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token, wait_for_element='your-consoles')
@@ -657,7 +659,7 @@ class TestSingleBlindConference():
 
     def test_post_decisions(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -709,7 +711,7 @@ url={https://openreview.net/forum?id='''
 
     def test_enable_camera_ready_revisions(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
