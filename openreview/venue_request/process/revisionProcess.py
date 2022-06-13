@@ -87,8 +87,43 @@ def process(client, note, invitation):
                 if remind_recruitment_invitation:
                     remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
                     client.post_invitation(remind_recruitment_invitation)
-
-
+            now = datetime.datetime.utcnow()
+            if (
+                    conference.submission_stage.second_due_date and conference.submission_stage.second_due_date < now) or (
+                    conference.submission_stage.due_date and conference.submission_stage.due_date < now):
+                revision_notes = client.get_references(
+                    referent=forum_note.id,
+                    invitation='{support_group}/-/Request{number}/Revision'.format(
+                        support_group=SUPPORT_GROUP, number=forum_note.number),
+                    limit=2
+                )
+                update_withdraw = False
+                update_desk_reject = False
+                if len(revision_notes) < 2:
+                    update_withdraw = True
+                    update_desk_reject = True
+                else:
+                    for key in ['withdrawn_submissions_author_anonymity', 'withdrawn_submissions_visibility', 'email_pcs_for_withdrawn_submissions']:
+                        if revision_notes[0].content.get(key) != revision_notes[-1].content.get(key):
+                            update_withdraw = True
+                            break
+                    for key in ['desk_rejected_submissions_visibility', 'desk_rejected_submissions_author_anonymity']:
+                        if revision_notes[0].content.get(key) != revision_notes[-1].content.get(key):
+                            update_desk_reject = True
+                            break
+                if update_withdraw:
+                    conference.create_withdraw_invitations(
+                        reveal_authors=conference.submission_stage.withdrawn_submission_reveal_authors,
+                        reveal_submission=conference.submission_stage.withdrawn_submission_public,
+                        email_pcs=conference.submission_stage.email_pcs_on_withdraw,
+                        hide_fields=forum_note.content.get('hide_fields', [])
+                    )
+                if update_desk_reject:
+                    conference.create_desk_reject_invitations(
+                        reveal_authors=conference.submission_stage.desk_rejected_submission_reveal_authors,
+                        reveal_submission=conference.submission_stage.desk_rejected_submission_public,
+                        hide_fields=forum_note.content.get('hide_fields', [])
+                    )
         elif invitation_type == 'Bid_Stage':
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
             if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
