@@ -1625,7 +1625,7 @@ class TestDoubleBlindConference():
             forum = notes[0].forum,
             replyto = notes[0].forum,
             readers = ['everyone'],
-            writers = [conference.id + '/Paper{number}/Authors'.format(number = notes[0].number), conference.id],
+            writers = [conference.id, conference.get_program_chairs_id()],
             signatures = [conference.id + '/Paper{number}/Authors'.format(number = notes[0].number)],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -1666,7 +1666,20 @@ class TestDoubleBlindConference():
         assert 'AKBC.ws/2019/Conference/Paper3/Authors' not in author_group.members
 
         posted_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
-        test_client.post_note(posted_note)
+
+        with pytest.raises(openreview.OpenReviewException) as ex:
+            test_client.post_note(posted_note)
+        assert ex.value.args[0].get('name') == 'ForbiddenError'
+
+        # Undo withdraw using pc client
+        pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc@mail.com', password='1234')
+
+        withdraw_note = pc_client.get_note(posted_note.id)
+        withdraw_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        withdraw_note.signatures = [conference.get_program_chairs_id()]
+        withdraw_note.writers = [conference.id, conference.get_program_chairs_id()]
+        print(withdraw_note)
+        withdraw_note = pc_client.post_note(withdraw_note)
 
         helpers.await_queue()
 
@@ -1674,12 +1687,9 @@ class TestDoubleBlindConference():
         assert submission_note.invitation == 'AKBC.ws/2019/Conference/-/Blind_Submission'
         assert submission_note.readers == ['everyone']
 
-        author_group = client.get_group('AKBC.ws/2019/Conference/Authors')
-        assert 'AKBC.ws/2019/Conference/Paper2/Authors' in author_group.members
-
         # Withdraw again
-        posted_note.ddate = None
-        test_client.post_note(posted_note)
+        withdraw_note.ddate = None
+        pc_client.post_note(withdraw_note)
 
         helpers.await_queue()
         submission_note = client.get_note(withdrawal_note.forum)
@@ -2025,7 +2035,7 @@ url={'''
         conference.post_decision_stage(decision_heading_map={'Accept (Poster)': 'Accepted poster papers',
                                                              'Accept (Oral)': 'Accepted oral papers',
                                                              'Reject': 'Reject'})
-        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", wait_for_element='reject')
+        request_page(selenium, "http://localhost:3030/group?id=AKBC.ws/2019/Conference", by=By.ID, wait_for_element='header')
         assert "AKBC 2019 Conference | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header

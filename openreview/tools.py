@@ -1006,7 +1006,8 @@ def iterget_edges (client,
                    head = None,
                    tail = None,
                    label = None,
-                   limit = None):
+                   limit = None, 
+                   trash = None):
     params = {}
     if invitation is not None:
         params['invitation'] = invitation
@@ -1018,6 +1019,8 @@ def iterget_edges (client,
         params['label'] = label
     if limit is not None:
         params['limit'] = limit
+    if trash == True:
+        params['trash']=True
     return iterget(client.get_edges, **params)
 
 def iterget_grouped_edges(
@@ -2093,18 +2096,3 @@ def export_committee(client, committee_id, file_name):
         csvwriter = csv.writer(outfile, delimiter=',')
         for profile in tqdm(profiles):
             s = csvwriter.writerow([profile.get_preferred_email(), profile.get_preferred_name(pretty=True)])
-
-
-@run_once
-def load_mimetypes():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(dir_path, 'mimetypes.json')) as f:
-        mimetypes = json.load(f)
-
-    f.close()
-    return mimetypes
-
-def get_mimetype(file_path):
-    mimetypes = load_mimetypes()
-    extension = os.path.splitext(file_path)[1][1:]
-    return mimetypes.get(extension) or 'text/plain'

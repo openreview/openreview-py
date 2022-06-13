@@ -608,7 +608,7 @@ Naila, Katja, Alice, and Ivan
                 'ICLR.cc/2021/Conference/Paper1/Reviewers',
                 'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
                 'ICLR.cc/2021/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper1/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['ICLR.cc/2021/Conference/Paper1/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -647,7 +647,7 @@ Naila, Katja, Alice, and Ivan
             replyto = submissions[3].forum,
             readers = [
                 'everyone'],
-            writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper2/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['ICLR.cc/2021/Conference/Paper2/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',

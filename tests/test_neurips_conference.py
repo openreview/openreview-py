@@ -948,6 +948,90 @@ You have selected a reduced load of 4 submissions to review.</p>
 
             }))
 
+    def test_update_withdraw_desk_reject_invitations(self, conference, client, helpers):
+        pc_client = openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=-1)
+        first_date = now + datetime.timedelta(days=-2)
+
+        # expire submission deadlne
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
+                'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
+                'email_pcs_for_withdrawn_submissions': 'No, do not email PCs.',
+                'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
+                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.'
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        withdraw_super_invitation = client.get_invitation(conference.get_invitation_id('Withdraw'))
+        assert 'REVEAL_AUTHORS_ON_WITHDRAW = True' in withdraw_super_invitation.process
+        assert 'REVEAL_SUBMISSIONS_ON_WITHDRAW = False' in withdraw_super_invitation.process
+
+        # update withdraw submissions author anonymity
+        venue_revision_note.content['withdrawn_submissions_author_anonymity'] = 'No, author identities of withdrawn submissions should not be revealed.'
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Conference on Neural Information Processing Systems',
+                'Official Venue Name': 'Conference on Neural Information Processing Systems',
+                'Abbreviated Venue Name': 'NeurIPS 2021',
+                'Official Website URL': 'https://neurips.cc',
+                'program_chair_emails': ['pc@neurips.cc'],
+                'contact_email': 'pc@neurips.cc',
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'Venue Start Date': '2021/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
+                'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
+                'email_pcs_for_withdrawn_submissions': 'No, do not email PCs.',
+                'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
+                'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.'
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('NeurIPS.cc/2021/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_NeurIPSChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        withdraw_super_invitation = client.get_invitation(conference.get_invitation_id('Withdraw'))
+        assert 'REVEAL_AUTHORS_ON_WITHDRAW = False' in withdraw_super_invitation.process
+
     def test_setup_matching(self, conference, client, helpers):
 
         now = datetime.datetime.utcnow()
@@ -2586,7 +2670,7 @@ Thank you,
                 'NeurIPS.cc/2021/Conference/Paper5/Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs',
                 'NeurIPS.cc/2021/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'NeurIPS.cc/2021/Conference/Paper5/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['NeurIPS.cc/2021/Conference/Paper5/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
