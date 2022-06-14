@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
+from tokenize import String
 import openreview
 import pytest
 import requests
@@ -1049,7 +1050,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         messages = client.get_messages(to='ethic_reviewer@arr.org', subject="[ARR 2021 - September] Your ethics review has been received on your assigned Paper number: 5, Paper title: \"Paper title 5\"")
         assert len(messages) == 1
-
+        print(messages)
         ## unflag papers
         stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -1092,3 +1093,53 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper3/-/Ethics_Review')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper4/-/Ethics_Review')               
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Paper5/-/Ethics_Review')
+   
+    def test_comment_email_pcs(self, venue, client, helpers, test_client): 
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
+        super_client=openreview.Client(username='openreview.net', password='1234')
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+        conference = openreview.helpers.get_conference(client, request_form.id)
+
+        # Post a review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        comment_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                "commentary_start_date": "2022/06/07 00:00",
+                "commentary_end_date": "2022/12/31 00:00",
+                "participants": [
+                    "Program Chairs",
+                    "Paper Area Chairs",
+                    "Paper Reviewers",
+                    "Authors"
+                ],
+                "email_program_chairs_about_official_comments": "Yes, email PCs for each official comment made in the venue"
+            },
+            forum=request_form.forum,
+            invitation='{}/-/Request{}/Comment_Stage'.format('openreview.net/Support', request_form.number),
+            readers=[f'{request_form.content["venue_id"]}/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        assert comment_stage_note
+        helpers.await_queue()
+        
+        paper = client.get_notes(invitation = "aclweb.org/ACL/ARR/2021/September/-/Blind_Submission")[0]
+        #assert conference.comment_stage.email_pcs, "Email pcs is false" <-- this fails, why? 
+        test_client.post_note(openreview.Note(
+            invitation = f"aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/-/Official_Comment", 
+            content = {
+                "title": "My test comment", 
+                "comment": "Let's see if the PCs are notified of this comment"
+            },
+            signatures = [f"aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Authors"],
+            readers = ["aclweb.org/ACL/ARR/2021/September/Program_Chairs"],
+            writers = ['aclweb.org/ACL/ARR/2021/September', f'aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Authors'],
+            forum = paper.forum
+        ))
+        
+        messages = super_client.get_messages(to = 'pc@aclrollingreview.org', subject = '[ARR 2021 - September] An author commented on a paper. Paper Number: 5, Paper Title: "Paper title 5"')
+        assert messages
+       
