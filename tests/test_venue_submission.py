@@ -94,7 +94,6 @@ class TestVenueSubmission():
                                     'hidden': True
                                 }
                             },
-                            # 'readers': [ conference_id, '${5/signatures}', conference_id + '/Paper${4/number}/Authors' ]
                             'readers': [conference_id, conference_id + '/Paper${4/number}/Action_Editors', conference_id + '/Paper${4/number}/Authors']
                         },
                         'authorids': {
@@ -106,7 +105,6 @@ class TestVenueSubmission():
                                     'regex': '~.*'
                                 }
                             },
-                            # 'readers': [ conference_id, '${5/signatures}', conference_id + '/Paper${4/number}/Authors' ]
                             'readers': [conference_id, conference_id + '/Paper${4/number}/Action_Editors', conference_id + '/Paper${4/number}/Authors']
                         },
                         'abstract': {
