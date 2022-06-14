@@ -789,7 +789,7 @@ class Conference(object):
         return readers
 
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False,
-                                    hide_fields=None, force=False):
+                                    hide_fields=[], force=False):
         if not force and reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
 
@@ -1739,6 +1739,9 @@ Program Chairs
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
+        # expire recruitment invitations
+        self.expire_recruitment_invitations()
+
     def send_decision_notifications(self, decision_options, messages):
         decision_notes = self.client.get_all_notes(
             invitation=self.get_invitation_id(self.decision_stage.name, '.*'),
@@ -1859,6 +1862,11 @@ Program Chairs
         )
 
         self.client.post_note(status_note)
+
+    def expire_recruitment_invitations(self):
+        recruitment_invitations = self.client.get_invitations(regex=self.get_invitation_id('Recruit_*'))
+        recruitment_invitation_ids = [inv.id for inv in recruitment_invitations]
+        tools.concurrent_requests(self.expire_invitation, recruitment_invitation_ids)
 
 
 class SubmissionStage(object):
@@ -2822,16 +2830,18 @@ class ConferenceBuilder(object):
         for i, g in enumerate(groups[:-1]):
             self.webfield_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        host = self.client.get_group(id = 'host')
+        host = self.client.get_group(id = 'host', details='writable')
         root_id = groups[0].id
         home_group = groups[-1]
         if root_id == root_id.lower():
             root_id = groups[1].id
-        writable = host.details.get('writable') if host.details else True
-        if writable:
+        if host.details.get('writable'):
             self.client.add_members_to_group(host, root_id)
             home_group.host = root_id
             self.client.post_group(home_group)
+
+        venues = self.client.get_group(id = 'venues', details='writable')
+        if venues.details.get('writable'):
             self.client.add_members_to_group('venues', home_group.id)
 
         if self.submission_stage:

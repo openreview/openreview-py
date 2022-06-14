@@ -151,7 +151,7 @@ class TestESWCConference():
                 'eswc-conferences.org/ESWC/2021/Conference/Paper1/Reviewers',
                 'eswc-conferences.org/ESWC/2021/Conference/Paper1/Area_Chairs',
                 'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -181,7 +181,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         # Undo Withdraw
         ## Undo desk rejection
         withdrawn_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
-        test_client.post_note(withdrawn_note)
+        client.post_note(withdrawn_note)
 
         helpers.await_queue()
 
@@ -196,9 +196,23 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert len(conference.get_submissions()) == 5
 
         # Withdraw the paper again
-        withdrawn_note.ddate = None
-        test_client.post_note(withdrawn_note)
-
+        withdrawn_note = test_client.post_note(
+            openreview.Note(invitation='eswc-conferences.org/ESWC/2021/Conference/Paper1/-/Withdraw',
+                            forum=notes[0].forum,
+                            replyto=notes[0].forum,
+                            readers=[
+                                'eswc-conferences.org/ESWC/2021/Conference',
+                                'eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors',
+                                'eswc-conferences.org/ESWC/2021/Conference/Paper1/Reviewers',
+                                'eswc-conferences.org/ESWC/2021/Conference/Paper1/Area_Chairs',
+                                'eswc-conferences.org/ESWC/2021/Conference/Program_Chairs'],
+                            writers=[conference.get_id(), conference.get_program_chairs_id()],
+                            signatures=['eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors'],
+                            content={
+                                'title': 'Submission Withdrawn by the Authors',
+                                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                            }
+                            ))
         helpers.await_queue()
 
         # Add a revision
@@ -331,7 +345,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
             replyto = submissions[0].forum,
             readers = [
                 'everyone'],
-            writers = [conference.get_id(), 'eswc-conferences.org/ESWC/2021/Conference/Paper5/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['eswc-conferences.org/ESWC/2021/Conference/Paper5/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
