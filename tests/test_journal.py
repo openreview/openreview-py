@@ -82,7 +82,7 @@ class TestJournal():
             assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research' == messages[0].text
 
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Action_Editors/-/Recruitment')
 
         group = openreview_client.get_group('TMLR/Action_Editors')
         assert len(group.members) == 9
@@ -112,7 +112,7 @@ class TestJournal():
             assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research' == messages[0].text
 
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Reviewers/-/Recruitment')
 
         group = openreview_client.get_group('TMLR/Reviewers')
         assert len(group.members) == 6

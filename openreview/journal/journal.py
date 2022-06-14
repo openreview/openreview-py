@@ -55,6 +55,7 @@ class Journal(object):
         }
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
+        self.unavailable_reminder_period = 4 # weeks
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -190,6 +191,9 @@ class Journal(object):
         if signature:
             return self.__get_invitation_id(name=f'{signature}/Responsibility/Acknowledgement', prefix=self.get_reviewers_id())
         return self.__get_invitation_id(name='Responsibility_Acknowledgement', prefix=self.get_reviewers_id())
+
+    def get_reviewer_report_id(self):
+        return self.__get_invitation_id(name='Reviewer_Report', prefix=self.get_reviewers_id())
 
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())

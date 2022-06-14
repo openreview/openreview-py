@@ -36,6 +36,7 @@ class InvitationBuilder(object):
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
         self.set_reviewer_responsibility_invitation()
+        self.set_reviewer_report_invitation()
         self.set_submission_invitation()
         self.set_review_approval_invitation()
         self.set_under_review_invitation()
@@ -510,6 +511,71 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
+    def set_reviewer_report_invitation(self):
+
+        venue_id=self.journal.venue_id
+        action_editors_id = self.journal.get_action_editors_id()
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Reviewer Report'})
+        if len(forum_notes) > 0:
+            forum_note_id = forum_notes[0].id
+        else:
+            forum_edit = self.client.post_note_edit(invitation=self.journal.get_form_id(),
+                signatures=[venue_id],
+                note = openreview.api.Note(
+                    signatures = [editors_in_chief_id],
+                    content = {
+                        'title': { 'value': 'Reviewer Report'},
+                        'description': { 'value': '''Report reviewers TODO.
+
+- TODO
+
+If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
+'''}
+                    }
+                )
+            )
+            forum_note_id = forum_edit['note']['id']
+
+        invitation=Invitation(id=self.journal.get_reviewer_report_id(),
+            invitees=[venue_id, action_editors_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'regex': '~.*|' + editors_in_chief_id, 'type': 'group[]' },
+                'readers': { 'const': [venue_id, '${signatures}'] },
+                'note': {
+                    'forum': { 'const': forum_note_id },
+                    'replyto': { 'const': forum_note_id },
+                    'signatures': { 'const': ['${signatures}'] },
+                    'readers': { 'const': [venue_id, '${signatures}'] },
+                    'writers': { 'const': [venue_id, '${signatures}'] },
+                    'content': {
+                        'reviewer_id': { 
+                            'value': {
+                                'type': "string",
+                                'regex': '~.*'
+                            },
+                            'description': 'OpenReview profile id of the reviewer that you want to report.',
+                            'order': 1                            
+                        },
+                        'report_reason': {
+                            'value': {
+                                'type': "string",
+                                'regex': '^[\\S\\s]{1,5000}$'
+                            },
+                            'description': f'Describe the reason why you are reporting the reviewer.',
+                            'order': 2
+                        },                        
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)
+
+
 
     def set_submission_invitation(self):
 
@@ -976,7 +1042,13 @@ If you have questions after reviewing the points below that are not answered on 
                         'default': 'Available'
                     }
                 }
-            }
+            },
+            date_processes=[
+                {
+                    'cron': '* 0 * * *',
+                    'script': self.get_process_content('process/remind_ae_unavailable_process.py')
+                }
+            ]
         )
         self.save_invitation(invitation)         
 
@@ -1274,7 +1346,13 @@ If you have questions after reviewing the points below that are not answered on 
                         'default': 'Available'
                     }
                 }
-            }
+            },
+            date_processes=[
+                {
+                    'cron': '* 0 * * *',
+                    'script': self.get_process_content('process/remind_reviewer_unavailable_process.py')
+                }
+            ]
         )
         self.save_invitation(invitation)        
 
