@@ -1139,7 +1139,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
             writers = ['aclweb.org/ACL/ARR/2021/September', f'aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Authors'],
             forum = paper.forum
         ))
-        
+        helpers.await_queue()
         messages = super_client.get_messages(to = 'pc@aclrollingreview.org', subject = '[ARR 2021 - September] An author commented on a paper. Paper Number: 5, Paper Title: "Paper title 5"')
         assert messages
        
