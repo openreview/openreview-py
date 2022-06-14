@@ -68,6 +68,11 @@ class TestVenueSubmission():
                     # 'readers': [conference_id, '${3/signatures}', conference_id + '/Paper${2/number}/Authors'],
                     # 'writers': [conference_id, '${3/signatures}', conference_id + '/Paper${2/number}/Authors'],
                     'readers': [conference_id, conference_id + '/Paper${2/number}/Action_Editors', conference_id + '/Paper${2/number}/Authors'],
+                    # 'readers': {
+                    #     'param': {
+                    #         'enum': ['everyone', conference_id + '/Editors_In_Chief', conference_id + '/Paper${2/number}/Action_Editors', conference_id + '/Paper${2/number}/Authors']
+                    #     }
+                    # },
                     'writers': [conference_id, conference_id + '/Paper${2/number}/Action_Editors', conference_id + '/Paper${2/number}/Authors'],
                     'content': {
                         'title': {
@@ -184,6 +189,7 @@ class TestVenueSubmission():
             invitation=f'{conference_id}/-/Submission',
             signatures= ['~Celeste_Martinez1'],
             note=Note(
+                readers = [conference_id, 'TestVenue.cc/Paper1/Authors'],
                 content={
                     'title': { 'value': 'Paper 1 Title' },
                     'abstract': { 'value': 'Paper abstract' },
@@ -193,3 +199,64 @@ class TestVenueSubmission():
                     'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
                 }
             ))
+
+        editors_in_chief_id = f'{conference_id}/Editors_In_Chief'
+        action_editors_id = f'{conference_id}/Paper1/Action_Editors'
+        reviewers_id = f'{conference_id}/Paper1/Reviewers'
+        authors_id = f'{conference_id}/Paper1/Authors'
+
+        paper_group=openreview_client.post_group(Group(id=f'{conference_id}/Paper1',
+                readers=[conference_id],
+                writers=[conference_id],
+                signatures=[conference_id],
+                signatories=[conference_id]
+            ))
+
+        authors_group=openreview_client.post_group(Group(id=authors_id,
+            readers=[conference_id, authors_id],
+            writers=[conference_id],
+            signatures=[conference_id],
+            signatories=[conference_id, authors_id],
+            members=submission_note_1['note']['content']['authorids']['value'] ## always update authors
+        ))
+
+        action_editors_group=openreview_client.post_group(Group(id=action_editors_id,
+                readers=['everyone'],
+                nonreaders=[authors_id],
+                writers=[conference_id],
+                signatures=[conference_id],
+                signatories=[conference_id, action_editors_id],
+                members=[]
+            ))
+
+        reviewers_group=openreview_client.post_group(Group(id=reviewers_id,
+                readers=[conference_id, action_editors_id, reviewers_id],
+                deanonymizers=[conference_id, action_editors_id],
+                nonreaders=[authors_id],
+                writers=[conference_id, action_editors_id],
+                signatures=[conference_id],
+                signatories=[conference_id],
+                members=[],
+                anonids=True
+            ))
+
+        # comment_invitation_id=f'{conference_id}/Paper1/-/Official_Comment'
+        # comment_invitation = Invitation(id=comment_invitation_id,
+        #     invitees=[conference_id, action_editors_id, reviewers_id, authors_id],
+        #     readers=['everyone'],
+        #     writers=[conference_id],
+        #     signatures=[conference_id],
+        #     edit = {
+        #         'signatures': {'param': { 'regex': f'{editors_in_chief_id}|{action_editors_id}|{reviewers_id}.*|{authors_id}' }},
+        #         'readers': {},
+        #         'writers': {},
+        #         'note': {
+        #             'id': {
+        #                 'withInvitation': comment_invitation_id,
+        #                 'optional': True
+        #             },
+        #             'forum': {
+        #                 'param':
+        #             }
+        #         }
+        #     } )
