@@ -241,9 +241,9 @@ recruitment = {
     'comment': {
         'order': 6,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Add your comment',
+        'description': '(Optionally) Leave a comment to the organizers of the venue.',
         'required': False,
-        'markdown': True
+        'markdown': False
     }
 }
 
