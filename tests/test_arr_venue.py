@@ -1050,7 +1050,6 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
 
         messages = client.get_messages(to='ethic_reviewer@arr.org', subject="[ARR 2021 - September] Your ethics review has been received on your assigned Paper number: 5, Paper title: \"Paper title 5\"")
         assert len(messages) == 1
-        print(messages)
         ## unflag papers
         stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -1098,12 +1097,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
         super_client=openreview.Client(username='openreview.net', password='1234')
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
-        conference = openreview.helpers.get_conference(client, request_form.id)
-
         # Post a comment stage note
-        now = datetime.datetime.utcnow()
-        start_date = now - datetime.timedelta(days=2)
-        due_date = now + datetime.timedelta(days=3)
         comment_stage_note = pc_client.post_note(openreview.Note(
             content={
                 "commentary_start_date": "2022/06/07 00:00",
@@ -1125,9 +1119,7 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
         ))
         assert comment_stage_note
         helpers.await_queue()
-        
         paper = client.get_notes(invitation = "aclweb.org/ACL/ARR/2021/September/-/Blind_Submission")[0]
-        #assert conference.comment_stage.email_pcs, "Email pcs is false" <-- this fails, why? 
         test_client.post_note(openreview.Note(
             invitation = f"aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/-/Official_Comment", 
             content = {
