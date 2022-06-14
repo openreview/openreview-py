@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
-from tokenize import String
 import openreview
 import pytest
 import requests
@@ -1095,7 +1094,6 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
    
     def test_comment_email_pcs(self, venue, client, helpers, test_client): 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password='1234')
-        super_client=openreview.Client(username='openreview.net', password='1234')
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
         # Post a comment stage note
         comment_stage_note = pc_client.post_note(openreview.Note(
@@ -1132,6 +1130,6 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
             forum = paper.forum
         ))
         helpers.await_queue()
-        messages = super_client.get_messages(to = 'pc@aclrollingreview.org', subject = '[ARR 2021 - September] An author commented on a paper. Paper Number: 5, Paper Title: "Paper title 5"')
-        assert messages
-       
+        messages = client.get_messages(to = 'pc@aclrollingreview.org', subject = '[ARR 2021 - September] An author commented on a paper. Paper Number: 5, Paper Title: "Paper title 5"')
+        assert messages and len(messages) == 1
+        assert "My test comment" in messages[0]["content"]["text"]
