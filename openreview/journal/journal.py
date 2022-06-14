@@ -88,6 +88,16 @@ class Journal(object):
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
 
+    def get_action_editors_unavailable_id(self, reminded=False):
+        if reminded:
+            return self.get_action_editors_id() + '/Unavailable/Reminded'
+        return self.get_action_editors_id() + '/Unavailable'
+
+    def get_reviewers_unavailable_id(self, reminded=False):
+        if reminded:
+            return self.get_reviewers_id() + '/Unavailable/Reminded'
+        return self.get_reviewers_id() + '/Unavailable'
+
     def get_meta_invitation_id(self):
         return self.__get_invitation_id(name='Edit')
 

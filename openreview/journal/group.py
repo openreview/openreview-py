@@ -148,6 +148,28 @@ class GroupBuilder(object):
                             signatories=[],
                             members=[]))
 
+        ## action editors unavailable group
+        action_editors_unavailable_id = journal.get_action_editors_unavailable_id()
+        action_editors_unavailable_group = openreview.tools.get_group(self.client, action_editors_unavailable_id)
+        if not action_editors_unavailable_group:
+            self.client.post_group(Group(id=action_editors_unavailable_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))
+
+        action_editors_unavailable_reminded_id = journal.get_action_editors_unavailable_id(reminded=True)
+        action_editors_unavailable_reminded_group = openreview.tools.get_group(self.client, action_editors_unavailable_reminded_id)
+        if not action_editors_unavailable_reminded_group:
+            self.client.post_group(Group(id=action_editors_unavailable_reminded_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))                            
+
+
         ## reviewers group
         reviewers_id = journal.get_reviewers_id()
         reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
@@ -191,6 +213,27 @@ class GroupBuilder(object):
                             signatures=[venue_id],
                             signatories=[],
                             members=[]))
+
+        ## reviewers unavailable group
+        reviewers_unavailable_id = journal.get_reviewers_unavailable_id()
+        reviewers_unavailable_group = openreview.tools.get_group(self.client, reviewers_unavailable_id)
+        if not reviewers_unavailable_group:
+            self.client.post_group(Group(id=reviewers_unavailable_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))
+
+        reviewers_unavailable_reminded_id = journal.get_reviewers_unavailable_id(reminded=True)
+        reviewers_unavailable_reminded_group = openreview.tools.get_group(self.client, reviewers_unavailable_reminded_id)
+        if not reviewers_unavailable_reminded_group:
+            self.client.post_group(Group(id=reviewers_unavailable_reminded_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))                              
 
         ## authors group
         authors_id = journal.get_authors_id()
