@@ -317,14 +317,13 @@ class Journal(object):
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
-
+        self.setup_reviewer_assignment(note)
 
     def setup_under_review_submission(self, note):
         self.invitation_builder.set_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_comment_invitation(note)
         self.invitation_builder.release_submission_history(note)
-        self.setup_reviewer_assignment(note)
 
     def assign_reviewer(self, note, reviewer, solicit):
         self.assignment.assign_reviewer(note, reviewer, solicit)
