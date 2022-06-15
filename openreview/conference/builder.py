@@ -1012,7 +1012,7 @@ class Conference(object):
             additional_fields=self.submission_stage.additional_fields,
             remove_fields=self.submission_stage.remove_fields,
             only_accepted=False,
-            multiReply=False,
+            multiReply=False if self.submission_stage.double_blind else True,
             allow_author_reorder=allow_author_reorder
         )
         self.__create_submission_revision_stage()
