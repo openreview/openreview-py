@@ -3159,7 +3159,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
                         },
                         'comment': {
                             'order': 2,
-                            'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.'
+                            'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'type': 'string',
                                 'regex': '^[\\S\\s]{1,200000}$'
@@ -3349,6 +3349,25 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2
                         },
+                        'authors': {
+                            'value': {
+                                'type': 'string[]',
+                                'const': note.content['authors']['value']
+                            },
+                            'description': 'Comma separated list of author names.',
+                            'order': 3,
+                            'presentation': {
+                                'hidden': True,
+                            }
+                        },
+                        'authorids': {
+                            'value': {
+                                'type': 'group[]',
+                                'const': note.content['authorids']['value']
+                            },
+                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'order': 4
+                        },                        
                         'pdf': {
                             'value': {
                                 'type': 'file',

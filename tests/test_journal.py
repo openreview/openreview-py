@@ -1463,6 +1463,8 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
                 forum=note_id_1,
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
+                    'authors': { 'value': ['Melisa Bok', 'Test User'] }, 
+                    'authorids': { 'value': ['~Melissa_Bok1', '~SomeFirstName_User1'] }, 
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -1483,10 +1485,8 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
-        # TODO: check this with Carlos
-        #assert note.content['authorids'].get('readers') == None
-        #assert note.content['authors'].get('readers') == None
+        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
+        assert note.content['authors']['value'] == ['Melisa Bok', 'Test User']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
@@ -1563,7 +1563,8 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
+        assert note.content['authors']['value'] == ['Melisa Bok', 'Test User']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -1572,9 +1573,9 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Test User and Melisa Bok},
+author={Melisa Bok and Test User},
 journal={Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
@@ -1649,7 +1650,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -1658,9 +1659,9 @@ note={Featured Certification, Reproducibility Certification}
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Test User and Melisa Bok},
+author={Melisa Bok and Test User},
 journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
