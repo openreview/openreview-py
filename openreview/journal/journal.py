@@ -88,16 +88,6 @@ class Journal(object):
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
 
-    def get_action_editors_unavailable_id(self, reminded=False):
-        if reminded:
-            return self.get_action_editors_id() + '/Unavailable/Reminded'
-        return self.get_action_editors_id() + '/Unavailable'
-
-    def get_reviewers_unavailable_id(self, reminded=False):
-        if reminded:
-            return self.get_reviewers_id() + '/Unavailable/Reminded'
-        return self.get_reviewers_id() + '/Unavailable'
-
     def get_meta_invitation_id(self):
         return self.__get_invitation_id(name='Edit')
 
@@ -333,6 +323,7 @@ class Journal(object):
         self.invitation_builder.set_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_comment_invitation(note)
+        self.invitation_builder.release_submission_history(note)
         self.setup_reviewer_assignment(note)
 
     def assign_reviewer(self, note, reviewer, solicit):

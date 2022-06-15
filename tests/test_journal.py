@@ -387,6 +387,16 @@ url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
 
+        edits = openreview_client.get_note_edits(note.id, invitation='TMLR/-/Under_Review')
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        ## Check the edit history is public
+        #edits = openreview_client.get_note_edits(note.id, invitation='TMLR/Paper1/-/Revision', sort='tcdate:asc')
+        edits = openreview_client.get_note_edits(note.id, sort='tcdate:asc')
+        assert edits
+        for edit in edits:
+            assert 'everyone' in edit.readers
+
         ## Remove assertion, the process function may run faster in the new machines
         ## try to make an assignment before the scores were computed
         # with pytest.raises(openreview.OpenReviewException, match=r'Can not add assignment, invitation is not active yet.'):

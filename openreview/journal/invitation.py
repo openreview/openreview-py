@@ -1006,7 +1006,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
             invitees=[venue_id, action_editors_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=['~Super_User1'], ## user super user so it can update the edges
             minReplies=1,
             maxReplies=1,            
             type='Edge',
@@ -1310,7 +1310,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
             invitees=[venue_id, reviewers_id],
             readers=[venue_id, action_editors_id, reviewers_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=['~Super_User1'], ## user super user so it can update the edges
             minReplies=1,
             maxReplies=1,            
             type='Edge',
@@ -2892,6 +2892,38 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
         )
 
         self.save_invitation(invitation)
+
+    def release_submission_history(self, note):
+
+        ## Change revision invitation to make the edits public
+        revision_invitation_id = self.journal.get_revision_id(number=note.number)
+        self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id],
+            invitation=Invitation(
+                id=revision_invitation_id,
+                edit={
+                    'readers': {
+                        'const': ['everyone']
+                    }
+                }
+            )
+        )
+
+        ## Make the edit public
+        for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tcdate:asc'):
+            edit.readers = ['everyone']
+            edit.note.mdate = None
+            self.client.post_edit(edit)
+
+        ## Make the first edit public too
+        for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tcdate:asc'):
+            edit.invitation = self.journal.get_meta_invitation_id()
+            edit.signatures = [self.journal.venue_id]
+            edit.readers = ['everyone']
+            edit.note.mdate = None
+            self.client.post_edit(edit)         
 
     def set_comment_invitation(self, note):
         venue_id = self.journal.venue_id
