@@ -3,8 +3,7 @@ def process(client, invitation):
     print('Remind action editors')
     journal = openreview.journal.Journal()
     edges = client.get_edges(invitation=journal.get_ae_availability_id(), label='Unavailable')
-#    reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
-    reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(minutes = 2))
+    reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
 
     subject=f'[{journal.short_name}] Consider updating your availability for {journal.short_name}'
 
