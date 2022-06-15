@@ -3159,7 +3159,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
                         },
                         'comment': {
                             'order': 2,
-                            'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.'
                             'value': {
                                 'type': 'string',
                                 'regex': '^[\\S\\s]{1,200000}$'
