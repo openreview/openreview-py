@@ -222,7 +222,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_group(self, id):
+    def get_group(self, id, details=None):
         """
         Get a single Group by id if available
 
@@ -236,7 +236,7 @@ class Client(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.groups_url, params = {'id': id, 'details': details}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         return Group.from_json(g)
@@ -522,7 +522,7 @@ class Client(object):
             response = requests.put(self.baseurl + '/attachment', files=(
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
-                ('file', (file_path, f, tools.get_mimetype(file_path))),
+                ('file', (file_path, f)),
             ), headers = headers)
 
         response = self.__handle_response(response)

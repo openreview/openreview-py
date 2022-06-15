@@ -493,7 +493,7 @@ def get_comment_stage(client, request_forum):
 
     unsubmitted_reviewers = 'Paper Submitted Reviewers' not in request_forum.content.get('participants', '') and 'Paper Reviewers' in request_forum.content.get('participants', '')
 
-    email_pcs = request_forum.content.get('email_program_chairs_about_official_reviews', '') == 'Yes, email PCs for each official comment made in the venue'
+    email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
 
     authors_invited = 'Authors' in request_forum.content.get('participants', '')
 
