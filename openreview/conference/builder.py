@@ -1768,31 +1768,33 @@ Program Chairs
             n.forum: n for n in self.client.get_all_notes(
                 invitation=self.get_invitation_id(self.decision_stage.name, '.*')
             )}
-        paper_notes = {n.forum: n for n in self.get_submissions()}
+        paper_notes = {n.number: n for n in self.get_submissions()}
         forum_note = self.client.get_note(self.request_form_id)
 
         def post_decision(paper_decision):
             if len(paper_decision) < 2:
                 raise OpenReviewException(
-                    "Not enough values provided in the decision file. Expected values are: paper_id, decision, comment")
+                    "Not enough values provided in the decision file. Expected values are: paper_number, decision, comment")
             if len(paper_decision) > 3:
                 raise OpenReviewException(
-                    "Too many values provided in the decision file. Expected values are: paper_id, decision, comment"
+                    "Too many values provided in the decision file. Expected values are: paper_number, decision, comment"
                 )
             if len(paper_decision) == 3:
-                paper_id, decision, comment = paper_decision
+                paper_number, decision, comment = paper_decision
             else:
-                paper_id, decision = paper_decision
+                paper_number, decision = paper_decision
                 comment = ''
 
-            print(f"Posting Decision {decision} for Paper {paper_id}")
-            paper_note = paper_notes.get(paper_id, None)
+            paper_number = int(paper_number)
+
+            print(f"Posting Decision {decision} for Paper {paper_number}")
+            paper_note = paper_notes.get(paper_number, None)
             if not paper_note:
                 raise OpenReviewException(
-                    f"Paper with ID: {paper_id} not found. Please check the submitted paperIDs."
+                    f"Paper {paper_number} not found. Please check the submitted paper numbers."
                 )
 
-            paper_decision_note = decision_notes.get(paper_id, None)
+            paper_decision_note = decision_notes.get(paper_note.id, None)
             if paper_decision_note:
                 paper_decision_note.readers = self.decision_stage.get_readers(conference=self, number=paper_note.number)
                 paper_decision_note.nonreaders = self.decision_stage.get_nonreaders(conference=self, number=paper_note.number)
@@ -1817,7 +1819,7 @@ Program Chairs
                     replyto=paper_note.forum
                 )
             self.client.post_note(paper_decision_note)
-            print(f"Decision posted for Paper {paper_id}")
+            print(f"Decision posted for Paper {paper_number}")
 
         futures = []
         futures_param_mapping = {}
