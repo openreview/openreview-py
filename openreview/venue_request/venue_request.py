@@ -1115,7 +1115,7 @@ class VenueRequest():
             },
             'use_recruitment_template': {
                 'value-radio': ['Yes', 'No'],
-                'default': 'Yes',
+                'default': 'No',
                 'order': 37,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
