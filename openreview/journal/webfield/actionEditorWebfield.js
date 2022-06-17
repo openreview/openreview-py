@@ -295,7 +295,9 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
     reviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
       var assignmentAcknowledgement = getReplies(submission, reviewer.id + '/' + ASSIGNMENT_ACKNOWLEDGEMENT_NAME, REVIEWERS_NAME);
-      var status = {};
+      var status = {
+        'profileID': reviewer.id
+      };
 
       if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
         status.Acknowledged = 'Yes';

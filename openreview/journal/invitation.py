@@ -554,7 +554,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
                                 'type': "string",
                                 'regex': '~.*'
                             },
-                            'description': 'OpenReview profile id of the reviewer that you want to report.',
+                            'description': 'OpenReview profile id of the reviewer that you want to report. It is being displayed in the Action Editor console with the property "profileID"',
                             'order': 1                            
                         },
                         'report_reason': {
