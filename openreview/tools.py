@@ -164,7 +164,7 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         for confirmed_email in profile.content.get('emailsConfirmed', []):
             profile_by_id_or_email[confirmed_email] = profile        
 
-    batch_size = 100
+    batch_size = 1000
     ## Get profiles by id and add them to the profiles list
     for i in range(0, len(ids), batch_size):
         batch_ids = ids[i:i+batch_size]
