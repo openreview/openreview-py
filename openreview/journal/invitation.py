@@ -99,6 +99,11 @@ class InvitationBuilder(object):
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
 
+    def expire_assignment_availability_invitations(self):
+        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        self.expire_invitation(self.journal.get_ae_availability_id(), now)
+        self.expire_invitation(self.journal.get_reviewer_availability_id(), now)
+
 
     def save_invitation(self, invitation):
 

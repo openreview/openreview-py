@@ -2938,6 +2938,7 @@ note={Withdrawn}
         note = openreview_client.get_note(note_id_9)
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_acknowledgement_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()
 
 
 
