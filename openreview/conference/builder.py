@@ -2828,7 +2828,7 @@ class ConferenceBuilder(object):
         self.conference.senior_area_chair_identity_readers = readers
 
     def use_recruitment_template(self, use_template):
-        self.conference.use_recruitment_template = True
+        self.conference.use_recruitment_template = use_template
 
     def get_result(self):
 
