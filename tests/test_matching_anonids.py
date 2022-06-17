@@ -1229,6 +1229,10 @@ class TestMatchingWithAnonIds():
 
         conference.set_assignments(assignment_title='ac-matching', committee_id='auai.org/UAI/2021/Conference/Senior_Program_Committee')
 
+        invitation = pc_client.get_invitation('auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment')
+        assert invitation.expdate is not None
+        assert invitation.expdate < round(time.time() * 1000)
+
         assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee_')
 
