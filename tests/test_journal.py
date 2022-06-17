@@ -21,7 +21,7 @@ class TestJournal():
         journal=Journal(fabian_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
         return journal
 
-    def test_setup(self, openreview_client, helpers):
+    def test_setup(self, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
 
@@ -57,6 +57,15 @@ class TestJournal():
 
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
         journal.setup(support_role='fabian@mail.com', editors=['~Raia_Hadsell1', '~Kyunghyun_Cho1'])
+
+        request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", ryan_client.token, wait_for_element='group-container')
+        header = selenium.find_element_by_id('header')
+        assert header
+        titles = header.find_elements_by_tag_name('strong')
+        assert 'Reviewer Assignment Browser:' in titles[0].text
+        assert 'Reviewer Report:' in titles[1].text
+
+
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 

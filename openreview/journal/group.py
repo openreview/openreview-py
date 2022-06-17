@@ -9,11 +9,20 @@ class GroupBuilder(object):
     def __init__(self, client):
         self.client = client
 
+    def set_group_variable(self, group_id, variable_name, value):
 
+        group = self.client.get_group(group_id)
+        group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
+        print(group.web[:1000])
+        self.client.post_group(group)
+    
     def set_groups(self, journal, support_role, editors):
         header = journal.header
         venue_id=journal.venue_id
         editor_in_chief_id=journal.get_editors_in_chief_id()
+        journal_request = journal.get_request_form()
+        reviewer_report_form = journal.get_reviewer_report_form()
+
         ## venue group
         venue_group=self.client.post_group(Group(id=venue_id,
                         readers=['everyone'],
@@ -45,8 +54,10 @@ class GroupBuilder(object):
             content = content.replace("var EDITORS_IN_CHIEF_NAME = '';", "var EDITORS_IN_CHIEF_NAME = '" + journal.editors_in_chief_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
-            if journal.get_request_form():
-                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal.get_request_form().id + "';")
+            if journal_request:
+                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal_request.id + "';")
+            if reviewer_report_form:
+                content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
 
             editor_in_chief_group.web = content
             self.client.post_group(editor_in_chief_group)
@@ -120,8 +131,10 @@ class GroupBuilder(object):
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
             content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + journal.submission_group_name + "';")
-            if journal.get_request_form():
-                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal.get_request_form().id + "';")
+            if journal_request:
+                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal_request.id + "';")
+            if reviewer_report_form:
+                content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
 
             action_editor_group.web = content
             self.client.post_group(action_editor_group)
@@ -186,6 +199,17 @@ class GroupBuilder(object):
         reviewers_declined_group = openreview.tools.get_group(self.client, reviewers_declined_id)
         if not reviewers_declined_group:
             self.client.post_group(Group(id=reviewers_declined_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))
+
+        ## reviewers reported group
+        reviewers_reported_id = journal.get_reviewers_reported_id()
+        reviewers_reported_group = openreview.tools.get_group(self.client, reviewers_reported_id)
+        if not reviewers_reported_group:
+            self.client.post_group(Group(id=reviewers_reported_id,
                             readers=[venue_id],
                             writers=[venue_id],
                             signatures=[venue_id],

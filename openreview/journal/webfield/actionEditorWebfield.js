@@ -14,6 +14,7 @@ var SUBMISSION_GROUP_NAME = 'Paper';
 var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var JOURNAL_REQUEST_ID = '';
+var REVIEWER_REPORT_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -57,6 +58,10 @@ var HEADER = {
 
 if (JOURNAL_REQUEST_ID) {
   HEADER.instructions += "<br><br><strong>Journal Recruitment:</strong><br><a href=/forum?id=" + JOURNAL_REQUEST_ID + "> Recruit Reviewer</a>"
+}
+
+if (REVIEWER_REPORT_ID) {
+  HEADER.instructions += "<br><br><strong>Reviewer Report:</strong><br><a href=/forum?id=" + REVIEWER_REPORT_ID + "> Report Reviewer</a>"
 }
 
 // Helpers

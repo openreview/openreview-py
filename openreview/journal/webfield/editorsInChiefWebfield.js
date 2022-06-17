@@ -14,6 +14,8 @@ var EDITORS_IN_CHIEF_NAME = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
+var REVIEWER_REPORT_ID = '';
+var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
@@ -152,7 +154,17 @@ var loadData = function() {
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
-    Webfield2.api.getAllSubmissions(REVIEWERS_ID + '/-/.*/' + RESPONSIBILITY_ACK_NAME, { details: {} }),
+    Webfield2.api.getAll('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID }),
+    Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID })
+    .then(function(notes) {
+      return notes.reduce(function(content, currentValue) {
+        if (!currentValue.content.reviewer_id in content) {
+          content[currentValue.content.reviewer_id] = [];
+        }
+        content[currentValue.content.reviewer_id].push(currentValue);
+        return content;
+      }, {})
+    }),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
@@ -190,6 +202,7 @@ var formatData = function(
   reviewersByNumber,
   submissions,
   responsibilityNotes,
+  reviewerReportByReviewerId,
   actionEditors,
   reviewers,
   invitationsById,
@@ -205,6 +218,7 @@ var formatData = function(
     var responsibility = responsibilityNotes.find(function(reply) {
       return reply.invitations[0] === REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME;
     });
+    var reviewerReports = reviewerReportByReviewerId[reviewer.id] || [];
 
     reviewerStatusById[reviewer.id] = {
       index: { number: index + 1 },
@@ -215,7 +229,8 @@ var formatData = function(
         status: {
           Profile: reviewer.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-',
-          'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No'
+          'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No',
+          'Reviewer Report': reviewerReports.length
         }
       },
       reviewerProgressData: {

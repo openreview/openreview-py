@@ -332,10 +332,8 @@ class InvitationBuilder(object):
         )
         self.save_invitation(invitation)
 
-        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
-        if len(forum_notes) > 0:
-            forum_note_id = forum_notes[0].id
-        else:
+        forum_note_id = self.journal.get_acknowledgement_responsibility_form()
+        if not forum_note_id:
             forum_edit = self.client.post_note_edit(invitation=self.journal.get_form_id(),
                 signatures=[venue_id],
                 note = openreview.api.Note(
@@ -517,10 +515,8 @@ If you have questions after reviewing the points below that are not answered on 
         action_editors_id = self.journal.get_action_editors_id()
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
-        forum_notes = self.client.get_notes(invitation=self.journal.get_form_id(), content={ 'title': 'Reviewer Report'})
-        if len(forum_notes) > 0:
-            forum_note_id = forum_notes[0].id
-        else:
+        forum_note_id = self.journal.get_reviewer_report_form()
+        if not forum_note_id:
             forum_edit = self.client.post_note_edit(invitation=self.journal.get_form_id(),
                 signatures=[venue_id],
                 note = openreview.api.Note(
@@ -540,7 +536,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
 
         invitation=Invitation(id=self.journal.get_reviewer_report_id(),
             invitees=[venue_id, action_editors_id],
-            readers=[venue_id],
+            readers=[venue_id, action_editors_id],
             writers=[venue_id],
             signatures=[venue_id],
             edit={
@@ -571,7 +567,9 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
                         },                        
                     }
                 }
-            }
+            },
+            preprocess=self.get_process_content('process/reviewer_report_pre_process.py'),
+            process=self.get_process_content('process/reviewer_report_process.py')
         )
         self.save_invitation(invitation)
 
