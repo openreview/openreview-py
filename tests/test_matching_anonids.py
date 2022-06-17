@@ -843,7 +843,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@fb.com')
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='~Reviewer_MITOne1')
 
-
+    @pytest.mark.skip("proposed invitation is expired after first deploy")
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
         blinded_notes = list(conference.get_submissions(sort='tmdate'))
@@ -1132,6 +1132,7 @@ class TestMatchingWithAnonIds():
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
+    @pytest.mark.skip("proposed invitation is expired after first deploy")
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 
         pc2_client = helpers.create_user('pc4@mail.com', 'PC', 'Four')
@@ -1237,7 +1238,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee').members == ['ac2@cmu.edu']
         assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee_')
 
-
+        pytest.skip("proposed invitation is expired after first deploy")
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@cmu.edu'],
             nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],
