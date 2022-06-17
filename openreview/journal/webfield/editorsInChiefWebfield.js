@@ -75,7 +75,9 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
   '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Journal Request Forum:</strong></li>' +
-  '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>';
+  '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
+  '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
+  '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
@@ -158,10 +160,13 @@ var loadData = function() {
     Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID })
     .then(function(notes) {
       return notes.reduce(function(content, currentValue) {
-        if (!currentValue.content.reviewer_id in content) {
-          content[currentValue.content.reviewer_id] = [];
+        var reviewer_id = currentValue.content.reviewer_id;
+        if (reviewer_id) {
+          if (!(reviewer_id.value in content)) {
+            content[reviewer_id.value] = [];
+          }
+          content[reviewer_id.value].push(currentValue);
         }
-        content[currentValue.content.reviewer_id].push(currentValue);
         return content;
       }, {})
     }),
