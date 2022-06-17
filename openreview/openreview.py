@@ -1436,7 +1436,7 @@ class Client(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
+    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False, id=None):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1461,6 +1461,8 @@ class Client(object):
             delete_query['head'] = head
         if tail:
             delete_query['tail'] = tail
+        if id: 
+            delete_query['id'] = id
 
         delete_query['waitToFinish'] = wait_to_finish
         delete_query['softDelete'] = soft_delete
