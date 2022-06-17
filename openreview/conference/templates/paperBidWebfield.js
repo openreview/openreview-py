@@ -54,14 +54,14 @@ function main() {
   load().then(renderContent).then(Webfield.ui.done);
 }
 
-function getPapersSortedByAffinity(offset) {
+function getPapersSortedByAffinity(offset, limit) {
   if (selectedScore) {
     return Webfield.get('/edges', {
       invitation: selectedScore,
       tail: user.profile.id,
       sort: 'weight:desc',
       offset: offset,
-      limit: 50
+      limit: limit || 50
     })
     .then(function(result) {
       noteCount = result.count;
@@ -101,7 +101,7 @@ function getPapersSortedByAffinity(offset) {
           invitation: BLIND_SUBMISSION_ID,
           details: 'invitation',
           offset: offset,
-          limit: 50
+          limit: limit || 50
         })
         .then(function(result) {
           noteCount = result.count;
@@ -114,7 +114,7 @@ function getPapersSortedByAffinity(offset) {
       invitation: BLIND_SUBMISSION_ID,
       details: 'invitation',
       offset: offset,
-      limit: 50
+      limit: limit || 50
     })
     .then(function(result) {
       noteCount = result.count;
@@ -124,6 +124,7 @@ function getPapersSortedByAffinity(offset) {
 }
 
 function getPapersByBids(bids, bidsByNote) {
+  if (!bids.length) return Promise.resolve([]);
   return Webfield.post('/notes/search', {
     ids: bids.map(function(bid) { return bid.head; })
   })
@@ -135,7 +136,7 @@ function getPapersByBids(bids, bidsByNote) {
 // Perform all the required API calls
 function load() {
 
-  var sortedNotesP = getPapersSortedByAffinity(0, selectedScore);
+  var sortedNotesP = getPapersSortedByAffinity(0);
 
   var conflictIdsP = Webfield.getAll('/edges', {
     invitation: CONFLICT_SCORE_ID,
@@ -173,7 +174,25 @@ function renderContent(notes, conflicts, bidEdges) {
     var containerId = sections[activeTab].id;
     var bidId = sections[activeTab].heading;
 
-    if (containerId !== 'all-papers') {
+    if (containerId === "no-bid-papers") {
+      getPapersSortedByAffinity(0, 1000).then(function (results) {
+        var notesWithNoBids = results.filter(function (p) {
+          return !bidsByNote[p.id];
+        });
+        Webfield.ui.submissionList(notesWithNoBids, {
+          heading: null,
+          autoLoad: true,
+          container: "#" + containerId,
+          search: {
+            enabled: false
+          },
+          displayOptions: paperDisplayOptions,
+          noteCount: noteCount,
+          pageSize: 1000,
+          fadeIn: false
+        });
+      });
+    } else if (containerId !== 'all-papers') {
       getPapersByBids(bidsById[bidId], bidsByNote).then(function(notes) {
         Webfield.ui.submissionList(notes, {
           heading: null,
@@ -224,12 +243,18 @@ function renderContent(notes, conflicts, bidEdges) {
       }, 100);
 
       // Change bid in the All Papers tab
-      var $noteToChange = $('#all-papers .submissions-list .note[data-id="' + previousEdge.head + '"] .btn-group');
-      if (edge.ddate) {
-        $noteToChange.button('toggle').children('input').prop('checked', false);
-      } else {
-        $noteToChange.find('label[data-value="' + edge.label + '"]').button('toggle');
+      if (sections[activeTab].id !== "no-bid-papers") {
+        var $noteToChange = $('#all-papers .submissions-list .note[data-id="' + previousEdge.head + '"] .btn-group');
+      
+        if (edge.ddate) {
+          $noteToChange.button("toggle").children("input").prop("checked", false);
+        } else {
+          $noteToChange
+            .find('label[data-value="' + edge.label + '"]')
+            .button("toggle");
+        }
       }
+      
     }
 
     updateCounts();
@@ -243,7 +268,7 @@ function renderContent(notes, conflicts, bidEdges) {
 
   $('#invitation-container').on('change', 'form.notes-search-form .score-dropdown', function(e) {
     selectedScore = $(this).val();
-    return getPapersSortedByAffinity(0, selectedScore)
+    return getPapersSortedByAffinity(0)
     .then(function(notes) {
       return updateNotes(prepareNotes(notes, conflictIds, bidsByNote));
     });
@@ -297,6 +322,12 @@ function updateNotes(notes) {
     })
   });
 
+  sections.push({
+    heading: 'Papers you have not bid on',
+    id: 'no-bid-papers',
+    content: loadingContent
+  })
+
   sections[activeTab].active = true;
 
   $('#notes .tabs-container').remove();
@@ -331,7 +362,7 @@ function updateNotes(notes) {
     noteCount: noteCount,
     pageSize: 50,
     onPageClick: function(offset) {
-      return getPapersSortedByAffinity(offset, selectedScore)
+      return getPapersSortedByAffinity(offset)
       .then(function(notes) {
         return prepareNotes(notes, conflictIds, bidsByNote);
       });
@@ -368,7 +399,7 @@ function updateNotes(notes) {
 function updateCounts() {
   var totalCount = 0;
 
-  for (var i = 1; i < sections.length; i++) {
+  for (var i = 1; i < sections.length - 1; i++) {
     var $tab = $('ul.nav-tabs li a[href="#' + sections[i].id + '"]');
     var numPapers = bidsById[sections[i].heading].length;
 
