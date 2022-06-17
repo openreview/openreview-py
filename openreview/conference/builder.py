@@ -1739,6 +1739,9 @@ Program Chairs
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
+        # expire recruitment invitations
+        self.expire_recruitment_invitations()
+
     def send_decision_notifications(self, decision_options, messages):
         decision_notes = self.client.get_all_notes(
             invitation=self.get_invitation_id(self.decision_stage.name, '.*'),
@@ -1859,6 +1862,11 @@ Program Chairs
         )
 
         self.client.post_note(status_note)
+
+    def expire_recruitment_invitations(self):
+        recruitment_invitations = self.client.get_invitations(regex=self.get_invitation_id('Recruit_*'))
+        recruitment_invitation_ids = [inv.id for inv in recruitment_invitations]
+        tools.concurrent_requests(self.expire_invitation, recruitment_invitation_ids)
 
 
 class SubmissionStage(object):

@@ -522,7 +522,7 @@ class Client(object):
             response = requests.put(self.baseurl + '/attachment', files=(
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
-                ('file', (file_path, f, tools.get_mimetype(file_path))),
+                ('file', (file_path, f)),
             ), headers = headers)
 
         response = self.__handle_response(response)
