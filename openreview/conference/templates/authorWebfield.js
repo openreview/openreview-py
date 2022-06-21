@@ -219,7 +219,7 @@ function renderStatusTable(notes) {
   var tableHtml = Handlebars.templates['components/table']({
     headings: ['#', 'Paper Summary', 'Reviews', 'Decision'],
     rows: rowsHtml,
-    extraClasses: 'console-table'
+    extraClasses: 'console-table author-console-table'
   });
 
   $container.empty().append(tableHtml);
