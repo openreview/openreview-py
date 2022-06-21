@@ -370,6 +370,15 @@ class Matching(object):
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
         user_profiles_info = [get_profile_info(p) for p in user_profiles]
+        # Get profile info from all the authors
+        all_authorids = []
+        for submission in submissions:
+            authorids = submission.content['authorids']
+            if submission.details and submission.details.get('original'):
+                authorids = submission.details['original']['content']['authorids']
+            all_authorids = all_authorids + authorids
+
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
 
         edges = []
 
@@ -379,19 +388,20 @@ class Matching(object):
             if submission.details and submission.details.get('original'):
                 authorids = submission.details['original']['content']['authorids']
 
-            # Extract domains from each profile
-            author_profiles = tools.get_profiles(self.client, authorids, with_publications=True)
+            # Extract domains from each autyhorprofile
             author_domains = set()
             author_emails = set()
             author_relations = set()
             author_publications = set()
-
-            for author_profile in author_profiles:
-                author_info = get_profile_info(author_profile)
-                author_domains.update(author_info['domains'])
-                author_emails.update(author_info['emails'])
-                author_relations.update(author_info['relations'])
-                author_publications.update(author_info['publications'])
+            for authorid in authorids:
+                if author_profile_by_id.get(authorid):
+                    author_info = get_profile_info(author_profile_by_id[authorid])
+                    author_domains.update(author_info['domains'])
+                    author_emails.update(author_info['emails'])
+                    author_relations.update(author_info['relations'])
+                    author_publications.update(author_info['publications'])
+                else:
+                    print(f'Profile not found: {authorid}')
 
             # Compute conflicts for each user and all the paper authors
             for user_info in user_profiles_info:
