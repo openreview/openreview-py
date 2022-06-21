@@ -70,7 +70,7 @@ Apologies for the change and thank you for your continued involvement with {jour
 The {journal.short_name} Editors-in-Chief
 '''
 
-        client.post_message(subject, recipients, message)
+        client.post_message(subject, recipients, message, replyTo=journal.contact_info)
 
         if pending_review_edge and pending_review_edge.weight > 0:
             pending_review_edge.weight -= 1
