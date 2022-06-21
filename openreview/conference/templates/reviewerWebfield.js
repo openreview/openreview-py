@@ -252,19 +252,19 @@ var getCustomLoad = function(userIds) {
       if (result.edges && result.edges.length) {
         return result.edges[0].weight;
       }
-      return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION, select: 'content.reviewer_load,content.user' })
+      return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION, select: 'content.reviewer_load,content.user,content.reduced_load' })
       .then(function(result) {
         if (!result.notes || !result.notes.length) {
           return REVIEW_LOAD;
         }
         if (result.notes.length === 1) {
-          return result.notes[0].content.reviewer_load;
+          return result.notes[0].content.reviewer_load || result.notes[0].content.reduced_load;
         } else {
           // If there is more than one there might be a Program Chair
           var loads = result.notes.filter(function(note) {
             return userIds.indexOf(note.content.user) > -1;
           });
-          return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
+          return loads.length ? (loads[0].content.reviewer_load || loads[0].content.reduced_load ) : REVIEW_LOAD;
         }
       });
     })
