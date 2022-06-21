@@ -937,6 +937,7 @@ var renderTable = function(container, rows) {
       }]
     },
     extraClasses: 'console-table paper-table',
+    pageSize: 10,
     postRenderTable: function() {
       $('#' + container + ' .console-table th').eq(0).css('width', '2%');  // [ ]
       $('#' + container + ' .console-table th').eq(1).css('width', '3%');  // #
@@ -1169,6 +1170,7 @@ var renderData = function(venueStatusData) {
       default: ['summary.name'],
     },
     extraClasses: 'console-table',
+    pageSize: 10,
     postRenderTable: function() {
       $('#reviewer-status .console-table th').eq(0).css('width', '4%');  // #
       $('#reviewer-status .console-table th').eq(1).css('width', '23%');  // reviewer
@@ -1217,7 +1219,8 @@ var renderData = function(venueStatusData) {
       papersAssigned: ['reviewProgressData.numPapers'],
       default: ['summary.name']
     },
-    extraClasses: 'console-table'
+    extraClasses: 'console-table',
+    pageSize: 10
   });
 
 };
