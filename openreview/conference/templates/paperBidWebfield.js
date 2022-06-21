@@ -323,7 +323,7 @@ function updateNotes(notes) {
   });
 
   sections.push({
-    heading: 'Papers you have not bid on',
+    heading: 'No Bid',
     id: 'no-bid-papers',
     content: loadingContent
   })
