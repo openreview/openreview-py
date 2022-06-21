@@ -81,7 +81,8 @@ class TestNeurIPSConference():
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'Program chairs and paper authors only',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes'
             }))
 
         helpers.await_queue()
@@ -133,7 +134,7 @@ class TestNeurIPSConference():
                 'invitee_role': 'Senior_Area_Chairs',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -154,18 +155,28 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
         assert messages[0]['content']['text'].startswith('<p>Dear SAC One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        print('invitation_url', invitation_url)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
+        messages = client.get_messages(to='sac1@google.com', subject='[NeurIPS 2021] Senior Area Chair Invitation accepted')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == '''<p>Thank you for accepting the invitation to be a Senior Area Chair for NeurIPS 2021.</p>
+<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>
+<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>
+'''
+        
         messages = client.get_messages(to='sac2@gmail.com', subject='[NeurIPS 2021] Invitation to serve as Senior Area Chair')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Senior Area Chair'
         assert messages[0]['content']['text'].startswith('<p>Dear SAC Two,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Senior Area Chair.')
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        helpers.await_queue()
-        assert client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs').members == ['sac1@google.com', 'sac2@gmail.com']
+        sac_group = client.get_group('NeurIPS.cc/2021/Conference/Senior_Area_Chairs')
+        assert len(sac_group.members) == 2
+        assert 'sac1@google.com' in sac_group.members
+        assert 'sac2@gmail.com' in sac_group.members
 
         sac_client = openreview.Client(username='sac1@google.com', password='1234')
         request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2021/Conference", sac_client.token, wait_for_element='notes')
@@ -197,10 +208,9 @@ class TestNeurIPSConference():
         assert 'Dear invitee,' in text
         assert 'You have been nominated by the program chair committee of NeurIPS 2021 to serve as Area Chair' in text
 
-        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
-        request_page(selenium, accept_url, alert=True)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(accepted_group.members) == 1
         assert 'ac1@mit.edu' in accepted_group.members
@@ -213,13 +223,15 @@ class TestNeurIPSConference():
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 0
 
-        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
-        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
+        messages = notes.find_elements_by_tag_name("p")
+        assert 'If you chose to decline the invitation because the paper load is too high, you can request to reduce your load. You can request a reduced reviewer load below:' == messages[0].text
+        
         rejected_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs/Declined')
         assert len(rejected_group.members) == 1
         assert 'ac1@mit.edu' in rejected_group.members
@@ -227,28 +239,39 @@ class TestNeurIPSConference():
         accepted_group = client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(accepted_group.members) == 0
 
-        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Recruit_Area_Chairs', content={'user': 'ac1@mit.edu', 'response': 'No'})
-        assert notes
-        assert len(notes) == 1
-
-        client.post_note(openreview.Note(
-            invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Reduced_Load',
-            readers=['NeurIPS.cc/2021/Conference', 'ac1@mit.edu'],
-            writers=['NeurIPS.cc/2021/Conference'],
-            signatures=['(anonymous)'],
-            content={
-                'user': 'ac1@mit.edu',
-                'key': notes[0].content['key'],
-                'response': 'Yes',
-                'reviewer_load': '3'
-            }
-        ))
-
+        ## Accept with reduced quota
+        link = selenium.find_element_by_class_name('reduced-load-link')
+        link.click()
+        time.sleep(0.5)
+        dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
+        dropdown.click()
+        time.sleep(0.5)
+        values = selenium.find_elements_by_class_name('dropdown-select__option')
+        assert len(values) > 0
+        values[1].click()
+        time.sleep(0.5)
+        button = selenium.find_element_by_xpath('//button[text()="Submit"]')
+        button.click()
+        time.sleep(0.5)
         helpers.await_queue()
 
         area_chairs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(area_chairs.members) == 1
         assert 'ac1@mit.edu' in area_chairs.members
+
+        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Recruitment', content={'user': 'ac1@mit.edu', 'response': 'Yes'}, sort='tcdate:desc')
+        assert notes
+        assert len(notes) == 2
+        assert notes[0].content['reduced_load'] == '3'
+
+        messages = client.get_messages(to = 'ac1@mit.edu', subject = '[NeurIPS 2021] Area Chair Invitation accepted with reduced load')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''<p>Thank you for accepting the invitation to be a Area Chair for NeurIPS 2021.<br>
+You have selected a reduced load of 3 submissions to review.</p>
+<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>
+<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>
+'''
+
 
     def test_sac_matching(self, client, conference, helpers, request_page, selenium):
 
@@ -415,7 +438,7 @@ class TestNeurIPSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(request_form.id), pc_client.token, by=By.ID, wait_for_element='note_{}'.format(request_form.id))
         recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form.id))
         assert recruitment_div
         reply_row = recruitment_div.find_element_by_class_name('reply_row')
@@ -431,7 +454,7 @@ class TestNeurIPSConference():
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -457,15 +480,16 @@ class TestNeurIPSConference():
         assert messages[0]['content']['subject'] == '[NeurIPS 2021] Invitation to serve as Reviewer'
         assert messages[0]['content']['text'].startswith('<p>Dear Reviewer UMass,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
         assert 'pc@neurips.cc' in messages[0]['content']['text']
-        reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
-        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
-        assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
+        assert notes        
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
-        assert 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: Request reduced load' == messages[1].text
+        messages = notes.find_elements_by_tag_name("p")
+        assert 'If you chose to decline the invitation because the paper load is too high, you can request to reduce your load. You can request a reduced reviewer load below:' == messages[0].text
 
         assert len(client.get_group('NeurIPS.cc/2021/Conference/Reviewers').members) == 0
 
@@ -477,31 +501,48 @@ class TestNeurIPSConference():
         messages = client.get_messages(to='reviewer1@umass.edu', subject='[NeurIPS 2021] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'].startswith('<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
+        assert messages[0]['content']['text'] == '<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n'
 
-        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/-/Recruit_Reviewers', content={'user': 'reviewer1@umass.edu'})
+        notes = client.get_notes(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Recruitment', content={'user': 'reviewer1@umass.edu'})
         assert notes
         assert len(notes) == 1
 
-        client.post_note(openreview.Note(
-            invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Reduced_Load',
-            readers=['NeurIPS.cc/2021/Conference', 'reviewer1@umass.edu'],
-            writers=['NeurIPS.cc/2021/Conference'],
-            signatures=['(anonymous)'],
-            content={
-                'user': 'reviewer1@umass.edu',
-                'key': notes[0].content['key'],
-                'response': 'Yes',
-                'reviewer_load': '4'
-            }
-        ))
-
-        helpers.await_queue()
+        ## Accept with reduced load
+        link = selenium.find_element_by_class_name('reduced-load-link')
+        link.click()
+        time.sleep(0.5)
+        dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
+        dropdown.click()
+        time.sleep(0.5)
+        values = selenium.find_elements_by_class_name('dropdown-select__option')
+        assert len(values) > 0
+        values[2].click()
+        time.sleep(0.5)
+        button = selenium.find_element_by_xpath('//button[text()="Submit"]')
+        button.click()
+        time.sleep(0.5)
+        helpers.await_queue()        
 
         reviewers_group=client.get_group('NeurIPS.cc/2021/Conference/Reviewers')
         assert len(reviewers_group.members) == 1
         assert 'reviewer1@umass.edu' in reviewers_group.members
 
+        messages = client.get_messages(to = 'reviewer1@umass.edu', subject = '[NeurIPS 2021] Reviewer Invitation accepted with reduced load')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''<p>Thank you for accepting the invitation to be a Reviewer for NeurIPS 2021.<br>
+You have selected a reduced load of 4 submissions to review.</p>
+<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>
+<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>
+'''        
+
+        ## Check reviewers console load
+        reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
+        request_page(selenium, 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Reviewers', reviewer_client.token, by=By.ID, wait_for_element='header')
+        header = selenium.find_element_by_id('header')
+        strong_elements = header.find_elements_by_tag_name('strong')
+        assert len(strong_elements) == 1
+        assert strong_elements[0].text == '4 papers'
+        
         ## Remind reviewers
         recruitment_note = pc_client.post_note(openreview.Note(
             content={
@@ -509,7 +550,7 @@ class TestNeurIPSConference():
                 'invitee_role': 'Reviewers',
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -525,8 +566,8 @@ class TestNeurIPSConference():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == 'Reminder: [NeurIPS 2021] Invitation to serve as Reviewer'
         assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
-        reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, reject_url, alert=True)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
         helpers.await_queue()
 
@@ -538,7 +579,7 @@ class TestNeurIPSConference():
         messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2021] Reviewer Invitation declined')
         assert messages
         assert len(messages)
-        assert messages[0]['content']['text'].startswith('<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here:')
+        assert messages[0]['content']['text'] =='<p>You have declined the invitation to become a Reviewer for NeurIPS 2021.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n'
 
         client.add_members_to_group('NeurIPS.cc/2021/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
@@ -601,7 +642,7 @@ class TestNeurIPSConference():
                 'invitee_reduced_load': ['2', '3', '4'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=request_form.forum,
             replyto=request_form.forum,
@@ -622,8 +663,8 @@ class TestNeurIPSConference():
 
         messages = client.get_messages(to='reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to serve as Ethics Reviewer')
         assert messages and len(messages) == 1
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue()
 
@@ -1307,15 +1348,13 @@ class TestNeurIPSConference():
         now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         email_template='''
-As an Area Chair for NeurIPS 2021, I’d like to ask for your expert review of a submission, titled: {title}:
+As an Area Chair for NeurIPS 2021, I'd like to ask for your expert review of a submission, titled: {title}:
 
 {abstract}
 
 If you accept, you will not be added to the general list of NeurIPS reviewers and will not be assigned additional submissions unless you explicitly agree to review them.
 
-To accept this request, please follow this link: {accept_url}
-
-To decline, follow this link: {decline_url}
+To respond this request, please follow this link: {invitation_url}
 
 If you accept, I would need the review by Friday, July 16.
 
@@ -1379,17 +1418,17 @@ Thank you,
         assert messages and len(messages) == 1
         invitation_message=messages[0]['content']['text']
 
-        invalid_accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('user=~External_Reviewer_Amazon1', 'user=~External_Reviewer_Amazon2').replace('&amp;', '&')
-        request_page(selenium, invalid_accept_url, alert=True, by=By.CLASS_NAME, wait_for_element='important_message')
+        invalid_accept_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1].replace('user=~External_Reviewer_Amazon1', 'user=~External_Reviewer_Amazon2').replace('&amp;', '&')
+        helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
         error_message = selenium.find_element_by_class_name('important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
-        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
 
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1419,7 +1458,7 @@ Thank you,
         # Confirmation email to the reviewer
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Amazon,<br>\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Amazon,<br>\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>The NeurIPS 2021 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add <a href=\"mailto:noreply@openreview.net\">noreply@openreview.net</a> to your email contacts to ensure that you receive all communications.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         # Confirmation email to the ac
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon accepted to review paper 5')
@@ -1428,11 +1467,11 @@ Thank you,
 
 
         ## External reviewer declines the invitation, assignment rollback
-        decline_url = re.search('href="https://.*response=No"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1455,7 +1494,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer1@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Amazon,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Amazon,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         response_note=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Proposed_Assignment_Recruitment', content={ 'submission_id': submission.id, 'user': '~External_Reviewer_Amazon1', 'response': 'No'})[0]
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer External Reviewer Amazon declined to review paper 5')
@@ -1471,11 +1510,11 @@ Thank you,
 
 
         ## External reviewer accepts the invitation again
-        accept_url = re.search('href="https://.*response=Yes"', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', invitation_message).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1554,12 +1593,11 @@ Thank you,
         ## External reviewer declines the invitation
         messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
-        reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-
-        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1578,7 +1616,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer3@adobe.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Adobe,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi External Reviewer Adobe,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         assert client.get_groups('NeurIPS.cc/2021/Conference/Paper5/External_Reviewers/Invited', member='~External_Reviewer_Adobe1')
         assert client.get_groups('NeurIPS.cc/2021/Conference/External_Reviewers/Invited', member='~External_Reviewer_Adobe1')
@@ -1621,12 +1659,11 @@ Thank you,
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        decline_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1642,7 +1679,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer4@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 5, assignment pending')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi <a href=\"mailto:external_reviewer4@gmail.com\">external_reviewer4@gmail.com</a>,<br>\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>Please signup in OpenReview using the email address <a href=\"mailto:external_reviewer4@gmail.com\">external_reviewer4@gmail.com</a> and complete your profile.<br>\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.</p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi <a href=\"mailto:external_reviewer4@gmail.com\">external_reviewer4@gmail.com</a>,<br>\nThank you for accepting the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>Please signup in OpenReview using the email address <a href=\"mailto:external_reviewer4@gmail.com\">external_reviewer4@gmail.com</a> and complete your profile.<br>\nConfirmation of the assignment is pending until your profile is active and no conflicts of interest are detected.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         messages = client.get_messages(to='ac1@mit.edu', subject='[NeurIPS 2021] Reviewer external_reviewer4@gmail.com accepted to review paper 5, assignment pending')
         assert messages and len(messages) == 1
@@ -1658,10 +1695,10 @@ Thank you,
         ## External reviewer creates a profile and accepts the invitation again
         external_reviewer=helpers.create_user('external_reviewer4@gmail.com', 'Reviewer', 'External')
 
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1673,7 +1710,7 @@ Thank you,
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'
 
-        request_page(selenium, decline_url, alert=True)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
         helpers.await_queue()
 
@@ -1710,11 +1747,11 @@ Thank you,
         ## External reviewer declines the invitation
         messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 5')
         assert messages and len(messages) == 1
-        reject_url = re.search('href="https://.*response=No"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, reject_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'You have declined the invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -1730,7 +1767,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer5@gmail.com', subject='[NeurIPS 2021] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi <a href=\"mailto:external_reviewer5@gmail.com\">external_reviewer5@gmail.com</a>,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please click the Accept link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi <a href=\"mailto:external_reviewer5@gmail.com\">external_reviewer5@gmail.com</a>,<br>\nYou have declined the invitation to review the paper number: 5, title: Paper title 5.</p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Accept&quot; button.</p>\n<p>OpenReview Team</p>\n'
         ## Invite external reviewer with wrong tilde id
         with pytest.raises(openreview.OpenReviewException) as openReviewError:
             posted_edge=ac_client.post_edge(openreview.Edge(
@@ -2140,11 +2177,11 @@ Thank you,
         ## External reviewer accepts the invitation
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')
         assert messages and len(messages) == 1
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -2170,7 +2207,7 @@ Thank you,
 
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi External Reviewer MIT,<br>\nThank you for accepting the invitation to review the paper number: 4, title: Paper title 4.</p>\n<p>Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: <a href=\"https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers\">https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers</a></p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi External Reviewer MIT,<br>\nThank you for accepting the invitation to review the paper number: 4, title: Paper title 4.</p>\n<p>Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: <a href=\"https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers\">https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers</a></p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         messages = client.get_messages(to='external_reviewer2@mit.edu', subject='[NeurIPS 2021] You have been assigned as a Reviewer for paper number 4')
         assert messages and len(messages) == 1
@@ -2239,11 +2276,11 @@ Thank you,
 
         messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] Invitation to review paper titled Paper title 4')
         assert messages and len(messages) == 1
-        accept_url = re.search('href="https://.*response=Yes"', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True, wait_for_element='notes')
-        notes = selenium.find_element_by_id("notes")
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        notes = selenium.find_element_by_class_name("note_editor")
         assert notes
-        messages = notes.find_elements_by_tag_name("h3")
+        messages = notes.find_elements_by_tag_name("h4")
         assert messages
         assert 'Thank you for accepting this invitation from Conference on Neural Information Processing Systems.' == messages[0].text
 
@@ -2263,7 +2300,7 @@ Thank you,
 
         messages = client.get_messages(to='reviewer6@amazon.com', subject='[NeurIPS 2021] Reviewer Invitation accepted for paper 4')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == '<p>Hi Reviewer Amazon,<br>\nThank you for accepting the invitation to review the paper number: 4, title: Paper title 4.</p>\n<p>Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: <a href=\"https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers\">https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers</a></p>\n<p>If you would like to change your decision, please click the Decline link in the previous invitation email.</p>\n<p>OpenReview Team</p>\n'
+        assert messages[0]['content']['text'] == '<p>Hi Reviewer Amazon,<br>\nThank you for accepting the invitation to review the paper number: 4, title: Paper title 4.</p>\n<p>Please go to the NeurIPS 2021 Reviewers Console and check your pending tasks: <a href=\"https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers\">https://openreview.net/group?id=NeurIPS.cc/2021/Conference/Reviewers</a></p>\n<p>If you would like to change your decision, please follow link in the previous invitation email and click on the &quot;Decline&quot; button.</p>\n<p>OpenReview Team</p>\n'
 
         assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers/Invited', member='~Reviewer_Amazon1')
         assert client.get_groups('NeurIPS.cc/2021/Conference/Emergency_Reviewers', member='~Reviewer_Amazon1')
