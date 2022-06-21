@@ -16,6 +16,11 @@ class InvitationBuilder(object):
         day = 1000 * 60 * 60 * 24
         seven_days = day * 7
 
+        self.author_reminder_process = {
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'script': self.get_process_content('process/author_edge_reminder_process.py')
+        }
+
         self.reviewer_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
             'script': self.get_process_content('process/reviewer_reminder_process.py')
@@ -2121,7 +2126,8 @@ If you have questions after reviewing the points below that are not answered on 
                         'type': 'float',
                         'regex': r'[-+]?[0-9]*\.?[0-9]*'
                     }
-                }
+                },
+                date_processes=[self.author_reminder_process]
             )
 
             header = {
