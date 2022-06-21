@@ -68,6 +68,19 @@ The OpenReview Team
 
 
     recruitment_email_subject = '[{Abbreviated_Venue_Name}] Invitation to serve as {{invitee_role}}'.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
+    recruitment_links = '''To ACCEPT the invitation, please click on the following link:
+
+{{accept_url}}
+
+To DECLINE the invitation, please click on the following link:
+
+{{decline_url}}'''
+
+    if conference.use_recruitment_template:
+        recruitment_links = '''To respond the invitation, please click on the following link:
+
+{{invitation_url}}'''
+
     recruitment_email_body = '''Dear {{fullname}},
 
 You have been nominated by the program chair committee of {Abbreviated_Venue_Name} to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make {Abbreviated_Venue_Name} a success.
@@ -76,13 +89,7 @@ You are also welcome to submit papers, so please also consider submitting to {Ab
 
 We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
 
-To ACCEPT the invitation, please click on the following link:
-
-{{accept_url}}
-
-To DECLINE the invitation, please click on the following link:
-
-{{decline_url}}
+{recruitment_links}
 
 Please answer within 10 days.
 
@@ -92,7 +99,7 @@ If you have any questions, please contact {{contact_info}}.
 
 Cheers!
 
-Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name())
+Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name()).replace('{recruitment_links}', recruitment_links)
 
     recruitment_invitation = openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Recruitment',

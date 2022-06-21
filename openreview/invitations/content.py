@@ -239,11 +239,11 @@ recruitment = {
         'required':True
     },
     'comment': {
-        'order': 5,
+        'order': 6,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Add your comment',
+        'description': '(Optionally) Leave a comment to the organizers of the venue.',
         'required': False,
-        'markdown': True
+        'markdown': False
     }
 }
 
@@ -275,9 +275,9 @@ paper_recruitment = {
     'comment': {
         'order': 5,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Add your comment',
+        'description': '(Optional) Write a comment that you want to share with the organizers.',
         'required': False,
-        'markdown': True
+        'markdown': False
     },
     'submission_id': {
         'description': 'submission id',

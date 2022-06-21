@@ -323,34 +323,29 @@ class WebfieldBuilder(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             return self.__update_invitation(invitation, content)
 
-    def set_recruit_page(self, conference_id, invitation, options = {}, reduced_load_id=None):
+    def set_recruit_page(self, conference, invitation, reduced_load_id=None):
 
-        default_header = {
-            'title': conference_id,
-            'subtitle': conference_id,
-            'location': 'TBD',
-            'date': 'TBD',
-            'website': 'nourl',
-            'instructions': '',
-            'deadline': 'TBD'
-        }
-
-        header = self.__build_options(default_header, options)
-
-        with open(os.path.join(os.path.dirname(__file__), 'templates/recruitResponseWebfield.js')) as f:
+        ## recruitment webfield
+        template_name = 'recruitResponseWebfield.js' if conference.use_recruitment_template else 'legacyRecruitResponseWebfield.js'
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_name}')) as f:
             content = f.read()
-            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference_id + "';")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(conference.get_homepage_options()) + ";")
+            content = content.replace("var ROLE_NAME = '';", "var ROLE_NAME = '" + conference.get_committee_name(committee_id=invitation.id.split('/-/')[0], pretty=True) + "';")
             if reduced_load_id:
                 content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + reduced_load_id + "';")
             else:
                 ## Reduce load is disabled, so we should set an invalid invitation
-                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference_id + '/-/no_name' + "';")
+                content = content.replace("var REDUCED_LOAD_INVITATION_ID = '';", "var REDUCED_LOAD_INVITATION_ID = '" + conference.id + '/-/no_name' + "';")
+            if 'reduced_load' in invitation.reply['content']:
+                content = content.replace("var USE_REDUCED_LOAD = false;", "var USE_REDUCED_LOAD = true;")
             return self.__update_invitation(invitation, content)
 
     def set_paper_recruitment_page(self, conference, invitation):
 
-        with open(os.path.join(os.path.dirname(__file__), 'templates/paperRecruitResponseWebfield.js')) as f:
+        template_name = 'paperRecruitResponseWebfield.js' if conference.use_recruitment_template else 'legacPaperRecruitResponseWebfield.js'
+
+        with open(os.path.join(os.path.dirname(__file__), f'templates/{template_name}')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(conference.get_homepage_options()) + ";")
@@ -397,7 +392,7 @@ class WebfieldBuilder(object):
 
         # Build reduced load invitation ID
         conf_id = conference.get_id()
-        reduced_load_id = conf_id + '/' + reviewers_name + '/-/Reduced_Load'
+        reduced_load_id = conference.get_recruitment_id(conference.get_committee_id(name=reviewers_name)) if conference.use_recruitment_template else conf_id + '/' + reviewers_name + '/-/Reduced_Load'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
