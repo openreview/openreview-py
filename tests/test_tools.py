@@ -541,7 +541,7 @@ class TestTools():
             openreview.tools.get_group(guest_client, '~Super_User1')
         assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 
-    def test_get_profiles_as_dict(self, client):
+    def test_get_profiles_as_dict(self, client, test_client):
         client.add_members_to_group(client.get_group('~SomeFirstName_User1'), 'alternate@mail.com')
         client.add_members_to_group(client.get_group('alternate@mail.com'), '~SomeFirstName_User1')
         profiles = openreview.tools.get_profiles(
@@ -553,8 +553,7 @@ class TestTools():
         assert profiles['~Another_Name1']
         assert profiles['~SomeFirstName_User1'].id == profiles['~Another_Name1'].id
         assert profiles['user@gmail.com']
-        assert profiles['test@mail.com']
-        assert profiles['alternate@mail.com']
-        assert profiles['alternate@mail.com'].id == profiles['test@mail.com'].id
-        assert profiles['test_user@mail.com'] is None
+        assert profiles['test@mail.com'].id == '~SomeFirstName_User1'
+        assert profiles['alternate@mail.com'].id == '~SomeFirstName_User1'
+        assert profiles['test_user@mail.com'].id == 'test_user@mail.com'
         assert profiles['~Test_Name1'] is None
