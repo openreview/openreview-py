@@ -219,13 +219,13 @@ function renderStatusTable(notes) {
   var tableHtml = Handlebars.templates['components/table']({
     headings: ['#', 'Paper Summary', 'Reviews', 'Decision'],
     rows: rowsHtml,
-    extraClasses: 'console-table author-console-table'
+    extraClasses: 'console-table'
   });
 
   $container.empty().append(tableHtml);
 
-  $('#your-submissions .console-table th').eq(0).css('width', '4%');
-  $('#your-submissions .console-table th').eq(1).css('width', '36%');
+  $('#your-submissions .console-table th').eq(0).css('width', '5%');
+  $('#your-submissions .console-table th').eq(1).css('width', '35%');
   $('#your-submissions .console-table th').eq(2).css('width', '30%');
   $('#your-submissions .console-table th').eq(3).css('width', '30%');
 }
