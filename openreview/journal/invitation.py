@@ -528,9 +528,9 @@ If you have questions after reviewing the points below that are not answered on 
                     signatures = [editors_in_chief_id],
                     content = {
                         'title': { 'value': 'Reviewer Report'},
-                        'description': { 'value': '''Report reviewers TODO.
-
-- TODO
+                        'description': { 'value': '''Use this report page to give feedback about a reviewer. 
+                        
+Tick one or more of the given reasons, and optionally add additional details in the comments.
 
 If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
 '''}
@@ -539,7 +539,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
             )
             forum_note_id = forum_edit['note']['id']
 
-        invitation=Invitation(id=self.journal.get_reviewer_report_id(),
+        reviewer_report_id = self.journal.get_reviewer_report_id()
+        invitation=Invitation(id=reviewer_report_id,
             invitees=[venue_id, action_editors_id],
             readers=[venue_id, action_editors_id],
             writers=[venue_id],
@@ -548,6 +549,10 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
                 'signatures': { 'regex': '~.*|' + editors_in_chief_id, 'type': 'group[]' },
                 'readers': { 'const': [venue_id, '${signatures}'] },
                 'note': {
+                    'id': {
+                        'withInvitation': reviewer_report_id,
+                        'optional': True
+                    },                    
                     'forum': { 'const': forum_note_id },
                     'replyto': { 'const': forum_note_id },
                     'signatures': { 'const': ['${signatures}'] },
@@ -564,12 +569,34 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
                         },
                         'report_reason': {
                             'value': {
-                                'type': "string",
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'type': "string[]",
+                                'enum': [
+                                    'Reviewer never submitted their review',
+                                    'Reviewer was significantly late in submitting their review',
+                                    'Reviewer submitted a poor review',
+                                    'Reviewer did not sufficiently engage with the authors',
+                                    'Reviewer never responded to my messages to them',
+                                    'Reviewer used inappropriate language, was aggressive, or showed significant bias.',
+                                    'Reviewer plagiarized all or part of their review',
+                                    'Reviewer violated the TMLR Code of Conduct',                            
+                                    'Other'
+                                ]
                             },
-                            'description': f'Describe the reason why you are reporting the reviewer.',
-                            'order': 2
-                        },                        
+                            'description': f'Select one or more of the given reasons.',
+                            'order': 2,
+                            'presentation': {
+                                'input': 'checkbox'
+                            }                           
+                        },
+                        'comment': {
+                            'order': 3,
+                            'description': 'Add additional details in a comment.',
+                            'value': {
+                                'type': 'string',
+                                'regex': '^[\\S\\s]{1,200000}$',
+                                'optional': True
+                            }
+                        }                                                
                     }
                 }
             },
