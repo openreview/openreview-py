@@ -1466,6 +1466,8 @@ class Matching(object):
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
 
+        self.conference.expire_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
+
     def deploy_invite(self, assignment_title, enable_reviewer_reassignment, email_template=None):
 
         ## Add sync process function
