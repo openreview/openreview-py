@@ -3366,7 +3366,7 @@ var buildDeskrejectedWithdrawnCSV = function(){
 
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/csv;charset=utf-8'});
-  var fileName = conferenceStatusData.filteredNotes ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
+  var fileName = conferenceStatusData.filteredRows ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
   saveAs(blob, fileName);
 });
 
