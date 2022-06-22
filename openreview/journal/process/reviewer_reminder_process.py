@@ -3,7 +3,6 @@ def process(client, invitation):
     journal = openreview.journal.Journal()
 
     submission = client.get_note(invitation.edit['note']['forum']['const'])
-    assigned_action_editor = submission.content.get('assigned_action_editor', {}).get('value')
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
     now = datetime.datetime.utcnow()
     task = invitation.pretty_id()
@@ -33,7 +32,7 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info
+        replyTo=journal.contact_info
     )
 
     if date_index > 0:

@@ -213,34 +213,6 @@ class TestJournal():
         assert f"{venue_id}/-/Retracted" in [i.id for i in invitations]
         assert f"{venue_id}/-/Authors_Release" in [i.id for i in invitations]
 
-
-        ## Check author reminders
-        raia_client.post_invitation_edit(
-            invitations='TMLR/-/Edit',
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Action_Editors/-/Recommendation',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
-                signatures=['TMLR/Editors_In_Chief']
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Action_Editors/-/Recommendation-0-0')
-
-        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for your paper Paper title')
-        assert len(messages) == 2
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>Our records show that you are late on the current task:</p>
-<p>Task: Recommendation<br>
-Submission: Paper title<br>
-Number of days late: 1<br>
-Link: <a href=\"https://openreview.net/group?id=TMLR/Authors#author-tasks\">https://openreview.net/group?id=TMLR/Authors#author-tasks</a></p>
-<p>Please follow the provided link and complete your task ASAP.</p>
-<p>We thank you for your cooperation.</p>
-<p>The TMLR Editors-in-Chief</p>
-'''        
-
         ## Update submission 1
         updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
             signatures=['TMLR/Paper1/Authors'],
