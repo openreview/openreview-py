@@ -203,7 +203,7 @@ class TestVenueRequest():
             subject='A request for service has been submitted by TestVenue@OR2021'
         )
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'].startswith(f'<p>A request for service has been submitted by TestVenue@OR2021. Check it here: <a href=\"https://openreview.net/forum?id={request_form_note.forum}\">https://openreview.net/forum?id={request_form_note.forum}</a></p>')
+        assert messages[0]['content']['text'].startswith(f'<p>A request for service has been submitted by TestVenue@OR2021. Check it here: <a href=\"https://openreview.net/forum?id={request_form_note.forum}\">https://openreview.net/forum?id={request_form_note.forum}</a>')
 
         client.post_note(openreview.Note(
             content={
@@ -223,6 +223,25 @@ class TestVenueRequest():
         ))
 
         helpers.await_queue()
+
+        request_form_note.content['program_chair_emails'] = ['new_test_user@mail.com', 'tom@mail.com', 'test@mail.com']
+        client.post_note(request_form_note)
+
+        helpers.await_queue()
+
+        messages = client.get_messages(
+            to='new_test_user@mail.com',
+            subject='Your request for OpenReview service has been received.')
+        assert messages and len(messages) == 1
+
+        messages = client.get_messages(
+            to='support@openreview.net',
+            subject='A request for service has been submitted by TestVenue@OR2021'
+        )
+        assert messages and len(messages) == 1
+
+        comment_invitation = client.get_invitation(id='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
+        assert 'test@mail.com' in comment_invitation.reply['readers']['values']
 
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(

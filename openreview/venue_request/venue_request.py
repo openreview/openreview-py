@@ -789,7 +789,7 @@ class VenueRequest():
                     web_string=file_content)
                 self.support_group = client.post_group(support_group)
 
-        self.support_process = os.path.join(os.path.dirname(__file__), 'process/supportProcess.js')
+        self.support_process = os.path.join(os.path.dirname(__file__), 'process/support_process.py')
         self.support_pre_process = os.path.join(os.path.dirname(__file__), 'process/request_form_pre_process.py')
         self.comment_process = os.path.join(os.path.dirname(__file__), 'process/commentProcess.js')
         self.error_status_process = os.path.join(os.path.dirname(__file__), 'process/error_status_process.py')
@@ -1126,7 +1126,7 @@ class VenueRequest():
             with open(self.support_process, 'r') as f:
                 pre_process_file_content = pre.read()
                 file_content = f.read()
-                file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + self.super_user + "';")
+                file_content = file_content.replace("GROUP_PREFIX = ''", "GROUP_PREFIX = '" + self.super_user + "'")
                 self.request_invitation = self.client.post_invitation(openreview.Invitation(
                     id=self.support_group.id + '/-/Request_Form',
                     readers=['everyone'],
