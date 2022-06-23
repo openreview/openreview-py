@@ -434,7 +434,7 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, unsubmitted_reviewers = False, authors=True))
+        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, unsubmitted_reviewers = False, authors=True, submitted_reviewers=True))
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)

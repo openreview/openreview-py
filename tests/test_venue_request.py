@@ -1232,7 +1232,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors'],
+                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Paper Submitted Reviewers'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
 
             },
@@ -1264,6 +1264,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 conference.get_area_chairs_id(number=1),
                 conference.get_id() + '/Paper1/Authors',
                 conference.get_id() + '/Paper1/Reviewers',
+                conference.get_id() + '/Paper1/Reviewers/Submitted',
                 conference.get_senior_area_chairs_id(number=1)
             ],
             writers=[

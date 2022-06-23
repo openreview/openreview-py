@@ -2454,7 +2454,7 @@ Thank you,
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=False, authors=True))
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, unsubmitted_reviewers=False, authors=True, submitted_reviewers=True))
 
         submissions=conference.get_submissions(number=5)
         assert len(submissions) == 1
