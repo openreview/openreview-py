@@ -2966,8 +2966,77 @@ note={Withdrawn}
 
         note = openreview_client.get_note(note_id_9)
         journal.invitation_builder.expire_paper_invitations(note)
+
+    def test_resubmission(self, journal, openreview_client, helpers):
+
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        venue_id = journal.venue_id
+        raia_client = OpenReviewClient(username='raia@mail.com', password='1234')
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password='1234')
+        editor_in_chief_group_id = journal.get_editors_in_chief_id()
+
+        rejected_submission = openreview_client.get_notes(invitation='TMLR/-/Submission', number=4)[0]
+        ## Resubmit rejected paper
+        submission_note_10 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 4' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Long submission (more than 12 pages of main content)'},
+                    'previous_TMLR_submission_url': { 'value': f'https://openreview.net/forum?id={rejected_submission.id}' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_10['id'])
+        note_id_10 = submission_note_10['note']['id']
+
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_10,
+            tail='~Joelle_Pineau1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Accept the submission 8
+        under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper10/-/Review_Approval',
+                                    signatures=[f'{venue_id}/Paper10/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        edits = openreview_client.get_note_edits(note_id=note_id_10, invitation='TMLR/-/Under_Review')
+
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        ## Assign David Belanger because of being the reviewer of the previous submission
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper10/Action_Editors", '~David_Belanger1'],
+            nonreaders=[f"{venue_id}/Paper10/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper10/Action_Editors"],
+            signatures=[f"{venue_id}/Paper10/Action_Editors"],
+            head=note_id_10,
+            tail='~David_Belanger1',
+            weight=1
+        ))       
+        
+
+        note = openreview_client.get_note(note_id_10)
+        journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_acknowledgement_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()        
 
 
 
