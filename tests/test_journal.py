@@ -1493,7 +1493,6 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
 
-        assert False
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
