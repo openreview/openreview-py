@@ -169,7 +169,7 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -239,6 +239,7 @@ class TestJournal():
 
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for your paper Paper title')
         assert len(messages) == 2
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] You are late in performing a task for your paper Paper title')
         assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
 <p>Our records show that you are late on the current task:</p>
 <p>Task: Recommendation<br>
@@ -290,7 +291,7 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Authors#author-tasks\">http
                                         content={
                                             'title': { 'value': 'Paper title 2' },
                                             'abstract': { 'value': 'Paper abstract 2' },
-                                            'authors': { 'value': ['Test User', 'Celeste Martinez']},
+                                            'authors': { 'value': ['SomeFirstName User', 'Celeste Martinez']},
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
@@ -315,7 +316,7 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Authors#author-tasks\">http
                                         content={
                                             'title': { 'value': 'Paper title 3' },
                                             'abstract': { 'value': 'Paper abstract 3' },
-                                            'authors': { 'value': ['Test User', 'Andrew McCallum']},
+                                            'authors': { 'value': ['SomeFirstName User', 'Andrew McCallum']},
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Andrew_McCallum1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
@@ -1492,6 +1493,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
 
+        assert False
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
@@ -1500,7 +1502,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
                 forum=note_id_1,
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
-                    'authors': { 'value': ['Melisa Bok', 'Test User'] }, 
+                    'authors': { 'value': ['Melissa Bok', 'SomeFirstName User'] }, 
                     'authorids': { 'value': ['~Melissa_Bok1', '~SomeFirstName_User1'] }, 
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -1523,7 +1525,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
-        assert note.content['authors']['value'] == ['Melisa Bok', 'Test User']
+        assert note.content['authors']['value'] == ['Melissa Bok', 'SomeFirstName User']
         assert note.content['venue']['value'] == 'Under review for TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Under_Review'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
@@ -1601,7 +1603,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
-        assert note.content['authors']['value'] == ['Melisa Bok', 'Test User']
+        assert note.content['authors']['value'] == ['Melissa Bok', 'SomeFirstName User']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -1612,7 +1614,7 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         assert note.content['_bibtex']['value'] == '''@article{
 bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melisa Bok and Test User},
+author={Melissa Bok and SomeFirstName User},
 journal={Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
@@ -1698,7 +1700,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note.content['_bibtex']['value'] == '''@article{
 bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melisa Bok and Test User},
+author={Melissa Bok and SomeFirstName User},
 journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
@@ -1735,7 +1737,7 @@ note={Retracted after acceptance}
                 content={
                     'title': { 'value': 'Paper title 4' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -2147,7 +2149,7 @@ note={Rejected}
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 4},
-author={Test User and Melisa Bok},
+author={SomeFirstName User and Melissa Bok},
 journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_4 + '''},
@@ -2192,7 +2194,7 @@ note={Rejected}
                 content={
                     'title': { 'value': 'Paper title 5' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Melisa Bok', 'Raia Hadsell']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok', 'Raia Hadsell']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1', '~Raia_Hadsell1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -2469,7 +2471,7 @@ note={Rejected}
                 content={
                     'title': { 'value': 'Paper title 6' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -2727,7 +2729,7 @@ note={Rejected}
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 6},
-author={Test User and Melisa Bok},
+author={SomeFirstName User and Melissa Bok},
 journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_6 + '''},
@@ -2750,7 +2752,7 @@ note={Withdrawn}
                 content={
                     'title': { 'value': 'Paper title 7' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -2843,7 +2845,7 @@ note={Withdrawn}
                 content={
                     'title': { 'value': 'Paper title 8' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -2916,7 +2918,7 @@ note={Withdrawn}
                 content={
                     'title': { 'value': 'Paper title 9' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Test User', 'Melisa Bok']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
