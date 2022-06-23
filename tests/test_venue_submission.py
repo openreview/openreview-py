@@ -187,7 +187,7 @@ class TestVenueSubmission():
             invitation=f'{conference_id}/-/Submission',
             signatures= ['~Celeste_Martinez1'],
             note=Note(
-                readers = [conference_id, 'TestVenue.cc/Paper1/Authors'],
+                #readers = [conference_id, 'TestVenue.cc/Paper1/Action_Editors', 'TestVenue.cc/Paper1/Authors'],
                 content={
                     'title': { 'value': 'Paper 1 Title' },
                     'abstract': { 'value': 'Paper abstract' },
