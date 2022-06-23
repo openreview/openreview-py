@@ -64,6 +64,7 @@ class Conference(object):
         self.use_secondary_area_chairs = False
         self.use_ethics_chairs = False
         self.use_ethics_reviewers = False
+        self.use_recruitment_template = False
         self.legacy_anonids = False
         self.legacy_invitation_id = False
         self.groups = []
@@ -597,6 +598,11 @@ class Conference(object):
 
     def get_registration_id(self, committee_id):
         return self.get_invitation_id(name = 'Registration', prefix = committee_id)
+
+    def get_recruitment_id(self, committee_id):
+        if self.use_recruitment_template:
+            return self.get_invitation_id('Recruitment', prefix=committee_id)
+        return self.get_invitation_id('Recruit_' + self.get_committee_name(committee_id))
 
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
@@ -1458,19 +1464,30 @@ class Conference(object):
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed,
             'reduced_load_id': None,
-            'allow_overlap_official_committee': allow_overlap_official_committee
+            'allow_overlap_official_committee': allow_overlap_official_committee,
+            'reduced_load_on_decline': reduced_load_on_decline
         }
-        if reduced_load_on_decline:
-            options['reduced_load_on_decline'] = reduced_load_on_decline
+        if reduced_load_on_decline and not self.use_recruitment_template:
             options['reduced_load_id'] = self.get_invitation_id('Reduced_Load', prefix = reviewers_id)
             invitation = self.invitation_builder.set_reviewer_reduced_load_invitation(self, options)
             invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
 
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
-        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reduced_load_id'])
+        invitation = self.webfield_builder.set_recruit_page(self, invitation, options['reduced_load_id'])
 
         role = reviewers_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
+        invitation_link = '''To response the invitation, please click on the following link:
+
+{{invitation_url}}      
+''' if self.use_recruitment_template else '''To ACCEPT the invitation, please click on the following link:
+
+{{accept_url}}
+
+To DECLINE the invitation, please click on the following link:
+
+{{decline_url}}
+'''
         recruit_message = f'''Dear {{{{fullname}}}},
 
 You have been nominated by the program chair committee of {self.get_short_name()} to serve as {role}. As a respected researcher in the area, we hope you will accept and help us make {self.get_short_name()} a success.
@@ -1479,13 +1496,7 @@ You are also welcome to submit papers, so please also consider submitting to {se
 
 We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
 
-To ACCEPT the invitation, please click on the following link:
-
-{{{{accept_url}}}}
-
-To DECLINE the invitation, please click on the following link:
-
-{{{{decline_url}}}}
+{invitation_link}
 
 Please answer within 10 days.
 
@@ -2815,6 +2826,9 @@ class ConferenceBuilder(object):
 
     def set_senior_area_chair_identity_readers(self, readers):
         self.conference.senior_area_chair_identity_readers = readers
+
+    def use_recruitment_template(self, use_template):
+        self.conference.use_recruitment_template = use_template
 
     def get_result(self):
 

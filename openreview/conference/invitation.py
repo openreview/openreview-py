@@ -1458,6 +1458,10 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                 else:
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
 
+                if conference.use_recruitment_template:
+                    post_content = post_content.replace("USE_RECRUITMENT_TEMPLATE = False", "USE_RECRUITMENT_TEMPLATE = True")
+
+                
                 edge_readers = []
                 edge_writers = []
                 #if committee_id.endswith(conference.area_chairs_name):
@@ -1811,13 +1815,22 @@ class InvitationBuilder(object):
         }
         reply = self.__build_options(default_reply, options.get('reply', {}))
 
-        invitation_id=conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers'))
+        invitation_id=conference.get_recruitment_id(conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers')))
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
         reduced_load = options.get('reduced_load_on_decline', None)
 
+        if reduced_load and conference.use_recruitment_template:
+            reply['content']['reduced_load'] = {
+                "description": "Please select the number of submissions that you would be comfortable reviewing.",
+                "required": False,
+                "value-dropdown": reduced_load,
+                "order": 5
+            }
+
+        post_proces_template = 'recruit_reviewers_post_process.py' if conference.use_recruitment_template else 'legacy_recruit_reviewers_post_process.py'
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/' + post_proces_template)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
                 pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")

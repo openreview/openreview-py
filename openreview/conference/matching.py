@@ -370,6 +370,15 @@ class Matching(object):
         invitation = self._create_edge_invitation(self.conference.get_conflict_score_id(self.match_group.id))
         # Get profile info from the match group
         user_profiles_info = [get_profile_info(p) for p in user_profiles]
+        # Get profile info from all the authors
+        all_authorids = []
+        for submission in submissions:
+            authorids = submission.content['authorids']
+            if submission.details and submission.details.get('original'):
+                authorids = submission.details['original']['content']['authorids']
+            all_authorids = all_authorids + authorids
+
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
 
         edges = []
 
@@ -379,19 +388,20 @@ class Matching(object):
             if submission.details and submission.details.get('original'):
                 authorids = submission.details['original']['content']['authorids']
 
-            # Extract domains from each profile
-            author_profiles = tools.get_profiles(self.client, authorids, with_publications=True)
+            # Extract domains from each autyhorprofile
             author_domains = set()
             author_emails = set()
             author_relations = set()
             author_publications = set()
-
-            for author_profile in author_profiles:
-                author_info = get_profile_info(author_profile)
-                author_domains.update(author_info['domains'])
-                author_emails.update(author_info['emails'])
-                author_relations.update(author_info['relations'])
-                author_publications.update(author_info['publications'])
+            for authorid in authorids:
+                if author_profile_by_id.get(authorid):
+                    author_info = get_profile_info(author_profile_by_id[authorid])
+                    author_domains.update(author_info['domains'])
+                    author_emails.update(author_info['emails'])
+                    author_relations.update(author_info['relations'])
+                    author_publications.update(author_info['publications'])
+                else:
+                    print(f'Profile not found: {authorid}')
 
             # Compute conflicts for each user and all the paper authors
             for user_info in user_profiles_info:
@@ -691,10 +701,14 @@ class Matching(object):
         current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation.id, groupby='tail', select=None)}
 
         reduced_loads = {}
-        reduced_load_notes = self.client.get_all_notes(invitation=self.conference.get_invitation_id('Reduced_Load', prefix = self.match_group.id), sort='tcdate:asc')
-
-        for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
-            reduced_loads[note.content['user']] = note
+        if self.conference.use_recruitment_template:
+            reduced_load_notes = self.client.get_all_notes(invitation=self.conference.get_recruitment_id(self.match_group.id), sort='tcdate:asc')
+            for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
+                reduced_loads[note.content['user']] = note.content.get('reduced_load')
+        else:
+            reduced_load_notes = self.client.get_all_notes(invitation=self.conference.get_invitation_id('Reduced_Load', prefix = self.match_group.id), sort='tcdate:asc')
+            for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
+                reduced_loads[note.content['user']] = note.content['reviewer_load']
 
         print ('Reduced loads received: ', len(reduced_loads))
 
@@ -709,7 +723,7 @@ class Matching(object):
 
             if custom_load:
                 current_edge = current_custom_max_edges.get(user_profile.id)
-                review_capacity = int(custom_load.content['reviewer_load'])
+                review_capacity = int(custom_load)
 
                 if current_edge:
                     ## Update edge if the new capacity is lower
@@ -877,7 +891,8 @@ class Matching(object):
                             'Deploying',
                             'Deployed',
                             'Deployment Error',
-                            'Queued'
+                            'Queued',
+                            'Cancelled'
                         ],
                         'order': 18
                     },
@@ -1124,6 +1139,8 @@ class Matching(object):
                 post_content = post_content.replace("INVITED_LABEL = ''", "INVITED_LABEL = '" + invited_label + "'")
                 pre_content = pre_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
                 post_content = post_content.replace("INVITE_LABEL = ''", "INVITE_LABEL = '" + invite_label + "'")
+                if self.conference.use_recruitment_template:
+                    post_content = post_content.replace("USE_RECRUITMENT_TEMPLATE = False", "USE_RECRUITMENT_TEMPLATE = True")
 
                 invitation.preprocess=pre_content
                 invitation.process=post_content
@@ -1448,6 +1465,8 @@ class Matching(object):
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
+
+        self.conference.expire_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
 
     def deploy_invite(self, assignment_title, enable_reviewer_reassignment, email_template=None):
 

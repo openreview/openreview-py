@@ -1,4 +1,4 @@
-def process(client, note, invitation):
+def process_update(client, note, invitation, existing_note):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
     SHORT_PHRASE = ''
@@ -12,6 +12,11 @@ def process(client, note, invitation):
     HASH_SEED = ''
     REDUCED_LOAD_INVITATION_NAME = ''
 
+    note = client.get_note(note.id)
+
+    if note.ddate:
+        return
+    
     user = urllib.parse.unquote(note.content['user'])
 
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
@@ -26,37 +31,37 @@ def process(client, note, invitation):
                 client.remove_members_from_group(REVIEWERS_ACCEPTED_ID, members_to_remove)
                 client.add_members_to_group(REVIEWERS_DECLINED_ID, user)
 
-                subject = '[{}] {} Invitation not accepted'.format(SHORT_PHRASE, REVIEWER_NAME)
-                message = '''It seems like you already accepted an invitation to serve as a {alternate_role} for {venue}. If you would like to change your decision and serve as a {role}, please click the Decline link in the {alternate_role} invitation email and click the Accept link in the {role} invitation email.'''.format(alternate_role=AREA_CHAIR_NAME, venue=SHORT_PHRASE, role=REVIEWER_NAME)
+                subject = f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation not accepted'
+                message = f'''It seems like you already accepted an invitation to serve as a {AREA_CHAIR_NAME} for {SHORT_PHRASE}. If you would like to change your decision and serve as a {REVIEWER_NAME}, please decline the invitation to be {AREA_CHAIR_NAME} and then accept the inviation to be {REVIEWER_NAME}.'''
                 client.post_message(subject, [user], message)
+                return
 
-            else:
-                client.remove_members_from_group(REVIEWERS_DECLINED_ID, members_to_remove)
-                client.add_members_to_group(REVIEWERS_ACCEPTED_ID, user)
+            client.remove_members_from_group(REVIEWERS_DECLINED_ID, members_to_remove)
+            client.add_members_to_group(REVIEWERS_ACCEPTED_ID, user)
 
-                subject = '[{}] {} Invitation accepted'.format(SHORT_PHRASE, REVIEWER_NAME)
-                message = '''Thank you for accepting the invitation to be a {role} for {venue}.
-The {venue} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+            reduced_load = note.content.get('reduced_load')
+            reduced_load_subject = ' with reduced load' if reduced_load else ''
+            reduced_load_text = f'''
+You have selected a reduced load of {reduced_load} submissions to review.''' if reduced_load else ''
 
-If you would like to change your decision, please click the Decline link in the previous invitation email.'''.format(role=REVIEWER_NAME, venue=SHORT_PHRASE)
+            subject = f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation accepted{reduced_load_subject}'
+            message = f'''Thank you for accepting the invitation to be a {REVIEWER_NAME} for {SHORT_PHRASE}.{reduced_load_text}
 
-                client.post_message(subject, [user], message, parentGroup=REVIEWERS_ACCEPTED_ID)
+The {SHORT_PHRASE} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-        elif (note.content['response'] == 'No'):
+If you would like to change your decision, please follow link in the previous invitation email and click on the "Decline" button.'''
+
+            client.post_message(subject, [user], message, parentGroup=REVIEWERS_ACCEPTED_ID)
+            return
+
+        if (note.content['response'] == 'No'):
             client.remove_members_from_group(REVIEWERS_ACCEPTED_ID, members_to_remove)
             client.add_members_to_group(REVIEWERS_DECLINED_ID, user)
 
-            subject = '[{}] {} Invitation declined'.format(SHORT_PHRASE, REVIEWER_NAME)
-            message = '''You have declined the invitation to become a {} for {}.
+            subject = f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation declined'
+            message = f'''You have declined the invitation to become a {REVIEWER_NAME} for {SHORT_PHRASE}.
 
-If you would like to change your decision, please click the Accept link in the previous invitation email.
-
-'''.format(REVIEWER_NAME, SHORT_PHRASE)
-
-            if (REDUCED_LOAD_INVITATION_NAME):
-                role = REVIEWER_NAME.replace(' ', '_') + 's'
-                REDUCED_LOAD_INVITATION_ID = f'{CONFERENCE_NAME}/{role}/-/{REDUCED_LOAD_INVITATION_NAME}'
-                message += 'In case you only declined because you think you cannot handle the maximum load of papers, you can reduce your load slightly. Be aware that this will decrease your overall score for an outstanding reviewer award, since all good reviews will accumulate a positive score. You can request a reduced reviewer load by clicking here: https://openreview.net/invitation?id={}&user={}&key={}'.format(REDUCED_LOAD_INVITATION_ID, user, note.content['key'])
+If you would like to change your decision, please follow link in the previous invitation email and click on the "Accept" button.'''
 
             client.post_message(subject, [user], message, parentGroup=REVIEWERS_DECLINED_ID)
 

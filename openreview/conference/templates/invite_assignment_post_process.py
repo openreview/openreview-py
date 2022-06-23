@@ -12,6 +12,7 @@ def process(client, edge, invitation):
     EMAIL_TEMPLATE = ''
     IS_REVIEWER = 'Reviewers' in ASSIGNMENT_INVITATION_ID
     ACTION_STRING = 'to review' if IS_REVIEWER else 'to serve as area chair for'
+    USE_RECRUITMENT_TEMPLATE = False
     print(edge.id)
 
     if edge.ddate is None and edge.label == INVITE_LABEL:
@@ -47,9 +48,22 @@ def process(client, edge, invitation):
         baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
         # build the URL to send in the message
-        url = f'{baseurl}/invitation?id={RECRUITMENT_INVITATION_ID}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={edge.tauthor}&response='
-        accept_url = url + "Yes"
-        decline_url = url + "No"
+        invitation_url = f'{baseurl}/invitation?id={RECRUITMENT_INVITATION_ID}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={edge.tauthor}'
+        accept_url = invitation_url + "&response=Yes"
+        decline_url = invitation_url + "&response=No"
+
+        invitation_links = f'''Please accept the invitation clicking:
+{invitation_url}&response=Yes
+
+or decline:
+
+{invitation_url}&response=No'''
+
+        if USE_RECRUITMENT_TEMPLATE:
+            invitation_links = f'''Please respond the invitation clicking the following link:
+
+{invitation_url}'''
+
 
         # format the message defined above
         subject=f'[{SHORT_PHRASE}] Invitation {ACTION_STRING} paper titled {submission.content["title"]}'
@@ -60,6 +74,7 @@ def process(client, edge, invitation):
                 abstract=submission.content['abstract'],
                 accept_url=accept_url,
                 decline_url=decline_url,
+                invitation_url=invitation_url,
                 inviter_id=inviter_id,
                 inviter_name=inviter_preferred_name,
                 inviter_email=edge.tauthor
@@ -69,18 +84,14 @@ def process(client, edge, invitation):
 You were invited {ACTION_STRING} the paper number: {submission.number}, title: {submission.content['title']}.
 Abstract: {submission.content['abstract']}
 
-Please accept the invitation clicking:
-{url}Yes
-
-or decline:
-
-{url}No
+{invitation_links}
 
 Thanks,
 
 {inviter_id}
 {inviter_preferred_name} ({edge.tauthor})'''
 
+        
         if PAPER_REVIEWER_INVITED_ID:
             paper_reviewers_invited_id=PAPER_REVIEWER_INVITED_ID.replace('{number}', str(submission.number))
             ## Paper invited group
