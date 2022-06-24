@@ -305,7 +305,8 @@ var formatData = function(
         content[currentValue] = submission.content[currentValue].value;
         return content;
       }, {}),
-      referrerUrl: referrerUrl
+      referrerUrl: referrerUrl,
+      useNewForumPage: true
     };
     var paperActionEditors = aeByNumber[number] || [];
     var actionEditor = { id: 'No Action Editor' };
@@ -393,7 +394,7 @@ var formatData = function(
         replies: reviewers
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
-      tasks.push(task);     
+      tasks.push(task);
     }
 
     if (reviewInvitation) {
@@ -405,7 +406,7 @@ var formatData = function(
         replies: reviewNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
-      tasks.push(task);         
+      tasks.push(task);
     }
 
     if (officialRecommendationInvitation) {
@@ -417,7 +418,7 @@ var formatData = function(
         replies: officialRecommendationNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
-      tasks.push(task);       
+      tasks.push(task);
     }
 
     if (reviewerRatingInvitations.length) {
@@ -429,7 +430,7 @@ var formatData = function(
         replies: reviewerRatingReplies
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
-      tasks.push(task);      
+      tasks.push(task);
     }
 
     if (decisionInvitation) {
@@ -441,7 +442,7 @@ var formatData = function(
         replies: decisionNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
-      tasks.push(task);      
+      tasks.push(task);
     }
 
     if (decisionApprovalInvitation) {
@@ -453,7 +454,7 @@ var formatData = function(
         replies: decisionApprovalNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
-      tasks.push(task);      
+      tasks.push(task);
       if (!task.complete) {
         incompleteEicTasks.push([
           {
@@ -475,7 +476,7 @@ var formatData = function(
         replies: complete ? [1] : []
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, cameraReadyTask);
-      tasks.push(cameraReadyTask);      
+      tasks.push(cameraReadyTask);
     }
 
     if (cameraReadyVerificationInvitation) {
@@ -487,7 +488,7 @@ var formatData = function(
         replies: cameraReadyVerificationNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, cameraReadyVerificationTask);
-      tasks.push(cameraReadyVerificationTask);      
+      tasks.push(cameraReadyVerificationTask);
     }
 
     var reviews = reviewNotes;
