@@ -623,7 +623,7 @@ class VenueStages():
                 'description': 'Configure additional options in the decision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'decisions_file': {
-                'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_id, decision, comment). Please do not add the column names as the first row',
+                'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). Please do not add the column names as the first row',
                 'order': 37,
                 'value-file': {
                     'fileTypes': ['csv'],
