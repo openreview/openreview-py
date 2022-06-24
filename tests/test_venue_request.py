@@ -1319,28 +1319,28 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            writer.writerow([submissions[0].id, 'Reject', 'Not Good', "Test"])
-            writer.writerow([submissions[1].id, 'Accept', 'Good Good', "Test"])
+            writer.writerow([submissions[0].number, 'Reject', 'Not Good', "Test"])
+            writer.writerow([submissions[1].number, 'Accept', 'Good Good', "Test"])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            writer.writerow([submissions[0].id])
-            writer.writerow([submissions[1].id])
+            writer.writerow([submissions[0].number])
+            writer.writerow([submissions[1].number])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            writer.writerow([submissions[0].id, 'Accept', 'Good Paper'])
-            writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
+            writer.writerow([submissions[0].number, 'Accept', 'Good Paper'])
+            writer.writerow([submissions[1].number, 'Reject', 'Not Good'])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            writer.writerow(["qwerty", 'Accept', 'Good Paper'])
-            writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
+            writer.writerow([978, 'Accept', 'Good Paper'])
+            writer.writerow([submissions[1].number, 'Reject', 'Not Good'])
 
         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_decision.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            writer.writerow([submissions[0].id, 'Test', 'Good Paper'])
-            writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
+            writer.writerow([submissions[0].number, 'Test', 'Good Paper'])
+            writer.writerow([submissions[1].number, 'Reject', 'Not Good'])
 
         # Post a decision stage note
         now = datetime.datetime.utcnow()
@@ -1460,7 +1460,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '0 Papers'
-        assert '\"Too many values provided in the decision file. Expected values are: paper_id, decision, comment\"' in decision_status.content['error']
+        assert '\"Too many values provided in the decision file. Expected values are: paper_number, decision, comment\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'),
                                          decision_stage_invitation, 'decisions_file')
@@ -1508,7 +1508,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '0 Papers'
-        assert '\"Not enough values provided in the decision file. Expected values are: paper_id, decision, comment\"' in decision_status.content['error']
+        assert '\"Not enough values provided in the decision file. Expected values are: paper_number, decision, comment\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'),
                                          decision_stage_invitation, 'decisions_file')
@@ -1556,7 +1556,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '1 Papers'
-        assert '\"Paper with ID: qwerty not found. Please check the submitted paperIDs.\"' in \
+        assert '\"Paper 978 not found. Please check the submitted paper numbers.\"' in \
                decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_decision.csv'),
