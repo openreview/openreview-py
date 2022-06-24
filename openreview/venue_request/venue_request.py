@@ -1111,6 +1111,13 @@ class VenueRequest():
                 'order': 38,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
+            },
+            'api_version': {
+                'value-dropdown': ['1', '2'],
+                'default': ['1'],
+                'order': 39,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
             }
         }
 

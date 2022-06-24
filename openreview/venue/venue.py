@@ -9,15 +9,26 @@ class Venue(object):
 
         self.client = client
         self.venue_id = venue_id
+        self.short_name = 'TBD'
         self.id = venue_id # get compatibility with conference
+        self.program_chairs_name = 'Program_Chairs'
         self.reviewers_name = 'Reviewers'
+        self.reviewer_roles = ['Reviewers']
         self.authors_name = 'Authors'
         self.submission_stage = None
         self.ethics_review_stage = None
+        self.use_area_chairs = False
+        self.use_senior_area_chairs = False
         self.invitation_builder = InvitationBuilder(self)
 
     def get_id(self):
         return self.venue_id
+
+    def get_short_name(self):
+        return self.short_name
+
+    def get_roles(self):
+        return [self.reviewers_name]
 
     def get_meta_invitation_id(self):
         return f'{self.venue_id}/-/Edit'
@@ -46,7 +57,10 @@ class Venue(object):
         return self.get_committee_id(self.reviewers_name, number)
 
     def get_authors_id(self, number = None):
-        return self.get_committee_id(self.authors_name, number)  
+        return self.get_committee_id(self.authors_name, number)
+
+    def get_program_chairs_id(self):
+        return self.get_committee_id(self.program_chairs_name)          
 
     def setup(self):
         venue_id = self.venue_id
@@ -77,7 +91,7 @@ class Venue(object):
             readers = [venue_id],
             writers = [venue_id],
             signatures = [venue_id],
-            invitation = openreview.api.Invitation(id = f'{venue_id}/-/Edit',
+            invitation = openreview.api.Invitation(id = self.get_meta_invitation_id(),
                 invitees = [venue_id],
                 readers = [venue_id],
                 signatures = [venue_id],
@@ -94,7 +108,8 @@ class Venue(object):
         venue_id = self.venue_id
         submissions = self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self))
         
-        ## Create paper groups for each submission
+        ## Create paper groups for each submission, given the authors group is going to be created during the submission time, we could consider creating all these groups
+        ## during the setup matching stage, we don't to have them created right after the submission deadline. 
         for submission in submissions:
             editors_in_chief_id = f'{venue_id}/Editors_In_Chief'
             action_editors_id = f'{venue_id}/Paper{submission.number}/Action_Editors'
