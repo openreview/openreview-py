@@ -343,9 +343,9 @@ TJ22 Editors-in-Chief
         helpers.await_queue(openreview_client)
 
         #check recruitment response posted as reply of lastest recruitment note
-        recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
-        assert recruitment_response
-        assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in recruitment_response.content['comment']['value']
+        # recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
+        # assert recruitment_response
+        # assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in recruitment_response.content['comment']['value']
 
         #check email sent only to latest AE to invite this reviewer
         messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')

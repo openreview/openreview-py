@@ -590,7 +590,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -608,6 +608,8 @@ class Client(object):
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param select: Specific field of the group. Only this field would be returned for all the groups
+        :type select: str, optional
 
         :return: List of Groups
         :rtype: list[Group]
@@ -618,6 +620,9 @@ class Client(object):
         if member is not None: params['member'] = member
         if signatory is not None: params['signatory'] = signatory
         if web: params['web'] = web
+        if select:
+            params['select'] = select
+
         params['limit'] = limit
         params['offset'] = offset
 
@@ -665,7 +670,7 @@ class Client(object):
         }
         return tools.concurrent_get(self, self.get_groups, **params)
 
-    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False, select=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
@@ -703,6 +708,8 @@ class Client(object):
         :type details: dict, optional
         :param expired: If true, retrieves the Invitations that have expired, otherwise, the ones that have not expired
         :type expired: bool, optional
+        :param select: Specific field of the group. Only this field would be returned for all the groups
+        :type select: str, optional
 
         :return: List of Invitations
         :rtype: list[Invitation]
@@ -730,6 +737,8 @@ class Client(object):
             params['minduedate'] = minduedate
         if super:
             params['super'] = super
+        if select:
+            params['select'] = select
         params['replyto'] = replyto
         params['duedate'] = duedate
         params['pastdue'] = pastdue
@@ -832,7 +841,9 @@ class Client(object):
             mintcdate = None,
             details = None,
             sort = None,
-            with_count=False):
+            with_count=False,
+            select=None
+        ):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
 
@@ -874,6 +885,8 @@ class Client(object):
         :type details: optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
         :type sort: str, optional
+        :param select: Specific field of the group. Only this field would be returned for all the groups
+        :type select: str, optional
 
         :return: List of Notes
         :rtype: list[Note]
@@ -910,6 +923,9 @@ class Client(object):
             params['mintcdate'] = mintcdate
         if details is not None:
             params['details'] = details
+        if select:
+            params['select'] = select
+
         params['sort'] = sort
         params['original'] = original
 
@@ -1436,7 +1452,7 @@ class Client(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
+    def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1461,6 +1477,8 @@ class Client(object):
             delete_query['head'] = head
         if tail:
             delete_query['tail'] = tail
+        if id: 
+            delete_query['id'] = id
 
         delete_query['waitToFinish'] = wait_to_finish
         delete_query['softDelete'] = soft_delete

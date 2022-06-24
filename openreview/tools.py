@@ -153,52 +153,49 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
         else:
             emails.append(member)
 
-    profiles = []
-    profile_by_email = {}
-    profiles_as_dict = {}
+    profile_by_id = {}
+    profile_by_id_or_email = {}
 
-    batch_size = 100
+    def process_profile(profile):
+        profile_by_id[profile.id] = profile
+        for name in profile.content.get("names", []):
+            if name.get("username"):
+                profile_by_id_or_email[name.get("username")] = profile
+        for confirmed_email in profile.content.get('emailsConfirmed', []):
+            profile_by_id_or_email[confirmed_email] = profile        
+
+    batch_size = 1000
+    ## Get profiles by id and add them to the profiles list
     for i in range(0, len(ids), batch_size):
         batch_ids = ids[i:i+batch_size]
         batch_profiles = client.search_profiles(ids=batch_ids)
-        profiles.extend(batch_profiles)
+        for profile in batch_profiles:
+            process_profile(profile)
 
-    if as_dict:
-        profiles_by_name = {}
-        for profile in profiles:
-            for name in profile.content.get("names", []):
-                profiles_by_name[name.get("username")] = profile
-
-        for id in ids:
-            profiles_as_dict[id] = profiles_by_name.get(id)
-
+    ## Get profiles by email and add them to the profiles list
     for j in range(0, len(emails), batch_size):
         batch_emails = emails[j:j+batch_size]
         batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
-        profile_by_email.update(batch_profile_by_email)
-
-    if as_dict:
-        _profiles_by_email = {}
-        for profile in profile_by_email.values():
-            for email in profile.content.get('emailsConfirmed', []):
-                _profiles_by_email[email] = profile
-
-        for email in emails:
-            profiles_as_dict[email] = _profiles_by_email.get(email)
+        for email, profile in batch_profile_by_email.items():
+            process_profile(profile)            
 
     for email in emails:
-        profiles.append(profile_by_email.get(email, openreview.Profile(
-            id=email,
-            content={
-                'emails': [email],
-                'preferredEmail': email,
-                'emailsConfirmed': [email],
-                'names': []
-            })))
+        if email not in profile_by_id_or_email:
+            profile = openreview.Profile(
+                id=email,
+                content={
+                    'emails': [email],
+                    'preferredEmail': email,
+                    'emailsConfirmed': [email],
+                    'names': []
+                })
+            profile_by_id[profile.id] = profile
+            profile_by_id_or_email[email] = profile
+ 
 
-    if as_dict and with_publications:
-        print("Getting profiles as dictionary is not supported with publications right now. Returning profiles without plublications.")
-    elif with_publications:
+    ## Get publications for all the profiles
+    profiles = list(profile_by_id.values())
+    if with_publications:
         baseurl_v1 = 'http://localhost:3000'
         baseurl_v2 = 'http://localhost:3001'
 
@@ -223,8 +220,17 @@ def get_profiles(client, ids_or_emails, with_publications=False, as_dict=False):
             else:
                 profiles[idx].content['publications'] = publications
 
+
     if as_dict:
+        profiles_as_dict = {}
+        for id in ids:
+            profiles_as_dict[id] = profile_by_id_or_email.get(id)
+
+        for email in emails:
+            profiles_as_dict[email] = profile_by_id_or_email.get(email)
+
         return profiles_as_dict
+
     return profiles
 
 
@@ -1689,7 +1695,7 @@ def recruit_reviewer(client, user, first,
     baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
     # build the URL to send in the message
-    url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}&response='.format(
+    url = '{baseurl}/invitation?id={recruitment_inv}&user={user}&key={hashkey}'.format(
         baseurl = baseurl if baseurl else client.baseurl,
         recruitment_inv = recruit_reviewers_id,
         user = urlparse.quote(user),
@@ -1698,8 +1704,9 @@ def recruit_reviewer(client, user, first,
 
     # format the message defined above
     personalized_message = recruit_message.replace("{{fullname}}", first) if first else recruit_message
-    personalized_message = personalized_message.replace("{{accept_url}}", url+"Yes")
-    personalized_message = personalized_message.replace("{{decline_url}}", url+"No")
+    personalized_message = personalized_message.replace("{{accept_url}}", url + "&response=Yes")
+    personalized_message = personalized_message.replace("{{decline_url}}", url + "&response=No")
+    personalized_message = personalized_message.replace("{{invitation_url}}", url)
     personalized_message = personalized_message.replace("{{contact_info}}", contact_info)
 
     personalized_message.format()
