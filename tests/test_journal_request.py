@@ -16,8 +16,6 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue(openreview_client)
-
         #post journal request form
         request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
             signatures = [support_group_id],
@@ -35,7 +33,7 @@ class TestJournalRequest():
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, request_form['id'])
 
         #return journal details
         journal_details = {
@@ -62,7 +60,6 @@ class TestJournalRequest():
         journal_request = JournalRequest(openreview_client, support_group_id)
         journal_request.setup_journal_request()
 
-        helpers.await_queue(openreview_client)
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), openreview_client.token)
 
         request_form = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request',
@@ -81,7 +78,7 @@ class TestJournalRequest():
                 }
             ))
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, request_form['id'])
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
 
         process_logs = openreview_client.get_process_logs(invitation = support_group_id + '/-/Journal_Request')
@@ -158,7 +155,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, recruitment_note['id'])
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -219,7 +216,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, recruitment_note['id'])
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -279,7 +276,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, recruitment_note['id'])
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -317,7 +314,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, recruitment_note['id'])
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -340,7 +337,7 @@ TJ22 Editors-in-Chief
         accept_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
 
         #check recruitment response posted as reply of lastest recruitment note
         # recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
@@ -369,7 +366,7 @@ TJ22 Editors-in-Chief
             ))
         assert recruitment_note
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, recruitment_note['id'])
         process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -386,7 +383,7 @@ TJ22 Editors-in-Chief
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
 
         #check recruitment response posted as reply of lastest recruitment note
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -406,7 +403,7 @@ TJ22 Editors-in-Chief
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
 
         # #check no new note was posted
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
