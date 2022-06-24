@@ -18,44 +18,45 @@ class TestVenueSubmission():
     def test_setup(self, openreview_client, helpers):
         conference_id = 'TestVenue.cc'
 
-        venue_group = Group(id = conference_id,
-            readers = ['everyone'],
-            writers = [conference_id],
-            signatures = ['~Super_User1'],
-            signatories = [conference_id],
-            members = [],
-            host = conference_id
-        )
+        # venue_group = Group(id = conference_id,
+        #     readers = ['everyone'],
+        #     writers = [conference_id],
+        #     signatures = ['~Super_User1'],
+        #     signatories = [conference_id],
+        #     members = [],
+        #     host = conference_id
+        # )
 
-        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/webfield/homepage.js')) as f:
-            content = f.read()
-            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + conference_id + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference_id + "/-/Submission';")
-            content = content.replace("var SUBMITTED_ID = '';", "var SUBMITTED_ID = '" + conference_id + "/Submitted';")
-            content = content.replace("var UNDER_REVIEW_ID = '';", "var UNDER_REVIEW_ID = '" + conference_id + "/Under_Review';")
-            content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + conference_id + "/Desk_Rejection';")
-            content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + conference_id + "/Withdrawn_Submission';")
-            content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + conference_id + "/Rejection';")
-            venue_group.web = content
-            openreview_client.post_group(venue_group)
+        # with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/webfield/homepage.js')) as f:
+        #     content = f.read()
+        #     content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + conference_id + "';")
+        #     content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + conference_id + "/-/Submission';")
+        #     content = content.replace("var SUBMITTED_ID = '';", "var SUBMITTED_ID = '" + conference_id + "/Submitted';")
+        #     content = content.replace("var UNDER_REVIEW_ID = '';", "var UNDER_REVIEW_ID = '" + conference_id + "/Under_Review';")
+        #     content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + conference_id + "/Desk_Rejection';")
+        #     content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + conference_id + "/Withdrawn_Submission';")
+        #     content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + conference_id + "/Rejection';")
+        #     venue_group.web = content
+        #     openreview_client.post_group(venue_group)
 
-        assert venue_group
+        # assert venue_group
 
-        meta_inv = openreview_client.post_invitation_edit(invitations = None, 
-            readers = [conference_id],
-            writers = [conference_id],
-            signatures = [conference_id],
-            invitation = Invitation(id = f'{conference_id}/-/Edit',
-                invitees = [conference_id],
-                readers = [conference_id],
-                signatures = [conference_id],
-                edit = True
-            ))
+        # meta_inv = openreview_client.post_invitation_edit(invitations = None, 
+        #     readers = [conference_id],
+        #     writers = [conference_id],
+        #     signatures = [conference_id],
+        #     invitation = Invitation(id = f'{conference_id}/-/Edit',
+        #         invitees = [conference_id],
+        #         readers = [conference_id],
+        #         signatures = [conference_id],
+        #         edit = True
+        #     ))
 
-        assert meta_inv
+        # assert meta_inv
 
         venue = Venue(openreview_client, conference_id)
-        venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True))
+        venue.setup()
+        venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.REVIEWERS_ASSIGNED]))
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Submission')
 
@@ -205,45 +206,61 @@ class TestVenueSubmission():
                 }
             ))
 
-        editors_in_chief_id = f'{conference_id}/Editors_In_Chief'
-        action_editors_id = f'{conference_id}/Paper1/Action_Editors'
-        reviewers_id = f'{conference_id}/Paper1/Reviewers'
-        authors_id = f'{conference_id}/Paper1/Authors'
+        submission = openreview_client.get_note(submission_note_1['note']['id'])
+        assert len(submission.readers) == 2
+        assert 'TestVenue.cc' in submission.readers
+        assert 'TestVenue.cc/Paper1/Authors' in submission.readers
+                
+        venue.set_post_submission_stage()
+        assert openreview_client.get_group('TestVenue.cc/Paper1/Authors')
+        assert openreview_client.get_group('TestVenue.cc/Paper1/Reviewers')
+        assert openreview_client.get_group('TestVenue.cc/Paper1/Action_Editors')
 
-        paper_group=openreview_client.post_group(Group(id=f'{conference_id}/Paper1',
-                readers=[conference_id],
-                writers=[conference_id],
-                signatures=[conference_id],
-                signatories=[conference_id]
-            ))
+        submission = openreview_client.get_note(submission.id)
+        assert len(submission.readers) == 3
+        assert 'TestVenue.cc' in submission.readers
+        assert 'TestVenue.cc/Paper1/Authors' in submission.readers        
+        assert 'TestVenue.cc/Paper1/Reviewers' in submission.readers        
 
-        authors_group=openreview_client.post_group(Group(id=authors_id,
-            readers=[conference_id, authors_id],
-            writers=[conference_id],
-            signatures=[conference_id],
-            signatories=[conference_id, authors_id],
-            members=submission_note_1['note']['content']['authorids']['value'] ## always update authors
-        ))
+        # editors_in_chief_id = f'{conference_id}/Editors_In_Chief'
+        # action_editors_id = f'{conference_id}/Paper1/Action_Editors'
+        # reviewers_id = f'{conference_id}/Paper1/Reviewers'
+        # authors_id = f'{conference_id}/Paper1/Authors'
 
-        action_editors_group=openreview_client.post_group(Group(id=action_editors_id,
-                readers=['everyone'],
-                nonreaders=[authors_id],
-                writers=[conference_id],
-                signatures=[conference_id],
-                signatories=[conference_id, action_editors_id],
-                members=[]
-            ))
+        # paper_group=openreview_client.post_group(Group(id=f'{conference_id}/Paper1',
+        #         readers=[conference_id],
+        #         writers=[conference_id],
+        #         signatures=[conference_id],
+        #         signatories=[conference_id]
+        #     ))
 
-        reviewers_group=openreview_client.post_group(Group(id=reviewers_id,
-                readers=[conference_id, action_editors_id, reviewers_id],
-                deanonymizers=[conference_id, action_editors_id],
-                nonreaders=[authors_id],
-                writers=[conference_id, action_editors_id],
-                signatures=[conference_id],
-                signatories=[conference_id],
-                members=[],
-                anonids=True
-            ))
+        # authors_group=openreview_client.post_group(Group(id=authors_id,
+        #     readers=[conference_id, authors_id],
+        #     writers=[conference_id],
+        #     signatures=[conference_id],
+        #     signatories=[conference_id, authors_id],
+        #     members=submission_note_1['note']['content']['authorids']['value'] ## always update authors
+        # ))
+
+        # action_editors_group=openreview_client.post_group(Group(id=action_editors_id,
+        #         readers=['everyone'],
+        #         nonreaders=[authors_id],
+        #         writers=[conference_id],
+        #         signatures=[conference_id],
+        #         signatories=[conference_id, action_editors_id],
+        #         members=[]
+        #     ))
+
+        # reviewers_group=openreview_client.post_group(Group(id=reviewers_id,
+        #         readers=[conference_id, action_editors_id, reviewers_id],
+        #         deanonymizers=[conference_id, action_editors_id],
+        #         nonreaders=[authors_id],
+        #         writers=[conference_id, action_editors_id],
+        #         signatures=[conference_id],
+        #         signatories=[conference_id],
+        #         members=[],
+        #         anonids=True
+        #     ))
 
         # comment_invitation_id=f'{conference_id}/Paper1/-/Official_Comment'
         # comment_invitation = Invitation(id=comment_invitation_id,

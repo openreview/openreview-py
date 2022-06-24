@@ -33,7 +33,7 @@ class InvitationBuilder(object):
         edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/Paper${{2/note/number}}/Authors']
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/Paper${{2/number}}/Authors']
 
-        submission_id = f'{venue_id}/-/{submission_stage.name}'
+        submission_id = submission_stage.get_submission_id(self.venue)
 
         submission_invitation = Invitation(
             id=submission_id,

@@ -1920,7 +1920,7 @@ class SubmissionStage(object):
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
 
-        submission_readers=[conference.get_id()]
+        submission_readers=[conference.id]
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
             hide = not decision_note or decision_note and 'Reject' in decision_note.content['decision']
