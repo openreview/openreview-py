@@ -1275,3 +1275,41 @@ class TestMatching():
 
         affinity_scores = pc_client.get_edges(invitation=conference.id + '/Reviewers_Mentors/-/Affinity_Score')
         assert len(affinity_scores) == 6
+
+    def test_desk_reject_expire_edges(self, conference, client, pc_client, helpers):
+        note = conference.get_submissions()[0]
+
+        desk_reject_note = openreview.Note(
+            invitation=f'{conference.id}/Paper{note.number}/-/Desk_Reject',
+            forum=note.forum,
+            replyto=note.forum,
+            readers=[conference.id,
+                     conference.get_authors_id(note.number),
+                     conference.get_reviewers_id(note.number),
+                     conference.get_area_chairs_id(note.number),
+                     conference.get_program_chairs_id()],
+            writers=[conference.get_id(), conference.get_program_chairs_id()],
+            signatures=[conference.get_program_chairs_id()],
+            content={
+                'desk_reject_comments': 'PC has decided to reject this submission.',
+                'title': 'Submission Desk Rejected by Program Chairs'
+            }
+        )
+
+        desk_reject_note = pc_client.post_note(desk_reject_note)
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=desk_reject_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        note_proposed_assignment_edges = client.get_edges(
+            invitation=conference.get_id() + '/.*/-/Proposed_Assignment',
+            head=desk_reject_note.forum)
+        assert not note_proposed_assignment_edges
+
+        note_assignment_edges = client.get_edges(
+            invitation=conference.get_id() + '/.*/-/Assignment',
+            head=desk_reject_note.forum)
+        assert not note_assignment_edges

@@ -98,6 +98,16 @@ def process_update(client, note, invitation, existing_note):
 
         forum_note = client.post_note(forum_note)
 
+        # Delete any assignment and proposed assignment edges
+        proposed_assignment_invitations = client.get_invitations(regex=CONFERENCE_ID + '/.*/-/Proposed_Assignment$')
+        assignment_invitations = client.get_invitations(regex=CONFERENCE_ID + '/.*/-/Assignment$')
+
+        for invitation in proposed_assignment_invitations:
+            client.delete_edges(invitation=invitation.id, head=forum_note.id, soft_delete=True)
+        for invitation in assignment_invitations:
+            client.delete_edges(invitation=invitation.id, head=forum_note.id, soft_delete=True)
+
+
         # Expire review, meta-review and decision invitations
         invitation_ids = ','.join([
             f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Official_Review',
