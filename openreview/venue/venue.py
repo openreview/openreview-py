@@ -19,6 +19,8 @@ class Venue(object):
         self.ethics_review_stage = None
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
+        self.use_ethics_chairs = False
+        self.use_ethics_reviewers = False
         self.invitation_builder = InvitationBuilder(self)
 
     def get_id(self):
