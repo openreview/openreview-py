@@ -25,7 +25,7 @@ Apologies for the change and thank you for your continued involvement with {jour
 The {journal.short_name} Editors-in-Chief
 '''
 
-        client.post_message(subject, recipients, message, parentGroup=group.id)
+        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
 
         return client.remove_members_from_group(group.id, edge.tail)
 
@@ -56,7 +56,7 @@ We thank you for your essential contribution to {journal.short_name}!
 The {journal.short_name} Editors-in-Chief
 '''
 
-        client.post_message(subject, recipients, message, parentGroup=group.id)
+        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
 
         ## expire AE recommendation
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
