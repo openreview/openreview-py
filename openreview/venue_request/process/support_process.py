@@ -6,6 +6,9 @@ def process_update(client, note, invitation, existing_note):
     SUPER_USER = '~Super_User1'
     baseurl = 'https://openreview.net'
 
+    if 'venue_id' in note.content:
+        return
+
     if existing_note is None:
         admin_subject = "A request for service has been submitted by {venue_name}".format(venue_name=note.content['Abbreviated Venue Name'])
         admin_message = "A request for service has been submitted by {venue_name}. Check it here: {baseurl}/forum?id={forum} \n".format(venue_name=note.content['Abbreviated Venue Name'], baseurl=baseurl, forum=note.forum)

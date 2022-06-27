@@ -10,12 +10,30 @@ def process(client, note, invitation):
     client.add_members_to_group(conference_group, SUPPORT_GROUP)
 
     forum = client.get_note(id=note.forum)
-    comment_readers = forum.content.get('Contact Emails', []) + forum.content.get('program_chair_emails', []) + [SUPPORT_GROUP]
+    forum.writers = []
+    forum = client.post_note(forum)
+
+    readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
+
+    comment_invitation = client.post_invitation(openreview.Invitation(
+        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
+        super=SUPPORT_GROUP + '/-/Comment',
+        reply={
+            'forum': forum.id,
+            'replyto': None,
+            'readers': {
+                'description': 'The users who will be allowed to read the above content.',
+                'values': [conference.get_program_chairs_id(), SUPPORT_GROUP]
+            }
+        },
+        signatures=['~Super_User1']
+    ))
+
     comment_note = openreview.Note(
         invitation = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
         forum = forum.id,
         replyto = forum.id,
-        readers = comment_readers,
+        readers = readers,
         writers = [SUPPORT_GROUP],
         signatures = [SUPPORT_GROUP],
         content = {
@@ -45,11 +63,6 @@ The OpenReview Team
         }
     )
     client.post_note(comment_note)
-
-    forum.writers = []
-    forum = client.post_note(forum)
-
-    readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
 
     client.post_invitation(openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Revision',
@@ -408,20 +421,6 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     )
     print('posting paper matching setup invitation!!')
     client.post_invitation(matching_invitation)
-
-    client.post_invitation(openreview.Invitation(
-        id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment',
-        super=SUPPORT_GROUP + '/-/Comment',
-        reply={
-            'forum': forum.id,
-            'replyto': None,
-            'readers': {
-                'description': 'The users who will be allowed to read the above content.',
-                'values': readers
-            }
-        },
-        signatures=['~Super_User1']
-    ))
 
     replies = client.get_notes(forum=forum.id, invitation=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Comment')
     for reply in replies:
