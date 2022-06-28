@@ -23,7 +23,7 @@ def process(client, note, invitation):
             'replyto': None,
             'readers': {
                 'description': 'The users who will be allowed to read the above content.',
-                'values': [conference.get_program_chairs_id(), SUPPORT_GROUP]
+                'values': readers
             }
         },
         signatures=['~Super_User1']
