@@ -1254,8 +1254,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Paper Submitted Reviewers'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+                'participants': ['Program Chairs', 'Paper Senior Area Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Paper Submitted Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'additional_readers': ['Public']
 
             },
             forum=venue['request_form_note'].forum,
@@ -1276,6 +1277,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         # Assert that official comment invitation is now available
         official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
         assert official_comment_invitation
+        assert 'everyone' in official_comment_invitation.reply['readers']['values-dropdown']
 
         # Assert that an official comment can be posted by the paper author
         forum_note = blind_submissions[-1]

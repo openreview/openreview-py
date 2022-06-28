@@ -489,15 +489,20 @@ def get_comment_stage(client, request_forum):
     else:
         commentary_end_date = None
 
-    anonymous = 'Public (anonymously)' in request_forum.content.get('participants', '')
-    allow_public_comments = anonymous or 'Public (non-anonymously)' in request_forum.content.get('participants', '')
+    participants = request_forum.content.get('participants', [])
+    additional_readers = request_forum.content.get('additional_readers', [])
+    additional_readers = [reader for reader in additional_readers if reader not in participants]
+    anonymous = 'Public (anonymously)' in participants
+    allow_public_comments = anonymous or 'Public (non-anonymously)' in participants
 
     unsubmitted_reviewers = 'Paper Reviewers' in request_forum.content.get('participants', '')
     submitted_reviewers = 'Paper Submitted Reviewers' in request_forum.content.get('participants', '')
+    area_chairs = 'Paper Area Chairs' in participants
+    senior_area_chairs = 'Paper Senior Area Chairs' in participants
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
 
-    authors_invited = 'Authors' in request_forum.content.get('participants', '')
+    authors_invited = 'Authors' in participants
 
     return openreview.CommentStage(
         start_date=commentary_start_date,
@@ -509,5 +514,8 @@ def get_comment_stage(client, request_forum):
         reader_selection=True,
         email_pcs=email_pcs,
         authors=authors_invited,
-        check_mandatory_readers=True
+        area_chairs=area_chairs,
+        senior_area_chairs=senior_area_chairs,
+        check_mandatory_readers=True,
+        additional_readers=additional_readers
     )
