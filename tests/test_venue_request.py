@@ -266,8 +266,7 @@ class TestVenueRequest():
         assert not openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission')
 
         assert pc_client.get_notes(invitation='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
-
-
+        
         conference = openreview.get_conference(pc_client, request_form_id=request_form_note.forum)
         submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
         abstract_due_date_str = abstract_due_date.strftime('%b %d %Y %I:%M%p')
