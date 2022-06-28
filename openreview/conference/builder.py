@@ -2406,7 +2406,7 @@ class CommentStage(object):
     senior_area_chairs=False,
     only_accepted=False,
     check_mandatory_readers=False,
-    additional_readers=None):
+    additional_readers=[]):
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
         self.start_date = start_date
@@ -2426,6 +2426,7 @@ class CommentStage(object):
 
     def get_readers(self, conference, number):
         readers = self.get_invitees(conference, number)
+        readers.remove(conference.support_user)
 
         if self.allow_public_comments or 'Public' in self.additional_readers:
             readers.append('everyone')

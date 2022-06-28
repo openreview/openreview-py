@@ -1278,7 +1278,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
 
-        conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, unsubmitted_reviewers=True))
+        conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, unsubmitted_reviewers=True, area_chairs=True))
 
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
 
