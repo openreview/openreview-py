@@ -2398,6 +2398,7 @@ class CommentStage(object):
     allow_public_comments=False,
     anonymous=False,
     unsubmitted_reviewers=False,
+    submitted_reviewers=False,
     reader_selection=False,
     email_pcs=False,
     authors=False,
@@ -2410,6 +2411,7 @@ class CommentStage(object):
         self.allow_public_comments = allow_public_comments
         self.anonymous = anonymous
         self.unsubmitted_reviewers = unsubmitted_reviewers
+        self.submitted_reviewers = submitted_reviewers
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
         self.authors = authors
@@ -2435,7 +2437,8 @@ class CommentStage(object):
 
         if self.unsubmitted_reviewers:
             readers.append(conference.get_reviewers_id(number))
-        else:
+
+        if self.submitted_reviewers:
             readers.append(conference.get_reviewers_id(number) + '/Submitted')
 
         if self.reader_selection:
@@ -2789,8 +2792,8 @@ class ConferenceBuilder(object):
     def set_review_rating_stage(self, start_date = None, due_date = None,  name = None, additional_fields = {}, remove_fields = [], public = False, release_to_reviewers=ReviewRatingStage.Readers.NO_REVIEWERS):
         self.review_rating_stage = ReviewRatingStage(start_date, due_date, name, additional_fields, remove_fields, public, release_to_reviewers)
 
-    def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False):
-        self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
+    def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, submitted_reviewers=False, reader_selection = False, email_pcs = False, authors = False):
+        self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, unsubmitted_reviewers, submitted_reviewers, reader_selection, email_pcs, authors)
 
     def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = MetaReviewStage.Readers.NO_REVIEWERS, additional_fields = {}, remove_fields = [], process = None):
         self.meta_review_stage = MetaReviewStage(name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields, remove_fields, process)

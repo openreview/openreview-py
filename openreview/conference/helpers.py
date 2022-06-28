@@ -492,7 +492,8 @@ def get_comment_stage(client, request_forum):
     anonymous = 'Public (anonymously)' in request_forum.content.get('participants', '')
     allow_public_comments = anonymous or 'Public (non-anonymously)' in request_forum.content.get('participants', '')
 
-    unsubmitted_reviewers = 'Paper Submitted Reviewers' not in request_forum.content.get('participants', '') and 'Paper Reviewers' in request_forum.content.get('participants', '')
+    unsubmitted_reviewers = 'Paper Reviewers' in request_forum.content.get('participants', '')
+    submitted_reviewers = 'Paper Submitted Reviewers' in request_forum.content.get('participants', '')
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
 
@@ -504,6 +505,7 @@ def get_comment_stage(client, request_forum):
         allow_public_comments=allow_public_comments,
         anonymous=anonymous,
         unsubmitted_reviewers=unsubmitted_reviewers,
+        submitted_reviewers=submitted_reviewers,
         reader_selection=True,
         email_pcs=email_pcs,
         authors=authors_invited,
