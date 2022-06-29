@@ -216,19 +216,19 @@ submission = {
 submission_v2 = {
     'title': {
         'order': 1,
-        'type': 'string',
         'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
         'value': { 
             'param': { 
+                'type': 'string',
                 'regex': '^.{1,250}$'
             }
         }
     },
     'authors': {
         'order': 2,
-        'type': 'string[]',
         'value': {
             'param': {
+                'type': 'string[]',
                 'regex': '[^;,\\n]+(,[^,\\n]+)*',
                 'hidden': True
             }
@@ -236,20 +236,20 @@ submission_v2 = {
     },
     'authorids': {
         'order': 3,
-        'type': 'group[]',
         'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
         'value': {
             'param': {
+                'type': 'group[]',
                 'regex': '~.*'
             }
         }
     },
     'abstract': {
         'order': 4,
-        'type': 'string',
         'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
         'value': {
             'param': {
+                'type': 'string',
                 'regex': '^[\\S\\s]{1,5000}$',
                 'markdown': True
             }
@@ -257,10 +257,10 @@ submission_v2 = {
     },
     'pdf': {
         'order': 5,
-        'type': 'file',
         'description': 'Upload a PDF file that ends with .pdf.',
         'value': {
             'param': {
+                'type': 'file',
                 'maxSize': 50,
                 'extensions': ['pdf']
             }
@@ -268,10 +268,10 @@ submission_v2 = {
     },
     "previous_submission_url": {
         'order': 6,
-        'type': 'string',
         'description': 'If a version of this submission was previously rejected, give the OpenReview link to the original submission (which must still be anonymous) and describe the changes below.',
         'value':{
             'param': {
+                'type': 'string',
                 'regex': 'https:\\/\\/openreview\\.net\\/forum\\?id=.*',
                 'optional': True
             }
@@ -279,10 +279,10 @@ submission_v2 = {
     },
     'changes_since_last_submission': {
         'order': 7,
-        'type': 'string',
         'description': 'Describe changes since last submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
         'value': {
             'param': {
+                'type': 'string',
                 'regex': '^[\\S\\s]{1,5000}$',
                 'optional': True,
                 'markdown': True
@@ -291,10 +291,10 @@ submission_v2 = {
     },
     "submission_length": {
         'order': 8,
-        'type': 'string',
         'description': 'Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.',
         'value': {
             'param': {
+                'type': 'string',
                 'enum': [
                     'Regular submission (no more than 12 pages of main content)',
                     'Long submission (more than 12 pages of main content)'
