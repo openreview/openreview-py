@@ -1856,8 +1856,9 @@ Program Chairs
         error_status = ''
         if errors:
             error_status = f'''
+Total Errors: {len(errors)}
 ```python
-{json.dumps({key: errors[key] for key in errors.keys()[:100]}, indent=2)}
+{json.dumps({key: errors[key] for key in list(errors.keys())[:10]}, indent=2)}
 ```
 '''
         status_note = openreview.Note(
