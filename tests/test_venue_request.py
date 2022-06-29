@@ -1463,6 +1463,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '0 Papers'
+        assert 'Total Errors: 2' in decision_status.content['error']
         assert '\"Too many values provided in the decision file. Expected values are: paper_number, decision, comment\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'),
@@ -1511,6 +1512,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '0 Papers'
+        assert 'Total Errors: 2' in decision_status.content['error']
         assert '\"Not enough values provided in the decision file. Expected values are: paper_number, decision, comment\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'),
@@ -1559,6 +1561,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '1 Papers'
+        assert 'Total Errors: 1' in decision_status.content['error']
         assert '\"Paper 978 not found. Please check the submitted paper numbers.\"' in \
                decision_status.content['error']
 
@@ -1608,6 +1611,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '1 Papers'
+        assert 'Total Errors: 1' in decision_status.content['error']
         assert '\"The value Test in field decision does not match the invitation definition\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'),
