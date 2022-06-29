@@ -1984,6 +1984,12 @@ Best,
         assert "Dear Venue Author,</p>\n<p>Thank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message['content']['text']
         assert f"https://openreview.net/forum?id={blind_submissions[0].id}" in last_message['content']['text']
 
+        test_client.post_note(post_decision_stage_note)
+        helpers.await_queue()
+
+        decision_messages = client.get_messages(subject="[TestVenue@OR'2030] Decision notification for your submission 1: test submission")
+        assert len(decision_messages) == 1
+
         # Assert that submissions are public
         assert blind_submissions[0].readers == ['everyone']
         assert blind_submissions[1].readers == ['everyone']
