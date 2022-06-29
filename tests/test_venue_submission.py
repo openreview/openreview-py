@@ -56,6 +56,10 @@ class TestVenueSubmission():
 
         venue = Venue(openreview_client, conference_id)
         venue.setup()
+
+        assert openreview_client.get_group('TestVenue.cc')
+        assert openreview_client.get_group('TestVenue.cc/Authors')
+
         venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.REVIEWERS_ASSIGNED]))
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Submission')
@@ -205,6 +209,8 @@ class TestVenueSubmission():
                     'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
                 }
             ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id']) 
 
         submission = openreview_client.get_note(submission_note_1['note']['id'])
         assert len(submission.readers) == 2

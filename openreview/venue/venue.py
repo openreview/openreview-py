@@ -10,6 +10,7 @@ class Venue(object):
         self.client = client
         self.venue_id = venue_id
         self.short_name = 'TBD'
+        self.website = None
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
         self.reviewers_name = 'Reviewers'
@@ -61,7 +62,14 @@ class Venue(object):
         return self.get_committee_id(self.authors_name, number)
 
     def get_program_chairs_id(self):
-        return self.get_committee_id(self.program_chairs_name)          
+        return self.get_committee_id(self.program_chairs_name)
+
+    def set_group_variable(self, group_id, variable_name, value):
+
+        group = self.client.get_group(group_id)
+        group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
+        print(group.web[:1000])
+        self.client.post_group(group)                  
 
     def setup(self):
         venue_id = self.venue_id
@@ -79,7 +87,7 @@ class Venue(object):
         with open(os.path.join(os.path.dirname(__file__), '../journal/webfield/homepage.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + venue_id + "/-/Submission';")
+            ##content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + venue_id + "/-/Submission';")
             content = content.replace("var SUBMITTED_ID = '';", "var SUBMITTED_ID = '" + venue_id + "/Submitted';")
             content = content.replace("var UNDER_REVIEW_ID = '';", "var UNDER_REVIEW_ID = '" + venue_id + "/Under_Review';")
             content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + venue_id + "/Desk_Rejection';")
@@ -87,6 +95,24 @@ class Venue(object):
             content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
             venue_group.web = content
             self.client.post_group(venue_group)
+
+        ## authors group
+        authors_id = self.get_authors_id()
+        authors_group = openreview.tools.get_group(self.client, authors_id)
+        if not authors_group:
+            authors_group = Group(id=authors_id,
+                            readers=[venue_id, authors_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[])
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
+            ##content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.submission_stage.get_submission_id(self) + "';")
+            authors_group.web = content
+            self.client.post_group(authors_group)            
 
         meta_inv = self.client.post_invitation_edit(invitations = None, 
             readers = [venue_id],
@@ -99,10 +125,15 @@ class Venue(object):
                 edit = True
             ))
 
+        self.client.add_members_to_group('venues', venue_id)
+        self.client.add_members_to_group('host', venue_id)
+
     
     def set_submission_stage(self, stage):
         self.submission_stage = stage
-        return self.invitation_builder.set_submission_invitation()
+        self.invitation_builder.set_submission_invitation()
+        self.set_group_variable(self.venue_id, 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
+        self.set_group_variable(self.get_authors_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
 
 
     def set_post_submission_stage(self):
@@ -116,21 +147,6 @@ class Venue(object):
             action_editors_id = f'{venue_id}/Paper{submission.number}/Action_Editors'
             reviewers_id = self.get_reviewers_id(submission.number)
             authors_id = self.get_authors_id(submission.number)
-
-            paper_group=self.client.post_group(openreview.api.Group(id=f'{venue_id}/Paper{submission.number}',
-                    readers=[venue_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    signatories=[venue_id]
-                ))
-
-            authors_group=self.client.post_group(Group(id=authors_id,
-                readers=[venue_id, authors_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                signatories=[venue_id, authors_id],
-                members=submission.content['authorids']['value'] ## always update authors
-            ))
 
             action_editors_group=self.client.post_group(Group(id=action_editors_id,
                     readers=[venue_id, action_editors_id],

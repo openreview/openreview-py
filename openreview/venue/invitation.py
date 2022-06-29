@@ -1,3 +1,4 @@
+import os
 from openreview.api import Invitation
 from .. import invitations
 
@@ -8,6 +9,11 @@ class InvitationBuilder(object):
         self.venue = venue
         self.venue_id = venue.venue_id
 
+    def get_process_content(self, file_path):
+        process = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            process = f.read()
+            return process.replace('VENUE_ID = ''', f"VENUE_ID = '{self.venue_id}'")
 
     def set_submission_invitation(self):
         venue_id = self.venue_id
@@ -65,7 +71,8 @@ class InvitationBuilder(object):
                     'writers': [venue_id, f'{venue_id}/Paper${{2/number}}/Authors'],
                     'content': content
                 }
-            }
+            },
+            process=self.get_process_content('process/submission_process.py')
         )
 
         submission_invitation = self.client.post_invitation_edit(
