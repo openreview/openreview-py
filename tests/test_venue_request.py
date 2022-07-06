@@ -1924,6 +1924,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                     'Revision Needed': 'Revision Needed',
                     'Reject': 'Reject'
                 },
+                'hide_fields': ['abstract'],
                 'send_decision_notifications': 'Yes, send an email notification to the authors',
                 'accept_email_content': f'''Dear {{{{fullname}}}},
 
@@ -1976,10 +1977,13 @@ Best,
 
         assert blind_submissions[0].content['authors'] == ['Anonymous']
         assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
+        assert not blind_submissions[0].content['abstract']
         assert blind_submissions[1].content['authors'] == ['Anonymous']
         assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
+        assert not blind_submissions[1].content['abstract']
         assert blind_submissions[2].content['authors'] == ['Anonymous']
         assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+        assert not blind_submissions[0].content['abstract']
 
         last_message = client.get_messages(to='venue_author1@mail.com')[-1]
         assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
