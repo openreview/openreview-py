@@ -65,7 +65,8 @@ class TestJournal():
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = '.MELBA/Action_Editors/-/Recruitment')
+
 
         group = openreview_client.get_group(f'{venue_id}/Action_Editors')
         assert len(group.members) == 5
@@ -88,7 +89,7 @@ class TestJournal():
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = '.MELBA/Reviewers/-/Recruitment')
 
         group = openreview_client.get_group(f'{venue_id}/Reviewers/Invited')
         assert len(group.members) == 5

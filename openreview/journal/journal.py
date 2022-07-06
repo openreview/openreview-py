@@ -55,6 +55,7 @@ class Journal(object):
         }
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
+        self.unavailable_reminder_period = 4 # weeks
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -77,6 +78,9 @@ class Journal(object):
 
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
+
+    def get_reviewers_reported_id(self):
+        return self.get_reviewers_id() + '/Reported'
 
     def get_solicit_reviewers_id(self, number=None, declined=False):
         group_id = self.__get_group_id(self.solicit_reviewers_name, number)
@@ -191,6 +195,9 @@ class Journal(object):
             return self.__get_invitation_id(name=f'{signature}/Responsibility/Acknowledgement', prefix=self.get_reviewers_id())
         return self.__get_invitation_id(name='Responsibility_Acknowledgement', prefix=self.get_reviewers_id())
 
+    def get_reviewer_report_id(self):
+        return self.__get_invitation_id(name='Reviewer_Report', prefix=self.get_reviewers_id())
+
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())
 
@@ -250,6 +257,16 @@ class Journal(object):
         if forum_note:
             return forum_note[0]
 
+    def get_reviewer_report_form(self):
+        forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
+        if forum_note:
+            return forum_note[0].id
+
+    def get_acknowledgement_responsibility_form(self):
+        forum_notes = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
+        if len(forum_notes) > 0:
+            return forum_notes[0].id                  
+
     def get_support_group(self):
         forum_note = self.get_request_form()
         if forum_note:
@@ -266,6 +283,9 @@ class Journal(object):
     def setup(self, support_role, editors=[], assignment_delay=5):
         self.group_builder.set_groups(self, support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
+        self.group_builder.set_group_variable(self.get_action_editors_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
+        self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
+        self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
@@ -313,13 +333,13 @@ class Journal(object):
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
-
+        self.setup_reviewer_assignment(note)
 
     def setup_under_review_submission(self, note):
         self.invitation_builder.set_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_comment_invitation(note)
-        self.setup_reviewer_assignment(note)
+        self.invitation_builder.release_submission_history(note)
 
     def assign_reviewer(self, note, reviewer, solicit):
         self.assignment.assign_reviewer(note, reviewer, solicit)
