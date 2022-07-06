@@ -349,7 +349,7 @@ class VenueStages():
                 'description': 'Select who should only be allowed to view the comments on submissions (other than the participants)',
                 'values-checkbox': [
                     'Program Chairs',
-                    'Paper Senior Area Chairs'
+                    'Paper Senior Area Chairs',
                     'Paper Area Chairs',
                     'Paper Reviewers',
                     'Paper Submitted Reviewers',
