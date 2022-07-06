@@ -1759,7 +1759,7 @@ Program Chairs
         def send_notification(note):
             decision_note = None
             for reply in note.details['directReplies']:
-                if reply['invitation'].endswith(self.decision_stage.name):
+                if reply['invitation'].endswith('/-/' + self.decision_stage.name):
                     decision_note = reply
                     break
             subject = "[{SHORT_NAME}] Decision notification for your submission {submission_number}: {submission_title}".format(
