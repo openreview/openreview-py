@@ -739,6 +739,11 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, I will send the emails to the authors'
+            },
+            'hide_fields': {
+                'values-regex': '.*',
+                'required': False,
+                'description': 'Comma separated values of submission fields to be hidden.'
             }
         }
 

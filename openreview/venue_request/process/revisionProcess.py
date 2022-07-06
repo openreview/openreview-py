@@ -229,6 +229,12 @@ Best,
                 'required': False
             }
 
+            content['hide_fields'] = {
+                'values-regex': '.*',
+                'required': False,
+                'description': 'Comma separated values of submission fields to be hidden'
+            }
+
             decision_due_date = forum_note.content.get('decision_deadline').strip()
             cdate = datetime.datetime.utcnow()
             if decision_due_date:
@@ -296,7 +302,7 @@ Best,
                 elif 'No, I don\'t want to release any submissions' in forum_note.content['release_submissions']:
                     submission_readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
-            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
+            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers, hide_fields=forum_note.content.get('hide_fields', []))
             if note.content.get('send_decision_notifications') == 'Yes, send an email notification to the authors':
                 decision_options = forum_note.content.get(
                     'decision_options',
