@@ -361,7 +361,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_authorpage_header())
 
-        template_file = 'legacyAuthorWebfield' if conference.legacy_anonids else 'authorWebfield'
+        template_file = 'legacyAuthorWebfield' if conference.legacy_anonids else 'webfield/authorWebfield'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
