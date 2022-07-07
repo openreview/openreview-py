@@ -572,7 +572,7 @@ var formatData = function(
       }
     });
 
-    paperActionEditors.forEach(function(actionEditor, number) {
+    paperActionEditors.forEach(function(actionEditor) {
       var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
       var actionEditorStatus = actionEditorStatusById[actionEditor.id];
       if (actionEditorStatus) {
