@@ -61,7 +61,8 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True, area_chairs=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AREA_CHAIRS, openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, email_pcs=True, invitees=comment_invitees, readers=comment_invitees))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -434,7 +435,9 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, unsubmitted_reviewers = False, authors=True, submitted_reviewers=True, area_chairs=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.CommentStage.Readers.AREA_CHAIRS,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
@@ -644,7 +647,9 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails = ['programchair@colt.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True, area_chairs=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AREA_CHAIRS,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
 
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
@@ -933,7 +938,9 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails = ['programchair@colt17.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection=True, authors=True, area_chairs=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AREA_CHAIRS,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)

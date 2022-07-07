@@ -314,8 +314,8 @@ class TestWorkshop():
         assert len(notes) == 1
 
     def test_open_comments(self, client, conference, test_client, selenium, request_page, helpers):
-
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, email_pcs = True, reader_selection=True, allow_public_comments = True, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, reader_selection=True, allow_public_comments = True, invitees=comment_invitees, readers=comment_invitees + [openreview.CommentStage.Readers.EVERYONE]))
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]

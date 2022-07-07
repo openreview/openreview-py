@@ -491,31 +491,54 @@ def get_comment_stage(client, request_forum):
 
     participants = request_forum.content.get('participants', [])
     additional_readers = request_forum.content.get('additional_readers', [])
-    additional_readers = [reader for reader in additional_readers if reader not in participants]
     anonymous = 'Public (anonymously)' in participants
     allow_public_comments = anonymous or 'Public (non-anonymously)' in participants
 
-    unsubmitted_reviewers = 'Paper Reviewers' in request_forum.content.get('participants', '')
-    submitted_reviewers = 'Paper Submitted Reviewers' in request_forum.content.get('participants', '')
-    area_chairs = 'Paper Area Chairs' in participants
-    senior_area_chairs = 'Paper Senior Area Chairs' in participants
+    invitees = []
+    readers = []
+    if 'Paper Reviewers' in participants:
+        invitees.append(openreview.CommentStage.Readers.REVIEWERS)
+        readers.append(openreview.CommentStage.Readers.REVIEWERS)
+    elif 'Paper Reviewers' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.REVIEWERS)
+
+    if 'Paper Submitted Reviewers' in participants:
+        invitees.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
+        readers.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
+    elif 'Paper Submitted Reviewers' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
+
+    if 'Paper Area Chairs' in participants:
+        invitees.append(openreview.CommentStage.Readers.AREA_CHAIRS)
+        readers.append(openreview.CommentStage.Readers.AREA_CHAIRS)
+    elif 'Paper Area Chairs' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.AREA_CHAIRS)
+
+    if 'Paper Senior Area Chairs' in participants:
+        invitees.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS)
+        readers.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS)
+    elif 'Paper Senior Area Chairs' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS)
+
+    if 'Authors' in participants:
+        invitees.append(openreview.CommentStage.Readers.AUTHORS)
+        readers.append(openreview.CommentStage.Readers.AUTHORS)
+    elif 'Authors' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.AUTHORS)
+
+    if 'Public' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.EVERYONE)
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
-
-    authors_invited = 'Authors' in participants
 
     return openreview.CommentStage(
         start_date=commentary_start_date,
         end_date=commentary_end_date,
         allow_public_comments=allow_public_comments,
         anonymous=anonymous,
-        unsubmitted_reviewers=unsubmitted_reviewers,
-        submitted_reviewers=submitted_reviewers,
         reader_selection=True,
         email_pcs=email_pcs,
-        authors=authors_invited,
-        area_chairs=area_chairs,
-        senior_area_chairs=senior_area_chairs,
         check_mandatory_readers=True,
-        additional_readers=additional_readers
+        readers=readers,
+        invitees=invitees
     )
