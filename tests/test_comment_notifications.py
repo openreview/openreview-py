@@ -335,7 +335,7 @@ class TestCommentNotification():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
-        builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
+        builder.set_comment_stage(email_pcs = True, invitees=[openreview.CommentStage.Readers.AUTHORS], readers=[openreview.CommentStage.Readers.AUTHORS])
         builder.set_review_stage(openreview.ReviewStage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
@@ -619,7 +619,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AUTHORS]
+        builder.set_comment_stage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
@@ -910,7 +911,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AUTHORS]
+        builder.set_comment_stage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
@@ -1129,7 +1131,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AUTHORS, openreview.CommentStage.Readers.AREA_CHAIRS]
+        builder.set_comment_stage(reader_selection = True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
