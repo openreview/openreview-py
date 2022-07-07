@@ -67,6 +67,7 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
+                'use_recruitment_template': 'No'
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -134,7 +135,7 @@ class TestVenueRequest():
         helpers.await_queue()
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
 
-        helpers.create_user('new_test_user@mail.com', 'NewFirstName', 'User')
+        pc_client = helpers.create_user('new_test_user@mail.com', 'NewFirstName', 'User')
 
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
@@ -148,7 +149,7 @@ class TestVenueRequest():
         due_date = now + datetime.timedelta(minutes=30)
         withdraw_exp_date = now + datetime.timedelta(hours=1)
 
-        request_form_note = client.post_note(openreview.Note(
+        request_form_note = pc_client.post_note(openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
             signatures=['~NewFirstName_User1'],
             readers=[
@@ -205,7 +206,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'].startswith(f'<p>A request for service has been submitted by TestVenue@OR2021. Check it here: <a href=\"https://openreview.net/forum?id={request_form_note.forum}\">https://openreview.net/forum?id={request_form_note.forum}</a>')
 
-        client.post_note(openreview.Note(
+        pc_client.post_note(openreview.Note(
             content={
                 'title': 'Urgent',
                 'comment': 'Please deploy ASAP.'
@@ -240,7 +241,7 @@ class TestVenueRequest():
         )
         assert messages and len(messages) == 1
 
-        comment_invitation = client.get_invitation(id='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
+        comment_invitation = pc_client.get_invitation(id='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
         assert 'test@mail.com' in comment_invitation.reply['readers']['values']
 
         # Test Deploy
@@ -262,10 +263,13 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
-        assert openreview.tools.get_invitation(client, 'TEST.cc/2021/Conference/-/Submission_Test')
-        assert not openreview.tools.get_invitation(client, 'TEST.cc/2021/Conference/-/Submission')
+        assert openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission_Test')
+        assert not openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission')
 
-        conference = openreview.get_conference(client, request_form_id=request_form_note.forum)
+        assert pc_client.get_notes(invitation='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
+
+
+        conference = openreview.get_conference(pc_client, request_form_id=request_form_note.forum)
         submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
         abstract_due_date_str = abstract_due_date.strftime('%b %d %Y %I:%M%p')
         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, Abstract Registration: ' + abstract_due_date_str + ' UTC-0, End: ' + submission_due_date_str + ' UTC-0'
@@ -305,10 +309,10 @@ class TestVenueRequest():
         )
 
         with pytest.raises(openreview.OpenReviewException, match=r'Author identities of desk-rejected submissions can only be anonymized for double-blind submissions'):
-            client.post_note(venue_revision_note)
+            pc_client.post_note(venue_revision_note)
 
         venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
-        venue_revision_note=client.post_note(venue_revision_note)
+        venue_revision_note=pc_client.post_note(venue_revision_note)
 
     def test_venue_revision_error(self, client, test_client, selenium, request_page, venue, helpers):
 
@@ -557,6 +561,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('<p>Dear Reviewer One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
+        assert "TEST.cc/2030/Conference/-/Recruit_Reviewers" in messages[0]['content']['text']
 
         messages = client.get_messages(to='reviewer_candidate2@email.com')
         assert messages and len(messages) == 1

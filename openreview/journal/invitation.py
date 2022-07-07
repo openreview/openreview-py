@@ -356,7 +356,7 @@ class InvitationBuilder(object):
 - [Editorial policies](https://jmlr.org/tmlr/editorial-policies.html)
 - [FAQ](https://jmlr.org/tmlr/contact.html)
 
-If you have questions after reviewing the points below that are not answered on the website, please contact the Editors-In-Chief: tmlr-editors@tmlr.org
+If you have questions after reviewing the points below that are not answered on the website, please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 '''}
                     }
                 )
@@ -537,7 +537,7 @@ If you have questions after reviewing the points below that are not answered on 
                         
 Tick one or more of the given reasons, and optionally add additional details in the comments.
 
-If you have questions please contact the Editors-In-Chief: tmlr-editors@tmlr.org
+If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 '''}
                     }
                 )
