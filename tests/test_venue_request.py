@@ -67,6 +67,7 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
+                'use_recruitment_template': 'No'
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -560,6 +561,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('<p>Dear Reviewer One,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
+        assert "TEST.cc/2030/Conference/-/Recruit_Reviewers" in messages[0]['content']['text']
 
         messages = client.get_messages(to='reviewer_candidate2@email.com')
         assert messages and len(messages) == 1
