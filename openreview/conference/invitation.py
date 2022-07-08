@@ -364,22 +364,17 @@ class WithdrawSuperInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'PAPER_AREA_CHAIRS_ID = \'\'',
                     'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number='{number}') + '\'')
-                file_content = file_content.replace(
-                    'AREA_CHAIRS_ID = \'\'',
-                    'AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id() + '\'')
             if conference.use_senior_area_chairs:
                 file_content = file_content.replace(
                     'PAPER_SENIOR_AREA_CHAIRS_ID = \'\'',
                     'PAPER_SENIOR_AREA_CHAIRS_ID = \'' + conference.get_senior_area_chairs_id(number='{number}') + '\'')
-                file_content = file_content.replace(
-                    'SENIOR_AREA_CHAIRS_ID = \'\'',
-                    'SENIOR_AREA_CHAIRS_ID = \'' + conference.get_senior_area_chairs_id() + '\'')
             file_content = file_content.replace(
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
             file_content = file_content.replace(
-                'REVIEWERS_ID = \'\'',
-                'REVIEWERS_ID = \'' + conference.get_reviewers_id() + '\'')
+                'CONFERENCE_ROLES = []',
+                str.format('CONFERENCE_ROLES = {}', conference.get_roles())
+            )
             file_content = file_content.replace(
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
@@ -570,22 +565,17 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 file_content = file_content.replace(
                     'PAPER_AREA_CHAIRS_ID = \'\'',
                     'PAPER_AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id(number=note.number) + '\'')
-                file_content = file_content.replace(
-                    'AREA_CHAIRS_ID = \'\'',
-                    'AREA_CHAIRS_ID = \'' + conference.get_area_chairs_id() + '\'')
             if conference.use_senior_area_chairs:
                 file_content = file_content.replace(
                     'PAPER_SENIOR_AREA_CHAIRS_ID = \'\'',
                     'PAPER_SENIOR_AREA_CHAIRS_ID = \'' + conference.get_senior_area_chairs_id(number=note.number) + '\'')
-                file_content = file_content.replace(
-                    'SENIOR_AREA_CHAIRS_ID = \'\'',
-                    'SENIOR_AREA_CHAIRS_ID = \'' + conference.get_senior_area_chairs_id() + '\'')
             file_content = file_content.replace(
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
             file_content = file_content.replace(
-                'REVIEWERS_ID = \'\'',
-                'REVIEWERS_ID = \'' + conference.get_reviewers_id() + '\'')
+                'CONFERENCE_ROLES = []',
+                str.format('CONFERENCE_ROLES = {}', conference.get_roles())
+            )
             file_content = file_content.replace(
                 'DESK_REJECTED_SUBMISSION_ID = \'\'',
                 'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')

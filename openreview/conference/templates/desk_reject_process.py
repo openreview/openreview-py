@@ -9,9 +9,7 @@ def process_update(client, note, invitation, existing_note):
     PAPER_AREA_CHAIRS_ID = ''
     PAPER_SENIOR_AREA_CHAIRS_ID = ''
     PROGRAM_CHAIRS_ID = ''
-    AREA_CHAIRS_ID = ''
-    SENIOR_AREA_CHAIRS_ID = ''
-    REVIEWERS_ID = ''
+    CONFERENCE_ROLES = []
     BLIND_SUBMISSION_ID = ''
     SUBMISSION_READERS = []
     DESK_REJECTED_SUBMISSION_ID = ''
@@ -19,15 +17,12 @@ def process_update(client, note, invitation, existing_note):
     REVEAL_SUBMISSIONS_ON_DESK_REJECT = False
     HIDE_FIELDS = []
 
-    paper_committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
-    committee = [REVIEWERS_ID]
+    committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
     if PAPER_AREA_CHAIRS_ID:
-        paper_committee.append(PAPER_AREA_CHAIRS_ID)
-        committee.append(AREA_CHAIRS_ID)
+        committee.append(PAPER_AREA_CHAIRS_ID)
     if PAPER_SENIOR_AREA_CHAIRS_ID:
-        paper_committee.append(PAPER_SENIOR_AREA_CHAIRS_ID)
-        committee.append(SENIOR_AREA_CHAIRS_ID)
-    paper_committee.append(PROGRAM_CHAIRS_ID)
+        committee.append(PAPER_SENIOR_AREA_CHAIRS_ID)
+    committee.append(PROGRAM_CHAIRS_ID)
 
     if note.ddate:
         ## Undo desk reject
@@ -77,7 +72,7 @@ def process_update(client, note, invitation, existing_note):
         if REVEAL_SUBMISSIONS_ON_DESK_REJECT:
             forum_note.readers = ['everyone']
         else:
-            forum_note.readers = paper_committee
+            forum_note.readers = committee
 
         bibtex = openreview.tools.generate_bibtex(
             note=original_note if original_note is not None else forum_note,
@@ -105,9 +100,19 @@ def process_update(client, note, invitation, existing_note):
         forum_note = client.post_note(forum_note)
 
         # Delete any assignment and proposed assignment edges
-        for role in committee:
-            client.delete_edges(invitation=role + '/-/Proposed_Assignment', head=forum_note.id, soft_delete=True)
-            client.delete_edges(invitation=role + '/-/Assignment', head=forum_note.id, soft_delete=True)
+        def delete_edges(invitation_id):
+            try:
+                client.delete_edges(invitation=invitation_id, head=forum_note.id, soft_delete=True)
+            except openreview.OpenReviewException as ex:
+                if ex.args[0].get('name') == 'NotFoundError':
+                    print(f"Invitation {invitation_id} not found. Skipping.")
+                else:
+                    raise ex
+
+        for role in CONFERENCE_ROLES:
+            role_id = CONFERENCE_ID + '/' + role
+            delete_edges(invitation_id=role_id + '/-/Proposed_Assignment')
+            delete_edges(invitation_id=role_id + '/-/Assignment')
 
         # Expire review, meta-review and decision invitations
         invitation_ids = ','.join([
@@ -145,4 +150,4 @@ To view more details, click here: https://openreview.net/forum?id={forum_id}&not
         note_id=note.id,
         action=action
     )
-    client.post_message(email_subject, paper_committee, email_body)
+    client.post_message(email_subject, committee, email_body)
