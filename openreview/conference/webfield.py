@@ -22,7 +22,7 @@ class WebfieldBuilder(object):
         return merged_options
 
     def __should_update(self, entity):
-        return entity.details.get('writable', False) and (not entity.web or entity.web.startswith('// webfield_template'))
+        return entity.details.get('writable', False) and (not entity.web or entity.web.startswith('// webfield_template') or entity.web.startswith('// Webfield component'))
 
     def __update_invitation(self, invitation, content):
         current_invitation=self.client.get_invitation(invitation.id)
