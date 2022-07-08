@@ -21,7 +21,8 @@ class Helpers:
                     {
                         'first': first,
                         'last': last,
-                        'username': username
+                        'username': username,
+                        'preferred': True
                     }
                 ],
             'emails': [email] + alternates,
