@@ -67,7 +67,7 @@ class TestLegacyInvitations():
         conference.set_assignment('reviewer_legacy@mail.com', 1)
         conference.set_assignment('ac_legacy@mail.com', 1, True)
 
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AREA_CHAIRS,
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
                             openreview.CommentStage.Readers.AUTHORS]
         conference.set_comment_stage(openreview.CommentStage(invitees=comment_invitees, readers=comment_invitees))
         conference.open_reviews()

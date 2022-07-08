@@ -496,29 +496,29 @@ def get_comment_stage(client, request_forum):
 
     invitees = []
     readers = []
-    if 'Paper Reviewers' in participants:
-        invitees.append(openreview.CommentStage.Readers.REVIEWERS)
-        readers.append(openreview.CommentStage.Readers.REVIEWERS)
-    elif 'Paper Reviewers' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.REVIEWERS)
+    if 'Assigned Reviewers' in participants:
+        invitees.append(openreview.CommentStage.Readers.REVIEWERS_ASSIGNED)
+        readers.append(openreview.CommentStage.Readers.REVIEWERS_ASSIGNED)
+    elif 'Assigned Reviewers' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.REVIEWERS_ASSIGNED)
 
-    if 'Paper Submitted Reviewers' in participants:
+    if 'Assigned Submitted Reviewers' in participants:
         invitees.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
         readers.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
-    elif 'Paper Submitted Reviewers' in additional_readers:
+    elif 'Assigned Submitted Reviewers' in additional_readers:
         readers.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
 
-    if 'Paper Area Chairs' in participants:
-        invitees.append(openreview.CommentStage.Readers.AREA_CHAIRS)
-        readers.append(openreview.CommentStage.Readers.AREA_CHAIRS)
-    elif 'Paper Area Chairs' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.AREA_CHAIRS)
+    if 'Assigned Area Chairs' in participants:
+        invitees.append(openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
+        readers.append(openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
+    elif 'Assigned Area Chairs' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
 
-    if 'Paper Senior Area Chairs' in participants:
-        invitees.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS)
-        readers.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS)
-    elif 'Paper Senior Area Chairs' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS)
+    if 'Assigned Senior Area Chairs' in participants:
+        invitees.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+        readers.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+    elif 'Assigned Senior Area Chairs' in additional_readers:
+        readers.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
 
     if 'Authors' in participants:
         invitees.append(openreview.CommentStage.Readers.AUTHORS)

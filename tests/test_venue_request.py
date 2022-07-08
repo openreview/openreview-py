@@ -1255,7 +1255,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'participants': ['Program Chairs', 'Paper Senior Area Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Paper Submitted Reviewers'],
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors', 'Assigned Submitted Reviewers'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
                 'additional_readers': ['Public']
 
@@ -2116,7 +2116,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Public (non-anonymously)'],
+                'participants': ['Program Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors', 'Public (non-anonymously)'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
 
             },

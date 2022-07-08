@@ -938,7 +938,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        comment_invitees = [openreview.CommentStage.Readers.AREA_CHAIRS,
+        comment_invitees = [openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
                             openreview.CommentStage.Readers.AUTHORS]
         conference.set_comment_stage(openreview.CommentStage(invitees=comment_invitees, readers=comment_invitees))
 

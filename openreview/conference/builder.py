@@ -2394,9 +2394,9 @@ class CommentStage(object):
 
     class Readers(Enum):
         EVERYONE = 0
-        SENIOR_AREA_CHAIRS = 1
-        AREA_CHAIRS = 2
-        REVIEWERS = 3
+        SENIOR_AREA_CHAIRS_ASSIGNED = 1
+        AREA_CHAIRS_ASSIGNED = 2
+        REVIEWERS_ASSIGNED = 3
         REVIEWERS_SUBMITTED = 4
         AUTHORS = 5
 
@@ -2435,13 +2435,13 @@ class CommentStage(object):
         if self.reader_selection:
             readers.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
 
-        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS in self.readers:
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
             readers.append(conference.get_senior_area_chairs_id(number))
 
-        if conference.use_area_chairs and self.Readers.AREA_CHAIRS in self.readers:
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
             readers.append(conference.get_area_chairs_id(number))
 
-        if self.Readers.REVIEWERS in self.readers:
+        if self.Readers.REVIEWERS_ASSIGNED in self.readers:
             readers.append(conference.get_reviewers_id(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.readers:
@@ -2456,13 +2456,14 @@ class CommentStage(object):
 
         committee = [conference.get_program_chairs_id()]
 
-        if conference.use_senior_area_chairs:
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_senior_area_chairs_id(number))
 
-        if conference.use_area_chairs:
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
-        committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+        if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
+            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
 
         if self.Readers.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
@@ -2472,13 +2473,13 @@ class CommentStage(object):
     def get_invitees(self, conference, number):
         invitees = [conference.get_program_chairs_id(), conference.support_user]
 
-        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS in self.invitees:
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
             invitees.append(conference.get_senior_area_chairs_id(number))
 
-        if conference.use_area_chairs and self.Readers.AREA_CHAIRS in self.invitees:
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
             invitees.append(conference.get_area_chairs_id(number))
 
-        if self.Readers.REVIEWERS in self.invitees:
+        if self.Readers.REVIEWERS_ASSIGNED in self.invitees:
             invitees.append(conference.get_reviewers_id(number))
 
         if self.Readers.REVIEWERS_SUBMITTED in self.invitees:

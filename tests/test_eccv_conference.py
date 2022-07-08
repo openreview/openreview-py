@@ -1277,7 +1277,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert '~ReviewerFirstName_Eccv1' in paper_reviewer_group.members
 
     def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AREA_CHAIRS]
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
         conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
 
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')

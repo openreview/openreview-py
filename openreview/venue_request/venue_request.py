@@ -333,10 +333,10 @@ class VenueStages():
                 'description': 'Select who should be allowed to post comments on submissions. These will be added as readers automatically.',
                 'values-checkbox' : [
                     'Program Chairs',
-                    'Paper Senior Area Chairs',
-                    'Paper Area Chairs',
-                    'Paper Reviewers',
-                    'Paper Submitted Reviewers',
+                    'Assigned Senior Area Chairs',
+                    'Assigned Area Chairs',
+                    'Assigned Reviewers',
+                    'Assigned Submitted Reviewers',
                     'Authors',
                     'Public (anonymously)',
                     'Public (non-anonymously)'
@@ -349,10 +349,10 @@ class VenueStages():
                 'description': 'Select who should only be allowed to view the comments on submissions (other than the participants)',
                 'values-checkbox': [
                     'Program Chairs',
-                    'Paper Senior Area Chairs',
-                    'Paper Area Chairs',
-                    'Paper Reviewers',
-                    'Paper Submitted Reviewers',
+                    'Assigned Senior Area Chairs',
+                    'Assigned Area Chairs',
+                    'Assigned Reviewers',
+                    'Assigned Submitted Reviewers',
                     'Authors',
                     'Public'
                 ],

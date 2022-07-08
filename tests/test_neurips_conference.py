@@ -2322,8 +2322,8 @@ Thank you,
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS, openreview.CommentStage.Readers.AREA_CHAIRS,
-                            openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS]
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED]
         conference.set_comment_stage(openreview.CommentStage(reader_selection=True, check_mandatory_readers=True, invitees=comment_invitees, readers=comment_invitees))
 
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
@@ -2456,8 +2456,8 @@ Thank you,
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.CommentStage.Readers.AREA_CHAIRS,
-                            openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS, openreview.CommentStage.Readers.AUTHORS]
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
         conference.set_comment_stage(openreview.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
 
         submissions=conference.get_submissions(number=5)
