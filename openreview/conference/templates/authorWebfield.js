@@ -22,7 +22,7 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 function main() {
   // In the future this should not be necessary as the group's readers
   // will prevent unauthenticated users
-  if (!user || !user.profile) {
+  if (!user || !user.profile || user.profile.id === 'guest') {
     location.href = '/login?redirect=' + encodeURIComponent(
       location.pathname + location.search + location.hash
     );
@@ -224,8 +224,8 @@ function renderStatusTable(notes) {
 
   $container.empty().append(tableHtml);
 
-  $('#your-submissions .console-table th').eq(0).css('width', '4%');
-  $('#your-submissions .console-table th').eq(1).css('width', '36%');
+  $('#your-submissions .console-table th').eq(0).css('width', '5%');
+  $('#your-submissions .console-table th').eq(1).css('width', '35%');
   $('#your-submissions .console-table th').eq(2).css('width', '30%');
   $('#your-submissions .console-table th').eq(3).css('width', '30%');
 }
