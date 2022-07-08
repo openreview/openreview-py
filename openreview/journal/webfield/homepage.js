@@ -78,7 +78,8 @@ function load() {
     'content.venueid': VENUE_ID,
     pageSize: PAGE_SIZE,
     details: 'replyCount',
-    includeCount: true
+    includeCount: true,
+    sort: 'tmdate:desc'
   });
 
   var featuredAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
@@ -86,7 +87,8 @@ function load() {
     'content.certifications': 'Featured Certification',
     pageSize: PAGE_SIZE,
     details: 'replyCount',
-    includeCount: true
+    includeCount: true,
+    sort: 'tmdate:desc'
   });
 
   var reproducibilityAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {
@@ -94,7 +96,8 @@ function load() {
     'content.certifications': 'Reproducibility Certification',
     pageSize: PAGE_SIZE,
     details: 'replyCount',
-    includeCount: true
+    includeCount: true,
+    sort: 'tmdate:desc'
   });
 
   var surveyAcceptedNotesP = Webfield2.api.getSubmissions(SUBMISSION_ID, {

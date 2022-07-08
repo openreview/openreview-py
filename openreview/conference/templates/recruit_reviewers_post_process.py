@@ -14,7 +14,7 @@ def process_update(client, note, invitation, existing_note):
 
     note = client.get_note(note.id)
 
-    if note.ddate:
+    if note.ddate or 'message' in note.content:
         return
     
     user = urllib.parse.unquote(note.content['user'])
@@ -49,7 +49,7 @@ You have selected a reduced load of {reduced_load} submissions to review.''' if 
 
 The {SHORT_PHRASE} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-If you would like to change your decision, please follow link in the previous invitation email and click on the "Decline" button.'''
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
 
             client.post_message(subject, [user], message, parentGroup=REVIEWERS_ACCEPTED_ID)
             return
@@ -61,7 +61,7 @@ If you would like to change your decision, please follow link in the previous in
             subject = f'[{SHORT_PHRASE}] {REVIEWER_NAME} Invitation declined'
             message = f'''You have declined the invitation to become a {REVIEWER_NAME} for {SHORT_PHRASE}.
 
-If you would like to change your decision, please follow link in the previous invitation email and click on the "Accept" button.'''
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
 
             client.post_message(subject, [user], message, parentGroup=REVIEWERS_DECLINED_ID)
 

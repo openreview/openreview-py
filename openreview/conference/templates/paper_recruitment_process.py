@@ -58,7 +58,7 @@ def process(client, note, invitation):
 
         print('Invitation accepted', edge.tail, submission.number)
 
-        decline_instructions = 'If you would like to change your decision, please follow link in the previous invitation email and click on the "Decline" button.' if USE_RECRUITMENT_TEMPLATE else 'If you would like to change your decision, please click the Decline link in the previous invitation email.'
+        decline_instructions = 'If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.' if USE_RECRUITMENT_TEMPLATE else 'If you would like to change your decision, please click the Decline link in the previous invitation email.'
 
         if not user_profile or user_profile.active == False:
             edge.label='Pending Sign Up'
@@ -198,7 +198,7 @@ OpenReview Team'''
     elif (note.content['response'] == 'No'):
 
         print('Invitation declined', edge.tail, submission.number)
-        accept_instructions = 'If you would like to change your decision, please follow link in the previous invitation email and click on the "Accept" button.' if USE_RECRUITMENT_TEMPLATE else 'If you would like to change your decision, please click the Accept link in the previous invitation email.'
+        accept_instructions = 'If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.' if USE_RECRUITMENT_TEMPLATE else 'If you would like to change your decision, please click the Accept link in the previous invitation email.'
 
         ## I'm not sure if we should remove it because they could have been invite to more than one paper
         #client.remove_members_from_group(EXTERNAL_COMMITTEE_ID, edge.tail)

@@ -14,6 +14,8 @@ var EDITORS_IN_CHIEF_NAME = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
+var REVIEWER_REPORT_ID = '';
+var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
@@ -73,7 +75,9 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
   '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Journal Request Forum:</strong></li>' +
-  '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>';
+  '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
+  '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
+  '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
@@ -152,7 +156,20 @@ var loadData = function() {
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
-    Webfield2.api.getAllSubmissions(REVIEWERS_ID + '/-/.*/' + RESPONSIBILITY_ACK_NAME, { details: {} }),
+    Webfield2.api.getAll('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID }),
+    Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID })
+    .then(function(notes) {
+      return notes.reduce(function(content, currentValue) {
+        var reviewer_id = currentValue.content.reviewer_id;
+        if (reviewer_id) {
+          if (!(reviewer_id.value in content)) {
+            content[reviewer_id.value] = [];
+          }
+          content[reviewer_id.value].push(currentValue);
+        }
+        return content;
+      }, {})
+    }),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
@@ -190,6 +207,7 @@ var formatData = function(
   reviewersByNumber,
   submissions,
   responsibilityNotes,
+  reviewerReportByReviewerId,
   actionEditors,
   reviewers,
   invitationsById,
@@ -205,6 +223,7 @@ var formatData = function(
     var responsibility = responsibilityNotes.find(function(reply) {
       return reply.invitations[0] === REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME;
     });
+    var reviewerReports = reviewerReportByReviewerId[reviewer.id] || [];
 
     reviewerStatusById[reviewer.id] = {
       index: { number: index + 1 },
@@ -215,7 +234,8 @@ var formatData = function(
         status: {
           Profile: reviewer.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-',
-          'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No'
+          'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No',
+          'Reviewer Report': reviewerReports.length
         }
       },
       reviewerProgressData: {
@@ -552,7 +572,7 @@ var formatData = function(
       }
     });
 
-    paperActionEditors.forEach(function(actionEditor, number) {
+    paperActionEditors.forEach(function(actionEditor) {
       var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
       var actionEditorStatus = actionEditorStatusById[actionEditor.id];
       if (actionEditorStatus) {
@@ -917,6 +937,7 @@ var renderTable = function(container, rows) {
       }]
     },
     extraClasses: 'console-table paper-table',
+    pageSize: 10,
     postRenderTable: function() {
       $('#' + container + ' .console-table th').eq(0).css('width', '2%');  // [ ]
       $('#' + container + ' .console-table th').eq(1).css('width', '3%');  // #
@@ -1149,6 +1170,7 @@ var renderData = function(venueStatusData) {
       default: ['summary.name'],
     },
     extraClasses: 'console-table',
+    pageSize: 10,
     postRenderTable: function() {
       $('#reviewer-status .console-table th').eq(0).css('width', '4%');  // #
       $('#reviewer-status .console-table th').eq(1).css('width', '23%');  // reviewer
@@ -1197,7 +1219,8 @@ var renderData = function(venueStatusData) {
       papersAssigned: ['reviewProgressData.numPapers'],
       default: ['summary.name']
     },
-    extraClasses: 'console-table'
+    extraClasses: 'console-table',
+    pageSize: 10
   });
 
 };

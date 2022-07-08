@@ -22,7 +22,7 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 function main() {
   // In the future this should not be necessary as the group's readers
   // will prevent unauthenticated users
-  if (!user || !user.profile) {
+  if (!user || !user.profile || user.profile.id === 'guest') {
     location.href = '/login?redirect=' + encodeURIComponent(
       location.pathname + location.search + location.hash
     );
