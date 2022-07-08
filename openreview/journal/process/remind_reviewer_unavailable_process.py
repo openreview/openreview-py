@@ -1,6 +1,6 @@
 def process(client, invitation):
     
-    print('Remind action editors')
+    print('Remind reviewers')
     journal = openreview.journal.Journal()
     edges = client.get_edges(invitation=journal.get_reviewer_availability_id(), label='Unavailable')
     reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
@@ -13,7 +13,7 @@ It has been a few weeks since you've marked yourself as unavailable to participa
 
 If you are now ready to get back to supporting {journal.short_name}'s review process, please visit the following page to adjust your availability accordingly:
 
-https://openreview.net/group?id={journal.get_action_editors_id()}
+https://openreview.net/group?id={journal.get_reviewers_id()}
 
 We thank you for your cooperation.
 
