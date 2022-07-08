@@ -12,7 +12,7 @@ def process(client, edit, invitation):
 
 {profile.get_preferred_name(pretty=True)} posted an assignment acknowledgement on a submission for which you are an Action Editor.
 
-Submission: Paper title UPDATED
+Submission: {submission.content['title']['value']}
 Assignment acknowledgement: {edit.note.content['assignment_acknowledgement']['value']}
 
 To view the acknowledgement, click here: https://openreview.net/forum?id={submission.id}&noteId={edit.note.id}

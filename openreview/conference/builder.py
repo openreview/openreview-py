@@ -64,6 +64,7 @@ class Conference(object):
         self.use_secondary_area_chairs = False
         self.use_ethics_chairs = False
         self.use_ethics_reviewers = False
+        self.use_recruitment_template = False
         self.legacy_anonids = False
         self.legacy_invitation_id = False
         self.groups = []
@@ -598,6 +599,11 @@ class Conference(object):
     def get_registration_id(self, committee_id):
         return self.get_invitation_id(name = 'Registration', prefix = committee_id)
 
+    def get_recruitment_id(self, committee_id):
+        if self.use_recruitment_template:
+            return self.get_invitation_id('Recruitment', prefix=committee_id)
+        return self.get_invitation_id('Recruit_' + self.get_committee_name(committee_id))
+
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
         if prefix:
@@ -789,7 +795,7 @@ class Conference(object):
         return readers
 
     def create_withdraw_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False,
-                                    hide_fields=None, force=False):
+                                    hide_fields=[], force=False):
         if not force and reveal_submission and not self.submission_stage.public:
             raise openreview.OpenReviewException('Can not reveal withdrawn submissions that are not originally public')
 
@@ -1012,7 +1018,7 @@ class Conference(object):
             additional_fields=self.submission_stage.additional_fields,
             remove_fields=self.submission_stage.remove_fields,
             only_accepted=False,
-            multiReply=False,
+            multiReply=False if self.submission_stage.double_blind else True,
             allow_author_reorder=allow_author_reorder
         )
         self.__create_submission_revision_stage()
@@ -1247,26 +1253,28 @@ class Conference(object):
         self.__create_group(parent_group_invited_id, self.id, exclude_self_reader=True)
 
         ## create groups per submissions
+        def create_paper_group(submission):
+            paper_group_id = self.get_committee_id(name=name, number=submission.number)
+            self.client.post_group(openreview.Group(
+                id=paper_group_id,
+                readers=[self.id, paper_group_id],
+                writers=[self.id],
+                signatures=[self.id],
+                signatories=[self.id],
+                members=[]
+            ))
+            paper_invited_group_id = self.get_committee_id(name=name + '/Invited', number=submission.number)
+            return self.client.post_group(openreview.Group(
+                id=paper_invited_group_id,
+                readers=[self.id],
+                writers=[self.id],
+                signatures=[self.id],
+                signatories=[self.id],
+                members=[]
+            ))
+
         if create_paper_groups:
-            for submission in tqdm(self.get_submissions()):
-                paper_group_id = self.get_committee_id(name=name, number=submission.number)
-                self.client.post_group(openreview.Group(
-                    id=paper_group_id,
-                    readers=[self.id, paper_group_id],
-                    writers=[self.id],
-                    signatures=[self.id],
-                    signatories=[self.id],
-                    members=[]
-                ))
-                paper_invited_group_id = self.get_committee_id(name=name + '/Invited', number=submission.number)
-                self.client.post_group(openreview.Group(
-                    id=paper_invited_group_id,
-                    readers=[self.id],
-                    writers=[self.id],
-                    signatures=[self.id],
-                    signatories=[self.id],
-                    members=[]
-                ))
+            tools.concurrent_requests(create_paper_group, self.get_submissions(), desc='Creating paper groups')
 
     def set_reviewers(self, emails = []):
         readers = []
@@ -1345,6 +1353,11 @@ class Conference(object):
         committee_id=self.get_reviewers_id()
         conference_matching = matching.Matching(self, self.client.get_group(committee_id))
         return conference_matching.append_note_conflicts(profile_id, build_conflicts)
+
+    def set_matching_alternate_conflicts(self, committee_id, source_committee_id, source_assignment_title, conflict_label):
+        conference_matching = matching.Matching(self, self.client.get_group(source_committee_id), committee_id)
+        conference_matching.compute_alternate_conflicts(source_assignment_title, conflict_label)
+
 
     def setup_assignment_recruitment(self, committee_id, hash_seed, due_date, assignment_title=None, invitation_labels={}, email_template=None):
 
@@ -1451,19 +1464,30 @@ class Conference(object):
             'reviewers_declined_id': reviewers_declined_id,
             'hash_seed': hash_seed,
             'reduced_load_id': None,
-            'allow_overlap_official_committee': allow_overlap_official_committee
+            'allow_overlap_official_committee': allow_overlap_official_committee,
+            'reduced_load_on_decline': reduced_load_on_decline
         }
-        if reduced_load_on_decline:
-            options['reduced_load_on_decline'] = reduced_load_on_decline
+        if reduced_load_on_decline and not self.use_recruitment_template:
             options['reduced_load_id'] = self.get_invitation_id('Reduced_Load', prefix = reviewers_id)
             invitation = self.invitation_builder.set_reviewer_reduced_load_invitation(self, options)
             invitation = self.webfield_builder.set_reduced_load_page(self.id, invitation, self.get_homepage_options())
 
         invitation = self.invitation_builder.set_reviewer_recruiter_invitation(self, options)
-        invitation = self.webfield_builder.set_recruit_page(self.id, invitation, self.get_homepage_options(), options['reduced_load_id'])
+        invitation = self.webfield_builder.set_recruit_page(self, invitation, options['reduced_load_id'])
 
         role = reviewers_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
+        invitation_link = '''To response the invitation, please click on the following link:
+
+{{invitation_url}}      
+''' if self.use_recruitment_template else '''To ACCEPT the invitation, please click on the following link:
+
+{{accept_url}}
+
+To DECLINE the invitation, please click on the following link:
+
+{{decline_url}}
+'''
         recruit_message = f'''Dear {{{{fullname}}}},
 
 You have been nominated by the program chair committee of {self.get_short_name()} to serve as {role}. As a respected researcher in the area, we hope you will accept and help us make {self.get_short_name()} a success.
@@ -1472,13 +1496,7 @@ You are also welcome to submit papers, so please also consider submitting to {se
 
 We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
 
-To ACCEPT the invitation, please click on the following link:
-
-{{{{accept_url}}}}
-
-To DECLINE the invitation, please click on the following link:
-
-{{{{decline_url}}}}
+{invitation_link}
 
 Please answer within 10 days.
 
@@ -1732,6 +1750,9 @@ Program Chairs
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
 
+        # expire recruitment invitations
+        self.expire_recruitment_invitations()
+
     def send_decision_notifications(self, decision_options, messages):
         decision_notes = self.client.get_all_notes(
             invitation=self.get_invitation_id(self.decision_stage.name, '.*'),
@@ -1758,31 +1779,33 @@ Program Chairs
             n.forum: n for n in self.client.get_all_notes(
                 invitation=self.get_invitation_id(self.decision_stage.name, '.*')
             )}
-        paper_notes = {n.forum: n for n in self.get_submissions()}
+        paper_notes = {n.number: n for n in self.get_submissions()}
         forum_note = self.client.get_note(self.request_form_id)
 
         def post_decision(paper_decision):
             if len(paper_decision) < 2:
                 raise OpenReviewException(
-                    "Not enough values provided in the decision file. Expected values are: paper_id, decision, comment")
+                    "Not enough values provided in the decision file. Expected values are: paper_number, decision, comment")
             if len(paper_decision) > 3:
                 raise OpenReviewException(
-                    "Too many values provided in the decision file. Expected values are: paper_id, decision, comment"
+                    "Too many values provided in the decision file. Expected values are: paper_number, decision, comment"
                 )
             if len(paper_decision) == 3:
-                paper_id, decision, comment = paper_decision
+                paper_number, decision, comment = paper_decision
             else:
-                paper_id, decision = paper_decision
+                paper_number, decision = paper_decision
                 comment = ''
 
-            print(f"Posting Decision {decision} for Paper {paper_id}")
-            paper_note = paper_notes.get(paper_id, None)
+            paper_number = int(paper_number)
+
+            print(f"Posting Decision {decision} for Paper {paper_number}")
+            paper_note = paper_notes.get(paper_number, None)
             if not paper_note:
                 raise OpenReviewException(
-                    f"Paper with ID: {paper_id} not found. Please check the submitted paperIDs."
+                    f"Paper {paper_number} not found. Please check the submitted paper numbers."
                 )
 
-            paper_decision_note = decision_notes.get(paper_id, None)
+            paper_decision_note = decision_notes.get(paper_note.id, None)
             if paper_decision_note:
                 paper_decision_note.readers = self.decision_stage.get_readers(conference=self, number=paper_note.number)
                 paper_decision_note.nonreaders = self.decision_stage.get_nonreaders(conference=self, number=paper_note.number)
@@ -1807,7 +1830,7 @@ Program Chairs
                     replyto=paper_note.forum
                 )
             self.client.post_note(paper_decision_note)
-            print(f"Decision posted for Paper {paper_id}")
+            print(f"Decision posted for Paper {paper_number}")
 
         futures = []
         futures_param_mapping = {}
@@ -1852,6 +1875,11 @@ Program Chairs
         )
 
         self.client.post_note(status_note)
+
+    def expire_recruitment_invitations(self):
+        recruitment_invitations = self.client.get_invitations(regex=self.get_invitation_id('Recruit_*'))
+        recruitment_invitation_ids = [inv.id for inv in recruitment_invitations]
+        tools.concurrent_requests(self.expire_invitation, recruitment_invitation_ids)
 
 
 class SubmissionStage(object):
@@ -1963,13 +1991,11 @@ class SubmissionStage(object):
         return submission_readers
 
     def get_invitation_readers(self, conference, under_submission):
-
-
-        ## Rolling review should be release right away
+        # Rolling review should be release right away
         if self.create_groups:
             return {'values': ['everyone']}
 
-        if under_submission:
+        if under_submission or self.double_blind:
             has_authorids = 'authorids' in self.get_content()
             readers = {
                 'values-copied': [
@@ -2044,6 +2070,7 @@ class SubmissionStage(object):
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
+
 
 class ExpertiseSelectionStage(object):
 
@@ -2802,6 +2829,9 @@ class ConferenceBuilder(object):
     def set_senior_area_chair_identity_readers(self, readers):
         self.conference.senior_area_chair_identity_readers = readers
 
+    def use_recruitment_template(self, use_template):
+        self.conference.use_recruitment_template = use_template
+
     def get_result(self):
 
         if self.conference.reviewer_identity_readers:
@@ -2816,16 +2846,18 @@ class ConferenceBuilder(object):
         for i, g in enumerate(groups[:-1]):
             self.webfield_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        host = self.client.get_group(id = 'host')
+        host = self.client.get_group(id = 'host', details='writable')
         root_id = groups[0].id
         home_group = groups[-1]
         if root_id == root_id.lower():
             root_id = groups[1].id
-        writable = host.details.get('writable') if host.details else True
-        if writable:
+        if host.details.get('writable'):
             self.client.add_members_to_group(host, root_id)
             home_group.host = root_id
             self.client.post_group(home_group)
+
+        venues = self.client.get_group(id = 'venues', details='writable')
+        if venues.details.get('writable'):
             self.client.add_members_to_group('venues', home_group.id)
 
         if self.submission_stage:

@@ -448,7 +448,7 @@ class PaperWithdrawInvitation(openreview.Invitation):
             id=conference.get_invitation_id('Withdraw', note.number),
             super=conference.get_invitation_id('Withdraw'),
             cdate=None,
-            invitees=[conference.get_authors_id(note.number), conference.support_user],
+            invitees=[conference.get_authors_id(note.number), conference.support_user, conference.get_program_chairs_id()],
             readers=['everyone'],
             writers=[conference.get_id()],
             signatures=['~Super_User1'],
@@ -458,13 +458,12 @@ class PaperWithdrawInvitation(openreview.Invitation):
                 'replyto': note.id,
                 'readers': readers,
                 'writers': {
-                    'values-copied': [
-                        conference.get_id(),
-                        '{signatures}'
+                    'values': [
+                        conference.get_id(), conference.get_program_chairs_id()
                     ]
                 },
                 'signatures': {
-                    'values': [conference.get_authors_id(note.number)],
+                    'values-regex': '{}|{}'.format(conference.get_program_chairs_id(), conference.get_authors_id(number=note.number)),
                     'description': 'How your identity will be displayed.'
                 },
             }
@@ -1459,6 +1458,10 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                 else:
                     post_content = post_content.replace("ASSIGNMENT_INVITATION_ID = ''", "ASSIGNMENT_INVITATION_ID = '" + conference.get_paper_assignment_id(committee_id, deployed=True) + "'")
 
+                if conference.use_recruitment_template:
+                    post_content = post_content.replace("USE_RECRUITMENT_TEMPLATE = False", "USE_RECRUITMENT_TEMPLATE = True")
+
+                
                 edge_readers = []
                 edge_writers = []
                 #if committee_id.endswith(conference.area_chairs_name):
@@ -1604,8 +1607,12 @@ class InvitationBuilder(object):
         self.client.post_invitation(WithdrawnSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
         self.client.post_invitation(WithdrawSuperInvitation(conference, reveal_authors, reveal_submission, email_pcs, hide_fields))
         notes = list(conference.get_submissions())
-        for note in tqdm(notes, total=len(notes), desc='set_withdraw_invitation'):
-            invitations.append(self.client.post_invitation(PaperWithdrawInvitation(conference, note, reveal_submission)))
+
+        def post_invitation(note):
+            withdraw_invitation = PaperWithdrawInvitation(conference, note, reveal_submission)
+            return self.client.post_invitation(withdraw_invitation)
+
+        invitations = tools.concurrent_requests(post_invitation, notes, desc='set_withdraw_invitation')
 
         return invitations
 
@@ -1624,10 +1631,13 @@ class InvitationBuilder(object):
     def set_review_invitation(self, conference, notes):
         invitations = []
         self.client.post_invitation(ReviewInvitation(conference))
-        for note in tqdm(notes, total=len(notes), desc='set_reviewinvitation'):
+
+        def set_review_invitation(note):
             invitation = self.client.post_invitation(PaperReviewInvitation(conference, note))
             self.__update_readers(note, invitation)
-            invitations.append(invitation)
+            return invitation
+
+        invitations = tools.concurrent_requests(set_review_invitation, notes, desc='set_review_invitation')
 
         return invitations
 
@@ -1805,13 +1815,22 @@ class InvitationBuilder(object):
         }
         reply = self.__build_options(default_reply, options.get('reply', {}))
 
-        invitation_id=conference.get_invitation_id('Recruit_' + options.get('reviewers_name', 'Reviewers'))
+        invitation_id=conference.get_recruitment_id(conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers')))
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
         reduced_load = options.get('reduced_load_on_decline', None)
 
+        if reduced_load and conference.use_recruitment_template:
+            reply['content']['reduced_load'] = {
+                "description": "Please select the number of submissions that you would be comfortable reviewing.",
+                "required": False,
+                "value-dropdown": reduced_load,
+                "order": 5
+            }
+
+        post_proces_template = 'recruit_reviewers_post_process.py' if conference.use_recruitment_template else 'legacy_recruit_reviewers_post_process.py'
         with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_pre_process.py')) as pre:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/recruit_reviewers_post_process.py')) as post:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/' + post_proces_template)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
                 pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")

@@ -222,7 +222,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_group(self, id):
+    def get_group(self, id, details=None):
         """
         Get a single Group by id if available
 
@@ -236,7 +236,7 @@ class Client(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.groups_url, params = {'id': id, 'details': details}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         return Group.from_json(g)
@@ -522,7 +522,7 @@ class Client(object):
             response = requests.put(self.baseurl + '/attachment', files=(
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
-                ('file', (file_path, f, tools.get_mimetype(file_path))),
+                ('file', (file_path, f)),
             ), headers = headers)
 
         response = self.__handle_response(response)
@@ -590,7 +590,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -608,6 +608,8 @@ class Client(object):
         :type limit: int, optional
         :param offset: Indicates the position to start retrieving Groups. For example, if there are 10 Groups and you want to obtain the last 3, then the offset would need to be 7.
         :type offset: int, optional
+        :param select: Specific field of the group. Only this field would be returned for all the groups
+        :type select: str, optional
 
         :return: List of Groups
         :rtype: list[Group]
@@ -618,6 +620,9 @@ class Client(object):
         if member is not None: params['member'] = member
         if signatory is not None: params['signatory'] = signatory
         if web: params['web'] = web
+        if select:
+            params['select'] = select
+
         params['limit'] = limit
         params['offset'] = offset
 
@@ -665,12 +670,14 @@ class Client(object):
         }
         return tools.concurrent_get(self, self.get_groups, **params)
 
-    def get_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False, select=None):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -701,6 +708,8 @@ class Client(object):
         :type details: dict, optional
         :param expired: If true, retrieves the Invitations that have expired, otherwise, the ones that have not expired
         :type expired: bool, optional
+        :param select: Specific field of the group. Only this field would be returned for all the groups
+        :type select: str, optional
 
         :return: List of Invitations
         :rtype: list[Invitation]
@@ -708,6 +717,8 @@ class Client(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
         if invitee is not None:
             params['invitee'] = invitee
         if replytoNote is not None:
@@ -726,6 +737,8 @@ class Client(object):
             params['minduedate'] = minduedate
         if super:
             params['super'] = super
+        if select:
+            params['select'] = select
         params['replyto'] = replyto
         params['duedate'] = duedate
         params['pastdue'] = pastdue
@@ -744,12 +757,14 @@ class Client(object):
 
         return invitations
     
-    def get_all_invitations(self, id=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
+    def get_all_invitations(self, id=None, ids=None, invitee=None, replytoNote=None, replyForum=None, signature=None, note=None, regex=None, tags=None, limit=None, offset=None, minduedate=None, duedate=None, pastdue=None, replyto=None, details=None, expired=None, super=None, with_count=False):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -787,6 +802,7 @@ class Client(object):
         
         params = {
             'id': id,
+            'ids': ids,
             'invitee': invitee,
             'replytoNote': replytoNote,
             'replyForum': replyForum,
@@ -825,7 +841,9 @@ class Client(object):
             mintcdate = None,
             details = None,
             sort = None,
-            with_count=False):
+            with_count=False,
+            select=None
+        ):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
 
@@ -867,6 +885,8 @@ class Client(object):
         :type details: optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
         :type sort: str, optional
+        :param select: Specific field of the group. Only this field would be returned for all the groups
+        :type select: str, optional
 
         :return: List of Notes
         :rtype: list[Note]
@@ -903,6 +923,9 @@ class Client(object):
             params['mintcdate'] = mintcdate
         if details is not None:
             params['details'] = details
+        if select:
+            params['select'] = select
+
         params['sort'] = sort
         params['original'] = original
 
@@ -1168,7 +1191,7 @@ class Client(object):
 
         return tools.concurrent_get(self, self.get_tags, **params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1188,6 +1211,7 @@ class Client(object):
         params['limit'] = limit
         params['offset'] = offset
         params['sort'] = sort
+        params['trash'] = trash
 
         response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1199,7 +1223,7 @@ class Client(object):
 
         return edges
 
-    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False):
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1218,7 +1242,8 @@ class Client(object):
             'limit': limit,
             'offset': offset,
             'sort': sort,
-            'with_count': with_count
+            'with_count': with_count,
+            'trash': trash
         }
 
         return tools.concurrent_get(self, self.get_edges, **params)
@@ -1427,7 +1452,7 @@ class Client(object):
 
         return response.json()
 
-    def delete_edges(self, invitation, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
+    def delete_edges(self, invitation, id=None, label=None, head=None, tail=None, wait_to_finish=False, soft_delete=False):
         """
         Deletes edges by a combination of invitation id and one or more of the optional filters.
 
@@ -1452,6 +1477,8 @@ class Client(object):
             delete_query['head'] = head
         if tail:
             delete_query['tail'] = tail
+        if id: 
+            delete_query['id'] = id
 
         delete_query['waitToFinish'] = wait_to_finish
         delete_query['softDelete'] = soft_delete

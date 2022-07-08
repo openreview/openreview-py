@@ -623,6 +623,7 @@ class OpenReviewClient(object):
 
     def get_invitations(self,
         id = None,
+        ids = None,
         invitee = None,
         replytoNote = None,
         replyForum = None,
@@ -646,6 +647,8 @@ class OpenReviewClient(object):
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -683,6 +686,8 @@ class OpenReviewClient(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if ids is not None:
+            params['ids'] = ids
         if invitee is not None:
             params['invitee'] = invitee
         if replytoNote is not None:
@@ -720,6 +725,7 @@ class OpenReviewClient(object):
 
     def get_all_invitations(self,
         id = None,
+        ids = None,
         invitee = None,
         replytoNote = None,
         replyForum = None,
@@ -743,6 +749,8 @@ class OpenReviewClient(object):
 
         :param id: id of the Invitation
         :type id: str, optional
+        :param ids: Comma separated Invitation IDs. If provided, returns invitations whose "id" value is any of the passed Invitation IDs.
+        :type ids: str, optional
         :param invitee: Invitations that contain this invitee
         :type invitee: str, optional
         :param replytoNote: Invitations that contain this replytoNote
@@ -779,6 +787,7 @@ class OpenReviewClient(object):
         """
         params = {
             'id': id,
+            'ids': ids,
             'invitee': invitee,
             'replytoNote': replytoNote,
             'replyForum': replyForum,
@@ -1027,7 +1036,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=False):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=False, sort=None):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1039,6 +1048,8 @@ class OpenReviewClient(object):
             params['note.id'] = note_id
         if invitation:
             params['invitation'] = invitation
+        if sort:
+            params['sort'] = sort
 
         response = requests.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1117,7 +1128,7 @@ class OpenReviewClient(object):
 
         return tools.concurrent_get(self, self.get_tags, **params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False, trash=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1136,6 +1147,7 @@ class OpenReviewClient(object):
         params['label'] = label
         params['limit'] = limit
         params['offset'] = offset
+        params['trash'] = trash
 
         response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1147,7 +1159,7 @@ class OpenReviewClient(object):
 
         return edges
 
-    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False):
+    def get_all_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=False, trash=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1165,7 +1177,8 @@ class OpenReviewClient(object):
             'label': label,
             'limit': limit,
             'offset': offset,
-            'with_count': with_count
+            'with_count': with_count,
+            'trash': trash
         }
 
         return tools.concurrent_get(self, self.get_edges, **params)

@@ -224,6 +224,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     program_chair_ids = note.content.get('Contact Emails', []) + note.content.get('program_chair_emails', [])
     builder.set_conference_program_chairs_ids(program_chair_ids)
     builder.use_legacy_anonids(note.content.get('reviewer_identity') is None)
+    builder.use_recruitment_template(note.content.get('use_recruitment_template', 'No') == 'Yes')
 
     readers_map = {
         'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
@@ -528,7 +529,7 @@ def get_comment_stage(client, request_forum):
 
     unsubmitted_reviewers = 'Paper Submitted Reviewers' not in request_forum.content.get('participants', '') and 'Paper Reviewers' in request_forum.content.get('participants', '')
 
-    email_pcs = request_forum.content.get('email_program_chairs_about_official_reviews', '') == 'Yes, email PCs for each official comment made in the venue'
+    email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
 
     authors_invited = 'Authors' in request_forum.content.get('participants', '')
 

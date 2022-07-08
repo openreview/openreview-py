@@ -28,6 +28,11 @@ def process(client, note, invitation):
                 if matching_invitation:
                     matching_invitation.cdate = openreview.tools.datetime_millis(submission_deadline)
                     client.post_invitation(matching_invitation)
+                revision_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Revision'))
+                if revision_invitation and conference.submission_stage.second_due_date and not forum_note.content.get('submission_revision_deadline'):
+                    revision_invitation.duedate = openreview.tools.datetime_millis(submission_deadline)
+                    revision_invitation.expdate = openreview.tools.datetime_millis(submission_deadline + datetime.timedelta(minutes=openreview.conference.invitation.SHORT_BUFFER_MIN))
+                    client.post_invitation(revision_invitation)
             withdraw_submission_expiration = forum_note.content.get('withdraw_submission_expiration')
             if withdraw_submission_expiration:
                 try:
@@ -40,6 +45,22 @@ def process(client, note, invitation):
                 if paper_withdraw_super_invitation:
                     paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
                     client.post_invitation(paper_withdraw_super_invitation)
+
+            if max(len(conference.reviewer_roles), len(conference.area_chair_roles), len(conference.senior_area_chair_roles)) > 1:
+                recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
+                if recruitment_invitation:
+                    recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(recruitment_invitation)
+
+                remind_recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Remind_Recruitment')
+                if remind_recruitment_invitation:
+                    remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
+                    client.post_invitation(remind_recruitment_invitation)
+
+                paper_matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
+                if paper_matching_invitation:
+                    paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = [conference.get_committee_id(r) for r in conference.reviewer_roles]
+                    client.post_invitation(paper_matching_invitation)
 
             if conference.use_ethics_chairs or conference.use_ethics_reviewers:
                 client.post_invitation(openreview.Invitation(
@@ -66,8 +87,43 @@ def process(client, note, invitation):
                 if remind_recruitment_invitation:
                     remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
                     client.post_invitation(remind_recruitment_invitation)
-
-
+            now = datetime.datetime.utcnow()
+            if (
+                    conference.submission_stage.second_due_date and conference.submission_stage.second_due_date < now) or (
+                    conference.submission_stage.due_date and conference.submission_stage.due_date < now):
+                revision_notes = client.get_references(
+                    referent=forum_note.id,
+                    invitation='{support_group}/-/Request{number}/Revision'.format(
+                        support_group=SUPPORT_GROUP, number=forum_note.number),
+                    limit=2
+                )
+                update_withdraw = False
+                update_desk_reject = False
+                if len(revision_notes) < 2:
+                    update_withdraw = True
+                    update_desk_reject = True
+                else:
+                    for key in ['withdrawn_submissions_author_anonymity', 'withdrawn_submissions_visibility', 'email_pcs_for_withdrawn_submissions']:
+                        if revision_notes[0].content.get(key) != revision_notes[-1].content.get(key):
+                            update_withdraw = True
+                            break
+                    for key in ['desk_rejected_submissions_visibility', 'desk_rejected_submissions_author_anonymity']:
+                        if revision_notes[0].content.get(key) != revision_notes[-1].content.get(key):
+                            update_desk_reject = True
+                            break
+                if update_withdraw:
+                    conference.create_withdraw_invitations(
+                        reveal_authors=conference.submission_stage.withdrawn_submission_reveal_authors,
+                        reveal_submission=conference.submission_stage.withdrawn_submission_public,
+                        email_pcs=conference.submission_stage.email_pcs_on_withdraw,
+                        hide_fields=forum_note.content.get('hide_fields', [])
+                    )
+                if update_desk_reject:
+                    conference.create_desk_reject_invitations(
+                        reveal_authors=conference.submission_stage.desk_rejected_submission_reveal_authors,
+                        reveal_submission=conference.submission_stage.desk_rejected_submission_public,
+                        hide_fields=forum_note.content.get('hide_fields', [])
+                    )
         elif invitation_type == 'Bid_Stage':
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
             if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
@@ -133,7 +189,7 @@ def process(client, note, invitation):
                         'default': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
@@ -146,7 +202,7 @@ Best,
                         'default': f'''Dear {{{{fullname}}}},
                         
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs
@@ -159,7 +215,7 @@ Best,
                         'default': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{{{forum_url}}}}}}
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
 Best,
 {short_name} Program Chairs

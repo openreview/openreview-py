@@ -457,7 +457,7 @@ class TestTools():
         assert "You do not have the required permissions as some emails are obfuscated" in error.value.args[0]
 
         profile1 = openreview.Profile(
-            id = 'Test_Conflict1',
+            id = '~Test_Conflict1',
             content = {
                 'emails': ['user@cmu.edu'],
                 'history': [{
@@ -469,7 +469,7 @@ class TestTools():
         )
 
         profile2 = openreview.Profile(
-            id = 'Test_Conflict2',
+            id = '~Test_Conflict2',
             content = {
                 'emails': ['user2@126.com'],
                 'history': [
@@ -488,7 +488,7 @@ class TestTools():
         )
 
         intern_profile = openreview.Profile(
-            id='Test_Conflict3',
+            id='~Test_Conflict3',
             content={
                 'emails': ['user3@345.com'],
                 'history': [{
@@ -496,7 +496,14 @@ class TestTools():
                     'institution': {
                         'domain': 'umass.edu'
                     }
-                }]
+                },
+                {
+                    'position': None,
+                    'institution': {
+                        'domain': 'cmu.edu'
+                    }
+                }
+                ]
             }
         )
 
@@ -506,7 +513,8 @@ class TestTools():
         assert 'umass.edu' in conflicts
 
         neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
-        assert len(neurips_conflicts) == 0
+        assert len(neurips_conflicts) == 1
+        assert 'cmu.edu' in conflicts
 
     def test_add_assignments(self, client):
 
@@ -533,7 +541,7 @@ class TestTools():
             openreview.tools.get_group(guest_client, '~Super_User1')
         assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 
-    def test_get_profiles_as_dict(self, client):
+    def test_get_profiles_as_dict(self, client, test_client):
         client.add_members_to_group(client.get_group('~SomeFirstName_User1'), 'alternate@mail.com')
         client.add_members_to_group(client.get_group('alternate@mail.com'), '~SomeFirstName_User1')
         profiles = openreview.tools.get_profiles(
@@ -545,13 +553,7 @@ class TestTools():
         assert profiles['~Another_Name1']
         assert profiles['~SomeFirstName_User1'].id == profiles['~Another_Name1'].id
         assert profiles['user@gmail.com']
-        assert profiles['test@mail.com']
-        assert profiles['alternate@mail.com']
-        assert profiles['alternate@mail.com'].id == profiles['test@mail.com'].id
-        assert profiles['test_user@mail.com'] is None
+        assert profiles['test@mail.com'].id == '~SomeFirstName_User1'
+        assert profiles['alternate@mail.com'].id == '~SomeFirstName_User1'
+        assert profiles['test_user@mail.com'].id == 'test_user@mail.com'
         assert profiles['~Test_Name1'] is None
-
-    def test_get_mimetype(self):
-        assert openreview.tools.get_mimetype('somepath/some name.pdf') == 'application/pdf'
-        assert openreview.tools.get_mimetype('somepath/some name.zip') == 'application/zip'
-        assert openreview.tools.get_mimetype('somepath/some name.unknown extension') == 'text/plain'
