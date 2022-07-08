@@ -231,7 +231,7 @@ class Conference(object):
         numbers = ','.join(map(str, self.ethics_review_stage.submission_numbers))
         print('flagged submissions', numbers)
         notes = list(self.get_submissions(number=numbers))
-        
+
         ## Unflag existing papers with no assigned reviewers
         groups = self.client.get_groups(regex=self.get_ethics_reviewers_id(number='.*'))
         for group in groups:
@@ -245,7 +245,7 @@ class Conference(object):
                     invitation = tools.get_invitation(self.client, self.get_invitation_id(self.ethics_review_stage.name, number))
                     invitation.expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
                     self.client.post_invitation(invitation)
-        
+
         ## Create ethics paper groups
         for note in tqdm(notes):
 
@@ -268,12 +268,12 @@ class Conference(object):
 
         ## Setup paper matching
         self.setup_committee_matching(self.get_ethics_reviewers_id(), compute_affinity_scores=False, compute_conflicts=True)
-        self.invitation_builder.set_assignment_invitation(self, self.get_ethics_reviewers_id())      
+        self.invitation_builder.set_assignment_invitation(self, self.get_ethics_reviewers_id())
 
         ## Make reviews visible to the ethics committee
         self.invitation_builder.set_review_invitation(self, notes)
         invitations = self.invitation_builder.set_ethics_review_invitation(self, notes)
-        return invitations 
+        return invitations
 
     def __create_review_rebuttal_stage(self):
         invitation = self.get_invitation_id(self.review_stage.name, '.*')
@@ -836,7 +836,7 @@ class Conference(object):
                     signatures=[self.id],
                     signatories=[self.id],
                     members=group.members if group else []
-                ))            
+                ))
 
             # Author Paper group
             if authors:
@@ -878,7 +878,7 @@ class Conference(object):
                         readers.append(self.get_senior_area_chairs_id(n.number))
                     if self.use_area_chairs:
                         readers.append(self.get_area_chairs_id(n.number))
-                    readers.append(reviewers_submitted_id)                    
+                    readers.append(reviewers_submitted_id)
                     self.client.post_group(openreview.Group(id=reviewers_submitted_id,
                         readers=readers,
                         writers=[self.id],
@@ -1018,7 +1018,7 @@ class Conference(object):
             additional_fields=self.submission_stage.additional_fields,
             remove_fields=self.submission_stage.remove_fields,
             only_accepted=False,
-            multiReply=False,
+            multiReply=False if self.submission_stage.double_blind else True,
             allow_author_reorder=allow_author_reorder
         )
         self.__create_submission_revision_stage()
@@ -1219,7 +1219,7 @@ class Conference(object):
         pcs_id = self.get_ethics_chairs_id()
         self.set_ethics_reviewers()
         self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
-        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True) 
+        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
 
     def set_ethics_chair_recruitment_groups(self):
         parent_group_id = self.get_ethics_chairs_id()
@@ -1229,7 +1229,7 @@ class Conference(object):
         pcs_id = self.get_program_chairs_id()
         self.set_ethics_chairs()
         self.__create_group(parent_group_declined_id, pcs_id, exclude_self_reader=True)
-        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)                
+        self.__create_group(parent_group_invited_id, pcs_id, exclude_self_reader=True)
 
     def set_reviewer_recruitment_groups(self):
         parent_group_id = self.get_reviewers_id()
@@ -1300,7 +1300,7 @@ class Conference(object):
             members = emails,
             additional_readers = readers)
 
-        return self.webfield_builder.set_ethics_reviewer_page(self, ethics_reviewer_group)        
+        return self.webfield_builder.set_ethics_reviewer_page(self, ethics_reviewer_group)
 
     def set_ethics_chairs(self, emails = []):
         readers = [self.id, self.get_ethics_chairs_id()]
@@ -1311,7 +1311,7 @@ class Conference(object):
             members = emails,
             additional_readers = readers)
 
-        return self.webfield_builder.set_ethics_chairs_page(self, ethics_reviewer_group)        
+        return self.webfield_builder.set_ethics_chairs_page(self, ethics_reviewer_group)
 
 
     def set_authors(self):
@@ -1745,7 +1745,7 @@ Program Chairs
         if decision_heading_map:
             for decision, tab_name in decision_heading_map.items():
                 venue_heading_map[tools.decision_to_venue(self.short_name, decision)] = tab_name
-        
+
         if venue_heading_map:
             self.set_homepage_decisions(decision_heading_map=venue_heading_map)
         self.client.remove_members_from_group('active_venues', self.id)
@@ -1856,8 +1856,9 @@ Program Chairs
         error_status = ''
         if errors:
             error_status = f'''
+Total Errors: {len(errors)}
 ```python
-{json.dumps(errors, indent=2)}
+{json.dumps({key: errors[key] for key in list(errors.keys())[:10]}, indent=2)}
 ```
 '''
         status_note = openreview.Note(
@@ -1985,7 +1986,7 @@ class SubmissionStage(object):
             if conference.use_ethics_chairs:
                 submission_readers.append(conference.get_ethics_chairs_id())
             if conference.use_ethics_reviewers:
-                submission_readers.append(conference.get_ethics_reviewers_id(number=number))            
+                submission_readers.append(conference.get_ethics_reviewers_id(number=number))
 
         submission_readers.append(conference.get_authors_id(number=number))
         return submission_readers
@@ -2205,7 +2206,7 @@ class ReviewStage(object):
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
             if conference.use_ethics_reviewers:
-                readers.append(conference.get_ethics_reviewers_id(number=number))  
+                readers.append(conference.get_ethics_reviewers_id(number=number))
 
         if self.release_to_authors:
             readers.append(conference.get_authors_id(number = number))
@@ -2278,7 +2279,7 @@ class EthicsReviewStage(object):
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
 
-            readers.append(conference.get_ethics_reviewers_id())                
+            readers.append(conference.get_ethics_reviewers_id())
 
         if self.release_to_reviewers == self.Readers.ALL_ASSIGNED_COMMITTEE:
             if conference.use_senior_area_chairs:
@@ -2292,21 +2293,21 @@ class EthicsReviewStage(object):
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
 
-            readers.append(self.get_ethics_reviewers_id(number=number)) 
+            readers.append(self.get_ethics_reviewers_id(number=number))
 
         if self.release_to_reviewers == self.Readers.ASSIGNED_ETHICS_REVIEWERS:
 
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
 
-            readers.append(self.get_ethics_reviewers_id(number=number)) 
+            readers.append(self.get_ethics_reviewers_id(number=number))
 
         if self.release_to_reviewers == self.Readers.ETHICS_REVIEWER_SIGNATURE:
 
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
 
-            readers.append('{signatures}')             
+            readers.append('{signatures}')
 
 
         if self.release_to_authors:
@@ -2826,7 +2827,7 @@ class ConferenceBuilder(object):
 
     def set_ethics_review_stage(self, stage):
         self.conference.ethics_review_stage = stage
-    
+
     def use_legacy_invitation_id(self, legacy_invitation_id):
         self.conference.legacy_invitation_id = legacy_invitation_id
 
@@ -2907,7 +2908,7 @@ class ConferenceBuilder(object):
         if self.conference.use_ethics_chairs:
             self.conference.set_ethics_chair_recruitment_groups()
         if self.conference.use_ethics_reviewers:
-            self.conference.set_ethics_reviewer_recruitment_groups()                       
+            self.conference.set_ethics_reviewer_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
 
         for s in self.bid_stages:
