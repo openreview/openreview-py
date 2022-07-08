@@ -48,7 +48,9 @@ class TestMatching():
         print ('Homepage header set')
         builder.set_conference_program_chairs_ids(['pc1@mail.com', 'pc3@mail.com'])
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
+        builder.set_area_chair_roles(['Senior_Program_Committee'])
         builder.set_conference_reviewers_name('Program_Committee')
+        builder.set_reviewer_roles(['Program_Committee'])
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
