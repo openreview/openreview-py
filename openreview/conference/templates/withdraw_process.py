@@ -9,6 +9,7 @@ def process_update(client, note, invitation, existing_note):
     PAPER_AREA_CHAIRS_ID = ''
     PAPER_SENIOR_AREA_CHAIRS_ID = ''
     PROGRAM_CHAIRS_ID = ''
+    CONFERENCE_ROLES = []
     WITHDRAWN_SUBMISSION_ID = ''
     BLIND_SUBMISSION_ID = ''
     SUBMISSION_READERS = []
@@ -113,6 +114,20 @@ def process_update(client, note, invitation, existing_note):
             forum_note.content[field] = ''
 
         forum_note = client.post_note(forum_note)
+
+        # Delete any assignment and proposed assignment edges
+        def delete_edges(invitation_id):
+            try:
+                client.delete_edges(invitation=invitation_id, head=forum_note.id, soft_delete=True)
+            except openreview.OpenReviewException as ex:
+                if ex.args[0].get('name') == 'NotFoundError':
+                    print(f"Invitation {invitation_id} not found. Skipping.")
+                else:
+                    raise ex
+        for role in CONFERENCE_ROLES:
+            role_id = CONFERENCE_ID + '/' + role
+            delete_edges(invitation_id=role_id + '/-/Proposed_Assignment')
+            delete_edges(invitation_id=role_id + '/-/Assignment')
 
         # Expire review, meta-review and decision invitations
         invitation_ids = ','.join([

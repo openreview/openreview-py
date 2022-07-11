@@ -124,6 +124,9 @@ class TestESWCConference():
 
         conference.setup_first_deadline_stage(force=True)
 
+        revision_invitation = test_client.get_invitation(id='eswc-conferences.org/ESWC/2021/Conference/-/Revision')
+        assert revision_invitation.multiReply
+
         notes = test_client.get_notes(invitation='eswc-conferences.org/ESWC/2021/Conference/-/Special_Submission', sort='number:asc')
         assert len(notes) == 5
         assert notes[0].readers == ['eswc-conferences.org/ESWC/2021/Conference', 'eswc-conferences.org/ESWC/2021/Conference/Reviewers', 'eswc-conferences.org/ESWC/2021/Conference/Paper1/Authors']
