@@ -224,8 +224,8 @@ function renderStatusTable(notes) {
 
   $container.empty().append(tableHtml);
 
-  $('#your-submissions .console-table th').eq(0).css('width', '4%');
-  $('#your-submissions .console-table th').eq(1).css('width', '36%');
+  $('#your-submissions .console-table th').eq(0).css('width', '5%');
+  $('#your-submissions .console-table th').eq(1).css('width', '35%');
   $('#your-submissions .console-table th').eq(2).css('width', '30%');
   $('#your-submissions .console-table th').eq(3).css('width', '30%');
 }
