@@ -267,8 +267,7 @@ class TestVenueRequest():
         assert not openreview.tools.get_invitation(pc_client, 'TEST.cc/2021/Conference/-/Submission')
 
         assert pc_client.get_notes(invitation='openreview.net/Support/-/Request{number}/Comment'.format(number=request_form_note.number))
-
-
+        
         conference = openreview.get_conference(pc_client, request_form_id=request_form_note.forum)
         submission_due_date_str = due_date.strftime('%b %d %Y %I:%M%p')
         abstract_due_date_str = abstract_due_date.strftime('%b %d %Y %I:%M%p')
@@ -1256,8 +1255,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors', 'Assigned Submitted Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'additional_readers': ['Public']
 
             },
             forum=venue['request_form_note'].forum,
@@ -1278,6 +1278,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         # Assert that official comment invitation is now available
         official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
         assert official_comment_invitation
+        assert 'everyone' in official_comment_invitation.reply['readers']['values-dropdown']
 
         # Assert that an official comment can be posted by the paper author
         forum_note = blind_submissions[-1]
@@ -1288,6 +1289,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 conference.get_area_chairs_id(number=1),
                 conference.get_id() + '/Paper1/Authors',
                 conference.get_id() + '/Paper1/Reviewers',
+                conference.get_id() + '/Paper1/Reviewers/Submitted',
                 conference.get_senior_area_chairs_id(number=1)
             ],
             writers=[
@@ -1465,6 +1467,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '0 Papers'
+        assert 'Total Errors: 2' in decision_status.content['error']
         assert '\"Too many values provided in the decision file. Expected values are: paper_number, decision, comment\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'),
@@ -1513,6 +1516,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '0 Papers'
+        assert 'Total Errors: 2' in decision_status.content['error']
         assert '\"Not enough values provided in the decision file. Expected values are: paper_number, decision, comment\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'),
@@ -1561,6 +1565,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '1 Papers'
+        assert 'Total Errors: 1' in decision_status.content['error']
         assert '\"Paper 978 not found. Please check the submitted paper numbers.\"' in \
                decision_status.content['error']
 
@@ -1610,6 +1615,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert decision_status
         assert decision_status.content['decision_posted'] == '1 Papers'
+        assert 'Total Errors: 1' in decision_status.content['error']
         assert '\"The value Test in field decision does not match the invitation definition\"' in decision_status.content['error']
 
         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'),
@@ -2116,7 +2122,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
             content={
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-                'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors', 'Public (non-anonymously)'],
+                'participants': ['Program Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors', 'Public (non-anonymously)'],
                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
 
             },
