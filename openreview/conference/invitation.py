@@ -372,6 +372,10 @@ class WithdrawSuperInvitation(openreview.Invitation):
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
             file_content = file_content.replace(
+                'CONFERENCE_ROLES = []',
+                str.format('CONFERENCE_ROLES = {}', conference.get_roles())
+            )
+            file_content = file_content.replace(
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
             file_content = file_content.replace(
@@ -568,6 +572,10 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_ROLES = []',
+                str.format('CONFERENCE_ROLES = {}', conference.get_roles())
+            )
             file_content = file_content.replace(
                 'DESK_REJECTED_SUBMISSION_ID = \'\'',
                 'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')
