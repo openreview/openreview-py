@@ -2392,57 +2392,62 @@ class ReviewRatingStage(object):
 
 class CommentStage(object):
 
+    class Readers(Enum):
+        EVERYONE = 0
+        SENIOR_AREA_CHAIRS_ASSIGNED = 1
+        AREA_CHAIRS_ASSIGNED = 2
+        REVIEWERS_ASSIGNED = 3
+        REVIEWERS_SUBMITTED = 4
+        AUTHORS = 5
+
     def __init__(self,
-    official_comment_name=None,
-    start_date=None,
-    end_date=None,
-    allow_public_comments=False,
-    anonymous=False,
-    unsubmitted_reviewers=False,
-    reader_selection=False,
-    email_pcs=False,
-    authors=False,
-    only_accepted=False,
-    check_mandatory_readers=False):
+        official_comment_name=None,
+        start_date=None,
+        end_date=None,
+        allow_public_comments=False,
+        anonymous=False,
+        reader_selection=False,
+        email_pcs=False,
+        only_accepted=False,
+        check_mandatory_readers=False,
+        readers=[],
+        invitees=[]):
+
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
         self.start_date = start_date
         self.end_date = end_date
         self.allow_public_comments = allow_public_comments
         self.anonymous = anonymous
-        self.unsubmitted_reviewers = unsubmitted_reviewers
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
-        self.authors = authors
         self.only_accepted=only_accepted
         self.check_mandatory_readers=check_mandatory_readers
+        self.readers = readers
+        self.invitees = invitees
 
     def get_readers(self, conference, number):
-        readers = []
-        default = []
+        readers = [conference.get_program_chairs_id()]
 
-        if self.allow_public_comments:
+        if self.allow_public_comments or self.Readers.EVERYONE in self.readers:
             readers.append('everyone')
-        else:
-            default = [conference.get_program_chairs_id()]
-
-        readers.append(conference.get_program_chairs_id())
-
-        if conference.use_senior_area_chairs:
-            readers.append(conference.get_senior_area_chairs_id(number))
-
-        if conference.use_area_chairs:
-            readers.append(conference.get_area_chairs_id(number))
-
-        if self.unsubmitted_reviewers:
-            readers.append(conference.get_reviewers_id(number))
-        else:
-            readers.append(conference.get_reviewers_id(number) + '/Submitted')
 
         if self.reader_selection:
             readers.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
 
-        if self.authors:
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers:
+            readers.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.readers:
+            readers.append(conference.get_area_chairs_id(number))
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.readers:
+            readers.append(conference.get_reviewers_id(number))
+
+        if self.Readers.REVIEWERS_SUBMITTED in self.readers:
+            readers.append(conference.get_reviewers_id(number) + '/Submitted')
+
+        if self.Readers.AUTHORS in self.readers:
             readers.append(conference.get_authors_id(number))
 
         return readers
@@ -2451,21 +2456,40 @@ class CommentStage(object):
 
         committee = [conference.get_program_chairs_id()]
 
-        if conference.use_senior_area_chairs:
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_senior_area_chairs_id(number))
 
-        if conference.use_area_chairs:
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_area_chair_id(number=number, anon_id='.*'))
 
-        committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
+        if self.Readers.REVIEWERS_ASSIGNED in self.invitees or self.Readers.REVIEWERS_SUBMITTED in self.invitees:
+            committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*'))
 
-        if self.authors:
+        if self.Readers.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
 
         return '|'.join(committee)
 
     def get_invitees(self, conference, number):
-        return conference.get_committee(number=number, with_authors=self.authors) + [conference.support_user]
+        invitees = [conference.get_program_chairs_id(), conference.support_user]
+
+        if conference.use_senior_area_chairs and self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_senior_area_chairs_id(number))
+
+        if conference.use_area_chairs and self.Readers.AREA_CHAIRS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_area_chairs_id(number))
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.invitees:
+            invitees.append(conference.get_reviewers_id(number))
+
+        if self.Readers.REVIEWERS_SUBMITTED in self.invitees:
+            invitees.append(conference.get_reviewers_id(number) + '/Submitted')
+
+        if self.Readers.AUTHORS in self.invitees:
+            invitees.append(conference.get_authors_id(number))
+
+        return invitees
+
 
 class MetaReviewStage(object):
 
@@ -2790,8 +2814,8 @@ class ConferenceBuilder(object):
     def set_review_rating_stage(self, start_date = None, due_date = None,  name = None, additional_fields = {}, remove_fields = [], public = False, release_to_reviewers=ReviewRatingStage.Readers.NO_REVIEWERS):
         self.review_rating_stage = ReviewRatingStage(start_date, due_date, name, additional_fields, remove_fields, public, release_to_reviewers)
 
-    def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, unsubmitted_reviewers = False, reader_selection = False, email_pcs = False, authors = False):
-        self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, unsubmitted_reviewers, reader_selection, email_pcs, authors)
+    def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, reader_selection = False, email_pcs = False, invitees=[], readers=[]):
+        self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, reader_selection, email_pcs, readers=readers, invitees=invitees)
 
     def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = MetaReviewStage.Readers.NO_REVIEWERS, additional_fields = {}, remove_fields = [], process = None):
         self.meta_review_stage = MetaReviewStage(name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields, remove_fields, process)

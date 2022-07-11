@@ -938,7 +938,9 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        conference.set_comment_stage(openreview.CommentStage(authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(invitees=comment_invitees, readers=comment_invitees))
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
