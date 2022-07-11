@@ -721,7 +721,8 @@ class VenueStages():
                     'Release all submissions to the public',
                     'Release only accepted submission to the public',
                     'No, I don\'t want to release any submissions'],
-                'required': True
+                'required': True,
+                'order': 1
             },
             'reveal_authors': {
                 'description': 'Would you like to release author identities of submissions to the public?',
@@ -729,7 +730,8 @@ class VenueStages():
                     'Reveal author identities of all submissions to the public',
                     'Reveal author identities of only accepted submissions to the public',
                     'No, I don\'t want to reveal any author identities.'],
-                'required': True
+                'required': True,
+                'order': 2
             },
             'send_decision_notifications': {
                 'description': 'Would you like to notify the authors regarding the decision? If yes, please carefully review the template below for each decision option before you click submit to send out the emails.',
@@ -738,12 +740,14 @@ class VenueStages():
                     'No, I will send the emails to the authors'
                 ],
                 'required': True,
-                'default': 'No, I will send the emails to the authors'
+                'default': 'No, I will send the emails to the authors',
+                'order': 3
             },
             'hide_fields': {
                 'values-regex': '.*',
                 'required': False,
-                'description': 'Comma separated values of submission fields to be hidden.'
+                'description': 'Comma separated values of submission fields to be hidden.',
+                'order': 4
             }
         }
 

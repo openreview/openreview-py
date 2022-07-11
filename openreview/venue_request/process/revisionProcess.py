@@ -151,6 +151,7 @@ def process(client, note, invitation):
                         'Everyone (submissions are public)',
                         'Make accepted submissions public and hide rejected submissions'
                     ],
+                    'order': 1,
                     'required': True
                 }
             }
@@ -162,6 +163,7 @@ def process(client, note, invitation):
                         'Reveal author identities of all submissions to the public',
                         'Reveal author identities of only accepted submissions to the public',
                         'No, I don\'t want to reveal any author identities.'],
+                    'order': 2,
                     'required': True
                 }
 
@@ -178,6 +180,7 @@ def process(client, note, invitation):
                     'No, I will send the emails to the authors'
                 ],
                 'required': True,
+                'order': 3,
                 'default': 'No, I will send the emails to the authors'
             }
             short_name = conference.get_short_name()
@@ -186,6 +189,7 @@ def process(client, note, invitation):
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                        'order': 4,
                         'default': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
@@ -199,6 +203,7 @@ Best,
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                        'order': 5,
                         'default': f'''Dear {{{{fullname}}}},
                         
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
@@ -212,6 +217,7 @@ Best,
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
                         'value-regex': '[\\S\\s]{1,10000}',
                         'description': 'Please carefully review the template below before you click submit to send out the emails. Make sure not to remove the parenthesized tokens.',
+                        'order': 6,
                         'default': f'''Dear {{{{fullname}}}},
 
 Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
@@ -226,12 +232,14 @@ Best,
                 'description': 'Change the name of the tab that you would like to use to list the papers by decision, please note the key must match with the decision options',
                 'value-dict': {},
                 'default': { o:o for o in decision_options},
+                'order': 7,
                 'required': False
             }
 
             content['hide_fields'] = {
                 'values-regex': '.*',
                 'required': False,
+                'order': 8,
                 'description': 'Comma separated values of submission fields to be hidden'
             }
 
