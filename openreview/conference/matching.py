@@ -769,9 +769,9 @@ class Matching(object):
                 'signatures': {'values': [self.conference.get_id()]},
                 'content': {
                     'title': {
-                        'value-regex': '.{1,250}',
+                        'value-regex': '(?!^ +$)^[a-zA-Z0-9-_ ]{1,250}$',
                         'required': True,
-                        'description': 'Title of the configuration.',
+                        'description': 'Title of the configuration. Only alphanumeric characters, dashes and underscores are allowed.',
                         'order': 1
                     },
                     'user_demand': {
