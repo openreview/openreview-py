@@ -1826,6 +1826,10 @@ note={Retracted after acceptance}
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert len(edges) == 4
+        assert edges[0].weight == 1
+        assert edges[1].weight == 1
+        assert edges[2].weight == 1
+        assert edges[3].weight == 0  ## Hugo
 
         ## Ask solicit review with a conflict
         solicit_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
@@ -1971,14 +1975,27 @@ note={Retracted after acceptance}
 
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
+        ## Assign a 4th reviewer
+        paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
+            readers=[venue_id, f"{venue_id}/Paper4/Action_Editors", '~Hugo_Larochelle1'],
+            nonreaders=[f"{venue_id}/Paper4/Authors"],
+            writers=[venue_id, f"{venue_id}/Paper4/Action_Editors"],
+            signatures=[f"{venue_id}/Paper4/Action_Editors"],
+            head=note_id_4,
+            tail='~Hugo_Larochelle1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)     
+
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert len(edges) == 5
-        assert edges[0].weight == 0
-        assert edges[1].weight == 0
-        assert edges[2].weight == 0
-        assert edges[3].weight == 0
-        assert edges[4].weight == 1
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 1
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 1
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper4/-/Official_Recommendation')
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -2167,6 +2184,15 @@ note={Rejected}
         assert f"{venue_id}/Paper4/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper4/-/Authors_De-Anonymization" in [i.id for i in invitations]
+
+        ## Check pending review edges
+        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert len(edges) == 5
+        assert edges[0].weight == 0
+        assert edges[1].weight == 0
+        assert edges[2].weight == 0
+        assert edges[3].weight == 0
+        assert edges[4].weight == 0
 
     def test_eic_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -2837,6 +2863,35 @@ note={Withdrawn}
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## Solicit review to more than 2 papers
+        peter_client=OpenReviewClient(username='petersnow@yahoo.com', password='1234')
+        solicit_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Solicit_Review',
+            signatures=['~Peter_Snow1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
+
+        ## Post a response
+        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Peter_Snow1_Solicit_Review_Approval',
+            signatures=[f"{venue_id}/Paper7/Action_Editors"],
+            note=Note(
+                forum=note_id_7,
+                replyto=solicit_review_note['note']['id'],
+                content={
+                    'decision': { 'value': 'Yes, I approve the solicit review.' },
+                    'comment': { 'value': 'thanks!' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
+
         ## Post the submission 8
         submission_note_8 = test_client.post_note_edit(invitation='TMLR/-/Submission',
             signatures=['~SomeFirstName_User1'],
@@ -2894,15 +2949,71 @@ note={Withdrawn}
                 weight=1
             ))
 
+        solicit_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper8/-/Solicit_Review',
+            signatures=['~Peter_Snow1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
+
+        ## Post a response
+        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper8/-/~Peter_Snow1_Solicit_Review_Approval',
+            signatures=[f"{venue_id}/Paper8/Action_Editors"],
+            note=Note(
+                forum=note_id_8,
+                replyto=solicit_review_note['note']['id'],
+                content={
+                    'decision': { 'value': 'Yes, I approve the solicit review.' },
+                    'comment': { 'value': 'thanks!' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
+        assignment_edge = openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_8, tail='~Peter_Snow1')[0]
+        helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
+
+        ## Check pending review edges
+        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert len(edges) == 5
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 2                 
+
         note = openreview_client.get_note(note_id_7)
         journal.invitation_builder.expire_paper_invitations(note)
+
+        ## Check pending review edges
+        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert len(edges) == 5
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 1          
 
         note = openreview_client.get_note(note_id_8)
         journal.invitation_builder.expire_paper_invitations(note)
 
+        ## Check pending review edges
+        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert len(edges) == 5
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0        
 
 
-    def test_desk_rejeced_submission_by_eic(self, journal, openreview_client, helpers):
+
+    def test_desk_rejected_submission_by_eic(self, journal, openreview_client, helpers):
 
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
         venue_id = journal.venue_id
@@ -3030,13 +3141,33 @@ note={Withdrawn}
             head=note_id_10,
             tail='~David_Belanger1',
             weight=1
-        ))       
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Check pending review edges
+        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert len(edges) == 5
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0               
         
 
         note = openreview_client.get_note(note_id_10)
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_acknowledgement_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()        
+        journal.invitation_builder.expire_assignment_availability_invitations()
+
+        ## Check pending review edges
+        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert len(edges) == 5
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0               
 
 
 
