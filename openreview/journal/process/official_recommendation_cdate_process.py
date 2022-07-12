@@ -7,6 +7,7 @@ def process(client, invitation):
 
     ## send email to reviewers
     print('send email to reviewers')
+    assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value']])[0]
     client.post_message(
         recipients=[journal.get_reviewers_id(number=submission.number)],
         subject=f'''[{journal.short_name}] Submit official recommendation for {journal.short_name} submission {submission.content['title']['value']}''',
@@ -23,8 +24,9 @@ For more details and guidelines on performing your review, visit {journal.websit
 We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 ''',
-        replyTo=journal.contact_info
+        replyTo=assigned_action_editor.get_preferred_email()
     )
 
     ## send email to action editos

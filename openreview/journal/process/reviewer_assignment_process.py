@@ -8,6 +8,7 @@ def process_update(client, edge, invitation, existing_edge):
 
     venue_id = journal.venue_id
     note = client.get_note(edge.head)
+    assigned_action_editor = client.search_profiles(ids=[note.content['assigned_action_editor']['value']])[0]
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
@@ -63,14 +64,15 @@ We recently informed you that your help was requested to review a {journal.short
 
 However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
 
-If you have any questions, don’t hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
+If you have any questions, don't hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
 
 Apologies for the change and thank you for your continued involvement with {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 '''
 
-        client.post_message(subject, recipients, message, replyTo=journal.contact_info)
+        client.post_message(subject, recipients, message, replyTo=assigned_action_editor.get_preferred_email())
 
         if pending_review_edge and pending_review_edge.weight > 0:
             pending_review_edge.weight -= 1
@@ -141,9 +143,10 @@ Once submitted, your review will become privately visible to the authors and AE.
 We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 '''
 
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
 
     if responsiblity_invitation_edit is not None:
 
