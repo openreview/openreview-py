@@ -1,6 +1,7 @@
 import os
 from openreview.api import Invitation
 from .. import invitations
+from .. import tools
 
 class InvitationBuilder(object):
 
@@ -63,7 +64,7 @@ class InvitationBuilder(object):
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'optional': True,
-                            'nullable': True
+                            'deletable': True
                         }
                     },                    
                     'signatures': [ f'{venue_id}/Paper${{2/number}}/Authors' ],
@@ -80,4 +81,82 @@ class InvitationBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             signatures = [venue_id],
-            invitation = submission_invitation)        
+            invitation = submission_invitation)
+
+    def set_recruitment_invitation(self, committee_name, options):
+        venue = self.venue
+        venue_id = self.venue_id
+
+        content = invitations.recruitment_v2
+
+        reduced_load = options.get('reduced_load_on_decline', None)
+        if reduced_load:
+            content['reduced_load'] = {
+                'order': 6,
+                'description': 'Please select the number of submissions that you would be comfortable reviewing.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': reduced_load,
+                        'input': 'select',
+                        'optional': True
+                    }
+                }
+            }
+        
+        invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
+        # current_invitation=tools.get_invitation(self.client, id = invitation_id)
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as process_reader:
+            process_content = process_reader.read()
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{venue.short_name}"')
+            process_content = process_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + committee_name.replace('_', ' ')[:-1] + "'")
+            process_content = process_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + venue.get_committee_id_invited(committee_name) + "'")
+            process_content = process_content.replace("REVIEWERS_ACCEPTED_ID = ''", "REVIEWERS_ACCEPTED_ID = '" + venue.get_committee_id(committee_name) + "'")
+            process_content = process_content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + venue.get_committee_id_declined(committee_name) + "'")
+            print(options.get('allow_overlap_official_committee'))
+            if not options.get('allow_overlap_official_committee'):
+                if committee_name == venue.reviewers_name and venue.use_area_chairs:
+                    process_content = process_content.replace("AREA_CHAIR_NAME = ''", f"ACTION_EDITOR_NAME = '{venue.area_chairs_name}'")
+                    process_content = process_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + venue.get_area_chairs_id() + "'")
+                elif committee_name == venue.area_chairs_name:
+                    process_content = process_content.replace("AREA_CHAIR_NAME = ''", f"ACTION_EDITOR_NAME = '{venue.reviewers_name}'")
+                    process_content = process_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + venue.get_reviewers_id() + "'")
+            process_content = process_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
+
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
+                webfield_content = webfield_reader.read()
+                webfield_content = webfield_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + "{'title': " + venue_id + ", 'subtitle': " + venue.short_name + "}" + ";")
+                webfield_content = webfield_content.replace("var ROLE_NAME = '';", "var ROLE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "';")
+                if reduced_load:
+                    webfield_content = webfield_content.replace("var USE_REDUCED_LOAD = false;", "var USE_REDUCED_LOAD = true;")
+
+                recruitment_invitation = Invitation(
+                    id = invitation_id,
+                    invitees = ['everyone'],
+                    signatures = [venue.id],
+                    readers = ['everyone'],
+                    writers = [venue.id],
+                    edit = {
+                        'signatures': ['(anonymous)'],
+                        'readers': [venue.id],
+                        'note' : {
+                            'signatures':['$signatures'],
+                            'readers': [venue.id],
+                            'writers': [venue.id],
+                            'content': content
+                        }
+                    },
+                    process = process_content,
+                    web = webfield_content
+                )
+
+        recruitment_invitation = self.client.post_invitation_edit(
+            invitations = venue.get_meta_invitation_id(),
+            readers = [venue_id],
+            writers = [venue_id],
+            signatures = [venue_id],
+            invitation = recruitment_invitation)
+
+        return recruitment_invitation

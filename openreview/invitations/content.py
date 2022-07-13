@@ -339,6 +339,61 @@ recruitment = {
     }
 }
 
+recruitment_v2 = {
+    'title': {
+        'order': 1,
+        'description': 'Title',
+        'value': { 
+            'param': { 
+                'type': 'string',
+                'const': 'Recruit Reponse'
+            }
+        }
+    },
+    'user': {
+        'order': 2,
+        'description': 'email address',
+        'value': { 
+            'param': { 
+                'type': 'string',
+                'regex': '.*'
+            }
+        }
+    },
+    'key': {
+        'order': 3,
+        'description': 'Email key hash',
+        'value': { 
+            'param': { 
+                'type': 'string',
+                'regex': '.{0,100}'
+            }
+        }
+    },
+    "response": {
+        'order': 4,
+        'description': 'Invitation response',
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': ['Yes', 'No'],
+                'input': 'radio'
+            }
+        }
+    },
+    'comment': {
+        'order': 5,
+        'description': '(Optionally) Leave a comment to the organizers of the venue.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'regex': '[\\S\\s]{1,5000}',
+                'optional': True
+            }
+        }
+    }
+}
+
 paper_recruitment = {
     'title': {
         'description': '',

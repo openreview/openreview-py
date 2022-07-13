@@ -8,7 +8,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
     if note.content.get('api_version') == '2':
         openreview_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', token=client.token)
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'])
-        venue.setup()
+        venue.setup(note.content.get('program_chair_emails'))
         name = note.content.get('submission_name', 'Submission').strip()
         double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
         readers_map = {
@@ -37,6 +37,10 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
             double_blind=double_blind, 
             readers=readers)
         )
+
+        if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
+            venue.has_area_chairs(True)
+
         return venue
 
     builder = get_conference_builder(client, request_form_id, support_user)
