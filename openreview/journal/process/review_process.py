@@ -20,6 +20,9 @@ def process(client, edit, invitation):
             pending_review_edge.weight -= 1
         client.post_edge(pending_review_edge)
 
+    print('Expire assignment acknowledgement invitation')
+    journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=submission.number, reviewer_id=profile.id))
+
     ## On update or delete return
     if note.tcdate != note.tmdate:
         print('Review edited, exit')
