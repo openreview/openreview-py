@@ -85,10 +85,10 @@ class Venue(object):
         return committee_id
 
     def get_committee_id_invited(self, committee_name):
-        return self.id + '/' + committee_name + '/Invited'
+        return self.get_committee_id(committee_name) + '/Invited'
 
     def get_committee_id_declined(self, committee_name):
-        return self.id + '/' + committee_name + '/Declined'
+        return self.get_committee_id(committee_name) + '/Declined'
 
     def get_reviewers_id(self, number = None):
         return self.get_committee_id(self.reviewers_name, number)
@@ -121,9 +121,6 @@ class Venue(object):
 
     def has_senior_area_chairs(self, has_senior_area_chairs):
         self.use_senior_area_chairs = has_senior_area_chairs
-
-    def has_secondary_area_chairs(self, has_secondary_area_chairs):
-        self.use_secondary_area_chairs = has_secondary_area_chairs               
 
     def setup(self, program_chair_ids=[]):
     
@@ -213,9 +210,9 @@ class Venue(object):
         self.client.add_members_to_group('host', venue_id)
 
     def recruit_reviewers(self,
+        title,
+        message,
         invitees = [],
-        title = None,
-        message = None,
         reviewers_name = 'Reviewers',
         remind = False,
         invitee_names = [],
@@ -225,9 +222,9 @@ class Venue(object):
         default_load= 0,
         allow_overlap_official_committee = False):
 
-        return self.recruitment.invite_committee(invitees, 
-            title,
+        return self.recruitment.invite_committee(title,
             message,
+            invitees,
             reviewers_name,
             remind,
             invitee_names,

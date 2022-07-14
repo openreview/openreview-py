@@ -12,9 +12,9 @@ class Recruitment(object):
         self.venue = venue
 
     def invite_committee(self, 
-            invitees, 
             title,
             message,
+            invitees,
             committee_name,
             remind,
             invitee_names,
@@ -39,7 +39,7 @@ class Recruitment(object):
         committee_group = tools.get_group(self.client, committee_id)
         if not committee_group:
             committee_group=self.client.post_group(Group(id=committee_id,
-                            readers=['everyone'],
+                            readers=[venue_id, committee_id],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[venue_id, committee_id],
@@ -49,7 +49,7 @@ class Recruitment(object):
         committee_declined_group = tools.get_group(self.client, committee_declined_id)
         if not committee_declined_group:
             committee_declined_group=self.client.post_group(Group(id=committee_declined_id,
-                            readers=['everyone'],
+                            readers=[venue_id, committee_declined_id],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[venue_id, committee_declined_id],
@@ -59,7 +59,7 @@ class Recruitment(object):
         committee_invited_group = tools.get_group(self.client, committee_invited_id)
         if not committee_invited_group:
             committee_invited_group=self.client.post_group(Group(id=committee_invited_id,
-                            readers=['everyone'],
+                            readers=[venue_id, committee_invited_id],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[venue_id, committee_invited_id],
@@ -83,43 +83,9 @@ class Recruitment(object):
         }
 
         invitation = venue.invitation_builder.set_recruitment_invitation(committee_name, options)
-        print(invitation['invitation'])
-        print(invitation['invitation']['id'])
         
         role = committee_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
-
-        recruit_message = f'''Dear {{{{fullname}}}},
-
-You have been nominated by the program chair committee of {venue.short_name} to serve as {role}. As a respected researcher in the area, we hope you will accept and help us make {venue.short_name} a success.
-
-You are also welcome to submit papers, so please also consider submitting to {venue.short_name}.
-
-We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-To respond to the invitation, please click on the following link:
-
-{{invitation_url}}  
-
-Please answer within 10 days.
-
-If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-If you have any questions, please contact {{{{contact_info}}}}.
-
-Cheers!
-
-Program Chairs
-
-        '''
-
-        recruit_subject = f'[{venue.short_name}]: Invitation to serve as {role.title()}'
-
-        if title:
-            recruit_subject = title
-
-        if message:
-            recruit_message = message
 
         print('sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
@@ -130,8 +96,8 @@ Program Chairs
                 tools.recruit_reviewer(self.client, email, name,
                     hash_seed,
                     invitation['invitation']['id'],
-                    recruit_message,
-                    recruit_subject,
+                    message,
+                    title,
                     committee_invited_id,
                     contact_info,
                     verbose=False)

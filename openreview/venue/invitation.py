@@ -114,7 +114,6 @@ class InvitationBuilder(object):
             process_content = process_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + venue.get_committee_id_invited(committee_name) + "'")
             process_content = process_content.replace("REVIEWERS_ACCEPTED_ID = ''", "REVIEWERS_ACCEPTED_ID = '" + venue.get_committee_id(committee_name) + "'")
             process_content = process_content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + venue.get_committee_id_declined(committee_name) + "'")
-            print(options.get('allow_overlap_official_committee'))
             if not options.get('allow_overlap_official_committee'):
                 if committee_name == venue.reviewers_name and venue.use_area_chairs:
                     process_content = process_content.replace("AREA_CHAIR_NAME = ''", f"ACTION_EDITOR_NAME = '{venue.area_chairs_name}'")
@@ -127,7 +126,7 @@ class InvitationBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
                 webfield_content = webfield_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + "{'title': " + venue_id + ", 'subtitle': " + venue.short_name + "}" + ";")
+                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + "{'title': '" + venue_id + "', 'subtitle': '" + venue.short_name + "'}" + ";")
                 webfield_content = webfield_content.replace("var ROLE_NAME = '';", "var ROLE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "';")
                 if reduced_load:
                     webfield_content = webfield_content.replace("var USE_REDUCED_LOAD = false;", "var USE_REDUCED_LOAD = true;")
@@ -157,6 +156,7 @@ class InvitationBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             signatures = [venue_id],
-            invitation = recruitment_invitation)
+            invitation = recruitment_invitation,
+            replacement = True)
 
         return recruitment_invitation

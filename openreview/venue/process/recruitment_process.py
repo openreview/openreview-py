@@ -1,4 +1,4 @@
-def process_update(client, note, invitation, existing_note):
+def process(client, note, edit):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
     SHORT_PHRASE = ''
