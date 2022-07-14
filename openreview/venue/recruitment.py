@@ -21,7 +21,7 @@ class Recruitment(object):
             retry_declined,
             contact_info,
             reduced_load_on_decline,
-            default_load,
+            # default_load,
             allow_overlap_official_committee):
 
         venue = self.venue

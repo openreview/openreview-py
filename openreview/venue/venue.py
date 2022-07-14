@@ -246,7 +246,7 @@ class Venue(object):
             retry_declined,
             contact_info,
             reduced_load_on_decline,
-            default_load,
+            # default_load, ##can this be removed? We never get it from the request form
             allow_overlap_official_committee)
 
     def set_submission_stage(self, stage):

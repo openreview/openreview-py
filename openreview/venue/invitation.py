@@ -180,8 +180,9 @@ class InvitationBuilder(object):
         content = invitations.recruitment_v2
 
         reduced_load = options.get('reduced_load_on_decline', None)
+        reduced_load_dict = {}
         if reduced_load:
-            content['reduced_load'] = {
+            reduced_load_dict = {
                 'order': 6,
                 'description': 'Please select the number of submissions that you would be comfortable reviewing.',
                 'value': {
@@ -193,9 +194,14 @@ class InvitationBuilder(object):
                     }
                 }
             }
+            content['reduced_load'] = reduced_load_dict
         
         invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
-        # current_invitation=tools.get_invitation(self.client, id = invitation_id)
+        current_invitation=tools.get_invitation(self.client, id = invitation_id)
+
+        #if reduced_load hasn't change, no need to repost invitation
+        if current_invitation and current_invitation.edit['note']['content'].get('reduced_load', {}) == reduced_load_dict:
+            return current_invitation
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as process_reader:
             process_content = process_reader.read()
