@@ -1,3 +1,4 @@
+import json
 import os
 from openreview.api import Invitation
 from .. import invitations
@@ -126,7 +127,7 @@ class InvitationBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
                 webfield_content = webfield_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + "{'title': '" + venue_id + "', 'subtitle': '" + venue.short_name + "'}" + ";")
+                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(venue.get_homepage_options()) + ";")
                 webfield_content = webfield_content.replace("var ROLE_NAME = '';", "var ROLE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "';")
                 if reduced_load:
                     webfield_content = webfield_content.replace("var USE_REDUCED_LOAD = false;", "var USE_REDUCED_LOAD = true;")

@@ -538,12 +538,12 @@ class TestVenueRequest():
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
 
-        # invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-        # print('invitation_url', invitation_url)
-        # helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        print('invitation_url', invitation_url)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        # messages = client.get_messages(to='reviewer_candidate2@email.com', subject="[TestVenue@OR'2030] Reviewer Invitation accepted")
-        # assert messages and len(messages) == 1
+        messages = client.get_messages(to='reviewer_candidate2@email.com', subject="[TestVenue@OR'2030] Reviewer Invitation accepted")
+        assert messages and len(messages) == 1
 
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 

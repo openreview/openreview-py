@@ -346,7 +346,7 @@ recruitment_v2 = {
         'value': { 
             'param': { 
                 'type': 'string',
-                'const': 'Recruit Reponse'
+                'const': 'Recruit response'
             }
         }
     },

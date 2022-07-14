@@ -11,8 +11,10 @@ class Venue(object):
 
         self.client = client
         self.venue_id = venue_id
+        self.name = 'TBD'
         self.short_name = 'TBD'
         self.website = None
+        self.contact = None
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
         self.reviewers_name = 'Reviewers'
@@ -101,6 +103,14 @@ class Venue(object):
 
     def get_area_chairs_id(self, number = None):
         return self.get_committee_id(self.area_chairs_name, number)
+
+    def get_homepage_options(self):
+        options = {}
+        options['title'] = self.name
+        options['subtitle'] = self.short_name
+        options['website'] = self.website
+        options['contact'] = self.contact
+        return options
 
     def set_group_variable(self, group_id, variable_name, value):
 
