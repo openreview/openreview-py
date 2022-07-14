@@ -916,10 +916,11 @@ You have selected a reduced load of 4 submissions to review.</p>
         now = datetime.datetime.utcnow()
         conference.open_paper_ranking(committee_id=conference.get_authors_id(), due_date=now + datetime.timedelta(days=3))
 
-        authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Authors'
-        request_page(selenium, authors_url, test_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
+        ## Manually set the webfield if the author ranking has to be enabled
+        ## authors_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Authors'
+        ##request_page(selenium, authors_url, test_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
 
-        assert selenium.find_elements_by_class_name('tag-widget')
+        ##assert selenium.find_elements_by_class_name('tag-widget')
 
         client.post_invitation(openreview.Invitation(id=f'{conference.get_authors_id()}/-/Perceived_Likelihood',
             invitees=[conference.get_authors_id()],
