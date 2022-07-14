@@ -330,12 +330,13 @@ class VenueStages():
                 'order': 28
             },
             'participants': {
-                'description': 'Select who should be allowed to post and view comments on submissions.',
+                'description': 'Select who should be allowed to post comments on submissions. These will be added as readers automatically.',
                 'values-checkbox' : [
                     'Program Chairs',
-                    'Paper Area Chairs',
-                    'Paper Reviewers',
-                    'Paper Submitted Reviewers',
+                    'Assigned Senior Area Chairs',
+                    'Assigned Area Chairs',
+                    'Assigned Reviewers',
+                    'Assigned Submitted Reviewers',
                     'Authors',
                     'Public (anonymously)',
                     'Public (non-anonymously)'
@@ -343,6 +344,21 @@ class VenueStages():
                 'required': True,
                 'default': ['Program Chairs'],
                 'order': 29
+            },
+            'additional_readers': {
+                'description': 'Select who should only be allowed to view the comments on submissions (other than the participants)',
+                'values-checkbox': [
+                    'Program Chairs',
+                    'Assigned Senior Area Chairs',
+                    'Assigned Area Chairs',
+                    'Assigned Reviewers',
+                    'Assigned Submitted Reviewers',
+                    'Authors',
+                    'Public'
+                ],
+                'required': False,
+                'default': ['Program Chairs'],
+                'order': 30
             },
             'email_program_chairs_about_official_comments': {
                 'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
@@ -352,7 +368,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, do not email PCs for each official comment made in the venue',
-                'order': 30
+                'order': 31
             }
         }
 

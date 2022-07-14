@@ -1086,8 +1086,8 @@ The Reviewer Reviewer ARR MIT(<a href=\"mailto:reviewer_arr2@mit.edu\">reviewer_
                 "commentary_end_date": "2022/12/31 00:00",
                 "participants": [
                     "Program Chairs",
-                    "Paper Area Chairs",
-                    "Paper Reviewers",
+                    "Assigned Area Chairs",
+                    "Assigned Reviewers",
                     "Authors"
                 ],
                 "email_program_chairs_about_official_comments": "Yes, email PCs for each official comment made in the venue"

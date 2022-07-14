@@ -438,10 +438,12 @@ var getReviewsWithReplyto = function() {
 }
 
 var getGroups = function() {
-  return Webfield.getAll('/groups', {
+  return Webfield.get('/groups', {
     id: CONFERENCE_ID + '/Paper.*',
+    stream: true,
     select: 'id,members'
-  }).then(function(groups) {
+  }).then(function(result) {
+    var groups = result.groups;
     var reviewerGroups = [];
     var anonReviewerGroups = {};
     var areaChairGroups = [];
