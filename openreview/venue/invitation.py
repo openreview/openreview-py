@@ -10,6 +10,15 @@ class InvitationBuilder(object):
         self.venue = venue
         self.venue_id = venue.venue_id
 
+    def save_invitation(self, invitation):
+        return self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
+            replacement=True,
+            invitation=invitation
+        )        
+
     def get_process_content(self, file_path):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
@@ -76,13 +85,93 @@ class InvitationBuilder(object):
             process=self.get_process_content('process/submission_process.py')
         )
 
-        submission_invitation = self.client.post_invitation_edit(
-            invitations = self.venue.get_meta_invitation_id(),
-            readers = [venue_id],
-            writers = [venue_id],
-            signatures = [venue_id],
-            invitation = submission_invitation)
+        submission_invitation = self.save_invitation(submission_invitation)
 
+    
+    def set_review_invitation(self):
+
+        venue_id = self.venue_id
+        review_stage = self.venue.review_stage
+        review_invitation_id = self.venue.get_invitation_id(review_stage.name)
+
+        content = invitations.review_v2
+        
+        invitation = Invitation(id=review_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            content={
+                'signatures': {
+                    'value': 'test'
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+
+                    },
+                    'duedate': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
+                            }
+                        }                    
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(review_stage.name, '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
+                    'maxReplies': 1,
+                    'duedate': '${2/content/duedate/value}',
+                    #'process': { 'const': paper_process },
+                    #'dateprocesses': { 'const': [self.reviewer_reminder_process]},
+                    'edit': {
+                        'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id(review_stage.name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': '${4/content/duedate/value}',
+                            'signatures': ['${3/signatures}'],
+                            'readers': [venue_id],
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                }
+
+            }
+        )
+
+        return self.save_invitation(invitation)
+       
+    
     def set_recruitment_invitation(self, committee_name, options):
         venue = self.venue
         venue_id = self.venue_id

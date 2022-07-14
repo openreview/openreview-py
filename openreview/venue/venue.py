@@ -21,6 +21,7 @@ class Venue(object):
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.authors_name = 'Authors'
         self.submission_stage = None
+        self.review_stage = None
         self.ethics_review_stage = None
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
@@ -90,8 +91,12 @@ class Venue(object):
     def get_committee_id_declined(self, committee_name):
         return self.get_committee_id(committee_name) + '/Declined'
 
-    def get_reviewers_id(self, number = None):
-        return self.get_committee_id(self.reviewers_name, number)
+    ## Compatibility with Conference, refactor conference references to use get_reviewers_id
+    def get_anon_reviewer_id(self, number, anon_id):
+        return self.get_reviewers_id(number, True)
+    
+    def get_reviewers_id(self, number = None, anon=False):
+        return self.get_committee_id('Reviewer_' if anon else self.reviewers_name, number)
 
     def get_authors_id(self, number = None):
         return self.get_committee_id(self.authors_name, number)
@@ -240,8 +245,11 @@ class Venue(object):
         self.set_group_variable(self.venue_id, 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
         self.set_group_variable(self.get_authors_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
 
+    def create_review_stage(self):
+        self.invitation_builder.set_review_invitation()
 
-    def set_post_submission_stage(self):
+
+    def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
         submissions = self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self))
         

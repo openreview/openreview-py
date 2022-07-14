@@ -1616,7 +1616,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, invitations, readers, writers, signatures, invitation=None, params=None, replacement=None):
+    def post_invitation_edit(self, invitations, readers, writers, signatures, invitation=None, params=None, content=None, replacement=None):
         """
         """
         edit_json = {
@@ -1630,6 +1630,9 @@ class OpenReviewClient(object):
 
         if params is not None:
             edit_json['params'] = params
+
+        if content is not None:
+            edit_json['content'] = content
 
         if replacement is not None:
             edit_json['replacement'] = replacement
@@ -2046,6 +2049,7 @@ class Invitation(object):
         writers = None,
         invitees = None,
         signatures = None,
+        content = None,
         edit = None,
         type = 'Note',
         noninvitees = None,
@@ -2091,6 +2095,7 @@ class Invitation(object):
         self.process = process
         self.preprocess = preprocess
         self.date_processes = date_processes
+        self.content = content
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2157,6 +2162,9 @@ class Invitation(object):
         if self.signatures:
             body['signatures'] = self.signatures
 
+        if self.content:
+            body['content'] = self.content
+
         if self.reply_forum_views:
             body['reply_forum_views'] = self.reply_forum_views
 
@@ -2211,7 +2219,8 @@ class Invitation(object):
             maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
-            bulk = i.get('bulk')
+            bulk = i.get('bulk'),
+            content = i.get('content')
             )
         if 'web' in i:
             invitation.web = i['web']

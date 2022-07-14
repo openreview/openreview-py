@@ -217,7 +217,7 @@ class TestVenueSubmission():
         assert 'TestVenue.cc' in submission.readers
         assert 'TestVenue.cc/Paper1/Authors' in submission.readers
                 
-        venue.set_post_submission_stage()
+        venue.setup_post_submission_stage()
         assert openreview_client.get_group('TestVenue.cc/Paper1/Authors')
         assert openreview_client.get_group('TestVenue.cc/Paper1/Reviewers')
         assert openreview_client.get_group('TestVenue.cc/Paper1/Action_Editors')
@@ -288,3 +288,29 @@ class TestVenueSubmission():
         #             }
         #         }
         #     } )
+        now = datetime.datetime.utcnow()
+        venue.review_stage = openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40))
+        venue.create_review_stage()
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
+
+        ## Create Paper 1 review invitation
+        openreview_client.post_invitation_edit(invitations='TestVenue.cc/-/Official_Review',
+            readers=['TestVenue.cc'],
+            writers=['TestVenue.cc'],
+            signatures=['TestVenue.cc'],
+            content={
+                'noteId': {
+                    'value': submission.id
+                },
+                'noteNumber': {
+                    'value': submission.number
+                },
+                'duedate': {
+                    'value': openreview.tools.datetime_millis(now)
+                }
+            },
+            invitation=Invitation()
+        )
+
+        assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Official_Review')        
