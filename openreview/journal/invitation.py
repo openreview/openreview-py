@@ -2664,7 +2664,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 'nullable': True
                             }},
                             'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}'] }},
                             'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
                             'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
                             'content': {
