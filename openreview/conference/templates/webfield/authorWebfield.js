@@ -9,7 +9,6 @@ var REVIEW_CONFIDENCE_NAME = 'confidence';
 var HEADER = {};
 var AUTHOR_NAME = 'Authors';
 var AUTHOR_SUBMISSION_FIELD = '';
-var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 
 return {
   component: 'AuthorConsole',
@@ -26,7 +25,6 @@ return {
     reviewRatingName: `${REVIEW_RATING_NAME}`,
     reviewConfidenceName: `${REVIEW_CONFIDENCE_NAME}`,
     authorName: `${AUTHOR_NAME}`,
-    submissionName:'Paper',
-    wildcardInvitation:`${WILDCARD_INVITATION}`
+    submissionName:'Paper'
   }
 }
