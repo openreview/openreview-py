@@ -164,10 +164,10 @@ class JournalRequest():
             content = content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.support_group_id + "'")
             invitation = openreview.api.Invitation(
                 id = request_comment_invitation_id,
-                invitees = ['everyone'],
+                invitees = [venue_id, self.support_group_id],
                 readers = ['everyone'],
                 writers = [],
-                signatures = ['~Super_User1'],
+                signatures = [venue_id],
                 edit = {
                     'signatures': { 'regex': f'~.*|{venue_id}|{self.support_group_id}', 'type': 'group[]' },
                     'writers': { 'const': [self.support_group_id, venue_id] },
@@ -178,7 +178,7 @@ class JournalRequest():
                             'optional': True
                         },
                         'signatures': { 'const': ['${signatures}'] },
-                        'readers': { 'enum': [self.support_group_id, venue_id, action_editors_id], 'type': 'group[]' },
+                        'readers': { 'enum': [self.support_group_id, venue_id, '~.*'], 'type': 'group[]' },
                         'writers': { 'const': [self.support_group_id, venue_id]},
                         'forum': { 'const': note.id },
                         'replyto': { 'withForum': note.id },
@@ -407,7 +407,7 @@ Cheers!
                         'forum': { 'const': note.id },
                         'replyto': {'const': note.id },
                         'signatures': { 'const': ['${signatures}'] },
-                        'readers': { 'const': [self.support_group_id, venue_id, f'{venue_id}/Action_Editors'] },
+                        'readers': { 'const': [self.support_group_id, venue_id, '${signatures}'] },
                         'writers': { 'const': [self.support_group_id, venue_id]},
                         'content': recruitment_content
                     }

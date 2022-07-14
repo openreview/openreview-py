@@ -274,13 +274,10 @@ TJ22 Editors-in-Chief
                 replyto = journal['journal_request_note']['forum'],
                 signatures = ['~First_AE1']
             ))
-        assert recruitment_note
-
         helpers.await_queue_edit(openreview_client, recruitment_note['id'])
-        process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
+
+        recruitment_note = openreview_client.get_note(recruitment_note['note']['id'])
+        assert recruitment_note.readers == ['openreview.net/Support', 'TJ22', '~First_AE1']
 
         messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
         assert len(messages) == 1
@@ -288,11 +285,12 @@ TJ22 Editors-in-Chief
         assert messages[0]['content']['replyTo'] == 'ae_journal1@mail.com'
 
         inv = '{}/Journal_Request{}/-/Comment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
-        recruitment_status = ae_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])
+        recruitment_status = ae_client.get_notes(invitation=inv, replyto=recruitment_note.id)
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
         assert 'Invited: 1 reviewer' in recruitment_status[0].content['comment']['value']
+        assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~First_AE1']
 
         helpers.create_user('ae_journal2@mail.com', 'Second', 'AE')
         ae2_client = OpenReviewClient(username='ae_journal2@mail.com', password='1234')
@@ -315,10 +313,9 @@ TJ22 Editors-in-Chief
         assert recruitment_note
 
         helpers.await_queue_edit(openreview_client, recruitment_note['id'])
-        process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
+
+        recruitment_note = openreview_client.get_note(recruitment_note['note']['id'])
+        assert recruitment_note.readers == ['openreview.net/Support', 'TJ22', '~Second_AE1']
 
         messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
         assert len(messages) == 2
@@ -326,18 +323,20 @@ TJ22 Editors-in-Chief
         assert messages[1]['content']['replyTo'] == 'ae_journal2@mail.com'
 
         inv = '{}/Journal_Request{}/-/Comment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
-        recruitment_status = ae2_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])
+        recruitment_status = ae2_client.get_notes(invitation=inv, replyto=recruitment_note.id)
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
         assert 'Invited: 1 reviewer' in recruitment_status[0].content['comment']['value']
+        assert recruitment_status[0].readers == ['openreview.net/Support', 'TJ22', '~Second_AE1']
 
         #decline reviewer invitation
         text = messages[0]['content']['text']
-        accept_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        decline_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        request_page(selenium, decline_url, alert=True)
 
-        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
+        recruitment_response = openreview_client.get_notes(invitation = 'TJ22/Reviewers/-/Recruitment', content={ 'user': 'new_reviewer@mail.com'}, sort='tcdate:desc')[0]
+        helpers.await_queue_edit(openreview_client, edit_id = openreview_client.get_note_edits(note_id=recruitment_response.id)[0].id)
 
         #check recruitment response posted as reply of lastest recruitment note
         # recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
@@ -409,6 +408,7 @@ TJ22 Editors-in-Chief
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
         assert recruitment_response and len(recruitment_response) == 2
         assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert recruitment_response[0].readers == ['openreview.net/Support', 'TJ22', '~Second_AE1']
         assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
         references = openreview_client.get_note_edits(recruitment_response[0].id)
         assert references and len(references) == 2
@@ -427,6 +427,7 @@ TJ22 Editors-in-Chief
         assert recruitment_response and len(recruitment_response) == 2
         assert recruitment_response[1].content['title']['value'] == 'Recruitment Status'
         assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
+        assert recruitment_response[0].readers == ['openreview.net/Support', 'TJ22', '~Second_AE1']
         assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
         references = openreview_client.get_note_edits(recruitment_response[0].id)
         assert references and len(references) == 3
