@@ -782,7 +782,8 @@ var renderTable = function(container, rows) {
       Handlebars.templates.noteAreaChairs,
       function(data) {
         return Webfield2.ui.eicTaskList(data.invitations, data.forumId, {
-          referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
+          referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')'),
+          showEditLink: true
         });
       },
       function(data) {
