@@ -100,6 +100,7 @@ def process(client, edit, invitation):
         cdate = journal.get_due_date(weeks = 2)
         duedate = cdate + datetime.timedelta(weeks = 2)
         journal.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
+        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value']])[0]
 
         ## Send email notifications to authors
         print('Send emails to authors')
@@ -117,8 +118,9 @@ Visit the following link to respond to the reviews: https://openreview.net/forum
 For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 ''',
-            replyTo=journal.contact_info
+            replyTo=assigned_action_editor.get_preferred_email()
         )
 
         ## Send email notifications to reviewers
@@ -137,8 +139,9 @@ For more details and guidelines on the {journal.short_name} review process, visi
 We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 ''',
-            replyTo=journal.contact_info
+            replyTo=assigned_action_editor.get_preferred_email()
         )
 
         ## Send email notifications to the action editor

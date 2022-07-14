@@ -82,5 +82,5 @@ Please check the invitee group to see more details: https://openreview.net/group
             },
             forum = recruitment_note.forum,
             replyto = recruitment_note.id,
-            readers = [SUPPORT_GROUP, venue_id, journal.get_action_editors_id()]
+            readers = [SUPPORT_GROUP, venue_id]
         ))

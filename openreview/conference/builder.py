@@ -1757,24 +1757,27 @@ Program Chairs
         self.expire_recruitment_invitations()
 
     def send_decision_notifications(self, decision_options, messages):
-        decision_notes = self.client.get_all_notes(
-            invitation=self.get_invitation_id(self.decision_stage.name, '.*'),
-        )
-        paper_notes = {n.forum: n for n in self.get_submissions()}
+        paper_notes = self.get_submissions(details='directReplies')
 
         def send_notification(note):
-            paper_note = paper_notes[note.forum]
-            message = messages[note.content['decision']]
+            decision_note = None
+            for reply in note.details['directReplies']:
+                if reply['invitation'].endswith('/-/' + self.decision_stage.name):
+                    decision_note = reply
+                    break
             subject = "[{SHORT_NAME}] Decision notification for your submission {submission_number}: {submission_title}".format(
                 SHORT_NAME=self.get_short_name(),
-                submission_number=paper_note.number,
-                submission_title=paper_note.content['title']
+                submission_number=note.number,
+                submission_title=note.content['title']
             )
-            final_message = message.replace("{{submission_title}}", paper_note.content['title'])
-            final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={paper_note.id}')
-            self.client.post_message(subject, recipients=paper_note.content['authorids'], message=final_message)
 
-        tools.concurrent_requests(send_notification, decision_notes)
+            if decision_note and not self.client.get_messages(subject=subject):
+                message = messages[decision_note['content']['decision']]
+                final_message = message.replace("{{submission_title}}", note.content['title'])
+                final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
+                self.client.post_message(subject, recipients=note.content['authorids'], message=final_message)
+
+        tools.concurrent_requests(send_notification, paper_notes)
 
     def post_decisions(self, decisions_file):
         decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
