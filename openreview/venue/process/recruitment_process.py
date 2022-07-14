@@ -1,4 +1,4 @@
-def process(client, note, edit):
+def process(client, edit, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
     SHORT_PHRASE = ''
@@ -10,19 +10,15 @@ def process(client, note, edit):
     AREA_CHAIRS_ACCEPTED_ID = ''
     HASH_SEED = ''
 
-    if hasattr(note, 'note'):
-        note=edit.note
-        user=note.content['user']['value']
-        key=note.content['key']['value']
-        response=note.content['response']['value']
-        reduced_load=note.content['reduced_load']['value'] if 'reduced_load' in note.content else None
-    else:
-        user=note.content['user']
-        key=note.content['key']
-        response=note.content['response']
-        reduced_load=note.content.get('reduced_load')
+    note = edit.note
+    user=note.content['user']['value']
+    key=note.content['key']['value']
+    response=note.content['response']['value']
+    reduced_load=note.content.get('reduced_load')
+    if reduced_load:
+        reduced_load = reduced_load['value']
 
-    if note.ddate or 'message' in note.content:
+    if note.ddate:
         return
     
     user = urllib.parse.unquote(user)

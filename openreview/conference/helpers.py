@@ -40,6 +40,10 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
             venue.has_area_chairs(True)
+        venue.short_name = note.content.get('Abbreviated Venue Name')
+        venue.name = note.content.get('Official Venue Name')
+        venue.website = note.content.get('Official Website URL')
+        venue.contact = note.content.get('contact_email')
 
         venue.review_stage = get_review_stage(note)
 
