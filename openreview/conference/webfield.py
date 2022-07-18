@@ -22,7 +22,7 @@ class WebfieldBuilder(object):
         return merged_options
 
     def __should_update(self, entity):
-        return entity.details.get('writable', False) and (not entity.web or entity.web.startswith('// webfield_template'))
+        return entity.details.get('writable', False) and (not entity.web or entity.web.startswith('// webfield_template') or entity.web.startswith('// Webfield component'))
 
     def __update_invitation(self, invitation, content):
         current_invitation=self.client.get_invitation(invitation.id)
@@ -361,7 +361,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, conference.get_authorpage_header())
 
-        template_file = 'legacyAuthorWebfield' if conference.legacy_anonids else 'authorWebfield'
+        template_file = 'legacyAuthorWebfield' if conference.legacy_anonids else 'webfield/authorWebfield'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_file}.js')) as f:
             content = f.read()
