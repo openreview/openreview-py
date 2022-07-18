@@ -89,23 +89,40 @@ class Recruitment(object):
 
         print('sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
-            name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-            if not name and not email.startswith('~'):
-                name = 'invitee'
-            try:
-                tools.recruit_reviewer(self.client, email, name,
-                    hash_seed,
-                    invitation['invitation']['id'],
-                    message,
-                    title,
-                    committee_invited_id,
-                    contact_info,
-                    verbose=False)
-                recruitment_status['invited'].append(email)
-            except Exception as e:
-                self.client.remove_members_from_group(committee_invited_id, email)
-                if repr(e) not in recruitment_status['errors']:
-                    recruitment_status['errors'][repr(e)] = []
-                recruitment_status['errors'][repr(e)].append(email)
+            memberships = [g.id for g in self.client.get_groups(member=email, regex=venue_id)] if tools.get_group(self.client, email) else []
+            invited_roles = [f'{venue_id}/{role}/Invited' for role in committee_roles]
+            member_roles = [f'{venue_id}/{role}' for role in committee_roles]
 
+            invited_group_ids=list(set(invited_roles) & set(memberships))
+            member_group_ids=list(set(member_roles) & set(memberships))
+
+            if invited_group_ids:
+                invited_group_id=invited_group_ids[0]
+                if invited_group_id not in recruitment_status['already_invited']:
+                    recruitment_status['already_invited'][invited_group_id] = [] 
+                recruitment_status['already_invited'][invited_group_id].append(email)
+            elif member_group_ids:
+                member_group_id = member_group_ids[0]
+                if member_group_id not in recruitment_status['already_member']:
+                    recruitment_status['already_member'][member_group_id] = []
+                recruitment_status['already_member'][member_group_id].append(email)
+            else:
+                name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
+                if not name and not email.startswith('~'):
+                    name = 'invitee'
+                try:
+                    tools.recruit_reviewer(self.client, email, name,
+                        hash_seed,
+                        invitation['invitation']['id'],
+                        message,
+                        title,
+                        committee_invited_id,
+                        contact_info,
+                        verbose=False)
+                    recruitment_status['invited'].append(email)
+                except Exception as e:
+                    self.client.remove_members_from_group(committee_invited_id, email)
+                    if repr(e) not in recruitment_status['errors']:
+                        recruitment_status['errors'][repr(e)] = []
+                    recruitment_status['errors'][repr(e)].append(email)
         return recruitment_status

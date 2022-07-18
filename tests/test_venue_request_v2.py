@@ -546,6 +546,37 @@ class TestVenueRequest():
         messages = client.get_messages(to='reviewer_candidate2@email.com', subject="[TestVenue@OR'2030] Reviewer Invitation accepted")
         assert messages and len(messages) == 1
 
+        #reinvite reviewer, no email should be sent
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_reduced_load': ['1', '2', '3'],
+                'invitee_details': 'reviewer_candidate1@email.com, Reviewer One',
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='reviewer_candidate1@email.com')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+
+        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
+                                                                                   venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
+        assert '0 users' in last_comment.content['invited']
+        assert 'No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' in last_comment.content['comment']
+        
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -599,6 +630,61 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
+
+    def test_venue_AC_recruitment_(self, client, test_client, selenium, request_page, venue, helpers):
+
+        # Test AC Recruitment
+
+        ac_details = '''ac_one@mail.com\nreviewer_candidate2@email.com, Reviewer Two'''
+
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Area_Chairs',
+                'allow_role_overlap': 'Yes',
+                'invitee_reduced_load': ['2', '4', '6'],
+                'invitee_details': ac_details,
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
+
+        messages = client.get_messages(to='ac_one@mail.com')
+        assert messages and len(messages) == 1
+
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Area Chair"
+        assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
+
+        messages = client.get_messages(to='reviewer_candidate2@email.com')
+        assert messages and len(messages) == 3
+        assert messages[2]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Area Chair"
+        assert messages[2]['content']['text'].startswith('<p>Dear Reviewer Two,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
+
+        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
+                                                                                   venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
+        assert '2 users' in last_comment.content['invited']
+
+        #aacept AC invitation after having accepted reviewer invitation
+        invitation_url = re.search('href="https://.*">', messages[2]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        print('invitation_url', invitation_url)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        messages = client.get_messages(to='reviewer_candidate2@email.com', subject="[TestVenue@OR'2030] Area Chair Invitation accepted")
+        assert messages and len(messages) == 1
 
 #     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 

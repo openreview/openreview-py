@@ -59,7 +59,12 @@ class Venue(object):
         return committee
 
     def get_roles(self):
-        return [self.reviewers_name]
+        roles = self.reviewer_roles
+        if self.use_area_chairs:
+            roles = self.reviewer_roles + [self.area_chairs_name]
+        if self.use_senior_area_chairs:
+            roles = roles + [self.senior_area_chairs_name]
+        return roles
 
     def get_meta_invitation_id(self):
         return f'{self.venue_id}/-/Edit'
