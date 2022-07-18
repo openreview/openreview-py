@@ -15,7 +15,7 @@ def process(client, note, invitation):
         conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
         comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
-            conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
+            conference.setup_post_submission_stage()
 
         if invitation_type == 'Revision':
             submission_deadline = forum_note.content.get('Submission Deadline')
@@ -116,13 +116,13 @@ def process(client, note, invitation):
                         reveal_authors=conference.submission_stage.withdrawn_submission_reveal_authors,
                         reveal_submission=conference.submission_stage.withdrawn_submission_public,
                         email_pcs=conference.submission_stage.email_pcs_on_withdraw,
-                        hide_fields=forum_note.content.get('hide_fields', [])
+                        hide_fields=conference.submission_stage.hide_fields
                     )
                 if update_desk_reject:
                     conference.create_desk_reject_invitations(
                         reveal_authors=conference.submission_stage.desk_rejected_submission_reveal_authors,
                         reveal_submission=conference.submission_stage.desk_rejected_submission_public,
-                        hide_fields=forum_note.content.get('hide_fields', [])
+                        hide_fields=conference.submission_stage.hide_fields
                     )
         elif invitation_type == 'Bid_Stage':
             conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
@@ -236,12 +236,13 @@ Best,
                 'required': False
             }
 
-            content['hide_fields'] = {
-                'values-regex': '.*',
-                'required': False,
-                'order': 8,
-                'description': 'Comma separated values of submission fields to be hidden'
-            }
+            if conference.submission_stage.double_blind:
+                content['hide_fields'] = {
+                    'values-regex': '.*',
+                    'required': False,
+                    'order': 8,
+                    'description': 'Comma separated values of submission fields to be hidden'
+                }
 
             decision_due_date = forum_note.content.get('decision_deadline').strip()
             cdate = datetime.datetime.utcnow()
@@ -310,7 +311,7 @@ Best,
                 elif 'No, I don\'t want to release any submissions' in forum_note.content['release_submissions']:
                     submission_readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
-            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers, hide_fields=forum_note.content.get('hide_fields', []))
+            conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
             if note.content.get('send_decision_notifications') == 'Yes, send an email notification to the authors':
                 decision_options = forum_note.content.get(
                     'decision_options',

@@ -1069,12 +1069,14 @@ class Conference(object):
         if self.use_area_chairs:
             self.set_area_chairs()
 
-    def setup_post_submission_stage(self, force=False, hide_fields=[]):
+    def setup_post_submission_stage(self, force=False, hide_fields=None):
+        if not hide_fields:
+            hide_fields = self.submission_stage.hide_fields
 
         now = datetime.datetime.utcnow()
 
         if self.submission_stage.second_due_date:
-            if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
+            if self.submission_stage.due_date < now < self.submission_stage.second_due_date:
                 self.setup_first_deadline_stage(force, hide_fields)
             elif self.submission_stage.second_due_date < now:
                 self.setup_final_deadline_stage(force, hide_fields)
@@ -1678,7 +1680,10 @@ Program Chairs
         for future in futures:
             result = future.result()
 
-    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=None):
+        if not hide_fields:
+            hide_fields = self.submission_stage.hide_fields
+
         submissions = self.get_submissions(details='original')
         decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
 
@@ -1700,6 +1705,9 @@ Program Chairs
                     submission.content['authors'] = ['Anonymous']
                     submission.content['authorids'] = [self.get_authors_id(number=submission.number)]
 
+                for field in hide_fields:
+                    submission.content[field] = ''
+
                 bibtex = tools.generate_bibtex(
                         openreview.Note.from_json(submission.details['original']),
                         venue_fullname=self.name,
@@ -1718,9 +1726,6 @@ Program Chairs
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=False
                 )
-
-            for field in hide_fields:
-                submission.content[field] = ''
 
             self.client.post_note(submission)
 
@@ -1911,6 +1916,7 @@ class SubmissionStage(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
+            hide_fields=[],
             subject_areas=[],
             email_pcs=False,
             create_groups=False,
@@ -1935,6 +1941,7 @@ class SubmissionStage(object):
         self.double_blind = double_blind
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
+        self.hide_fields = hide_fields
         self.subject_areas = subject_areas
         self.email_pcs = email_pcs
         self.create_groups = create_groups
@@ -2752,6 +2759,7 @@ class ConferenceBuilder(object):
             double_blind=False,
             additional_fields={},
             remove_fields=[],
+            hide_fields=[],
             subject_areas=[],
             email_pcs=False,
             create_groups=False,
@@ -2785,6 +2793,7 @@ class ConferenceBuilder(object):
             double_blind,
             additional_fields,
             remove_fields,
+            hide_fields,
             subject_areas,
             email_pcs,
             create_groups,

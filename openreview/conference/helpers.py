@@ -155,6 +155,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     email_pcs = 'Yes' in note.content.get('email_pcs_for_new_submissions', '')
 
     name = note.content.get('submission_name', 'Submission').strip()
+    hide_fields = note.content.get('hide_fields', [])
 
     builder.set_submission_stage(
         name=name,
@@ -165,6 +166,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         second_due_date=submission_second_due_date,
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
+        hide_fields=hide_fields,
         email_pcs=email_pcs,
         create_groups=create_groups,
         create_review_invitation=create_review_invitation,

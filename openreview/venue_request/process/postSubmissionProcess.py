@@ -7,7 +7,7 @@ def process(client, note, invitation):
     comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
     import traceback
     try:
-        conference.setup_post_submission_stage(force=note.content['force'] == 'Yes', hide_fields=note.content.get('hide_fields', []))
+        conference.setup_post_submission_stage(force=note.content['force'] == 'Yes')
         print('Conference: ', conference.get_id())
     except Exception as e:
         error_status = f'''
