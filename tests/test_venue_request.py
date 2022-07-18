@@ -451,6 +451,16 @@ class TestVenueRequest():
         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, End: ' + submission_due_date_str + ' UTC-0'
         assert openreview.tools.get_invitation(client, conference.submission_stage.get_withdrawn_submission_id(conference)) is None
 
+    def test_ac_sac_groups(self, client, test_client, selenium, request_page, venue, helpers):
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        ac_group = client.get_group(conference.get_area_chairs_id())
+        sac_group = client.get_group(conference.get_senior_area_chairs_id())
+
+        assert ac_group
+        assert sac_group
+
+        assert conference.get_senior_area_chairs_id() in ac_group.writers
+
     def test_multiple_reviewer_roles(self, client, test_client, selenium, request_page, venue, helpers):
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
 
