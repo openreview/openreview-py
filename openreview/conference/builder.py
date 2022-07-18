@@ -110,14 +110,14 @@ class Conference(object):
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
 
-    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], exclude_self_reader=False):
+    def __create_group(self, group_id, group_owner_id, members = [], is_signatory = True, additional_readers = [], exclude_self_reader=False, additional_writers=[]):
         group = tools.get_group(self.client, id = group_id)
         if group is None:
             readers = [self.id, group_owner_id] if exclude_self_reader else [self.id, group_owner_id, group_id]
             return self.client.post_group(openreview.Group(
                 id = group_id,
                 readers = ['everyone'] if 'everyone' in additional_readers else readers + additional_readers,
-                writers = [self.id, group_owner_id],
+                writers = [self.id, group_owner_id] + additional_writers,
                 signatures = [self.id],
                 signatories = [self.id, group_id] if is_signatory else [self.id, group_owner_id],
                 members = members))
@@ -1164,7 +1164,7 @@ class Conference(object):
     def set_area_chairs(self, emails = []):
         if self.use_area_chairs:
             readers=[self.get_senior_area_chairs_id()] if self.use_senior_area_chairs else []
-            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails, additional_readers=readers)
+            self.__create_group(group_id=self.get_area_chairs_id(), group_owner_id=self.id, members=emails, additional_readers=readers, additional_writers=readers)
 
             return self.__set_area_chair_page()
         else:
