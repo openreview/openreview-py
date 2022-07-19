@@ -64,7 +64,7 @@ class TestVenueRequest():
                 'Expected Submissions': '100',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'reviewer_identity': ['Program Chairs'],
-                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
                 'use_recruitment_template': 'No'
@@ -1138,7 +1138,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].readers
 
         assert 'TEST.cc/2030/Conference' in ac_groups[0].deanonymizers
-        assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
 
