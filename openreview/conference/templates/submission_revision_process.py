@@ -1,12 +1,10 @@
 def process_update(client, note, invitation, existing_note):
-
     CONFERENCE_ID = ''
     SHORT_PHRASE = ''
     AUTHORS_NAME = ''
     CONFERENCE_NAME = ''
     CONFERENCE_YEAR = ''
     REVISION_INVITATION = ''
-
 
     action = 'posted'
     if existing_note:
@@ -15,7 +13,10 @@ def process_update(client, note, invitation, existing_note):
     forum = client.get_note(note.forum)
 
     title = note.content.get('title', forum.content.get('title', ''))
-    authorids = note.content.get('authorids', forum.content.get('authorids', []))
+    if note.ddate:
+        authorids = forum.content.get('authorids', [])
+    else:
+        authorids = note.content.get('authorids', forum.content.get('authorids', []))
     abstract = note.content.get('abstract', forum.content.get('abstract', ''))
 
     subject = '{} has received a new revision of your submission titled {}'.format(SHORT_PHRASE, title)
