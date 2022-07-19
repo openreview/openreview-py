@@ -87,6 +87,33 @@ class Recruitment(object):
         role = committee_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
 
+        if remind:
+            invited_committee = committee_invited_group.members
+            print("Sending reminders for recruitment invitations")
+            for invited_user in tqdm(invited_committee, desc='remind recruitment'):
+                memberships = [g.id for g in self.client.get_groups(member=invited_user, regex=committee_id)] if tools.get_group(self.client, invited_user) else []   
+                if committee_id not in memberships and committee_declined_id not in memberships:
+                    name = 'invitee'
+                    if invited_user.startswith('~') :
+                        name = None
+                    elif (invited_user in invitees) and invitee_names:
+                        name = invitee_names[invitees.index(invited_user)]
+                    try:
+                        tools.recruit_reviewer(self.client, invited_user, name,
+                            hash_seed,
+                            invitation['invitation']['id'],
+                            message,
+                            'Reminder: ' + title,
+                            committee_invited_id,
+                            contact_info,
+                            verbose = False)
+                        recruitment_status['reminded'].append(invited_user)
+                    except Exception as e:
+                        self.client.remove_members_from_group(committee_invited_id, invited_user)
+                        if repr(e) not in recruitment_status['errors']:
+                            recruitment_status['errors'][repr(e)] = []
+                        recruitment_status['errors'][repr(e)].append(invited_user)
+
         print('sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
             memberships = [g.id for g in self.client.get_groups(member=email, regex=venue_id)] if tools.get_group(self.client, email) else []

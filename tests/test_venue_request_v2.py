@@ -686,56 +686,60 @@ class TestVenueRequest():
         messages = client.get_messages(to='reviewer_candidate2@email.com', subject="[TestVenue@OR'2030] Area Chair Invitation accepted")
         assert messages and len(messages) == 1
 
-#     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
-#         # Test Reviewer Remind Recruitment
-#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-#         recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
-#         assert recruitment_div
-#         reply_row = recruitment_div.find_element_by_class_name('reply_row')
-#         assert reply_row
-#         buttons = reply_row.find_elements_by_class_name('btn-xs')
-#         assert [btn for btn in buttons if btn.text == 'Remind Recruitment']
+        # Test Reviewer Remind Recruitment
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
+        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        assert recruitment_div
+        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        assert reply_row
+        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        assert [btn for btn in buttons if btn.text == 'Remind Recruitment']
 
-#         remind_recruitment_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Remind Recruitment',
-#                 'invitee_role': 'Reviewers',
-#                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-#                 'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
-#             },
-#             forum=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert remind_recruitment_note
+        remind_recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Remind Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert remind_recruitment_note
 
-#         helpers.await_queue()
-#         process_logs = client.get_process_logs(id=remind_recruitment_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-#         assert process_logs[0]['invitation'] == '{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=remind_recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-#         messages = client.get_messages(to='reviewer_candidate1@email.com')
-#         assert messages and len(messages) == 2
-#         assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer"
-#         assert messages[1]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
+        messages = client.get_messages(to='reviewer_candidate1@email.com')
+        assert messages and len(messages) == 2
+        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[1]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.</p>')
 
-#         messages = client.get_messages(to='reviewer_candidate2@email.com')
-#         assert messages and len(messages) == 2
-#         assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer"
-#         assert messages[1]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.</p>')
+        messages = client.get_messages(to='reviewer_candidate2@email.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        assert not messages
 
-#         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
-#                                                                                    venue['request_form_note'].number)
-#         last_comment = client.get_notes(invitation=remind_recruitment_status_invitation, sort='tmdate')[0]
-#         assert '4 users' in last_comment.content['reminded']
+        messages = client.get_messages(to='reviewer_one_tilde@mail.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        assert messages and len(messages) == 1
 
-#         last_message = client.get_messages(to='support@openreview.net')[-1]
-#         assert 'Remind Recruitment Status' not in last_message['content']['text']
+        messages = client.get_messages(to='reviewer_two_tilde@mail.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        assert messages and len(messages) == 1
+
+        remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
+                                                                                   venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=remind_recruitment_status_invitation, sort='tmdate')[0]
+        assert '3 users' in last_comment.content['reminded']
+
+        last_message = client.get_messages(to='support@openreview.net')[-1]
+        assert 'Remind Recruitment Status' not in last_message['content']['text']
 
 #     def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
 #         now = datetime.datetime.utcnow()
