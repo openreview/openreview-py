@@ -1742,8 +1742,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
-    def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
-
+    def test_post_submission_deadline_edit(self, client, test_client, selenium, request_page, helpers, venue):
         author_client = helpers.create_user('venue_author3@mail.com', 'Venue', 'Author')
         submission = author_client.post_note(openreview.Note(
             invitation='{}/-/Submission'.format(venue['venue_id']),
@@ -1766,12 +1765,91 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         assert submission
 
+        # expire submission deadline
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(days=1)
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=venue_revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         conference.setup_post_submission_stage(force=True)
+
+        submission.content['authorids'] = ['~Venue_Author3', '~Venue_Author2']
+        submission.content['authors'] = ['Venue Author', 'Venue Author']
+        submission.signatures = ['~SomeFirstName_User1']
+
+        test_client.post_note(submission)
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=submission.id)
+        assert process_logs[0]['status'] == 'ok'
 
         blind_submissions = author_client.get_notes(
             invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
         assert blind_submissions and len(blind_submissions) == 1
+
+        authors_group = client.get_group(f'{conference.id}/Paper{submission.number}/Authors')
+        assert '~Venue_Author2' in authors_group.members
+
+    def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
+        author_client = openreview.Client(baseurl = 'http://localhost:3000', username='venue_author3@mail.com', password='1234')
+
+        # extend submission deadline
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=1)
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=venue_revision_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
         # Post a revision stage note
         now = datetime.datetime.utcnow()
@@ -1843,10 +1921,29 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert updated_note.content['abstract'] == 'revised abstract 3'
         assert updated_note.content['authors'] == blind_submissions[0].content['authors']
         assert updated_note.content['authorids'] == blind_submissions[0].content['authorids']
+        note_authors = client.get_group('{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number))
+        assert len(note_authors.members) == 2
+        assert note_authors.members == ['~Venue_Author3', 'melisa@mail.com']
 
         messages = client.get_messages(subject='{} has received a new revision of your submission titled revised test submission 3'.format(venue['request_form_note'].content['Abbreviated Venue Name']))
         assert messages and len(messages) == 2
         #assert messages[0]['content']['to'] == 'venue_author3@mail.com'
+
+        revision_note.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        deleted_note = author_client.post_note(revision_note)
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=deleted_note.id)
+        assert len(process_logs) == 2
+        assert process_logs[0]['status'] == 'ok'
+
+        updated_note = author_client.get_note(id=blind_submissions[0].forum)
+        assert updated_note
+        assert updated_note.content['authors'] == blind_submissions[0].content['authors']
+        assert updated_note.content['authorids'] == blind_submissions[0].content['authorids']
+        note_authors = client.get_group('{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number))
+        assert len(note_authors.members) == 2
+        assert note_authors.members == ['~Venue_Author3', '~Venue_Author2']
+
 
     def test_venue_submission_revision_stage_accepted_papers_only(self, client, test_client, selenium, request_page, helpers, venue):
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
