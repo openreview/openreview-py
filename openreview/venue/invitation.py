@@ -237,7 +237,7 @@ class InvitationBuilder(object):
                         'signatures': ['(anonymous)'],
                         'readers': [venue.id],
                         'note' : {
-                            'signatures':['$signatures'],
+                            'signatures':['${3/signatures}'],
                             'readers': [venue.id],
                             'writers': [venue.id],
                             'content': content
