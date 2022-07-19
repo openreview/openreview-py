@@ -256,3 +256,61 @@ class InvitationBuilder(object):
             replacement = True)
 
         return recruitment_invitation
+
+    def set_bid_invitation(self, bid_stage):
+
+        venue_id = self.venue_id
+        match_group_id = bid_stage.committee_id
+
+        invitation_readers = bid_stage.get_invitation_readers(self.venue)
+        bid_readers = bid_stage.get_readers(self.venue)
+        bid_readers.replace('{signatures}', '${2/signatures}')
+
+        head = {
+            'param': {
+                'type': 'note',
+                'withInvitation': self.venue.get_blind_submission_id()
+            }
+        }
+        if match_group_id == self.venue.get_senior_area_chairs_id():
+            head = {
+                'type': 'profile',
+                'inGroup': self.venue.get_area_chairs_id()
+            }
+
+        bid_invitation_id = self.venue.get_bid_id(match_group_id)
+
+        bid_invitation = Invitation(
+            id=bid_invitation_id,
+            invitees = [match_group_id],
+            signatures = [venue_id],
+            readers = invitation_readers,
+            writers = [venue_id],
+            edge = {
+                'ddate': {
+                    'param': {
+                        # 'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [ bid_readers ],
+                'writers': [ venue_id, '${2/signatures}' ],
+                'signatures': { 
+                    'param': { 
+                        'regex': '~.*' 
+                    } 
+                },
+                'head': head,
+                'tail': {
+                    'param': 'profile',
+                    'inGroup': match_group_id
+                },
+                'label': {
+                    'param': {
+                        'enum': bid_stage.get_bid_options()
+                    }
+                }
+            }
+        )

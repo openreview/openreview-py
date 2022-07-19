@@ -69,8 +69,14 @@ class Venue(object):
     def get_meta_invitation_id(self):
         return f'{self.venue_id}/-/Edit'
 
+    def get_blind_submission_id(self):
+        return self.submission_stage.get_blind_submission_id(self)
+
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
+
+    def get_bid_id(self, group_id):
+        return self.get_invitation_id('Bid', prefix=group_id)
 
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
@@ -113,6 +119,9 @@ class Venue(object):
 
     def get_area_chairs_id(self, number = None):
         return self.get_committee_id(self.area_chairs_name, number)
+
+    def get_senior_area_chairs_id(self, number = None):
+        return self.get_committee_id(self.senior_area_chairs_name, number)
 
     def get_homepage_options(self):
         options = {}
@@ -309,6 +318,9 @@ class Venue(object):
         ## Create revision invitation if there is a second deadline?
         ## Create withdraw and desk reject invitations
         #    
+
+    def set_bid_stage(self, stage):
+        self.invitation_builder.set_bid_invitation(stage)
 
 
 
