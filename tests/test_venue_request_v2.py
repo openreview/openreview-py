@@ -427,60 +427,60 @@ class TestVenueRequest():
 #         assert conference.homepage_header['deadline'] == 'Submission Start:  UTC-0, End: ' + submission_due_date_str + ' UTC-0'
 #         assert openreview.tools.get_invitation(client, conference.submission_stage.get_withdrawn_submission_id(conference)) is None
 
-#     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
-#         # Test Reviewer Recruitment
-#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-#         recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
-#         assert recruitment_div
-#         reply_row = recruitment_div.find_element_by_class_name('reply_row')
-#         assert reply_row
-#         buttons = reply_row.find_elements_by_class_name('btn-xs')
-#         assert [btn for btn in buttons if btn.text == 'Recruitment']
-#         reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
-#         recruitment_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Recruitment',
-#                 'invitee_role': 'Reviewers',
-#                 'invitee_details': reviewer_details,
-#                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-#                 'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the {program} chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
-#             },
-#             forum=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert recruitment_note
+        # Test Reviewer Recruitment
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
+        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        assert recruitment_div
+        reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        assert reply_row
+        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        assert [btn for btn in buttons if btn.text == 'Recruitment']
+        reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the {program} chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
 
-#         invite = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
+        invite = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
 
-#         assert invite.reply['content']['invitee_details']['description'] == 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee".'
+        assert invite.reply['content']['invitee_details']['description'] == 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee".'
 
-#         helpers.await_queue()
-#         process_logs = client.get_process_logs(id=recruitment_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-#         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=recruitment_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-#         messages = client.get_messages(to='reviewer_candidate1@email.com')
-#         assert not messages
-#         messages = client.get_messages(to='reviewer_candidate2@email.com')
-#         assert not messages
+        messages = client.get_messages(to='reviewer_candidate1@email.com')
+        assert not messages
+        messages = client.get_messages(to='reviewer_candidate2@email.com')
+        assert not messages
 
-#         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
-#                                                              venue['request_form_note'].number)
-#         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
-#         error_string = '{\n ' \
-#                        ' "KeyError(\'program\')": [\n' \
-#                        '    "reviewer_candidate1@email.com",\n' \
-#                        '    "reviewer_candidate2@email.com"\n' \
-#                        '  ]\n' \
-#                        '}'
-#         assert error_string in last_comment.content['error']
-#         assert '0 users' in last_comment.content['invited']
+        recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
+                                                             venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
+        error_string = '{\n ' \
+                       ' "KeyError(\'program\')": [\n' \
+                       '    "reviewer_candidate1@email.com",\n' \
+                       '    "reviewer_candidate2@email.com"\n' \
+                       '  ]\n' \
+                       '}'
+        assert error_string in last_comment.content['error']
+        assert '0 users' in last_comment.content['invited']
 
     def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
