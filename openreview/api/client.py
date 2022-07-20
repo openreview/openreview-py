@@ -2051,6 +2051,7 @@ class Invitation(object):
         signatures = None,
         content = None,
         edit = None,
+        edge = None,
         type = 'Note',
         noninvitees = None,
         nonreaders = None,
@@ -2085,6 +2086,7 @@ class Invitation(object):
         self.minReplies = minReplies
         self.maxReplies = maxReplies
         self.edit = edit
+        self.edge = edge
         self.type = type
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -2185,6 +2187,8 @@ class Invitation(object):
                 body['edit']=self.edit
             if self.type == 'Edge':
                 body['edge']=self.edit
+        if self.edge:
+            body['edge']=self.edge
         if self.bulk is not None:
             body['bulk']=self.bulk
         return body

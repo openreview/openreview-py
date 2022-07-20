@@ -15,7 +15,7 @@ from openreview.venue import Venue
 
 class TestVenueSubmission():
 
-    def test_setup(self, openreview_client, helpers):
+    def test_setup(self, openreview_client, selenium, request_page, helpers):
         conference_id = 'TestVenue.cc'
 
         # venue_group = Group(id = conference_id,
@@ -313,4 +313,32 @@ class TestVenueSubmission():
             invitation=Invitation()
         )
 
-        assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Official_Review')        
+        assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Official_Review')
+
+        #recruit reviewers to create /Reviewers group
+        message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+        
+        helpers.create_user('reviewer_venue_one@mail.com', 'Reviewer Venue', 'One')
+        reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password='1234')
+
+        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Reviewer',
+            message=message,
+            invitees = ['~Reviewer_Venue_One1'],
+            contact_info='testvenue@contact.com')
+
+        messages = openreview_client.get_messages(to='reviewer_venue_one@mail.com')
+        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        print('invitation_url', invitation_url)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        reviewer_group = openreview_client.get_group('TestVenue.cc/Reviewers')
+        assert reviewer_group
+        assert '~Reviewer_Venue_One1' in reviewer_group.members
+        
+        #bid stage
+        venue.area_chairs_name = 'Action_Editors'
+        venue.has_area_chairs(True)
+        bid_stage = openreview.BidStage(committee_id=venue.get_reviewers_id())
+        venue.set_bid_stage(bid_stage)
+
+        assert openreview_client.get_invitation('TestVenue.cc/Reviewers/-/Bid')
