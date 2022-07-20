@@ -293,6 +293,7 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = invitation_readers,
             writers = [venue_id],
+            maxReplies=1,   ##not sure if this is right?
             edge = {
                 'ddate': {
                     'param': {
