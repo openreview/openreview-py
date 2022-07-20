@@ -338,7 +338,8 @@ class TestVenueSubmission():
         #bid stage
         venue.area_chairs_name = 'Action_Editors'
         venue.has_area_chairs(True)
-        bid_stage = openreview.BidStage(committee_id=venue.get_reviewers_id())
+        now = datetime.datetime.utcnow()
+        bid_stage = openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id())
         venue.set_bid_stage(bid_stage)
 
         assert openreview_client.get_invitation('TestVenue.cc/Reviewers/-/Bid')

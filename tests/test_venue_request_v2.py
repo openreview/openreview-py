@@ -741,36 +741,36 @@ class TestVenueRequest():
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
 
-#     def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
-#         now = datetime.datetime.utcnow()
-#         due_date = now + datetime.timedelta(days=3)
+    def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
 
-#         bid_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'bid_start_date': '2021/02/30',
-#                 'bid_due_date': due_date.strftime('%Y/%m/%d')
-#             },
-#             forum=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             referent=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert bid_stage_note
+        bid_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'bid_start_date': '2021/02/30',
+                'bid_due_date': due_date.strftime('%Y/%m/%d')
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            referent=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert bid_stage_note
 
-#         helpers.await_queue()
-#         process_logs = client.get_process_logs(id=bid_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
-#         assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue()
+        process_logs = client.get_process_logs(id=bid_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['invitation'] == '{}/-/Request{}/Bid_Stage'.format(venue['support_group_id'], venue['request_form_note'].number)
+        assert process_logs[0]['status'] == 'ok'
 
-#         comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
-#                                                              venue['request_form_note'].number)
-#         last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[0]
-#         error_string = '\n```python\nValueError(\'day is out of range for month\')'
-#         assert error_string in last_comment.content['error']
+        comment_invitation = '{}/-/Request{}/Stage_Error_Status'.format(venue['support_group_id'],
+                                                             venue['request_form_note'].number)
+        last_comment = client.get_notes(invitation=comment_invitation, sort='tmdate')[0]
+        error_string = '\n```python\nValueError(\'day is out of range for month\')'
+        assert error_string in last_comment.content['error']
 
 #     def test_venue_bid_stage(self, client, test_client, selenium, request_page, helpers, venue):
 

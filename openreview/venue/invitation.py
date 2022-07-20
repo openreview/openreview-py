@@ -1,8 +1,11 @@
+import datetime
 import json
 import os
 from openreview.api import Invitation
 from .. import invitations
 from .. import tools
+
+SHORT_BUFFER_MIN = 30
 
 class InvitationBuilder(object):
 
@@ -283,6 +286,9 @@ class InvitationBuilder(object):
 
         bid_invitation = Invitation(
             id=bid_invitation_id,
+            cdate = tools.datetime_millis(bid_stage.start_date),
+            duedate = tools.datetime_millis(bid_stage.due_date),
+            expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
             invitees = [match_group_id],
             signatures = [venue_id],
             readers = invitation_readers,
