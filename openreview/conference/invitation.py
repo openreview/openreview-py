@@ -697,7 +697,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
 
 class PaperSubmissionRevisionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, submission_content):
+    def __init__(self, conference, note, submission_content, invitees=None):
 
         submission_revision_stage = conference.submission_revision_stage
         referent = note.original if note.original else note.id
@@ -755,7 +755,9 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             }
         }
 
-        invitees = [conference.get_id(), conference.get_authors_id(number=note.number)]
+        if not invitees:
+            invitees = [conference.get_id(), conference.get_authors_id(number=note.number)]
+
         super(PaperSubmissionRevisionInvitation, self).__init__(
             id=conference.get_invitation_id(submission_revision_stage.name, note.number),
             super=conference.get_invitation_id(submission_revision_stage.name),
@@ -1729,10 +1731,10 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_revise_submission_invitation(self, conference, notes, content):
+    def set_revise_submission_invitation(self, conference, notes, content, invitees=None):
         self.client.post_invitation(SubmissionRevisionInvitation(conference, content))
         return tools.concurrent_requests(
-            lambda note : self.client.post_invitation(PaperSubmissionRevisionInvitation(conference, note, content)),
+            lambda note : self.client.post_invitation(PaperSubmissionRevisionInvitation(conference, note, content, invitees)),
             notes,
             desc='set_revise_submission_invitation'
         )

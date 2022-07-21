@@ -306,7 +306,7 @@ class Conference(object):
         notes = list(self.get_submissions())
         return self.invitation_builder.set_decision_invitation(self, notes)
 
-    def __create_submission_revision_stage(self):
+    def __create_submission_revision_stage(self, invitees=None):
         invitation = tools.get_invitation(self.client, self.get_submission_id())
         if invitation:
             notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted, details='original')
@@ -316,7 +316,7 @@ class Conference(object):
                 non_accepted_notes = [note for note in all_notes if note.id not in accepted_note_ids]
                 expire_invitation_ids = [self.get_invitation_id(self.submission_revision_stage.name, note.number) for note in non_accepted_notes]
                 tools.concurrent_requests(self.expire_invitation, expire_invitation_ids)
-            return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'])
+            return self.invitation_builder.set_revise_submission_invitation(self, notes, invitation.reply['content'], invitees)
 
     ## Deprecated, use this only for manual assignments
     def set_reviewer_reassignment(self, enabled = True):
@@ -1037,7 +1037,6 @@ class Conference(object):
             force=True
         )
 
-
     def setup_final_deadline_stage(self, force=False, hide_fields=[]):
 
         if self.submission_stage.double_blind and not (self.submission_stage.author_names_revealed or self.submission_stage.papers_released):
@@ -1050,6 +1049,15 @@ class Conference(object):
                 if note.readers != final_readers:
                     note.readers = final_readers
                     self.client.post_note(note)
+
+        if not self.submission_stage.double_blind:
+            self.submission_revision_stage = SubmissionRevisionStage(
+                name='Revision',
+                start_date=None if force else self.submission_stage.due_date,
+                due_date=None,
+                multiReply=True
+            )
+            self.__create_submission_revision_stage(invitees=[self.get_id()])
 
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True, senior_area_chairs=True)
         self.create_withdraw_invitations(
