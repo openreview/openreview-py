@@ -1050,15 +1050,6 @@ class Conference(object):
                     note.readers = final_readers
                     self.client.post_note(note)
 
-        if not self.submission_stage.double_blind and pc_revision_stage:
-            self.submission_revision_stage = SubmissionRevisionStage(
-                name='Revision',
-                start_date=None if force else self.submission_stage.due_date,
-                due_date=None,
-                multiReply=True
-            )
-            self.__create_submission_revision_stage(invitees=[self.get_id()])
-
         self.create_paper_groups(authors=True, reviewers=True, area_chairs=True, senior_area_chairs=True)
         self.create_withdraw_invitations(
             reveal_authors=self.submission_stage.withdrawn_submission_reveal_authors,
@@ -1071,6 +1062,15 @@ class Conference(object):
             reveal_submission=self.submission_stage.desk_rejected_submission_public,
             hide_fields=hide_fields
         )
+
+        if not self.submission_stage.double_blind and pc_revision_stage:
+            self.submission_revision_stage = SubmissionRevisionStage(
+                name='Revision',
+                start_date=None if force else self.submission_stage.due_date,
+                due_date=None,
+                multiReply=True
+            )
+            self.__create_submission_revision_stage(invitees=[self.get_id()])
 
         self.set_authors()
         self.set_reviewers()
