@@ -1037,7 +1037,7 @@ class Conference(object):
             force=True
         )
 
-    def setup_final_deadline_stage(self, force=False, hide_fields=[]):
+    def setup_final_deadline_stage(self, force=False, hide_fields=[], pc_revision_stage=False):
 
         if self.submission_stage.double_blind and not (self.submission_stage.author_names_revealed or self.submission_stage.papers_released):
             self.create_blind_submissions(hide_fields)
@@ -1050,7 +1050,7 @@ class Conference(object):
                     note.readers = final_readers
                     self.client.post_note(note)
 
-        if not self.submission_stage.double_blind:
+        if not self.submission_stage.double_blind and pc_revision_stage:
             self.submission_revision_stage = SubmissionRevisionStage(
                 name='Revision',
                 start_date=None if force else self.submission_stage.due_date,
@@ -1091,7 +1091,7 @@ class Conference(object):
                 self.setup_final_deadline_stage(force, hide_fields)
         else:
             if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):
-                self.setup_final_deadline_stage(force, hide_fields)
+                self.setup_final_deadline_stage(force, hide_fields, pc_revision_stage=True)
 
     ## Deprecated
     def open_bids(self):

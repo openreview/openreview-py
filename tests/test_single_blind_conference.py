@@ -313,6 +313,33 @@ class TestSingleBlindConference():
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
 
+    def test_close_submission_pc_revision_invitation(self, client, test_client, selenium, request_page):
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_conference_short_name('MLITS 2018')
+        now = datetime.datetime.utcnow()
+        builder.set_submission_stage(
+            due_date=now - datetime.timedelta(minutes=40),
+            public=True,
+            email_pcs=True,
+            create_groups=False,
+            withdrawn_submission_public=True,
+            withdrawn_submission_reveal_authors=True,
+            desk_rejected_submission_public=True,
+            desk_rejected_submission_reveal_authors=True)
+
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        conference.setup_final_deadline_stage(pc_revision_stage=True)
+        revision_invitation = client.get_invitation(conference.get_invitation_id(conference.submission_revision_stage.name))
+        assert revision_invitation
+        paper_revision_invitation = client.get_invitation(conference.get_invitation_id(conference.submission_revision_stage.name, number=1))
+        assert paper_revision_invitation
+        assert paper_revision_invitation.invitees == ['NIPS.cc/2018/Workshop/MLITS']
+
     def test_open_comments(self, client, test_client, selenium, request_page):
 
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
