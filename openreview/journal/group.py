@@ -9,21 +9,32 @@ class GroupBuilder(object):
     def __init__(self, client):
         self.client = client
 
+    def set_group_variable(self, group_id, variable_name, value):
 
+        group = self.client.get_group(group_id)
+        group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
+        print(group.web[:1000])
+        self.client.post_group(group)
+    
     def set_groups(self, journal, support_role, editors):
         header = journal.header
         venue_id=journal.venue_id
         editor_in_chief_id=journal.get_editors_in_chief_id()
+        journal_request = journal.get_request_form()
+        reviewer_report_form = journal.get_reviewer_report_form()
+
         ## venue group
         venue_group=self.client.post_group(Group(id=venue_id,
                         readers=['everyone'],
                         writers=[venue_id],
                         signatures=['~Super_User1'],
                         signatories=[venue_id],
-                        members=[support_role]
+                        members=[support_role],
+                        host=venue_id
                         ))
 
         self.client.add_members_to_group('host', venue_id)
+        self.client.add_members_to_group('venues', venue_id)
 
         ## editor in chief
         editor_in_chief_group = openreview.tools.get_group(self.client, editor_in_chief_id)
@@ -38,11 +49,16 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/editorsInChiefWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
             content = content.replace("var EDITORS_IN_CHIEF_NAME = '';", "var EDITORS_IN_CHIEF_NAME = '" + journal.editors_in_chief_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
+            if journal_request:
+                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal_request.id + "';")
+            if reviewer_report_form:
+                content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
+
             editor_in_chief_group.web = content
             self.client.post_group(editor_in_chief_group)
 
@@ -110,11 +126,15 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/actionEditorWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
             content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + journal.submission_group_name + "';")
+            if journal_request:
+                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal_request.id + "';")
+            if reviewer_report_form:
+                content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
 
             action_editor_group.web = content
             self.client.post_group(action_editor_group)
@@ -155,10 +175,11 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
+            content = content.replace("var WEBSITE = '';", "var WEBSITE = '" + journal.website + "';")
             reviewer_group.web = content
             self.client.post_group(reviewer_group)
 
@@ -184,6 +205,17 @@ class GroupBuilder(object):
                             signatories=[],
                             members=[]))
 
+        ## reviewers reported group
+        reviewers_reported_id = journal.get_reviewers_reported_id()
+        reviewers_reported_group = openreview.tools.get_group(self.client, reviewers_reported_id)
+        if not reviewers_reported_group:
+            self.client.post_group(Group(id=reviewers_reported_id,
+                            readers=[venue_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[],
+                            members=[]))
+
         ## authors group
         authors_id = journal.get_authors_id()
         authors_group = openreview.tools.get_group(self.client, authors_id)
@@ -198,8 +230,9 @@ class GroupBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
             content = f.read()
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            content = content.replace("var SHORT_PHRASE = '';", "var SHORT_PHRASE = '" + journal.short_name + "';")
+            content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
             content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
+            content = content.replace("var WEBSITE = '';", "var WEBSITE = '" + journal.website + "';")
             authors_group.web = content
             self.client.post_group(authors_group)
 
@@ -231,7 +264,7 @@ class GroupBuilder(object):
         action_editors_group=openreview.tools.get_group(self.client, action_editors_group_id)
         if not action_editors_group:
             action_editors_group=self.client.post_group(Group(id=action_editors_group_id,
-                readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                readers=['everyone'],
                 nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
@@ -243,7 +276,7 @@ class GroupBuilder(object):
         if not reviewers_group:
             reviewers_group=self.client.post_group(Group(id=reviewers_group_id,
                 readers=[venue_id, action_editors_group_id, reviewers_group_id],
-                deanonymizers=[venue_id, action_editors_group_id],
+                deanonymizers=[venue_id, action_editors_group_id, reviewers_group_id],
                 nonreaders=[authors_group_id],
                 writers=[venue_id, action_editors_group_id],
                 signatures=[venue_id],
@@ -257,6 +290,16 @@ class GroupBuilder(object):
         solicit_reviewers_group = openreview.tools.get_group(self.client, solicit_reviewers_id)
         if not solicit_reviewers_group:
             self.client.post_group(Group(id=solicit_reviewers_id,
+                readers=[venue_id, action_editors_group_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                signatories=[],
+                members=[]))
+
+        declined_solicit_reviewers_id = journal.get_solicit_reviewers_id(number=note.number, declined=True)
+        declined_solicit_reviewers_group = openreview.tools.get_group(self.client, declined_solicit_reviewers_id)
+        if not declined_solicit_reviewers_group:
+            self.client.post_group(Group(id=declined_solicit_reviewers_id,
                 readers=[venue_id, action_editors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],

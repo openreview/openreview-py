@@ -54,8 +54,8 @@ class Assignment(object):
         for action_editor_profile in tqdm(action_editor_profiles):
 
             conflicts = tools.get_conflicts(author_profiles, action_editor_profile, policy='neurips')
-            print('Compute AE conflict', note.id, action_editor_profile.id, conflicts)
             if conflicts:
+                print('Compute AE conflict', note.id, action_editor_profile.id, conflicts)
                 edge = Edge(invitation = self.journal.get_ae_conflict_id(),
                     readers = [venue_id, authors_id],
                     writers = [venue_id],
@@ -105,8 +105,8 @@ class Assignment(object):
         for reviewer_profile in tqdm(reviewer_profiles):
 
             conflicts = tools.get_conflicts(author_profiles, reviewer_profile, policy='neurips')
-            print('Compute Reviewer conflict', note.id, reviewer_profile.id, conflicts)
             if conflicts:
+                print('Compute Reviewer conflict', note.id, reviewer_profile.id, conflicts)
                 edge = Edge(invitation = self.journal.get_reviewer_conflict_id(),
                     readers = [venue_id, action_editors_id],
                     nonreaders = [authors_id],
@@ -155,9 +155,8 @@ class Assignment(object):
                 group_id=committee_id,
                 paper_id=note.id,
                 model='specter+mfr')
-            job_id = job.get('job_id')
+            job_id = job.get('jobId')
             response = self.client.get_expertise_results(job_id, wait_for_complete=True)
             return response.get('results', [])
         except Exception as e:
-            print('Error computing affinity scores', e)
-            return []
+            raise openreview.OpenReviewException('Error computing affinity scores: ' + str(e))

@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
+from selenium.webdriver.common.by import By
 import openreview
 import pytest
 import requests
@@ -10,7 +11,7 @@ class TestLegacyInvitations():
 
     def test_single_blind_conference(self, client, test_client, selenium, request_page, helpers) :
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2019/Workshop/MLITS')
@@ -34,9 +35,10 @@ class TestLegacyInvitations():
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_public=True,
             desk_rejected_submission_reveal_authors=True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 40))
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 40)))
         builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 40))
         conference = builder.get_result()
+        conference.create_review_stage()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],
@@ -65,7 +67,9 @@ class TestLegacyInvitations():
         conference.set_assignment('reviewer_legacy@mail.com', 1)
         conference.set_assignment('ac_legacy@mail.com', 1, True)
 
-        conference.set_comment_stage(openreview.CommentStage(authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(invitees=comment_invitees, readers=comment_invitees))
         conference.open_reviews()
         conference.open_meta_reviews()
         conference.open_decisions()
@@ -76,7 +80,7 @@ class TestLegacyInvitations():
         assert client.get_invitations(regex = 'NIPS.cc/2019/Workshop/MLITS/-/Paper.*/Decision')
 
         reviewer_client = helpers.create_user('reviewer_legacy@mail.com', 'Reviewer', 'Legacy')
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2019/Workshop/MLITS/Reviewers", reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2019/Workshop/MLITS/Reviewers", reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
@@ -85,7 +89,7 @@ class TestLegacyInvitations():
         assert len(tabs.find_element_by_id('reviewer-tasks').find_elements_by_class_name('note')) == 1
 
         ac_client = helpers.create_user('ac_legacy@mail.com', 'AC', 'Legacy')
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2019/Workshop/MLITS/Area_Chairs", ac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2019/Workshop/MLITS/Area_Chairs", ac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')

@@ -13,23 +13,37 @@ var SUBMISSION_ID = '';
 var EDITORS_IN_CHIEF_NAME = '';
 var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
+var JOURNAL_REQUEST_ID = '';
+var REVIEWER_REPORT_ID = '';
+var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var EDITORS_IN_CHIEF_ID = VENUE_ID + '/' + EDITORS_IN_CHIEF_NAME;
+var RESPONSIBILITY_ACK_NAME = 'Responsibility/Acknowledgement';
+var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
+var AVAILABILITY_NAME = 'Assignment_Availability';
 
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
 var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
 var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
 var REVIEWERS_PENDING_REVIEWS_ID = REVIEWERS_ID + '/-/Pending_Reviews';
+var REVIEWERS_AVAILABILITY_ID = REVIEWERS_ID + '/-/' + AVAILABILITY_NAME;
 var ACTION_EDITORS_ASSIGNMENT_ID = ACTION_EDITOR_ID + '/-/Assignment';
 var ACTION_EDITORS_CONFLICT_ID = ACTION_EDITOR_ID + '/-/Conflict';
 var ACTION_EDITORS_AFFINITY_SCORE_ID = ACTION_EDITOR_ID + '/-/Affinity_Score';
 var ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID = ACTION_EDITOR_ID + '/-/Custom_Max_Papers';
 var ACTION_EDITORS_RECOMMENDATION_ID = ACTION_EDITOR_ID + '/-/Recommendation';
+var ACTION_EDITORS_AVAILABILITY_ID = ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME;
+
+var REVIEWER_RATING_MAP = {
+  "Exceeds expectations": 3,
+  "Meets expectations": 2,
+  "Falls below expectations": 1
+}
 
 var HEADER = {
-  title: SHORT_PHRASE + ' Editors-In-Chief Console',
+  title: SHORT_PHRASE + ' Editors-in-Chief Console',
   instructions: ''
 };
 var SUBMISSION_GROUP_NAME = 'Paper';
@@ -43,28 +57,35 @@ var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
+var WITHDRAWN_STATUS = VENUE_ID + '/Withdrawn_Submission';
+var RETRACTED_STATUS = VENUE_ID + '/Retracted_Acceptance';
+var REJECTED_STATUS = VENUE_ID + '/Rejected';
+var DESK_REJECTED_STATUS = VENUE_ID + '/Desk_Rejected'
 
+var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')');
 var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
-'&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
-'&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
-'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
-
+  '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+  '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
+  '&version=2&referrer=' + referrerUrl;
 var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
-'&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
-'&browse=' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
-'&version=2&referrer=[Editors-In-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')';
-
-HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Edge Browser:</strong></li>' +
+  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
+  '&browse=' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+  '&version=2&referrer=' + referrerUrl;
+HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
-  '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li></ul>';
+  '<li><a href="' + reviewers_url + '">Modify Reviewer Assignments</a></li></ul>' +
+  '<ul class="list-inline mb-0"><li><strong>Journal Request Forum:</strong></li>' +
+  '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
+  '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
+  '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
   return Webfield2.utils.getInvitationId(VENUE_ID, number, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME })
 };
 
-var getReplies = function(submission, name) {
-  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { submissionGroupName: SUBMISSION_GROUP_NAME });
+var getReplies = function(submission, name, prefix) {
+  return Webfield2.utils.getRepliesfromSubmission(VENUE_ID, submission, name, { prefix: prefix, submissionGroupName: SUBMISSION_GROUP_NAME });
 };
 
 var getRatingInvitations = function(invitationsById, number) {
@@ -93,7 +114,17 @@ var main = function() {
   Webfield2.ui.setup('#group-container', VENUE_ID, {
     title: HEADER.title,
     instructions: HEADER.instructions,
-    tabs: ['Submitted', 'Under Review', 'Decision Approval', 'Submission Complete', 'Action Editor Status', 'Reviewer Status', 'Editors-in-Chief Tasks'],
+    tabs: [
+      'Overview',
+      'Submitted',
+      'Under Review',
+      'Under Discussion',
+      'Under Decision',
+      'Camera Ready',
+      'Submission Complete',
+      'Action Editor Status',
+      'Reviewer Status'
+    ],
     referrer: args && args.referrer,
     fullWidth: true
   });
@@ -105,48 +136,118 @@ var main = function() {
     .fail(Webfield2.ui.errorMessage);
 };
 
+var getGroupMembersCount = function(groupId) {
+  if (!groupId) {
+    return $.Deferred().resolve(0);
+  }
+
+  return Webfield.get('/groups', { id: groupId, limit: 1, select: 'members' }, { handleErrors: false })
+    .then(function(result) {
+      var members = _.get(result, 'groups[0].members', []);
+      return members.length;
+    }, function() {
+      // Do not fail if group cannot be retreived
+      return $.Deferred().resolve(0);
+    });
+};
+
 var loadData = function() {
   return $.when(
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID),
+    Webfield2.api.getAll('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID }),
+    Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID })
+    .then(function(notes) {
+      return notes.reduce(function(content, currentValue) {
+        var reviewer_id = currentValue.content.reviewer_id;
+        if (reviewer_id) {
+          if (!(reviewer_id.value in content)) {
+            content[reviewer_id.value] = [];
+          }
+          content[reviewer_id.value].push(currentValue);
+        }
+        return content;
+      }, {})
+    }),
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAll('/invitations', {
       regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
       select: 'id,cdate,duedate,expdate',
-      // expired: true
+      sort: 'cdate:asc'
     }).then(function(invitations) {
       return _.keyBy(invitations, 'id');
     }),
-    Webfield2.api.getAll('/edges', {
-      invitation: VENUE_ID + '/' + ACTION_EDITOR_NAME + '/-/' + RECOMMENDATION_NAME,
-      groupBy: 'head'
-    }),
-    Webfield2.api.getAssignedInvitations(VENUE_ID, EDITORS_IN_CHIEF_NAME),
+    Webfield2.api.getAll('/invitations', { regex: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
+    Webfield2.api.getAll('/invitations', { regex: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
+    Webfield2.api.getAll('/invitations', { regex: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc' }),
+    Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count'})
+    .then(function(response) {
+      var groupedEdges = response.groupedEdges;
+      var recommendationCount = {};
+      groupedEdges.forEach(function(group){
+        recommendationCount[group.id.head] = group.count;
+      })
+      return recommendationCount;
+    })
   );
 };
 
-var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEditors, reviewers, invitationsById, actionEditorRecommendations, invitations) {
-  var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
+var updateEarlyLateTaskDuedate = function(earlylateTaskDueDate, task) {
+  if ((earlylateTaskDueDate == 0 || earlylateTaskDueDate > task.duedate) && !task.complete) {
+    earlylateTaskDueDate = task.duedate;
+  }
+  return earlylateTaskDueDate;
+}
 
-  // build the rows
-  var paperStatusRows = [];
+var formatData = function(
+  aeByNumber,
+  reviewersByNumber,
+  submissions,
+  responsibilityNotes,
+  reviewerReportByReviewerId,
+  actionEditors,
+  reviewers,
+  invitationsById,
+  superInvitationIds,
+  reviewerInvitationIds,
+  aeInvitationIds,
+  aeRecommendations
+) {
+  var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
+
   var reviewerStatusById = {};
   reviewers.members.forEach(function(reviewer, index) {
+    var responsibility = responsibilityNotes.find(function(reply) {
+      return reply.invitations[0] === REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME;
+    });
+    var reviewerReports = reviewerReportByReviewerId[reviewer.id] || [];
+
     reviewerStatusById[reviewer.id] = {
       index: { number: index + 1 },
       summary: {
         id: reviewer.id,
         name: reviewer.name,
         email: reviewer.email,
+        status: {
+          Profile: reviewer.id.startsWith('~') ? 'Yes' : 'No',
+          Publications: '-',
+          'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No',
+          'Reviewer Report': reviewerReports.length
+        }
       },
       reviewerProgressData: {
         numCompletedReviews: 0,
         numPapers: 0,
         papers: [],
         referrer: referrerUrl
+      },
+      ratingData: {
+        ratings:[],
+        ratingsMap: Object.keys(REVIEWER_RATING_MAP).reduce((o, key) => Object.assign(o, {[key]: 0}), {}),
+        averageRating: 0
       },
       reviewerStatusData: {
         numCompletedReviews: 0,
@@ -165,6 +266,10 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         id: actionEditor.id,
         name: actionEditor.name,
         email: actionEditor.email,
+        status: {
+          Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
+          Publications: '-'
+        }
       },
       reviewProgressData: {
         numCompletedReviews: 0,
@@ -181,6 +286,10 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     };
   });
 
+  var paperStatusRows = [];
+  var authorSubmissionsCount = {};
+  var incompleteEicTasks = [];
+  var overdueTasks = [];
   submissions.forEach(function(submission) {
     var number = submission.number;
     var formattedSubmission = {
@@ -204,11 +313,27 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       actionEditor = actionEditorStatusById[paperActionEditors[0].id].summary;
     }
 
+    // Track number of submissions per author
+    if (
+      formattedSubmission.content.venueid === UNDER_REVIEW_STATUS &&
+      formattedSubmission.content.authorids &&
+      formattedSubmission.content.authorids.length
+    ) {
+      formattedSubmission.content.authorids.forEach(function(profileId) {
+        authorSubmissionsCount[profileId] = authorSubmissionsCount[profileId] || 0;
+        authorSubmissionsCount[profileId] += 1;
+      });
+    }
+
     // Build array of tasks
     var tasks = [];
+    // AE Recommendation by Authors
+    var aeRecommendationInvitation = invitationsById[getInvitationId(number, RECOMMENDATION_NAME, ACTION_EDITOR_NAME)];
     // Review approval by AE
     var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
     var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
+    // Reviewer assignment by AE
+    var reviewerAssignmentInvitation = invitationsById[getInvitationId(number, 'Assignment', REVIEWERS_NAME)];
     // Reviews by Reviewers
     var reviewInvitation = invitationsById[getInvitationId(number, REVIEW_NAME)];
     var reviewNotes = getReplies(submission, REVIEW_NAME);
@@ -229,85 +354,140 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     // Camera Ready Verification by AE
     var cameraReadyVerificationInvitation = invitationsById[getInvitationId(number, CAMERA_READY_VERIFICATION_NAME)];
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
+    var cameraReadyTask = null;
+    var cameraReadyVerificationTask = null;
+    var earlylateTaskDueDate = 0;
+
+    if (aeRecommendationInvitation) {
+      var recommendationCount = aeRecommendations[submission.id] || 0;
+      var task = {
+        id: aeRecommendationInvitation.id,
+        cdate: aeRecommendationInvitation.cdate,
+        duedate: aeRecommendationInvitation.duedate,
+        complete: recommendationCount >= 3,
+        replies: Array(recommendationCount).fill(1)
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);
+    }
 
     if (reviewApprovalInvitation) {
-      tasks.push({
+      var task = {
         id: reviewApprovalInvitation.id,
-        startdate: reviewApprovalInvitation.cdate,
+        cdate: reviewApprovalInvitation.cdate,
         duedate: reviewApprovalInvitation.duedate,
         complete: reviewApprovalNotes.length > 0,
         replies: reviewApprovalNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);
+    }
+
+    if (reviewerAssignmentInvitation) {
+      var reviewers = reviewersByNumber[number] || [];
+      var task = {
+        id: reviewerAssignmentInvitation.id,
+        cdate: reviewerAssignmentInvitation.cdate,
+        duedate: reviewerAssignmentInvitation.duedate,
+        complete: reviewers.length >= 3,
+        replies: reviewers
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);     
     }
 
     if (reviewInvitation) {
-      tasks.push({
+      var task = {
         id: reviewInvitation.id,
-        startdate: reviewInvitation.cdate,
+        cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
         complete: reviewNotes.length >= 3,
         replies: reviewNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);         
     }
 
     if (officialRecommendationInvitation) {
-      tasks.push({
+      var task = {
         id: officialRecommendationInvitation.id,
-        startdate: officialRecommendationInvitation.cdate,
+        cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
         complete: officialRecommendationNotes.length >= 3,
         replies: officialRecommendationNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);       
     }
 
     if (reviewerRatingInvitations.length) {
-      tasks.push({
+      var task = {
         id: getInvitationId(number, 'Reviewer_Rating'),
-        startdate: reviewerRatingInvitations[0].cdate,
+        cdate: reviewerRatingInvitations[0].cdate,
         duedate: reviewerRatingInvitations[0].duedate,
         complete: reviewerRatingReplies.length == reviewNotes.length,
         replies: reviewerRatingReplies
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);      
     }
 
     if (decisionInvitation) {
-      tasks.push({
+      var task = {
         id: decisionInvitation.id,
-        startdate: decisionInvitation.cdate,
+        cdate: decisionInvitation.cdate,
         duedate: decisionInvitation.duedate,
         complete: decisionNotes.length > 0,
         replies: decisionNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);      
     }
 
     if (decisionApprovalInvitation) {
-      tasks.push({
+      var task = {
         id: decisionApprovalInvitation.id,
-        startdate: decisionApprovalInvitation.cdate,
+        cdate: decisionApprovalInvitation.cdate,
         duedate: decisionApprovalInvitation.duedate,
         complete: decisionApprovalNotes.length > 0,
         replies: decisionApprovalNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);      
+      if (!task.complete) {
+        incompleteEicTasks.push([
+          {
+            id: formattedSubmission.id,
+            title: formattedSubmission.content.title || formattedSubmission.number
+          },
+          task
+        ]);
+      }
     }
 
     if (cameraReadyRevisionInvitation) {
-      tasks.push({
+      var complete = submission.invitations.includes(cameraReadyRevisionInvitation.id);
+      cameraReadyTask = {
         id: cameraReadyRevisionInvitation.id,
-        startdate: cameraReadyRevisionInvitation.cdate,
+        cdate: cameraReadyRevisionInvitation.cdate,
         duedate: cameraReadyRevisionInvitation.duedate,
-        complete: submission.invitations.includes(cameraReadyRevisionInvitation.id),
-        replies: []
-      });
+        complete: complete,
+        replies: complete ? [1] : []
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, cameraReadyTask);
+      tasks.push(cameraReadyTask);      
     }
 
     if (cameraReadyVerificationInvitation) {
-      tasks.push({
+      cameraReadyVerificationTask = {
         id: cameraReadyVerificationInvitation.id,
-        startdate: cameraReadyVerificationInvitation.cdate,
+        cdate: cameraReadyVerificationInvitation.cdate,
         duedate: cameraReadyVerificationInvitation.duedate,
         complete: cameraReadyVerificationNotes.length > 0,
         replies: cameraReadyVerificationNotes
-      });
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, cameraReadyVerificationTask);
+      tasks.push(cameraReadyVerificationTask);      
     }
 
     var reviews = reviewNotes;
@@ -323,14 +503,38 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
 
     paperReviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
+      var assignmentAcknowledgement = getReplies(submission, reviewer.id + '/' + ASSIGNMENT_ACKNOWLEDGEMENT_NAME, REVIEWERS_NAME);
       var reviewerRecommendation = null;
       var status = {};
+      var reviewerStatus = reviewerStatusById[reviewer.id];
+
+      if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
+        status.Acknowledged = 'Yes';
+      }
+
       if (completedReview) {
         reviewerRecommendation = recommendationByReviewer[completedReview.signatures[0]];
-        status = {};
         if (reviewerRecommendation) {
           status.Recommendation = reviewerRecommendation.content.decision_recommendation.value;
           status.Certifications = reviewerRecommendation.content.certification_recommendations ? reviewerRecommendation.content.certification_recommendations.value.join(', ') : '';
+        }
+        var reviewerRating = reviewerRatingReplies.find(function (p) {
+          return p.replyto === completedReview.id;
+        });
+        if(reviewerRating){
+          status.Rating = reviewerRating.content.rating.value;
+          if(reviewerStatus){
+            var rating = reviewerRating.content.rating.value;
+            var ratingValue = REVIEWER_RATING_MAP[rating];
+            reviewerStatus.ratingData.ratings.push(rating);
+            reviewerStatus.ratingData.ratingsMap[rating] += 1;
+            var count = reviewerStatus.ratingData.ratings.length;
+            if (count > 1) {
+              reviewerStatus.ratingData.averageRating = ((reviewerStatus.ratingData.averageRating * (count - 1) + ratingValue) / count);
+            } else {
+              reviewerStatus.ratingData.averageRating = ratingValue;
+            }
+          }
         }
       }
       paperReviewerStatus[reviewer.anonId] = {
@@ -349,7 +553,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
           invitationId: getInvitationId(submission.number, REVIEW_NAME)
         })
       }
-      var reviewerStatus = reviewerStatusById[reviewer.id];
+
       if (reviewerStatus) {
         reviewerStatus.reviewerProgressData.numPapers += 1;
         reviewerStatus.reviewerStatusData.numPapers += 1;
@@ -368,7 +572,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
       }
     });
 
-    paperActionEditors.forEach(function(actionEditor, number) {
+    paperActionEditors.forEach(function(actionEditor) {
       var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
       var actionEditorStatus = actionEditorStatusById[actionEditor.id];
       if (actionEditorStatus) {
@@ -393,7 +597,7 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
     });
 
     var metaReview = null;
-    var decision = decisions.length && decisions[0];
+    var decision = decisions.length > 0 ? decisions[0] : null;
     if (decision) {
       metaReview = {
         id: decision.id,
@@ -404,6 +608,8 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         }
       };
     }
+
+    overdueTasks.concat(tasks.filter(function(inv) { return !inv.complete; }));
 
     paperStatusRows.push({
       checked: { noteId: submission.id, checked: false },
@@ -416,18 +622,20 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         numSubmittedRecommendations: recommendations.length,
         numReviewers: paperReviewers.length,
         reviewers: paperReviewerStatus,
+        expandReviewerList: true,
         sendReminder: true,
         referrer: referrerUrl,
-        actions: [UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) ? [
+        actions: ([UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) && reviewerAssignmentInvitation) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
             '&traverse='+ REVIEWERS_ASSIGNMENT_ID +
             '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
-            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore' +
+            '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&version=2'
           }
-        ] : []
+        ] : [],
+        duedate: reviewInvitation && reviewInvitation.duedate || 0
       },
       actionEditorProgressData: {
         recommendation: metaReview && metaReview.content.recommendation,
@@ -439,7 +647,13 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
         actionEditor: actionEditor,
         metaReview: metaReview,
         referrer: referrerUrl,
+        reviewPending: reviewInvitation && reviewNotes.length < 3,
+        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3,
+        ratingPending: reviewerRatingInvitations.length && reviewerRatingReplies.length < reviewNotes.length,
+        decisionPending: decisionInvitation && decisionNotes.length == 0,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
+        cameraReadyPending: (cameraReadyTask && !cameraReadyTask.complete) || (cameraReadyVerificationTask && !cameraReadyVerificationTask.complete),
+        earlylateTaskDueDate: earlylateTaskDueDate,
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
         actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
@@ -448,25 +662,97 @@ var formatData = function(aeByNumber, reviewersByNumber, submissions, actionEdit
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
             '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
             '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
-            '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID +
+            '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
             '&version=2'
           }
         ] : [],
         tableWidth: '100%'
       },
       tasks: { invitations: tasks, forumId: submission.id },
+      eicComments: {
+        comments: submission.details.replies.filter(function(r) {
+          return r.readers.length == 1 && r.readers[0] == EDITORS_IN_CHIEF_ID;
+        }).sort(function(a, b) {
+          return a.tcdate - b.tcdate;
+        })
+      },
       status: submission.content.venue.value
     });
   });
 
+  var submissionStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === SUBMITTED_STATUS;
+  });
+  var underReviewStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && row.actionEditorProgressData.reviewPending;
+  });
+  var underDiscussionStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && row.actionEditorProgressData.recommendationPending;
+  });
+  var underDecisionStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && (row.actionEditorProgressData.ratingPending || row.actionEditorProgressData.decisionPending || row.actionEditorProgressData.decisionApprovalPending);
+  });
+  var cameraReadyStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === UNDER_REVIEW_STATUS
+      && row.actionEditorProgressData.cameraReadyPending;
+  });
+  var completeSubmissionStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid !== SUBMITTED_STATUS
+      && row.submission.content.venueid !== UNDER_REVIEW_STATUS;
+  });
+  var withdrawnStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === WITHDRAWN_STATUS;
+  });
+  var retractedStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === RETRACTED_STATUS;
+  });
+  var rejectedStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === REJECTED_STATUS
+      || row.submission.content.venueid === DESK_REJECTED_STATUS;
+  });
+
+  // Generate journal stats for overview tab
+  var journalStats = {
+    numReviewers: reviewers.members.length,
+    numActionEditors: actionEditors.members.length,
+    numSubmissions: submissionStatusRows.length,
+    numUnderReview: underReviewStatusRows.length,
+    numUnderDiscussion: underDiscussionStatusRows.length,
+    numUnderDecision: underDecisionStatusRows.length,
+    numAccepted: completeSubmissionStatusRows.length - withdrawnStatusRows.length - retractedStatusRows.length - rejectedStatusRows.length,
+    numWithdrawn: withdrawnStatusRows.length,
+    numRetracted: retractedStatusRows.length,
+    numRejected: rejectedStatusRows.length,
+    superInvitationIds: superInvitationIds,
+    reviewerInvitationIds: reviewerInvitationIds.filter(function(inv) {
+      return !inv.id.endsWith('/' + RESPONSIBILITY_ACK_NAME);
+    }),
+    aeInvitationIds: aeInvitationIds,
+    activeAuthors: _.sortBy(
+      _.toPairs(authorSubmissionsCount),
+      function(pair) { return pair[1]; }
+    ).reverse().slice(0, 20),
+    incompleteEicTasks: incompleteEicTasks.sort(
+      function(a, b) { return a[1].duedate - b[1].duedate; }
+    ),
+    overdueTasks: overdueTasks.sort(
+      function(a, b) { return a[1].duedate - b[1].duedate; }
+    ).slice(0, 20),
+  };
+
   return {
-    submissionStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === SUBMITTED_STATUS; }),
-    paperStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS; }),
-    decisionApprovalStatusRows: paperStatusRows.filter(function(row) { return row.submission.content.venueid === UNDER_REVIEW_STATUS && row.actionEditorProgressData.decisionApprovalPending; }),
-    completeSubmissionStatusRows: paperStatusRows.filter(function(row) { return ![SUBMITTED_STATUS, UNDER_REVIEW_STATUS].includes(row.submission.content.venueid); }),
+    submissionStatusRows: submissionStatusRows,
+    underReviewStatusRows: underReviewStatusRows,
+    underDiscussionStatusRows: underDiscussionStatusRows,
+    underDecisionStatusRows: underDecisionStatusRows,
+    cameraReadyStatusRows: cameraReadyStatusRows,
+    completeSubmissionStatusRows: completeSubmissionStatusRows,
     reviewerStatusRows: Object.values(reviewerStatusById),
     actionEditorStatusRows: Object.values(actionEditorStatusById),
-    invitations: invitations
+    journalStats: journalStats,
   };
 };
 
@@ -480,6 +766,7 @@ var renderTable = function(container, rows) {
       'Review Progress',
       'Action Editor Decision',
       'Tasks',
+      'EIC Comments',
       'Status'
     ],
     renders: [
@@ -499,6 +786,18 @@ var renderTable = function(container, rows) {
         });
       },
       function(data) {
+        var html = data.comments.map(function(c) {
+          return (
+            '<li class="mb-3">' +
+              '<p class="text-muted mb-1">' + view.forumDate(c.tcdate) + ': </p>' +
+              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + c.content.title.value + '</a></strong></p>' +
+              '<p style="word-break: break-word;">' + c.content.comment.value + '</p>' +
+            '</li>'
+          );
+        });
+        return  '<ul class="list-unstyled">' + html.join('\n') + '</ul>';
+      },
+      function(data) {
         return '<h4>' + data + '</h4>';
       }
     ],
@@ -511,14 +810,16 @@ var renderTable = function(container, rows) {
       Number_of_Recommendations_Submitted: function(row) { return row.reviewProgressData.numSubmittedRecommendations; },
       Number_of_Recommendations_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedRecommendations; },
       Decision: function(row) { return row.actionEditorProgressData.recommendation; },
-      Status: function(row) { return row.status; }
+      Status: function(row) { return row.status; },
+      Review_Due_Date: function(row) { return row.reviewProgressData.duedate; },
+      Earliest_Late_Due_Date: function(row) { return row.actionEditorProgressData.earlylateTaskDueDate; }
     },
     searchProperties: {
       number: ['submissionNumber.number'],
       id: ['submission.id'],
       title: ['submission.content.title'],
       submissionDate: ['submission.cdate'],
-      author: ['submission.content.authors','note.content.authorids'], // multi props
+      author: ['submission.content.authors', 'note.content.authorids'], // multi props
       keywords: ['submission.content.keywords'],
       reviewer: ['reviewProgressData.reviewers'],
       numReviewersAssigned: ['reviewProgressData.numReviewers'],
@@ -534,6 +835,7 @@ var renderTable = function(container, rows) {
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
+      replyTo: 'tmlr-editors@jmlr.org',
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
@@ -571,8 +873,28 @@ var renderTable = function(container, rows) {
         messageBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your decision for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief'
-      }
-      , {
+      },
+      {
+        id: 'all-authors',
+        name: 'All authors of selected papers',
+        getUsers: function(selectedIds) {
+          selectedIds = selectedIds || [];
+          return rows.map(function(row) {
+            return {
+              groups: selectedIds.includes(row.submission.id)
+                ? row.submission.content.authorids.map(function(authorId) { return { id: authorId, name: view.prettyId(authorId), email: authorId };})
+                : [],
+              forumUrl: 'https://openreview.net/forum?' + $.param({
+                id: row.submission.forum
+              })
+            }
+          });
+        },
+        messageBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your camera ready revision for ' + SHORT_PHRASE + '.\n\n' +
+        'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
+        'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
+      },
+      {
         id: 'unsubmitted-reviews',
         name: 'Reviewers with missing reviews',
         getUsers: function(selectedIds) {
@@ -615,32 +937,221 @@ var renderTable = function(container, rows) {
       }]
     },
     extraClasses: 'console-table paper-table',
+    pageSize: 10,
     postRenderTable: function() {
       $('#' + container + ' .console-table th').eq(0).css('width', '2%');  // [ ]
       $('#' + container + ' .console-table th').eq(1).css('width', '3%');  // #
       $('#' + container + ' .console-table th').eq(2).css('width', '20%'); // Paper Summary
-      $('#' + container + ' .console-table th').eq(3).css('width', '22%'); // Review Progress
-      $('#' + container + ' .console-table th').eq(4).css('width', '22%'); // Action Editor Decision
+      $('#' + container + ' .console-table th').eq(3).css('width', '20%'); // Review Progress
+      $('#' + container + ' .console-table th').eq(4).css('width', '20%'); // Action Editor Decision
       $('#' + container + ' .console-table th').eq(5).css('width', '20%'); // Tasks
-      $('#' + container + ' .console-table th').eq(6).css('width', '11%'); // Status
+      $('#' + container + ' .console-table th').eq(6).css('width', '15%'); // EIC comments
+      $('#' + container + ' .console-table th').eq(7).css('width', '11%'); // Status
     }
   });
 };
 
+var renderOverviewTab = function(conferenceStats) {
+  var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
+
+  var renderStatContainer = function(title, stat, hint, extraClasses) {
+    return '<div class="col-md-4 col-xs-6 mb-3 ' + (extraClasses || '') + '">' +
+      '<h4>' + title + '</h4>' +
+      stat +
+      (hint ? '<p class="hint">' + hint + '</p>' : '') +
+      '</div>';
+  };
+
+  var getDueDateStatus = function(date) {
+    var day = 24 * 60 * 60 * 1000;
+    var diff = Date.now() - date.getTime();
+
+    if (diff > 0) {
+      return 'expired';
+    }
+    if (diff > -3 * day) {
+      return 'warning';
+    }
+    return '';
+  };
+
+  var renderCombinedTasksList = function(invPairs) {
+    var resultHtml = '';
+    if (invPairs.length > 0) {
+      resultHtml += '<ul class="list-unstyled submissions-list task-list eic-task-list mt-0 mb-0">'
+      invPairs.forEach(function(forumInv) {
+        var dateFormatOptions = {
+          hour: 'numeric', minute: 'numeric', day: '2-digit', month: 'short', year: 'numeric', timeZoneName: 'long'
+        };
+        var inv = forumInv[1]
+
+        if (inv.cdate > Date.now()) {
+          var startDate = new Date(inv.cdate);
+          inv.startDateStr = startDate.toLocaleDateString('en-GB', dateFormatOptions);
+        }
+        var duedate = new Date(inv.duedate);
+        inv.dueDateStr = duedate.toLocaleDateString('en-GB', dateFormatOptions);
+        inv.dueDateStatus = getDueDateStatus(duedate);
+        resultHtml += (
+          '<li class="note">' +
+            '<p class="mb-1"><strong><a href="/forum?id=' + forumInv[0].id + '&invitationId=' + inv.id + '&referrer=' + referrerUrl + '" target="_blank">' +
+            forumInv[0].title + ': ' + view.prettyInvitationId(inv.id) +
+            '</a></strong></p>' +
+            (inv.startDateStr ? '<p class="mb-1"><span class="duedate" style="margin-left: 0;">Start: ' + inv.startDateStr + '</span></p>' : '') +
+            '<p class="mb-1"><span class="duedate ' + inv.dueDateStatus +'" style="margin-left: 0;">Due: ' + inv.dueDateStr + '</span></p>' +
+          '</li>'
+        );
+      });
+      resultHtml += '</ul>';
+    } else {
+      resultHtml += '<p class="empty-message mb-3">No tasks to complete.</p>';
+    }
+    return resultHtml;
+  }
+
+  // Conference statistics
+  var html = '<div class="container"><div class="row text-center" style="margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Reviewers:',
+    '<h3>' + conferenceStats.numReviewers + '</h3>',
+    '<a href="/group/edit?id=' + REVIEWERS_ID + '">Reviewers Group</a> (<a href="/group/edit?id=' + REVIEWERS_ID + '/Invited">Invited</a>, <a href="/group/edit?id=' + REVIEWERS_ID + '/Declined">Declined</a>)',
+    'col-md-offset-2'
+  );
+  html += renderStatContainer(
+    'Action Editors:',
+    '<h3>' + conferenceStats.numActionEditors + '</h3>',
+    '<a href="/group/edit?id=' + ACTION_EDITOR_ID + '">Action Editors Group</a> (<a href="/group/edit?id=' + ACTION_EDITOR_ID + '/Invited">Invited</a>, <a href="/group/edit?id=' + ACTION_EDITOR_ID + '/Declined">Declined</a>)'
+  );
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem; margin-top: .5rem;">';
+
+  html += '<div class="row text-center" style="margin-top: .5rem;">';
+  html += renderStatContainer(
+    'Submitted Papers:',
+    '<h3>' + conferenceStats.numSubmissions + '</h3>'
+  );
+  html += renderStatContainer(
+    'Papers Under Review:',
+    '<h3>' + conferenceStats.numUnderReview + '</h3>'
+  );
+  html += renderStatContainer(
+    'Papers Under Discussion:',
+    '<h3>' + conferenceStats.numUnderDiscussion + '</h3>'
+  );
+  html += renderStatContainer(
+    'Papers Under Decision:',
+    '<h3>' + conferenceStats.numUnderDecision + '</h3>'
+  );
+  html += renderStatContainer(
+    'Accepted Papers:',
+    '<h3>' + conferenceStats.numAccepted + '</h3>'
+  );
+  html += renderStatContainer(
+    'Withdrawn Papers:',
+    '<h3>' + conferenceStats.numWithdrawn + '</h3>'
+  );
+  html += renderStatContainer(
+    'Rejected Papers:',
+    '<h3>' + conferenceStats.numRejected + '</h3>'
+  );
+  html += renderStatContainer(
+    'Retracted Papers:',
+    '<h3>' + conferenceStats.numRetracted + '</h3>'
+  );
+  html += '</div>';
+  html += '<hr class="spacer" style="margin-bottom: 1rem; margin-top: 0;">';
+
+  html += '<div class="row" style="margin-top: .5rem;">';
+  html += '<div class="col-md-4 col-xs-6">';
+  html += '<h4>Important Invitations:</h4>';
+  html += '<p class="mb-1"><strong>Venue:</strong></p>';
+  html += '<ul style="padding-left: 15px">';
+  html += conferenceStats.superInvitationIds.map(function(inv) {
+    return '<li><a href="/invitation/edit?id=' + inv.id + '">' + view.prettyInvitationId(inv.id) + '</a></li>';
+  }).join('\n');
+  html += '</ul>';
+  html += '<p class="mb-1"><strong>Reviewers:</strong></p>';
+  html += '<ul style="padding-left: 15px">';
+  html += conferenceStats.reviewerInvitationIds.map(function(inv) {
+    return '<li><a href="/invitation/edit?id=' + inv.id + '">' + view.prettyInvitationId(inv.id) + '</a></li>';
+  }).join('\n');
+  html += '</ul>';
+  html += '<p class="mb-1"><strong>Action Editors:</strong></p>';
+  html += '<ul style="padding-left: 15px">';
+  html += conferenceStats.aeInvitationIds.map(function(inv) {
+    return '<li><a href="/invitation/edit?id=' + inv.id + '">' + view.prettyInvitationId(inv.id) + '</a></li>';
+  }).join('\n');
+  html += '</ul>';
+  html += '</div>';
+
+  html += '<div class="col-md-4 col-xs-6">';
+  html += '<h4>Authors with Most Submissions:</h4>';
+  html += '<table class="table table-condensed table-minimal">';
+  html += '<thead><tr>' +
+    '<th style="width: 35px;height: 20px;padding: 0;border: 0;">#</th>' +
+    '<th style="height: 20px;padding: 0;border: 0;">Author</th>' +
+    '<th style="width: 120px;height: 20px;padding: 0;border: 0;">All Submissions</th>' +
+    '</tr></thead>';
+  html += '<tbody>';
+  html += conferenceStats.activeAuthors.map(function(entry) {
+    return '<tr>' +
+      '<td style="padding-left: 0;font-size: .875rem;">' + entry[1] + '</td>' +
+      '<td style="padding-left: 0;font-size: .875rem;"><a href="/profile?id=' + entry[0] + '">' + view.prettyId(entry[0]) + '</a></td>' +
+      '<td style="padding-left: 0;font-size: .875rem;"><a href="/search?term=' + entry[0] + '&group=' + VENUE_ID + '&content=all&source=forum">view &raquo;</a></td>' +
+      '</tr>';
+  }).join('\n');
+  html += '</tbody>';
+  html += '</table>';
+  html += '</div>';
+
+  html += '<div class="col-md-4 col-xs-6">';
+  html += '<h4>Pending Editors-in-Chief Tasks:</h4>';
+  html += renderCombinedTasksList(conferenceStats.incompleteEicTasks);
+
+  html += '<h4>Overdue Tasks:</h4>';
+  html += renderCombinedTasksList(conferenceStats.overdueTasks);
+  html += '</div>';
+
+  html += '</div></div>';
+
+  $('#overview').html(html);
+};
+
 var renderData = function(venueStatusData) {
+  renderOverviewTab(venueStatusData.journalStats);
+
   renderTable('submitted', venueStatusData.submissionStatusRows);
-  renderTable('under-review', venueStatusData.paperStatusRows);
-  renderTable('decision-approval', venueStatusData.decisionApprovalStatusRows);
+  renderTable('under-review', venueStatusData.underReviewStatusRows);
+  renderTable('under-discussion', venueStatusData.underDiscussionStatusRows);
+  renderTable('under-decision', venueStatusData.underDecisionStatusRows);
+  renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
   renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
-    headings: ['#', 'Reviewer', 'Review Progress', 'Status'],
+    headings: ['#', 'Reviewer', 'Review Progress', 'Rating <span id="rating-info" class="glyphicon glyphicon-info-sign"></span>', 'Status'],
     renders: [
-      function(data) {
+      function (data) {
         return '<strong class="note-number">' + data.number + '</strong>';
       },
       Handlebars.templates.committeeSummary,
       Handlebars.templates.notesReviewerProgress,
+      function (data) {
+        return '<table class="table table-condensed table-minimal">'
+          .concat(
+            "<h4>Average Rating: ".concat(data.averageRating ? data.averageRating.toFixed(2) : '-', "</h4>"),
+            "<tbody>"
+          )
+          .concat(
+            Object.entries(data.ratingsMap)
+              .map(function (rating) {
+                return "<tr><td class='rating'><strong>"
+                  .concat(rating[0], ":</strong> ")
+                  .concat(rating[1], "</td></tr>");
+              })
+              .join(""),
+            "</tbody></table>"
+          );
+      },
       Handlebars.templates.notesReviewerStatus
     ],
     sortOptions: {
@@ -649,14 +1160,40 @@ var renderData = function(venueStatusData) {
       Papers_with_Reviews_Missing: function(row) { return row.reviewerProgressData.numPapers - row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Reviews_Submitted: function(row) { return row.reviewerProgressData.numCompletedReviews; },
       Papers_with_Completed_Reviews_Missing: function(row) { return row.reviewerStatusData.numPapers - row.reviewerStatusData.numCompletedReviews; },
-      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; }
+      Papers_with_Completed_Reviews: function(row) { return row.reviewerStatusData.numCompletedReviews; },
+      Average_Rating: function(row) { return row.ratingData.averageRating; }
     },
     searchProperties: {
       name: ['summary.name'],
       papersAssigned: ['reviewerProgressData.numPapers'],
-      default: ['summary.name']
+      averageRating:['ratingData.averageRating'],
+      default: ['summary.name'],
     },
-    extraClasses: 'console-table'
+    extraClasses: 'console-table',
+    pageSize: 10,
+    postRenderTable: function() {
+      $('#reviewer-status .console-table th').eq(0).css('width', '4%');  // #
+      $('#reviewer-status .console-table th').eq(1).css('width', '23%');  // reviewer
+      $('#reviewer-status .console-table th').eq(2).css('width', '33%'); // review progress
+      $('#reviewer-status .console-table th').eq(3).css('width', '15%'); // rating
+      $('#reviewer-status .console-table th').eq(4).css('width', '25%'); // status
+      $('#reviewer-status td.rating').css('white-space', 'nowrap'); // rating no wrap
+      $("#rating-info").on("mouseenter", function (e) {
+        $(e.target).tooltip({
+          title: '<strong class="tooltip-title">Rating map</strong><br/>'.concat(
+            Object.entries(REVIEWER_RATING_MAP || {})
+              .map(function (item) {
+                return "<span>"
+                  .concat(item[0], " = ")
+                  .concat(item[1], "</span><br/>");
+              })
+              .join("")
+          ),
+          html: true,
+          placement: "bottom"
+        });
+      });
+    }
   });
 
   Webfield2.ui.renderTable('#action-editor-status', venueStatusData.actionEditorStatusRows, {
@@ -682,14 +1219,10 @@ var renderData = function(venueStatusData) {
       papersAssigned: ['reviewProgressData.numPapers'],
       default: ['summary.name']
     },
-    extraClasses: 'console-table'
+    extraClasses: 'console-table',
+    pageSize: 10
   });
 
-  Webfield2.ui.renderTasks(
-    '#editors-in-chief-tasks',
-    venueStatusData.invitations,
-    { referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#editors-in-chief-tasks)') }
-  );
 };
 
 main();

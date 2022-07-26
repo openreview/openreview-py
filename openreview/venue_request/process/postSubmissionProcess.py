@@ -4,7 +4,7 @@ def process(client, note, invitation):
     conference = openreview.helpers.get_conference(client, note.forum)
     forum_note = client.get_note(note.forum)
 
-    comment_readers = forum_note.content.get('Contact Emails', []) + forum_note.content.get('program_chair_emails', []) + [SUPPORT_GROUP]
+    comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
     import traceback
     try:
         conference.setup_post_submission_stage(force=note.content['force'] == 'Yes', hide_fields=note.content.get('hide_fields', []))

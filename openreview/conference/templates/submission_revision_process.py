@@ -1,10 +1,10 @@
 def process_update(client, note, invitation, existing_note):
-
     CONFERENCE_ID = ''
     SHORT_PHRASE = ''
     AUTHORS_NAME = ''
     CONFERENCE_NAME = ''
     CONFERENCE_YEAR = ''
+    REVISION_INVITATION = ''
 
     action = 'posted'
     if existing_note:
@@ -13,7 +13,10 @@ def process_update(client, note, invitation, existing_note):
     forum = client.get_note(note.forum)
 
     title = note.content.get('title', forum.content.get('title', ''))
-    authorids = note.content.get('authorids', forum.content.get('authorids', []))
+    if note.ddate:
+        authorids = forum.content.get('authorids', [])
+    else:
+        authorids = note.content.get('authorids', forum.content.get('authorids', []))
     abstract = note.content.get('abstract', forum.content.get('abstract', ''))
 
     subject = '{} has received a new revision of your submission titled {}'.format(SHORT_PHRASE, title)
@@ -36,23 +39,30 @@ To view your submission, click here: https://openreview.net/forum?id={}'''.forma
     if CONFERENCE_NAME and CONFERENCE_YEAR and note.content.get('title') and note.content.get('authors'):
         bibtex_note=forum
         notes=client.get_notes(original=forum.id)
+        anonymous_note=False
         if notes:
             bibtex_note=notes[0]
             anonymous_note = bibtex_note.content.get('authors') == ['Anonymous']
-            bibtex_note.content = {
-                'venue': bibtex_note.content.get('venue'),
-                'venueid': bibtex_note.content.get('venueid')
-            }
-            if anonymous_note:
-                bibtex_note.content['authors'] = ['Anonymous']
-                bibtex_note.content['authorids'] = [CONFERENCE_ID + '/Paper' + str(bibtex_note.number) + '/' + AUTHORS_NAME]
 
-        bibtex_note.content['_bibtex'] = openreview.tools.get_bibtex(
-            note,
+        bibtex = openreview.tools.generate_bibtex(
+            forum,
             venue_fullname=CONFERENCE_NAME,
             year=CONFERENCE_YEAR,
             url_forum=bibtex_note.id,
-            accepted=True,
-            anonymous=bibtex_note.content.get('authors', []) == ['Anonymous']
+            paper_status='accepted',
+            anonymous=anonymous_note
         )
-        client.post_note(bibtex_note)
+
+        revision_note = client.post_note(openreview.Note(
+            invitation = f'{REVISION_INVITATION}',
+            forum = forum.id,
+            referent = forum.id,
+            readers = ['everyone'],
+            writers = [CONFERENCE_ID],
+            signatures = [CONFERENCE_ID],
+            content = {
+                'venue': forum.content.get('venue'),
+                'venueid': forum.content.get('venueid'),
+                '_bibtex': bibtex
+            }
+        ))

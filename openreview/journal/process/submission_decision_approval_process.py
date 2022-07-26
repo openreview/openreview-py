@@ -3,8 +3,6 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
-    duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4))
-
     decision_approval = client.get_note(edit.note.id)
     decision = client.get_note(edit.note.replyto)
 
@@ -16,23 +14,20 @@ def process(client, edit, invitation):
 
     ## Make the decision public
     print('Make decision public')
-    invitation = client.post_invitation_edit(readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
             bulk=True,
             invitees=[venue_id],
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [venue_id ] },
-                'readers': { 'values': [ venue_id, journal.get_action_editors_id(number=submission.number) ] },
-                'writers': { 'values': [ venue_id ] },
+                'signatures': { 'const': [venue_id ] },
+                'readers': { 'const': [ venue_id, journal.get_action_editors_id(number=submission.number) ] },
+                'writers': { 'const': [ venue_id ] },
                 'note': {
-                    'id': { 'value-invitation': journal.get_ae_decision_id(number=submission.number) },
-                    'readers': { 'values': [ 'everyone' ] },
-                    'nonreaders': { 'values': [] }
+                    'id': { 'withInvitation': journal.get_ae_decision_id(number=submission.number) },
+                    'readers': { 'const': [ 'everyone' ] },
+                    'nonreaders': { 'const': [] }
                 }
             }
     ))
@@ -41,7 +36,7 @@ def process(client, edit, invitation):
     print(decision.content)
     if decision.content['recommendation']['value'] == 'Reject':
         ## Post a reject edit
-        client.post_note_edit(invitation=journal.get_rejection_id(),
+        client.post_note_edit(invitation=journal.get_rejected_id(),
             signatures=[venue_id],
             note=openreview.api.Note(
                 id=submission.id,
@@ -56,10 +51,7 @@ def process(client, edit, invitation):
 
     ## Make submission editable by the authors
     print('Make submission editable by the authors')
-    invitation = client.post_invitation_edit(readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
             #bulk=True,
             invitees=[venue_id],
             noninvitees=[journal.get_editors_in_chief_id()],
@@ -67,12 +59,12 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'values': [venue_id ] },
-                'readers': { 'values': [ venue_id, journal.get_action_editors_id(number=submission.number), journal.get_authors_id(number=submission.number) ] },
-                'writers': { 'values': [ venue_id ] },
+                'signatures': { 'const': [venue_id ] },
+                'readers': { 'const': [ venue_id, journal.get_action_editors_id(number=submission.number), journal.get_authors_id(number=submission.number) ] },
+                'writers': { 'const': [ venue_id ] },
                 'note': {
-                    'id': { 'value': submission.id },
-                    'writers': { 'values': [ venue_id, journal.get_authors_id(number=submission.number) ] }
+                    'id': { 'const': submission.id },
+                    'writers': { 'const': [ venue_id, journal.get_authors_id(number=submission.number) ] }
                 }
             }
     ))
@@ -86,7 +78,7 @@ def process(client, edit, invitation):
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')
-    journal.invitation_builder.set_camera_ready_revision_invitation(journal, submission, decision, duedate)
+    journal.invitation_builder.set_camera_ready_revision_invitation(submission, decision, journal.get_due_date(weeks = 4))
 
     ## Send email to authors
     print('Send email to authors')

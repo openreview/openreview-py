@@ -21,12 +21,16 @@ def process(client, edit, invitation):
 
     subject = recruitment_note.content['email_subject']['value']
     message = recruitment_note.content['email_content']['value']
-    message = message.replace('{inviter}', recruitment_note.signatures[0])
 
-    status = journal.invite_reviewers(message, subject, [email], [name])
+    inviter_profile = client.get_profile(recruitment_note.signatures[0])
+    inviter_name = openreview.tools.get_preferred_name(inviter_profile)
+    message = message.replace('{{inviter}}', inviter_name)
 
-    non_invited_status = f'''No recruitment invitation was sent to the following user because they have already been invited as reviewer:
-{status.get('already_invited')}''' if status.get('already_invited') else ''
+    inviter_email = inviter_profile.content.get('preferredEmail')
+    if not inviter_email:
+        inviter_email = inviter_profile.content.get('emails')[0]
+
+    status = journal.invite_reviewers(message, subject, [email], [name], replyTo=inviter_email, reinvite=True)
 
     already_member_status = f'''No recruitment invitation was sent to the following user because they are already members of the reviewer group:
 {status.get('already_member')}''' if status.get('already_member') else ''
@@ -38,7 +42,6 @@ def process(client, edit, invitation):
     comment_content = f'''
 Invited: {len(status.get('invited'))} reviewers.
 
-{non_invited_status}
 {already_member_status}
 
 Please check the invitee group to see more details: https://openreview.net/group?id={venue_id}/Reviewers/Invited
@@ -58,5 +61,5 @@ Please check the invitee group to see more details: https://openreview.net/group
             },
             forum = recruitment_note.forum,
             replyto = recruitment_note.id,
-            readers = [SUPPORT_GROUP, venue_id, journal.get_action_editors_id()]
+            readers = recruitment_note.readers
         ))

@@ -53,7 +53,7 @@ class TestJournal():
         venue_id = '.MELBA'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='editors@melba-journal.org', full_name='The Journal of Machine Learning for Biomedical Imaging', short_name='MELBA', website='melba-journal.org')
 
-        journal.invite_action_editors(message='Test {name},  {accept_url}, {decline_url}', subject='[MELBA] Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mail.com', '~Ana_Martinez1'])
+        journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='[MELBA] Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mail.com', '~Ana_Martinez1'])
         invited_group = openreview_client.get_group(f'{venue_id}/Action_Editors/Invited')
         assert invited_group.members == ['new_user@mail.com', '~Hoel_Hervadec1', '~Xukun_Liu1', '~Aasa_Feragen1', '~Ana_Martinez1']
 
@@ -65,7 +65,8 @@ class TestJournal():
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = '.MELBA/Action_Editors/-/Recruitment')
+
 
         group = openreview_client.get_group(f'{venue_id}/Action_Editors')
         assert len(group.members) == 5
@@ -76,7 +77,7 @@ class TestJournal():
         venue_id = '.MELBA'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='editors@melba-journal.org', full_name='The Journal of Machine Learning for Biomedical Imaging', short_name='MELBA', website='melba-journal.org')
 
-        journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com', 'rev4@mailfour.com', 'rev3@mailthree.com', 'rev2@mailtwo.com', 'rev5@mailfive.com'])
+        journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com', 'rev4@mailfour.com', 'rev3@mailthree.com', 'rev2@mailtwo.com', 'rev5@mailfive.com'])
         invited_group = openreview_client.get_group(f'{venue_id}/Reviewers/Invited')
         assert invited_group.members == ['~MELBARev_One1', '~MELBARev_Four1', '~MELBARev_Three1', '~MELBARev_Two1', '~MELBARev_Five1']
 
@@ -88,13 +89,13 @@ class TestJournal():
             accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation = '.MELBA/Reviewers/-/Recruitment')
 
         group = openreview_client.get_group(f'{venue_id}/Reviewers/Invited')
         assert len(group.members) == 5
         assert '~MELBARev_One1' in group.members
 
-        status = journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com'])
+        status = journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com'])
         messages = openreview_client.get_messages(to = 'rev1@mailone.com', subject = '[MELBA] Invitation to be a Reviewer')
         assert len(messages) == 1
 
@@ -117,15 +118,12 @@ class TestJournal():
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Martinez1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
-                    'human_subjects_reporting': { 'value': 'Not applicable'}
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
             ))
 
-        helpers.await_queue(openreview_client)
-        note_id_1=submission_note_1['note']['id']
-        process_logs = openreview_client.get_process_logs(id = submission_note_1['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[MELBA] Suggest candidate Action Editor for your new MELBA submission')
         assert len(messages) == 1
@@ -136,3 +134,6 @@ class TestJournal():
 <p>For more details and guidelines on the MELBA review process, visit <a href=\"http://melba-journal.org\">melba-journal.org</a>.</p>
 <p>The MELBA Editors-in-Chief</p>
 '''
+
+        note = openreview_client.get_note(submission_note_1['note']['id'])
+        journal.invitation_builder.expire_paper_invitations(note)

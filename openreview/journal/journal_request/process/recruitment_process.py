@@ -41,11 +41,11 @@ def process(client, edit, invitation):
     content = recruitment_note.content['email_content']['value']
     if 'Action_Editor' in invitation.id:
         role = 'Action Editor'
-        subject = subject.replace('{role}', role)
+        subject = subject.replace('{{role}}', role)
         status = journal.invite_action_editors(content, subject, invitee_emails, invitee_names)
     else:
         role = 'Reviewer'
-        subject = subject.replace('{role}', role)
+        subject = subject.replace('{{role}}', role)
         status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
 
     non_invited_status = f'''No recruitment invitation was sent to the following users because they have already been invited as {role}:
@@ -82,5 +82,5 @@ Please check the invitee group to see more details: https://openreview.net/group
             },
             forum = recruitment_note.forum,
             replyto = recruitment_note.id,
-            readers = [SUPPORT_GROUP, venue_id, journal.get_action_editors_id()]
+            readers = [SUPPORT_GROUP, venue_id]
         ))

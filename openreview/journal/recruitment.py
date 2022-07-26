@@ -25,6 +25,7 @@ class Recruitment(object):
         }
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
+            invitee = invitee.lower() if '@' in invitee else invitee
             memberships = [g.id for g in self.client.get_groups(member=invitee, regex=action_editors_id)] if tools.get_group(self.client, invitee) else []
             if action_editors_id in memberships:
                 recruitment_status['already_member'].append(invitee)
@@ -35,7 +36,7 @@ class Recruitment(object):
                 invitee = profile.id if profile else invitee
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
+                    name = profile.get_preferred_name(pretty=True) if profile else 'invitee'
                 try:
                     r=tools.recruit_reviewer(self.client, invitee, name,
                         hash_seed,
@@ -53,7 +54,7 @@ class Recruitment(object):
 
         return recruitment_status
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None):
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reinvite=False):
 
         reviewers_id = self.journal.get_reviewers_id()
         reviewers_declined_id = reviewers_id + '/Declined'
@@ -70,17 +71,18 @@ class Recruitment(object):
         invited_members = self.client.get_group(reviewers_invited_id).members
 
         for index, invitee in enumerate(tqdm(invitees, desc='send_invitations')):
+            invitee = invitee.lower() if '@' in invitee else invitee
             memberships = [g.id for g in self.client.get_groups(member=invitee, regex=reviewers_id)] if tools.get_group(self.client, invitee) else []
             if reviewers_id in memberships:
                 recruitment_status['already_member'].append(invitee)
-            elif reviewers_invited_id in memberships:
+            elif not reinvite and reviewers_invited_id in memberships:
                 recruitment_status['already_invited'].append(invitee)
             else:
                 profile=openreview.tools.get_profile(self.client, invitee)
                 invitee = profile.id if profile else invitee
                 name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
                 if not name:
-                    name = re.sub('[0-9]+', '', invitee.replace('~', '').replace('_', ' ')) if invitee.startswith('~') else 'invitee'
+                    name = profile.get_preferred_name(pretty=True) if profile else 'invitee'
                 try:
                     r=tools.recruit_reviewer(self.client, invitee, name,
                         hash_seed,
@@ -88,7 +90,8 @@ class Recruitment(object):
                         message,
                         subject,
                         reviewers_invited_id,
-                        verbose = False)
+                        verbose = False,
+                        replyTo = replyTo)
                     recruitment_status['invited'].append(invitee)
                 except Exception as e:
                     self.client.remove_members_from_group(reviewers_invited_id, invitee)

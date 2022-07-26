@@ -22,7 +22,7 @@ var WILDCARD_INVITATION = CONFERENCE_ID + '.*';
 function main() {
   // In the future this should not be necessary as the group's readers
   // will prevent unauthenticated users
-  if (!user || !user.profile) {
+  if (!user || !user.profile || user.profile.id === 'guest') {
     location.href = '/login?redirect=' + encodeURIComponent(
       location.pathname + location.search + location.hash
     );
@@ -46,7 +46,8 @@ function main() {
 function load() {
   var query = {
     invitation: SUBMISSION_ID,
-    details: 'invitation,overwriting,directReplies'
+    details: 'invitation,overwriting,directReplies',
+    sort: 'number:asc'
   }
   query[AUTHOR_SUBMISSION_FIELD] = user.profile.id;
   var notesP = Webfield.get('/notes', query).then(function(result) {
@@ -62,7 +63,8 @@ function load() {
     if (blindNoteIds.length) {
       return Webfield.get('/notes', {
         ids: blindNoteIds,
-        details: 'directReplies'
+        details: 'directReplies',
+        sort: 'number:asc'
       })
       .then(function(result) {
         return (result.notes || []).filter(function(note) {
@@ -222,8 +224,8 @@ function renderStatusTable(notes) {
 
   $container.empty().append(tableHtml);
 
-  $('#your-submissions .console-table th').eq(0).css('width', '4%');
-  $('#your-submissions .console-table th').eq(1).css('width', '36%');
+  $('#your-submissions .console-table th').eq(0).css('width', '5%');
+  $('#your-submissions .console-table th').eq(1).css('width', '35%');
   $('#your-submissions .console-table th').eq(2).css('width', '30%');
   $('#your-submissions .console-table th').eq(3).css('width', '30%');
 }

@@ -1,7 +1,7 @@
 from .. import openreview
 from .. import tools
-from . import invitation
 from . import group
+from .invitation import InvitationBuilder
 from .recruitment import Recruitment
 from .assignment import Assignment
 from openreview.api import Edge
@@ -35,12 +35,12 @@ class Journal(object):
         self.submission_group_name = 'Paper'
         self.submitted_venue_id = f'{venue_id}/Submitted'
         self.under_review_venue_id = f'{venue_id}/Under_Review'
-        self.rejected_venue_id = f'{venue_id}/Rejection'
-        self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejection'
+        self.rejected_venue_id = f'{venue_id}/Rejected'
+        self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
         self.retracted_venue_id = f'{venue_id}/Retracted_Acceptance'
         self.accepted_venue_id = venue_id
-        self.invitation_builder = invitation.InvitationBuilder(client)
+        self.invitation_builder = InvitationBuilder(self)
         self.group_builder = group.GroupBuilder(client)
         self.header = {
             "title": self.full_name,
@@ -55,6 +55,7 @@ class Journal(object):
         }
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
+        self.unavailable_reminder_period = 4 # weeks
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -78,17 +79,32 @@ class Journal(object):
     def get_reviewers_id(self, number=None, anon=False):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
 
-    def get_solicit_reviewers_id(self, number=None):
-        return self.__get_group_id(self.solicit_reviewers_name, number)
+    def get_reviewers_reported_id(self):
+        return self.get_reviewers_id() + '/Reported'
+
+    def get_solicit_reviewers_id(self, number=None, declined=False):
+        group_id = self.__get_group_id(self.solicit_reviewers_name, number)
+        if declined:
+            group_id = group_id + '/Declined'
+        return group_id
 
     def get_authors_id(self, number=None):
         return self.__get_group_id(self.authors_name, number)
 
+    def get_meta_invitation_id(self):
+        return self.__get_invitation_id(name='Edit')
+
+    def get_form_id(self):
+        return self.__get_invitation_id(name='Form')
+
     def get_review_approval_id(self, number=None):
         return self.__get_invitation_id(name='Review_Approval', number=number)
 
-    def get_withdraw_id(self, number=None):
+    def get_withdrawal_id(self, number=None):
         return self.__get_invitation_id(name='Withdrawal', number=number)
+
+    def get_desk_rejection_id(self, number=None):
+        return self.__get_invitation_id(name='Desk_Rejection', number=number)
 
     def get_retraction_id(self, number=None):
         return self.__get_invitation_id(name='Retraction', number=number)
@@ -96,14 +112,17 @@ class Journal(object):
     def get_retraction_approval_id(self, number=None):
         return self.__get_invitation_id(name='Retraction_Approval', number=number)
 
+    def get_retraction_release_id(self, number=None):
+        return self.__get_invitation_id(name='Retraction_Release', number=number)
+
     def get_retracted_id(self):
         return self.__get_invitation_id(name='Retracted')
 
     def get_under_review_id(self):
         return self.__get_invitation_id(name='Under_Review')
 
-    def get_desk_rejection_id(self):
-        return self.__get_invitation_id(name='Desk_Rejection')
+    def get_desk_rejected_id(self):
+        return self.__get_invitation_id(name='Desk_Rejected')
 
     def get_withdrawn_id(self):
         return self.__get_invitation_id(name='Withdrawn')
@@ -147,26 +166,37 @@ class Journal(object):
     def get_ae_custom_max_papers_id(self, number=None):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_action_editors_id(number=number))
 
+    def get_ae_availability_id(self):
+        return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_action_editors_id())
+
     def get_decision_approval_id(self, number=None):
         return self.__get_invitation_id(name='Decision_Approval', number=number)
 
-    def get_review_id(self, number):
+    def get_review_id(self, number=None):
         return self.__get_invitation_id(name='Review', number=number)
 
     def get_review_rating_id(self, signature):
         return self.__get_invitation_id(name='Rating', prefix=signature)
 
-    def get_acceptance_id(self):
-        return self.__get_invitation_id(name='Acceptance')
+    def get_accepted_id(self):
+        return self.__get_invitation_id(name='Accepted')
 
-    def get_rejection_id(self):
-        return self.__get_invitation_id(name='Rejection')
+    def get_rejected_id(self):
+        return self.__get_invitation_id(name='Rejected')
 
     def get_reviewer_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Official_Recommendation', number=number)
 
     def get_reviewer_recruitment_id(self):
         return self.__get_invitation_id(name='Recruitment', prefix=self.get_reviewers_id())
+
+    def get_reviewer_responsibility_id(self, signature=None):
+        if signature:
+            return self.__get_invitation_id(name=f'{signature}/Responsibility/Acknowledgement', prefix=self.get_reviewers_id())
+        return self.__get_invitation_id(name='Responsibility_Acknowledgement', prefix=self.get_reviewers_id())
+
+    def get_reviewer_report_id(self):
+        return self.__get_invitation_id(name='Reviewer_Report', prefix=self.get_reviewers_id())
 
     def get_reviewer_conflict_id(self):
         return self.__get_invitation_id(name='Conflict', prefix=self.get_reviewers_id())
@@ -177,8 +207,16 @@ class Journal(object):
     def get_reviewer_assignment_id(self, number=None):
         return self.__get_invitation_id(name='Assignment', prefix=self.get_reviewers_id(number))
 
+    def get_reviewer_assignment_acknowledgement_id(self, number=None, reviewer_id=None):
+        if reviewer_id:
+           return self.__get_invitation_id(name=f'{reviewer_id}/Assignment/Acknowledgement', prefix=self.get_reviewers_id(number))
+        return self.__get_invitation_id(name='Assignment_Acknowledgement', prefix=self.get_reviewers_id(number))
+
     def get_reviewer_custom_max_papers_id(self):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_reviewers_id())
+
+    def get_reviewer_availability_id(self):
+        return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_reviewers_id())
 
     def get_reviewer_pending_review_id(self):
         return self.__get_invitation_id(name='Pending_Reviews', prefix=self.get_reviewers_id())
@@ -192,11 +230,15 @@ class Journal(object):
     def get_revision_id(self, number=None):
         return self.__get_invitation_id(name='Revision', number=number)
 
-    def get_solicit_review_id(self, number):
+    def get_solicit_review_id(self, number=None):
         return self.__get_invitation_id(name='Solicit_Review', number=number)
 
-    def get_solicit_review_approval_id(self, number, signature):
-        return self.__get_invitation_id(name=f'{signature}_Solicit_Review_Approval', number=number)
+    def get_solicit_review_approval_id(self, number=None, signature=None):
+        if signature:
+            return self.__get_invitation_id(name=f'{signature}_Solicit_Review_Approval', number=number)
+
+        return self.__get_invitation_id(name='Solicit_Review_Approval', number=number)
+
 
     def get_public_comment_id(self, number):
         return self.__get_invitation_id(name='Public_Comment', number=number)
@@ -210,9 +252,40 @@ class Journal(object):
     def get_submission_editable_id(self, number):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
-    def setup(self, support_role, editors=[]):
+    def get_request_form(self):
+        forum_note = self.client.get_notes(invitation='(openreview.net|OpenReview.net)/Support/-/Journal_Request$', content={'venue_id':self.venue_id})
+        if forum_note:
+            return forum_note[0]
+
+    def get_reviewer_report_form(self):
+        forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
+        if forum_note:
+            return forum_note[0].id
+
+    def get_acknowledgement_responsibility_form(self):
+        forum_notes = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
+        if len(forum_notes) > 0:
+            return forum_notes[0].id                  
+
+    def get_support_group(self):
+        forum_note = self.get_request_form()
+        if forum_note:
+            return forum_note.invitations[0].split('/-/')[0]
+
+    def get_review_period_length(self, note):
+        if 'submission_length' in note.content:
+            if 'Regular submission' in note.content['submission_length']['value']:
+                return 2 ## weeks
+            if 'Long submission' in note.content['submission_length']['value']:
+                return 4 ## weeks
+        return 2 ## weeks
+    
+    def setup(self, support_role, editors=[], assignment_delay=5):
         self.group_builder.set_groups(self, support_role, editors)
-        self.invitation_builder.set_invitations(self)
+        self.invitation_builder.set_invitations(assignment_delay)
+        self.group_builder.set_group_variable(self.get_action_editors_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
+        self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
+        self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
@@ -250,26 +323,30 @@ class Journal(object):
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
         return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None):
-        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names)
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reinvite=False):
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reinvite)
 
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
-        self.invitation_builder.set_revision_submission(self, note)
-        self.invitation_builder.set_review_approval_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
-        self.invitation_builder.set_withdraw_invitation(self, note)
+        self.invitation_builder.set_revision_submission(note)
+        self.invitation_builder.set_note_withdrawal_invitation(note)
+        self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)
-        self.invitation_builder.set_ae_recommendation_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)))
-
+        self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
+        self.setup_reviewer_assignment(note)
 
     def setup_under_review_submission(self, note):
-        self.invitation_builder.set_review_invitation(self, note, openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)))
-        self.invitation_builder.set_solicit_review_invitation(self, note)
-        self.invitation_builder.set_comment_invitation(self, note)
-        self.setup_reviewer_assignment(note)
+        self.invitation_builder.set_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
+        self.invitation_builder.set_note_solicit_review_invitation(note)
+        self.invitation_builder.set_comment_invitation(note)
+        self.invitation_builder.release_submission_history(note)
 
     def assign_reviewer(self, note, reviewer, solicit):
         self.assignment.assign_reviewer(note, reviewer, solicit)
+
+    def get_due_date(self, days=0, weeks=0):
+        due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
+        return due_date
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
 
@@ -286,16 +363,16 @@ class Journal(object):
 
         first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
         bibtex_title = u.unicode_to_latex(note.content['title']['value'])
+        year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
         if new_venue_id == self.under_review_venue_id:
 
             first_author_last_name = 'anonymous'
             authors = 'Anonymous'
-            year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -315,11 +392,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.cdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -340,11 +416,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -360,11 +435,10 @@ class Journal(object):
             first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
             first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
             authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={' + self.full_name + '},',
@@ -384,11 +458,10 @@ class Journal(object):
                 first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
                 first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
                 authors = ' and '.join(note.content['authors']['value'])
-            year = datetime.datetime.fromtimestamp(note.mdate/1000).year
 
             bibtex = [
                 '@article{',
-                utf8tolatex(first_author_last_name + first_word + ','),
+                utf8tolatex(first_author_last_name + str(year) + first_word + ','),
                 'title={' + bibtex_title + '},',
                 'author={' + utf8tolatex(authors) + '},',
                 'journal={Submitted to ' + self.full_name + '},',
@@ -399,6 +472,39 @@ class Journal(object):
             ]
             return '\n'.join(bibtex)
 
+
+    def get_late_invitees(self, invitation_id):
+
+        invitation = self.client.get_invitation(invitation_id)
+
+        invitee_members = []
+        for invitee in invitation.invitees:
+            if invitee not in [self.venue_id, self.get_editors_in_chief_id()]:
+                if invitee.startswith('~'):
+                    profile = self.client.get_profile(invitee)
+                    invitee_members.append(profile.id)
+                else:
+                    invitee_members = invitee_members + self.client.get_group(invitee).members
+
+        ## Check replies and get signatures
+        replies = self.client.get_notes(invitation=invitation.id, details='signatures')
+
+        signature_members = []
+        for reply in replies:
+            for signature in reply.details['signatures']:
+                if signature['id'].startswith('~'):
+                    profile = self.client.get_profile(signature)
+                    signature_members.append(profile.id)
+                else:
+                    signature_members = signature_members + signature['members']
+            for signature in reply.signatures:
+                if signature.startswith('~'):
+                    profile = self.client.get_profile(signature)
+                    signature_members.append(profile.id)
+
+        print('invitee_members', invitee_members)
+        print('signature_members', signature_members)
+        return list(set(invitee_members) - set(signature_members))
 
     def notify_readers(self, edit, content_fields=[]):
 
@@ -432,7 +538,7 @@ To view the {lower_formatted_invitation}, click here: https://openreview.net/for
 '''
 
         ## Notify author of the note
-        if action == 'posted':
+        if action == 'posted' and self.get_editors_in_chief_id() not in note.signatures:
             message = f'''Hi {{{{fullname}}}},
 
 Your {lower_formatted_invitation} on a submission has been {action}
@@ -475,3 +581,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {content}
             '''
             self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+
+
+        if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation:
+            message = f'''Hi {{{{fullname}}}},
+
+{before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are serving as Editor-In-Chief.
+{content}
+            '''
+            self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+

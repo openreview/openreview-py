@@ -23,60 +23,63 @@ def process(client, note, invitation):
         matching_status = conference.setup_committee_matching(matching_group, compute_affinity_scores, compute_conflicts)
     except Exception as e:
         if 'Submissions not found.' in str(e):
-            matching_status['error'] = ['Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.']
+            matching_status['error'] = 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.'
         elif 'The match group is empty' in str(e):
-            matching_status['error'] = [f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.']
+            matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.'
         elif 'The alternate match group is empty' in str(e):
             role_name = conference.get_area_chairs_name()
-            matching_status['error'] = [f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.']
+            matching_status['error'] = f'Could not compute affinity scores and conflicts since there are no {role_name}. You can use the \'Recruitment\' button to recruit {role_name}.'
         else:
-            matching_status['error'] = [str(e)]
+            matching_status['error'] = str(e)
 
     print("Following error in the process function was posted as a comment:")
     print(traceback.format_exc())
 
     comment_note = openreview.Note(
-        invitation = note.invitation.replace('Paper_Matching_Setup', 'Comment'),
+        invitation = note.invitation.replace('Paper_Matching_Setup', 'Paper_Matching_Setup_Status'),
         forum = note.forum,
         replyto = note.id,
-        readers = request_form.content.get('program_chair_emails', []) + [SUPPORT_GROUP],
+        readers = [conference.get_program_chairs_id()] + [SUPPORT_GROUP],
         writers = [],
         signatures = [SUPPORT_GROUP],
         content = {
-            'title': 'Matching Status [{note_id}]'.format(note_id=note.id),
+            'title': 'Paper Matching Setup Status',
             'comment': ''
         }
     )
 
     if matching_status.get('error'):
-        error_status = f'''{len(matching_status.get('error'))} error(s): {matching_status.get('error')}'''
-        comment_note.content['comment'] += error_status
-        comment_note.content['comment'] += f'''
-
-To check references for the note: https://api.openreview.net/references?id={note.id}
-'''
+        error_status = f'''
+        {matching_status.get('error')}
+        '''
+        comment_note.content['error'] = error_status
 
     else:
-        no_profiles_status = matching_status.get('no_profiles')
-        if no_profiles_status:
-            profiles_status=f'''
-{len(no_profiles_status)} {role_name} without a profile: {no_profiles_status}
+        no_profiles_members = matching_status.get('no_profiles', [])
+        if no_profiles_members:
+            without_profiles_status = f'''
+{len(no_profiles_members)} {role_name} without a profile.
 
-Affinity scores and/or conflicts could not be computed for these users. Please ask these users to sign up in OpenReview and upload their papers. Alternatively, you can remove these users from the {role_name} group.
+Affinity scores and/or conflicts could not be computed for the users listed under 'Without Profile'. You will not be able to run the matcher until all {role_name} have profiles. You have two options:
 
-Please check the {role_name} group to see more details: https://openreview.net/group?id={matching_group}'''
+1. You can ask these users to sign up in OpenReview and upload their papers. After all {role_name} have done this, you will need to rerun the paper matching setup to recompute conflicts and/or affinity scores for all users.
+2. You can remove these users from the {role_name} group: https://openreview.net/group/edit?id={matching_group}. You can find all users without a profile by searching for the '@' character in the search box.
+'''
+            comment_note.content['without_profile'] = no_profiles_members
+            comment_note.content['comment'] += f'''{without_profiles_status}'''
         else:
-            profiles_status=f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group?id={conference.get_program_chairs_id()}
+            profiles_status = f'''Affinity scores and/or conflicts were successfully computed. To run the matcher, click on the '{role_name} Paper Assignment' link in the PC console: https://openreview.net/group?id={conference.get_program_chairs_id()}
 
 Please refer to the FAQ for pointers on how to run the matcher: https://openreview.net/faq#question-edge-browswer'''
 
-        comment_note.content['comment'] += f'''{profiles_status}'''
+            comment_note.content['comment'] += f'''{profiles_status}'''
 
         if matching_status.get('no_publications'):
-            no_publications_status=f'''{len(matching_status.get('no_publications'))} {role_name} with no publications: {matching_status.get('no_publications')}'''
-            no_publications_status = no_publications_status.replace('~', '\~')
+            no_publication_members = matching_status.get('no_publications')
+            no_publications_status = f'''{len(matching_status.get('no_publications'))} {role_name} listed under 'Without Publication' don't have any publications.'''
+            # no_publications_status = no_publications_status.replace('~', '\~')
+            comment_note.content['without_publication'] = no_publication_members
             comment_note.content['comment'] += f'''
-
-{no_publications_status}'''
+            \n{no_publications_status}'''
 
     client.post_note(comment_note)

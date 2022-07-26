@@ -20,7 +20,7 @@ class TestOpenSubmissions():
     def conference(self, client):
         now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('aclweb.org/ACL/2020/Workshop/NLP-COVID')
@@ -36,12 +36,13 @@ class TestOpenSubmissions():
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_reveal_authors=True
         )
-        builder.set_review_stage(public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True)
-        builder.set_comment_stage(allow_public_comments=True, email_pcs=True, reader_selection=True, authors=True)
+        builder.set_review_stage(openreview.ReviewStage(public=True, due_date=now + datetime.timedelta(minutes = 40), email_pcs=True))
+        builder.set_comment_stage(allow_public_comments=True, email_pcs=True, reader_selection=True, invitees=[openreview.CommentStage.Readers.AUTHORS], readers=[openreview.CommentStage.Readers.AUTHORS])
         builder.set_decision_stage(public=True, due_date=now + datetime.timedelta(minutes = 40), options = ['Accept', 'Reject'], email_authors=True)
         builder.enable_reviewer_reassignment(enable = True)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@aclweb.org'])
+        conference.create_review_stage()
         return conference
 
 
@@ -94,7 +95,7 @@ class TestOpenSubmissions():
 
         ## call post submission stage and keep the submissions public
         conference.setup_post_submission_stage(force=True)
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
         assert submissions
         assert submissions[0].readers == ['everyone']
         assert submissions[0].tcdate == submissions[0].tmdate
@@ -111,7 +112,7 @@ class TestOpenSubmissions():
 
         reviewer_client=helpers.create_user('reviewer@aclweb.org', 'Reviewer', 'ACL')
 
-        submissions=reviewer_client.get_notes(invitation='aclweb.org/ACL/2020/Workshop/NLP-COVID/-/Submission')
+        submissions=reviewer_client.get_notes(invitation='aclweb.org/ACL/2020/Workshop/NLP-COVID/-/Submission', sort='tmdate')
         assert submissions
 
         note = openreview.Note(invitation = conference.get_invitation_id(name = 'Official_Review', number = 1),
@@ -139,7 +140,7 @@ class TestOpenSubmissions():
 
     def test_post_comments(self, client, conference, test_client, helpers):
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
 
         conference.open_comments()
@@ -170,7 +171,7 @@ class TestOpenSubmissions():
 
     def test_post_decisions(self, client, conference, helpers):
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
 
         conference.open_decisions()

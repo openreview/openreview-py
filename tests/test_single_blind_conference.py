@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
+from selenium.webdriver.common.by import By
 import openreview
 import pytest
 import requests
@@ -10,7 +11,7 @@ class TestSingleBlindConference():
 
     def test_create_single_blind_conference(self, client, selenium, request_page) :
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -67,7 +68,7 @@ class TestSingleBlindConference():
         assert '"website": "https://sites.google.com/site/nips2018mlits/home"' in groups[3].web
         assert '"deadline": "October 12, 2018, 11:59 pm UTC"' in groups[3].web
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS")
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", wait_for_element='header')
 
         assert "NIPS 2018 Workshop MLITS | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
@@ -86,7 +87,7 @@ class TestSingleBlindConference():
     def test_enable_submissions(self, client, selenium, request_page):
 
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -109,7 +110,7 @@ class TestSingleBlindConference():
         assert posted_invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
         assert posted_invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 70))
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS")
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", wait_for_element='invitation')
 
         assert "NIPS 2018 Workshop MLITS | OpenReview" in selenium.title
         invitation_panel = selenium.find_element_by_id('invitation')
@@ -124,7 +125,7 @@ class TestSingleBlindConference():
         assert invitation.duedate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 40))
         assert invitation.expdate == openreview.tools.datetime_millis(now + datetime.timedelta(minutes = 70))
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS")
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", wait_for_element='invitation')
 
         assert "NIPS 2018 Workshop MLITS | OpenReview" in selenium.title
         invitation_panel = selenium.find_element_by_id('invitation')
@@ -142,7 +143,7 @@ class TestSingleBlindConference():
 
     def test_post_submissions(self, client, test_client, peter_client, selenium, request_page, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -209,12 +210,12 @@ class TestSingleBlindConference():
 
         conference.setup_final_deadline_stage()
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
         assert submissions[0].readers == ['everyone']
 
         # Author user
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token, wait_for_element='notes')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -233,7 +234,7 @@ class TestSingleBlindConference():
         assert allsubmissions_tab
         assert len(allsubmissions_tab.find_element_by_class_name('submissions-list').find_elements_by_tag_name('li')) == 2
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-submissions')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -242,7 +243,7 @@ class TestSingleBlindConference():
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS")
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", wait_for_element='all-submissions')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -260,7 +261,7 @@ class TestSingleBlindConference():
         assert len(allsubmissions_tab.find_element_by_class_name('submissions-list').find_elements_by_tag_name('li')) == 2
 
         # Co-author user
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", peter_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", peter_client.token, wait_for_element='all-submissions')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -279,7 +280,7 @@ class TestSingleBlindConference():
         assert allsubmissions_tab
         assert len(allsubmissions_tab.find_element_by_class_name('submissions-list').find_elements_by_tag_name('li')) == 2
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", peter_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", peter_client.token, wait_for_element='your-submissions')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -289,7 +290,7 @@ class TestSingleBlindConference():
 
     def test_close_submission(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -307,25 +308,26 @@ class TestSingleBlindConference():
         assert 'peter@mail.com' in notes[0].writers
         assert 'andrew@mail.com' in notes[0].writers
 
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='edit_button')
 
         assert len(selenium.find_elements_by_class_name('edit_button')) == 1
         assert len(selenium.find_elements_by_class_name('trash_button')) == 1
 
     def test_open_comments(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        conference.set_comment_stage(openreview.CommentStage(authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(invitees=comment_invitees, readers=comment_invitees))
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 2
@@ -334,7 +336,7 @@ class TestSingleBlindConference():
 
     def test_close_comments(self, client, test_client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -345,7 +347,7 @@ class TestSingleBlindConference():
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
@@ -374,7 +376,7 @@ class TestSingleBlindConference():
         assert group
         assert group.members == ['~Reviewer_SomeLastName1']
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
@@ -384,7 +386,7 @@ class TestSingleBlindConference():
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -396,25 +398,26 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['pc2@mail.com'])
         conference.set_area_chairs(emails = ['ac2@mail.com'])
         conference.set_reviewers(emails = ['reviewer@mail.com', 'reviewer3@mail.com'])
+        conference.create_review_stage()
 
         conference.set_assignment('ac2@mail.com', submission.number, is_area_chair = True)
         conference.set_assignment('reviewer@mail.com', submission.number)
         conference.set_assignment('reviewer3@mail.com', submission.number)
 
         # Reviewer
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
 
         # Author
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
@@ -501,14 +504,14 @@ class TestSingleBlindConference():
     def test_consoles(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
-        builder.set_review_stage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -520,11 +523,12 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        }, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
+        conference.create_review_stage()
 
         # Author user
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", test_client.token, wait_for_element='your-consoles')
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
@@ -534,7 +538,7 @@ class TestSingleBlindConference():
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Author Console' == console.find_element_by_tag_name('a').text
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-submissions')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -550,7 +554,7 @@ class TestSingleBlindConference():
             'schedule': 'This is a schedule'
         })
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-submissions')
 
         header = selenium.find_element_by_id('header')
         assert header
@@ -569,7 +573,7 @@ class TestSingleBlindConference():
 
         # Reviewer user
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer@mail.com', password='1234')
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", reviewer_client.token, wait_for_element='your-submissions')
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
@@ -579,7 +583,7 @@ class TestSingleBlindConference():
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Reviewer Console' == console.find_element_by_tag_name('a').text
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Reviewers", reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Reviewers", reviewer_client.token, wait_for_element='reviewer-tasks')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
@@ -593,7 +597,7 @@ class TestSingleBlindConference():
             'schedule': 'This is a schedule'
         })
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Reviewers", reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Reviewers", reviewer_client.token, wait_for_element='reviewer-tasks')
 
         header = selenium.find_element_by_id('header')
         assert header
@@ -610,7 +614,7 @@ class TestSingleBlindConference():
 
         # Area chair user
         ac_client = helpers.create_user('ac2@mail.com', 'AC', 'MLITS')
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", ac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", ac_client.token, wait_for_element='your-consoles')
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
@@ -620,7 +624,7 @@ class TestSingleBlindConference():
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Area Chair Console' == console.find_element_by_tag_name('a').text
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Area_Chairs", ac_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Area_Chairs", ac_client.token, wait_for_element='areachair-tasks')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('assigned-papers')
@@ -637,7 +641,7 @@ class TestSingleBlindConference():
         #Program chair user
         pc_client = helpers.create_user('pc2@mail.com', 'ProgramChair', 'SomeLastName')
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", pc_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", pc_client.token, wait_for_element='your-consoles')
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
         tabs = notes_panel.find_element_by_class_name('tabs-container')
@@ -647,7 +651,7 @@ class TestSingleBlindConference():
         console = tabs.find_element_by_id('your-consoles').find_elements_by_tag_name('ul')[0]
         assert 'Program Chair Console' == console.find_element_by_tag_name('a').text
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Program_Chairs", pc_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Program_Chairs", pc_client.token, by=By.CLASS_NAME, wait_for_element='reviewer-status')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('paper-status')
@@ -656,7 +660,7 @@ class TestSingleBlindConference():
 
     def test_post_decisions(self, client, selenium, request_page):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -664,10 +668,15 @@ class TestSingleBlindConference():
         builder.set_conference_year(2018)
         builder.set_conference_name('NIPS Workshop MLITS')
         conference = builder.get_result()
+        decision_additional_fields = {
+            "comment test": {
+                'order': 4,
+                'value-regex': '.*'
+            }
+        }
+        conference.set_decision_stage(openreview.DecisionStage(public=True, additional_fields=decision_additional_fields))
 
-        conference.set_decision_stage(openreview.DecisionStage(public=True))
-
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Decision',
             forum = submissions[0].id,
@@ -677,14 +686,15 @@ class TestSingleBlindConference():
             signatures = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs'],
             content = {
                 'title': 'Paper Decision',
-                'decision': 'Accept (Oral)'
+                'decision': 'Accept (Oral)',
+                'comment test': 'Accepted',
             }
         )
         note = client.post_note(note)
 
-        conference.post_decision_stage(release_notes_accepted=True)
+        conference.post_decision_stage(submission_readers=[openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
 
         valid_bibtex = '''@inproceedings{
@@ -702,7 +712,7 @@ url={https://openreview.net/forum?id='''
 
     def test_enable_camera_ready_revisions(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
@@ -713,7 +723,7 @@ url={https://openreview.net/forum?id='''
 
         conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]
@@ -742,7 +752,7 @@ url={https://openreview.net/forum?id='''
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        notes = conference.get_submissions()
+        notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
         note = notes[0]

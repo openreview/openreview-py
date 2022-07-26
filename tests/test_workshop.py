@@ -18,7 +18,7 @@ class TestWorkshop():
     def conference(self, client):
         now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('icaps-conference.org/ICAPS/2019/Workshop/HSDIP')
@@ -54,7 +54,7 @@ class TestWorkshop():
         posted_invitation = client.get_invitation(id = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Submission')
         assert posted_invitation
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP")
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", wait_for_element='recent-activity')
 
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
@@ -95,7 +95,7 @@ class TestWorkshop():
         test_client.post_note(note)
 
         # Author user
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", test_client.token, wait_for_element='recent-activity')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -111,7 +111,7 @@ class TestWorkshop():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", test_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", test_client.token, wait_for_element='your-submissions')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -120,7 +120,7 @@ class TestWorkshop():
         assert len(papers.find_elements_by_tag_name('tr')) == 2
 
         # Guest user
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP")
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", wait_for_element='your-consoles')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -135,7 +135,7 @@ class TestWorkshop():
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 0
 
         # Co-author user
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", peter_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", peter_client.token, wait_for_element='recent-activity')
         invitation_panel = selenium.find_element_by_id('invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements_by_tag_name('div')) == 1
@@ -151,7 +151,7 @@ class TestWorkshop():
         assert tabs.find_element_by_id('recent-activity')
         assert len(tabs.find_element_by_id('recent-activity').find_elements_by_class_name('activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", peter_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", peter_client.token, wait_for_element='your-submissions')
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
@@ -170,7 +170,7 @@ class TestWorkshop():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions = conference.get_submissions()
+        blind_submissions = conference.get_submissions(sort='tmdate')
         assert blind_submissions
         assert len(blind_submissions) == 1
 
@@ -191,7 +191,7 @@ class TestWorkshop():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions_2 = conference.get_submissions()
+        blind_submissions_2 = conference.get_submissions(sort='tmdate')
         assert blind_submissions_2
         assert len(blind_submissions_2) == 2
         assert blind_submissions[0].id == blind_submissions_2[1].id
@@ -216,7 +216,7 @@ class TestWorkshop():
 
         conference.setup_post_submission_stage(force=True)
 
-        blind_submissions_3 = conference.get_submissions()
+        blind_submissions_3 = conference.get_submissions(sort='tmdate')
         assert blind_submissions_3
         assert len(blind_submissions_3) == 3
         assert blind_submissions[0].id == blind_submissions_3[2].id
@@ -256,7 +256,7 @@ class TestWorkshop():
 
     def test_open_reviews(self, client, conference, test_client, selenium, request_page, helpers):
 
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         # Reviewer
@@ -264,13 +264,13 @@ class TestWorkshop():
 
         conference.set_assignment('reviewer4@mail.com', submission.number)
 
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Official Review' == reply_row.find_elements_by_class_name('btn')[0].text
 
         # Author
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token)
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element_by_class_name('reply_row')
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
@@ -314,10 +314,10 @@ class TestWorkshop():
         assert len(notes) == 1
 
     def test_open_comments(self, client, conference, test_client, selenium, request_page, helpers):
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, reader_selection=True, allow_public_comments = True, invitees=comment_invitees, readers=comment_invitees + [openreview.CommentStage.Readers.EVERYONE]))
 
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, email_pcs = True, reader_selection=True, allow_public_comments = True, authors=True))
-
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
@@ -389,10 +389,10 @@ class TestWorkshop():
 
     def test_open_revise_reviews(self, client, conference, test_client, selenium, request_page, helpers):
 
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
-        reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review')
+        reviews = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review', sort='tmdate')
         assert reviews
         review = reviews[0]
 
@@ -441,7 +441,7 @@ class TestWorkshop():
 
         conference.open_meta_reviews()
 
-        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Meta_Review',
@@ -467,7 +467,7 @@ class TestWorkshop():
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
-        notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission')
+        notes = pc_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         assert len(notes) == 3
         submission = notes[2]
 
@@ -525,13 +525,13 @@ class TestWorkshop():
 
     def test_release_decisions(self, client, conference, selenium, request_page):
 
-        conference.post_decision_stage(reveal_authors_accepted=True, release_all_notes=True, decision_heading_map = {
+        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map = {
             'Accept (Oral)': 'Oral Presentations',
             'Accept (Poster)': 'Post Presentations',
             'Reject': 'All Presentations'
-        })
+        }, submission_readers=[openreview.SubmissionStage.Readers.EVERYONE])
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client.token)
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client.token, wait_for_element='oral-presentations')
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
@@ -551,7 +551,7 @@ class TestWorkshop():
         assert len(accepted_notes) == 1
 
         pc_client = openreview.Client(username='program_chairs@hsdip.org', password='1234')
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", pc_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", pc_client.token, wait_for_element='your-consoles')
         consoles_tab = selenium.find_element_by_id('your-consoles')
         assert consoles_tab
 
@@ -559,7 +559,7 @@ class TestWorkshop():
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs#paper-status", pc_client.token)
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs#paper-status", pc_client.token, wait_for_element='paper-status')
         assert "ICAPS 2019 Workshop HSDIP Program Chairs | OpenReview" in selenium.title
         notes_panel = selenium.find_element_by_id('notes')
         assert notes_panel
@@ -582,7 +582,8 @@ class TestWorkshop():
 
         accepted_authors = client.get_group('icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors/Accepted')
         assert accepted_authors
-        assert accepted_authors.members == ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors']
+        assert 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors' in accepted_authors.members
+        assert 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper2/Authors' in accepted_authors.members
 
         notes = conference.get_submissions(accepted=True, sort='number:asc')
         assert len(notes) == 2
@@ -595,7 +596,7 @@ class TestWorkshop():
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
-            writers = [conference.get_id(), 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -608,7 +609,7 @@ class TestWorkshop():
         notes = conference.get_submissions(accepted=True, sort='number:asc')
         assert len(notes) == 1
 
-        withdrawn_notes = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Withdrawn_Submission')
+        withdrawn_notes = client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Withdrawn_Submission', sort='tmdate')
         assert len(withdrawn_notes) == 1
         assert withdrawn_notes[0].readers == [
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',

@@ -22,7 +22,7 @@ class TestMatchingWithAnonIds():
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
         pc_client = helpers.create_user('pc1@uai.com', 'PCFirstName', 'UAI')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id('auai.org/UAI/2021/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
         builder.set_conference_short_name('UAI 2021')
@@ -47,13 +47,16 @@ class TestMatchingWithAnonIds():
         builder.set_conference_program_chairs_ids(['pc1@uai.com', 'pc4@mail.com'])
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
         builder.set_conference_reviewers_name('Program_Committee')
+        builder.set_area_chair_roles(['Senior_Program_Committee'])
+        builder.set_reviewer_roles(['Program_Committee'])
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
             "Algorithms: Belief Propagation",
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
-        ])
+        ],
+        readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS])
         additional_registration_content = {
             'reviewing_experience': {
                 'description': 'How many times have you been a reviewer for any conference or journal?',
@@ -146,7 +149,7 @@ class TestMatchingWithAnonIds():
 
         ## Create blind submissions
         conference.setup_post_submission_stage(force=True)
-        blinded_notes = conference.get_submissions()
+        blinded_notes = conference.get_submissions(sort='tmdate')
 
         # Set up reviewer matching
         conference.setup_matching(build_conflicts=True)
@@ -348,7 +351,7 @@ class TestMatchingWithAnonIds():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Conflict'
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
         assert 3 == len(submissions)
 
@@ -387,7 +390,7 @@ class TestMatchingWithAnonIds():
 
     def test_setup_matching_with_recommendations(self, conference, pc_client, test_client, helpers):
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         ## Open reviewer recommendations
         now = datetime.datetime.utcnow()
@@ -497,7 +500,7 @@ class TestMatchingWithAnonIds():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Conflict'
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
         assert 3 == len(submissions)
 
@@ -536,7 +539,7 @@ class TestMatchingWithAnonIds():
 
     def test_setup_matching_with_subject_areas(self, conference, pc_client, test_client, helpers):
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         registration_notes = pc_client.get_notes(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Registration_Form')
         assert registration_notes
@@ -627,7 +630,7 @@ class TestMatchingWithAnonIds():
         assert len(ac2_conflicts)
         assert ac2_conflicts[0].label == 'Conflict'
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert submissions
         assert 3 == len(submissions)
 
@@ -699,7 +702,7 @@ class TestMatchingWithAnonIds():
 
         conference.client = pc_client
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         edges = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Proposed_Assignment',
@@ -840,10 +843,10 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@fb.com')
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='~Reviewer_MITOne1')
 
-
+    @pytest.mark.skip("proposed invitation is expired after first deploy")
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
@@ -1129,6 +1132,7 @@ class TestMatchingWithAnonIds():
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
+    @pytest.mark.skip("proposed invitation is expired after first deploy")
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 
         pc2_client = helpers.create_user('pc4@mail.com', 'PC', 'Four')
@@ -1136,7 +1140,7 @@ class TestMatchingWithAnonIds():
 
         conference.client = pc2_client
 
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         pc2_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
             readers = [conference.id, '~Reviewer_MITOne1'],
@@ -1175,7 +1179,7 @@ class TestMatchingWithAnonIds():
     def test_set_ac_assigments(self, conference, pc_client, test_client, helpers):
 
         conference.set_area_chairs(['ac2@cmu.edu', 'ac2@umass.edu'])
-        blinded_notes = list(conference.get_submissions())
+        blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
         edges = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
@@ -1225,6 +1229,10 @@ class TestMatchingWithAnonIds():
 
         conference.set_assignments(assignment_title='ac-matching', committee_id='auai.org/UAI/2021/Conference/Senior_Program_Committee')
 
+        invitation = pc_client.get_invitation('auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment')
+        assert invitation.expdate is not None
+        assert invitation.expdate < round(time.time() * 1000)
+
         assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee_')
 
@@ -1234,7 +1242,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee').members == ['ac2@cmu.edu']
         assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee_')
 
-
+        pytest.skip("proposed invitation is expired after first deploy")
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@cmu.edu'],
             nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],

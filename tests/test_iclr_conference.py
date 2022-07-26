@@ -20,7 +20,7 @@ class TestICLRConference():
     def conference(self, client):
         now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('ICLR.cc/2021/Conference')
@@ -131,7 +131,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         )
         builder.set_expertise_selection_stage(due_date = now + datetime.timedelta(minutes = 10))
         builder.set_submission_stage(double_blind = True,
-            public = True,
+            public = False,
             due_date = now + datetime.timedelta(minutes = 10),
             second_due_date = now + datetime.timedelta(minutes = 20),
             withdrawn_submission_public=True,
@@ -174,7 +174,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                     "value-checkbox": "I acknowledge that I and all co-authors of this work have read and commit to adhering to the ICLR Code of Ethics",
                     "required": True
                 }
-            })
+            },
+            readers=[openreview.SubmissionStage.Readers.AREA_CHAIRS])
         builder.set_reviewer_identity_readers([openreview.Conference.IdentityReaders.PROGRAM_CHAIRS, openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED])
 
         conference = builder.get_result()
@@ -229,7 +230,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_one@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -251,7 +252,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_two@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -265,7 +266,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'iclr2021_four@mail.com', subject = '[ICLR 2021]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
         assert 'Dear invitee,' in text
-        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as reviewer' in text
+        assert 'You have been nominated by the program chair committee of ICLR 2021 to serve as Reviewer' in text
 
         reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
@@ -298,7 +299,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
 
         reviewer_client = openreview.Client(username='iclr2021_one@mail.com', password='1234')
         reviewer_tasks_url = 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers#reviewer-tasks'
-        request_page(selenium, reviewer_tasks_url, reviewer_client.token)
+        request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
         assert selenium.find_element_by_link_text('Reviewer Registration')
         assert selenium.find_element_by_link_text('Expertise Selection')
@@ -336,7 +337,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert registration_note
 
 
-        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client.token)
+        request_page(selenium, 'http://localhost:3030/group?id=ICLR.cc/2021/Conference/Reviewers', reviewer_client.token, wait_for_element='header')
         header = selenium.find_element_by_id('header')
         assert header
         notes = header.find_elements_by_class_name("description")
@@ -344,7 +345,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert len(notes) == 1
         assert notes[0].text == 'This page provides information and status updates for the ICLR 2021. It will be regularly updated as the conference progresses, so please check back frequently.'
 
-        request_page(selenium, reviewer_tasks_url, reviewer_client.token)
+        request_page(selenium, reviewer_tasks_url, reviewer_client.token, by=By.LINK_TEXT, wait_for_element='Reviewer Registration')
 
         assert selenium.find_element_by_link_text('Reviewer Registration')
         assert selenium.find_element_by_link_text('Expertise Selection')
@@ -436,7 +437,7 @@ Thank you for responding to our invitation to serve as a reviewer for ICLR 2021.
 If you would now like to ACCEPT the invitation, please click on the following link:
 
 
-{accept_url}
+{{accept_url}}
 
 
 We would appreciate an answer by Friday September 4th (in 7 days).
@@ -506,9 +507,9 @@ Naila, Katja, Alice, and Ivan
             )
             note = test_client.post_note(note)
 
-        conference.setup_first_deadline_stage(force=True, submission_readers=['ICLR.cc/2021/Conference/Area_Chairs'])
+        conference.setup_first_deadline_stage(force=True)
 
-        blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission')
+        blinded_notes = test_client.get_notes(invitation='ICLR.cc/2021/Conference/-/Blind_Submission', sort='tmdate')
         assert len(blinded_notes) == 5
 
         assert blinded_notes[0].readers == [
@@ -607,7 +608,7 @@ Naila, Katja, Alice, and Ivan
                 'ICLR.cc/2021/Conference/Paper1/Reviewers',
                 'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
                 'ICLR.cc/2021/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper1/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['ICLR.cc/2021/Conference/Paper1/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -629,9 +630,11 @@ Naila, Katja, Alice, and Ivan
 
     def test_post_submission_stage(self, conference, helpers, test_client, client):
 
+        conference.submission_stage.public = True
+        conference.submission_stage.readers = [openreview.SubmissionStage.Readers.EVERYONE]
         conference.setup_final_deadline_stage(force=True)
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 4
         assert submissions[0].readers == ['everyone']
         assert submissions[1].readers == ['everyone']
@@ -644,7 +647,7 @@ Naila, Katja, Alice, and Ivan
             replyto = submissions[3].forum,
             readers = [
                 'everyone'],
-            writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper2/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['ICLR.cc/2021/Conference/Paper2/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -654,7 +657,7 @@ Naila, Katja, Alice, and Ivan
 
         helpers.await_queue()
 
-        withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission')
+        withdrawn_notes = client.get_notes(invitation='ICLR.cc/2021/Conference/-/Withdrawn_Submission', sort='tmdate')
         assert len(withdrawn_notes) == 2
         withdrawn_notes[0].readers == [
             'everyone'
@@ -672,7 +675,7 @@ Naila, Katja, Alice, and Ivan
         now = datetime.datetime.utcnow()
         conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(due_date=now + datetime.timedelta(minutes = 40), allow_author_reorder=True))
 
-        submissions = conference.get_submissions()
+        submissions = conference.get_submissions(sort='tmdate')
 
         print(submissions[0])
 

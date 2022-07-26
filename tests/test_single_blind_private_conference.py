@@ -20,7 +20,7 @@ class TestSingleBlindPrivateConference():
     def conference(self, client):
         now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('MICCAI.org/2021/Challenges')
@@ -80,7 +80,7 @@ class TestSingleBlindPrivateConference():
 
         conference.setup_post_submission_stage(force=True)
 
-        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
+        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')
         assert len(notes) == 5
         assert notes[0].readers == ['MICCAI.org/2021/Challenges', 'MICCAI.org/2021/Challenges/Area_Chairs', 'MICCAI.org/2021/Challenges/Paper5/Reviewers', 'MICCAI.org/2021/Challenges/Paper5/Authors']
 
@@ -95,10 +95,11 @@ class TestSingleBlindPrivateConference():
         assert 'MICCAI.org/2021/Challenges/Paper5/-/Withdraw' in invitation_ids
 
     def test_public_comments(self, conference, helpers, test_client, client):
-        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
+        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')
         assert len(notes) == 5
 
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True, allow_public_comments=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.CommentStage.Readers.EVERYONE]))
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
         assert public_comment_invitation is None
 
@@ -106,7 +107,7 @@ class TestSingleBlindPrivateConference():
 
         conference.set_decision_stage(openreview.DecisionStage(release_to_area_chairs=True))
 
-        submissions=conference.get_submissions()
+        submissions=conference.get_submissions(sort='tmdate')
         assert len(submissions) == 5
 
         client.post_note(openreview.Note(
@@ -153,7 +154,7 @@ class TestSingleBlindPrivateConference():
 
     def test_post_decisions(self, conference, helpers, test_client, client, request_page, selenium):
 
-        conference.post_decision_stage(reveal_all_authors=False, reveal_authors_accepted=True, release_all_notes=False, release_notes_accepted=True, decision_heading_map={ 'Accept (Poster)': 'Poster', 'Accept (Oral)': 'Oral'})
+        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={ 'Accept (Poster)': 'Poster', 'Accept (Oral)': 'Oral'}, submission_readers=[openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
 
         submissions=conference.get_submissions(number=5)
         assert submissions[0].readers != ['everyone']
@@ -164,7 +165,7 @@ class TestSingleBlindPrivateConference():
         submissions=conference.get_submissions(number=3)
         assert submissions[0].readers == ['everyone']
 
-        request_page(selenium, "http://localhost:3030/group?id=MICCAI.org/2021/Challenges")
+        request_page(selenium, "http://localhost:3030/group?id=MICCAI.org/2021/Challenges", wait_for_element='tabs-container')
         assert "MICCAI 2021 Challenges | OpenReview" in selenium.title
         header = selenium.find_element_by_id('header')
         assert header
@@ -182,11 +183,12 @@ class TestSingleBlindPrivateConference():
         assert tabs.find_element_by_id('poster')
 
     def test_enable_public_comments(self, conference, helpers, test_client, client):
-        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission')
+        notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')
         assert len(notes) == 5
 
         conference.submission_stage.papers_released=True
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True, allow_public_comments=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.CommentStage.Readers.EVERYONE]))
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=4))
         assert public_comment_invitation
 

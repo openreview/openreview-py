@@ -3,13 +3,13 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
-    duedate = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1))
+    duedate = journal.get_due_date(weeks = 1)
 
     submission = client.get_note(edit.note.id)
 
     ## Enable Camera Ready Verification
     print('Enable Camera Ready Verification')
-    journal.invitation_builder.set_camera_ready_verification_invitation(journal, submission, duedate)
+    journal.invitation_builder.set_camera_ready_verification_invitation(submission, duedate)
 
     ## Send email to AE
     print('Send email to AE')
@@ -24,7 +24,7 @@ As your final task for this submission, please verify that the camera ready manu
 
 Moreover, if the paper was accepted with minor revision, verify that the changes requested have been followed.
 
-Visit the following link to perform this task: https://openreview.net/forum?id={submission.id}
+Visit the following link to perform this task: https://openreview.net/forum?id={submission.id}&invitationId={journal.get_camera_ready_verification_id(number=submission.number)}
 
 If any correction is needed, you may contact the authors directly by email or through OpenReview.
 
