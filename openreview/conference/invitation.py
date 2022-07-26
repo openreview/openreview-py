@@ -697,7 +697,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
 
 class PaperSubmissionRevisionInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, submission_content, invitees=None):
+    def __init__(self, conference, note, submission_content):
 
         submission_revision_stage = conference.submission_revision_stage
         referent = note.original if note.original else note.id
@@ -755,8 +755,9 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             }
         }
 
-        if not invitees:
-            invitees = [conference.get_id(), conference.get_authors_id(number=note.number)]
+        invitees = [conference.get_id()]
+        if not submission_revision_stage.program_chairs_only:
+            invitees.append(conference.get_authors_id(number=note.number))
 
         super(PaperSubmissionRevisionInvitation, self).__init__(
             id=conference.get_invitation_id(submission_revision_stage.name, note.number),
@@ -767,6 +768,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
             invitees=invitees,
             reply=reply
         )
+
 
 class PublicCommentInvitation(openreview.Invitation):
 
@@ -1731,10 +1733,10 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_revise_submission_invitation(self, conference, notes, content, invitees=None):
+    def set_revise_submission_invitation(self, conference, notes, content):
         self.client.post_invitation(SubmissionRevisionInvitation(conference, content))
         return tools.concurrent_requests(
-            lambda note : self.client.post_invitation(PaperSubmissionRevisionInvitation(conference, note, content, invitees)),
+            lambda note : self.client.post_invitation(PaperSubmissionRevisionInvitation(conference, note, content)),
             notes,
             desc='set_revise_submission_invitation'
         )

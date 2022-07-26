@@ -333,7 +333,7 @@ class TestSingleBlindConference():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        conference.setup_final_deadline_stage(pc_revision_stage=True)
+        conference.setup_final_deadline_stage()
         revision_invitation = client.get_invitation(conference.get_invitation_id(conference.submission_revision_stage.name))
         assert revision_invitation
         paper_revision_invitation = client.get_invitation(conference.get_invitation_id(conference.submission_revision_stage.name, number=1))
