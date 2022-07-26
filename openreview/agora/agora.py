@@ -83,6 +83,7 @@ class Agora(object):
             content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
             covid_group.web = content
             client.post_group(covid_group)
+            client.add_members_to_group('venues', covid_group.id)
 
 
 

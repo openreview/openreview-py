@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import openreview
+from openreview.conference.builder import ReviewStage
 import pytest
 import requests
 import datetime
@@ -16,7 +17,7 @@ class TestCommentNotification():
 
     def test_notify_all(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('MIDL.io/2019/Conference')
         builder.set_conference_name('Medical Imaging with Deep Learning')
@@ -60,7 +61,8 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, email_pcs=True, invitees=comment_invitees, readers=comment_invitees))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -305,7 +307,7 @@ class TestCommentNotification():
 
     def test_notify_submitted_reviewers(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id('auai.org/UAI/2020/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
         builder.set_conference_short_name('UAI 2020')
@@ -333,11 +335,12 @@ class TestCommentNotification():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
-        builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
-        builder.set_review_stage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED)
+        builder.set_comment_stage(email_pcs = True, invitees=[openreview.CommentStage.Readers.AUTHORS], readers=[openreview.CommentStage.Readers.AUTHORS])
+        builder.set_review_stage(openreview.ReviewStage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
+        conference.create_review_stage()
 
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = [conference.id, '~SomeFirstName_User1', 'author@mail.com', 'author2@mail.com'],
@@ -432,7 +435,9 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, unsubmitted_reviewers = False, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
@@ -598,7 +603,7 @@ class TestCommentNotification():
 
     def test_notify_all_mandatory_readers(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2018/Conference')
         builder.set_conference_name('Conference on Learning Theory')
@@ -614,7 +619,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        builder.set_comment_stage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
@@ -642,7 +648,9 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails = ['programchair@colt.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
 
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
@@ -887,7 +895,7 @@ class TestCommentNotification():
 
     def test_notify_except_program_chairs(self, client, test_client, helpers):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2017/Conference')
         builder.set_conference_name('Conference on Learning Theory')
@@ -903,7 +911,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        builder.set_comment_stage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
@@ -931,7 +940,9 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails = ['programchair@colt17.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection=True, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -1104,7 +1115,7 @@ class TestCommentNotification():
 
     def test_notify_except_authors_are_program_chairs(self, client, helpers, test_client):
 
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
 
         builder.set_conference_id('learningtheory.org/COLT/2017/Conference')
         builder.set_conference_name('Conference on Learning Theory')
@@ -1120,7 +1131,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
+        builder.set_comment_stage(reader_selection = True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 

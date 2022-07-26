@@ -14,6 +14,7 @@ var SUBMISSION_GROUP_NAME = 'Paper';
 var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var JOURNAL_REQUEST_ID = '';
+var REVIEWER_REPORT_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -39,6 +40,7 @@ var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 
+var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')');
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail=' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
   '&edit=' + REVIEWERS_ASSIGNMENT_ID +
@@ -47,7 +49,7 @@ var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tai
     REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
     REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' +
     REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
-  '&maxColumns=2&version=2&referrer=' + encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')');
+  '&maxColumns=2&version=2&referrer=' + referrerUrl;
 
 
 var HEADER = {
@@ -56,7 +58,11 @@ var HEADER = {
 };
 
 if (JOURNAL_REQUEST_ID) {
-  HEADER.instructions += "<br><br><strong>Journal Recruitment:</strong><br><a href=/forum?id=" + JOURNAL_REQUEST_ID + "> Recruit Reviewer</a>"
+  HEADER.instructions += "<br><br><strong>Journal Recruitment:</strong><br><a href=/forum?id=" + JOURNAL_REQUEST_ID + "&referrer=" + referrerUrl + "> Recruit Reviewer</a>"
+}
+
+if (REVIEWER_REPORT_ID) {
+  HEADER.instructions += "<br><br><strong>Reviewer Report:</strong><br><a href=/forum?id=" + REVIEWER_REPORT_ID + "&referrer=" + referrerUrl + "> Report Reviewer</a>"
 }
 
 // Helpers
@@ -118,6 +124,7 @@ var loadData = function() {
           regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
           type: 'all',
           select: 'id,cdate,duedate,expdate',
+          sort: 'cdate:asc'
           // expired: true
         }).then(function(invitations) {
           return _.keyBy(invitations, 'id');
@@ -288,7 +295,9 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
     reviewers.forEach(function(reviewer) {
       var completedReview = reviews.find(function(review) { return review.signatures[0].endsWith('/Reviewer_' + reviewer.anonId); });
       var assignmentAcknowledgement = getReplies(submission, reviewer.id + '/' + ASSIGNMENT_ACKNOWLEDGEMENT_NAME, REVIEWERS_NAME);
-      var status = {};
+      var status = {
+        'profileID': reviewer.id
+      };
 
       if (assignmentAcknowledgement && assignmentAcknowledgement.length) {
         status.Acknowledged = 'Yes';
@@ -347,7 +356,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&maxColumns=2&version=2'
           }
-        ] : []
+        ] : [],
+        duedate: reviewInvitation && reviewInvitation.duedate || 0
       },
       actionEditorData: {
         committeeName: 'Action Editor',
@@ -403,7 +413,8 @@ var renderData = function(venueStatusData) {
       Number_of_Reviews_Submitted: function(row) { return row.reviewProgressData.numSubmittedReviews; },
       Number_of_Reviews_Missing: function(row) { return row.reviewProgressData.numReviewers - row.reviewProgressData.numSubmittedReviews; },
       Recommendation: function(row) { return row.actionEditorData.recommendation; },
-      Status: function(row) { return row.status; }
+      Status: function(row) { return row.status; },
+      Review_Due_Date: function(row) { return row.reviewProgressData.duedate; }
     },
     searchProperties: {
       number: ['submissionNumber.number'],
@@ -424,6 +435,7 @@ var renderData = function(venueStatusData) {
       defaultBody: 'Hi {{fullname}},\n\nThis is a reminder to please submit your review for ' + SHORT_PHRASE + '.\n\n' +
         'Click on the link below to go to the review page:\n\n{{forumUrl}}' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
+      replyTo: user && user.id,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',

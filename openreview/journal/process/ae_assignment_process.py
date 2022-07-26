@@ -25,13 +25,16 @@ Apologies for the change and thank you for your continued involvement with {jour
 The {journal.short_name} Editors-in-Chief
 '''
 
-        client.post_message(subject, recipients, message, parentGroup=group.id)
+        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
 
         return client.remove_members_from_group(group.id, edge.tail)
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
         client.add_members_to_group(group.id, edge.tail)
+
+        print('Enable review approval invitation')
+        journal.invitation_builder.set_note_review_approval_invitation(note, journal.get_due_date(weeks=1))
 
         recipients=[edge.tail]
         subject=f'[{journal.short_name}] Assignment to new {journal.short_name} submission {note.content["title"]["value"]}'
@@ -53,7 +56,7 @@ We thank you for your essential contribution to {journal.short_name}!
 The {journal.short_name} Editors-in-Chief
 '''
 
-        client.post_message(subject, recipients, message, parentGroup=group.id)
+        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
 
         ## expire AE recommendation
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))

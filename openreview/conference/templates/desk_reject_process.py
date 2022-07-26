@@ -9,6 +9,7 @@ def process_update(client, note, invitation, existing_note):
     PAPER_AREA_CHAIRS_ID = ''
     PAPER_SENIOR_AREA_CHAIRS_ID = ''
     PROGRAM_CHAIRS_ID = ''
+    CONFERENCE_ROLES = []
     BLIND_SUBMISSION_ID = ''
     SUBMISSION_READERS = []
     DESK_REJECTED_SUBMISSION_ID = ''
@@ -43,8 +44,18 @@ def process_update(client, note, invitation, existing_note):
             forum_note = client.post_note(forum_note)
 
             # Restore review, meta-review and decision invitations
-            invitation_regex = CONFERENCE_ID + '/Paper' + str(forum_note.number) + '/-/(Official_Review|Meta_Review|Decision|Revision|Desk_Reject|Withdraw|Supplementary_Material|Official_Comment|Public_Comment)$'
-            all_paper_invitations = openreview.tools.iterget_invitations(client, regex=invitation_regex, expired=True)
+            invitation_ids = ','.join([
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Official_Review',
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Meta_Review',
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Decision',
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Revision',
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Desk_Reject',
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Withdraw',
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Supplementary_Material',
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Official_Comment',
+                f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Public_Comment'
+            ])
+            all_paper_invitations = openreview.tools.iterget_invitations(client, ids=invitation_ids, expired=True)
             for invitation in all_paper_invitations:
                 invitation.expdate = None
                 client.post_invitation(invitation)
@@ -88,9 +99,34 @@ def process_update(client, note, invitation, existing_note):
 
         forum_note = client.post_note(forum_note)
 
+        # Delete any assignment and proposed assignment edges
+        def delete_edges(invitation_id):
+            try:
+                client.delete_edges(invitation=invitation_id, head=forum_note.id, soft_delete=True)
+            except openreview.OpenReviewException as ex:
+                if ex.args[0].get('name') == 'NotFoundError':
+                    print(f"Invitation {invitation_id} not found. Skipping.")
+                else:
+                    raise ex
+
+        for role in CONFERENCE_ROLES:
+            role_id = CONFERENCE_ID + '/' + role
+            delete_edges(invitation_id=role_id + '/-/Proposed_Assignment')
+            delete_edges(invitation_id=role_id + '/-/Assignment')
+
         # Expire review, meta-review and decision invitations
-        invitation_regex = CONFERENCE_ID + '/Paper' + str(forum_note.number) + '/-/(Official_Review|Meta_Review|Decision|Revision|Desk_Reject|Withdraw|Supplementary_Material|Official_Comment|Public_Comment)$'
-        all_paper_invitations = client.get_all_invitations(regex=invitation_regex)
+        invitation_ids = ','.join([
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Official_Review',
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Meta_Review',
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Decision',
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Revision',
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Desk_Reject',
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Withdraw',
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Supplementary_Material',
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Official_Comment',
+            f'{CONFERENCE_ID}/Paper{str(forum_note.number)}/-/Public_Comment'
+        ])
+        all_paper_invitations = client.get_all_invitations(ids=invitation_ids)
         now = openreview.tools.datetime_millis(datetime.utcnow())
         for invitation in all_paper_invitations:
             invitation.expdate = now

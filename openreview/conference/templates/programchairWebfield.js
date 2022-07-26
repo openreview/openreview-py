@@ -342,15 +342,9 @@ var getInvitationMap = function() {
     });
   }
 
-  var assignmentInvitationsP = Webfield.getAll('/invitations', {
-    regex: CONFERENCE_ID + '.*/-/Assignment_Configuration',
-    expired: true,
-    type: 'notes'
-  });
-
-  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP, assignmentInvitationsP)
-  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations, assignmentInvitations) {
-    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations).concat(assignmentInvitations);
+  return $.when(conferenceInvitationsP, reviewerInvitationsP, acInvitationsP, sacInvitationsP)
+  .then(function(conferenceInvitations, reviewerInvitations, acInvitations, sacInvitations) {
+    var allInvitations = conferenceInvitations.concat(reviewerInvitations).concat(acInvitations).concat(sacInvitations);
     return _.keyBy(allInvitations, 'id');
   });
 };
@@ -444,10 +438,12 @@ var getReviewsWithReplyto = function() {
 }
 
 var getGroups = function() {
-  return Webfield.getAll('/groups', {
+  return Webfield.get('/groups', {
     id: CONFERENCE_ID + '/Paper.*',
+    stream: true,
     select: 'id,members'
-  }).then(function(groups) {
+  }).then(function(result) {
+    var groups = result.groups;
     var reviewerGroups = [];
     var anonReviewerGroups = {};
     var areaChairGroups = [];
@@ -1126,9 +1122,10 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   // Config
   var requestForm = conferenceStatusData.requestForm;
-  var senior_area_chair_roles = requestForm && requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs']
-  var area_chair_roles = requestForm && requestForm.content['area_chair_roles'] || ['Area_Chairs']
-  var reviewer_roles = requestForm && requestForm.content['reviewer_roles'] || ['Reviewers']
+  var sacRoles = requestForm && requestForm.content['senior_area_chair_roles'] || ['Senior_Area_Chairs'];
+  var acRoles = requestForm && requestForm.content['area_chair_roles'] || ['Area_Chairs'];
+  var reviewerRoles = requestForm && requestForm.content['reviewer_roles'] || ['Reviewers'];
+  var hasEthicsChairs = requestForm && requestForm.content['ethics_chairs_and_reviewers'] && requestForm.content['ethics_chairs_and_reviewers'].includes('Yes');
 
   html += '<div class="row" style="margin-top: .5rem;">';
   if (requestForm) {
@@ -1164,7 +1161,7 @@ var displayStatsAndConfiguration = function(conferenceStats) {
 
   if (SENIOR_AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, SENIOR_AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Senior Area Chairs Bidding');
-    senior_area_chair_roles.forEach(function(role) {
+    sacRoles.forEach(function(role) {
       if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
         notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
       }
@@ -1173,16 +1170,14 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   if (AREA_CHAIRS_ID) {
     pushToDatedArrays(invitationMap, AREA_CHAIRS_ID + '/-/' + BID_NAME, 'Area Chairs Bidding');
     pushToDatedArrays(invitationMap, REVIEWERS_ID + '/-/Recommendation', 'Reviewer Recommendation');
-    area_chair_roles.forEach(function(role) {
+    acRoles.forEach(function(role) {
       if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
         notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
       }
     })
   }
-  reviewer_roles.forEach(function(role) {
-    if (invitationMap[CONFERENCE_ID + '/' + role + '/-/Assignment_Configuration']) {
-      notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
-    }
+  reviewerRoles.forEach(function(role) {
+    notDatedElements.push('<li><a href="/assignments?group=' + CONFERENCE_ID + '/' + role  + '&referrer=' + referrerUrl + '">' + view.prettyId(role) + ' Paper Assignment</a> open until Reviewing starts</li>');
   })
   pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + OFFICIAL_REVIEW_NAME, 'Reviewing');
   pushToDatedArrays(invitationMap, CONFERENCE_ID + '/-/' + COMMENT_NAME, 'Commenting');
@@ -1205,20 +1200,31 @@ var displayStatsAndConfiguration = function(conferenceStats) {
   html += '<h4>Venue Roles:</h4><ul style="padding-left: 15px">' +
     '<li><a href="/group/edit?id=' + PROGRAM_CHAIRS_ID + '">Program Chairs</a></li>';
   if (SENIOR_AREA_CHAIRS_ID) {
-    senior_area_chair_roles.forEach(function(role) {
+    sacRoles.forEach(function(role) {
       html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
     })
   }
   if (AREA_CHAIRS_ID) {
-    area_chair_roles.forEach(function(role) {
+    acRoles.forEach(function(role) {
       html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
         '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
     })
   }
-  reviewer_roles.forEach(function(role) {
+
+  if (hasEthicsChairs) {
+    html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Chairs' + '">Ethics Chairs</a> (' +
+    '<a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Chairs' + '/Invited">Invited</a>, ' +
+    '<a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Chairs' + '/Declined">Declined</a>)</li>';
+
+    html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Reviewers' + '">Ethics Reviewers</a> (' +
+    '<a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Reviewers' + '/Invited">Invited</a>, ' +
+    '<a href="/group/edit?id=' + CONFERENCE_ID + '/Ethics_Reviewers' + '/Declined">Declined</a>)</li>';
+  }
+
+  reviewerRoles.forEach(function(role) {
     html += '<li><a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '">' + view.prettyId(role) + '</a> (' +
       '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Invited">Invited</a>, ' +
       '<a href="/group/edit?id=' + CONFERENCE_ID + '/' + role + '/Declined">Declined</a>)</li>';
@@ -3362,7 +3368,7 @@ var buildDeskrejectedWithdrawnCSV = function(){
 
 $('#group-container').on('click', 'button.btn.btn-export-data', function(e) {
   var blob = new Blob(buildCSV(), {type: 'text/csv;charset=utf-8'});
-  var fileName = conferenceStatusData.filteredNotes ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
+  var fileName = conferenceStatusData.filteredRows ? SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status(Filtered).csv' : SHORT_PHRASE.replace(/\s/g, '_') + '_paper_status.csv'
   saveAs(blob, fileName);
 });
 

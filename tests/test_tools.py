@@ -20,7 +20,7 @@ class TestTools():
                     readers = ['everyone'],
                     writers =['NewGroup']
                 ))
-        
+
         params = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         results = openreview.tools.concurrent_requests(post_random_group, params)
         assert len(results) == len(params)
@@ -33,10 +33,6 @@ class TestTools():
 
         for number, group in enumerate(groups):
             assert group.id == f'NewGroup{number}'
-
-    def test_get_submission_invitations(self, client):
-        invitations = openreview.tools.get_submission_invitations(client)
-        assert invitations, "Invitations could not be retrieved"
 
     def test_add_members_to_group(self, client):
         new_group = client.post_group(
@@ -191,6 +187,113 @@ class TestTools():
 
         notes_iterator = openreview.tools.iterget_notes(client, invitation='IterGroup/-/Submission')
         assert notes_iterator
+
+    def test_get_all_notes(self, client):
+        get_all_group = client.post_group(
+            openreview.Group(
+                id = 'GetAllNotes',
+                members = [],
+                signatures = ['~Super_User1'],
+                signatories = ['GetAllNotes'],
+                readers = ['everyone'],
+                writers =['GetAllNotes']
+            ))
+        assert get_all_group
+
+        invitation = openreview.Invitation(
+            id = 'GetAllNotes/-/Submission',
+            readers = ['everyone'],
+            writers = ['~Super_User1'],
+            signatures = ['~Super_User1'],
+            invitees = ['everyone'],
+            reply = {
+                'readers': { 'values': ['everyone'] },
+                'writers': { 'values': ['~Super_User1'] },
+                'signatures': {'values-regex': '~.*'},
+                'content': {
+                    'title': { 'value-regex': '.*' }
+                }
+            }
+        )
+        client.post_invitation(invitation)
+
+        def post_note(number):
+            note = openreview.Note(
+                invitation = 'GetAllNotes/-/Submission',
+                readers = ['everyone'],
+                writers = ['~Super_User1'],
+                signatures = ['~Super_User1'],
+                content = {
+                    'title': 'Test Note ' + str(number)
+                }
+            )
+            note = client.post_note(note)
+
+        num_array = range(1, 1334)
+        openreview.tools.concurrent_requests(post_note, num_array)
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission')
+        assert notes
+        assert len(notes) == 1333
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1200)
+        assert notes
+        assert len(notes) == 1200
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=4000)
+        assert notes
+        assert len(notes) == 1333
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=500)
+        assert notes
+        assert len(notes) == 500
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=4000)
+        assert len(notes) == 0
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1000, limit=4000)
+        assert notes
+        assert len(notes) == 333
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1050, limit=200)
+        assert notes
+        assert len(notes) == 200
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=33, limit=900)
+        assert notes
+        assert len(notes) == 900
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=200, limit=900)
+        assert notes
+        assert len(notes) == 900
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=33, limit=1100)
+        assert notes
+        assert len(notes) == 1100
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1333)
+        assert notes
+        assert len(notes) == 1333
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', limit=1000)
+        assert notes
+        assert len(notes) == 1000
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=333, limit=1000)
+        assert notes
+        assert len(notes) == 1000
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=334, limit=1000)
+        assert notes
+        assert len(notes) == 999
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=333, limit=1001)
+        assert notes
+        assert len(notes) == 1000
+
+        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission', offset=1100)
+        assert notes
+        assert len(notes) == 233
 
     def test_get_all_refs(self, client):
         refs_iterator = openreview.tools.iterget_references(client)
@@ -350,32 +453,64 @@ class TestTools():
         assert "You do not have the required permissions as some emails are obfuscated" in error.value.args[0]
 
         profile1 = openreview.Profile(
-            id = 'Test_Conflict1',
+            id = '~Test_Conflict1',
             content = {
                 'emails': ['user@cmu.edu'],
                 'history': [{
                     'institution': {
-                        'domain': 'user@126.com'
+                        'domain': '126.com'
                     }
                 }]
             }
         )
 
         profile2 = openreview.Profile(
-            id = 'Test_Conflict2',
+            id = '~Test_Conflict2',
             content = {
                 'emails': ['user2@126.com'],
-                'history': [{
-                    'institution': {
-                        'domain': 'user2@cmu.edu'
+                'history': [
+                    {
+                        'institution': {
+                            'domain': 'cmu.edu'
+                        }
+                    },
+                    {
+                        'institution': {
+                            'domain': 'umass.edu'
+                        }
                     }
-                }]
+                ]
             }
         )
 
-        conflicts = openreview.tools.get_conflicts([profile1], profile2)
-        assert len(conflicts) == 1
-        assert conflicts[0] == 'cmu.edu'
+        intern_profile = openreview.Profile(
+            id='~Test_Conflict3',
+            content={
+                'emails': ['user3@345.com'],
+                'history': [{
+                    'position': 'Intern',
+                    'institution': {
+                        'domain': 'umass.edu'
+                    }
+                },
+                {
+                    'position': None,
+                    'institution': {
+                        'domain': 'cmu.edu'
+                    }
+                }
+                ]
+            }
+        )
+
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2)
+        assert len(conflicts) == 2
+        assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
+
+        neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='neurips')
+        assert len(neurips_conflicts) == 1
+        assert 'cmu.edu' in conflicts
 
     def test_add_assignments(self, client):
 
@@ -402,3 +537,19 @@ class TestTools():
             openreview.tools.get_group(guest_client, '~Super_User1')
         assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 
+    def test_get_profiles_as_dict(self, client, test_client):
+        client.add_members_to_group(client.get_group('~SomeFirstName_User1'), 'alternate@mail.com')
+        client.add_members_to_group(client.get_group('alternate@mail.com'), '~SomeFirstName_User1')
+        profiles = openreview.tools.get_profiles(
+            client, ids_or_emails=['~SomeFirstName_User1', '~Another_Name1', 'user@gmail.com', 'test_user@mail.com', 'test@mail.com', 'alternate@mail.com', '~Test_Name1'], as_dict=True
+        )
+
+        assert isinstance(profiles, dict)
+        assert profiles['~SomeFirstName_User1']
+        assert profiles['~Another_Name1']
+        assert profiles['~SomeFirstName_User1'].id == profiles['~Another_Name1'].id
+        assert profiles['user@gmail.com']
+        assert profiles['test@mail.com'].id == '~SomeFirstName_User1'
+        assert profiles['alternate@mail.com'].id == '~SomeFirstName_User1'
+        assert profiles['test_user@mail.com'].id == 'test_user@mail.com'
+        assert profiles['~Test_Name1'] is None

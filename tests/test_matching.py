@@ -24,7 +24,7 @@ class TestMatching():
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
         pc_client = helpers.create_user('pc1@mail.com', 'PCFirstName', 'UAI')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id('auai.org/UAI/2019/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
         builder.set_conference_short_name('UAI 2019')
@@ -48,7 +48,9 @@ class TestMatching():
         print ('Homepage header set')
         builder.set_conference_program_chairs_ids(['pc1@mail.com', 'pc3@mail.com'])
         builder.set_conference_area_chairs_name('Senior_Program_Committee')
+        builder.set_area_chair_roles(['Senior_Program_Committee'])
         builder.set_conference_reviewers_name('Program_Committee')
+        builder.set_reviewer_roles(['Program_Committee'])
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), double_blind= True, subject_areas=[
             "Algorithms: Approximate Inference",
@@ -81,7 +83,7 @@ class TestMatching():
         # conference.client = pc_client
         return conference
 
-    def test_setup_matching(self, conference, pc_client, test_client, helpers):
+    def test_setup_matching(self, conference, client, pc_client, test_client, helpers):
 
         ## setup matching with no reviewers
         with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
@@ -167,6 +169,12 @@ class TestMatching():
         # Set up reviewer matching
         conference.setup_matching(committee_id=conference.get_area_chairs_id())
         conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
+
+        #check assignment process is set when invitation is created
+        assignment_inv = client.get_invitation(conference.get_paper_assignment_id(group_id=conference.get_reviewers_id(), deployed=True))
+        assert assignment_inv
+        assert assignment_inv.process
+        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
         blinded_notes = conference.get_submissions(sort='tmdate')
 
@@ -715,7 +723,7 @@ class TestMatching():
         assert 1 == len(ac1_s2_subject_scores)
         assert ac1_s2_subject_scores[0].weight ==  1
 
-    def test_set_assigments(self, conference, pc_client, test_client, helpers):
+    def test_set_assigments(self, conference, client, pc_client, test_client, helpers):
 
         conference.client = pc_client
 
@@ -822,6 +830,14 @@ class TestMatching():
         assert '~Reviewer_One1' in revs_paper2.members
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('r3@fb.com')+1)).members == ['r3@fb.com']
         assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer{y}'.format(x=blinded_notes[2].number, y=revs_paper2.members.index('~Reviewer_One1')+1)).members == ['~Reviewer_One1']
+
+        conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts=True)
+
+        #check assignment process is still set after deployment and setting up matching again
+        assignment_inv = client.get_invitation(conference.get_paper_assignment_id(group_id=conference.get_reviewers_id(), deployed=True))
+        assert assignment_inv
+        assert assignment_inv.process
+        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
@@ -1261,3 +1277,41 @@ class TestMatching():
 
         affinity_scores = pc_client.get_edges(invitation=conference.id + '/Reviewers_Mentors/-/Affinity_Score')
         assert len(affinity_scores) == 6
+
+    def test_desk_reject_expire_edges(self, conference, client, pc_client, helpers):
+        note = conference.get_submissions()[0]
+
+        desk_reject_note = openreview.Note(
+            invitation=f'{conference.id}/Paper{note.number}/-/Desk_Reject',
+            forum=note.forum,
+            replyto=note.forum,
+            readers=[conference.id,
+                     conference.get_authors_id(note.number),
+                     conference.get_reviewers_id(note.number),
+                     conference.get_area_chairs_id(note.number),
+                     conference.get_program_chairs_id()],
+            writers=[conference.get_id(), conference.get_program_chairs_id()],
+            signatures=[conference.get_program_chairs_id()],
+            content={
+                'desk_reject_comments': 'PC has decided to reject this submission.',
+                'title': 'Submission Desk Rejected by Program Chairs'
+            }
+        )
+
+        desk_reject_note = pc_client.post_note(desk_reject_note)
+
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=desk_reject_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        note_proposed_assignment_edges = client.get_edges(
+            invitation=conference.get_id() + '/.*/-/Proposed_Assignment',
+            head=desk_reject_note.forum)
+        assert not note_proposed_assignment_edges
+
+        note_assignment_edges = client.get_edges(
+            invitation=conference.get_id() + '/.*/-/Assignment',
+            head=desk_reject_note.forum)
+        assert not note_assignment_edges

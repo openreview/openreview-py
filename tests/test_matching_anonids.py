@@ -22,7 +22,7 @@ class TestMatchingWithAnonIds():
     @pytest.fixture(scope="class")
     def conference(self, client, helpers):
         pc_client = helpers.create_user('pc1@uai.com', 'PCFirstName', 'UAI')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         builder.set_conference_id('auai.org/UAI/2021/Conference')
         builder.set_conference_name('Conference on Uncertainty in Artificial Intelligence')
         builder.set_conference_short_name('UAI 2021')
@@ -843,7 +843,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@fb.com')
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='~Reviewer_MITOne1')
 
-
+    @pytest.mark.skip("proposed invitation is expired after first deploy")
     def test_redeploy_assigments(self, conference, client, pc_client, test_client, helpers):
 
         blinded_notes = list(conference.get_submissions(sort='tmdate'))
@@ -1132,6 +1132,7 @@ class TestMatchingWithAnonIds():
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
+    @pytest.mark.skip("proposed invitation is expired after first deploy")
     def test_set_reviewers_assignments_as_author(self, conference, pc_client, helpers):
 
         pc2_client = helpers.create_user('pc4@mail.com', 'PC', 'Four')
@@ -1228,6 +1229,10 @@ class TestMatchingWithAnonIds():
 
         conference.set_assignments(assignment_title='ac-matching', committee_id='auai.org/UAI/2021/Conference/Senior_Program_Committee')
 
+        invitation = pc_client.get_invitation('auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment')
+        assert invitation.expdate is not None
+        assert invitation.expdate < round(time.time() * 1000)
+
         assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee').members == ['ac2@umass.edu']
         assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper1/Senior_Program_Committee_')
 
@@ -1237,7 +1242,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_group('auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee').members == ['ac2@cmu.edu']
         assert pc_client.get_groups(regex='auai.org/UAI/2021/Conference/Paper3/Senior_Program_Committee_')
 
-
+        pytest.skip("proposed invitation is expired after first deploy")
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             readers = [conference.id, 'ac2@cmu.edu'],
             nonreaders = [conference.get_authors_id(number=blinded_notes[1].number)],

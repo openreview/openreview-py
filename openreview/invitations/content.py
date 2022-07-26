@@ -115,6 +115,26 @@ review = {
     }
 }
 
+ethics_review = {
+    "recommendation": {
+        "order": 1,
+        "value-radio": [
+            "1: No serious ethical issues",
+            "2: Serious ethical issues that need to be addressed in the final version",
+            "3: Paper should be rejected due to ethical issues"
+      ],
+      "description": "Please select your ethical recommendation",
+      "required": True
+    },
+    "ethics_review": {
+      "order": 2,
+      "value-regex": "[\\S\\s]{1,200000}",
+      "description": "Provide justification for your suggested ethics issues. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.",
+      "required": False,
+      "markdown": True
+    }
+}
+
 meta_review = {
     'metareview': {
         'order': 1,
@@ -219,11 +239,11 @@ recruitment = {
         'required':True
     },
     'comment': {
-        'order': 5,
+        'order': 6,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Add your comment',
+        'description': '(Optionally) Leave a comment to the organizers of the venue.',
         'required': False,
-        'markdown': True
+        'markdown': False
     }
 }
 
@@ -255,9 +275,9 @@ paper_recruitment = {
     'comment': {
         'order': 5,
         'value-regex': '[\\S\\s]{1,5000}',
-        'description': 'Add your comment',
+        'description': '(Optional) Write a comment that you want to share with the organizers.',
         'required': False,
-        'markdown': True
+        'markdown': False
     },
     'submission_id': {
         'description': 'submission id',

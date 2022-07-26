@@ -20,7 +20,7 @@ class TestICLRConference():
     def conference(self, client):
         now = datetime.datetime.utcnow()
         #pc_client = openreview.Client(username='pc@eccv.org', password='1234')
-        builder = openreview.conference.ConferenceBuilder(client)
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
         builder.set_conference_id('ICLR.cc/2021/Conference')
@@ -437,7 +437,7 @@ Thank you for responding to our invitation to serve as a reviewer for ICLR 2021.
 If you would now like to ACCEPT the invitation, please click on the following link:
 
 
-{accept_url}
+{{accept_url}}
 
 
 We would appreciate an answer by Friday September 4th (in 7 days).
@@ -608,7 +608,7 @@ Naila, Katja, Alice, and Ivan
                 'ICLR.cc/2021/Conference/Paper1/Reviewers',
                 'ICLR.cc/2021/Conference/Paper1/Area_Chairs',
                 'ICLR.cc/2021/Conference/Program_Chairs'],
-            writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper1/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['ICLR.cc/2021/Conference/Paper1/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',
@@ -647,7 +647,7 @@ Naila, Katja, Alice, and Ivan
             replyto = submissions[3].forum,
             readers = [
                 'everyone'],
-            writers = [conference.get_id(), 'ICLR.cc/2021/Conference/Paper2/Authors'],
+            writers = [conference.get_id(), conference.get_program_chairs_id()],
             signatures = ['ICLR.cc/2021/Conference/Paper2/Authors'],
             content = {
                 'title': 'Submission Withdrawn by the Authors',

@@ -128,18 +128,19 @@ var buildNoteMap = function(noteNumbers) {
 
 // AJAX functions
 var getReviewerNoteNumbers = function() {
+  var singularName = REVIEWER_NAME.endsWith('s') ? REVIEWER_NAME.slice(0, -1) : REVIEWER_NAME;
   return Webfield.getAll('/groups', {
     regex: WILDCARD_INVITATION,
     member: user.id
   }).then(function(groups) {
 
-    var anonGroups = _.filter(groups, function(g) { return g.id.includes('/Reviewer_'); });
+    var anonGroups = _.filter(groups, function(g) { return g.id.includes('/' + singularName + '_'); });
     var reviewerGroups = _.filter(groups, function(g) { return g.id.endsWith('/' + REVIEWER_NAME); });
 
     var groupByNumber = {};
     _.forEach(reviewerGroups, function(reviewerGroup) {
       var num = getNumberFromGroup(reviewerGroup.id, 'Paper');
-      var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/Reviewer_'); });
+      var anonGroup = anonGroups.find(function(anonGroup) { return anonGroup.id.startsWith(CONFERENCE_ID + '/Paper' + num + '/' + singularName + '_'); });
       if (anonGroup) {
         groupByNumber[num] = anonGroup.id;
       }
@@ -251,19 +252,19 @@ var getCustomLoad = function(userIds) {
       if (result.edges && result.edges.length) {
         return result.edges[0].weight;
       }
-      return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION, select: 'content.reviewer_load,content.user' })
+      return Webfield.get('/notes', { invitation: CUSTOM_LOAD_INVITATION, select: 'content.reviewer_load,content.user,content.reduced_load' })
       .then(function(result) {
         if (!result.notes || !result.notes.length) {
           return REVIEW_LOAD;
         }
         if (result.notes.length === 1) {
-          return result.notes[0].content.reviewer_load;
+          return result.notes[0].content.reviewer_load || result.notes[0].content.reduced_load;
         } else {
           // If there is more than one there might be a Program Chair
           var loads = result.notes.filter(function(note) {
             return userIds.indexOf(note.content.user) > -1;
           });
-          return loads.length ? loads[0].content.reviewer_load : REVIEW_LOAD;
+          return loads.length ? (loads[0].content.reviewer_load || loads[0].content.reduced_load ) : REVIEW_LOAD;
         }
       });
     })

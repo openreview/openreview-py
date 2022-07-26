@@ -24,7 +24,7 @@ def process(client, edit, invitation):
 
     inviter_profile = client.get_profile(recruitment_note.signatures[0])
     inviter_name = openreview.tools.get_preferred_name(inviter_profile)
-    message = message.replace('{inviter}', inviter_name)
+    message = message.replace('{{inviter}}', inviter_name)
 
     inviter_email = inviter_profile.content.get('preferredEmail')
     if not inviter_email:
@@ -61,5 +61,5 @@ Please check the invitee group to see more details: https://openreview.net/group
             },
             forum = recruitment_note.forum,
             replyto = recruitment_note.id,
-            readers = [SUPPORT_GROUP, venue_id, journal.get_action_editors_id()]
+            readers = recruitment_note.readers
         ))

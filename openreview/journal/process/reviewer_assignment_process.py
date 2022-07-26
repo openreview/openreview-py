@@ -8,6 +8,7 @@ def process_update(client, edge, invitation, existing_edge):
 
     venue_id = journal.venue_id
     note = client.get_note(edge.head)
+    assigned_action_editor = client.search_profiles(ids=[note.content['assigned_action_editor']['value']])[0]
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
@@ -38,7 +39,7 @@ def process_update(client, edge, invitation, existing_edge):
     if len(tail_assignment_edges) == 1 and not edge.ddate:
         print('Enable reviewer responsibility task for', edge.tail)
         responsiblity_invitation_edit = client.post_invitation_edit(invitations=journal.get_reviewer_responsibility_id(),
-            params={ 'reviewerId': edge.tail, 'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)) },
+            params={ 'reviewerId': edge.tail, 'duedate': openreview.tools.datetime_millis(journal.get_due_date(weeks = 1)) },
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id]
@@ -63,14 +64,15 @@ We recently informed you that your help was requested to review a {journal.short
 
 However, it was just determined that your help is no longer needed for this submission and you have been unassigned as a reviewer for it.
 
-If you have any questions, don’t hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
+If you have any questions, don't hesitate to reach out directly to the Action Editor (AE) for the submission, for example by leaving a comment readable by the AE only, on the OpenReview page for the submission: https://openreview.net/forum?id={note.id}
 
 Apologies for the change and thank you for your continued involvement with {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 '''
 
-        client.post_message(subject, recipients, message)
+        client.post_message(subject, recipients, message, replyTo=assigned_action_editor.get_preferred_email())
 
         if pending_review_edge and pending_review_edge.weight > 0:
             pending_review_edge.weight -= 1
@@ -100,7 +102,8 @@ The {journal.short_name} Editors-in-Chief
                 weight = 1
             ))
 
-        duedate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
+        review_period_length = journal.get_review_period_length(note)
+        duedate = journal.get_due_date(weeks = review_period_length)
 
         ## Update review invitation duedate
         invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=note.number),
@@ -114,7 +117,7 @@ The {journal.short_name} Editors-in-Chief
                 'noteId': note.id,
                 'noteNumber': note.number,
                 'reviewerId': edge.tail,
-                'duedate': openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(days = 2)),
+                'duedate': openreview.tools.datetime_millis(journal.get_due_date(days = 2)),
                 'reviewDuedate': duedate.strftime("%b %d, %Y")
              },
             readers=[venue_id],
@@ -127,7 +130,7 @@ The {journal.short_name} Editors-in-Chief
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.content['title']['value']}'''
         message=f'''Hi {{{{fullname}}}},
 
-With this email, we request that you submit, within 2 weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within {review_period_length} weeks ({duedate.strftime("%b %d")}) a review for your newly assigned {journal.short_name} submission "{note.content['title']['value']}". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit['invitation']['id']}
 
@@ -140,9 +143,10 @@ Once submitted, your review will become privately visible to the authors and AE.
 We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 '''
 
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
 
     if responsiblity_invitation_edit is not None:
 

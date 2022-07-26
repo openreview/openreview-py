@@ -51,7 +51,8 @@ class TestSubmissionReaders():
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
                 'reviewer_identity': ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair']
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'Expected Submissions': '1000'
             })
 
         request_form_note=test_client.post_note(request_form_note)
@@ -234,7 +235,8 @@ class TestSubmissionReaders():
         post_decision_note=client.post_note(openreview.Note(
             content= {
                 'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
-                'submission_readers': 'Make accepted submissions public and hide rejected submissions'
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'send_decision_notifications': 'No, I will send the emails to the authors'
             },
             forum= venue['request_form_note'].id,
             invitation= 'openreview.net/Support/-/Request{}/Post_Decision_Stage'.format(venue['request_form_note'].number),

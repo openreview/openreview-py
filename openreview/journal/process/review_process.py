@@ -97,15 +97,13 @@ def process(client, edit, invitation):
 
         ## Enable official recommendation
         print('Enable official recommendations')
-        cdate = datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)
+        cdate = journal.get_due_date(weeks = 2)
         duedate = cdate + datetime.timedelta(weeks = 2)
         journal.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
+        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value']])[0]
 
         ## Send email notifications to authors
         print('Send emails to authors')
-        now = datetime.datetime.utcnow()
-        duedate = now + datetime.timedelta(weeks = 2)
-        late_duedate = now + datetime.timedelta(weeks = 4)
         client.post_message(
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
@@ -113,15 +111,16 @@ def process(client, edit, invitation):
 
 Now that 3 reviews have been submitted for your submission  {submission.content['title']['value']}, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
-You will have at least 2 weeks to respond to the reviewers. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({duedate.strftime("%b %d")}), and no later than 4 weeks ({late_duedate.strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({cdate.strftime("%b %d")}), and no later than 4 weeks ({duedate.strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission.id}
 
 For more details and guidelines on the {journal.short_name} review process, visit {journal.website}.
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 ''',
-            replyTo=journal.contact_info
+            replyTo=assigned_action_editor.get_preferred_email()
         )
 
         ## Send email notifications to reviewers
@@ -131,9 +130,7 @@ The {journal.short_name} Editors-in-Chief
             subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Thank you for submitting your review for {journal.short_name} submission "{submission.content['title']['value']}".
-
-Now that 3 reviews have been submitted for the submission, all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
+There are now 3 reviews that have been submitted for your assigned submission "{submission.content['title']['value']}" and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={submission.id}
 
@@ -142,8 +139,9 @@ For more details and guidelines on the {journal.short_name} review process, visi
 We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 ''',
-            replyTo=journal.contact_info
+            replyTo=assigned_action_editor.get_preferred_email()
         )
 
         ## Send email notifications to the action editor
