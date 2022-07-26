@@ -2063,6 +2063,7 @@ class Invitation(object):
         minReplies = None,
         maxReplies = None,
         bulk = None,
+        content = None,
         reply_forum_views = [],
         details = None):
 
@@ -2091,6 +2092,7 @@ class Invitation(object):
         self.process = process
         self.preprocess = preprocess
         self.date_processes = date_processes
+        self.content = content
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2160,6 +2162,9 @@ class Invitation(object):
         if self.reply_forum_views:
             body['reply_forum_views'] = self.reply_forum_views
 
+        if self.content:
+            body['content'] = self.content
+
         if  self.minReplies:
             body['minReplies']=self.minReplies
         if  self.maxReplies:
@@ -2213,6 +2218,8 @@ class Invitation(object):
             reply_forum_views = i.get('replyForumViews'),
             bulk = i.get('bulk')
             )
+        if 'content' in i:
+            invitation.content = i['content']
         if 'web' in i:
             invitation.web = i['web']
         if 'process' in i:
