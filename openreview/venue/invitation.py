@@ -273,7 +273,7 @@ class InvitationBuilder(object):
         head = {
             'param': {
                 'type': 'note',
-                'withInvitation': venue.get_blind_submission_id()
+                'withInvitation': venue.submission_stage.get_submission_id(venue)
             }
         }
         if match_group_id == venue.get_senior_area_chairs_id():
@@ -293,8 +293,14 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = invitation_readers,
             writers = [venue_id],
-            maxReplies=1,   ##not sure if this is right?
+            maxReplies=1,
             edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': bid_invitation_id,
+                        'optional': True
+                    }
+                },
                 'ddate': {
                     'param': {
                         # 'type': 'date',
