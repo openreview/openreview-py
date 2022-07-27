@@ -861,8 +861,8 @@ class Client(object):
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
         :type replyto: str, optional
-        :param tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
-        :type tauthor: str, optional
+        :param tauthor: If provided, returns Notes whose true author is the user requesting the Notes.
+        :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
@@ -974,8 +974,8 @@ class Client(object):
         :type invitation: str, optional
         :param replyto: A Note ID. If provided, returns Notes whose replyto field matches the given ID.
         :type replyto: str, optional
-        :param tauthor: A Group ID. If provided, returns Notes whose tauthor field ("true author") matches the given ID, or is a transitive member of the Group represented by the given ID.
-        :type tauthor: str, optional
+        :param tauthor: If provided, returns Notes whose true author is the user requesting the Notes.
+        :type tauthor: bool, optional
         :param signature: A Group ID. If provided, returns Notes whose signatures field contains the given Group ID.
         :type signature: str, optional
         :param writer: A Group ID. If provided, returns Notes whose writers field contains the given Group ID.
