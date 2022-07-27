@@ -93,7 +93,7 @@ class TestSingleBlindPrivateConference():
         invitation_ids = [invitation.id for invitation in invitations]
         assert 'MICCAI.org/2021/Challenges/Paper5/-/Desk_Reject' in invitation_ids
         assert 'MICCAI.org/2021/Challenges/Paper5/-/Withdraw' in invitation_ids
-        assert 'MICCAI.org/2021/Challenges/Paper5/-/Revision' in invitation_ids
+        assert 'MICCAI.org/2021/Challenges/Paper5/-/Exec_Revision' in invitation_ids
 
     def test_public_comments(self, conference, helpers, test_client, client):
         notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')
