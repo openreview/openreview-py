@@ -1063,15 +1063,14 @@ class Conference(object):
             hide_fields=hide_fields
         )
 
-        if not self.submission_stage.double_blind:
-            self.submission_revision_stage = SubmissionRevisionStage(
-                name='Revision',
-                start_date=None if force else self.submission_stage.due_date,
-                due_date=None,
-                multiReply=True,
-                program_chairs_only=True
-            )
-            self.__create_submission_revision_stage()
+        self.submission_revision_stage = SubmissionRevisionStage(
+            name='Exec Revision',
+            start_date=None if force else self.submission_stage.due_date,
+            due_date=None,
+            multiReply=True,
+            program_chairs_only=True
+        )
+        self.__create_submission_revision_stage()
 
         self.set_authors()
         self.set_reviewers()

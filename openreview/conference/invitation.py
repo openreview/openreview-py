@@ -734,6 +734,16 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
                 'order': content['authorids']['order']
             }
 
+        invitees = [conference.get_id()]
+        if not submission_revision_stage.program_chairs_only:
+            invitees.append(conference.get_authors_id(number=note.number))
+
+        if submission_revision_stage.program_chairs_only:
+            signatures = {'values': [conference.get_program_chairs_id()]}
+        else:
+            signatures = {
+                'values-regex': '{}|{}'.format(conference.get_program_chairs_id(), conference.get_authors_id(number=note.number))
+            }
         reply = {
             'forum': referent,
             'referent': referent,
@@ -750,9 +760,7 @@ class PaperSubmissionRevisionInvitation(openreview.Invitation):
                     conference.get_authors_id(number=note.number)
                 ]
             },
-            'signatures': {
-                'values-regex': '{}|{}'.format(conference.get_program_chairs_id(), conference.get_authors_id(number=note.number))
-            }
+            'signatures': signatures
         }
 
         invitees = [conference.get_id()]
