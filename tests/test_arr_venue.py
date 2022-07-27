@@ -766,19 +766,18 @@ OpenReview Team'''
         messages = client.get_messages(to='reviewer_arr4@fb.com', subject='[ARR 2021 - September] Reviewer Invitation accepted for paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Reviewer ARR Facebook,
-
 Thank you for accepting the invitation to review the paper number: 5, title: Paper title 5.
 
 Please go to the ARR 2021 - September Reviewer Console and check your pending tasks: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Reviewers.
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.
+
 OpenReview Team'''
 
         # Confirmation email to the area chair
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Reviewer ARR Facebook accepted to review paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-
 The Reviewer Reviewer ARR Facebook(reviewer_arr4@fb.com) that was invited to review paper 5 has accepted the invitation and is now assigned to the paper 5.
 
 OpenReview Team'''
@@ -826,7 +825,6 @@ ACL ARR 2021 September Program Chairs'''
         messages = client.get_messages(to='reviewer_arr2@mit.edu', subject='[ARR 2021 - September] Reviewer Invitation declined for paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Reviewer ARR MIT,
-
 You have declined the invitation to review the paper number: 5, title: Paper title 5.
 
 If you would like to change your decision, please click the Accept link in the previous invitation email.
@@ -837,7 +835,6 @@ OpenReview Team'''
         messages = client.get_messages(to='ac1@gmail.com', subject='[ARR 2021 - September] Reviewer Reviewer ARR MIT declined to review paper 5')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Area CMUChair,
-
 The Reviewer Reviewer ARR MIT(reviewer_arr2@mit.edu) that was invited to review paper 5 has declined the invitation.
 
 Please go to the Area Chair console: https://openreview.net/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs to invite another reviewer.
