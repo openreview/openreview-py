@@ -54,7 +54,8 @@ If you would like to change your decision, please click the Accept link in the p
             response =  client.post_message(subject, [user], message, parentGroup=ACTION_EDITOR_DECLINED_ID)
 
         if JOURNAL_REQUEST_ID:
-            recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request.*/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID, sort='number:desc'))
+            journal_request = client.get_note(JOURNAL_REQUEST_ID)
+            recruitment_notes = list(openreview.tools.iterget_notes(client, invitation=f'{SUPPORT_GROUP}/Journal_Request{journal_request.number}/-/Reviewer_Recruitment_by_AE', replyto=JOURNAL_REQUEST_ID, sort='number:desc'))
             for note in recruitment_notes:
                 invitee = note.content['invitee_email']['value'].strip()
                 invitee_ids = [invitee]
@@ -66,7 +67,7 @@ If you would like to change your decision, please click the Accept link in the p
                     profile = openreview.tools.get_profile(client, user)
                     id_or_email = profile.id
                 if id_or_email in invitee_ids:
-                    comment_inv = client.get_invitations(regex=f'{SUPPORT_GROUP}/Journal_Request.*/-/Comment', replyForum=JOURNAL_REQUEST_ID)[0]
+                    comment_inv = client.get_invitation(id=f'{SUPPORT_GROUP}/Journal_Request{journal_request.number}/-/Comment')
                     comment_content = f'''The user {invitee} has {action} an invitation to be a reviewer for {SHORT_PHRASE}.'''
                     recruitment_response_notes = list(openreview.tools.iterget_notes(client, replyto=note.id, sort='number:desc'))
                     if recruitment_response_notes and 'New Recruitment Response' in recruitment_response_notes[0].content['title']['value']:
@@ -93,7 +94,7 @@ If you would like to change your decision, please click the Accept link in the p
                                 },
                                 forum = JOURNAL_REQUEST_ID,
                                 replyto = note.id,
-                                readers = comment_inv.edit['note']['readers']['enum']
+                                readers = note.readers
                             ))
                     return response
 

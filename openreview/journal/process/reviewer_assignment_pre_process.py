@@ -53,9 +53,10 @@ def process(client, edge, invitation):
             if previous_assignments:
                 return ## don't check pending reviews
 
-        ## Check pending reviews
-        pending_review_edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
-        if pending_review_edges and pending_review_edges[0].weight >= 1:
-            raise openreview.OpenReviewException(f'Can not add assignment, reviewer {edge.tail} has {pending_review_edges[0].weight} pending reviews.')
+        ## Check pending reviews for official reviewers
+        if client.get_groups(member=edge.tail, id=journal.get_reviewers_id()):
+            pending_review_edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
+            if pending_review_edges and pending_review_edges[0].weight >= 1:
+                raise openreview.OpenReviewException(f'Can not add assignment, reviewer {edge.tail} has {pending_review_edges[0].weight} pending reviews.')
 
 
