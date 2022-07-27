@@ -1064,7 +1064,7 @@ class Conference(object):
         )
 
         self.submission_revision_stage = SubmissionRevisionStage(
-            name='Exec Revision',
+            name='Exec_Revision',
             start_date=None if force else self.submission_stage.due_date,
             due_date=None,
             multiReply=True,
