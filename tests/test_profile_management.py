@@ -30,6 +30,36 @@ class TestProfileManagement():
         assert 'username' in profile.content['names'][1]
         assert profile.content['names'][1]['username'] == '~John_Alternate_Last1'
 
+        ## Add publications
+        john_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~John_Alternate_Last1'],
+            writers = ['~John_Alternate_Last1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['John Alternate Last', 'Test Client'],
+                'authorids': ['~John_Alternate_Last1', 'test@mail.com']
+            }
+        ))
+
+        john_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~John_Alternate_Last1'],
+            writers = ['~John_Alternate_Last1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'Paper abstract 2',
+                'authors': ['John Last', 'Test Client'],
+                'authorids': ['~John_Last1', 'test@mail.com']
+            }
+        ))
+
+        publications = client.get_notes(content={ 'authorids': '~John_Last1'})
+        assert len(publications) == 2
+
         request_note = john_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
             readers=['openreview.net/Support', '~John_Last1'],
@@ -76,10 +106,13 @@ The OpenReview Team.
         note = john_client.get_note(request_note.id)
         assert note.content['status'] == 'Accepted'
 
+        publications = client.get_notes(content={ 'authorids': '~John_Last1'})
+        assert len(publications) == 2
+
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 1
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~John_Last1'
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~John_Alternate_Last1'):
-            client.get_group('~John_Alternate_Last1')        
+            client.get_group('~John_Alternate_Last1')      
