@@ -395,8 +395,8 @@ class Conference(object):
 
     def create_bid_stages(self):
         if self.bid_stages:
-            for stage in self.bid_stages:
-                return self.__create_bid_stage(stage)
+            for stage in self.bid_stages.values():
+                self.__create_bid_stage(stage)
 
     def create_review_stage(self):
         if self.review_stage:
@@ -2811,6 +2811,10 @@ class ConferenceBuilder(object):
         default_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile/edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = self.conference.get_id())
         reviewer_instructions = instructions if instructions else default_instructions
         self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, additional_fields, reviewer_instructions))
+
+    @deprecated(version='1.6.0')
+    def set_bid_stage(self, stage):
+        self.conference.bid_stages[stage.committee_id] = stage
 
     def set_bid_stages(self, stages):
         for stage in stages:
