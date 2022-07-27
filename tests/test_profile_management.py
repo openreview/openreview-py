@@ -47,11 +47,15 @@ class TestProfileManagement():
 
         messages = client.get_messages(to='john@profile.org', subject='Profile name removal request has been received')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == '''<p>Hi John Last,</p>
-<p>We have received your request to remove the name &quot;~John_Alternate_Last1&quot; from your <a href=\"https://openreview.net/profile?id=~John_Last1\">profile</a>.</p>
-<p>We will evaluate your request and you will receive another email with the request status.</p>
-<p>Thanks,</p>
-<p>The OpenReview Team.</p>
+        assert messages[0]['content']['text'] == '''Hi John Last,
+
+We have received your request to remove the name "~John_Alternate_Last1" from your profile: https://openreview.net/profile?id=~John_Last1.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
 '''
 
         ## Accept the request

@@ -5,9 +5,9 @@ def process(client, note, invitation):
     recipients=note.signatures, 
     message=f'''Hi {{{{fullname}}}},
 
-We have received your request to remove the name "{note.content['username']}" from your [profile](https://openreview.net/profile?id={note.signatures[0]}).
+We have received your request to remove the name "{note.content['username']}" from your profile: https://openreview.net/profile?id={note.signatures[0]}.
 
-We will evaluate your request and you will receive another email with the request status. 
+We will evaluate your request and you will receive another email with the request status.
 
 Thanks,
 
