@@ -108,6 +108,11 @@ The OpenReview Team.
 
         publications = client.get_notes(content={ 'authorids': '~John_Last1'})
         assert len(publications) == 2
+        assert '~John_Last1' in publications[0].writers
+        assert '~John_Last1' in publications[0].signatures
+        assert '~John_Last1' in publications[1].writers
+        assert '~John_Last1' in publications[1].signatures
+
 
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 1

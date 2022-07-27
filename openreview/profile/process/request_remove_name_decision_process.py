@@ -36,6 +36,32 @@ def process(client, note, invitation):
 
         
     print('Change all the notes that contain the name to remove as signatures')
+    signed_notes = client.get_notes(signature=username)
+    for note in signed_notes:
+        signatures = []
+        for signature in note.signatures:
+            if username == signature:
+                signatures.append(profile.id)
+            else:
+                signatures.append(signature)
+
+        readers = []
+        for reader in note.readers:
+            if username == reader:
+                readers.append(profile.id)
+            else:
+                readers.append(reader)
+        writers = []
+        for writer in note.writers:
+            if username == writer:
+                writers.append(profile.id)
+            else:
+                writers.append(writer)
+        note.signatures = signatures
+        note.readers = readers
+        note.writers = writers
+        client.post_note(note)
+
     
     print('Replace all the group members that contain the name to remove')
     memberships = client.get_groups(member=username)
