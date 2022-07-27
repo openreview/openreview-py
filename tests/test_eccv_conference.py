@@ -322,8 +322,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         assert 'You have been nominated by the program chair committee of ECCV 2020 to serve as Reviewer' in text
 
         # Test to check that a user is not able to accept/decline if they are not a part of the invited group
-        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        reject_url = re.search('https://.*&response=No\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
+        accept_url = re.search('https://.*&response=Yes\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
 
 
         # Removing reviewer from the invited group
@@ -388,7 +388,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
 
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        accept_url = re.search('https://.*&response=Yes\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
 
         request_page(selenium, accept_url, alert=True)
 
@@ -553,7 +553,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
         assert len(other_author_messages) == 2
         text = other_author_messages[0]['content']['text']
-        assert text == f'<p>Your submission to ECCV 2020 has been updated.</p>\n<p>Submission Number: 5</p>\n<p>Title: I have been updated</p>\n<p>Abstract: This is an abstract 5</p>\n<p>To view your submission, click here: <a href=\"http://localhost:3030/forum?id={note.id}\">http://localhost:3030/forum?id={note.id}</a></p>\n<p>If you are not an author of this submission and would like to be removed, please contact the author who added you at <a href=\"mailto:test@mail.com\">test@mail.com</a></p>\n'
+        assert text == f'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: 5 \n\nTitle: I have been updated \n\nAbstract: This is an abstract 5 \n\nTo view your submission, click here: http://localhost:3030/forum?id={note.id}\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at test@mail.com'
 
     def test_revise_additional_files(self, conference, client, test_client):
 
@@ -1263,7 +1263,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         messages = client.get_messages(to = 'test_reviewer_eccv@mail.com', subject = '[ECCV 2020]: Invitation to serve as Reviewer')
         text = messages[0]['content']['text']
-        reject_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        reject_url = re.search('https://.*&response=No\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
 
         #Assert reviewer is still in reviewer group
         request_page(selenium, reject_url, alert=True)
