@@ -7,6 +7,23 @@ def process(client, note, invitation):
     profile = client.get_profile(username)
     preferred_name = profile.get_preferred_name(pretty=True)
     
+    if 'Rejected' == request_note.content['status']:
+        client.post_message(subject='Profile name removal request has been rejected', 
+        recipients=[profile.id], 
+        message=f'''Hi {{{{fullname}}}},
+
+We have received your request to remove the name "{username}" from your profile: https://openreview.net/profile?id={profile.id}.
+
+We can not remove the name from the profile for the following reason:
+
+{request_note.content['support_comment']}
+
+Regards,
+
+The OpenReview Team.
+''')
+        return       
+    
     print('Check if we need to rename the profile')
     if username == profile.id:
         profile = client.rename_profile(profile.id, profile.get_preferred_name())

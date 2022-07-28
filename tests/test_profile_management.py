@@ -302,4 +302,85 @@ The name has been removed from your profile. Please check the information listed
 Thanks,
 
 The OpenReview Team.
-'''                
+'''
+
+    def test_request_remove_name_and_decline(self, client, helpers):
+
+        peter_client = helpers.create_user('peter@profile.org', 'Peter', 'Last', alternates=[], institution='google.com')
+        profile = peter_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Peter',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        peter_client.post_profile(profile)
+        profile = peter_client.get_profile(email_or_id='~Peter_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Peter_Alternate_Last1'
+        assert profile.content['names'][1]['preferred'] == False
+        assert profile.content['names'][0]['preferred'] == True       
+
+        request_note = peter_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            readers=['openreview.net/Support', '~Peter_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Peter_Last1'],
+            content={
+                'username': '~Peter_Alternate_Last1',
+                'comment': 'typo in my name',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='peter@profile.org', subject='Profile name removal request has been received')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Peter Last,
+
+We have received your request to remove the name "~Peter_Alternate_Last1" from your profile: https://openreview.net/profile?id=~Peter_Last1.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+        ## Decline the request
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Rejected',
+                'support_comment': 'Name the is left is not descriptive'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        note = peter_client.get_note(request_note.id)
+        assert note.content['status'] == 'Rejected'
+
+        messages = client.get_messages(to='peter@profile.org', subject='Profile name removal request has been rejected')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Peter Last,
+
+We have received your request to remove the name "~Peter_Alternate_Last1" from your profile: https://openreview.net/profile?id=~Peter_Last1.
+
+We can not remove the name from the profile for the following reason:
+
+Name the is left is not descriptive
+
+Regards,
+
+The OpenReview Team.
+'''
