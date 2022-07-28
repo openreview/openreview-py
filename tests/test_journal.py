@@ -760,9 +760,14 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
 
+        ## Check invitations as a reviewer
+        invitations = david_client.get_invitations(replyForum=note_id_1)
+        assert len(invitations) == 2
+        assert f"{venue_id}/Paper1/-/Review"  in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Comment"  in [i.id for i in invitations]
+
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 18
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -951,7 +956,6 @@ Comment: This is an inapropiate comment</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 18
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -1049,17 +1053,17 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement',
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
                 duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement-0-0')
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement-0-0')
 
-        messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
-        assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
+        messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 3
+        assert messages[2]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
 <p>Our records show that you are late on the current reviewing task:</p>
 <p>Task: Assignment Acknowledgement<br>
 Submission: Paper title UPDATED<br>
@@ -1071,14 +1075,14 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 '''
 
 
-        late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement')
+        late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement')
         assert late_reviewers
-        assert '~David_Belanger1' in late_reviewers
+        assert '~Carlos_Mondragon1' in late_reviewers
 
         ## post the assignment ack
         formatted_date = (datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d, %Y")
-        assignment_ack_note = david_client.post_note_edit(invitation=f'TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement',
-            signatures=['~David_K_Belanger1'],
+        assignment_ack_note = carlos_client.post_note_edit(invitation=f'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
+            signatures=['~Carlos_Mondragon1'],
             note=Note(
                 content={
                     'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.' }
@@ -1088,13 +1092,13 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_ack_note['id'])
 
-        late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement')
+        late_reviewers = journal.get_late_invitees('TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement')
         assert not late_reviewers
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment Acknowledgement posted on submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>David Belanger posted an assignment acknowledgement on a submission for which you are an Action Editor.</p>
+<p>Carlos Mondragon posted an assignment acknowledgement on a submission for which you are an Action Editor.</p>
 <p>Submission: Paper title UPDATED<br>
 Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.</p>
 <p>To view the acknowledgement, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}</a></p>
@@ -1120,7 +1124,6 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 19
         assert f"{venue_id}/-/Under_Review"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Desk_Rejected"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Rejected"  in [i.id for i in invitations]
@@ -1299,7 +1302,6 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 20
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -1323,7 +1325,6 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 20
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
@@ -1347,7 +1348,6 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 24
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
