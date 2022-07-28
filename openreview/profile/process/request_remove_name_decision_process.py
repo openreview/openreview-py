@@ -98,3 +98,16 @@ def process(client, note, invitation):
 
     print('Remove tilde id group')
     client.delete_group(username)
+
+    client.post_message(subject='Profile name removal request has been accepted', 
+    recipients=[profile.id], 
+    message=f'''Hi {{{{fullname}}}},
+
+We have received your request to remove the name "{username}" from your profile: https://openreview.net/profile?id={profile.id}.
+
+The name has been removed from your profile. Please check the information listed in your profile is correct.
+
+Thanks,
+
+The OpenReview Team.
+''')

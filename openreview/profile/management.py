@@ -40,26 +40,29 @@ class ProfileManagement():
 
         with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_process.py'), 'r') as f:
             file_content = f.read()
-            self.client.post_invitation(openreview.Invitation(
-                id=f'{self.support_group_id}/-/Profile_Name_Removal',
-                readers=['everyone'],
-                writers=[self.support_group_id],
-                signatures=[self.support_group_id],
-                invitees=['~'],
-                process_string=file_content,
-                reply={
-                    'readers': {
-                        'values-copied': [self.support_group_id, '{signatures}']
-                    },
-                    'writers': {
-                        'values':[self.support_group_id],
-                    },
-                    'signatures': {
-                        'values-regex': f'~.*|{self.support_group_id}'
-                    },
-                    'content': content
-                }
-            ))        
+            with open(os.path.join(os.path.dirname(__file__), 'process/request_remove_name_pre_process.py'), 'r') as pre:
+                pre_file_content = pre.read()
+                self.client.post_invitation(openreview.Invitation(
+                    id=f'{self.support_group_id}/-/Profile_Name_Removal',
+                    readers=['everyone'],
+                    writers=[self.support_group_id],
+                    signatures=[self.support_group_id],
+                    invitees=['~'],
+                    process_string=file_content,
+                    preprocess=pre_file_content,
+                    reply={
+                        'readers': {
+                            'values-copied': [self.support_group_id, '{signatures}']
+                        },
+                        'writers': {
+                            'values':[self.support_group_id],
+                        },
+                        'signatures': {
+                            'values-regex': f'~.*|{self.support_group_id}'
+                        },
+                        'content': content
+                    }
+                ))        
     
 
         content = {

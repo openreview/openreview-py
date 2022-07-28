@@ -30,6 +30,35 @@ class TestProfileManagement():
         assert 'username' in profile.content['names'][1]
         assert profile.content['names'][1]['username'] == '~John_Alternate_Last1'
 
+        ## Try to remove the unexisting name an get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~John_Last'):
+            request_note = john_client.post_note(openreview.Note(
+                invitation='openreview.net/Support/-/Profile_Name_Removal',
+                readers=['openreview.net/Support', '~John_Last1'],
+                writers=['openreview.net/Support'],
+                signatures=['~John_Last1'],
+                content={
+                    'username': '~John_Last',
+                    'comment': 'typo in my name',
+                    'status': 'Pending'
+                }
+            ))
+
+        ## Try to remove the name that is marked as preferred an get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove preferred name'):
+            request_note = john_client.post_note(openreview.Note(
+                invitation='openreview.net/Support/-/Profile_Name_Removal',
+                readers=['openreview.net/Support', '~John_Last1'],
+                writers=['openreview.net/Support'],
+                signatures=['~John_Last1'],
+                content={
+                    'username': '~John_Last1',
+                    'comment': 'typo in my name',
+                    'status': 'Pending'
+                }
+            ))        
+
+
         ## Add publications
         john_client.post_note(openreview.Note(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -120,4 +149,17 @@ The OpenReview Team.
         assert profile.content['names'][0]['username'] == '~John_Last1'
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~John_Alternate_Last1'):
-            client.get_group('~John_Alternate_Last1')      
+            client.get_group('~John_Alternate_Last1')
+
+        messages = client.get_messages(to='john@profile.org', subject='Profile name removal request has been accepted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi John Last,
+
+We have received your request to remove the name "~John_Alternate_Last1" from your profile: https://openreview.net/profile?id=~John_Last1.
+
+The name has been removed from your profile. Please check the information listed in your profile is correct.
+
+Thanks,
+
+The OpenReview Team.
+'''                
