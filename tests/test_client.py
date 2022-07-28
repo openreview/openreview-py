@@ -193,10 +193,10 @@ class TestClient():
         assert len(invitations) == 5
 
         invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
-        assert len(invitations) == 22
+        assert invitations
 
         invitations = client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')
-        assert len(invitations) == 10
+        assert invitations
 
         invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
         assert len(invitations) == 0
