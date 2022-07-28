@@ -1781,34 +1781,6 @@ def post_submission_groups(client, conference_id, submission_invite, chairs):
             readers=[conference_id, chairs],
             signatories=[]))
 
-def get_submission_invitations(client, open_only=False):
-    """
-    Returns a list of invitation ids visible to the client according to the value of parameter "open_only".
-
-    :param client: Client used to get the Invitations
-    :type client: Client
-    :param open_only: If True, the results will be invitations having a future due date.
-    :type open_only: bool, optional
-
-    :return: List of Invitation ids
-    :rtype: list[str]
-
-    Example Usage:
-
-    >>> get_submission_invitations(c,True)
-    [u'machineintelligence.cc/MIC/2018/Conference/-/Submission', u'machineintelligence.cc/MIC/2018/Abstract/-/Submission', u'ISMIR.net/2018/WoRMS/-/Submission', u'OpenReview.net/Anonymous_Preprint/-/Submission']
-    """
-
-    #Calculate the epoch for current timestamp
-    now = int(time.time()*1000)
-    duedate = now if open_only==True else None
-    invitations = client.get_invitations(regex='.*/-/.*[sS]ubmission.*',minduedate=duedate)
-
-    # For each group in the list, append the invitation id to a list
-    invitation_ids = [inv.id for inv in invitations]
-
-    return invitation_ids
-
 def get_all_venues(client):
     """
     Returns a list of all the venues
@@ -1894,6 +1866,8 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=5):
     author_relations = set()
     author_publications = set()
     info_function = get_neurips_profile_info if policy == 'neurips' else get_profile_info
+    if policy == 'neurips':
+        n_years = 3
 
     for profile in author_profiles:
         author_info = info_function(profile, n_years)

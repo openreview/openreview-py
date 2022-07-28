@@ -43,6 +43,17 @@ class SubmissionInvitation(openreview.Invitation):
 
                 if conference.use_area_chairs:
                     file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+        else:
+            post_submission_deadline_process_file = 'templates/post_submission_deadline_process.py'
+
+            with open(os.path.join(os.path.dirname(__file__), post_submission_deadline_process_file)) as f:
+                file_content = f.read()
+
+                file_content = file_content.replace(
+                    'CONFERENCE_ID = \'\'',
+                    'CONFERENCE_ID = \'' + conference.get_id() + '\'')
+                file_content = file_content.replace(
+                    'AUTHORS_NAME = \'\'', 'AUTHORS_NAME = \'' + conference.authors_name + '\'')
 
 
         super(SubmissionInvitation, self).__init__(id = conference.get_submission_id(),
@@ -65,6 +76,7 @@ class SubmissionInvitation(openreview.Invitation):
             },
             process_string = file_content
         )
+
 
 class BlindSubmissionsInvitation(openreview.Invitation):
 
@@ -113,6 +125,7 @@ class BlindSubmissionsInvitation(openreview.Invitation):
                 'content': content
             }
         )
+
 
 class BidInvitation(openreview.Invitation):
     def __init__(self, conference, bid_stage, current_invitation):
@@ -372,6 +385,10 @@ class WithdrawSuperInvitation(openreview.Invitation):
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
             file_content = file_content.replace(
+                'CONFERENCE_ROLES = []',
+                str.format('CONFERENCE_ROLES = {}', conference.get_roles())
+            )
+            file_content = file_content.replace(
                 'WITHDRAWN_SUBMISSION_ID = \'\'',
                 'WITHDRAWN_SUBMISSION_ID = \'' + conference.submission_stage.get_withdrawn_submission_id(conference) + '\'')
             file_content = file_content.replace(
@@ -568,6 +585,10 @@ class PaperDeskRejectInvitation(openreview.Invitation):
             file_content = file_content.replace(
                 'PROGRAM_CHAIRS_ID = \'\'',
                 'PROGRAM_CHAIRS_ID = \'' + conference.get_program_chairs_id() + '\'')
+            file_content = file_content.replace(
+                'CONFERENCE_ROLES = []',
+                str.format('CONFERENCE_ROLES = {}', conference.get_roles())
+            )
             file_content = file_content.replace(
                 'DESK_REJECTED_SUBMISSION_ID = \'\'',
                 'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')

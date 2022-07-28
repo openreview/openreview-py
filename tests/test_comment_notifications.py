@@ -61,7 +61,8 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers=True, reader_selection=True, email_pcs=True, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, email_pcs=True, invitees=comment_invitees, readers=comment_invitees))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -99,7 +100,7 @@ class TestCommentNotification():
         assert len(messages) == 2
         assert messages[0]['content']['subject'] == 'MIDL 2019 has received your submission titled Paper title'
         assert messages[1]['content']['subject'] == '[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"'
-        assert messages[1]['content']['text'] == f'<p>AnonReviewer1 commented on your submission.</p>\n<p>Paper Number: 1</p>\n<p>Paper Title: &quot;Paper title&quot;</p>\n<p>Comment title: Comment title</p>\n<p>Comment: This is an comment</p>\n<p>To view the comment, click here: <a href=\"http://localhost:3030/forum?id={comment_note.forum}&amp;noteId={comment_note.id}\">http://localhost:3030/forum?id={comment_note.forum}&amp;noteId={comment_note.id}</a></p>\n'
+        assert messages[1]['content']['text'] == f'AnonReviewer1 commented on your submission.\n\nPaper Number: 1\n\nPaper Title: "Paper title"\n\nComment title: Comment title\n\nComment: This is an comment\n\nTo view the comment, click here: http://localhost:3030/forum?id={comment_note.forum}&noteId={comment_note.id}'
 
         assert client.get_messages(to = 'test@mail.com', subject='MIDL 2019 has received your submission titled Paper title')
         assert client.get_messages(to = 'test@mail.com', subject='[MIDL 2019] AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title: "Paper title"')
@@ -334,7 +335,7 @@ class TestCommentNotification():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
-        builder.set_comment_stage(email_pcs = True, unsubmitted_reviewers = False, authors=True)
+        builder.set_comment_stage(email_pcs = True, invitees=[openreview.CommentStage.Readers.AUTHORS], readers=[openreview.CommentStage.Readers.AUTHORS])
         builder.set_review_stage(openreview.ReviewStage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
@@ -434,7 +435,9 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, unsubmitted_reviewers = False, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
@@ -616,7 +619,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        builder.set_comment_stage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
@@ -644,7 +648,9 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails = ['programchair@colt.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection = True, email_pcs = True, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
 
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
@@ -905,7 +911,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection=True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
+        builder.set_comment_stage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
@@ -933,7 +940,9 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails = ['programchair@colt17.io'])
-        conference.set_comment_stage(openreview.CommentStage(unsubmitted_reviewers = True, reader_selection=True, authors=True))
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -1122,7 +1131,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
-        builder.set_comment_stage(unsubmitted_reviewers = True, reader_selection = True, authors=True)
+        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
+        builder.set_comment_stage(reader_selection = True, invitees=comment_invitees, readers=comment_invitees)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
 

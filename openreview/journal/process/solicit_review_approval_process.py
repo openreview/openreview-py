@@ -19,6 +19,7 @@ def process(client, edit, invitation):
         print('Send email to solicit reviewer')
         review_period_length = journal.get_review_period_length(submission)
         duedate = journal.get_due_date(weeks = review_period_length)
+        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value']])[0]
 
         client.post_message(
             recipients=solicit_request.signatures,
@@ -36,9 +37,9 @@ Once submitted, your review will become privately visible to the authors and AE.
 We thank you for your contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
-
+note: replies to this email will go to the AE, {assigned_action_editor.get_preferred_name(pretty=True)}.
 ''',
-            replyTo=journal.contact_info
+            replyTo=assigned_action_editor.get_preferred_email()
         )
 
         return

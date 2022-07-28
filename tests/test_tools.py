@@ -34,10 +34,6 @@ class TestTools():
         for number, group in enumerate(groups):
             assert group.id == f'NewGroup{number}'
 
-    def test_get_submission_invitations(self, client):
-        invitations = openreview.tools.get_submission_invitations(client)
-        assert invitations, "Invitations could not be retrieved"
-
     def test_add_members_to_group(self, client):
         new_group = client.post_group(
             openreview.Group(
