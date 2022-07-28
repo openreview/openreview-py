@@ -3,11 +3,11 @@ import openreview
 
 class ProfileManagement():
 
-    def __init__(self, client, support_group_id, super_user):
+    def __init__(self, client, super_user):
 
         self.client = client
         self.super_user = super_user
-        self.support_group_id = support_group_id
+        self.support_group_id = f'{self.super_user}/Support'
         self.author_rename_invitation_id = f'{self.support_group_id}/-/Author_Rename'
 
 

@@ -7,6 +7,10 @@ def process(client, note, invitation):
     profile = client.get_profile(username)
     preferred_name = profile.get_preferred_name(pretty=True)
     
+    print('Check if we need to rename the profile')
+    if username == profile.id:
+        profile = client.rename_profile(profile.id, profile.get_preferred_name())
+    
     print('Replace all the publications that contain the name to remove')
     publications = client.get_notes(content={ 'authorids': username})
     for publication in publications:
@@ -65,6 +69,7 @@ def process(client, note, invitation):
     
     print('Replace all the group members that contain the name to remove')
     memberships = client.get_groups(member=username)
+    print()
 
     for group in memberships:
         if username in group.members:

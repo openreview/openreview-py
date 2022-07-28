@@ -9,7 +9,7 @@ class TestProfileManagement():
     
     @pytest.fixture(scope="class")
     def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net/Support', 'openreview.net')
+        profile_management = ProfileManagement(client, 'openreview.net')
         profile_management.setup()
         return profile_management
     
@@ -156,6 +156,146 @@ The OpenReview Team.
         assert messages[0]['content']['text'] == '''Hi John Last,
 
 We have received your request to remove the name "~John_Alternate_Last1" from your profile: https://openreview.net/profile?id=~John_Last1.
+
+The name has been removed from your profile. Please check the information listed in your profile is correct.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+    def test_remove_name_and_rename_profile_id(self, client, helpers):
+
+        ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
+        profile = ana_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Ana',
+            'middle': 'Alternate',
+            'last': 'Last',
+            'preferred': True
+            })
+        ana_client.post_profile(profile)
+        profile = ana_client.get_profile(email_or_id='~Ana_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Ana_Alternate_Last1'
+        assert profile.content['names'][1]['preferred'] == True
+        assert profile.content['names'][0]['preferred'] == False
+
+        ## Try to remove the name that is marked as preferred an get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not remove preferred name'):
+            request_note = ana_client.post_note(openreview.Note(
+                invitation='openreview.net/Support/-/Profile_Name_Removal',
+                readers=['openreview.net/Support', '~Ana_Alternate_Last1'],
+                writers=['openreview.net/Support'],
+                signatures=['~Ana_Alternate_Last1'],
+                content={
+                    'username': '~Ana_Alternate_Last1',
+                    'comment': 'typo in my name',
+                    'status': 'Pending'
+                }
+            ))        
+
+
+        ## Add publications
+        ana_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Ana_Last1'],
+            writers = ['~Ana_Last1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['Ana Last', 'Test Client'],
+                'authorids': ['~Ana_Last1', 'test@mail.com']
+            }
+        ))
+
+        ana_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Ana_Last1'],
+            writers = ['~Ana_Last1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'Paper abstract 2',
+                'authors': ['Ana Last', 'Test Client'],
+                'authorids': ['~Ana_Last1', 'test@mail.com']
+            }
+        ))
+
+        publications = client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
+        assert len(publications) == 2
+
+        request_note = ana_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            readers=['openreview.net/Support', '~Ana_Alternate_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Ana_Alternate_Last1'],
+            content={
+                'username': '~Ana_Last1',
+                'comment': 'typo in my name',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='ana@profile.org', subject='Profile name removal request has been received')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Ana Alternate Last,
+
+We have received your request to remove the name "~Ana_Last1" from your profile: https://openreview.net/profile?id=~Ana_Alternate_Last1.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+        ## Accept the request
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Accepted'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        note = ana_client.get_note(request_note.id)
+        assert note.content['status'] == 'Accepted'
+
+        publications = client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
+        assert len(publications) == 2
+        assert '~Ana_Alternate_Last1' in publications[0].writers
+        assert '~Ana_Alternate_Last1' in publications[0].signatures
+        assert '~Ana_Alternate_Last1' in publications[1].writers
+        assert '~Ana_Alternate_Last1' in publications[1].signatures
+
+
+        profile = ana_client.get_profile(email_or_id='~Ana_Alternate_Last1')
+        assert len(profile.content['names']) == 1
+        assert 'username' in profile.content['names'][0]
+        assert profile.content['names'][0]['username'] == '~Ana_Alternate_Last1'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ana_Last1'):
+            client.get_group('~Ana_Last1')
+
+        messages = client.get_messages(to='ana@profile.org', subject='Profile name removal request has been accepted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Ana Alternate Last,
+
+We have received your request to remove the name "~Ana_Last1" from your profile: https://openreview.net/profile?id=~Ana_Alternate_Last1.
 
 The name has been removed from your profile. Please check the information listed in your profile is correct.
 
