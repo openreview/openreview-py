@@ -483,6 +483,12 @@ class Conference(object):
             return name[:-1] if name.endswith('s') else name
         return self.area_chairs_name
 
+    def get_senior_area_chairs_name(self, pretty=True):
+        if pretty:
+            name=self.senior_area_chairs_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.senior_area_chairs_name        
+
     def get_secondary_area_chairs_name(self, pretty=True):
         if pretty:
             return self.use_secondary_area_chairs.replace('_', ' ')

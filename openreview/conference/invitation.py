@@ -2105,6 +2105,19 @@ class InvitationBuilder(object):
 
     def set_registration_invitation(self, conference, stage):
 
+        if conference.use_senior_area_chairs and stage.committee_id == conference.get_senior_area_chairs_id():
+            return self.__set_registration_invitation(conference=conference,
+                name=stage.name,
+                start_date=stage.start_date,
+                due_date=stage.due_date,
+                additional_fields=stage.additional_fields,
+                remove_fields=stage.remove_fields,
+                instructions=stage.instructions,
+                title=stage.title,
+                committee_id=conference.get_senior_area_chairs_id(),
+                committee_name=conference.get_senior_area_chairs_name(pretty=True)
+            )
+
         if conference.use_area_chairs and stage.committee_id == conference.get_area_chairs_id():
             return self.__set_registration_invitation(conference=conference,
                 name=stage.name,
