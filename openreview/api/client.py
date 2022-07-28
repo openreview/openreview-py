@@ -2068,6 +2068,7 @@ class Invitation(object):
         minReplies = None,
         maxReplies = None,
         bulk = None,
+        content = None,
         reply_forum_views = [],
         details = None):
 
@@ -2170,6 +2171,9 @@ class Invitation(object):
         if self.reply_forum_views:
             body['reply_forum_views'] = self.reply_forum_views
 
+        if self.content:
+            body['content'] = self.content
+
         if  self.minReplies:
             body['minReplies']=self.minReplies
         if  self.maxReplies:
@@ -2226,6 +2230,8 @@ class Invitation(object):
             bulk = i.get('bulk'),
             content = i.get('content')
             )
+        if 'content' in i:
+            invitation.content = i['content']
         if 'web' in i:
             invitation.web = i['web']
         if 'process' in i:

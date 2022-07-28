@@ -254,6 +254,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
     builder.set_review_stage(get_review_stage(note))
     builder.set_ethics_review_stage(get_ethics_review_stage(note))
+    builder.set_bid_stages(get_bid_stages(note))
 
     decision_heading_map = note.content.get('home_page_tab_names')
     if decision_heading_map:
@@ -262,7 +263,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     return builder
 
-def get_bid_stage(client, request_forum, committee_id):
+def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
     if bid_start_date:
         try:
@@ -281,7 +282,14 @@ def get_bid_stage(client, request_forum, committee_id):
     else:
         bid_due_date = None
 
-    return openreview.BidStage(committee_id if committee_id else request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+    reviewer_bid_stage = openreview.BidStage(request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+    bid_stages = [reviewer_bid_stage]
+
+    if 'Yes, our venue has Area Chairs' in request_forum.content.get('Area Chairs (Metareviewers)', ''):
+        ac_bid_stage = openreview.BidStage(request_forum.content['venue_id'] + '/Area_Chairs', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+        bid_stages.append(ac_bid_stage)
+
+    return bid_stages
 
 def get_review_stage(request_forum):
     review_start_date = request_forum.content.get('review_start_date', '').strip()
