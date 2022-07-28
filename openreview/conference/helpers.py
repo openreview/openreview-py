@@ -46,6 +46,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.contact = note.content.get('contact_email')
 
         venue.review_stage = get_review_stage(note)
+        venue.bid_stages = get_bid_stages(note)
 
         return venue
 

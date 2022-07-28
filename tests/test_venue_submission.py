@@ -315,7 +315,10 @@ class TestVenueSubmission():
 
         assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Official_Review')
 
-        #recruit reviewers to create /Reviewers group
+        venue.area_chairs_name = 'Action_Editors'
+        venue.has_area_chairs(True)
+
+        #recruit reviewers and action editors to create groups
         message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
         
         helpers.create_user('reviewer_venue_one@mail.com', 'Reviewer Venue', 'One')
@@ -326,8 +329,16 @@ class TestVenueSubmission():
             invitees = ['~Reviewer_Venue_One1'],
             contact_info='testvenue@contact.com')
 
+        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Action Editor',
+            message=message,
+            invitees = ['~Reviewer_Venue_One1'],
+            reviewers_name = 'Action_Editors',
+            contact_info='testvenue@contact.com',
+            allow_overlap_official_committee = True)
+
         messages = openreview_client.get_messages(to='reviewer_venue_one@mail.com')
-        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        assert messages
+        invitation_url = re.search('href="https://.*">', messages[1]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
@@ -335,11 +346,14 @@ class TestVenueSubmission():
         assert reviewer_group
         assert '~Reviewer_Venue_One1' in reviewer_group.members
         
-        #bid stage
-        venue.area_chairs_name = 'Action_Editors'
-        venue.has_area_chairs(True)
+        #bid stages
         now = datetime.datetime.utcnow()
-        bid_stage = openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id())
-        venue.set_bid_stage(bid_stage)
+        bid_stages = [
+            openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
+            openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
+        ]
+        venue.bid_stages = bid_stages
+        venue.create_bid_stages()
 
         assert openreview_client.get_invitation('TestVenue.cc/Reviewers/-/Bid')
+        assert openreview_client.get_invitation('TestVenue.cc/Action_Editors/-/Bid')

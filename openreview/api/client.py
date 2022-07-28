@@ -2049,7 +2049,6 @@ class Invitation(object):
         writers = None,
         invitees = None,
         signatures = None,
-        content = None,
         edit = None,
         edge = None,
         type = 'Note',
@@ -2165,9 +2164,6 @@ class Invitation(object):
         if self.signatures:
             body['signatures'] = self.signatures
 
-        if self.content:
-            body['content'] = self.content
-
         if self.reply_forum_views:
             body['reply_forum_views'] = self.reply_forum_views
 
@@ -2227,8 +2223,7 @@ class Invitation(object):
             maxReplies = i.get('maxReplies'),
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
-            bulk = i.get('bulk'),
-            content = i.get('content')
+            bulk = i.get('bulk')
             )
         if 'content' in i:
             invitation.content = i['content']

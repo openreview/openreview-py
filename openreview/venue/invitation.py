@@ -260,75 +260,77 @@ class InvitationBuilder(object):
 
         return recruitment_invitation
 
-    def set_bid_invitation(self, bid_stage):
+    def set_bid_invitations(self):
 
         venue = self.venue
         venue_id = self.venue_id
-        match_group_id = bid_stage.committee_id
 
-        invitation_readers = bid_stage.get_invitation_readers(venue)
-        bid_readers = bid_stage.get_readers(venue)
-        bid_readers[-1] = bid_readers[-1].replace('{signatures}', '${2/signatures}')
+        for bid_stage in venue.bid_stages:
+            match_group_id = bid_stage.committee_id
 
-        head = {
-            'param': {
-                'type': 'note',
-                'withInvitation': venue.submission_stage.get_submission_id(venue)
-            }
-        }
-        if match_group_id == venue.get_senior_area_chairs_id():
+            invitation_readers = bid_stage.get_invitation_readers(venue)
+            bid_readers = bid_stage.get_readers(venue)
+            bid_readers[-1] = bid_readers[-1].replace('{signatures}', '${2/signatures}')
+
             head = {
-                'type': 'profile',
-                'inGroup': venue.get_area_chairs_id()
-            }
-
-        bid_invitation_id = venue.get_bid_id(match_group_id)
-
-        bid_invitation = Invitation(
-            id=bid_invitation_id,
-            cdate = tools.datetime_millis(bid_stage.start_date),
-            duedate = tools.datetime_millis(bid_stage.due_date),
-            expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
-            invitees = [match_group_id],
-            signatures = [venue_id],
-            readers = invitation_readers,
-            writers = [venue_id],
-            maxReplies=1,
-            edge = {
-                'id': {
-                    'param': {
-                        'withInvitation': bid_invitation_id,
-                        'optional': True
-                    }
-                },
-                'ddate': {
-                    'param': {
-                        # 'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
-                    }
-                },
-                'readers':  bid_readers,
-                'writers': [ venue_id, '${2/signatures}' ],
-                'signatures': { 
-                    'param': { 
-                        'regex': '~.*' 
-                    } 
-                },
-                'head': head,
-                'tail': {
-                    'param': {
-                        'type': 'profile',
-                        'inGroup': match_group_id
-                    }
-                },
-                'label': {
-                    'param': {
-                        'enum': bid_stage.get_bid_options()
-                    }
+                'param': {
+                    'type': 'note',
+                    'withInvitation': venue.submission_stage.get_submission_id(venue)
                 }
             }
-        )
+            if match_group_id == venue.get_senior_area_chairs_id():
+                head = {
+                    'type': 'profile',
+                    'inGroup': venue.get_area_chairs_id()
+                }
 
-        bid_invitation = self.save_invitation(bid_invitation)
+            bid_invitation_id = venue.get_bid_id(match_group_id)
+
+            bid_invitation = Invitation(
+                id=bid_invitation_id,
+                cdate = tools.datetime_millis(bid_stage.start_date),
+                duedate = tools.datetime_millis(bid_stage.due_date),
+                expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
+                invitees = [match_group_id],
+                signatures = [venue_id],
+                readers = invitation_readers,
+                writers = [venue_id],
+                maxReplies=1,
+                edge = {
+                    'id': {
+                        'param': {
+                            'withInvitation': bid_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers':  bid_readers,
+                    'writers': [ venue_id, '${2/signatures}' ],
+                    'signatures': { 
+                        'param': { 
+                            'regex': '~.*' 
+                        } 
+                    },
+                    'head': head,
+                    'tail': {
+                        'param': {
+                            'type': 'profile',
+                            'inGroup': match_group_id
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'enum': bid_stage.get_bid_options()
+                        }
+                    }
+                }
+            )
+
+            bid_invitation = self.save_invitation(bid_invitation)

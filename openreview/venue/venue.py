@@ -25,6 +25,7 @@ class Venue(object):
         self.submission_stage = None
         self.review_stage = None
         self.ethics_review_stage = None
+        self.bid_stages = []
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
@@ -68,9 +69,6 @@ class Venue(object):
 
     def get_meta_invitation_id(self):
         return f'{self.venue_id}/-/Edit'
-
-    def get_blind_submission_id(self):
-        return self.submission_stage.get_blind_submission_id(self)
 
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
@@ -319,8 +317,5 @@ class Venue(object):
         ## Create withdraw and desk reject invitations
         #    
 
-    def set_bid_stage(self, stage):
-        self.invitation_builder.set_bid_invitation(stage)
-
-
-
+    def create_bid_stages(self):
+        self.invitation_builder.set_bid_invitations()
