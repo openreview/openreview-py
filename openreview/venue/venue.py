@@ -73,9 +73,6 @@ class Venue(object):
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
-    def get_bid_id(self, group_id):
-        return self.get_invitation_id('Bid', prefix=group_id)
-
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
         if prefix:

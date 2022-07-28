@@ -220,7 +220,6 @@ class InvitationBuilder(object):
                 elif committee_name == venue.area_chairs_name:
                     process_content = process_content.replace("AREA_CHAIR_NAME = ''", f"ACTION_EDITOR_NAME = '{venue.reviewers_name}'")
                     process_content = process_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + venue.get_reviewers_id() + "'")
-            process_content = process_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
@@ -236,6 +235,11 @@ class InvitationBuilder(object):
                     signatures = [venue.id],
                     readers = ['everyone'],
                     writers = [venue.id],
+                    content={
+                        'hash_seed': {
+                            'value': '1234'
+                        }
+                    },
                     edit = {
                         'signatures': ['(anonymous)'],
                         'readers': [venue.id],
@@ -284,7 +288,7 @@ class InvitationBuilder(object):
                     'inGroup': venue.get_area_chairs_id()
                 }
 
-            bid_invitation_id = venue.get_bid_id(match_group_id)
+            bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
 
             bid_invitation = Invitation(
                 id=bid_invitation_id,

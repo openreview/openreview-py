@@ -8,7 +8,6 @@ def process(client, edit, invitation):
     REVIEWERS_DECLINED_ID = ''
     AREA_CHAIR_NAME = ''
     AREA_CHAIRS_ACCEPTED_ID = ''
-    HASH_SEED = ''
 
     note = edit.note
     user=note.content['user']['value']
@@ -22,8 +21,9 @@ def process(client, edit, invitation):
         return
     
     user = urllib.parse.unquote(user)
+    hash_seed = invitation.content['hash_seed']['value']
 
-    hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
+    hashkey = HMAC.new(hash_seed.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
 
     if (hashkey == key and client.get_groups(id=REVIEWERS_INVITED_ID, member=user)):
         members_to_remove=[user]

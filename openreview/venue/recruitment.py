@@ -31,7 +31,6 @@ class Recruitment(object):
         committee_id = venue.get_committee_id(committee_name)
         committee_invited_id = venue.get_committee_id_invited(committee_name)
         committee_declined_id = venue.get_committee_id_declined(committee_name)
-        hash_seed = '1234'
 
         #set default load
         # self.set_default_load(default_load, reviewers_name)
@@ -77,7 +76,6 @@ class Recruitment(object):
         }
 
         options = {
-            'hash_seed': hash_seed,
             'allow_overlap_official_committee': allow_overlap_official_committee,
             'reduced_load_on_decline': reduced_load_on_decline
         }
@@ -86,6 +84,7 @@ class Recruitment(object):
         
         role = committee_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
+        hash_seed = invitation['invitation']['content']['hash_seed']['value']
 
         if remind:
             invited_committee = committee_invited_group.members
