@@ -199,14 +199,14 @@ class TestVenueRequest():
             to='new_test_user@mail.com',
             subject='Your request for OpenReview service has been received.')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'] == f'<p>Thank you for choosing OpenReview to host your upcoming venue. We are reviewing your request and will post a comment on the request forum when the venue is deployed. You can access the request forum here: <a href=\"https://openreview.net/forum?id={request_form_note.forum}\">https://openreview.net/forum?id={request_form_note.forum}</a></p>\n'
+        assert messages[0]['content']['text'] == f'Thank you for choosing OpenReview to host your upcoming venue. We are reviewing your request and will post a comment on the request forum when the venue is deployed. You can access the request forum here: https://openreview.net/forum?id={request_form_note.forum}'
 
         messages = client.get_messages(
             to='support@openreview.net',
             subject='A request for service has been submitted by TestVenue@OR2021'
         )
         assert messages and len(messages) == 1
-        assert messages[0]['content']['text'].startswith(f'<p>A request for service has been submitted by TestVenue@OR2021. Check it here: <a href=\"https://openreview.net/forum?id={request_form_note.forum}\">https://openreview.net/forum?id={request_form_note.forum}</a></p>')
+        assert messages[0]['content']['text'].startswith(f'A request for service has been submitted by TestVenue@OR2021. Check it here: https://openreview.net/forum?id={request_form_note.forum}')
 
         client.post_note(openreview.Note(
             content={
@@ -678,7 +678,7 @@ class TestVenueRequest():
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
 
-        #aacept AC invitation after having accepted reviewer invitation
+        #accept AC invitation after having accepted reviewer invitation
         invitation_url = re.search('href="https://.*">', messages[2]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
