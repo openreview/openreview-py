@@ -83,6 +83,11 @@ The OpenReview Team.
         note.writers = writers
         client.post_note(note)
 
+    print('Rename all the edges')
+    head_edges = client.get_edges(head=username)
+    tail_edges = client.get_edges(tail=username)
+    if head_edges or tail_edges:
+        client.rename_edges(username, profile.id)
     
     print('Replace all the group members that contain the name to remove')
     memberships = client.get_groups(member=username)
