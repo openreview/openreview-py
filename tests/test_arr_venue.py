@@ -1120,6 +1120,7 @@ OpenReview Team'''
                 "commentary_end_date": "2022/12/31 00:00",
                 "participants": [
                     "Program Chairs",
+                    "Assigned Senior Area Chairs",
                     "Assigned Area Chairs",
                     "Assigned Reviewers",
                     "Authors"
@@ -1143,7 +1144,7 @@ OpenReview Team'''
                 "comment": "Let's see if the PCs are notified of this comment"
             },
             signatures = [f"aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Authors"],
-            readers = ["aclweb.org/ACL/ARR/2021/September/Program_Chairs"],
+            readers = ["aclweb.org/ACL/ARR/2021/September/Program_Chairs", f'aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Senior_Area_Chairs'],
             writers = ['aclweb.org/ACL/ARR/2021/September', f'aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Authors'],
             forum = paper.forum
         ))

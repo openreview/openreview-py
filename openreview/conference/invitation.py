@@ -1485,11 +1485,11 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                 
                 edge_readers = []
                 edge_writers = []
-                #if committee_id.endswith(conference.area_chairs_name):
-                    #if conference.has_senior_area_chairs :
+                if committee_id.endswith(conference.area_chairs_name):
+                    if conference.has_senior_area_chairs :
                         #TODO: decide what to do with area chair assignments
-                        #edge_readers.append(conference.get_senior_area_chairs_id())
-                        #edge_writers.append(conference.get_senior_area_chairs_id())
+                        edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
+                        edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
                 if committee_id.endswith(conference.reviewers_name):
                     if conference.use_senior_area_chairs :
