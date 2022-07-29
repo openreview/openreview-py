@@ -987,7 +987,7 @@ class VenueRequest():
                     'All Reviewers',
                     'Assigned Reviewers'
                 ],
-                'default': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'default': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
                 'order': 18,
                 'required': False,
             },

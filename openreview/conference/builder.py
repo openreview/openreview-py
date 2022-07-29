@@ -383,13 +383,20 @@ class Conference(object):
     def set_registration_stage(self, stage):
         return self.__create_registration_stage(stage)
 
+    @deprecated(version='1.6.0')
     def set_bid_stage(self, stage):
         self.bid_stages[stage.committee_id] = stage
         return self.__create_bid_stage(stage)
 
+    @deprecated(version='1.6.0')
     def set_review_stage(self, stage):
         self.review_stage = stage
         self.create_review_stage()
+
+    def create_bid_stages(self):
+        if self.bid_stages:
+            for stage in self.bid_stages.values():
+                self.__create_bid_stage(stage)
 
     def create_review_stage(self):
         if self.review_stage:
@@ -2817,8 +2824,13 @@ class ConferenceBuilder(object):
         reviewer_instructions = instructions if instructions else default_instructions
         self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, additional_fields, reviewer_instructions))
 
-    def set_bid_stage(self, committee_id, start_date = None, due_date = None, request_count = 50, score_ids = [], instructions = False):
-        self.bid_stages.append(BidStage(committee_id, start_date, due_date, request_count, score_ids, instructions))
+    @deprecated(version='1.6.0')
+    def set_bid_stage(self, stage):
+        self.conference.bid_stages[stage.committee_id] = stage
+
+    def set_bid_stages(self, stages):
+        for stage in stages:
+            self.conference.bid_stages[stage.committee_id] = stage
 
     def set_review_stage(self, stage):
         self.conference.review_stage = stage
@@ -2926,9 +2938,6 @@ class ConferenceBuilder(object):
         if self.conference.use_ethics_reviewers:
             self.conference.set_ethics_reviewer_recruitment_groups()
         self.conference.set_reviewer_recruitment_groups()
-
-        for s in self.bid_stages:
-            self.conference.set_bid_stage(s)
 
         if self.expertise_selection_stage:
             self.conference.set_expertise_selection_stage(self.expertise_selection_stage)
