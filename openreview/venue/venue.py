@@ -135,6 +135,9 @@ class Venue(object):
     def get_ethics_chairs_id(self, number = None):
         return self.get_committee_id(self.ethics_chairs_name, number)
 
+    def get_ethics_reviewers_id(self, number = None):
+        return self.get_committee_id(self.ethics_reviewers_name, number)
+
     def get_homepage_options(self):
         options = {}
         options['title'] = self.name

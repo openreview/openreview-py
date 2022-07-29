@@ -373,3 +373,5 @@ class TestVenueSubmission():
 
         bid_edges = openreview_client.get_edges(invitation=venue.id + '/Reviewers/-/Bid')
         assert len(bid_edges) == 1
+
+        venue.setup_committee_matching()
