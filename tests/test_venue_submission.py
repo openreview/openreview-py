@@ -10,6 +10,7 @@ from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.api import Group
 from openreview.api import Invitation
+from openreview.api import Edge
 
 from openreview.venue import Venue
 
@@ -355,5 +356,20 @@ class TestVenueSubmission():
         venue.bid_stages = bid_stages
         venue.create_bid_stages()
 
-        assert openreview_client.get_invitation('TestVenue.cc/Reviewers/-/Bid')
-        assert openreview_client.get_invitation('TestVenue.cc/Action_Editors/-/Bid')
+        assert openreview_client.get_invitation(venue.id + '/Reviewers/-/Bid')
+        assert openreview_client.get_invitation(venue.id + '/Action_Editors/-/Bid')
+
+        #test posting a bid edge
+        openreview_client.add_members_to_group(venue.id + '/Paper1/Reviewers', '~Reviewer_Venue_One1')
+
+        bid_edge = reviewer_client.post_edge(Edge(invitation = venue.id + '/Reviewers/-/Bid',
+            head = submission.id,
+            tail = '~Reviewer_Venue_One1',
+            readers = ['TestVenue.cc', 'TestVenue.cc/Action_Editors', '~Reviewer_Venue_One1'],
+            writers = ['TestVenue.cc', '~Reviewer_Venue_One1'],
+            signatures = ['~Reviewer_Venue_One1'],
+            label = 'High'
+        ))
+
+        bid_edges = openreview_client.get_edges(invitation=venue.id + '/Reviewers/-/Bid')
+        assert len(bid_edges) == 1
