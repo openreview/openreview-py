@@ -21,6 +21,8 @@ class Venue(object):
         self.reviewer_roles = ['Reviewers']
         self.area_chairs_name = 'Area_Chairs'
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
+        self.ethics_chairs_name = 'Ethics_Chairs'
+        self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
         self.submission_stage = None
         self.review_stage = None
@@ -117,6 +119,9 @@ class Venue(object):
 
     def get_senior_area_chairs_id(self, number = None):
         return self.get_committee_id(self.senior_area_chairs_name, number)
+
+    def get_ethics_chairs_id(self, number = None):
+        return self.get_committee_id(self.ethics_chairs_name, number)
 
     def get_homepage_options(self):
         options = {}
