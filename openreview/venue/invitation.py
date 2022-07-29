@@ -204,7 +204,7 @@ class InvitationBuilder(object):
 
         #if reduced_load hasn't change, no need to repost invitation
         if current_invitation and current_invitation.edit['note']['content'].get('reduced_load', {}) == reduced_load_dict:
-            return current_invitation
+            return current_invitation.to_json()
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as process_reader:
             process_content = process_reader.read()
@@ -284,8 +284,10 @@ class InvitationBuilder(object):
             }
             if match_group_id == venue.get_senior_area_chairs_id():
                 head = {
-                    'type': 'profile',
-                    'inGroup': venue.get_area_chairs_id()
+                    'param': {
+                        'type': 'profile',
+                        'inGroup': venue.get_area_chairs_id()
+                    }
                 }
 
             bid_invitation_id = venue.get_invitation_id(bid_stage.name, prefix=match_group_id)
@@ -317,10 +319,10 @@ class InvitationBuilder(object):
                     },
                     'readers':  bid_readers,
                     'writers': [ venue_id, '${2/signatures}' ],
-                    'signatures': { 
-                        'param': { 
+                    'signatures': {
+                        'param': {
                             'regex': '~.*' 
-                        } 
+                        }
                     },
                     'head': head,
                     'tail': {

@@ -84,7 +84,13 @@ class Recruitment(object):
         
         role = committee_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
-        hash_seed = invitation['invitation']['content']['hash_seed']['value']
+        
+        if 'invitation' in invitation:
+            invitation_id = invitation['invitation']['id']
+            hash_seed = invitation['invitation']['content']['hash_seed']['value']
+        else:
+            invitation_id = invitation['id']
+            hash_seed = invitation['content']['hash_seed']['value']
 
         if remind:
             invited_committee = committee_invited_group.members
@@ -100,7 +106,7 @@ class Recruitment(object):
                     try:
                         tools.recruit_reviewer(self.client, invited_user, name,
                             hash_seed,
-                            invitation['invitation']['id'],
+                            invitation_id,
                             message,
                             'Reminder: ' + title,
                             committee_invited_id,
@@ -139,7 +145,7 @@ class Recruitment(object):
                 try:
                     tools.recruit_reviewer(self.client, email, name,
                         hash_seed,
-                        invitation['invitation']['id'],
+                        invitation_id,
                         message,
                         title,
                         committee_invited_id,
