@@ -2353,3 +2353,29 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         rejected_notes = rejected_panel.find_elements_by_class_name('note')
         assert rejected_notes
         assert len(rejected_notes) == 2
+
+    def test_withdraw_submission(self, client, test_client, selenium, request_page, helpers, venue):
+
+        blind_submissions = client.get_notes(invitation='TEST.cc/2030/Conference/-/Blind_Submission', sort='number:asc')
+
+        author_client = openreview.Client(username='venue_author1@mail.com', password='1234')
+
+        withdrawal_note = author_client.post_note(openreview.Note(
+            invitation = 'TEST.cc/2030/Conference/Paper1/-/Withdraw',
+            forum = blind_submissions[0].forum,
+            replyto = blind_submissions[0].forum,
+            readers = ['TEST.cc/2030/Conference', 
+            'TEST.cc/2030/Conference/Program_Chairs',
+            'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs',
+            'TEST.cc/2030/Conference/Paper1/Area_Chairs',
+            'TEST.cc/2030/Conference/Paper1/Reviewers',
+            'TEST.cc/2030/Conference/Paper1/Authors'],
+            writers = ['TEST.cc/2030/Conference', 'TEST.cc/2030/Conference/Program_Chairs'],
+            signatures = ['TEST.cc/2030/Conference/Paper1/Authors'],
+            content = {
+                'title': 'Submission Withdrawn by the Authors',
+                'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+            }
+        ))
+
+        helpers.await_queue()    
