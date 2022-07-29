@@ -4,6 +4,7 @@ from openreview import tools
 from .invitation import InvitationBuilder
 from openreview.api import Group
 from .recruitment import Recruitment
+from . import matching
 
 class Venue(object):
 
@@ -32,6 +33,7 @@ class Venue(object):
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
         self.use_recruitment_template = True
+        self.support_user = 'OpenReview.net/Support'
         self.invitation_builder = InvitationBuilder(self)
         self.recruitment = Recruitment(self)
 
@@ -74,6 +76,16 @@ class Venue(object):
 
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
+
+    def get_paper_assignment_id(self, group_id, deployed=False, invite=False):
+        if deployed:
+            return self.get_invitation_id('Assignment', prefix=group_id)
+        if invite:
+            return self.get_invitation_id('Invite_Assignment', prefix=group_id)
+        return self.get_invitation_id('Proposed_Assignment', prefix=group_id)
+
+    def get_custom_max_papers_id(self, group_id):
+        return self.get_invitation_id('Custom_Max_Papers', prefix=group_id)
 
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
@@ -272,7 +284,6 @@ class Venue(object):
     def create_review_stage(self):
         self.invitation_builder.set_review_invitation()
 
-
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
         submissions = self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self))
@@ -321,3 +332,12 @@ class Venue(object):
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
+
+    def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
+        if committee_id is None:
+            committee_id=self.get_reviewers_id()
+        if self.use_senior_area_chairs and committee_id == self.get_senior_area_chairs_id() and not alternate_matching_group:
+            alternate_matching_group = self.get_area_chairs_id()
+        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+
+        return venue_matching.setup(compute_affinity_scores, compute_conflicts)
