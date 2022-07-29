@@ -366,7 +366,7 @@ class WithdrawSuperInvitation(openreview.Invitation):
                 'CONFERENCE_ID = \'' + conference.get_id() + '\'')
             file_content = file_content.replace(
                 'CONFERENCE_SHORT_NAME = \'\'',
-                'CONFERENCE_SHORT_NAME = \'' + conference.get_short_name() + '\'')
+                'CONFERENCE_SHORT_NAME = "' + conference.get_short_name() + '"')
             file_content = file_content.replace(
                 'PAPER_AUTHORS_ID = \'\'',
                 'PAPER_AUTHORS_ID = \'' + conference.get_authors_id(number='{number}') + '\'')
@@ -567,7 +567,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 'CONFERENCE_ID = \'' + conference.get_id() + '\'')
             file_content = file_content.replace(
                 'CONFERENCE_SHORT_NAME = \'\'',
-                'CONFERENCE_SHORT_NAME = \'' + conference.get_short_name() + '\'')
+                'CONFERENCE_SHORT_NAME = "' + conference.get_short_name() + '"')
             file_content = file_content.replace(
                 'PAPER_AUTHORS_ID = \'\'',
                 'PAPER_AUTHORS_ID = \'' + conference.get_authors_id(number=note.number) + '\'')
