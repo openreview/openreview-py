@@ -489,7 +489,6 @@ note={Under review}
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper2/-/Desk_Rejection_Approval")
-        assert False
         approval_note = raia_client.post_note_edit(invitation='TMLR/Paper2/-/Desk_Rejection_Approval',
                             signatures=[f"{venue_id}/Editors_In_Chief"],
                             note=Note(
@@ -585,7 +584,6 @@ note={Withdrawn}
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 15
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         #TODO: fix tests
         #assert acceptance_invitation_id in [i.id for i in invitations]
@@ -1143,7 +1141,6 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         assert f"{venue_id}/-/Rejected"  in [i.id for i in invitations]
         assert f"{venue_id}/-/Withdrawn"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]

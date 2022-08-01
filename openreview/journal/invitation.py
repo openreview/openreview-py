@@ -2682,6 +2682,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                             'input': 'select'
                                         }
                                     }
+                                },
+                                'comment': {
+                                    'const': {
+                                        'order': 3,
+                                        'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
+                                        'value': {
+                                            'type': 'string',
+                                            'regex': '^[\\S\\s]{1,200000}$',
+                                            'optional': True
+                                        },
+                                        'presentation': {
+                                            'markdown': True
+                                        }
+                                    }
                                 }
                             }
                         }
