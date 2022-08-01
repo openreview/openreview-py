@@ -34,8 +34,9 @@ class Matching(object):
         venue_id = venue.venue_id
         
         is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
-        # paper_number='{head.number}' if is_assignment_invitation else None
-        paper_number = '${{2/head/number}}'
+        paper_number = '${{2/head}/number}'
+
+        paper_num_signatures = '${{1/head}/number}'
 
         edge_invitees = [venue_id, venue.support_user]
         edge_readers = [venue_id]
@@ -56,15 +57,11 @@ class Matching(object):
                 if venue.use_senior_area_chairs:
                     edge_invitees.append(venue.get_senior_area_chairs_id())
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_number))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_num_signatures))
                 if venue.use_area_chairs:
                     edge_invitees.append(venue.get_area_chairs_id())
                     edge_writers.append(venue.get_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_area_chairs_id(number=paper_number))
-
-                # edge_nonreaders = {
-                #     'values': [self.conference.get_authors_id(number=paper_number)]
-                # }
+                    edge_signatures.append(venue.get_area_chairs_id(number=paper_num_signatures))
 
         if self.is_area_chair:
             if venue.use_senior_area_chairs:
@@ -75,11 +72,7 @@ class Matching(object):
                 if self.conference.use_senior_area_chairs:
                     edge_invitees.append(venue.get_senior_area_chairs_id())
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_number))
-
-                # edge_nonreaders = {
-                #     'values': [self.conference.get_authors_id(number=paper_number)]
-                # }
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_num_signatures))
 
         if self.is_ethics_reviewer:
             if venue.use_ethics_chairs:
@@ -92,12 +85,8 @@ class Matching(object):
                     edge_writers.append(venue.get_ethics_chairs_id())
                     edge_signatures.append(venue.get_ethics_chairs_id())
 
-                # edge_nonreaders = {
-                #     'values': [self.conference.get_authors_id(number=paper_number)]
-                # }
-
         #append tail to readers
-        edge_readers.append('${{2/tail}}')
+        edge_readers.append('${2/tail}')
 
         edge_head = {
             'param': {
@@ -186,8 +175,8 @@ class Matching(object):
                 'writers': edge_writers,
                 'signatures': {
                     'param': { 
-                        'regex': '|'.join(edge_signatures)
-                        # 'default': venue.get_program_chairs_id()
+                        'regex': '|'.join(edge_signatures),
+                        'default': [venue.get_program_chairs_id()]
                     }
                 },
                 'head': edge_head,

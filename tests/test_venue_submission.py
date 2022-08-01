@@ -377,12 +377,13 @@ class TestVenueSubmission():
         venue.setup_committee_matching()
 
         # #test posting proposed assignment edge
-        # proposed_assignment_edge = openreview_client.post_edge(Edge(
-        #     invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
-        #     head = submission.id,
-        #     tail = '~Reviewer_Venue_One1',
-        #     readers = ['TestVenue.cc', 'TestVenue.cc/Action_Editors', '~Reviewer_Venue_One1'],
-        #     writers = ['TestVenue.cc', '~Reviewer_Venue_One1'],
-        #     signatures = ['~Reviewer_Venue_One1'],
-        #     label = 'High'
-        # ))
+        proposed_assignment_edge = openreview_client.post_edge(Edge(
+            invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
+            signatures = ['TestVenue.cc'],
+            head = submission.id,
+            tail = '~Reviewer_Venue_One1',
+            readers = ['TestVenue.cc','TestVenue.cc/Paper1/Action_Editors','~Reviewer_Venue_One1'],
+            writers = ['TestVenue.cc','TestVenue.cc/Paper1/Action_Editors'],
+            weight = 0.92,
+            label = 'test-matching-1'
+        ))
