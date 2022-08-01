@@ -87,6 +87,11 @@ class Venue(object):
     def get_custom_max_papers_id(self, group_id):
         return self.get_invitation_id('Custom_Max_Papers', prefix=group_id)
 
+    def get_recommendation_id(self, group_id=None):
+        if not group_id:
+            group_id = self.get_reviewers_id()
+        return self.get_invitation_id('Recommendation', prefix=group_id)
+
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
         if prefix:

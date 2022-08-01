@@ -217,14 +217,14 @@ class Matching(object):
         except:
             print('Bid invitation not found')
 
-        # try:
-        #     invitation = self.client.get_invitation(self.conference.get_recommendation_id())
-        #     score_spec[invitation.id] = {
-        #         'weight': 1,
-        #         'default': 0
-        #     }
-        # except:
-        #     print('Recommendation invitation not found')
+        try:
+            invitation = self.client.get_invitation(self.conference.get_recommendation_id())
+            score_spec[invitation.id] = {
+                'weight': 1,
+                'default': 0
+            }
+        except:
+            print('Recommendation invitation not found')
 
         # The reviewers are all emails so convert to tilde ids
         self.match_group = openreview.tools.replace_members_with_ids(client, self.match_group)
