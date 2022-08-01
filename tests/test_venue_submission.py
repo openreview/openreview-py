@@ -375,3 +375,14 @@ class TestVenueSubmission():
         assert len(bid_edges) == 1
 
         venue.setup_committee_matching()
+
+        # #test posting proposed assignment edge
+        # proposed_assignment_edge = openreview_client.post_edge(Edge(
+        #     invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
+        #     head = submission.id,
+        #     tail = '~Reviewer_Venue_One1',
+        #     readers = ['TestVenue.cc', 'TestVenue.cc/Action_Editors', '~Reviewer_Venue_One1'],
+        #     writers = ['TestVenue.cc', '~Reviewer_Venue_One1'],
+        #     signatures = ['~Reviewer_Venue_One1'],
+        #     label = 'High'
+        # ))

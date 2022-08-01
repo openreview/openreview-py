@@ -198,8 +198,6 @@ class Matching(object):
         if edge_label:
             invitation.edge['label'] = edge_label
 
-        print(invitation)
-
         invitation = self.venue.invitation_builder.save_invitation(invitation)
         return invitation
 
@@ -250,9 +248,14 @@ class Matching(object):
         user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts)
 
         invitation = self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id))
-        # if not self.is_senior_area_chair:
-        #     with open(os.path.join(os.path.dirname(__file__), 'templates/proposed_assignment_pre_process.py')) as f:
-        #         content = f.read()
-        #         content = content.replace("CUSTOM_MAX_PAPERS_INVITATION_ID = ''", "CUSTOM_MAX_PAPERS_INVITATION_ID = '" + venue.get_custom_max_papers_id(self.match_group.id) + "'")
-        #         invitation.preprocess=content
-        #         self.client.post_invitation(invitation)
+        
+        ## is there better way to do this?
+        if not self.is_senior_area_chair:
+            invitation = invitation['invitation']
+            with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
+                content = f.read()
+                content = content.replace("CUSTOM_MAX_PAPERS_INVITATION_ID = ''", "CUSTOM_MAX_PAPERS_INVITATION_ID = '" + venue.get_custom_max_papers_id(self.match_group.id) + "'")
+                invitation['preprocess']=content
+                venue.invitation_builder.save_invitation(Invitation.from_json(invitation))
+
+        self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id, deployed=True))
