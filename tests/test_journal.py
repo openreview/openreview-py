@@ -462,10 +462,9 @@ note={Under review}
 
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
-        assert len(invitations) == 3
+        assert len(invitations) == 2
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Review_Approval" in [i.id for i in invitations]
 
         ## Assign Action editor to submission 2
         paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
@@ -488,6 +487,21 @@ note={Under review}
                                     }))
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        assert openreview_client.get_invitation(f"{venue_id}/Paper2/-/Desk_Rejection_Approval")
+        assert False
+        approval_note = raia_client.post_note_edit(invitation='TMLR/Paper2/-/Desk_Rejection_Approval',
+                            signatures=[f"{venue_id}/Editors_In_Chief"],
+                            note=Note(
+                                signatures=[f"{venue_id}/Editors_In_Chief"],
+                                forum=note_id_2,
+                                replyto=desk_reject_note['note']['id'],
+                                content= {
+                                    'approval': { 'value': 'Yes' }
+                                 }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])        
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
         assert len(messages) == 1
