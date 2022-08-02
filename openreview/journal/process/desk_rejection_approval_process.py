@@ -6,6 +6,15 @@ def process(client, edit, invitation):
 
     if edit.note.content['approval']['value'] == 'Yes':
 
+        ## Release review approval to the authors
+        review_approval_note = client.get_note(edit.note.replyto)
+        client.post_note_edit(invitation=journal.get_meta_invitation_id(),
+            signatures=[venue_id],
+            note=openreview.api.Note(id=review_approval_note.id,
+                readers=[journal.get_editors_in_chief_id(), journal.get_action_editors_id(submission.number), journal.get_authors_id(submission.number)]
+            )
+        )
+
         client.post_note_edit(invitation= journal.get_desk_rejected_id(),
                                 signatures=[venue_id],
                                 note=openreview.api.Note(id=edit.note.forum))

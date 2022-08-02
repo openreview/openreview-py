@@ -8,12 +8,20 @@ def process(client, edit, invitation):
     if submission.content.get('venueid', {}).get('value') == journal.under_review_venue_id:
         return
 
-    ## Notify readers
-    journal.notify_readers(edit, content_fields=['under_review', 'comment'])
-
     paper_action_editor_group = client.get_group(id=journal.get_action_editors_id(number=submission.number))
 
     if edit.note.content['under_review']['value'] == 'Appropriate for Review':
+        
+        ## Release review approval to the authors
+        client.post_note_edit(invitation=journal.get_meta_invitation_id(),
+            signatures=[venue_id],
+            note=openreview.api.Note(id=edit.note.id,
+                readers=[journal.get_editors_in_chief_id(), journal.get_action_editors_id(submission.number), journal.get_authors_id(submission.number)]
+            )
+        )
+        ## Notify readers
+        journal.notify_readers(edit, content_fields=['under_review', 'comment'])
+        
         return client.post_note_edit(invitation= journal.get_under_review_id(),
                                 signatures=[venue_id],
                                 note=openreview.api.Note(id=edit.note.forum,

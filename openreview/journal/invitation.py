@@ -1455,7 +1455,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'forum': { 'const': { 'const': '${params.noteId}' }},
                             'replyto': { 'const': { 'const': '${params.noteId}' }},
                             'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id ] }},
                             'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id ] }},
                             'content': {
                                 'under_review': { 'const':  {
@@ -1542,7 +1542,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'note': {
                             'forum': { 'const': { 'const': '${params.noteId}' }},
                             'replyto': { 'const': { 'const': '${params.replytoId}' }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id] }},
                             'writers': { 'const': { 'const': [ venue_id] }},
                             'signatures': { 'const': { 'const': [editors_in_chief_id] }},
                             'content': {
