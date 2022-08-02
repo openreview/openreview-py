@@ -1485,11 +1485,11 @@ class PaperRecruitmentInvitation(openreview.Invitation):
                 
                 edge_readers = []
                 edge_writers = []
-                #if committee_id.endswith(conference.area_chairs_name):
-                    #if conference.has_senior_area_chairs :
+                if committee_id.endswith(conference.area_chairs_name):
+                    if conference.has_senior_area_chairs :
                         #TODO: decide what to do with area chair assignments
-                        #edge_readers.append(conference.get_senior_area_chairs_id())
-                        #edge_writers.append(conference.get_senior_area_chairs_id())
+                        edge_readers.append(conference.get_senior_area_chairs_id(number='{number}'))
+                        edge_writers.append(conference.get_senior_area_chairs_id(number='{number}'))
 
                 if committee_id.endswith(conference.reviewers_name):
                     if conference.use_senior_area_chairs :
@@ -2104,6 +2104,19 @@ class InvitationBuilder(object):
         return registration_invitation
 
     def set_registration_invitation(self, conference, stage):
+
+        if conference.use_senior_area_chairs and stage.committee_id == conference.get_senior_area_chairs_id():
+            return self.__set_registration_invitation(conference=conference,
+                name=stage.name,
+                start_date=stage.start_date,
+                due_date=stage.due_date,
+                additional_fields=stage.additional_fields,
+                remove_fields=stage.remove_fields,
+                instructions=stage.instructions,
+                title=stage.title,
+                committee_id=conference.get_senior_area_chairs_id(),
+                committee_name=conference.get_senior_area_chairs_name(pretty=True)
+            )
 
         if conference.use_area_chairs and stage.committee_id == conference.get_area_chairs_id():
             return self.__set_registration_invitation(conference=conference,

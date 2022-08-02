@@ -55,7 +55,7 @@ class TestARRVenue():
                 'program_chair_emails': ['pc@aclrollingreview.org'],
                 'contact_email': 'pc@aclrollingreview.org',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
-                'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
+                'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -65,9 +65,9 @@ class TestARRVenue():
                     'Reviewer Bid Scores',
                     'OpenReview Affinity'],
                 'Author and Reviewer Anonymity': 'Double-blind',
-                'reviewer_identity': ['Program Chairs', 'Assigned Area Chair'],
-                'area_chair_identity': ['Program Chairs'],
-                'senior_area_chair_identity': ['Program Chairs'],
+                'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
@@ -95,6 +95,7 @@ class TestARRVenue():
         assert group
         assert group.host == 'aclweb.org/ACL'
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Program_Chairs')
+        assert client.get_group('aclweb.org/ACL/ARR/2021/September/Senior_Area_Chairs')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Area_Chairs')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Reviewers')
         assert client.get_group('aclweb.org/ACL/ARR/2021/September/Authors')
@@ -404,17 +405,34 @@ class TestARRVenue():
             )
         )
 
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_senior_area_chairs_id(),
+                additional_fields = fields,
+                instructions = instructions,
+                name = 'Registration',
+                title = 'Senior Action Editors Registration Form',
+                start_date = None,
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10)
+            )
+        )
 
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Senior_Area_Chairs/-/Registration')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Senior_Area_Chairs/-/Registration_Form')
 
         notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
         assert len(notes) == 1
         assert notes[0].content['instructions'] == 'Test instructions for profile registration'
 
         notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+        assert len(notes) == 1
+        assert notes[0].content['instructions'] == 'Test instructions for profile registration'
+
+        notes = client.get_notes(invitation='aclweb.org/ACL/ARR/2021/September/Senior_Area_Chairs/-/Registration_Form')
         assert len(notes) == 1
         assert notes[0].content['instructions'] == 'Test instructions for profile registration'
 
@@ -442,8 +460,10 @@ class TestARRVenue():
 
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Senior_Area_Chairs/-/Registration')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/Registration_Form')
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Registration_Form')
+        assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Senior_Area_Chairs/-/Registration_Form')
 
         assert client.get_invitation('aclweb.org/ACL/ARR/2021/September/Reviewers/-/License_Agreement')
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/License_Agreement was not found'):
@@ -524,8 +544,8 @@ class TestARRVenue():
         ## AC assignments
         client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Proposed_Assignment',
-            readers = [venue.id, '~Area_CMUChair1'],
-            writers = [venue.id],
+            readers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[0].number}/Senior_Area_Chairs', '~Area_CMUChair1'],
+            writers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[0].number}/Senior_Area_Chairs'],
             nonreaders = [f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[0].number}/Authors'],
             signatures = [venue.id],
             head = submissions[0].id,
@@ -535,8 +555,8 @@ class TestARRVenue():
         ))
         client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Proposed_Assignment',
-            readers = [venue.id, '~Area_MITChair1'],
-            writers = [venue.id],
+            readers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[1].number}/Senior_Area_Chairs', '~Area_MITChair1'],
+            writers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[1].number}/Senior_Area_Chairs'],
             nonreaders = [f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[1].number}/Authors'],
             signatures = [venue.id],
             head = submissions[1].id,
@@ -546,8 +566,8 @@ class TestARRVenue():
         ))
         client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Proposed_Assignment',
-            readers = [venue.id, '~Area_AmazonChair1'],
-            writers = [venue.id],
+            readers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[2].number}/Senior_Area_Chairs', '~Area_AmazonChair1'],
+            writers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[2].number}/Senior_Area_Chairs'],
             nonreaders = [f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[2].number}/Authors'],
             signatures = [venue.id],
             head = submissions[2].id,
@@ -557,8 +577,8 @@ class TestARRVenue():
         ))
         client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Proposed_Assignment',
-            readers = [venue.id, '~Area_CMUChair1'],
-            writers = [venue.id],
+            readers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[3].number}/Senior_Area_Chairs', '~Area_CMUChair1'],
+            writers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[3].number}/Senior_Area_Chairs'],
             nonreaders = [f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[3].number}/Authors'],
             signatures = [venue.id],
             head = submissions[3].id,
@@ -568,8 +588,8 @@ class TestARRVenue():
         ))
         client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Area_Chairs/-/Proposed_Assignment',
-            readers = [venue.id, '~Area_MITChair1'],
-            writers = [venue.id],
+            readers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[4].number}/Senior_Area_Chairs', '~Area_MITChair1'],
+            writers = [venue.id, f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[4].number}/Senior_Area_Chairs'],
             nonreaders = [f'aclweb.org/ACL/ARR/2021/September/Paper{submissions[4].number}/Authors'],
             signatures = [venue.id],
             head = submissions[4].id,
@@ -859,6 +879,7 @@ OpenReview Team'''
                      'aclweb.org/ACL/ARR/2021/September/Paper2/Authors',
                      'aclweb.org/ACL/ARR/2021/September/Paper2/Reviewers',
                      'aclweb.org/ACL/ARR/2021/September/Paper2/Area_Chairs',
+                     'aclweb.org/ACL/ARR/2021/September/Paper2/Senior_Area_Chairs',
                      'aclweb.org/ACL/ARR/2021/September/Program_Chairs'],
             writers=[venue.get_id(), venue.get_program_chairs_id()],
             signatures=[venue.get_program_chairs_id()],
@@ -929,7 +950,7 @@ OpenReview Team'''
             invitation='aclweb.org/ACL/ARR/2021/September/Paper5/-/Official_Review',
             forum=submissions[0].id,
             replyto=submissions[0].id,
-            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Area_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Reviewers/Submitted'],
+            readers=['aclweb.org/ACL/ARR/2021/September/Program_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Area_Chairs', 'aclweb.org/ACL/ARR/2021/September/Paper5/Reviewers/Submitted'],
             nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
             writers=['aclweb.org/ACL/ARR/2021/September', signatory_groups[0].id],
             signatures=[signatory_groups[0].id],
@@ -1099,6 +1120,7 @@ OpenReview Team'''
                 "commentary_end_date": "2022/12/31 00:00",
                 "participants": [
                     "Program Chairs",
+                    "Assigned Senior Area Chairs",
                     "Assigned Area Chairs",
                     "Assigned Reviewers",
                     "Authors"
@@ -1122,7 +1144,7 @@ OpenReview Team'''
                 "comment": "Let's see if the PCs are notified of this comment"
             },
             signatures = [f"aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Authors"],
-            readers = ["aclweb.org/ACL/ARR/2021/September/Program_Chairs"],
+            readers = ["aclweb.org/ACL/ARR/2021/September/Program_Chairs", f'aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Senior_Area_Chairs'],
             writers = ['aclweb.org/ACL/ARR/2021/September', f'aclweb.org/ACL/ARR/2021/September/Paper{paper.number}/Authors'],
             forum = paper.forum
         ))
