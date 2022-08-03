@@ -2305,7 +2305,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 readers=[venue_id, authors_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                minReplies=3,
+                minReplies=1,
                 type='Edge',
                 edit={
                     'ddate': {

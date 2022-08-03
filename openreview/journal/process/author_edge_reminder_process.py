@@ -8,15 +8,15 @@ def process(client, invitation):
     now = datetime.datetime.utcnow()
     task = invitation.pretty_id()
 
-    late_invitees = journal.get_late_invitees(invitation.id)
+    edges = client.get_edges(invitation=journal.get_ae_recommendation_id(submission.number))
 
-    if len(late_invitees) == 0:
+    if len(edges) >= 1:
       return
 
     ## send email to authors
-    print('send email to reviewers', late_invitees)
+    print('send email to authors')
     client.post_message(
-        recipients=late_invitees,
+        recipients=[journal.get_authors_id(submission.number)],
         subject=f'''[{journal.short_name}] You are late in performing a task for your paper {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
