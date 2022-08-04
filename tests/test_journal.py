@@ -496,7 +496,7 @@ note={Under review}
                                 forum=note_id_2,
                                 replyto=desk_reject_note['note']['id'],
                                 content= {
-                                    'approval': { 'value': 'Yes' }
+                                    'approval': { 'value': 'I approve the AE\'s decision.' }
                                  }
                             ))
 

@@ -4,26 +4,24 @@ def process(client, edit, invitation):
     venue_id = journal.venue_id
     submission = client.get_note(edit.note.forum)
 
-    if edit.note.content['approval']['value'] == 'Yes':
-
-        ## Release review approval to the authors
-        review_approval_note = client.get_note(edit.note.replyto)
-        client.post_note_edit(invitation=journal.get_meta_invitation_id(),
-            signatures=[venue_id],
-            note=openreview.api.Note(id=review_approval_note.id,
-                readers=[journal.get_editors_in_chief_id(), journal.get_action_editors_id(submission.number), journal.get_authors_id(submission.number)]
-            )
+    ## Release review approval to the authors
+    review_approval_note = client.get_note(edit.note.replyto)
+    client.post_note_edit(invitation=journal.get_meta_invitation_id(),
+        signatures=[venue_id],
+        note=openreview.api.Note(id=review_approval_note.id,
+            readers=[journal.get_editors_in_chief_id(), journal.get_action_editors_id(submission.number), journal.get_authors_id(submission.number)]
         )
+    )
 
-        client.post_note_edit(invitation= journal.get_desk_rejected_id(),
-                                signatures=[venue_id],
-                                note=openreview.api.Note(id=edit.note.forum))
+    client.post_note_edit(invitation= journal.get_desk_rejected_id(),
+                            signatures=[venue_id],
+                            note=openreview.api.Note(id=edit.note.forum))
 
-        ## send email to authors
-        client.post_message(
-            recipients=submission.signatures,
-            subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.content['title']['value']}''',
-            message=f'''Hi {{{{fullname}}}},
+    ## send email to authors
+    client.post_message(
+        recipients=submission.signatures,
+        subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.content['title']['value']}''',
+        message=f'''Hi {{{{fullname}}}},
 
 We are sorry to inform you that, after consideration by the assigned Action Editor, your {journal.short_name} submission title "{submission.content['title']['value']}" has been rejected without further review.
 
@@ -35,7 +33,7 @@ For more details and guidelines on the {journal.short_name} review process, visi
 
 The {journal.short_name} Editors-in-Chief
 ''',
-            replyTo=journal.contact_info
-        )
+        replyTo=journal.contact_info
+    )
 
-        journal.invitation_builder.expire_paper_invitations(submission)
+    journal.invitation_builder.expire_paper_invitations(submission)

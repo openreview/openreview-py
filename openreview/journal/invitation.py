@@ -1550,11 +1550,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                     'order': 1,
                                     'value': {
                                         'type': 'string',
-                                        'enum': ['Yes', 'No']
+                                        'enum': ['I approve the AE\'s decision.']
                                     },
                                     'presentation': {
-                                        'input': 'radio'
-                                    },
+                                        'input': 'checkbox'
+                                    }
                                 }},
                                 'comment': { 'const': {
                                     'order': 2,
