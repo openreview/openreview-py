@@ -234,13 +234,13 @@ class Journal(object):
         return self.__get_invitation_id(name='Revision', number=number)
 
     def get_solicit_review_id(self, number=None):
-        return self.__get_invitation_id(name='Solicit_Review', number=number)
+        return self.__get_invitation_id(name='Volunteer_to_Review', number=number)
 
     def get_solicit_review_approval_id(self, number=None, signature=None):
         if signature:
-            return self.__get_invitation_id(name=f'{signature}_Solicit_Review_Approval', number=number)
+            return self.__get_invitation_id(name=f'{signature}_Volunteer_to_Review_Approval', number=number)
 
-        return self.__get_invitation_id(name='Solicit_Review_Approval', number=number)
+        return self.__get_invitation_id(name='Volunteer_to_Review_Approval', number=number)
 
 
     def get_public_comment_id(self, number):

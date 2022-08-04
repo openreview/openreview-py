@@ -591,7 +591,7 @@ note={Withdrawn}
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
 
         ## David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -783,7 +783,7 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
@@ -971,7 +971,7 @@ Comment: This is an inapropiate comment</p>
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
@@ -1176,7 +1176,7 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
@@ -1349,7 +1349,7 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
@@ -1372,7 +1372,7 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
@@ -1395,7 +1395,7 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         assert f"{venue_id}/Paper1/-/Revision"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Withdrawal"  in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Solicit_Review" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
@@ -1910,7 +1910,7 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         assert edges[3].weight == 0  ## Hugo
 
         ## Ask solicit review with a conflict
-        solicit_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
+        Volunteer_to_Review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
             signatures=['~Tom_Rain1'],
             note=Note(
                 content={
@@ -1920,14 +1920,14 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_note['id'])
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been submitted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
 <p>This is to inform you that an OpenReview user has requested to review TMLR submission Paper title 4, which you are the AE for.</p>
 <p>Please consult the request and either accept or reject it, by visiting this link:</p>
-<p><a href=\"https://openreview.net/forum?id={note_id_4}&amp;noteId={solicit_review_note['note']['id']}\">https://openreview.net/forum?id={note_id_4}&amp;noteId={solicit_review_note['note']['id']}</a></p>
+<p><a href=\"https://openreview.net/forum?id={note_id_4}&amp;noteId={Volunteer_to_Review_note['note']['id']}\">https://openreview.net/forum?id={note_id_4}&amp;noteId={Volunteer_to_Review_note['note']['id']}</a></p>
 <p>We ask that you provide a response within 1 week, by {(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (<a href=\"https://openreview.net/profile?id=~Tom_Rain1\">https://openreview.net/profile?id=~Tom_Rain1</a>) before making a decision.</p>
 <p>We thank you for your contribution to TMLR!</p>
 <p>The TMLR Editors-in-Chief</p>
@@ -1935,11 +1935,11 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         ## Post a response
         with pytest.raises(openreview.OpenReviewException, match=r'Can not approve this solicit review: conflict detected for ~Tom_Rain1'):
-            solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Solicit_Review_Approval',
+            Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Volunteer_to_Review_Approval',
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
                     forum=note_id_4,
-                    replyto=solicit_review_note['note']['id'],
+                    replyto=Volunteer_to_Review_note['note']['id'],
                     content={
                         'decision': { 'value': 'Yes, I approve the solicit review.' },
                         'comment': { 'value': 'thanks!' }
@@ -1948,7 +1948,7 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
             )
 
         ## Ask solicit review
-        solicit_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Solicit_Review',
+        Volunteer_to_Review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
             signatures=['~Peter_Snow1'],
             note=Note(
                 content={
@@ -1958,17 +1958,17 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_note['id'])
 
         invitations = joelle_client.get_invitations(replyForum=note_id_4)
-        assert f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval' in [i.id for i in invitations]
+        assert f'{venue_id}/Paper4/-/~Peter_Snow1_Volunteer_to_Review_Approval' in [i.id for i in invitations]
 
         ## Post a response
-        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Solicit_Review_Approval',
+        Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Volunteer_to_Review_Approval',
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
                 forum=note_id_4,
-                replyto=solicit_review_note['note']['id'],
+                replyto=Volunteer_to_Review_note['note']['id'],
                 content={
                     'decision': { 'value': 'Yes, I approve the solicit review.' },
                     'comment': { 'value': 'thanks!' }
@@ -1976,9 +1976,9 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_approval_note['id'])
 
-        assert '~Peter_Snow1' in solicit_review_approval_note['note']['readers']
+        assert '~Peter_Snow1' in Volunteer_to_Review_approval_note['note']['readers']
 
         paper_assignment_edges = openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', tail='~Peter_Snow1', head=note_id_4)
         assert len(paper_assignment_edges) == 1
@@ -2907,7 +2907,7 @@ note={Withdrawn}
 
         ## Ask solicit review with a conflict
         tom_client = OpenReviewClient(username='tom@mail.com', password='1234')
-        solicit_review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Solicit_Review',
+        Volunteer_to_Review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Volunteer_to_Review',
             signatures=['~Tom_Rain1'],
             note=Note(
                 content={
@@ -2917,14 +2917,14 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_note['id'])
 
         ## Post a response
-        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Tom_Rain1_Solicit_Review_Approval',
+        Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Tom_Rain1_Volunteer_to_Review_Approval',
             signatures=[f"{venue_id}/Paper7/Action_Editors"],
             note=Note(
                 forum=note_id_7,
-                replyto=solicit_review_note['note']['id'],
+                replyto=Volunteer_to_Review_note['note']['id'],
                 content={
                     'decision': { 'value': 'No, I decline the solicit review.' },
                     'comment': { 'value': 'Sorry, all the reviewers were assigned.' }
@@ -2932,19 +2932,19 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_approval_note['id'])
 
         messages = journal.client.get_messages(to = 'tom@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 7" was not accepted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Tom Rain,</p>
-<p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: <a href=\"https://openreview.net/forum?id={note_id_7}&amp;noteId={solicit_review_approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_7}&amp;noteId={solicit_review_approval_note['note']['id']}</a>.</p>
+<p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: <a href=\"https://openreview.net/forum?id={note_id_7}&amp;noteId={Volunteer_to_Review_approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_7}&amp;noteId={Volunteer_to_Review_approval_note['note']['id']}</a>.</p>
 <p>Respectfully,</p>
 <p>The TMLR Editors-in-Chief</p>
 '''
 
         ## Solicit review to more than 2 papers
         peter_client=OpenReviewClient(username='petersnow@yahoo.com', password='1234')
-        solicit_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Solicit_Review',
+        Volunteer_to_Review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Volunteer_to_Review',
             signatures=['~Peter_Snow1'],
             note=Note(
                 content={
@@ -2954,14 +2954,14 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_note['id'])
 
         ## Post a response
-        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Peter_Snow1_Solicit_Review_Approval',
+        Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/~Peter_Snow1_Volunteer_to_Review_Approval',
             signatures=[f"{venue_id}/Paper7/Action_Editors"],
             note=Note(
                 forum=note_id_7,
-                replyto=solicit_review_note['note']['id'],
+                replyto=Volunteer_to_Review_note['note']['id'],
                 content={
                     'decision': { 'value': 'Yes, I approve the solicit review.' },
                     'comment': { 'value': 'thanks!' }
@@ -2969,7 +2969,7 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_approval_note['id'])
 
         ## Post the submission 8
         submission_note_8 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -3028,7 +3028,7 @@ note={Withdrawn}
                 weight=1
             ))
 
-        solicit_review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper8/-/Solicit_Review',
+        Volunteer_to_Review_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper8/-/Volunteer_to_Review',
             signatures=['~Peter_Snow1'],
             note=Note(
                 content={
@@ -3038,14 +3038,14 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_note['id'])
 
         ## Post a response
-        solicit_review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper8/-/~Peter_Snow1_Solicit_Review_Approval',
+        Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper8/-/~Peter_Snow1_Volunteer_to_Review_Approval',
             signatures=[f"{venue_id}/Paper8/Action_Editors"],
             note=Note(
                 forum=note_id_8,
-                replyto=solicit_review_note['note']['id'],
+                replyto=Volunteer_to_Review_note['note']['id'],
                 content={
                     'decision': { 'value': 'Yes, I approve the solicit review.' },
                     'comment': { 'value': 'thanks!' }
@@ -3053,7 +3053,7 @@ note={Withdrawn}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=solicit_review_approval_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_approval_note['id'])
         assignment_edge = openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_8, tail='~Peter_Snow1')[0]
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
 
