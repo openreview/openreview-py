@@ -648,7 +648,7 @@ var formatData = function(
     ] : [];
     if (submission.content['previous_' + VENUE_ID + '_submission_url']) {
       aeActions.push({
-        name: 'Resubmission',
+        name: 'TMLR Resubmission',
         url: submission.content['previous_' + VENUE_ID + '_submission_url']['value']
       })
     }
