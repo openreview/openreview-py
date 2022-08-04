@@ -35,7 +35,7 @@ class TestJournal():
         ## Action Editors
         helpers.create_user('joelle@mailseven.com', 'Joelle', 'Pineau')
         ryan_client = helpers.create_user('yan@mail.com', 'Ryan', 'Adams')
-        samy_client = helpers.create_user('samy@mail.com', 'Samy', 'Bengio')
+        samy_client = helpers.create_user('samy@bengio.com', 'Samy', 'Bengio')
         yoshua_client = helpers.create_user('yoshua@mail.com', 'Yoshua', 'Bengio')
         corinna_client = helpers.create_user('corinna@mail.com', 'Corinna', 'Cortes')
         ivan_client = helpers.create_user('ivan@mail.com', 'Ivan', 'Titov')
@@ -3034,8 +3034,26 @@ note={Withdrawn}
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0        
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
 
+        # Assign another Action Editor and the submission should be updated
+        current_assignment = raia_client.get_edges(invitation='TMLR/Action_Editors/-/Assignment', head=note_id_8)[0]
+        current_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        raia_client.post_edge(current_assignment)
+
+        paper_assignment_edge = raia_client.post_edge(openreview.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_8,
+            tail='~Samy_Bengio1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        submission = raia_client.get_note(note_id_8)
+        assert '~Samy_Bengio1' == submission.content['assigned_action_editor']['value']                
 
 
     def test_desk_rejected_submission_by_eic(self, journal, openreview_client, helpers):
