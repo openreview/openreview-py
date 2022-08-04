@@ -1059,6 +1059,39 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 <p>The TMLR Editors-in-Chief</p>
 '''
 
+        ## Check review reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-0-2')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 3
+
+        messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 3
+
+        messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
+        assert len(messages) == 1
+
+        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
+<p>Our records show that a reviewer is <em>one month</em> late on a reviewing task:</p>
+<p>Task: Review<br>
+Reviewer: Carlos Mondragon<br>
+Submission: Paper title UPDATED<br>
+Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
+<p>OpenReview Team</p>
+'''        
+
+
         ## Check reviewer assignment acknowledge reminders
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
@@ -1585,13 +1618,34 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
-<p>Our records show that the AE for submission Paper title VERSION 2 is <em>one week</em> late on an AE task::</p>
+<p>Our records show that the AE for submission Paper title VERSION 2 is <em>one week</em> late on an AE task:</p>
 <p>Task: Camera Ready Verification<br>
 AE: Joelle Pineau<br>
 Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
 <p>OpenReview Team</p>
 '''
 
+        ## Check reminders
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
+                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Camera_Ready_Verification-0-2')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 1
+
+        messages = journal.client.get_messages(subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 4
+
+        messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
+        assert len(messages) == 2
 
         ## AE verifies the camera ready revision
         verification_note = joelle_client.post_note_edit(invitation='TMLR/Paper1/-/Camera_Ready_Verification',

@@ -15,6 +15,7 @@ class InvitationBuilder(object):
 
         day = 1000 * 60 * 60 * 24
         seven_days = day * 7
+        one_month = day * 30
 
         self.author_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
@@ -26,13 +27,18 @@ class InvitationBuilder(object):
             'script': self.get_process_content('process/reviewer_reminder_process.py')
         }
 
+        self.reviewer_reminder_process_with_EIC = {
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
+            'script': self.get_process_content('process/reviewer_reminder_process.py')
+        }
+
         self.ae_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_reminder_process.py')
         }
 
         self.ae_edge_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
@@ -2484,7 +2490,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
                     'process': { 'const': paper_process },
-                    'dateprocesses': { 'const': [self.reviewer_reminder_process]},
+                    'dateprocesses': { 'const': [self.reviewer_reminder_process_with_EIC]},
                     'edit': {
                         'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
                         'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -2621,7 +2627,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'dateprocesses': { 'const': [{
                         'dates': [ "#{cdate} + 1000" ],
                         'script': cdate_process
-                    }, self.reviewer_reminder_process]},
+                    }, self.reviewer_reminder_process_with_EIC]},
                     'edit': {
                         'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
                         'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},

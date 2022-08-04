@@ -12,41 +12,43 @@ def process(client, invitation):
     if len(late_invitees) == 0:
       return
 
-    ## send email to reviewers
-    print('send email to action editors', late_invitees)
-    client.post_message(
-        recipients=late_invitees,
-        subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.content['title']['value']}''',
-        message=f'''Hi {{{{fullname}}}},
+    ## get preferred names
+    profiles = openreview.tools.get_profiles(client, late_invitees)
+
+    if date_index == 0 or date_index == 1:
+        print('send email to action editors', late_invitees)
+        client.post_message(
+            recipients=late_invitees,
+            subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.content['title']['value']}''',
+            message=f'''Hi {{{{fullname}}}},
 
 Our records show that you are late on the current action editor task:
 
-  Task: {task}
-  Submission: {submission.content['title']['value']}
-  Number of days late: {abs((now - duedate).days)}
-  Link: https://openreview.net/forum?id={submission.id}
+Task: {task}
+Submission: {submission.content['title']['value']}
+Number of days late: {abs((now - duedate).days)}
+Link: https://openreview.net/forum?id={submission.id}
 
 Please follow the provided link and complete your task ASAP.
 
 We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
-''',
-        replyTo=journal.contact_info
-    )
+    ''',
+            replyTo=journal.contact_info
+        )
 
-    if date_index > 0:
-      ## get preferred names
-      profiles = openreview.tools.get_profiles(client, late_invitees)
+    if date_index == 1 or date_index == 2:
       ## send email to editors in chief
       print('send email to editors in chief')
+      days_late = 'one week' if date_index == 1 else 'one month'
       for profile in profiles:
         client.post_message(
             recipients=[journal.get_editors_in_chief_id()],
             subject=f'''[{journal.short_name}] AE is late in performing a task for assigned paper {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Our records show that the AE for submission {submission.content['title']['value']} is *one week* late on an AE task::
+Our records show that the AE for submission {submission.content['title']['value']} is *{days_late}* late on an AE task:
 
 Task: {task}
 AE: {profile.get_preferred_name(pretty=True)}
@@ -55,4 +57,7 @@ Link: https://openreview.net/forum?id={submission.id}
 OpenReview Team
 ''',
             replyTo=journal.contact_info
-        )
+        )                    
+
+
+
