@@ -636,6 +636,23 @@ var formatData = function(
 
     overdueTasks.concat(tasks.filter(function(inv) { return !inv.complete; }));
 
+    var aeActions = [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
+      {
+        name: 'Edit Assignments',
+        url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
+        '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
+        '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+        '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
+        '&version=2'
+      }
+    ] : [];
+    if (submission.content['previous_' + VENUE_ID + '_submission_url']) {
+      aeActions.push({
+        name: 'Resubmission',
+        url: submission.content['previous_' + VENUE_ID + '_submission_url']['value']
+      })
+    }
+
     paperStatusRows.push({
       checked: { noteId: submission.id, checked: false },
       submissionNumber: { number: parseInt(number, 10) },
@@ -681,16 +698,7 @@ var formatData = function(
         earlylateTaskDueDate: earlylateTaskDueDate,
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
-        actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
-          {
-            name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
-            '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
-            '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
-            '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
-            '&version=2'
-          }
-        ] : [],
+        actions: aeActions,
         tableWidth: '100%'
       },
       tasks: { invitations: tasks, forumId: submission.id },
