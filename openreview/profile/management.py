@@ -18,20 +18,26 @@ class ProfileManagement():
     def set_remove_name_invitations(self):
 
         content = {
-            'username': {
+            'name': {
                 'order': 1,
+                'description': 'Name that wants to be removed.',
+                'value-regex': '.*',
+                'required': True                
+            },
+            'username': {
+                'order': 2,
                 'description': 'Username that wants to be removed.',
                 'value-regex': '~.*',
                 'required': True
             },
             'comment': {
-                'order': 2,
+                'order': 3,
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Reason why you want to delete your name.',
                 'required': False
             },
             'status': {
-                'order': 3,
+                'order': 4,
                 'value': 'Pending',
                 'description': 'Request status.',
                 'required': True

@@ -9,3 +9,7 @@ def process(client, note, invitation):
 
     if username == profile.get_preferred_name():
         raise openreview.OpenReviewException(f'Can not remove preferred name')
+
+    name = note.content.get('name')
+    if name != openreview.tools.pretty_id(username):
+        raise openreview.OpenReviewException("Name does not match with username")

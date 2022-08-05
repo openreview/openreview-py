@@ -30,7 +30,7 @@ class TestProfileManagement():
         assert 'username' in profile.content['names'][1]
         assert profile.content['names'][1]['username'] == '~John_Alternate_Last1'
 
-        ## Try to remove the unexisting name an get an error
+        ## Try to remove the unexisting name and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~John_Last'):
             request_note = john_client.post_note(openreview.Note(
                 invitation='openreview.net/Support/-/Profile_Name_Removal',
@@ -38,13 +38,14 @@ class TestProfileManagement():
                 writers=['openreview.net/Support'],
                 signatures=['~John_Last1'],
                 content={
+                    'name': 'John Last',
                     'username': '~John_Last',
                     'comment': 'typo in my name',
                     'status': 'Pending'
                 }
             ))
 
-        ## Try to remove the name that is marked as preferred an get an error
+        ## Try to remove the name that is marked as preferred and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove preferred name'):
             request_note = john_client.post_note(openreview.Note(
                 invitation='openreview.net/Support/-/Profile_Name_Removal',
@@ -52,11 +53,27 @@ class TestProfileManagement():
                 writers=['openreview.net/Support'],
                 signatures=['~John_Last1'],
                 content={
+                    'name': 'John Last',
                     'username': '~John_Last1',
                     'comment': 'typo in my name',
                     'status': 'Pending'
                 }
-            ))        
+            )) 
+
+        ## Try to remove the name that doesn't match with the username and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'Name does not match with username'):
+            request_note = john_client.post_note(openreview.Note(
+                invitation='openreview.net/Support/-/Profile_Name_Removal',
+                readers=['openreview.net/Support', '~John_Last1'],
+                writers=['openreview.net/Support'],
+                signatures=['~John_Last1'],
+                content={
+                    'name': 'Melisa Bok',
+                    'username': '~John_Alternate_Last1',
+                    'comment': 'typo in my name',
+                    'status': 'Pending'
+                }
+            ))                    
 
 
         ## Add publications
@@ -95,6 +112,7 @@ class TestProfileManagement():
             writers=['openreview.net/Support'],
             signatures=['~John_Last1'],
             content={
+                'name': 'John Alternate Last',
                 'username': '~John_Alternate_Last1',
                 'comment': 'typo in my name',
                 'status': 'Pending'
@@ -192,6 +210,7 @@ The OpenReview Team.
                 writers=['openreview.net/Support'],
                 signatures=['~Ana_Alternate_Last1'],
                 content={
+                    'name': 'Ana Alternate Last',
                     'username': '~Ana_Alternate_Last1',
                     'comment': 'typo in my name',
                     'status': 'Pending'
@@ -235,6 +254,7 @@ The OpenReview Team.
             writers=['openreview.net/Support'],
             signatures=['~Ana_Alternate_Last1'],
             content={
+                'name': 'Ana Last',
                 'username': '~Ana_Last1',
                 'comment': 'typo in my name',
                 'status': 'Pending'
@@ -329,6 +349,7 @@ The OpenReview Team.
             writers=['openreview.net/Support'],
             signatures=['~Peter_Last1'],
             content={
+                'name': 'Peter Alternate Last',
                 'username': '~Peter_Alternate_Last1',
                 'comment': 'typo in my name',
                 'status': 'Pending'
