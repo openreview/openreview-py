@@ -76,10 +76,11 @@ class TestMatching():
         builder.set_registration_stage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40))
         builder.set_registration_stage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), additional_fields = additional_registration_content)
 
-        builder.set_bid_stage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
-        builder.set_bid_stage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50)
+        builder.set_bid_stage(openreview.BidStage('auai.org/UAI/2019/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50))
+        builder.set_bid_stage(openreview.BidStage('auai.org/UAI/2019/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50))
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
+        conference.create_bid_stages()
         # conference.client = pc_client
         return conference
 
@@ -1315,3 +1316,21 @@ class TestMatching():
             invitation=conference.get_id() + '/.*/-/Assignment',
             head=desk_reject_note.forum)
         assert not note_assignment_edges
+
+    def test_empty_title_regex(self, conference, client, pc_client, helpers):
+        invitation = client.get_invitation(
+            id='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration')
+        assert invitation
+        with pytest.raises(openreview.OpenReviewException, match=r'ValueRegexNotMatchError'):
+            client.post_note(
+                openreview.Note(
+                    invitation='auai.org/UAI/2019/Conference/Program_Committee/-/Assignment_Configuration',
+                    readers=['auai.org/UAI/2019/Conference'],
+                    writers=['auai.org/UAI/2019/Conference'],
+                    signatures=['~AreaChair_One1'],
+                    content={
+                        'title': ' '
+                    }
+                )
+            )
+

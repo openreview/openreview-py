@@ -125,9 +125,7 @@ def process(client, note, invitation):
                         hide_fields=forum_note.content.get('hide_fields', [])
                     )
         elif invitation_type == 'Bid_Stage':
-            conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_reviewers_id()))
-            if forum_note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs':
-                conference.set_bid_stage(openreview.helpers.get_bid_stage(client, forum_note, conference.get_area_chairs_id()))
+            conference.create_bid_stages()
 
         elif invitation_type == 'Review_Stage':
             conference.create_review_stage()
