@@ -303,3 +303,16 @@ class Matching(object):
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
+
+        submissions = client.get_all_notes(invitation=venue.submission_stage.get_submission_id(venue))
+
+        if not self.match_group.members:
+            raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
+        if self.alternate_matching_group:
+            other_matching_group = self.client.get_group(self.alternate_matching_group)
+            if not other_matching_group.members:
+                raise openreview.OpenReviewException(f'The alternate match group is empty: {self.alternate_matching_group}')
+        elif not submissions:
+            raise openreview.OpenReviewException('Submissions not found.')
+
+        return matching_status

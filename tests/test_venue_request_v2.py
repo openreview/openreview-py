@@ -12,6 +12,9 @@ import csv
 import os
 import random
 
+from openreview.api import OpenReviewClient
+from openreview.api import Note
+
 class TestVenueRequest():
 
     @pytest.fixture(scope='class')
@@ -819,130 +822,128 @@ class TestVenueRequest():
         # request_page(selenium, reviewer_url, reviewer_client.token, By.LINK_TEXT, wait_for_element='Reviewer Bid')
         # assert selenium.find_element_by_link_text('Reviewer Bid')
 
-#     def test_venue_matching_setup(self, client, test_client, selenium, request_page, helpers, venue):
-#         # add a member to PC group
-#         pc_group = client.get_group('{}/Program_Chairs'.format(venue['venue_id']))
-#         client.add_members_to_group(group=pc_group, members=['pc@test.com'])
+    def test_venue_matching_setup(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
+        # add a member to PC group
+        pc_group = client.get_group('{}/Program_Chairs'.format(venue['venue_id']))
+        client.add_members_to_group(group=pc_group, members=['pc@test.com'])
 
-#         author_client = helpers.create_user('venue_author1@mail.com', 'Venue', 'Author')
-#         reviewer_client = helpers.create_user('venue_reviewer2@mail.com', 'Venue', 'Reviewer')
+        helpers.create_user('venue_author1@mail.com', 'Venue', 'Author')
+        author_client = OpenReviewClient(username='venue_author1@mail.com', password='1234')
+        reviewer_client = helpers.create_user('venue_reviewer2@mail.com', 'Venue', 'Reviewer')
 
-#         submission = author_client.post_note(openreview.Note(
-#             invitation='{}/-/Submission'.format(venue['venue_id']),
-#             readers=[
-#                 venue['venue_id'],
-#                 '~Venue_Author1'],
-#             writers=[
-#                 '~Venue_Author1',
-#                 venue['venue_id']
-#             ],
-#             signatures=['~Venue_Author1'],
-#             content={
-#                 'title': 'test submission',
-#                 'authorids': ['~Venue_Author1'],
-#                 'authors': ['Venue Author'],
-#                 'abstract': 'test abstract'
-#             }
-#         ))
+        venue_id = venue['venue_id']
 
-#         assert submission
-#         helpers.await_queue()
+        # messages = client.get_messages(subject='{} has received a new submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
+        # assert messages and len(messages) == 3
+        # recipients = [msg['content']['to'] for msg in messages]
+        # assert 'test@mail.com' in recipients
+        # assert 'tom@mail.com' in recipients
+        # assert 'pc@test.com' in recipients
 
-#         messages = client.get_messages(subject='{} has received a new submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
-#         assert messages and len(messages) == 3
-#         recipients = [msg['content']['to'] for msg in messages]
-#         assert 'test@mail.com' in recipients
-#         assert 'tom@mail.com' in recipients
-#         assert 'pc@test.com' in recipients
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
 
-#         author_client = helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
+        ## activate matching setup invitation
+        matching_setup_invitation = '{}/-/Request{}/Paper_Matching_Setup'.format(venue['support_group_id'], venue['request_form_note'].number)
+        matching_inv = client.get_invitation(matching_setup_invitation)
+        activation = datetime.datetime.utcnow()
+        matching_inv.cdate = openreview.tools.datetime_millis(activation)
+        matching_inv = client.post_invitation(matching_inv)
+        assert matching_inv
 
-#         submission = author_client.post_note(openreview.Note(
-#             invitation='{}/-/Submission'.format(venue['venue_id']),
-#             readers=[
-#                 venue['venue_id'],
-#                 '~Venue_Author2'],
-#             writers=[
-#                 '~Venue_Author2',
-#                 venue['venue_id']
-#             ],
-#             signatures=['~Venue_Author2'],
-#             content={
-#                 'title': 'test submission 2',
-#                 'authorids': ['~Venue_Author2'],
-#                 'authors': ['Venue Author'],
-#                 'abstract': 'test abstract 2'
-#             }
-#         ))
-#         assert submission
 
-#         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        ## Run matching setup with no submissions
+        matching_setup_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group':  venue['venue_id'] + '/Reviewers',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'Yes'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation=matching_setup_invitation,
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert matching_setup_note
+        helpers.await_queue()
 
-#         ## activate matching setup invitation
-#         matching_setup_invitation = '{}/-/Request{}/Paper_Matching_Setup'.format(venue['support_group_id'], venue['request_form_note'].number)
-#         matching_inv = client.get_invitation(matching_setup_invitation)
-#         activation = datetime.datetime.utcnow()
-#         matching_inv.cdate = openreview.tools.datetime_millis(activation)
-#         matching_inv = client.post_invitation(matching_inv)
-#         assert matching_inv
+        comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
+        assert matching_status
+        assert 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.' in matching_status.content['error']
 
-#         ## Run matching setup with no submissions
-#         matching_setup_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Paper Matching Setup',
-#                 'matching_group': conference.get_id() + '/Reviewers',
-#                 'compute_conflicts': 'Yes',
-#                 'compute_affinity_scores': 'Yes'
-#             },
-#             forum=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             invitation=matching_setup_invitation,
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert matching_setup_note
-#         helpers.await_queue()
+        submission_note_1 = author_client.post_note_edit(
+            invitation=f'{venue_id}/-/Submission',
+            signatures= ['~Venue_Author1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'test submission' },
+                    'abstract': { 'value': 'test abstract' },
+                    'authors': { 'value': ['Venue Author']},
+                    'authorids': { 'value': ['~Venue_Author1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
+                }
+            ))
 
-#         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-#         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
-#         assert matching_status
-#         assert 'Could not compute affinity scores and conflicts since no submissions were found. Make sure the submission deadline has passed and you have started the review stage using the \'Review Stage\' button.' in matching_status.content['error']
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id']) 
 
-#         conference.setup_post_submission_stage(force=True)
+        helpers.create_user('venue_author2@mail.com', 'Venue', 'Author')
+        author_client2 = OpenReviewClient(username='venue_author2@mail.com', password='1234')
 
-#         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
-#         assert blind_submissions and len(blind_submissions) == 2
+        submission_note_2 = author_client2.post_note_edit(
+            invitation=f'{venue_id}/-/Submission',
+            signatures= ['~Venue_Author2'],
+            note=Note(
+                content={
+                    'title': { 'value': 'test submission 2' },
+                    'abstract': { 'value': 'test abstract' },
+                    'authors': { 'value': ['Venue Author']},
+                    'authorids': { 'value': ['~Venue_Author2']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
+                }
+        ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
 
-#         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
-#         client.remove_members_from_group(reviewer_group, '~Venue_Reviewer1')
+        conference.setup_post_submission_stage(force=True)
 
-#         ## Remove ~Venue_Reviewer1 to keep the group empty and run the setup matching
-#         matching_setup_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Paper Matching Setup',
-#                 'matching_group': conference.get_id() + '/Reviewers',
-#                 'compute_conflicts': 'Yes',
-#                 'compute_affinity_scores': 'Yes'
-#             },
-#             forum=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             invitation=matching_setup_invitation,
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert matching_setup_note
-#         helpers.await_queue()
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
+        assert submissions and len(submissions) == 2
 
-#         comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
-#         matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
-#         assert matching_status
-#         assert 'Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers.' in matching_status.content['error']
+        reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
+        client.remove_members_from_group(reviewer_group, '~Venue_Reviewer1')
+        client.remove_members_from_group(reviewer_group, 'reviewer_candidate2@email.com')
 
-#         client.add_members_to_group(reviewer_group, '~Venue_Reviewer1')
-#         client.add_members_to_group(reviewer_group, '~Venue_Reviewer2')
-#         client.add_members_to_group(reviewer_group, 'some_user@mail.com')
+        ## Remove ~Venue_Reviewer1 to keep the group empty and run the setup matching
+        matching_setup_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': conference.get_id() + '/Reviewers',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'Yes'
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation=matching_setup_invitation,
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert matching_setup_note
+        helpers.await_queue()
+
+        comment_invitation_id = '{}/-/Request{}/Paper_Matching_Setup_Status'.format(venue['support_group_id'], venue['request_form_note'].number)
+        matching_status = client.get_notes(invitation=comment_invitation_id, replyto=matching_setup_note.id, forum=venue['request_form_note'].forum, sort='tmdate')[0]
+        assert matching_status
+        assert 'Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers.' in matching_status.content['error']
+
+        client.add_members_to_group(reviewer_group, '~Venue_Reviewer1')
+        client.add_members_to_group(reviewer_group, '~Venue_Reviewer2')
+        client.add_members_to_group(reviewer_group, 'some_user@mail.com')
 
 #         ## Setup matching with the API request
 #         matching_setup_note = test_client.post_note(openreview.Note(
