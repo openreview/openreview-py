@@ -405,3 +405,145 @@ Regards,
 
 The OpenReview Team.
 '''
+
+    def test_remove_name_from_merged_profile(self, client, profile_management, helpers):
+
+        ella_client = helpers.create_user('ella@profile.org', 'Ella', 'Last', alternates=[], institution='google.com')
+        profile = ella_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Ella',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        ella_client.post_profile(profile)
+        profile = ella_client.get_profile(email_or_id='~Ella_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
+
+        ## Add publications
+        ella_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Ella_Last1'],
+            writers = ['~Ella_Last1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['Ella Last', 'Test Client'],
+                'authorids': ['~Ella_Last1', 'test@mail.com']
+            }
+        ))
+
+        publications = client.get_notes(content={ 'authorids': '~Ella_Last1'})
+        assert len(publications) == 1
+
+
+        ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ella', 'Last', alternates=[], institution='deepmind.com')
+        profile = ella_client_2.get_profile()
+        assert '~Ella_Last2' == profile.id
+
+        ella_client_2.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Ella_Last2'],
+            writers = ['~Ella_Last2'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'Paper abstract 2',
+                'authors': ['Ella Last', 'Test Client'],
+                'authorids': ['~Ella_Last2', 'test@mail.com']
+            }
+        ))
+
+        publications = client.get_notes(content={ 'authorids': '~Ella_Last2'})
+        assert len(publications) == 1
+
+
+        client.merge_profiles('~Ella_Last1', '~Ella_Last2')
+        profile = ella_client.get_profile()
+        assert len(profile.content['names']) == 3
+        profile.content['names'][0]['username'] == '~Ella_Last1'
+        profile.content['names'][0]['preferred'] == True
+        profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
+        profile.content['names'][2]['username'] == '~Ella_Last2'
+    
+ 
+        request_note = ella_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            readers=['openreview.net/Support', '~Ella_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Ella_Last1'],
+            content={
+                'name': 'Ella Last',
+                'username': '~Ella_Last2',
+                'comment': 'typo in my name',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='ella@profile.org', subject='Profile name removal request has been received')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Ella Last,
+
+We have received your request to remove the name "~Ella_Last2" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+        ## Accept the request
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Accepted'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        note = ella_client.get_note(request_note.id)
+        assert note.content['status'] == 'Accepted'
+
+        publications = client.get_notes(content={ 'authorids': '~Ella_Last1'})
+        assert len(publications) == 2
+        assert '~Ella_Last1' in publications[0].writers
+        assert '~Ella_Last1' in publications[0].signatures
+        assert '~Ella_Last1' in publications[1].writers
+        assert '~Ella_Last1' in publications[1].signatures
+
+
+        profile = ella_client.get_profile(email_or_id='~Ella_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][0]
+        assert profile.content['names'][0]['username'] == '~Ella_Last1'
+        assert profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ella_Last2'):
+            client.get_group('~Ella_Last2')
+
+        messages = client.get_messages(to='ella@profile.org', subject='Profile name removal request has been accepted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Ella Last,
+
+We have received your request to remove the name "~Ella_Last2" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+
+The name has been removed from your profile. Please check the information listed in your profile is correct.
+
+Thanks,
+
+The OpenReview Team.
+'''
