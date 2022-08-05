@@ -328,7 +328,8 @@ class TestVenueSubmission():
         venue.recruit_reviewers(title='[TV 22] Invitation to serve as Reviewer',
             message=message,
             invitees = ['~Reviewer_Venue_One1'],
-            contact_info='testvenue@contact.com')
+            contact_info='testvenue@contact.com',
+            reduced_load_on_decline = ['1','2','3'])
 
         venue.recruit_reviewers(title='[TV 22] Invitation to serve as Action Editor',
             message=message,
@@ -374,6 +375,22 @@ class TestVenueSubmission():
         bid_edges = openreview_client.get_edges(invitation=venue.id + '/Reviewers/-/Bid')
         assert len(bid_edges) == 1
 
+        #post recruitment note with reduced load to test custom load edge
+        recruitment_note = openreview_client.post_note_edit(
+            invitation=f'{conference_id}/Reviewers/-/Recruitment',
+            signatures= ['(anonymous)'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Recruit response' },
+                    'user': { 'value': '~Reviewer_Venue_One1' },
+                    'key': { 'value': '62b25fec293218c0b0986204b80beaee080f86c9a308c34ef8beb296b7c62188'},
+                    'response': { 'value': 'Yes'},
+                    'reduced_load': {'value': '1' },
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=recruitment_note['id']) 
+
         venue.setup_committee_matching()
 
         # #test posting proposed assignment edge
@@ -387,3 +404,6 @@ class TestVenueSubmission():
             weight = 0.92,
             label = 'test-matching-1'
         ))
+
+        custom_load_edges = openreview_client.get_edges(invitation=f'{conference_id}/Reviewers/-/Custom_Max_Papers')
+        assert (len(custom_load_edges)) == 1

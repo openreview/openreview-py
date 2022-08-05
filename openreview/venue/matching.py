@@ -2,6 +2,7 @@ import os
 import openreview
 from openreview.api import Edge
 from openreview.api import Invitation
+from tqdm import tqdm
 
 class Matching(object):
 
@@ -190,6 +191,56 @@ class Matching(object):
         invitation = self.venue.invitation_builder.save_invitation(invitation)
         return invitation
 
+    def _build_custom_max_papers(self, user_profiles):
+        invitation=self._create_edge_invitation(self.venue.get_custom_max_papers_id(self.match_group.id))
+        invitation_id = invitation['invitation']['id']
+        current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation_id, groupby='tail', select=None)}
+
+        reduced_loads = {}
+        reduced_load_notes = self.client.get_all_notes(invitation=self.venue.get_recruitment_id(self.match_group.id), sort='tcdate:asc')
+        for note in tqdm(reduced_load_notes, desc='getting reduced load notes'):
+            if 'reduced_load' in note.content:
+                reduced_loads[note.content['user']['value']] = note.content['reduced_load']['value']
+
+        print ('Reduced loads received: ', len(reduced_loads))
+
+        edges = []
+        for user_profile in tqdm(user_profiles):
+
+            custom_load = None
+            ids = user_profile.content['emailsConfirmed'] + [ n['username'] for n in user_profile.content['names'] if 'username' in n]
+            for i in ids:
+                if not custom_load and (i in reduced_loads):
+                    custom_load = reduced_loads[i]
+
+            if custom_load:
+                current_edge = current_custom_max_edges.get(user_profile.id)
+                review_capacity = int(custom_load)
+
+                if current_edge:
+                    ## Update edge if the new capacity is lower
+                    if current_edge.weight > review_capacity:
+                        print(f'Update edge for {user_profile.id}')
+                        current_edge.weight=review_capacity
+                        self.client.post_edge(current_edge)
+
+                else:
+                    edge = Edge(
+                        head=self.match_group.id,
+                        tail=user_profile.id,
+                        invitation=invitation_id,
+                        readers=self._get_edge_readers(user_profile.id),
+                        writers=[self.venue.id],
+                        signatures=[self.venue.id],
+                        weight=review_capacity
+                    )
+                    edges.append(edge)
+
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+
+        return invitation
+
     def setup(self, compute_affinity_scores=False, compute_conflicts=False):
 
         venue = self.venue
@@ -248,3 +299,7 @@ class Matching(object):
                 venue.invitation_builder.save_invitation(Invitation.from_json(invitation))
 
         self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id, deployed=True))
+        # venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+        self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
+        self._build_custom_max_papers(user_profiles)
+        self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))

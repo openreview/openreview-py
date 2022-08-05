@@ -29,6 +29,7 @@ class Venue(object):
         self.review_stage = None
         self.ethics_review_stage = None
         self.bid_stages = []
+        self.meta_review_stage = None
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
@@ -121,9 +122,27 @@ class Venue(object):
     ## Compatibility with Conference, refactor conference references to use get_reviewers_id
     def get_anon_reviewer_id(self, number, anon_id):
         return self.get_reviewers_id(number, True)
+
+    def get_reviewers_name(self, pretty=True):
+        if pretty:
+            name=self.reviewers_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.reviewers_name
+
+    def get_ethics_reviewers_name(self, pretty=True):
+        if pretty:
+            name=self.ethics_reviewers_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.ethics_reviewers_name
+
+    def get_area_chairs_name(self, pretty=True):
+        if pretty:
+            name=self.area_chairs_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.area_chairs_name
     
     def get_reviewers_id(self, number = None, anon=False):
-        return self.get_committee_id('Reviewer_' if anon else self.reviewers_name, number)
+        return self.get_committee_id('Reviewer_.*' if anon else self.reviewers_name, number)
 
     def get_authors_id(self, number = None):
         return self.get_committee_id(self.authors_name, number)
@@ -131,8 +150,8 @@ class Venue(object):
     def get_program_chairs_id(self):
         return self.get_committee_id(self.program_chairs_name)
 
-    def get_area_chairs_id(self, number = None):
-        return self.get_committee_id(self.area_chairs_name, number)
+    def get_area_chairs_id(self, number = None, anon=False):
+        return self.get_committee_id('Area_Chair_.*' if anon else self.area_chairs_name, number)
 
     def get_senior_area_chairs_id(self, number = None):
         return self.get_committee_id(self.senior_area_chairs_name, number)
@@ -140,8 +159,8 @@ class Venue(object):
     def get_ethics_chairs_id(self, number = None):
         return self.get_committee_id(self.ethics_chairs_name, number)
 
-    def get_ethics_reviewers_id(self, number = None):
-        return self.get_committee_id(self.ethics_reviewers_name, number)
+    def get_ethics_reviewers_id(self, number = None, anon=False):
+        return self.get_committee_id('Ethics_Reviewer_.*' if anon else self.ethics_reviewers_name, number)
 
     def get_homepage_options(self):
         options = {}
