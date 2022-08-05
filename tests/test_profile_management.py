@@ -547,3 +547,146 @@ Thanks,
 
 The OpenReview Team.
 '''
+
+    def test_remove_duplicated_name(self, client, profile_management, helpers):
+
+        javier_client = helpers.create_user('javier@profile.org', 'Javier', 'Last', alternates=[], institution='google.com')
+        profile = javier_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Javier',
+            'middle': 'Alternate',
+            'last': 'Last',
+            'preferred': True
+            })
+        javier_client.post_profile(profile)
+        profile = javier_client.get_profile(email_or_id='~Javier_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Javier_Alternate_Last1'
+        assert profile.content['names'][1]['preferred'] == True
+
+        ## Add publications
+        javier_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Javier_Last1'],
+            writers = ['~Javier_Last1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['Javier Last', 'Test Client'],
+                'authorids': ['~Javier_Last1', 'test@mail.com']
+            }
+        ))
+
+        publications = client.get_notes(content={ 'authorids': '~Javier_Last1'})
+        assert len(publications) == 1
+
+
+        javier_client_2 = helpers.create_user('javier_two@profile.org', 'Javier', 'Last', alternates=[], institution='deepmind.com')
+        profile = javier_client_2.get_profile()
+        assert '~Javier_Last2' == profile.id
+
+        javier_client_2.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Javier_Last2'],
+            writers = ['~Javier_Last2'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'Paper abstract 2',
+                'authors': ['Javier Last', 'Test Client'],
+                'authorids': ['~Javier_Last2', 'test@mail.com']
+            }
+        ))
+
+        publications = client.get_notes(content={ 'authorids': '~Javier_Last2'})
+        assert len(publications) == 1
+
+
+        client.merge_profiles('~Javier_Last1', '~Javier_Last2')
+        profile = javier_client.get_profile()
+        assert len(profile.content['names']) == 3
+        profile.content['names'][0]['username'] == '~Javier_Last1'
+        profile.content['names'][1]['username'] == '~Javier_Alternate_Last1'
+        profile.content['names'][1]['preferred'] == True
+        profile.content['names'][2]['username'] == '~Javier_Last2'
+    
+ 
+        request_note = javier_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            readers=['openreview.net/Support', '~Javier_Alternate_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Javier_Alternate_Last1'],
+            content={
+                'name': 'Javier Last',
+                'username': '~Javier_Last1',
+                'comment': 'typo in my name',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='javier@profile.org', subject='Profile name removal request has been received')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Javier Alternate Last,
+
+We have received your request to remove the name "~Javier_Last1" from your profile: https://openreview.net/profile?id=~Javier_Alternate_Last1.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+        ## Accept the request
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Accepted'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        note = javier_client.get_note(request_note.id)
+        assert note.content['status'] == 'Accepted'
+
+        publications = client.get_notes(content={ 'authorids': '~Javier_Alternate_Last1'})
+        assert len(publications) == 2
+        assert '~Javier_Last2' in publications[0].writers
+        assert '~Javier_Last2' in publications[0].signatures
+        assert '~Javier_Alternate_Last1' in publications[1].writers
+        assert '~Javier_Alternate_Last1' in publications[1].signatures
+
+
+        profile = javier_client.get_profile(email_or_id='~Javier_Alternate_Last1')
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][0]['username'] == '~Javier_Alternate_Last1'
+        assert profile.content['names'][1]['username'] == '~Javier_Last2'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Javier_Last1'):
+            client.get_group('~Javier_Last1')
+
+        messages = client.get_messages(to='javier@profile.org', subject='Profile name removal request has been accepted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Javier Alternate Last,
+
+We have received your request to remove the name "~Javier_Last1" from your profile: https://openreview.net/profile?id=~Javier_Alternate_Last1.
+
+The name has been removed from your profile. Please check the information listed in your profile is correct.
+
+Thanks,
+
+The OpenReview Team.
+'''
