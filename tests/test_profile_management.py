@@ -39,7 +39,7 @@ class TestProfileManagement():
                 signatures=['~John_Last1'],
                 content={
                     'name': 'John Last',
-                    'username': '~John_Last',
+                    'usernames': ['~John_Last'],
                     'comment': 'typo in my name',
                     'status': 'Pending'
                 }
@@ -54,7 +54,7 @@ class TestProfileManagement():
                 signatures=['~John_Last1'],
                 content={
                     'name': 'John Last',
-                    'username': '~John_Last1',
+                    'usernames': ['~John_Last1'],
                     'comment': 'typo in my name',
                     'status': 'Pending'
                 }
@@ -69,7 +69,7 @@ class TestProfileManagement():
                 signatures=['~John_Last1'],
                 content={
                     'name': 'Melisa Bok',
-                    'username': '~John_Alternate_Last1',
+                    'usernames': ['~John_Alternate_Last1'],
                     'comment': 'typo in my name',
                     'status': 'Pending'
                 }
@@ -113,7 +113,7 @@ class TestProfileManagement():
             signatures=['~John_Last1'],
             content={
                 'name': 'John Alternate Last',
-                'username': '~John_Alternate_Last1',
+                'usernames': ['~John_Alternate_Last1'],
                 'comment': 'typo in my name',
                 'status': 'Pending'
             }
@@ -126,7 +126,7 @@ class TestProfileManagement():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi John Last,
 
-We have received your request to remove the name "~John_Alternate_Last1" from your profile: https://openreview.net/profile?id=~John_Last1.
+We have received your request to remove the name "John Alternate Last" from your profile: https://openreview.net/profile?id=~John_Last1.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -173,7 +173,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi John Last,
 
-We have received your request to remove the name "~John_Alternate_Last1" from your profile: https://openreview.net/profile?id=~John_Last1.
+We have received your request to remove the name "John Alternate Last" from your profile: https://openreview.net/profile?id=~John_Last1.
 
 The name has been removed from your profile. Please check the information listed in your profile is correct.
 
@@ -211,7 +211,7 @@ The OpenReview Team.
                 signatures=['~Ana_Alternate_Last1'],
                 content={
                     'name': 'Ana Alternate Last',
-                    'username': '~Ana_Alternate_Last1',
+                    'usernames': ['~Ana_Alternate_Last1'],
                     'comment': 'typo in my name',
                     'status': 'Pending'
                 }
@@ -255,7 +255,7 @@ The OpenReview Team.
             signatures=['~Ana_Alternate_Last1'],
             content={
                 'name': 'Ana Last',
-                'username': '~Ana_Last1',
+                'usernames': ['~Ana_Last1'],
                 'comment': 'typo in my name',
                 'status': 'Pending'
             }
@@ -268,7 +268,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ana Alternate Last,
 
-We have received your request to remove the name "~Ana_Last1" from your profile: https://openreview.net/profile?id=~Ana_Alternate_Last1.
+We have received your request to remove the name "Ana Last" from your profile: https://openreview.net/profile?id=~Ana_Alternate_Last1.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -315,7 +315,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ana Alternate Last,
 
-We have received your request to remove the name "~Ana_Last1" from your profile: https://openreview.net/profile?id=~Ana_Alternate_Last1.
+We have received your request to remove the name "Ana Last" from your profile: https://openreview.net/profile?id=~Ana_Alternate_Last1.
 
 The name has been removed from your profile. Please check the information listed in your profile is correct.
 
@@ -350,7 +350,7 @@ The OpenReview Team.
             signatures=['~Peter_Last1'],
             content={
                 'name': 'Peter Alternate Last',
-                'username': '~Peter_Alternate_Last1',
+                'usernames': ['~Peter_Alternate_Last1'],
                 'comment': 'typo in my name',
                 'status': 'Pending'
             }
@@ -363,7 +363,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Peter Last,
 
-We have received your request to remove the name "~Peter_Alternate_Last1" from your profile: https://openreview.net/profile?id=~Peter_Last1.
+We have received your request to remove the name "Peter Alternate Last" from your profile: https://openreview.net/profile?id=~Peter_Last1.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -395,7 +395,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Peter Last,
 
-We have received your request to remove the name "~Peter_Alternate_Last1" from your profile: https://openreview.net/profile?id=~Peter_Last1.
+We have received your request to remove the name "Peter Alternate Last" from your profile: https://openreview.net/profile?id=~Peter_Last1.
 
 We can not remove the name from the profile for the following reason:
 
@@ -478,7 +478,7 @@ The OpenReview Team.
             signatures=['~Ella_Last1'],
             content={
                 'name': 'Ella Last',
-                'username': '~Ella_Last2',
+                'usernames': ['~Ella_Last2'],
                 'comment': 'typo in my name',
                 'status': 'Pending'
             }
@@ -491,7 +491,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ella Last,
 
-We have received your request to remove the name "~Ella_Last2" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -539,7 +539,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ella Last,
 
-We have received your request to remove the name "~Ella_Last2" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
 The name has been removed from your profile. Please check the information listed in your profile is correct.
 
@@ -622,7 +622,7 @@ The OpenReview Team.
             signatures=['~Javier_Alternate_Last1'],
             content={
                 'name': 'Javier Last',
-                'username': '~Javier_Last1',
+                'usernames': ['~Javier_Last1', '~Javier_Last2'],
                 'comment': 'typo in my name',
                 'status': 'Pending'
             }
@@ -635,7 +635,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Javier Alternate Last,
 
-We have received your request to remove the name "~Javier_Last1" from your profile: https://openreview.net/profile?id=~Javier_Alternate_Last1.
+We have received your request to remove the name "Javier Last" from your profile: https://openreview.net/profile?id=~Javier_Alternate_Last1.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -664,16 +664,15 @@ The OpenReview Team.
 
         publications = client.get_notes(content={ 'authorids': '~Javier_Alternate_Last1'})
         assert len(publications) == 2
-        assert '~Javier_Last2' in publications[0].writers
-        assert '~Javier_Last2' in publications[0].signatures
+        assert '~Javier_Alternate_Last1' in publications[0].writers
+        assert '~Javier_Alternate_Last1' in publications[0].signatures
         assert '~Javier_Alternate_Last1' in publications[1].writers
         assert '~Javier_Alternate_Last1' in publications[1].signatures
 
 
         profile = javier_client.get_profile(email_or_id='~Javier_Alternate_Last1')
-        assert len(profile.content['names']) == 2
+        assert len(profile.content['names']) == 1
         assert profile.content['names'][0]['username'] == '~Javier_Alternate_Last1'
-        assert profile.content['names'][1]['username'] == '~Javier_Last2'
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Javier_Last1'):
             client.get_group('~Javier_Last1')
@@ -682,7 +681,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Javier Alternate Last,
 
-We have received your request to remove the name "~Javier_Last1" from your profile: https://openreview.net/profile?id=~Javier_Alternate_Last1.
+We have received your request to remove the name "Javier Last" from your profile: https://openreview.net/profile?id=~Javier_Alternate_Last1.
 
 The name has been removed from your profile. Please check the information listed in your profile is correct.
 

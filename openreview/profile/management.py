@@ -20,14 +20,14 @@ class ProfileManagement():
         content = {
             'name': {
                 'order': 1,
-                'description': 'Name that wants to be removed.',
+                'description': 'Name that want to be removed.',
                 'value-regex': '.*',
                 'required': True                
             },
-            'username': {
+            'usernames': {
                 'order': 2,
-                'description': 'Username that wants to be removed.',
-                'value-regex': '~.*',
+                'description': 'Usernames that want to be removed.',
+                'values-regex': '~.*',
                 'required': True
             },
             'comment': {
