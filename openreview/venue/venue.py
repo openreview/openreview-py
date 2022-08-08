@@ -75,6 +75,9 @@ class Venue(object):
     def get_meta_invitation_id(self):
         return f'{self.venue_id}/-/Edit'
 
+    def get_submission_id(self):
+        return self.submission_stage.get_submission_id(self)
+
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
@@ -84,6 +87,12 @@ class Venue(object):
         if invite:
             return self.get_invitation_id('Invite_Assignment', prefix=group_id)
         return self.get_invitation_id('Proposed_Assignment', prefix=group_id)
+
+    def get_affinity_score_id(self, group_id):
+        return self.get_invitation_id('Affinity_Score', prefix=group_id)
+
+    def get_conflict_score_id(self, group_id):
+        return self.get_invitation_id('Conflict', prefix=group_id)
 
     def get_custom_max_papers_id(self, group_id):
         return self.get_invitation_id('Custom_Max_Papers', prefix=group_id)

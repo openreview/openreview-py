@@ -3,6 +3,8 @@ import openreview
 from openreview.api import Edge
 from openreview.api import Invitation
 from tqdm import tqdm
+import time
+from .. import tools
 
 class Matching(object):
 
@@ -92,7 +94,7 @@ class Matching(object):
         edge_head = {
             'param': {
                 'type': 'note',
-                'withInvitation': venue.submission_stage.get_submission_id(venue)
+                'withInvitation': venue.get_submission_id()
             }
         }
         edge_weight = {
@@ -103,6 +105,7 @@ class Matching(object):
         edge_label = {
             'param': {
                 'regex': '.*',
+                'optional': True
             }
         }
 
@@ -191,6 +194,79 @@ class Matching(object):
         invitation = self.venue.invitation_builder.save_invitation(invitation)
         return invitation
 
+    def _build_conflicts(self, submissions, user_profiles, get_profile_info):
+        # if self.alternate_matching_group:
+        #     other_matching_group = self.client.get_group(self.alternate_matching_group)
+        #     other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members)
+        #     return self._build_profile_conflicts(other_matching_profiles, user_profiles)
+        return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
+
+    def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
+        invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
+        invitation_id = invitation['invitation']['id']
+        # Get profile info from the match group
+        user_profiles_info = [get_profile_info(p) for p in user_profiles]
+        # Get profile info from all the authors
+        all_authorids = []
+        for submission in submissions:
+            authorids = submission.content['authorids']['value']
+            all_authorids = all_authorids + authorids
+
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, as_dict=True)
+
+        edges = []
+
+        for submission in tqdm(submissions, total=len(submissions), desc='_build_conflicts'):
+            # Get author profiles
+            authorids = submission.content['authorids']['value']
+
+            # Extract domains from each authorprofile
+            author_domains = set()
+            author_emails = set()
+            author_relations = set()
+            author_publications = set()
+            for authorid in authorids:
+                if author_profile_by_id.get(authorid):
+                    author_info = get_profile_info(author_profile_by_id[authorid])
+                    author_domains.update(author_info['domains'])
+                    author_emails.update(author_info['emails'])
+                    author_relations.update(author_info['relations'])
+                    author_publications.update(author_info['publications'])
+                else:
+                    print(f'Profile not found: {authorid}')
+
+            # Compute conflicts for each user and all the paper authors
+            for user_info in user_profiles_info:
+                conflicts = set()
+                conflicts.update(author_domains.intersection(user_info['domains']))
+                conflicts.update(author_relations.intersection(user_info['emails']))
+                conflicts.update(author_emails.intersection(user_info['relations']))
+                conflicts.update(author_emails.intersection(user_info['emails']))
+                conflicts.update(author_publications.intersection(user_info['publications']))
+
+                if conflicts:
+                    edges.append(Edge(
+                        invitation=invitation_id,
+                        head=submission.id,
+                        tail=user_info['id'],
+                        weight=-1,
+                        label='Conflict',
+                        readers=self._get_edge_readers(tail=user_info['id']),
+                        writers=[self.venue.id],
+                        signatures=[self.venue.id]
+                    ))
+
+        ## Delete previous conflicts
+        self.client.delete_edges(invitation_id, wait_to_finish=True)
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+
+        # Perform sanity check
+        edges_posted = self.client.get_edges_count(invitation=invitation_id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
+        return invitation
+
     def _build_custom_max_papers(self, user_profiles):
         invitation=self._create_edge_invitation(self.venue.get_custom_max_papers_id(self.match_group.id))
         invitation_id = invitation['invitation']['id']
@@ -240,6 +316,97 @@ class Matching(object):
         openreview.tools.post_bulk_edges(client=self.client, edges=edges)
 
         return invitation
+
+    def _build_scores_from_stream(self, score_invitation_id, scores_stream, submissions):
+        scores = [input_line.split(',') for input_line in scores_stream.decode().split('\n')]
+        return self._build_note_scores(score_invitation_id, scores, submissions)
+
+    def _build_note_scores(self, score_invitation_id, scores, submissions):
+
+        invitation = self._create_edge_invitation(score_invitation_id)
+        invitation_id = invitation['invitation']['id']
+
+        submissions_per_id = {note.id: note.number for note in submissions}
+
+        edges = []
+        deleted_papers = set()
+        for score_line in tqdm(scores, desc='_build_scores'):
+            if score_line:
+                paper_note_id = score_line[0]
+                paper_number = submissions_per_id.get(paper_note_id)
+                if paper_number:
+                    profile_id = score_line[1]
+                    score = str(max(round(float(score_line[2]), 4), 0))
+                    edges.append(openreview.Edge(
+                        invitation=invitation_id,
+                        head=paper_note_id,
+                        tail=profile_id,
+                        weight=float(score),
+                        readers=self._get_edge_readers(tail=profile_id),
+                        nonreaders=[self.venue.get_authors_id(number=paper_number)],
+                        writers=[self.venue.id],
+                        signatures=[self.venue.id]
+                    ))
+                else:
+                    deleted_papers.add(paper_note_id)
+
+        print('deleted papers', deleted_papers)
+
+        ## Delete previous scores
+        self.client.delete_edges(invitation_id, wait_to_finish=True)
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+        # Perform sanity check
+        edges_posted = self.client.get_edges_count(invitation=invitation_id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
+        return invitation
+
+    def _compute_scores(self, score_invitation_id, submissions):
+
+        venue = self.venue
+        client = self.client
+        matching_status = {
+            'no_profiles': [],
+            'no_publications': []
+        }
+
+        try:
+            job_id = client.request_expertise(
+                name=venue.get_short_name(),
+                group_id=self.match_group.id,
+                paper_invitation=venue.get_submission_id(),
+                alternate_match_group=self.alternate_matching_group,
+                # exclusion_inv=venue.get_expertise_selection_id(),
+                model='specter+mfr'
+            )
+            status = ''
+            call_count = 0
+            while 'Completed' not in status and 'Error' not in status:
+                if call_count == 1440: ## one day to wait the completion or trigger a timeout
+                    break
+                time.sleep(60)
+                status_response = client.get_expertise_status(job_id['jobId'])
+                status = status_response.get('status')
+                desc = status_response.get('description')
+                call_count += 1
+            if 'Completed' in status:
+                result = client.get_expertise_results(job_id['jobId'])
+                matching_status['no_profiles'] = result['metadata']['no_profile']
+                matching_status['no_publications'] = result['metadata']['no_publications']
+
+                # if self.alternate_matching_group:
+                #     scores = [[entry['match_member'], entry['submission_member'], entry['score']] for entry in result['results']]
+                #     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
+
+                scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
+                return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
+            if 'Error' in status:
+                raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)
+            if call_count == 1440:
+                raise openreview.OpenReviewException('Time out computing scores, description: ' + desc)
+        except openreview.OpenReviewException as e:
+            raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
 
     def setup(self, compute_affinity_scores=False, compute_conflicts=False):
 
@@ -304,7 +471,7 @@ class Matching(object):
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
 
-        submissions = client.get_all_notes(invitation=venue.submission_stage.get_submission_id(venue))
+        submissions = client.get_all_notes(invitation=venue.get_submission_id())
 
         if not self.match_group.members:
             raise openreview.OpenReviewException(f'The match group is empty: {self.match_group.id}')
@@ -315,4 +482,35 @@ class Matching(object):
         elif not submissions:
             raise openreview.OpenReviewException('Submissions not found.')
 
+        type_affinity_scores = type(compute_affinity_scores)
+
+        if type_affinity_scores == bytes:
+            invitation = self._build_scores_from_stream(
+                venue.get_affinity_score_id(self.match_group.id),
+                compute_affinity_scores,
+                submissions
+            )
+            if invitation:
+                invitation_id = invitation['invitation']['id']
+                score_spec[invitation_id] = {
+                    'weight': 1,
+                    'default': 0
+                }
+
+        if compute_affinity_scores == True:
+            invitation, matching_status = self._compute_scores(
+                venue.get_affinity_score_id(self.match_group.id),
+                submissions
+            )
+            if invitation:
+                invitation_id = invitation['invitation']['id']
+                score_spec[invitation_id] = {
+                    'weight': 1,
+                    'default': 0
+                }
+
+        if compute_conflicts:
+            self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if compute_conflicts == 'neurips' else openreview.tools.get_profile_info)
+
+        # self._build_config_invitation(score_spec)
         return matching_status
