@@ -1,5 +1,5 @@
 include README.md
-include openreview/conference/templates/*.js
+recursive-include openreview/conference/templates *.js
 include openreview/conference/templates/*.py
 include openreview/venue_request/webfield/*.js
 include openreview/venue_request/process/*.js
