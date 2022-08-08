@@ -543,7 +543,7 @@ To view the {lower_formatted_invitation}, click here: https://openreview.net/for
 
 Your {lower_formatted_invitation} on a submission has been {action}
 {content}
-            '''
+'''
             self.client.post_message(recipients=[edit.tauthor], subject=subject, message=message, replyTo=self.contact_info)
 
         ## Notify authors
@@ -552,7 +552,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
 {before_invitation} {lower_formatted_invitation} has been {action} on your submission.
 {content}
-            '''
+'''
             self.client.post_message(recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 
         ## Notify reviewers
@@ -569,7 +569,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are a reviewer.
 {content}
-            '''
+'''
             self.client.post_message(recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 
 
@@ -579,7 +579,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are an Action Editor.
 {content}
-            '''
+'''
             self.client.post_message(recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 
 
@@ -588,6 +588,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
 {before_invitation} {lower_formatted_invitation} has been {action} on a submission for which you are serving as Editor-In-Chief.
 {content}
-            '''
+'''
             self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 

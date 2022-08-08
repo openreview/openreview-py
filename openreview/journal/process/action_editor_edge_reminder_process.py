@@ -47,7 +47,7 @@ The {journal.short_name} Editors-in-Chief
             subject=f'''[{journal.short_name}] AE is late in performing a task for assigned paper {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
 
-Our records show that the AE for submission {submission.content['title']['value']} is *one week* late on an AE task::
+Our records show that the AE for submission {submission.content['title']['value']} is *one week* late on an AE task:
 
 Task: {task}
 AE: {profile.get_preferred_name(pretty=True)}
