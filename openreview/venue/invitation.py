@@ -98,7 +98,14 @@ class InvitationBuilder(object):
         review_stage = self.venue.review_stage
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
 
-        content = invitations.review_v2
+        content = invitations.review_v2.copy()
+
+        for key in review_stage.additional_fields:
+            content[key] = review_stage.additional_fields[key]
+
+        for field in review_stage.remove_fields:
+            if field in content:
+                del content[field]        
         
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],

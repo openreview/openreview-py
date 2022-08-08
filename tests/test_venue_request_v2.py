@@ -1130,91 +1130,86 @@ class TestVenueRequest():
 #         assert paper_withdraw_super_invitation.duedate is None
 #         assert openreview.tools.datetime_millis(withdraw_exp_date) == openreview.tools.datetime_millis(paper_withdraw_super_invitation.expdate)
 
-#     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
+    def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-#         # Post a review stage note
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         due_date = now + datetime.timedelta(days=3)
-#         review_stage_note = openreview.Note(
-#             content={
-#                 'review_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'review_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
-#                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
-#                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-#                 'remove_review_form_options': 'title',
-#                 'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
-#                 'review_rating_field_name': 'review_rating'
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         )
+        # Post a review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        review_stage_note = openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'remove_review_form_options': 'title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
+                'review_rating_field_name': 'review_rating'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        )
 
-#         with pytest.raises(openreview.OpenReviewException, match=r'Reviews cannot be released to the public since all papers are private'):
-#             review_stage_note=test_client.post_note(review_stage_note)
+        with pytest.raises(openreview.OpenReviewException, match=r'Reviews cannot be released to the public since all papers are private'):
+            review_stage_note=test_client.post_note(review_stage_note)
 
-#         review_stage_note.content['make_reviews_public'] = 'No, reviews should NOT be revealed publicly when they are posted'
-#         review_stage_note=test_client.post_note(review_stage_note)
+        review_stage_note.content['make_reviews_public'] = 'No, reviews should NOT be revealed publicly when they are posted'
+        review_stage_note=test_client.post_note(review_stage_note)
 
-#         assert review_stage_note
-#         helpers.await_queue()
+        helpers.await_queue()
 
-#         process_logs = client.get_process_logs(id = review_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Reviewers', '~Venue_Reviewer2')
 
-#         openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Reviewer2')
+        reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
+        # reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
+        # assert reviewer_group and len(reviewer_group.members) == 2
 
-#         reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
-#         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
-#         assert reviewer_group and len(reviewer_group.members) == 2
+        # reviewer_page_url = 'http://localhost:3030/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
+        # request_page(selenium, reviewer_page_url, token=reviewer_client.token, by=By.LINK_TEXT, wait_for_element='test submission')
 
-#         reviewer_page_url = 'http://localhost:3030/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
-#         request_page(selenium, reviewer_page_url, token=reviewer_client.token, by=By.LINK_TEXT, wait_for_element='test submission')
+        # note_div = selenium.find_element_by_id('note-summary-1')
+        # assert note_div
+        # assert 'test submission' == note_div.find_element_by_link_text('test submission').text
 
-#         note_div = selenium.find_element_by_id('note-summary-1')
-#         assert note_div
-#         assert 'test submission' == note_div.find_element_by_link_text('test submission').text
+        review_invitations = openreview_client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
+        assert review_invitations and len(review_invitations) == 2
+        assert 'title' not in review_invitations[0].edit['note']['content']
 
-#         review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
-#         assert review_invitations and len(review_invitations) == 2
-#         assert 'title' not in review_invitations[0].reply['content']
+        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
+        assert conference.review_stage.rating_field_name == 'review_rating'
 
-#         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-#         assert conference.review_stage.rating_field_name == 'review_rating'
+        reviewer_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Reviewers$')
+        assert len(reviewer_groups) == 2
+        # assert 'V2.cc/2030/Conference' in reviewer_groups[0].readers
+        # assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
+        # assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviewer_groups[0].readers
 
-#         reviewer_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Reviewers$')
-#         assert len(reviewer_groups) == 2
-#         assert 'TEST.cc/2030/Conference' in reviewer_groups[0].readers
-#         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
-#         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' in reviewer_groups[0].readers
+        # assert 'V2.cc/2030/Conference' in reviewer_groups[0].deanonymizers
+        # assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
+        # assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
 
-#         assert 'TEST.cc/2030/Conference' in reviewer_groups[0].deanonymizers
-#         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
-#         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
+        # ac_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Area_Chairs$')
+        # assert len(ac_groups) == 2
+        # assert 'V2.cc/2030/Conference' in ac_groups[0].readers
+        # assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
+        # assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].readers
+        # assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].readers
 
-#         ac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Area_Chairs$')
-#         assert len(ac_groups) == 2
-#         assert 'TEST.cc/2030/Conference' in ac_groups[0].readers
-#         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
-#         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].readers
-#         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].readers
+        # assert 'V2.cc/2030/Conference' in ac_groups[0].deanonymizers
+        # assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
+        # assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
+        # assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
 
-#         assert 'TEST.cc/2030/Conference' in ac_groups[0].deanonymizers
-#         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
-#         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
-#         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
-
-#         sac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Senior_Area_Chairs$')
-#         assert len(sac_groups) == 2
-#         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
-#         assert 'TEST.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
+        # sac_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Senior_Area_Chairs$')
+        # assert len(sac_groups) == 2
+        # assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
+        # assert 'V2.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
 
 #     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 

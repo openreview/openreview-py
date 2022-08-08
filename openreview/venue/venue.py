@@ -170,6 +170,9 @@ class Venue(object):
         options['contact'] = self.contact
         return options
 
+    def get_submissions(self):
+        return self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self))
+
     def set_group_variable(self, group_id, variable_name, value):
 
         group = self.client.get_group(group_id)
@@ -310,6 +313,25 @@ class Venue(object):
 
     def create_review_stage(self):
         self.invitation_builder.set_review_invitation()
+        ## Move this to the date process function
+        for submission in self.get_submissions():
+            self.client.post_invitation_edit(invitations=self.get_invitation_id(self.review_stage.name),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
+            content={
+                'noteId': {
+                    'value': submission.id
+                },
+                'noteNumber': {
+                    'value': submission.number
+                },
+                'duedate': {
+                    'value': tools.datetime_millis(self.review_stage.due_date)
+                }
+            },
+            invitation=openreview.api.Invitation()
+        )        
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
