@@ -23,7 +23,7 @@ def process(client, edit, invitation):
         subject=f'''[{journal.short_name}] Decision for your {journal.short_name} submission {submission.content['title']['value']}''',
         message=f'''Hi {{{{fullname}}}},
 
-We are sorry to inform you that, after consideration by the assigned Action Editor, your {journal.short_name} submission title "{submission.content['title']['value']}" has been rejected without further review.
+We are sorry to inform you that, after consideration by the assigned Action Editor, your {journal.short_name} submission titled "{submission.content['title']['value']}" has been rejected without further review.
 
 Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {journal.short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).
 
