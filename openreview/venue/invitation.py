@@ -187,7 +187,7 @@ class InvitationBuilder(object):
         venue = self.venue
         venue_id = self.venue_id
 
-        content = invitations.recruitment_v2
+        content = invitations.recruitment_v2.copy()
 
         reduced_load = options.get('reduced_load_on_decline', None)
         reduced_load_dict = {}

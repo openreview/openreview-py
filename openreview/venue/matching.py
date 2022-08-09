@@ -195,10 +195,10 @@ class Matching(object):
         return invitation
 
     def _build_conflicts(self, submissions, user_profiles, get_profile_info):
-        # if self.alternate_matching_group:
-        #     other_matching_group = self.client.get_group(self.alternate_matching_group)
-        #     other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members)
-        #     return self._build_profile_conflicts(other_matching_profiles, user_profiles)
+        if self.alternate_matching_group:
+            other_matching_group = self.client.get_group(self.alternate_matching_group)
+            other_matching_profiles = tools.get_profiles(self.client, other_matching_group.members)
+            return self._build_profile_conflicts(other_matching_profiles, user_profiles)
         return self._build_note_conflicts(submissions, user_profiles, get_profile_info)
 
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
@@ -248,6 +248,48 @@ class Matching(object):
                     edges.append(Edge(
                         invitation=invitation_id,
                         head=submission.id,
+                        tail=user_info['id'],
+                        weight=-1,
+                        label='Conflict',
+                        readers=self._get_edge_readers(tail=user_info['id']),
+                        writers=[self.venue.id],
+                        signatures=[self.venue.id]
+                    ))
+
+        ## Delete previous conflicts
+        self.client.delete_edges(invitation_id, wait_to_finish=True)
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+
+        # Perform sanity check
+        edges_posted = self.client.get_edges_count(invitation=invitation_id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
+        return invitation
+
+    def _build_profile_conflicts(self, head_profiles, user_profiles):
+        
+        invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
+        invitation_id = invitation['invitation']['id']
+        # Get profile info from the match group
+        user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
+        head_profiles_info = [openreview.tools.get_profile_info(p) for p in head_profiles]
+
+        edges = []
+
+        for head_profile_info in tqdm(head_profiles_info, total=len(head_profiles_info), desc='_build_profile_conflicts'):
+
+            # Compute conflicts for each user and all the paper authors
+            for user_info in user_profiles_info:
+                conflicts = set()
+                conflicts.update(head_profile_info['domains'].intersection(user_info['domains']))
+                conflicts.update(head_profile_info['relations'].intersection(user_info['emails']))
+                conflicts.update(head_profile_info['emails'].intersection(user_info['relations']))
+                conflicts.update(head_profile_info['emails'].intersection(user_info['emails']))
+                if conflicts:
+                    edges.append(Edge(
+                        invitation=invitation_id,
+                        head=head_profile_info['id'],
                         tail=user_info['id'],
                         weight=-1,
                         label='Conflict',
@@ -320,6 +362,33 @@ class Matching(object):
     def _build_scores_from_stream(self, score_invitation_id, scores_stream, submissions):
         scores = [input_line.split(',') for input_line in scores_stream.decode().split('\n')]
         return self._build_note_scores(score_invitation_id, scores, submissions)
+
+    def _build_profile_scores(self, score_invitation_id, scores):
+
+        invitation = self._create_edge_invitation(score_invitation_id)
+        invitation_id = invitation['invitation']['id']
+        edges = []
+
+        for row in tqdm(SNDCTL_COPR_SENDMSG, desc='_build_scores'):
+            edges.append(Edge(
+                invitation=invitation_id,
+                head=row[1],
+                tail=row[0],
+                weight=str(max(round(float(row[2]), 4), 0)),
+                readers=self._get_edge_readers(tail=row[1]),
+                writers=[self.venue.id],
+                signatures=[self.venue.id]
+            ))
+
+        ## Delete previous scores
+        self.client.delete_edges(invitation_id, wait_to_finish=True)
+
+        openreview.tools.post_bulk_edges(client=self.client, edges=edges)
+        # Perform sanity check
+        edges_posted = self.client.get_edges_count(invitation=invitation_id)
+        if edges_posted < len(edges):
+            raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
+        return invitation
 
     def _build_note_scores(self, score_invitation_id, scores, submissions):
 
@@ -395,9 +464,9 @@ class Matching(object):
                 matching_status['no_profiles'] = result['metadata']['no_profile']
                 matching_status['no_publications'] = result['metadata']['no_publications']
 
-                # if self.alternate_matching_group:
-                #     scores = [[entry['match_member'], entry['submission_member'], entry['score']] for entry in result['results']]
-                #     return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
+                if self.alternate_matching_group:
+                    scores = [[entry['match_member'], entry['submission_member'], entry['score']] for entry in result['results']]
+                    return self._build_profile_scores(score_invitation_id, scores=scores), matching_status
 
                 scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
                 return self._build_note_scores(score_invitation_id, scores, submissions), matching_status
@@ -407,6 +476,274 @@ class Matching(object):
                 raise openreview.OpenReviewException('Time out computing scores, description: ' + desc)
         except openreview.OpenReviewException as e:
             raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
+
+    def _build_config_invitation(self, scores_specification):
+        venue = self.venue
+
+        config_inv = Invitation(
+            id = '{}/-/{}'.format(self.match_group.id, 'Assignment_Configuration'),
+            invitees = [venue.id, venue.support_user],
+            signatures = [venue.id],
+            readers = [venue.id],
+            writers = [venue.id],
+            edit = {
+                'signatures': [venue.id],
+                'readers': [venue.id],
+                'writers': [venue.id],
+                'note': {
+                    'signatures': [venue.id],
+                    'readers': [venue.id],
+                    'writers': [venue.id],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Title of the configuration.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{1,250}'
+                                }
+                            }
+                        },
+                        'user_demand': {
+                            'order': 2,
+                            'description': 'Number of users that can review a paper',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'max_papers': {
+                            'order': 3,
+                            'description': 'Max number of reviews a user has to do',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'min_papers': {
+                            'order': 4,
+                            'description': 'Min number of reviews a user should do',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'alternates': {
+                            'order': 5,
+                            'description': 'The number of alternate reviewers to save (per-paper)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'paper_invitation': {
+                            'order': 6,
+                            'description': 'Invitation to get the paper metadata or Group id to get the users to be matched',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': self.alternate_matching_group if self.alternate_matching_group else venue.get_submission_id() + '.*',
+                                    'default': self.alternate_matching_group if self.alternate_matching_group else venue.get_submission_id(),
+                                }
+                            }
+                        },
+                        'match_group': {
+                            'order': 7,
+                            'description': 'Group id containing users to be matched',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '{}/.*'.format(venue.id),
+                                    'default': self.match_group.id,
+                                }
+                            }
+                        },
+                        # 'scores_specification': {},
+                        'aggregate_score_invitation': {
+                            'order': 9,
+                            'description': 'Invitation to store aggregated scores',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '{}/.*'.format(venue.id),
+                                    'default': self._get_edge_invitation_id('Aggregate_Score'),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'conflicts_invitation': {
+                            'order': 10,
+                            'description': 'Invitation to store conflict scores',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '{}/.*'.format(venue.id),
+                                    'default': venue.get_conflict_score_id(self.match_group.id),
+                                }
+                            }
+                        },
+                        'assignment_invitation': {
+                            'order': 11,
+                            'description': 'Invitation to store paper user assignments',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': venue.get_paper_assignment_id(self.match_group.id),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'deployed_assignment_invitation': {
+                            'order': 12,
+                            'description': 'Invitation to store deployed paper user assignments',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': venue.get_paper_assignment_id(self.match_group.id, deployed=True),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'invite_assignment_invitation': {
+                            'order': 13,
+                            'description': 'Invitation used to invite external or emergency reviewers',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': venue.get_paper_assignment_id(self.match_group.id, deployed=True),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'custom_user_demand_invitation': {
+                            'order': 14,
+                            'description': 'Invitation to store custom number of users required by papers',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '{}/.*/-/Custom_User_Demands$'.format(venue.id),
+                                    'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'custom_max_papers_invitation': {
+                            'order': 15,
+                            'description': 'Invitation to store custom max number of papers that can be assigned to reviewers',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  '{}/.*/-/Custom_Max_Papers$'.format(venue.id),
+                                    'default': venue.get_custom_max_papers_id(self.match_group.id),
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'config_invitation': {
+                            'order': 16,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const':  self._get_edge_invitation_id('Assignment_Configuration'),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'solver': {
+                            'order': 17,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'status': {
+                            'order': 18,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Initialized',
+                                        'Running',
+                                        'Error',
+                                        'No Solution',
+                                        'Complete',
+                                        'Deploying',
+                                        'Deployed',
+                                        'Deployment Error',
+                                        'Queued',
+                                        'Cancelled'
+                                    ],
+                                    'input': 'select',
+                                    'default': 'Initialized'
+                                }
+                            }
+                        },
+                        'error_message': {
+                            'order': 19,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  '.*',
+                                    'optional': True,
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'allow_zero_score_assignments': {
+                            'order': 20,
+                            'description': 'Select "No" only if you do not want to allow assignments with 0 scores. Note that if there are any users without publications, you need to select "Yes" in order to run a paper matching.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum':  ['Yes', 'No'],
+                                    'optional': True,
+                                    'default': 'Yes'
+                                }
+                            }
+                        },
+                        'randomized_probability_limits': {
+                            'order': 21,
+                            'description': 'Enter the probability limits if the selected solver is Randomized',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  r'[-+]?[0-9]*\.?[0-9]*',
+                                    'optional': True,
+                                    'default': '1'
+                                }
+                            }
+                        },
+                        'randomized_fraction_of_opt': {
+                            'order': 22,
+                            'description': 'result of randomized assignment',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  r'[-+]?[0-9]*\.?[0-9]*',
+                                    'optional': True,
+                                    'default': '',
+                                    'hidden': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        invitation = venue.invitation_builder.save_invitation(config_inv)
 
     def setup(self, compute_affinity_scores=False, compute_conflicts=False):
 
@@ -512,5 +849,5 @@ class Matching(object):
         if compute_conflicts:
             self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if compute_conflicts == 'neurips' else openreview.tools.get_profile_info)
 
-        # self._build_config_invitation(score_spec)
+        self._build_config_invitation(score_spec)
         return matching_status
