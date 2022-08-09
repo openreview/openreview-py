@@ -529,7 +529,7 @@ The TMLR Editors-in-Chief
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title "Paper title 2" has been rejected without further review.
+We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission titled "Paper title 2" has been rejected without further review.
 
 Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).
 
