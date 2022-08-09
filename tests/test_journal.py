@@ -81,7 +81,7 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
             request_page(selenium, accept_url, alert=True)
 
             notes = selenium.find_element_by_id("notes")
@@ -111,7 +111,7 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
             request_page(selenium, accept_url, alert=True)
 
             notes = selenium.find_element_by_id("notes")
@@ -184,12 +184,17 @@ class TestJournal():
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Suggest candidate Action Editor for your new TMLR submission')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == '''<p>Hi SomeFirstName User,</p>
-<p>Thank you for submitting your work titled &quot;Paper title&quot; to TMLR.</p>
-<p>Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.</p>
-<p>To do so, please follow this link: <a href=\"https://openreview.net/invitation?id=TMLR/Paper1/Action_Editors/-/Recommendation\">https://openreview.net/invitation?id=TMLR/Paper1/Action_Editors/-/Recommendation</a> or check your tasks in the Author Console: <a href=\"https://openreview.net/group?id=TMLR/Authors\">https://openreview.net/group?id=TMLR/Authors</a></p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
+
+Thank you for submitting your work titled "Paper title" to TMLR.
+
+Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+
+To do so, please follow this link: https://openreview.net/invitation?id=TMLR/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=TMLR/Authors
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+The TMLR Editors-in-Chief
 '''
 
         author_group=openreview_client.get_group(f"{venue_id}/Paper1/Authors")
@@ -240,16 +245,21 @@ class TestJournal():
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for your paper Paper title')
         assert len(messages) == 2
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] You are late in performing a task for your paper Paper title')
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>Our records show that you are late on the current task:</p>
-<p>Task: Recommendation<br>
-Submission: Paper title<br>
-Number of days late: 1<br>
-Link: <a href=\"https://openreview.net/group?id=TMLR/Authors#author-tasks\">https://openreview.net/group?id=TMLR/Authors#author-tasks</a></p>
-<p>Please follow the provided link and complete your task ASAP.</p>
-<p>We thank you for your cooperation.</p>
-<p>The TMLR Editors-in-Chief</p>
-'''        
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+Our records show that you are late on the current task:
+
+  Task: Recommendation
+  Submission: Paper title
+  Number of days late: 1
+  Link: https://openreview.net/group?id=TMLR/Authors#author-tasks
+
+Please follow the provided link and complete your task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
+'''
 
         ## Update submission 1
         updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
@@ -370,13 +380,21 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Authors#author-tasks\">http
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>With this email, we request that you manage the review process for a new TMLR submission titled &quot;Paper title UPDATED&quot;.</p>
-<p>As a reminder, TMLR Action Editors (AEs) are <strong>expected to accept all AE requests</strong> to manage submissions that fall within your expertise and quota. Reasonable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at <a href=\"mailto:tmlr@jmlr.org\">tmlr@jmlr.org</a>.</p>
-<p>Your first task is to make sure the submitted preprint is appropriate for TMLR and respects our submission guidelines. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication). If you suspect but are unsure about whether a submission might need to be desk rejected for any other reasons (e.g. lack of fit with the scope of TMLR or lack of technical depth), please email us.</p>
-<p>Please follow this link to perform this task: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review_Approval">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review_Approval</a></p>
-<p>If you think the submission can continue through TMLR's review process, click the button &quot;Under Review&quot;. Otherwise, click on &quot;Desk Reject&quot;. Once the submission has been confirmed, then the review process will begin, and your next step will be to assign 3 reviewers to the paper. You will get a follow up email when OpenReview is ready for you to assign these 3 reviewers.</p>
-<p>We thank you for your essential contribution to TMLR!</p>\n<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+With this email, we request that you manage the review process for a new TMLR submission titled "Paper title UPDATED".
+
+As a reminder, TMLR Action Editors (AEs) are **expected to accept all AE requests** to manage submissions that fall within your expertise and quota. Reasonable exceptions are 1) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of fully performing your AE duties or 2) you have a conflict of interest with one of the authors. If any such exception applies to you, contact us at tmlr@jmlr.org.
+
+Your first task is to make sure the submitted preprint is appropriate for TMLR and respects our submission guidelines. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication). If you suspect but are unsure about whether a submission might need to be desk rejected for any other reasons (e.g. lack of fit with the scope of TMLR or lack of technical depth), please email us.
+
+Please follow this link to perform this task: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Review_Approval
+
+If you think the submission can continue through TMLR's review process, click the button "Under Review". Otherwise, click on "Desk Reject". Once the submission has been confirmed, then the review process will begin, and your next step will be to assign 3 reviewers to the paper. You will get a follow up email when OpenReview is ready for you to assign these 3 reviewers.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
 '''
 
         ## Try to assign the same AE again and get an error
@@ -452,12 +470,17 @@ note={Under review}
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Perform reviewer assignments for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>With this email, we request that you assign 3 reviewers to your assigned TMLR submission &quot;Paper title UPDATED&quot;. The assignments must be completed <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors\">https://openreview.net/group?id=TMLR/Action_Editors</a> and click on &quot;Edit Assignment&quot; for that paper in your &quot;Assigned Papers&quot; console.</p>
-<p>As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.</p>
-<p>Once assigned, reviewers will be asked to acknowledge on OpenReview their responsibility to review this submission. This acknowledgement will be made visible to you on the OpenReview page of the submission. If the reviewer has not acknowledged their responsibility a couple of days after their assignment, consider reaching out to them directly to confirm.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+With this email, we request that you assign 3 reviewers to your assigned TMLR submission "Paper title UPDATED". The assignments must be completed **within 1 week** ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/group?id=TMLR/Action_Editors and click on "Edit Assignment" for that paper in your "Assigned Papers" console.
+
+As a reminder, up to their annual quota of six reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.
+
+Once assigned, reviewers will be asked to acknowledge on OpenReview their responsibility to review this submission. This acknowledgement will be made visible to you on the OpenReview page of the submission. If the reviewer has not acknowledged their responsibility a couple of days after their assignment, consider reaching out to them directly to confirm.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
 '''
 
         ## Check active invitations
@@ -504,12 +527,17 @@ note={Under review}
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title &quot;Paper title 2&quot; has been rejected without further review.</p>
-<p>Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).</p>
-<p>To know more about the decision, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_2}\">https://openreview.net/forum?id={note_id_2}</a></p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+We are sorry to inform you that, after consideration by the assigned Action Editor, your TMLR submission title "Paper title 2" has been rejected without further review.
+
+Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).
+
+To know more about the decision, please follow this link: https://openreview.net/forum?id={note_id_2}
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+The TMLR Editors-in-Chief
 '''
 
         note = joelle_client.get_note(note_id_2)
@@ -628,14 +656,22 @@ note={Withdrawn}
         time.sleep(6)
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
-<p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
-<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement</a></p>
-<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief<br>
-note: replies to this email will go to the AE, Joelle Pineau.</p>
+        assert messages[0]['content']['text'] == f'''Hi David Belanger,
+
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+
+Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement
+
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
+
+To submit your review, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks
+
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+note: replies to this email will go to the AE, Joelle Pineau.
 '''
         assert messages[0]['content']['replyTo'] == 'joelle@mailseven.com'
 
@@ -664,11 +700,15 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Acknowledgement of Reviewer Responsibility')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
-<p>TMLR operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of TMLR that might differ from your previous reviewing experience.</p>
-<p>To perform this quick task, simply visit the following link: <a href=\"https://openreview.net/forum?id={forum_notes[0].id}&amp;invitationId=TMLR/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement\">https://openreview.net/forum?id={forum_notes[0].id}&amp;invitationId=TMLR/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement</a></p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi David Belanger,
+
+TMLR operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of TMLR that might differ from your previous reviewing experience.
+
+To perform this quick task, simply visit the following link: https://openreview.net/forum?id={forum_notes[0].id}&invitationId=TMLR/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
 '''
 
         ## Carlos Mondragon
@@ -686,14 +726,22 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
-<p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
-<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement</a></p>
-<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief<br>
-note: replies to this email will go to the AE, Joelle Pineau.</p>
+        assert messages[0]['content']['text'] == f'''Hi Carlos Mondragon,
+
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+
+Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement
+
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
+
+To submit your review, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks
+
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+note: replies to this email will go to the AE, Joelle Pineau.
 '''
 
         ## Check reviewer assignment reminders
@@ -713,15 +761,20 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'joelle@mailseven.com'
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>Our records show that you are late on the current action editor task:</p>
-<p>Task: Reviewer Assignment<br>
-Submission: Paper title UPDATED<br>
-Number of days late: 1<br>
-Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks\">https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks</a></p>
-<p>Please follow the provided link and complete your task ASAP.</p>
-<p>We thank you for your cooperation.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+Our records show that you are late on the current action editor task:
+
+  Task: Reviewer Assignment
+  Submission: Paper title UPDATED
+  Number of days late: 1
+  Link: https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks
+
+Please follow the provided link and complete your task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
 '''
 
 
@@ -740,14 +793,22 @@ Link: <a href=\"https://openreview.net/group?id=TMLR/Action_Editors#action-edito
 
         messages = journal.client.get_messages(to = 'javier@mailtwo.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Javier Burroni,</p>
-<p>With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title UPDATED&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
-<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~Javier_Burroni1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/Reviewers/-/~Javier_Burroni1/Assignment/Acknowledgement</a></p>
-<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief<br>
-note: replies to this email will go to the AE, Joelle Pineau.</p>
+        assert messages[0]['content']['text'] == f'''Hi Javier Burroni,
+
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+
+Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~Javier_Burroni1/Assignment/Acknowledgement
+
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
+
+To submit your review, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks
+
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+note: replies to this email will go to the AE, Joelle Pineau.
 '''
 
         reviewerrs_group = raia_client.get_group(f'{venue_id}/Paper1/Reviewers')
@@ -859,13 +920,17 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
-        assert len(messages) == 1        
-        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
-<p>An official comment has been posted on a submission for which you are serving as Editor-In-Chief.</p>
-<p>Submission: Paper title UPDATED<br>
-Title: I have a conflict with this paper<br>
-Comment: I know the authors and I can not review this paper.</p>
-<p>To view the official comment, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note['note']['id']}</a></p>
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+
+An official comment has been posted on a submission for which you are serving as Editor-In-Chief.
+
+Submission: Paper title UPDATED
+Title: I have a conflict with this paper
+Comment: I know the authors and I can not review this paper.
+
+To view the official comment, click here: https://openreview.net/forum?id={note_id_1}&noteId={comment_note['note']['id']}
+
 '''
 
         ## Post an official comment from the EIC to the EIC only
@@ -918,12 +983,16 @@ Comment: I know the authors and I can not review this paper.</p>
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Public Comment posted on submission Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'joelle@mailseven.com'
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>A public comment has been posted on a submission for which you are an Action Editor.</p>
-<p>Submission: Paper title UPDATED<br>
-Title: Comment title<br>
-Comment: This is an inapropiate comment</p>
-<p>To view the public comment, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note_id}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={comment_note_id}</a></p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+A public comment has been posted on a submission for which you are an Action Editor.
+
+Submission: Paper title UPDATED
+Title: Comment title
+Comment: This is an inapropiate comment
+
+To view the public comment, click here: https://openreview.net/forum?id={note_id_1}&noteId={comment_note_id}
+
 '''
 
 
@@ -1014,15 +1083,20 @@ Comment: This is an inapropiate comment</p>
         messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'carlos@mailthree.com'
-        assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
-<p>Our records show that you are late on the current reviewing task:</p>
-<p>Task: Review<br>
-Submission: Paper title UPDATED<br>
-Number of days late: 1<br>
-Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>Please follow the provided link and complete your task ASAP.</p>
-<p>We thank you for your cooperation.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Carlos Mondragon,
+
+Our records show that you are late on the current reviewing task:
+
+  Task: Review
+  Submission: Paper title UPDATED
+  Number of days late: 1
+  Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow the provided link and complete your task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
 '''
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
@@ -1048,15 +1122,20 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'joelle@mailseven.com'
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>Our records show that a reviewer on a paper you are the AE for is <em>one week</em> late on a reviewing task:</p>
-<p>Task: Review<br>
-Reviewer: Carlos Mondragon<br>
-Submission: Paper title UPDATED<br>
-Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>Please follow up directly with the reviewer in question to ensure they complete their task ASAP.</p>
-<p>We thank you for your cooperation.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+Our records show that a reviewer on a paper you are the AE for is *one week* late on a reviewing task:
+
+Task: Review
+Reviewer: Carlos Mondragon
+Submission: Paper title UPDATED
+Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow up directly with the reviewer in question to ensure they complete their task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
 '''
 
         ## Check review reminders
@@ -1108,15 +1187,20 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 
         messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 3
-        assert messages[2]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
-<p>Our records show that you are late on the current reviewing task:</p>
-<p>Task: Assignment Acknowledgement<br>
-Submission: Paper title UPDATED<br>
-Number of days late: 1<br>
-Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>Please follow the provided link and complete your task ASAP.</p>
-<p>We thank you for your cooperation.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[2]['content']['text'] == f'''Hi Carlos Mondragon,
+
+Our records show that you are late on the current reviewing task:
+
+  Task: Assignment Acknowledgement
+  Submission: Paper title UPDATED
+  Number of days late: 1
+  Link: https://openreview.net/forum?id={note_id_1}
+
+Please follow the provided link and complete your task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
 '''
 
 
@@ -1142,11 +1226,14 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment Acknowledgement posted on submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>Carlos Mondragon posted an assignment acknowledgement on a submission for which you are an Action Editor.</p>
-<p>Submission: Paper title UPDATED<br>
-Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.</p>
-<p>To view the acknowledgement, click here: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={assignment_ack_note['note']['id']}</a></p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+Carlos Mondragon posted an assignment acknowledgement on a submission for which you are an Action Editor.
+
+Submission: Paper title UPDATED
+Assignment acknowledgement: I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.
+
+To view the acknowledgement, click here: https://openreview.net/forum?id={note_id_1}&noteId={assignment_ack_note['note']['id']}
 '''
 
 
@@ -1206,35 +1293,50 @@ Assignment acknowledgement: I acknowledge my responsibility to submit a review f
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Reviewer responses and discussion for your TMLR submission')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>Now that 3 reviews have been submitted for your submission  Paper title UPDATED, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.</p>
-<p>You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.</p>
-<p>Visit the following link to respond to the reviews: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>The TMLR Editors-in-Chief<br>
-note: replies to this email will go to the AE, Joelle Pineau.</p>
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+Now that 3 reviews have been submitted for your submission  Paper title UPDATED, all reviews have been made public. If you haven’t already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+
+You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+
+Visit the following link to respond to the reviews: https://openreview.net/forum?id={note_id_1}
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+The TMLR Editors-in-Chief
+note: replies to this email will go to the AE, Joelle Pineau.
 '''
         assert messages[0]['content']['replyTo'] == 'joelle@mailseven.com'
 
         messages = openreview_client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Carlos Mondragon,</p>
-<p>There are now 3 reviews that have been submitted for your assigned submission &quot;Paper title UPDATED&quot; and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need <strong>within the next 2 weeks</strong> to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.</p>
-<p>You will find the OpenReview page for this submission at this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief<br>
-note: replies to this email will go to the AE, Joelle Pineau.</p>
+        assert messages[0]['content']['text'] == f'''Hi Carlos Mondragon,
+
+There are now 3 reviews that have been submitted for your assigned submission "Paper title UPDATED" and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
+
+You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={note_id_1}
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+note: replies to this email will go to the AE, Joelle Pineau.
 '''
 
         messages = openreview_client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Start of author discussion for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>Now that 3 reviews have been submitted for submission Paper title UPDATED, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in <strong>2 weeks</strong>.</p>
-<p>You will find the OpenReview page for this submission at this link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+Now that 3 reviews have been submitted for submission Paper title UPDATED, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
+
+You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={note_id_1}
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
 '''
 
         ## Edit a review and don't release the review again
@@ -1319,14 +1421,20 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
         messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
         assert len(messages) == 4
         messages = journal.client.get_messages(to= 'hugo@mailsix.com', subject = '[TMLR] Submit official recommendation for TMLR submission Paper title UPDATED')
-        assert messages[0]['content']['text'] == f'''<p>Hi Hugo Larochelle,</p>
-<p>Thank you for submitting your review and engaging with the authors of TMLR submission &quot;Paper title UPDATED&quot;.</p>
-<p>You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.</p>
-<p>We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Official_Recommendation\">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Official_Recommendation</a></p>
-<p>For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief<br>
-note: replies to this email will go to the AE, Joelle Pineau.</p>
+        assert messages[0]['content']['text'] == f'''Hi Hugo Larochelle,
+
+Thank you for submitting your review and engaging with the authors of TMLR submission "Paper title UPDATED".
+
+You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
+
+We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Official_Recommendation
+
+For more details and guidelines on performing your review, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+note: replies to this email will go to the AE, Joelle Pineau.
 '''
         messages = journal.client.get_messages(subject = '[TMLR] Reviewers must submit official recommendation for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
@@ -1407,24 +1515,29 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Evaluate reviewers and submit decision for TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>Thank you for overseeing the review process for TMLR submission &quot;Paper title UPDATED&quot;.</p>
-<p>All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:</p>
-<ul>
-<li>Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.</li>
-<li>Rate the quality of the reviews submitted by the reviewers. <strong>You will not be able to submit your decision until these ratings have been submitted</strong>. To rate a review, go on the submission's page and click on button &quot;Rating&quot; for each of the reviews.</li>
-</ul>
-<p>We ask that you submit your decision <strong>within 1 week</strong> ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Decision">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Decision</a></p>
-<p>The possible decisions are:</p>
-<ul>
-<li><strong>Accept as is</strong>: once its camera ready version is submitted, the manuscript will be marked as accepted.</li>
-<li><strong>Accept with minor revision</strong>: to use if you wish to request some specific revisions to the manuscript, to be specified explicitly in your decision comments. These revisions will be expected from the authors when they submit their camera ready version.</li>
-<li><strong>Reject</strong>: the paper is rejected, but you may indicate whether you would be willing to consider a significantly revised version of the manuscript. Such a revised submission will need to be entered as a new submission, that will also provide a link to this rejected submission as well as a description of the changes made since.</li>
-</ul>
-<p>Your decision may also include certification(s) recommendations for the submission (in case of an acceptance).</p>
-<p>For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+Thank you for overseeing the review process for TMLR submission "Paper title UPDATED".
+
+All reviewers have submitted their official recommendation of a decision for the submission. Therefore it is now time for you to determine a decision for the submission. Before doing so:
+
+- Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.
+- Rate the quality of the reviews submitted by the reviewers. **You will not be able to submit your decision until these ratings have been submitted**. To rate a review, go on the submission's page and click on button "Rating" for each of the reviews.
+
+We ask that you submit your decision **within 1 week** ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Decision
+
+The possible decisions are:
+- **Accept as is**: once its camera ready version is submitted, the manuscript will be marked as accepted.
+- **Accept with minor revision**: to use if you wish to request some specific revisions to the manuscript, to be specified explicitly in your decision comments. These revisions will be expected from the authors when they submit their camera ready version.
+- **Reject**: the paper is rejected, but you may indicate whether you would be willing to consider a significantly revised version of the manuscript. Such a revised submission will need to be entered as a new submission, that will also provide a link to this rejected submission as well as a description of the changes made since.
+
+Your decision may also include certification(s) recommendations for the submission (in case of an acceptance).
+
+For more details and guidelines on performing your review, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
 '''
 
         ## Update the official recommendation and don't send the email again
@@ -1537,13 +1650,19 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title UPDATED')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title &quot;Paper title UPDATED&quot; is accepted as is.</p>
-<p>To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button &quot;Camera Ready Revision&quot;: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.</p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your contribution to TMLR and congratulate you for your successful submission!</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title "Paper title UPDATED" is accepted as is.
+
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_1}
+
+In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+We thank you for your contribution to TMLR and congratulate you for your successful submission!
+
+The TMLR Editors-in-Chief
 '''
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
@@ -1587,13 +1706,20 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Review camera ready version for TMLR paper Paper title VERSION 2')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>The authors of TMLR paper Paper title VERSION 2 have now submitted the deanonymized camera ready version of their work.</p>
-<p>As your final task for this submission, please verify that the camera ready manuscript complies with the TMLR stylefile, with all author information inserted in the manuscript as well as the link to the OpenReview page for the submission.</p>
-<p>Moreover, if the paper was accepted with minor revision, verify that the changes requested have been followed.</p>
-<p>Visit the following link to perform this task: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Camera_Ready_Verification">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Camera_Ready_Verification</a></p>
-<p>If any correction is needed, you may contact the authors directly by email or through OpenReview.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+The authors of TMLR paper Paper title VERSION 2 have now submitted the deanonymized camera ready version of their work.
+
+As your final task for this submission, please verify that the camera ready manuscript complies with the TMLR stylefile, with all author information inserted in the manuscript as well as the link to the OpenReview page for the submission.
+
+Moreover, if the paper was accepted with minor revision, verify that the changes requested have been followed.
+
+Visit the following link to perform this task: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Camera_Ready_Verification
+
+If any correction is needed, you may contact the authors directly by email or through OpenReview.
+
+The TMLR Editors-in-Chief
+
 '''
 
         ## Check reminders
@@ -1617,12 +1743,15 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] AE is late in performing a task for assigned paper Paper title VERSION 2')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
-<p>Our records show that the AE for submission Paper title VERSION 2 is <em>one week</em> late on an AE task:</p>
-<p>Task: Camera Ready Verification<br>
-AE: Joelle Pineau<br>
-Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>OpenReview Team</p>
+        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+
+Our records show that the AE for submission Paper title VERSION 2 is *one week* late on an AE task:
+
+Task: Camera Ready Verification
+AE: Joelle Pineau
+Link: https://openreview.net/forum?id={note_id_1}
+
+OpenReview Team
 '''
 
         ## Check reminders
@@ -1663,10 +1792,14 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Camera ready version accepted for your TMLR submission Paper title VERSION 2')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>This is to inform you that your submitted camera ready version of your paper Paper title VERSION 2 has been verified and confirmed by the Action Editor.</p>
-<p>We thank you again for your contribution to TMLR and congratulate you for your successful submission!</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+This is to inform you that your submitted camera ready version of your paper Paper title VERSION 2 has been verified and confirmed by the Action Editor.
+
+We thank you again for your contribution to TMLR and congratulate you for your successful submission!
+
+The TMLR Editors-in-Chief
+
 '''
 
         note = openreview_client.get_note(note_id_1)
@@ -1724,9 +1857,11 @@ note={Featured Certification, Reproducibility Certification}
         messages = journal.client.get_messages(subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
         assert len(messages) == 2
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Authors request to retract TMLR submission Paper title VERSION 2')
-        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
-<p>The authors of paper Paper title VERSION 2 are requesting to retract the paper. An EIC must confirm and accept the retraction: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Retraction_Approval">https://openreview.net/forum?id={note_id_1}&amp;invitationId=TMLR/Paper1/-/Retraction_Approval</a></p>
-<p>OpenReview Team</p>
+        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+
+The authors of paper Paper title VERSION 2 are requesting to retract the paper. An EIC must confirm and accept the retraction: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Retraction_Approval
+
+OpenReview Team
 '''
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Retraction_Approval")
 
@@ -1746,10 +1881,14 @@ note={Featured Certification, Reproducibility Certification}
         messages = journal.client.get_messages(subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
         assert len(messages) == 2
         messages = journal.client.get_messages(to='test@mail.com', subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>As TMLR Editors-in-Chief, we have submitted our decision on your request to retract your accepted paper at TMLR titled &quot;Paper title VERSION 2&quot;.</p>
-<p>To view our decision, follow this link: <a href=\"https://openreview.net/forum?id={note_id_1}&amp;noteId={approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_1}&amp;noteId={approval_note['note']['id']}</a></p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+As TMLR Editors-in-Chief, we have submitted our decision on your request to retract your accepted paper at TMLR titled "Paper title VERSION 2".
+
+To view our decision, follow this link: https://openreview.net/forum?id={note_id_1}&noteId={approval_note['note']['id']}
+
+The TMLR Editors-in-Chief
+
 '''
 
         note = openreview_client.get_note(retraction_note['note']['id'])
@@ -1865,14 +2004,22 @@ note={Retracted after acceptance}
 
         messages = journal.client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title 4')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi David Belanger,</p>
-<p>With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned TMLR submission &quot;Paper title 4&quot;. If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.</p>
-<p>Please acknowledge on OpenReview that you have received this review assignment by following this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement</a></p>
-<p>As a reminder, reviewers are <strong>expected to accept all assignments</strong> for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks\">https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks</a></p>\n<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your essential contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief<br>
-note: replies to this email will go to the AE, Joelle Pineau.</p>
+        assert messages[0]['content']['text'] == f'''Hi David Belanger,
+
+With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned TMLR submission "Paper title 4". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+
+Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_4}&invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement
+
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
+
+To submit your review, please follow this link: https://openreview.net/forum?id={note_id_4}&invitationId=TMLR/Paper4/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=TMLR/Reviewers#reviewer-tasks
+
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit jmlr.org/tmlr.
+
+We thank you for your essential contribution to TMLR!
+
+The TMLR Editors-in-Chief
+note: replies to this email will go to the AE, Joelle Pineau.
 '''
 
         ## Assign Carlos Mondragon
@@ -1924,13 +2071,20 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been submitted')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Joelle Pineau,</p>
-<p>This is to inform you that an OpenReview user has requested to review TMLR submission Paper title 4, which you are the AE for.</p>
-<p>Please consult the request and either accept or reject it, by visiting this link:</p>
-<p><a href=\"https://openreview.net/forum?id={note_id_4}&amp;noteId={Volunteer_to_Review_note['note']['id']}\">https://openreview.net/forum?id={note_id_4}&amp;noteId={Volunteer_to_Review_note['note']['id']}</a></p>
-<p>We ask that you provide a response within 1 week, by {(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (<a href=\"https://openreview.net/profile?id=~Tom_Rain1\">https://openreview.net/profile?id=~Tom_Rain1</a>) before making a decision.</p>
-<p>We thank you for your contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+
+This is to inform you that an OpenReview user has requested to review TMLR submission Paper title 4, which you are the AE for.
+
+Please consult the request and either accept or reject it, by visiting this link:
+
+https://openreview.net/forum?id={note_id_4}&noteId={Volunteer_to_Review_note['note']['id']}
+
+We ask that you provide a response within 1 week, by {(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (https://openreview.net/profile?id=~Tom_Rain1) before making a decision.
+
+We thank you for your contribution to TMLR!
+
+The TMLR Editors-in-Chief
+
 '''
 
         ## Post a response
@@ -1989,14 +2143,20 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Request to review TMLR submission "Paper title 4" has been accepted')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Peter Snow,</p>
-<p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 4 has been accepted by the Action Editor (AE).</p>
-<p>You are required to submit your review within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.</p>
-<p>To submit your review, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review">https://openreview.net/forum?id={note_id_4}&amp;invitationId=TMLR/Paper4/-/Review</a> or check your tasks in the Reviewers Console: <a href=\"https://openreview.net/group?id=TMLR/Reviewers\">https://openreview.net/group?id=TMLR/Reviewers</a></p>
-<p>Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your contribution to TMLR!</p>
-<p>The TMLR Editors-in-Chief<br>
-note: replies to this email will go to the AE, Joelle Pineau.</p>
+        assert messages[0]['content']['text'] == f'''Hi Peter Snow,
+
+This is to inform you that your request to act as a reviewer for TMLR submission Paper title 4 has been accepted by the Action Editor (AE).
+
+You are required to submit your review within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
+
+To submit your review, please follow this link: https://openreview.net/forum?id={note_id_4}&invitationId=TMLR/Paper4/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=TMLR/Reviewers
+
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit jmlr.org/tmlr.
+
+We thank you for your contribution to TMLR!
+
+The TMLR Editors-in-Chief
+note: replies to this email will go to the AE, Joelle Pineau.
 '''
 
         messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Assignment to review new TMLR submission Paper title 4')
@@ -2185,13 +2345,19 @@ note: replies to this email will go to the AE, Joelle Pineau.</p>
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 4')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>We are sorry to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title &quot;Paper title 4&quot; is rejected.</p>
-<p>To know more about the decision, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_4}\">https://openreview.net/forum?id={note_id_4}</a></p>
-<p>The action editor might have indicated that they would be willing to consider a significantly revised version of the manuscript. If so, a revised submission will need to be entered as a new submission, that must also provide a link to this previously rejected submission as well as a description of the changes made since.</p>
-<p>In any case, your submission will remain publicly available on OpenReview. You may decide to reveal your identity and deanonymize your submission on the OpenReview page. Doing so will however preclude you from submitting any revised version of the manuscript to TMLR.</p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+We are sorry to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title "Paper title 4" is rejected.
+
+To know more about the decision, please follow this link: https://openreview.net/forum?id={note_id_4}
+
+The action editor might have indicated that they would be willing to consider a significantly revised version of the manuscript. If so, a revised submission will need to be entered as a new submission, that must also provide a link to this previously rejected submission as well as a description of the changes made since.
+
+In any case, your submission will remain publicly available on OpenReview. You may decide to reveal your identity and deanonymize your submission on the OpenReview page. Doing so will however preclude you from submitting any revised version of the manuscript to TMLR.
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+The TMLR Editors-in-Chief
 '''
 
         note = openreview_client.get_note(note_id_4)
@@ -2530,14 +2696,21 @@ note={Rejected}
 
         messages = journal.client.get_messages(to = 'raia@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 5')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
-<p>We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title &quot;Paper title 5&quot; is accepted with minor revision.</p>
-<p>To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button &quot;Camera Ready Revision&quot;: <a href=\"https://openreview.net/forum?id={note_id_5}\">https://openreview.net/forum?id={note_id_5}</a></p>
-<p>The Action Editor responsible for your submission will have provided a description of the revision expected for accepting your final manuscript.</p>
-<p>In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.</p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>We thank you for your contribution to TMLR and congratulate you for your successful submission!</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+
+We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission title "Paper title 5" is accepted with minor revision.
+
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_5}
+
+The Action Editor responsible for your submission will have provided a description of the revision expected for accepting your final manuscript.
+
+In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+We thank you for your contribution to TMLR and congratulate you for your successful submission!
+
+The TMLR Editors-in-Chief
 '''
         ## Expire review invitations to the jobs are cancelled
         withdraw_note = raia_client.post_note_edit(invitation='TMLR/Paper5/-/Withdrawal',
@@ -2936,10 +3109,14 @@ note={Withdrawn}
 
         messages = journal.client.get_messages(to = 'tom@mail.com', subject = '[TMLR] Request to review TMLR submission "Paper title 7" was not accepted')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi Tom Rain,</p>
-<p>This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: <a href=\"https://openreview.net/forum?id={note_id_7}&amp;noteId={Volunteer_to_Review_approval_note['note']['id']}\">https://openreview.net/forum?id={note_id_7}&amp;noteId={Volunteer_to_Review_approval_note['note']['id']}</a>.</p>
-<p>Respectfully,</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi Tom Rain,
+
+This is to inform you that your request to act as a reviewer for TMLR submission Paper title 7 was not accepted by the Action Editor (AE). If you would like to know more about the reason behind this decision, you can click here: https://openreview.net/forum?id={note_id_7}&noteId={Volunteer_to_Review_approval_note['note']['id']}.
+
+Respectfully,
+
+The TMLR Editors-in-Chief
+
 '''
 
         ## Solicit review to more than 2 papers
@@ -3163,12 +3340,17 @@ note={Withdrawn}
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 9')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''<p>Hi SomeFirstName User,</p>
-<p>We are sorry to inform you that, after consideration by the Editors-in-Chief, your TMLR submission title &quot;Paper title 9&quot; has been rejected without further review.</p>
-<p>Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).</p>
-<p>To know more about the decision, please follow this link: <a href=\"https://openreview.net/forum?id={note_id_9}\">https://openreview.net/forum?id={note_id_9}</a></p>
-<p>For more details and guidelines on the TMLR review process, visit <a href=\"http://jmlr.org/tmlr\">jmlr.org/tmlr</a>.</p>
-<p>The TMLR Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+We are sorry to inform you that, after consideration by the Editors-in-Chief, your TMLR submission title "Paper title 9" has been rejected without further review.
+
+Cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified TMLR stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication).
+
+To know more about the decision, please follow this link: https://openreview.net/forum?id={note_id_9}
+
+For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
+
+The TMLR Editors-in-Chief
 '''        
         
 
