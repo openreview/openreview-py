@@ -765,10 +765,10 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
 Our records show that you are late on the current action editor task:
 
-  Task: Reviewer Assignment
-  Submission: Paper title UPDATED
-  Number of days late: 1
-  Link: https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks
+Task: Reviewer Assignment
+Submission: Paper title UPDATED
+Number of days late: 1
+Link: https://openreview.net/group?id=TMLR/Action_Editors#action-editor-tasks
 
 Please follow the provided link and complete your task ASAP.
 
@@ -1087,10 +1087,10 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
 
 Our records show that you are late on the current reviewing task:
 
-  Task: Review
-  Submission: Paper title UPDATED
-  Number of days late: 1
-  Link: https://openreview.net/forum?id={note_id_1}
+Task: Review
+Submission: Paper title UPDATED
+Number of days late: 1
+Link: https://openreview.net/forum?id={note_id_1}
 
 Please follow the provided link and complete your task ASAP.
 
@@ -1161,13 +1161,16 @@ The TMLR Editors-in-Chief
         messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper Paper title UPDATED')
         assert len(messages) == 1
 
-        assert messages[0]['content']['text'] == f'''<p>Hi Raia Hadsell,</p>
-<p>Our records show that a reviewer is <em>one month</em> late on a reviewing task:</p>
-<p>Task: Review<br>
-Reviewer: Carlos Mondragon<br>
-Submission: Paper title UPDATED<br>
-Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview.net/forum?id={note_id_1}</a></p>
-<p>OpenReview Team</p>
+        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+
+Our records show that a reviewer is *one month* late on a reviewing task:
+
+Task: Review
+Reviewer: Carlos Mondragon
+Submission: Paper title UPDATED
+Link: https://openreview.net/forum?id={note_id_1}
+
+OpenReview Team
 '''        
 
 
@@ -1191,10 +1194,10 @@ Link: <a href=\"https://openreview.net/forum?id={note_id_1}\">https://openreview
 
 Our records show that you are late on the current reviewing task:
 
-  Task: Assignment Acknowledgement
-  Submission: Paper title UPDATED
-  Number of days late: 1
-  Link: https://openreview.net/forum?id={note_id_1}
+Task: Assignment Acknowledgement
+Submission: Paper title UPDATED
+Number of days late: 1
+Link: https://openreview.net/forum?id={note_id_1}
 
 Please follow the provided link and complete your task ASAP.
 

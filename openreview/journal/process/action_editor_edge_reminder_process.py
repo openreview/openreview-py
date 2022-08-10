@@ -31,7 +31,7 @@ Please follow the provided link and complete your task ASAP.
 We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
-    ''',
+''',
             replyTo=journal.contact_info
         )
 

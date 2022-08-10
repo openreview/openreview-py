@@ -33,7 +33,7 @@ Please follow the provided link and complete your task ASAP.
 We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
-    ''',
+''',
             replyTo=assigned_action_editor if assigned_action_editor else journal.contact_info
         )
 
@@ -80,7 +80,7 @@ Submission: {submission.content['title']['value']}
 Link: https://openreview.net/forum?id={submission.id}
 
 OpenReview Team
-    ''',
+''',
                 replyTo=journal.contact_info
         )        
 
