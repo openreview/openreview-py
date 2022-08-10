@@ -527,12 +527,12 @@ class TestVenueRequest():
         messages = client.get_messages(to='reviewer_candidate1@email.com')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[0]['content']['text'].startswith('<p>Dear Reviewer One,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.</p>')
+        assert messages[0]['content']['text'].startswith('Dear Reviewer One,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         messages = client.get_messages(to='reviewer_candidate2@email.com')
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[0]['content']['text'].startswith('<p>Dear Reviewer Two,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.</p>')
+        assert messages[0]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
@@ -542,7 +542,7 @@ class TestVenueRequest():
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
 
-        invitation_url = re.search('href="https://.*">', messages[0]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
@@ -622,12 +622,12 @@ class TestVenueRequest():
         assert messages and len(messages) == 2
 
         assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('<p>Dear Reviewer OneTilde,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+        assert messages[1]['content']['text'].startswith('Dear Reviewer OneTilde,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         messages = client.get_messages(to='reviewer_two_tilde@mail.com')
         assert messages and len(messages) == 2
         assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('<p>Dear Reviewer TwoTilde,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+        assert messages[1]['content']['text'].startswith('Dear Reviewer TwoTilde,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
@@ -669,12 +669,12 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
 
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Area Chair"
-        assert messages[0]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
+        assert messages[0]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
 
         messages = client.get_messages(to='reviewer_candidate2@email.com')
         assert messages and len(messages) == 3
         assert messages[2]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Area Chair"
-        assert messages[2]['content']['text'].startswith('<p>Dear Reviewer Two,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
+        assert messages[2]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
@@ -682,7 +682,7 @@ class TestVenueRequest():
         assert '2 users' in last_comment.content['invited']
 
         #accept AC invitation after having accepted reviewer invitation
-        invitation_url = re.search('href="https://.*">', messages[2]['content']['text']).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        invitation_url = re.search('https://.*\n', messages[2]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
@@ -725,7 +725,7 @@ class TestVenueRequest():
         messages = client.get_messages(to='reviewer_candidate1@email.com')
         assert messages and len(messages) == 2
         assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('<p>Dear invitee,</p>\n<p>You have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.</p>')
+        assert messages[1]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         messages = client.get_messages(to='reviewer_candidate2@email.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
         assert not messages
