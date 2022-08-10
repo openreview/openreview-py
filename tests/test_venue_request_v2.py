@@ -1186,30 +1186,30 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         reviewer_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Reviewers$')
         assert len(reviewer_groups) == 2
-        # assert 'V2.cc/2030/Conference' in reviewer_groups[0].readers
-        # assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
-        # assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviewer_groups[0].readers
+        assert 'V2.cc/2030/Conference' in reviewer_groups[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviewer_groups[0].readers
 
-        # assert 'V2.cc/2030/Conference' in reviewer_groups[0].deanonymizers
-        # assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
-        # assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference' in reviewer_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
 
-        # ac_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Area_Chairs$')
-        # assert len(ac_groups) == 2
-        # assert 'V2.cc/2030/Conference' in ac_groups[0].readers
-        # assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
-        # assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].readers
-        # assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].readers
+        ac_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Area_Chairs$')
+        assert len(ac_groups) == 2
+        assert 'V2.cc/2030/Conference' in ac_groups[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].readers
 
-        # assert 'V2.cc/2030/Conference' in ac_groups[0].deanonymizers
-        # assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
-        # assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
-        # assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference' in ac_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
 
-        # sac_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Senior_Area_Chairs$')
-        # assert len(sac_groups) == 2
-        # assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
-        # assert 'V2.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
+        sac_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Senior_Area_Chairs$')
+        assert len(sac_groups) == 2
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
+        assert 'V2.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
 
 #     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 

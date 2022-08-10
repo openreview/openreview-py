@@ -2,6 +2,7 @@ import os
 import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
+from .group import GroupBuilder
 from openreview.api import Group
 from .recruitment import Recruitment
 from . import matching
@@ -36,7 +37,11 @@ class Venue(object):
         self.use_recruitment_template = True
         self.support_user = 'OpenReview.net/Support'
         self.invitation_builder = InvitationBuilder(self)
+        self.group_builder = GroupBuilder(self)
         self.recruitment = Recruitment(self)
+        self.reviewer_identity_readers = []
+        self.area_chair_identity_readers = []
+        self.senior_area_chair_identity_readers = []        
 
     def get_id(self):
         return self.venue_id
@@ -179,8 +184,8 @@ class Venue(object):
         options['contact'] = self.contact
         return options
 
-    def get_submissions(self):
-        return self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self))
+    def get_submissions(self, sort=None):
+        return self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self), sort=sort)
 
     def set_group_variable(self, group_id, variable_name, value):
 
@@ -188,19 +193,6 @@ class Venue(object):
         group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
         # print(group.web[:1000])
         self.client.post_group(group)   
-
-    def has_area_chairs(self, has_area_chairs):
-        self.use_area_chairs = has_area_chairs
-        # pc_group = tools.get_group(self.client, self.get_program_chairs_id())
-        # if pc_group and pc_group.web:
-        #     # update PC console
-        #     if self.use_area_chairs:
-        #         self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', self.get_area_chairs_id())
-        #     else:
-        #         self.webfield_builder.edit_web_string_value(pc_group, 'AREA_CHAIRS_ID', '')
-
-    def has_senior_area_chairs(self, has_senior_area_chairs):
-        self.use_senior_area_chairs = has_senior_area_chairs
 
     def setup(self, program_chair_ids=[]):
     
@@ -346,33 +338,34 @@ class Venue(object):
         venue_id = self.venue_id
         submissions = self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self))
         
+        self.group_builder.create_paper_committee_groups()
         ## Create paper groups for each submission, given the authors group is going to be created during the submission time, we could consider creating all these groups
         ## during the setup matching stage, we don't to have them created right after the submission deadline. 
-        for submission in submissions:
-            editors_in_chief_id = f'{venue_id}/Editors_In_Chief'
-            action_editors_id = f'{venue_id}/Paper{submission.number}/Action_Editors'
-            reviewers_id = self.get_reviewers_id(submission.number)
-            authors_id = self.get_authors_id(submission.number)
+        # for submission in submissions:
+        #     editors_in_chief_id = f'{venue_id}/Editors_In_Chief'
+        #     action_editors_id = f'{venue_id}/Paper{submission.number}/Action_Editors'
+        #     reviewers_id = self.get_reviewers_id(submission.number)
+        #     authors_id = self.get_authors_id(submission.number)
 
-            action_editors_group=self.client.post_group(Group(id=action_editors_id,
-                    readers=[venue_id, action_editors_id],
-                    nonreaders=[authors_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    signatories=[venue_id, action_editors_id],
-                    members=[]
-                ))
+        #     action_editors_group=self.client.post_group(Group(id=action_editors_id,
+        #             readers=[venue_id, action_editors_id],
+        #             nonreaders=[authors_id],
+        #             writers=[venue_id],
+        #             signatures=[venue_id],
+        #             signatories=[venue_id, action_editors_id],
+        #             members=[]
+        #         ))
 
-            reviewers_group=self.client.post_group(Group(id=reviewers_id,
-                    readers=[venue_id, action_editors_id, reviewers_id],
-                    deanonymizers=[venue_id, action_editors_id],
-                    nonreaders=[authors_id],
-                    writers=[venue_id, action_editors_id],
-                    signatures=[venue_id],
-                    signatories=[venue_id],
-                    members=[],
-                    anonids=True
-                ))            
+        #     reviewers_group=self.client.post_group(Group(id=reviewers_id,
+        #             readers=[venue_id, action_editors_id, reviewers_id],
+        #             deanonymizers=[venue_id, action_editors_id],
+        #             nonreaders=[authors_id],
+        #             writers=[venue_id, action_editors_id],
+        #             signatures=[venue_id],
+        #             signatories=[venue_id],
+        #             members=[],
+        #             anonids=True
+        #         ))            
         
         ## Release the submissions to specified readers
         for submission in submissions:

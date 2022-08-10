@@ -38,12 +38,15 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
             readers=readers)
         )
 
-        if note.content.get('Area Chairs (Metareviewers)', '') in ['Yes, our venue has Area Chairs', 'Yes, our conference has Area Chairs']:
-            venue.has_area_chairs(True)
+        venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'           
+        venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'            
         venue.short_name = note.content.get('Abbreviated Venue Name')
         venue.name = note.content.get('Official Venue Name')
         venue.website = note.content.get('Official Website URL')
         venue.contact = note.content.get('contact_email')
+        venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
+        venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
+        venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
 
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)
@@ -247,9 +250,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
     }
 
-    builder.set_reviewer_identity_readers([readers_map[r] for r in note.content.get('reviewer_identity', [])])
-    builder.set_area_chair_identity_readers([readers_map[r] for r in note.content.get('area_chair_identity', [])])
-    builder.set_senior_area_chair_identity_readers([readers_map[r] for r in note.content.get('senior_area_chair_identity', [])])
+    builder.set_reviewer_identity_readers(get_identity_readers(note, 'reviewer_identity'))
+    builder.set_area_chair_identity_readers(get_identity_readers(note, 'area_chair_identity'))
+    builder.set_senior_area_chair_identity_readers(get_identity_readers(note, 'senior_area_chair_identity'))
     builder.set_reviewer_roles(note.content.get('reviewer_roles', ['Reviewers']))
     builder.set_area_chair_roles(note.content.get('area_chair_roles', ['Area_Chairs']))
     builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
@@ -263,6 +266,21 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         builder.set_venue_heading_map(decision_heading_map)
 
     return builder
+
+def get_identity_readers(request_forum, field_name):
+
+    readers_map = {
+        'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+        'All Senior Area Chairs': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS,
+        'Assigned Senior Area Chair': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+        'All Area Chairs': openreview.Conference.IdentityReaders.AREA_CHAIRS,
+        'Assigned Area Chair': openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+        'All Reviewers': openreview.Conference.IdentityReaders.REVIEWERS,
+        'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+    }
+
+    return [readers_map[r] for r in request_forum.content.get(field_name, [])]    
+
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
