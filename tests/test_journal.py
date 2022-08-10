@@ -1211,10 +1211,13 @@ The TMLR Editors-in-Chief
         assert late_reviewers
         assert '~Carlos_Mondragon1' in late_reviewers
 
+        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        assert len(carlos_anon_groups) == 1
+
         ## post the assignment ack
         formatted_date = (datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d, %Y")
         assignment_ack_note = carlos_client.post_note_edit(invitation=f'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
-            signatures=['~Carlos_Mondragon1'],
+            signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
                     'assignment_acknowledgement': { 'value': f'I acknowledge my responsibility to submit a review for this submission by the end of day on {formatted_date} UTC time.' }
@@ -1240,8 +1243,6 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
 '''
 
 
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
-        assert len(carlos_anon_groups) == 1
 
         ## Post a review edit
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',

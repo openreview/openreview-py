@@ -479,6 +479,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         venue_id=self.journal.venue_id
         action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        reviewer_id_regex = self.journal.get_reviewers_id(number='${params.noteNumber}', anon=True) 
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
         paper_process = self.get_process_content('process/reviewer_assignment_acknowledgement_process.py')
@@ -511,7 +512,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'process': { 'const': paper_process },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
-                        'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
+                        'signatures': { 'const': { 'regex': reviewer_id_regex, 'type': 'group[]' }},
                         'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
                         'note': {
                             'forum': { 'const': { 'const': '${params.noteId}' }},
