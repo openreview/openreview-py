@@ -2044,6 +2044,7 @@ class Invitation(object):
     """
     def __init__(self,
         id = None,
+        invitations = None,
         domain = None,
         readers = None,
         writers = None,
@@ -2072,6 +2073,7 @@ class Invitation(object):
         details = None):
 
         self.id = id
+        self.invitations = invitations
         self.domain = domain
         self.cdate = cdate
         self.ddate = ddate
@@ -2131,6 +2133,9 @@ class Invitation(object):
             'id': self.id
         }
 
+        if self.invitations:
+            body['invitations'] = self.invitations
+        
         if self.domain:
             body['domain'] = self.domain
 
@@ -2205,6 +2210,7 @@ class Invitation(object):
         :rtype: Invitation
         """
         invitation = Invitation(i['id'],
+            invitations = i.get('invitations'),
             domain = i.get('domain'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),

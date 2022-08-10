@@ -105,7 +105,24 @@ class InvitationBuilder(object):
 
         for field in review_stage.remove_fields:
             if field in content:
-                del content[field]        
+                del content[field]
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/review_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+            file_content = file_content.replace("OFFICIAL_REVIEW_NAME = ''", f"OFFICIAL_REVIEW_NAME = '{review_stage.name}'")
+            file_content = file_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
+            file_content = file_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
+            file_content = file_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
+            file_content = file_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
+
+            if self.venue.use_area_chairs:
+                file_content = file_content.replace("USE_AREA_CHAIRS = False", "USE_AREA_CHAIRS = True")
+
+            if review_stage.email_pcs:
+                file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
         
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -113,8 +130,8 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             content={
-                'signatures': {
-                    'value': 'test'
+                'review_process_script': {
+                    'value': file_content
                 }
             },
             edit={
@@ -153,7 +170,13 @@ class InvitationBuilder(object):
                     'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
                     'duedate': '${2/content/duedate/value}',
-                    #'process': { 'const': paper_process },
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['review_process_script']['value']
+    funcs = {}
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                     #'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
@@ -168,9 +191,15 @@ class InvitationBuilder(object):
                             },
                             'forum': '${4/content/noteId/value}',
                             'replyto': '${4/content/noteId/value}',
-                            'ddate': '${4/content/duedate/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True                                   
+                                }
+                            },
                             'signatures': ['${3/signatures}'],
-                            'readers': [venue_id],
+                            'readers': review_stage.get_readers(self.venue, '${5/content/noteNumber/value}'),
+                            'nonreaders': review_stage.get_nonreaders(self.venue, '${5/content/noteNumber/value}'),
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }

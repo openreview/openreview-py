@@ -1166,7 +1166,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Reviewers', '~Venue_Reviewer2')
 
-        reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
+        reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer2@mail.com', password='1234')
         # reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
         # assert reviewer_group and len(reviewer_group.members) == 2
 
@@ -1210,6 +1210,34 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(sac_groups) == 2
         assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
         assert 'V2.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
+
+        ## Post a review
+        reviewer_anon_groups=reviewer_client.get_groups(regex=f'V2.cc/2030/Conference/Paper1/Reviewer_.*', signatory='~Venue_Reviewer2')
+        assert len(reviewer_anon_groups) == 1
+
+        ## Post a review edit
+        review_note = reviewer_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Paper1/-/Official_Review',
+            signatures=[reviewer_anon_groups[0].id],
+            note=Note(
+                content={
+                    'review': { 'value': 'great paper!' },
+                    'rating': { 'value': '10: Top 5% of accepted papers, seminal paper' },
+                    'confidence': { 'value': '3: The reviewer is fairly confident that the evaluation is correct' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+
+        ## All the reviews should be public now
+        reviews = reviewer_client.get_notes(invitation=f'V2.cc/2030/Conference/Paper1/-/Official_Review', sort= 'number:asc')
+        assert len(reviews) == 1
+        assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers/Submitted' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Authors' not in reviews[0].readers
+
 
 #     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
