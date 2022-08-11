@@ -1,4 +1,5 @@
 import os
+import time
 import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
@@ -196,6 +197,20 @@ class Venue(object):
         group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
         # print(group.web[:1000])
         self.client.post_group(group)   
+
+    def expire_invitation(self, invitation_id):
+        # Get invitation
+        invitation = tools.get_invitation(self.client, id = invitation_id)
+
+        if invitation:
+            # Force the expdate
+            now = round(time.time() * 1000)
+            if not invitation.expdate or invitation.expdate > now:
+                invitation.expdate = now
+                invitation.duedate = now
+                invitation = self.invitation_builder.save_invitation(invitation)
+
+            return invitation
 
     def setup(self, program_chair_ids=[]):
     
@@ -395,3 +410,9 @@ class Venue(object):
         venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
 
         return venue_matching.setup(compute_affinity_scores, compute_conflicts)
+
+    def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
+
+        match_group = self.client.get_group(committee_id)
+        conference_matching = matching.Matching(self, match_group)
+        return conference_matching.deploy(assignment_title, overwrite, enable_reviewer_reassignment)
