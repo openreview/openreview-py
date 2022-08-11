@@ -91,29 +91,29 @@ class Venue(object):
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
-    def get_bid_id(self, group_id):
-        return self.get_invitation_id('Bid', prefix=group_id)
+    def get_bid_id(self, committee_id):
+        return self.get_invitation_id('Bid', prefix=committee_id)
 
-    def get_paper_assignment_id(self, group_id, deployed=False, invite=False):
+    def get_paper_assignment_id(self, committee_id, deployed=False, invite=False):
         if deployed:
-            return self.get_invitation_id('Assignment', prefix=group_id)
+            return self.get_invitation_id('Assignment', prefix=committee_id)
         if invite:
-            return self.get_invitation_id('Invite_Assignment', prefix=group_id)
-        return self.get_invitation_id('Proposed_Assignment', prefix=group_id)
+            return self.get_invitation_id('Invite_Assignment', prefix=committee_id)
+        return self.get_invitation_id('Proposed_Assignment', prefix=committee_id)
 
-    def get_affinity_score_id(self, group_id):
-        return self.get_invitation_id('Affinity_Score', prefix=group_id)
+    def get_affinity_score_id(self, committee_id):
+        return self.get_invitation_id('Affinity_Score', prefix=committee_id)
 
-    def get_conflict_score_id(self, group_id):
-        return self.get_invitation_id('Conflict', prefix=group_id)
+    def get_conflict_score_id(self, committee_id):
+        return self.get_invitation_id('Conflict', prefix=committee_id)
 
-    def get_custom_max_papers_id(self, group_id):
-        return self.get_invitation_id('Custom_Max_Papers', prefix=group_id)
+    def get_custom_max_papers_id(self, committee_id):
+        return self.get_invitation_id('Custom_Max_Papers', prefix=committee_id)
 
-    def get_recommendation_id(self, group_id=None):
-        if not group_id:
-            group_id = self.get_reviewers_id()
-        return self.get_invitation_id('Recommendation', prefix=group_id)
+    def get_recommendation_id(self, committee_id=None):
+        if not committee_id:
+            committee_id = self.get_reviewers_id()
+        return self.get_invitation_id('Recommendation', prefix=committee_id)
 
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id

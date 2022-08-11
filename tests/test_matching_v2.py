@@ -158,7 +158,7 @@ class TestMatching():
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
 
         #check assignment process is set when invitation is created
-        assignment_inv = openreview_client.get_invitation(venue.get_paper_assignment_id(group_id=venue.get_reviewers_id(), deployed=True))
+        assignment_inv = openreview_client.get_invitation(venue.get_paper_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
         assert assignment_inv
     #     assert assignment_inv.process
     #     assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
@@ -543,7 +543,7 @@ class TestMatching():
         # venue.setup_matching(committee_id=venue.get_reviewers_id(), build_conflicts=True)
 
         # #check assignment process is still set after deployment and setting up matching again
-        # assignment_inv = openreview_client.get_invitation(venue.get_paper_assignment_id(group_id=venue.get_reviewers_id(), deployed=True))
+        # assignment_inv = openreview_client.get_invitation(venue.get_paper_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
         # assert assignment_inv
         # assert assignment_inv.process
         # assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
