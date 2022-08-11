@@ -362,7 +362,9 @@ class Matching(object):
         return invitation
 
     def _build_scores_from_stream(self, score_invitation_id, scores_stream, submissions):
-        scores = [input_line.split(',') for input_line in scores_stream.decode().split('\n')]
+        scores = [input_line.split(',') for input_line in scores_stream.decode().strip().split('\n')]
+        if self.alternate_matching_group:
+            return self._build_profile_scores(score_invitation_id, scores)
         return self._build_note_scores(score_invitation_id, scores, submissions)
 
     def _build_profile_scores(self, score_invitation_id, scores):
@@ -371,16 +373,18 @@ class Matching(object):
         invitation_id = invitation['invitation']['id']
         edges = []
 
-        for row in tqdm(SNDCTL_COPR_SENDMSG, desc='_build_scores'):
+        for row in tqdm(scores, desc='_build_scores'):
+
+            score = str(max(round(float(row[2]), 4), 0))
             edges.append(Edge(
-                invitation=invitation_id,
-                head=row[1],
-                tail=row[0],
-                weight=str(max(round(float(row[2]), 4), 0)),
-                readers=self._get_edge_readers(tail=row[1]),
-                writers=[self.venue.id],
-                signatures=[self.venue.id]
-            ))
+                    invitation=invitation_id,
+                    head=row[1],
+                    tail=row[0],
+                    weight=float(score),
+                    readers=self._get_edge_readers(tail=row[1]),
+                    writers=[self.venue.id],
+                    signatures=[self.venue.id]
+                ))
 
         ## Delete previous scores
         self.client.delete_edges(invitation_id, wait_to_finish=True)
