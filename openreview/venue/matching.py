@@ -74,7 +74,7 @@ class Matching(object):
                 invitation_readers.append(venue.get_senior_area_chairs_id())
 
             if is_assignment_invitation:
-                if self.conference.use_senior_area_chairs:
+                if self.venue.use_senior_area_chairs:
                     edge_invitees.append(venue.get_senior_area_chairs_id())
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
                     edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_num_signatures))
@@ -574,7 +574,8 @@ class Matching(object):
                             'description': 'Manually entered JSON score specification',
                             'value': {
                                 'param': {
-                                    'type': 'json'
+                                    'type': 'json',
+                                    'default': scores_specification
                                 }
                             }
                         },
@@ -869,9 +870,9 @@ class Matching(object):
 
         committee_id=self.match_group.id
         role_name = committee_id.split('/')[-1]
-        review_name = venue.review_stage.name
+        review_name = 'Official_Review'
         reviewer_name = venue.reviewers_name
-        if role_name in venue.area_chair_roles: ##implemente area_chair_roles with metareview stage
+        if role_name in venue.area_chair_roles:
             reviewer_name = venue.area_chairs_name
             review_name = 'Meta_Review'
 
@@ -991,4 +992,4 @@ class Matching(object):
         #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
         #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
 
-        self.venue.expire_invitation(self.venue.get_paper_assignment_id(self.match_group.id))
+        # self.venue.invitation_builder.expire_invitation(self.venue.get_paper_assignment_id(self.match_group.id))

@@ -433,13 +433,13 @@ class TestVenueRequest():
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
-        assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
-        assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
-        assert [btn for btn in buttons if btn.text == 'Recruitment']
+        # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
+        # recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        # assert recruitment_div
+        # reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        # assert reply_row
+        # buttons = reply_row.find_elements_by_class_name('btn-xs')
+        # assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
@@ -488,13 +488,13 @@ class TestVenueRequest():
     def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
-        assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
-        assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
-        assert [btn for btn in buttons if btn.text == 'Recruitment']
+        # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
+        # recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        # assert recruitment_div
+        # reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        # assert reply_row
+        # buttons = reply_row.find_elements_by_class_name('btn-xs')
+        # assert [btn for btn in buttons if btn.text == 'Recruitment']
         reviewer_details = '''reviewer_candidate1@email.com, Reviewer One\nreviewer_candidate2@email.com, Reviewer Two'''
         recruitment_note = test_client.post_note(openreview.Note(
             content={
@@ -583,13 +583,13 @@ class TestVenueRequest():
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
-        assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
-        assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
-        assert [btn for btn in buttons if btn.text == 'Recruitment']
+        # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
+        # recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        # assert recruitment_div
+        # reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        # assert reply_row
+        # buttons = reply_row.find_elements_by_class_name('btn-xs')
+        # assert [btn for btn in buttons if btn.text == 'Recruitment']
         helpers.create_user('reviewer_one_tilde@mail.com', 'Reviewer', 'OneTilde')
         helpers.create_user('reviewer_two_tilde@mail.com', 'Reviewer', 'TwoTilde')
         reviewer_details = '''~Reviewer_OneTilde1\n~Reviewer_TwoTilde1'''
@@ -692,13 +692,13 @@ class TestVenueRequest():
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Remind Recruitment
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
-        assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
-        assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
-        assert [btn for btn in buttons if btn.text == 'Remind Recruitment']
+        # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
+        # recruitment_div = selenium.find_element_by_id('note_{}'.format(venue['request_form_note'].id))
+        # assert recruitment_div
+        # reply_row = recruitment_div.find_element_by_class_name('reply_row')
+        # assert reply_row
+        # buttons = reply_row.find_elements_by_class_name('btn-xs')
+        # assert [btn for btn in buttons if btn.text == 'Remind Recruitment']
 
         remind_recruitment_note = test_client.post_note(openreview.Note(
             content={

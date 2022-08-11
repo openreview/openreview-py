@@ -14,14 +14,22 @@ class InvitationBuilder(object):
         self.venue = venue
         self.venue_id = venue.venue_id
 
-    def save_invitation(self, invitation):
+    def save_invitation(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
             readers=[self.venue_id],
             writers=[self.venue_id],
             signatures=[self.venue_id],
-            replacement=True,
+            replacement=replacement,
             invitation=invitation
-        )      
+        )
+
+    def expire_invitation(self, invitation_id):
+        invitation = self.client.get_invitation(invitation_id)
+        self.save_invitation(invitation=Invitation(id=invitation.id,
+                expdate=tools.datetime_millis(datetime.datetime.utcnow()),
+                signatures=[self.venue_id]
+            )
+        )     
 
     def get_process_content(self, file_path):
         process = None
@@ -89,7 +97,7 @@ class InvitationBuilder(object):
             process=self.get_process_content('process/submission_process.py')
         )
 
-        submission_invitation = self.save_invitation(submission_invitation)
+        submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
     
     def set_review_invitation(self):
@@ -216,7 +224,7 @@ class InvitationBuilder(object):
             }
         )
 
-        return self.save_invitation(invitation)
+        return self.save_invitation(invitation, replacement=True)
        
     
     def set_recruitment_invitation(self, committee_name, options):
@@ -297,15 +305,7 @@ class InvitationBuilder(object):
                     web = webfield_content
                 )
 
-        recruitment_invitation = self.client.post_invitation_edit(
-            invitations = venue.get_meta_invitation_id(),
-            readers = [venue_id],
-            writers = [venue_id],
-            signatures = [venue_id],
-            invitation = recruitment_invitation,
-            replacement = True)
-
-        return recruitment_invitation
+        return self.save_invitation(recruitment_invitation, replacement=True)
 
     def set_bid_invitations(self):
 
@@ -382,7 +382,7 @@ class InvitationBuilder(object):
                 }
             )
 
-            bid_invitation = self.save_invitation(bid_invitation)
+            bid_invitation = self.save_invitation(bid_invitation, replacement=True)
 
     def set_assignment_invitation(self, committee_id):
         client = self.client

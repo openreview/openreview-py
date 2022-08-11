@@ -91,6 +91,9 @@ class Venue(object):
     def get_recruitment_id(self, committee_id):
         return self.get_invitation_id('Recruitment', prefix=committee_id)
 
+    def get_bid_id(self, group_id):
+        return self.get_invitation_id('Bid', prefix=group_id)
+
     def get_paper_assignment_id(self, group_id, deployed=False, invite=False):
         if deployed:
             return self.get_invitation_id('Assignment', prefix=group_id)
@@ -201,21 +204,7 @@ class Venue(object):
         group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
         group.web = group.web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
         # print(group.web[:1000])
-        self.client.post_group(group)   
-
-    def expire_invitation(self, invitation_id):
-        # Get invitation
-        invitation = tools.get_invitation(self.client, id = invitation_id)
-
-        if invitation:
-            # Force the expdate
-            now = round(time.time() * 1000)
-            if not invitation.expdate or invitation.expdate > now:
-                invitation.expdate = now
-                invitation.duedate = now
-                invitation = self.invitation_builder.save_invitation(invitation)
-
-            return invitation
+        self.client.post_group(group)
 
     def setup(self, program_chair_ids=[]):
     
