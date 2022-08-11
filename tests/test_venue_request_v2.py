@@ -1235,6 +1235,46 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'V2.cc/2030/Conference/Paper1/Reviewers/Submitted' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Paper1/Authors' not in reviews[0].readers
 
+    def test_release_reviews_to_authors(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
+
+        # Post a review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers',
+                'remove_review_form_options': 'title',
+                'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert review_stage_note
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Paper1/-/Official_Review')
+        assert len(invitation.edit['note']['readers']) == 5
+        assert 'V2.cc/2030/Conference/Paper1/Authors' in invitation.edit['note']['readers']
+        assert len(invitation.edit['note']['nonreaders']) == 0
+
+        reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Paper1/-/Official_Review')
+        assert len(reviews) == 1
+        assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Authors' in reviews[0].readers
+
 
 #     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -2220,36 +2260,42 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 #         assert public_comment_invitation
 
 
-#     def test_release_reviews(self, client, test_client, selenium, request_page, helpers, venue):
+    # def test_release_reviews(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-#         # Post a review stage note
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         due_date = now + datetime.timedelta(days=3)
-#         review_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'review_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'review_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
-#                 'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
-#                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to all reviewers',
-#                 'remove_review_form_options': 'title',
-#                 'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert review_stage_note
-#         helpers.await_queue()
+    #     # Post a review stage note
+    #     now = datetime.datetime.utcnow()
+    #     start_date = now - datetime.timedelta(days=2)
+    #     due_date = now + datetime.timedelta(days=3)
+    #     review_stage_note = test_client.post_note(openreview.Note(
+    #         content={
+    #             'review_start_date': start_date.strftime('%Y/%m/%d'),
+    #             'review_deadline': due_date.strftime('%Y/%m/%d'),
+    #             'make_reviews_public': 'Yes, reviews should be revealed publicly when they are posted',
+    #             'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+    #             'release_reviews_to_reviewers': 'Reviews should be immediately revealed to all reviewers',
+    #             'remove_review_form_options': 'title',
+    #             'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received'
+    #         },
+    #         forum=venue['request_form_note'].forum,
+    #         invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+    #         readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+    #         referent=venue['request_form_note'].forum,
+    #         replyto=venue['request_form_note'].forum,
+    #         signatures=['~SomeFirstName_User1'],
+    #         writers=[]
+    #     ))
+    #     assert review_stage_note
+    #     helpers.await_queue()
 
-#         process_logs = client.get_process_logs(id = review_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+    #     invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Paper1/-/Official_Review')
+    #     assert len(invitation.edit['note']['readers']) == 1
+    #     assert 'everyone' in invitation.edit['note']['readers']
+    #     assert len(invitation.edit['note']['nonreaders']) == 0
+
+    #     notes = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Paper1/-/Official_Review')
+    #     assert notes[0].readers == ['everyone']
+        
+
 
 #     def test_supplementary_material_revision(self, client, test_client, selenium, request_page, helpers, venue):
 

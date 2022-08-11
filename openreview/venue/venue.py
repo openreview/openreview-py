@@ -22,11 +22,15 @@ class Venue(object):
         self.program_chairs_name = 'Program_Chairs'
         self.reviewers_name = 'Reviewers'
         self.reviewer_roles = ['Reviewers']
+        self.area_chair_roles = ['Area_Chairs']
+        self.senior_area_chair_roles = ['Senior_Area_Chairs']        
         self.area_chairs_name = 'Area_Chairs'
         self.senior_area_chairs_name = 'Senior_Area_Chairs'
         self.ethics_chairs_name = 'Ethics_Chairs'
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
+        self.use_ethics_chairs = False
+        self.use_ethics_reviewers = False        
         self.submission_stage = None
         self.review_stage = None
         self.ethics_review_stage = None
@@ -333,29 +337,53 @@ class Venue(object):
         self.set_group_variable(self.get_authors_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
         self.set_group_variable(self.get_reviewers_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
 
+    def update_readers(self, submission, invitation):
+        ## Update readers of current notes
+        notes = self.client.get_notes(invitation=invitation.id)
+
+        ## if the invitation indicates readers is everyone but the submission is not, we ignore the update
+        if 'everyone' in invitation.edit['note']['readers'] and 'everyone' not in submission.readers:
+            return
+
+        for note in notes:
+            if type(invitation.edit['note']['readers']) is list and note.readers != invitation.edit['note']['readers']:
+                self.client.post_note_edit(
+                    invitation = self.get_meta_invitation_id(),
+                    readers = [self.venue_id],
+                    writers = [self.venue_id],
+                    signatures = [self.venue_id],
+                    note = openreview.api.Note(
+                        id = note.id,
+                        readers = invitation.edit['note']['readers'],
+                        nonreaders = invitation.edit['note']['nonreaders']
+                    )
+                ) 
+
     def create_review_stage(self):
         self.invitation_builder.set_review_invitation()
         self.set_group_variable(self.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
 
         ## Move this to the date process function
         for submission in self.get_submissions():
-            self.client.post_invitation_edit(invitations=self.get_invitation_id(self.review_stage.name),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            content={
-                'noteId': {
-                    'value': submission.id
+            paper_invitation_edit = self.client.post_invitation_edit(invitations=self.get_invitation_id(self.review_stage.name),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                content={
+                    'noteId': {
+                        'value': submission.id
+                    },
+                    'noteNumber': {
+                        'value': submission.number
+                    },
+                    'duedate': {
+                        'value': tools.datetime_millis(self.review_stage.due_date)
+                    }
                 },
-                'noteNumber': {
-                    'value': submission.number
-                },
-                'duedate': {
-                    'value': tools.datetime_millis(self.review_stage.due_date)
-                }
-            },
-            invitation=openreview.api.Invitation()
-        )        
+                invitation=openreview.api.Invitation()
+            )
+            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
+            self.update_readers(submission, paper_invitation)    
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id

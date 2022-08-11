@@ -21,7 +21,7 @@ class InvitationBuilder(object):
             signatures=[self.venue_id],
             replacement=True,
             invitation=invitation
-        )        
+        )      
 
     def get_process_content(self, file_path):
         process = None
