@@ -48,6 +48,33 @@ class GroupBuilder(object):
             readers.append(self.venue.get_reviewers_id(number))
         return readers
 
+    def create_reviewers_group(self):
+
+        venue_id = self.venue.id
+        reviewers_id = self.venue.get_reviewers_id()
+        area_chairs_id = self.venue.get_area_chairs_id()
+        senior_area_chairs_id = self.venue.get_senior_area_chairs_id()
+        reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
+        if not reviewer_group:
+            reviewer_group = Group(id=reviewers_id,
+                            readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewers_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
+            content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
+            content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
+            content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = 'Paper'")
+            content = content.replace("const CUSTOM_MAX_PAPERS_ID = ''", f"const CUSTOM_MAX_PAPERS_ID = '{self.venue.get_custom_max_papers_id(reviewers_id)}'")
+            content = content.replace("const RECRUITMENT_ID = ''", f"const RECRUITMENT_ID = '{self.venue.get_recruitment_id(reviewers_id)}'")
+            reviewer_group.web = content
+            self.client.post_group(reviewer_group)        
+
 
     def create_paper_committee_groups(self, overwrite=False):
         print('create_paper_committee_groups')

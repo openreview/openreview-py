@@ -194,6 +194,7 @@ class Venue(object):
 
         group = self.client.get_group(group_id)
         group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
+        group.web = group.web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
         # print(group.web[:1000])
         self.client.post_group(group)   
 
@@ -281,6 +282,7 @@ class Venue(object):
                 edit = True
             ))
 
+        self.group_builder.create_reviewers_group()
         self.client.add_members_to_group('venues', venue_id)
         self.client.add_members_to_group('host', venue_id)
 
@@ -314,9 +316,12 @@ class Venue(object):
         self.invitation_builder.set_submission_invitation()
         self.set_group_variable(self.venue_id, 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
         self.set_group_variable(self.get_authors_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
+        self.set_group_variable(self.get_reviewers_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
 
     def create_review_stage(self):
         self.invitation_builder.set_review_invitation()
+        self.set_group_variable(self.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
+
         ## Move this to the date process function
         for submission in self.get_submissions():
             self.client.post_invitation_edit(invitations=self.get_invitation_id(self.review_stage.name),

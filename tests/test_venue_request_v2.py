@@ -1167,22 +1167,19 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Reviewers', '~Venue_Reviewer2')
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer2@mail.com', password='1234')
-        # reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
-        # assert reviewer_group and len(reviewer_group.members) == 2
+        reviewer_group = client.get_group('V2.cc/2030/Conference/Reviewers')
+        assert reviewer_group and len(reviewer_group.members) == 2
 
-        # reviewer_page_url = 'http://localhost:3030/group?id={}/Reviewers#assigned-papers'.format(venue['venue_id'])
-        # request_page(selenium, reviewer_page_url, token=reviewer_client.token, by=By.LINK_TEXT, wait_for_element='test submission')
+        reviewer_page_url = 'http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers#assigned-papers'
+        request_page(selenium, reviewer_page_url, token=reviewer_client.token, by=By.LINK_TEXT, wait_for_element='test submission')
 
-        # note_div = selenium.find_element_by_id('note-summary-1')
-        # assert note_div
-        # assert 'test submission' == note_div.find_element_by_link_text('test submission').text
+        note_div = selenium.find_element_by_class_name('note')
+        assert note_div
+        assert 'test submission' == note_div.find_element_by_link_text('test submission').text
 
         review_invitations = openreview_client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 2
         assert 'title' not in review_invitations[0].edit['note']['content']
-
-        conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        assert conference.review_stage.rating_field_name == 'review_rating'
 
         reviewer_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Reviewers$')
         assert len(reviewer_groups) == 2
