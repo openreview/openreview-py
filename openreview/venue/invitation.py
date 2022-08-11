@@ -123,12 +123,26 @@ class InvitationBuilder(object):
 
             if review_stage.email_pcs:
                 file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
-        
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
+        with open(process_file) as f:
+            invitation_start_process = f.read()
+
+            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{self.venue.id}"')
+            invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+
+
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            cdate=tools.datetime_millis(review_stage.start_date),
+            duedate=tools.datetime_millis(review_stage.due_date),
+            date_processes=[{ 
+                'dates': ["#{4/cdate}"],
+                'script': invitation_start_process                
+            }],
             content={
                 'review_process_script': {
                     'value': file_content
@@ -152,14 +166,6 @@ class InvitationBuilder(object):
                                 'regex': '.*', 'type': 'string' 
                             }
                         }
-
-                    },
-                    'duedate': { 
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'integer' 
-                            }
-                        }                    
                     }
                 },
                 'invitation': {
@@ -169,7 +175,8 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
-                    'duedate': '${2/content/duedate/value}',
+                    'duedate': tools.datetime_millis(review_stage.due_date),
+                    'cdate': tools.datetime_millis(review_stage.start_date),
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_process_script']['value']
@@ -177,7 +184,6 @@ class InvitationBuilder(object):
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
-                    #'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
                         'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
                         'readers': [venue_id],

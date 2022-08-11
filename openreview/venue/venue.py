@@ -340,21 +340,22 @@ class Venue(object):
     def update_readers(self, submission, invitation):
         ## Update readers of current notes
         notes = self.client.get_notes(invitation=invitation.id)
+        invitation_readers = invitation.edit['note']['readers']
 
         ## if the invitation indicates readers is everyone but the submission is not, we ignore the update
-        if 'everyone' in invitation.edit['note']['readers'] and 'everyone' not in submission.readers:
+        if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
             return
 
         for note in notes:
-            if type(invitation.edit['note']['readers']) is list and note.readers != invitation.edit['note']['readers']:
+            if type(invitation_readers) is list and note.readers != invitation_readers:
                 self.client.post_note_edit(
                     invitation = self.get_meta_invitation_id(),
-                    readers = [self.venue_id],
+                    readers = invitation_readers,
                     writers = [self.venue_id],
                     signatures = [self.venue_id],
                     note = openreview.api.Note(
                         id = note.id,
-                        readers = invitation.edit['note']['readers'],
+                        readers = invitation_readers,
                         nonreaders = invitation.edit['note']['nonreaders']
                     )
                 ) 
@@ -375,9 +376,6 @@ class Venue(object):
                     },
                     'noteNumber': {
                         'value': submission.number
-                    },
-                    'duedate': {
-                        'value': tools.datetime_millis(self.review_stage.due_date)
                     }
                 },
                 invitation=openreview.api.Invitation()
