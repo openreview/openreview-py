@@ -15,6 +15,7 @@ class InvitationBuilder(object):
 
         day = 1000 * 60 * 60 * 24
         seven_days = day * 7
+        one_month = day * 30
 
         self.author_reminder_process = {
             'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
@@ -26,13 +27,18 @@ class InvitationBuilder(object):
             'script': self.get_process_content('process/reviewer_reminder_process.py')
         }
 
+        self.reviewer_reminder_process_with_EIC = {
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
+            'script': self.get_process_content('process/reviewer_reminder_process.py')
+        }
+
         self.ae_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_reminder_process.py')
         }
 
         self.ae_edge_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
@@ -44,6 +50,7 @@ class InvitationBuilder(object):
         self.set_reviewer_report_invitation()
         self.set_submission_invitation()
         self.set_review_approval_invitation()
+        self.set_desk_rejection_approval_invitation()
         self.set_under_review_invitation()
         self.set_desk_rejected_invitation()
         self.set_rejected_invitation()
@@ -472,6 +479,7 @@ If you have questions after reviewing the points below that are not answered on 
 
         venue_id=self.journal.venue_id
         action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        reviewer_id_regex = self.journal.get_reviewers_id(number='${params.noteNumber}', anon=True) 
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
         paper_process = self.get_process_content('process/reviewer_assignment_acknowledgement_process.py')
@@ -504,7 +512,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'process': { 'const': paper_process },
                     'dateprocesses': { 'const': [self.reviewer_reminder_process]},
                     'edit': {
-                        'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
+                        'signatures': { 'const': { 'regex': reviewer_id_regex, 'type': 'group[]' }},
                         'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
                         'note': {
                             'forum': { 'const': { 'const': '${params.noteId}' }},
@@ -1445,11 +1453,17 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
                         'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
                         'note': {
+                            'id': { 
+                                'const': {
+                                    'withInvitation': paper_review_approval_invitation_id,
+                                    'optional': True
+                                }                                
+                            },
                             'forum': { 'const': { 'const': '${params.noteId}' }},
                             'replyto': { 'const': { 'const': '${params.noteId}' }},
                             'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] }},
-                            'writers': { 'const': { 'const': [ venue_id ] }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id ] }},
+                            'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id ] }},
                             'content': {
                                 'under_review': { 'const':  {
                                     'order': 1,
@@ -1464,7 +1478,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 }},
                                 'comment': { 'const': {
                                     'order': 2,
-                                    'description': 'Enter a reason if the decision is Desk Reject. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'description': 'Give an explanation for the desk reject decision. Be specific so that authors understand the decision, and explain why the submission does not meet TMLR\'s acceptance criteria if the rejection is based on the content rather than the format: https://jmlr.org/tmlr/reviewer-guide.html',
                                     'value': {
                                         'type': 'string',
                                         'regex': '^[\\S\\s]{1,200000}$',
@@ -1490,6 +1504,93 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
+
+    def set_desk_rejection_approval_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
+        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
+
+        desk_rejection_approval_invitation_id=self.journal.get_desk_rejection_approval_id()
+        paper_desk_rejection_approval_invitation_id=self.journal.get_desk_rejection_approval_id(number='${params.noteNumber}')
+
+        paper_process = self.get_process_content('process/desk_rejection_approval_process.py')
+
+        invitation = Invitation(id=desk_rejection_approval_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            edit={
+                'signatures': { 'const': [venue_id] },
+                'readers': { 'const': [venue_id] },
+                'writers': { 'const': [venue_id] },
+                'params': {
+                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
+                    'noteId': { 'regex': '.*', 'type': 'string' },
+                    'replytoId': { 'regex': '.*', 'type': 'string' },
+                    'duedate': { 'regex': '.*', 'type': 'date' },
+                },
+                'invitation': {
+                    'id': { 'const': paper_desk_rejection_approval_invitation_id },
+                    'invitees': { 'const': [venue_id, editors_in_chief_id] },
+                    'readers': { 'const': ['everyone'] },
+                    'writers': { 'const': [venue_id] },
+                    'signatures': { 'const': [venue_id] },
+                    'minReplies': { 'const': 1},
+                    'maxReplies': { 'const': 1},
+                    'process': { 'const': paper_process },
+                    'duedate': { 'const': '${params.duedate}'},
+                    'edit': {
+                        'signatures': { 'const': { 'const': [editors_in_chief_id] }},
+                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
+                        'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
+                        'writers': { 'const': { 'const': [ venue_id] }},
+                        'note': {
+                            'forum': { 'const': { 'const': '${params.noteId}' }},
+                            'replyto': { 'const': { 'const': '${params.replytoId}' }},
+                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id] }},
+                            'writers': { 'const': { 'const': [ venue_id] }},
+                            'signatures': { 'const': { 'const': [editors_in_chief_id] }},
+                            'content': {
+                                'approval': { 'const': {
+                                    'order': 1,
+                                    'value': {
+                                        'type': 'string',
+                                        'enum': ['I approve the AE\'s decision.']
+                                    },
+                                    'presentation': {
+                                        'input': 'checkbox'
+                                    }
+                                }},
+                                'comment': { 'const': {
+                                    'order': 2,
+                                    'description': 'Optionally add any additional notes that might be useful for the action editor.',
+                                    'value': {
+                                        'type': 'string',
+                                        'regex': '^[\\S\\s]{1,200000}$',
+                                        'optional': True
+                                    },
+                                    'presentation': {
+                                        'markdown': True
+                                    }
+                                }}
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
+
+    def set_note_desk_rejection_approval_invitation(self, note, review_approval, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_approval_id(),
+            params={ 'noteId': note.id, 'noteNumber': note.number, 'replytoId': review_approval.id, 'duedate': openreview.tools.datetime_millis(duedate) },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
 
     def set_withdrawal_invitation(self):
         venue_id = self.journal.venue_id
@@ -2211,7 +2312,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 readers=[venue_id, authors_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                minReplies=3,
+                minReplies=1,
                 type='Edge',
                 edit={
                     'ddate': {
@@ -2390,7 +2491,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'maxReplies': { 'const': 1 },
                     'duedate': { 'const': '${params.duedate}' },
                     'process': { 'const': paper_process },
-                    'dateprocesses': { 'const': [self.reviewer_reminder_process]},
+                    'dateprocesses': { 'const': [self.reviewer_reminder_process_with_EIC]},
                     'edit': {
                         'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
                         'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -2527,7 +2628,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'dateprocesses': { 'const': [{
                         'dates': [ "#{cdate} + 1000" ],
                         'script': cdate_process
-                    }, self.reviewer_reminder_process]},
+                    }, self.reviewer_reminder_process_with_EIC]},
                     'edit': {
                         'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
                         'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
@@ -2586,6 +2687,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                         },
                                         'presentation': {
                                             'input': 'select'
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'const': {
+                                        'order': 3,
+                                        'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
+                                        'value': {
+                                            'type': 'string',
+                                            'regex': '^[\\S\\s]{1,200000}$',
+                                            'optional': True
+                                        },
+                                        'presentation': {
+                                            'markdown': True
                                         }
                                     }
                                 }

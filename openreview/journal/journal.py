@@ -106,6 +106,9 @@ class Journal(object):
     def get_desk_rejection_id(self, number=None):
         return self.__get_invitation_id(name='Desk_Rejection', number=number)
 
+    def get_desk_rejection_approval_id(self, number=None):
+        return self.__get_invitation_id(name='Desk_Rejection_Approval', number=number)        
+
     def get_retraction_id(self, number=None):
         return self.__get_invitation_id(name='Retraction', number=number)
 
@@ -231,13 +234,13 @@ class Journal(object):
         return self.__get_invitation_id(name='Revision', number=number)
 
     def get_solicit_review_id(self, number=None):
-        return self.__get_invitation_id(name='Solicit_Review', number=number)
+        return self.__get_invitation_id(name='Volunteer_to_Review', number=number)
 
     def get_solicit_review_approval_id(self, number=None, signature=None):
         if signature:
-            return self.__get_invitation_id(name=f'{signature}_Solicit_Review_Approval', number=number)
+            return self.__get_invitation_id(name=f'{signature}_Volunteer_to_Review_Approval', number=number)
 
-        return self.__get_invitation_id(name='Solicit_Review_Approval', number=number)
+        return self.__get_invitation_id(name='Volunteer_to_Review_Approval', number=number)
 
 
     def get_public_comment_id(self, number):
@@ -340,6 +343,7 @@ class Journal(object):
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_comment_invitation(note)
         self.invitation_builder.release_submission_history(note)
+        self.invitation_builder.expire_invitation(self.get_review_approval_id(note.number))
 
     def assign_reviewer(self, note, reviewer, solicit):
         self.assignment.assign_reviewer(note, reviewer, solicit)

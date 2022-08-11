@@ -25,6 +25,9 @@ def process(client, edit, invitation):
         print('Review edited, exit')
         return
 
+    ## Expire ack task
+    journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=submission.number, reviewer_id=profile.id))
+
     review_note=client.get_note(note.id)
     if review_note.readers == ['everyone']:
         print('Review already public, exit')
