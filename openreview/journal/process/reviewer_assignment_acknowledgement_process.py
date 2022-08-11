@@ -3,7 +3,8 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
 
     submission = client.get_note(edit.note.forum)
-    profile = client.get_profile(edit.note.signatures[0])
+    anon_reviewer_group = client.get_group(edit.note.signatures[0])
+    profile = client.get_profile(anon_reviewer_group.members[0])
 
     recipients = [journal.get_action_editors_id(number=submission.number)]
     ignoreRecipients = []

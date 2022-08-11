@@ -62,7 +62,7 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue_edit(openreview_client, invitation = '.MELBA/Action_Editors/-/Recruitment')
@@ -86,7 +86,7 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
             request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue_edit(openreview_client, invitation = '.MELBA/Reviewers/-/Recruitment')
@@ -127,12 +127,17 @@ class TestJournal():
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[MELBA] Suggest candidate Action Editor for your new MELBA submission')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == '''<p>Hi SomeFirstName User,</p>
-<p>Thank you for submitting your work titled &quot;Paper title&quot; to MELBA.</p>
-<p>Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.</p>
-<p>To do so, please follow this link: <a href=\"https://openreview.net/invitation?id=.MELBA/Paper1/Action_Editors/-/Recommendation\">https://openreview.net/invitation?id=.MELBA/Paper1/Action_Editors/-/Recommendation</a> or check your tasks in the Author Console: <a href=\"https://openreview.net/group?id=.MELBA/Authors\">https://openreview.net/group?id=.MELBA/Authors</a></p>
-<p>For more details and guidelines on the MELBA review process, visit <a href=\"http://melba-journal.org\">melba-journal.org</a>.</p>
-<p>The MELBA Editors-in-Chief</p>
+        assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
+
+Thank you for submitting your work titled "Paper title" to MELBA.
+
+Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+
+To do so, please follow this link: https://openreview.net/invitation?id=.MELBA/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=.MELBA/Authors
+
+For more details and guidelines on the MELBA review process, visit melba-journal.org.
+
+The MELBA Editors-in-Chief
 '''
 
         note = openreview_client.get_note(submission_note_1['note']['id'])

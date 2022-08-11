@@ -293,7 +293,7 @@ var getRequestForm = function() {
 };
 
 var getRegistrationForms = function() {
-  var prefixes = [ REVIEWERS_ID, AREA_CHAIRS_ID ];
+  var prefixes = [ REVIEWERS_ID, AREA_CHAIRS_ID, SENIOR_AREA_CHAIRS_ID ];
   var promises = _.map(prefixes, function(prefix) {
     return Webfield.getAll('/notes', {
       invitation: prefix + '/-/.*',

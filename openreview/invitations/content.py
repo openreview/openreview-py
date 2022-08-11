@@ -229,7 +229,7 @@ submission = {
     'title': {
         'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
         'order': 1,
-        'value-regex': '.{1,250}',
+        'value-regex': '(?!^ +$)^.{1,250}$',
         'required':True
     },
     'authors': {

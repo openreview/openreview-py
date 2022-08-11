@@ -30,6 +30,7 @@ var REVIEWERS_AVAILABILITY_ID = REVIEWERS_ID + '/-/' + AVAILABILITY_NAME;
 var SUBMISSION_GROUP_NAME = 'Paper';
 var RECOMMENDATION_NAME = 'Recommendation';
 var REVIEW_APPROVAL_NAME = 'Review_Approval';
+var DESK_REJECTION_APPROVAL_NAME = 'Desk_Rejection_Approval';
 var REVIEW_NAME = 'Review';
 var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var DECISION_NAME = 'Decision';
@@ -178,6 +179,9 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
     // Review approval by AE
     var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
     var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
+    // Desk Rejection approval by EIC
+    var deskRejectionApprovalInvitation = invitationsById[getInvitationId(number, DESK_REJECTION_APPROVAL_NAME)];
+    var deskRejectionApprovalNotes = getReplies(submission, DESK_REJECTION_APPROVAL_NAME);
     // Reviewer assignment by AE
     var reviewerAssignmentInvitation = invitationsById[getInvitationId(number, 'Assignment', REVIEWERS_NAME)];
     // Reviews by Reviewers
@@ -210,6 +214,17 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         replies: reviewApprovalNotes
       });
     }
+
+    if (deskRejectionApprovalInvitation) {
+      var task = {
+        id: deskRejectionApprovalInvitation.id,
+        cdate: deskRejectionApprovalInvitation.cdate,
+        duedate: deskRejectionApprovalInvitation.duedate,
+        complete: deskRejectionApprovalNotes.length > 0,
+        replies: deskRejectionApprovalNotes
+      };
+      tasks.push(task);
+    }    
 
     if (reviewerAssignmentInvitation) {
       tasks.push({
