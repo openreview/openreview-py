@@ -317,7 +317,7 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Official_Review')
 
         venue.area_chairs_name = 'Action_Editors'
-        venue.has_area_chairs(True)
+        venue.use_area_chairs = True
 
         #recruit reviewers and action editors to create groups
         message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
