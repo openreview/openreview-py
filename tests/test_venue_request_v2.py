@@ -1274,6 +1274,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviews[0].readers
         assert 'V2.cc/2030/Conference/Paper1/Authors' in reviews[0].readers
+        assert len(reviews[0].nonreaders) == 0
 
 
 #     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):

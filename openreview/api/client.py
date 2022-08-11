@@ -1958,7 +1958,7 @@ class Note(object):
         self.forum = forum
         self.replyto = replyto
         self.readers = readers
-        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.nonreaders = nonreaders
         self.signatures = signatures
         self.writers = writers
         self.number = number
@@ -1998,7 +1998,7 @@ class Note(object):
             body['mdate'] = self.mdate
         if self.ddate:
             body['ddate'] = self.ddate
-        if self.nonreaders:
+        if self.nonreaders is not None:
             body['nonreaders'] = self.nonreaders
         if self.signatures:
             body['signatures'] = self.signatures

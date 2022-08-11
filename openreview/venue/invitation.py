@@ -186,7 +186,8 @@ class InvitationBuilder(object):
 ''',
                     'edit': {
                         'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
-                        'readers': [venue_id],
+                        'readers': review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'nonreaders': review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
                         'note': {
                             'id': {
