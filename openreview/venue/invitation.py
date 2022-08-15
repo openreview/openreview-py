@@ -105,6 +105,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
+        review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
 
         content = invitations.review_v2.copy()
 
@@ -145,7 +146,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            cdate=tools.datetime_millis(review_stage.start_date),
+            cdate=review_cdate,
             duedate=tools.datetime_millis(review_stage.due_date),
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
@@ -184,7 +185,7 @@ class InvitationBuilder(object):
                     'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
                     'duedate': tools.datetime_millis(review_stage.due_date),
-                    'cdate': tools.datetime_millis(review_stage.start_date),
+                    'cdate': review_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_process_script']['value']
