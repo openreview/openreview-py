@@ -18,7 +18,7 @@ def process_update(client, edge, invitation, existing_edge):
 
 We recently informed you that your help was requested to manage the review process for a new {journal.short_name} submission titled "{note.content['title']['value']}".
 
-However, we’ve just determined that your help was no longer needed for this submission and have unassigned you as the AE for it.
+However, we've just determined that your help was no longer needed for this submission and have unassigned you as the AE for it.
 
 Apologies for the change and thank you for your continued involvement with {journal.short_name}!
 
@@ -60,5 +60,15 @@ The {journal.short_name} Editors-in-Chief
 
         ## expire AE recommendation
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
+
+        ## update assigned_action_editor if exists in the submission
+        if 'assigned_action_editor' in note.content:
+            client.post_note_edit(invitation= journal.get_meta_invitation_id(),
+                                signatures=[journal.venue_id],
+                                note=openreview.api.Note(id=note.id,
+                                content = {
+                                    'assigned_action_editor': { 'value': edge.tail}
+                                } 
+            ))            
 
         return

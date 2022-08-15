@@ -49,6 +49,7 @@ var HEADER = {
 var SUBMISSION_GROUP_NAME = 'Paper';
 var RECOMMENDATION_NAME = 'Recommendation';
 var REVIEW_APPROVAL_NAME = 'Review_Approval';
+var DESK_REJECTION_APPROVAL_NAME = 'Desk_Rejection_Approval';
 var REVIEW_NAME = 'Review';
 var OFFICIAL_RECOMMENDATION_NAME = 'Official_Recommendation';
 var DECISION_NAME = 'Decision';
@@ -332,6 +333,9 @@ var formatData = function(
     // Review approval by AE
     var reviewApprovalInvitation = invitationsById[getInvitationId(number, REVIEW_APPROVAL_NAME)];
     var reviewApprovalNotes = getReplies(submission, REVIEW_APPROVAL_NAME);
+    // Desk Rejection approval by EIC
+    var deskRejectionApprovalInvitation = invitationsById[getInvitationId(number, DESK_REJECTION_APPROVAL_NAME)];
+    var deskRejectionApprovalNotes = getReplies(submission, DESK_REJECTION_APPROVAL_NAME);
     // Reviewer assignment by AE
     var reviewerAssignmentInvitation = invitationsById[getInvitationId(number, 'Assignment', REVIEWERS_NAME)];
     // Reviews by Reviewers
@@ -381,6 +385,27 @@ var formatData = function(
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
       tasks.push(task);
+    }
+
+    if (deskRejectionApprovalInvitation) {
+      var task = {
+        id: deskRejectionApprovalInvitation.id,
+        cdate: deskRejectionApprovalInvitation.cdate,
+        duedate: deskRejectionApprovalInvitation.duedate,
+        complete: deskRejectionApprovalNotes.length > 0,
+        replies: deskRejectionApprovalNotes
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);
+      if (!task.complete) {
+        incompleteEicTasks.push([
+          {
+            id: formattedSubmission.id,
+            title: formattedSubmission.content.title || formattedSubmission.number
+          },
+          task
+        ]);
+      }      
     }
 
     if (reviewerAssignmentInvitation) {
@@ -611,6 +636,23 @@ var formatData = function(
 
     overdueTasks.concat(tasks.filter(function(inv) { return !inv.complete; }));
 
+    var aeActions = [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
+      {
+        name: 'Edit Assignments',
+        url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
+        '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
+        '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
+        '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
+        '&version=2'
+      }
+    ] : [];
+    if (submission.content['previous_' + VENUE_ID + '_submission_url']) {
+      aeActions.push({
+        name: 'TMLR Resubmission',
+        url: submission.content['previous_' + VENUE_ID + '_submission_url']['value']
+      })
+    }
+
     paperStatusRows.push({
       checked: { noteId: submission.id, checked: false },
       submissionNumber: { number: parseInt(number, 10) },
@@ -656,16 +698,7 @@ var formatData = function(
         earlylateTaskDueDate: earlylateTaskDueDate,
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
-        actions: [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
-          {
-            name: 'Edit Assignments',
-            url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
-            '&traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
-            '&edit=' + ACTION_EDITORS_ASSIGNMENT_ID + ';' + ACTION_EDITORS_CUSTOM_MAX_PAPERS_ID + ',head:ignore' +
-            '&browse=' + ACTION_EDITORS_AFFINITY_SCORE_ID + ';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + ';' + ACTION_EDITORS_AVAILABILITY_ID + ',head:ignore' +
-            '&version=2'
-          }
-        ] : [],
+        actions: aeActions,
         tableWidth: '100%'
       },
       tasks: { invitations: tasks, forumId: submission.id },
@@ -782,7 +815,8 @@ var renderTable = function(container, rows) {
       Handlebars.templates.noteAreaChairs,
       function(data) {
         return Webfield2.ui.eicTaskList(data.invitations, data.forumId, {
-          referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')')
+          referrer: encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + ')'),
+          showEditLink: true
         });
       },
       function(data) {

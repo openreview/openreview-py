@@ -170,11 +170,11 @@ TJ22 Editors-in-Chief
 
         messages = openreview_client.get_messages(to = 'reviewer_journal1@mail.com', subject = '[TJ22] Invitation to serve as Reviewer for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('<p>Dear First Reviewer,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as reviewer.</p>')
+        assert messages[0]['content']['text'].startswith('Dear First Reviewer,\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.')
 
         messages = openreview_client.get_messages(to = 'reviewer_journal2@mail.com', subject = '[TJ22] Invitation to serve as Reviewer for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('<p>Dear Second Reviewer,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as reviewer.</p>')
+        assert messages[0]['content']['text'].startswith('Dear Second Reviewer,\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.')
 
         messages = openreview_client.get_messages(to = 'reviewer_journal3@mail.com')
         assert not messages
@@ -230,11 +230,11 @@ TJ22 Editors-in-Chief
 
         messages = openreview_client.get_messages(to = 'ae_journal2@mail.com', subject = '[TJ22] Invitation to serve as Action Editor for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('<p>Dear Second AE,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as action editor.</p>')
+        assert messages[0]['content']['text'].startswith('Dear Second AE,\n\nYou have been nominated by the program chair committee of TJ22 to serve as action editor.')
 
         messages = openreview_client.get_messages(to = 'ae_journal3@mail.com', subject = '[TJ22] Invitation to serve as Action Editor for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('<p>Dear Third AE,</p>\n<p>You have been nominated by the program chair committee of TJ22 to serve as action editor.</p>')
+        assert messages[0]['content']['text'].startswith('Dear Third AE,\n\nYou have been nominated by the program chair committee of TJ22 to serve as action editor.')
 
         inv = '{}/Journal_Request{}/-/Comment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
         recruitment_status = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])
@@ -281,7 +281,7 @@ TJ22 Editors-in-Chief
 
         messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
         assert len(messages) == 1
-        assert messages[0]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22 by First AE.</p>')
+        assert messages[0]['content']['text'].startswith('Dear New Reviewer,\n\nYou have been nominated to serve as reviewer for TJ22 by First AE.')
         assert messages[0]['content']['replyTo'] == 'ae_journal1@mail.com'
 
         inv = '{}/Journal_Request{}/-/Comment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
@@ -319,7 +319,7 @@ TJ22 Editors-in-Chief
 
         messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
         assert len(messages) == 2
-        assert messages[1]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22 by Second AE.</p>')
+        assert messages[1]['content']['text'].startswith('Dear New Reviewer,\n\nYou have been nominated to serve as reviewer for TJ22 by Second AE.')
         assert messages[1]['content']['replyTo'] == 'ae_journal2@mail.com'
 
         inv = '{}/Journal_Request{}/-/Comment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
@@ -332,7 +332,7 @@ TJ22 Editors-in-Chief
 
         #decline reviewer invitation
         text = messages[0]['content']['text']
-        decline_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        decline_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, decline_url, alert=True)
 
         recruitment_response = openreview_client.get_notes(invitation = 'TJ22/Reviewers/-/Recruitment', content={ 'user': 'new_reviewer@mail.com'}, sort='tcdate:desc')[0]
@@ -347,7 +347,7 @@ TJ22 Editors-in-Chief
         messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'ae_journal2@mail.com'
-        assert 'The user <a href="mailto:new_reviewer@mail.com">new_reviewer@mail.com</a> has declined an invitation to be a reviewer for TJ22.' in messages[0]['content']['text']
+        assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in messages[0]['content']['text']
 
         recruitment_note = ae2_client.post_note_edit(
             invitation = '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number']),
@@ -374,12 +374,12 @@ TJ22 Editors-in-Chief
         #check reviewer received another invitation even after declining
         messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
         assert len(messages) == 3
-        assert messages[2]['content']['text'].startswith('<p>Dear New Reviewer,</p>\n<p>You have been nominated to serve as reviewer for TJ22 by Second AE.</p>')
+        assert messages[2]['content']['text'].startswith('Dear New Reviewer,\n\nYou have been nominated to serve as reviewer for TJ22 by Second AE.')
         assert messages[2]['content']['replyTo'] == 'ae_journal2@mail.com'
 
         #accept reviewer invitation
         text = messages[0]['content']['text']
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
@@ -395,11 +395,11 @@ TJ22 Editors-in-Chief
         ae_messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
         assert len(ae_messages) == 2
         assert ae_messages[1]['content']['to'] == 'ae_journal2@mail.com'
-        assert 'The user <a href="mailto:new_reviewer@mail.com">new_reviewer@mail.com</a> has accepted an invitation to be a reviewer for TJ22.' in ae_messages[1]['content']['text']
+        assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in ae_messages[1]['content']['text']
 
         #accept reviewer invitation again
         text = messages[0]['content']['text']
-        accept_url = re.search('href="https://.*response=Yes"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
@@ -419,7 +419,7 @@ TJ22 Editors-in-Chief
 
         #decline reviewer invitation
         text = messages[0]['content']['text']
-        accept_url = re.search('href="https://.*response=No"', text).group(0)[6:-1].replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
+        accept_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
         #check recruitment response was updated
@@ -436,4 +436,4 @@ TJ22 Editors-in-Chief
         ae_messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
         assert len(ae_messages) == 3
         assert ae_messages[2]['content']['to'] == 'ae_journal2@mail.com'
-        assert 'The user <a href="mailto:new_reviewer@mail.com">new_reviewer@mail.com</a> has declined an invitation to be a reviewer for TJ22.' in ae_messages[2]['content']['text']
+        assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in ae_messages[2]['content']['text']
