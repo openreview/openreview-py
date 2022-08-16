@@ -161,5 +161,8 @@ class TestVenueSubmission():
             label = 'test-matching-1'
         ))
 
+        assert proposed_assignment_edge
+        assert proposed_assignment_edge.nonreaders == ['TestVenue.cc/Paper1/Authors']
+
         custom_load_edges = openreview_client.get_edges(invitation=f'{conference_id}/Reviewers/-/Custom_Max_Papers')
         assert (len(custom_load_edges)) == 1

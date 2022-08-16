@@ -39,7 +39,7 @@ class Matching(object):
         venue_id = venue.venue_id
         
         is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
-        paper_number = '${{2/head}/number}'
+        paper_number = '${{2/head}/number}' if is_assignment_invitation else None
 
         paper_num_signatures = '${{1/head}/number}'
 

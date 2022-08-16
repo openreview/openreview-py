@@ -5,7 +5,7 @@ var ROLE_NAME = 'reviewer';
 
 return {
   component: 'RecruitmentForm',
-  version: 1,
+  version: 2,
   properties: {
     header: HEADER,
     invitationMessage: `
