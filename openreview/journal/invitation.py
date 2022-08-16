@@ -18,27 +18,27 @@ class InvitationBuilder(object):
         one_month = day * 30
 
         self.author_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
         }
 
         self.reviewer_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
             'script': self.get_process_content('process/reviewer_reminder_process.py')
         }
 
         self.reviewer_reminder_process_with_EIC = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
             'script': self.get_process_content('process/reviewer_reminder_process.py')
         }
 
         self.ae_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_reminder_process.py')
         }
 
         self.ae_edge_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
@@ -335,7 +335,8 @@ class InvitationBuilder(object):
                     'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
-                            'optional': True
+                            'optional': True,
+                            'deletable': True
                         }
                     },
                     'signatures': [editors_in_chief_id],
@@ -708,7 +709,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${2/note/number}'), self.journal.get_authors_id(number='${2/note/number}')],
                 'writers': [ venue_id ],
                 'note': {
-                    'signatures': [authors_value],
+                    'signatures': [self.journal.get_authors_id(number='${2/number}')],
                     'readers': [ venue_id, self.journal.get_action_editors_id(number='${2/number}'), self.journal.get_authors_id(number='${2/number}')],
                     'writers': [ venue_id, self.journal.get_authors_id(number='${2/number}')],
                     'content': {
@@ -881,7 +882,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}.number}')],
@@ -927,7 +929,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}.number}'), '${2/tail}'],
@@ -974,7 +977,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
@@ -1026,7 +1030,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}.number}')],
@@ -1067,7 +1072,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, '${2/tail}'],
@@ -1112,7 +1118,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, '${2/tail}'],
@@ -1171,7 +1178,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}')],
@@ -1218,7 +1226,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
@@ -1266,7 +1275,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
@@ -1324,7 +1334,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
@@ -1369,7 +1380,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
@@ -1409,7 +1421,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
@@ -1549,7 +1562,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_note_review_approval_invitation(self, note, duedate):
         return self.client.post_invitation_edit(invitations=self.journal.get_review_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate) },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }, 
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -1656,7 +1673,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_note_desk_rejection_approval_invitation(self, note, review_approval, duedate):
         return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'replytoId': review_approval.id, 'duedate': openreview.tools.datetime_millis(duedate) },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }, 
+                'replytoId': { 'value': review_approval.id }, 
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -1749,7 +1771,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_note_withdrawal_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_withdrawal_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number },
+            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number} },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -1804,7 +1826,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'forum': '${4/content/noteId/value}',
                             'replyto': '${4/content/noteId/value}',
                             'signatures': [editors_in_chief_id],
-                            'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                            'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                             'writers': [ venue_id ],
                             'content': {
                                 'desk_reject_comments': {
@@ -1830,7 +1852,10 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_note_desk_rejection_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -1882,8 +1907,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'),  self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                         'writers': [ venue_id,  self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
-                            'forum': '${params.noteId}',
-                            'replyto': '${params.noteId}',
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
                             'signatures': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
                             'readers': [ editors_in_chief, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                             'writers': [ venue_id ],
@@ -1924,7 +1949,10 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_note_retraction_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_retraction_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2023,7 +2051,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_note_retraction_approval_invitation(self, note, retraction):
         return self.client.post_invitation_edit(invitations=self.journal.get_retraction_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'replytoId': retraction.id },
+            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }, 'replytoId': { 'value': retraction.id }},
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2045,7 +2073,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'signatures': [ venue_id ],
@@ -2104,7 +2133,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'signatures': [venue_id],
@@ -2282,7 +2312,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
-                        'optional': True
+                        'optional': True,
+                        'deletable': True
                     }
                 },
                 'signatures': [venue_id],
@@ -2410,36 +2441,32 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 type='Edge',
                 edit={
                     'ddate': {
-                        'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     },
-                    'readers': {
-                        'const': [venue_id, authors_id]
-                    },
-                    'nonreaders': {
-                        'const': [],
-                        'optional': True
-                    },
-                    'writers': {
-                        'const': [venue_id, authors_id]
-                    },
-                    'signatures': {
-                        'const': [authors_id]
-                    },
+                    'readers': [venue_id, authors_id],
+                    'writers': [venue_id, authors_id],
+                    'signatures': [authors_id],
                     'head': {
-                        'type': 'note',
-                        'const': note.id,
-                        'withInvitation': author_submission_id
+                        'param': {
+                            'type': 'note',
+                            'const': note.id,
+                            'withInvitation': author_submission_id
+                        }
                     },
                     'tail': {
-                        'type': 'profile',
-                        'inGroup' : action_editors_id
+                        'param': {
+                            'type': 'profile',
+                            'inGroup' : action_editors_id
+                        }
                     },
                     'weight': {
-                        'type': 'float',
-                        'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                        'param': {
+                            'minimum': -1
+                        }
                     }
                 },
                 date_processes=[self.author_reminder_process]
@@ -2493,34 +2520,32 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             type='Edge',
             edit={
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, paper_action_editors_id]
-                },
-                'nonreaders': {
-                    'const': [paper_authors_id]
-                },
-                'writers': {
-                    'const': [venue_id]
-                },
-                'signatures': {
-                    'const': [paper_action_editors_id]
-                },
+                'readers': [venue_id, paper_action_editors_id],
+                'nonreaders': [paper_authors_id],
+                'writers': [venue_id],
+                'signatures': [paper_action_editors_id],
                 'head': {
-                    'type': 'note',
-                    'const': note.id
+                    'param': {
+                        'type': 'note',
+                        'const': note.id
+                    }
                 },
                 'tail': {
-                    'type': 'group',
-                    'const' : reviewers_id
+                    'param': {
+                        'type': 'group',
+                        'const' : reviewers_id
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 }
             }
         )
@@ -2614,7 +2639,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'ddate': { 
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'signatures': ['${2/signatures}'],
@@ -2678,7 +2704,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_review_invitation(self, note, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_review_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate) },
+            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }, 'duedate': { 'value': openreview.tools.datetime_millis(duedate)} },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2827,7 +2853,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_note_official_recommendation_invitation(self, note, cdate, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_reviewer_recommendation_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'cdate': openreview.tools.datetime_millis(cdate), 'duedate': openreview.tools.datetime_millis(duedate) },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                 'cdate': { 'value': openreview.tools.datetime_millis(cdate) }, 
+                 'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2938,7 +2969,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_note_solicit_review_invitation(self, note):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number },
+            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }},
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -3060,7 +3091,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_note_solicit_review_approval_invitation(self, note, solicit_note, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate), 'replytoId': solicit_note.id, 'soliciter': solicit_note.signatures[0] },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}, 
+                'replytoId': { 'value': solicit_note.id }, 
+                'soliciter': { 'value': solicit_note.signatures[0] }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -3082,109 +3119,124 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[venue_id],
             edit={
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'signatures': { 'regex': f'{paper_authors_id}|{editors_in_chief_id}', 'type': 'group[]' },
-                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
-                'writers': { 'const': [ venue_id, paper_authors_id]},
+                'signatures': { 'param': { 'regex': f'{paper_authors_id}|{editors_in_chief_id}' }},
+                'readers': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
+                'writers': [ venue_id, paper_authors_id],
                 'note': {
-                    'id': { 'const': note.id },
+                    'id': note.id,
                     'content': {
                         'title': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^.{1,250}$',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'regex': '^.{1,250}$'
+                                }
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 1
                         },
                         'abstract': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'optional': True
+                                }
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2
                         },
                         'pdf': {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['pdf'],
-                                'maxSize': 50
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['pdf'],
+                                    'maxSize': 50
+                                }
                             },
-                            'description': 'Upload a PDF file that ends with .pdf',
+                            'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
                         'submission_length': {
                             'value': {
-                                'type': 'string',
-                                'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)']
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
+                                    'input': 'radio'
+
+                                }
                             },
                             'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                            'order': 6,
-                            'presentation': {
-                                'input': 'radio'
-                            }
-                        },                         
+                            'order': 6
+                        },                        
                         "supplementary_material": {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['zip', 'pdf'],
-                                'maxSize': 100,
-                                "optional": True
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['zip', 'pdf'],
+                                    'maxSize': 100,
+                                    "optional": True
+                                }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 7,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
-                            }
+                            "order": 7
                         },
                         f'previous_{short_name}_submission_url': {
                             'value': {
-                                'type': 'string',
-                                'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'optional': True
+                                }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
-                            'order': 8,
+                            'order': 8
                         },
                         'changes_since_last_submission': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 9,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 9
                         },
                         'competing_interests': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': "string",
+                                    'regex': '^[\\S\\s]{1,5000}$'
+                                }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                            'order': 10,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'order': 10
                         },
                         'human_subjects_reporting': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': "string",
+                                    'regex': '^[\\S\\s]{1,5000}$'
+                                }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                            'order': 11,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
+                            'order': 11
+                        },
+                        'venue': {
+                            'value': {
+                                'param': {
+                                    'type': "string",
+                                    'const': f'Submitted to {short_name}',
+                                    'hidden': True
+                                }
                             }
                         }
                     }
@@ -3242,43 +3294,52 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'regex': f'~.*', 'type': 'group[]' },
-                'readers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
-                'writers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
+                'signatures': { 'param': { 'regex': f'~.*' }},
+                'readers': [ venue_id, paper_action_editors_id, '${2/signatures}'],
+                'writers': [ venue_id, paper_action_editors_id, '${2/signatures}'],
                 'note': {
                     'id': {
-                        'withInvitation': public_comment_invitation_id,
-                        'optional': True
+                        'param': {
+                            'withInvitation': public_comment_invitation_id,
+                            'optional': True
+                        }
                     },
-                    'forum': { 'const': note.id },
-                    'replyto': { 'withForum': note.id },
+                    'forum': note.id,
+                    'replyto': { 
+                        'param': {
+                            'withForum': note.id 
+                        }
+                    },
                     'ddate': {
-                        'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     },
-                    'signatures': { 'const': ['${signatures}'] },
-                    'readers': { 'const': [ 'everyone']},
-                    'writers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ 'everyone'],
+                    'writers': [ venue_id, paper_action_editors_id, '${3/signatures}'],
                     'content': {
                         'title': {
                             'order': 1,
                             'description': 'Brief summary of your comment.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^.{1,500}$'
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^.{1,500}$'
+                                }
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
-                            },
-                            'presentation': {
-                                'markdown': True
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'markdown': True
+                                }
                             }
                         }
                     }
@@ -3297,49 +3358,57 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}', 'type': 'group[]' },
-                'readers': { 'const': [ venue_id, '${signatures}' ] },
-                'writers': { 'const': [ venue_id, '${signatures}' ] },
+                'signatures': { 'param': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}', 'type': 'group[]' }},
+                'readers': [ venue_id, '${2/signatures}' ],
+                'writers': [ venue_id, '${2/signatures}' ],
                 'note': {
                     'id': {
-                        'withInvitation': official_comment_invitation_id,
-                        'optional': True
+                        'param': {
+                            'withInvitation': official_comment_invitation_id,
+                            'optional': True
+                        }
                     },
-                    'forum': { 'const': note.id },
-                    'replyto': { 'withForum': note.id },
+                    'forum': note.id,
+                    'replyto': { 
+                        'param': {
+                            'withForum': note.id 
+                        }
+                    },
                     'ddate': {
-                        'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     },
-                    'signatures': { 'const': ['${signatures}'] },
+                    'signatures': ['${3/signatures}'],
                     'readers': {
-                       'type': 'group[]',
-                       'enum': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id],
-                    #    'presentation': {
-                    #        'input': 'select'
-                    #    }
+                        'param': {
+                            'type': 'group[]',
+                            'enum': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id],
+                        }
                     },
-                    'writers': { 'const': ['${writers}'] },
+                    'writers': ['${3/writers}'],
                     'content': {
                         'title': {
                             'order': 1,
                             'description': 'Brief summary of your comment.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^.{1,500}$'
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^.{1,500}$'
+                                }
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
-                            },
-                            'presentation': {
-                                'markdown': True
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'markdown': True
+                                }
                             }
                         }
                     }
@@ -3361,44 +3430,46 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     writers=[venue_id],
                     signatures=[venue_id],
                     edit={
-                        'signatures': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}', 'type': 'group[]' },
-                        'readers': { 'const': [ venue_id, paper_action_editors_id]},
-                        'writers': { 'const': [ venue_id, paper_action_editors_id]},
+                        'signatures': { 'param': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}' }},
+                        'readers': [ venue_id, paper_action_editors_id],
+                        'writers': [ venue_id, paper_action_editors_id],
                         'note': {
-                            'id': { 'withInvitation': public_comment_invitation_id },
-                            'forum': { 'const': note.id },
-                            'readers': {
-                                'const': ['everyone']
+                            'id': { 
+                                'param': {
+                                    'withInvitation': public_comment_invitation_id 
+                                }
                             },
-                            'writers': {
-                                'const': [venue_id, paper_action_editors_id]
+                            'forum': note.id,
+                            'readers': ['everyone'],
+                            'writers': [venue_id, paper_action_editors_id],
+                            'signatures': { 
+                                'param': {
+                                    'regex': '~.*', 'optional': True 
+                                }
                             },
-                            'signatures': { 'regex': '~.*', 'optional': True, 'type': 'group[]' },
                             'content': {
                                 'title': {
                                     'order': 1,
                                     'description': 'Brief summary of your comment.',
                                     'value': {
-                                        'type': 'string',
-                                        'regex': '^.{1,500}$'
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '^.{1,500}$'
+                                        }
                                     },
-                                    'readers': {
-                                        'const': [ venue_id, paper_action_editors_id, '${signatures}']
-                                    }
+                                    'readers': [ venue_id, paper_action_editors_id, '${5/signatures}']
                                 },
                                 'comment': {
                                     'order': 2,
                                     'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                                     'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,5000}$'
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '^[\\S\\s]{1,5000}$',
+                                            'markdown': True
+                                        }
                                     },
-                                    'presentation': {
-                                        'markdown': True
-                                    },
-                                    'readers': {
-                                        'const': [ venue_id, paper_action_editors_id, '${signatures}']
-                                    }
+                                    'readers': [ venue_id, paper_action_editors_id, '${5/signatures}']
                                 }
                             }
                         }
@@ -3423,67 +3494,70 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             minReplies=1,
             edit={
-                'signatures': { 'const': [paper_action_editors_id] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id] },
-                'nonreaders': { 'const': [ paper_authors_id ] },
-                'writers': { 'const': [ venue_id, paper_action_editors_id] },
+                'signatures': [paper_action_editors_id],
+                'readers': [ venue_id, paper_action_editors_id],
+                'nonreaders': [ paper_authors_id ],
+                'writers': [ venue_id, paper_action_editors_id],
                 'note': {
                     'id': {
-                        'withInvitation': decision_invitation_id,
-                        'optional': True
+                        'param': {
+                            'withInvitation': decision_invitation_id,
+                            'optional': True
+                        }
                     },
-                    'forum': { 'const': note.forum },
-                    'replyto': { 'const': note.forum },
+                    'forum': note.forum,
+                    'replyto': note.forum,
                     'ddate': {
-                        'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     },
-                    'signatures': { 'const': [paper_action_editors_id] },
-                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id ] },
-                    'nonreaders': { 'const': [ paper_authors_id ] },
-                    'writers': { 'const': [ venue_id, paper_action_editors_id] },
+                    'signatures': [paper_action_editors_id],
+                    'readers': [ editors_in_chief_id, paper_action_editors_id ],
+                    'nonreaders': [ paper_authors_id ],
+                    'writers': [ venue_id, paper_action_editors_id],
                     'content': {
                         'recommendation': {
                             'order': 1,
                             'value': {
-                                'type': 'string',
-                                'enum': [
-                                    'Accept as is',
-                                    'Accept with minor revision',
-                                    'Reject'
-                                ]
-                            },
-                            'presentation': {
-                                'input': 'radio'
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Accept as is',
+                                        'Accept with minor revision',
+                                        'Reject'
+                                    ],
+                                    'input': 'radio'
+                                }
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$'
-                            },
-                            'presentation': {
-                                'markdown': True
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'markdown': True
+                                }
                             }
                         },
                         'certifications': {
                             'order': 3,
                             'description': f'Optionally and if appropriate, recommend a certification for this submission. See {self.journal.website} for information about certifications.',
                             'value': {
-                                'type': 'string[]',
-                                'enum': [
-                                    'Featured Certification',
-                                    'Reproducibility Certification',
-                                    'Survey Certification'
-                                ],
-                                'optional': True
-                            },
-                            'presentation': {
-                                'input': 'select'
+                                'param': {
+                                    'type': 'string[]',
+                                    'enum': [
+                                        'Featured Certification',
+                                        'Reproducibility Certification',
+                                        'Survey Certification'
+                                    ],
+                                    'optional': True,
+                                    'input': 'select'
+                                }
                             }
                         }
                     }

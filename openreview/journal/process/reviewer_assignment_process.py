@@ -158,7 +158,7 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
 
 {journal.short_name} operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of {journal.short_name} that might differ from your previous reviewing experience.
 
-To perform this quick task, simply visit the following link: https://openreview.net/forum?id={responsiblity_invitation_edit['invitation']['edit']['note']['forum']['const']}&invitationId={responsiblity_invitation_edit['invitation']['id']}
+To perform this quick task, simply visit the following link: https://openreview.net/forum?id={responsiblity_invitation_edit['invitation']['edit']['note']['forum']}&invitationId={responsiblity_invitation_edit['invitation']['id']}
 
 We thank you for your essential contribution to {journal.short_name}!
 
