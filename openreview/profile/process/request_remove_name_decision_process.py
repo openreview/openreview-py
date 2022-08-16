@@ -133,7 +133,7 @@ The OpenReview Team.
 
 We have received your request to remove the name "{request_note.content['name']}" from your profile: https://openreview.net/profile?id={profile.id}.
 
-The name has been removed from your profile. Please check the information listed in your profile is correct.
+The name has been removed from your profile. Please check that the information listed in your profile is correct.
 
 Thanks,
 
