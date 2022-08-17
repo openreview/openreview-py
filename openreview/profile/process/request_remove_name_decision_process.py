@@ -30,7 +30,7 @@ The OpenReview Team.
             profile = client.rename_profile(profile.id, profile.get_preferred_name())
         
         print('Replace all the publications that contain the name to remove')
-        publications = client.get_notes(content={ 'authorids': username})
+        publications = client.get_all_notes(content={ 'authorids': username})
         for publication in publications:
             authors = []
             authorids = []
@@ -41,7 +41,8 @@ The OpenReview Team.
                     authorids.append(profile.id)
                     needs_change = True
                 else:
-                    authors.append(publication.content['authors'][index])
+                    if publication.content.get('authors'):
+                        authors.append(publication.content['authors'][index])
                     authorids.append(publication.content['authorids'][index])
             if needs_change:
                 client.post_note(openreview.Note(
@@ -58,7 +59,7 @@ The OpenReview Team.
 
         
         print('Change all the notes that contain the name to remove as signatures')
-        signed_notes = client.get_notes(signature=username)
+        signed_notes = client.get_all_notes(signature=username)
         for note in signed_notes:
             signatures = []
             for signature in note.signatures:
@@ -82,7 +83,11 @@ The OpenReview Team.
             note.signatures = signatures
             note.readers = readers
             note.writers = writers
-            client.post_note(note)
+            ## catch the error, some notes may not match with the invitation
+            try:
+                client.post_note(note)
+            except Exception as e:
+                print(f'note id {note.id} not updated: {e}')
 
         print('Rename all the edges')
         head_edges = client.get_edges(head=username)
@@ -91,7 +96,7 @@ The OpenReview Team.
             client.rename_edges(username, profile.id)
         
         print('Replace all the group members that contain the name to remove')
-        memberships = client.get_groups(member=username)
+        memberships = client.get_all_groups(member=username)
         print()
 
         for group in memberships:

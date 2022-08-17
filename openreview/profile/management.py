@@ -38,7 +38,7 @@ class ProfileManagement():
             },
             'status': {
                 'order': 4,
-                'value': 'Pending',
+                'value-dropdown': ['Pending', 'Accepted', 'Rejected'],
                 'description': 'Request status.',
                 'required': True
             }
