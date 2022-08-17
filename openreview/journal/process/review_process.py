@@ -42,7 +42,7 @@ def process(client, edit, invitation):
                 signatures=[journal.get_editors_in_chief_id()],
                 edit={
                     'note': {
-                        'readers': { 'const': [ 'everyone' ] }
+                        'readers': [ 'everyone' ]
                     }
                 }
         ))
@@ -55,12 +55,12 @@ def process(client, edit, invitation):
                 writers=[venue_id],
                 signatures=[venue_id],
                 edit={
-                    'signatures': { 'const': [venue_id ] },
-                    'readers': { 'const': [ venue_id, journal.get_action_editors_id(number=submission.number), '${{note.id}.signatures}' ] },
-                    'writers': { 'const': [ venue_id ] },
+                    'signatures': [venue_id ],
+                    'readers': [ venue_id, journal.get_action_editors_id(number=submission.number), '${{2/note/id}/signatures}' ],
+                    'writers': [ venue_id ],
                     'note': {
-                        'id': { 'withInvitation': edit.invitation },
-                        'readers': { 'const': [ 'everyone' ] }
+                        'id': { 'param': { 'withInvitation': edit.invitation }},
+                        'readers': [ 'everyone' ]
                     }
                 }
         ))
@@ -74,12 +74,12 @@ def process(client, edit, invitation):
                 writers=[venue_id],
                 signatures=[venue_id],
                 edit={
-                    'signatures': { 'const': [venue_id ] },
-                    'readers': { 'const': [ venue_id, '${{note.id}.signatures}' ] },
-                    'writers': { 'const': [ venue_id ] },
+                    'signatures': [venue_id ],
+                    'readers': [ venue_id, '${{2/note/id}/signatures}' ],
+                    'writers': [ venue_id ],
                     'note': {
-                        'id': { 'withInvitation': official_comment_invitation_id },
-                        'readers': { 'const': [ 'everyone' ] }
+                        'id': { 'param': { 'withInvitation': official_comment_invitation_id }},
+                        'readers': [ 'everyone' ]
                     }
                 }
         ))

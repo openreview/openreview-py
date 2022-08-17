@@ -15,13 +15,13 @@ def process(client, edit, invitation):
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'const': [venue_id ] },
-                'readers': { 'const': [ venue_id, journal.get_action_editors_id(number=submission.number), journal.get_authors_id(number=submission.number) ] },
-                'writers': { 'const': [ venue_id ] },
+                'signatures': [venue_id ],
+                'readers': [ venue_id, journal.get_action_editors_id(number=submission.number), journal.get_authors_id(number=submission.number) ],
+                'writers': [ venue_id ],
                 'note': {
-                    'id': { 'withInvitation': journal.get_retraction_id(number=submission.number) },
-                    'readers': { 'const': [ 'everyone' ] },
-                    'nonreaders': { 'const': [] }
+                    'id': { 'param': { 'withInvitation': journal.get_retraction_id(number=submission.number) }},
+                    'readers': [ 'everyone' ],
+                    'nonreaders': []
                 }
             }
     ))

@@ -552,7 +552,7 @@ If you have questions after reviewing the points below that are not answered on 
                 },
                 'invitation': {
                     'id': self.journal.get_reviewer_assignment_acknowledgement_id(number='${2/content/noteNumber/value}', reviewer_id='${2/content/reviewerId/value}'),
-                    'invitees': ['${2/content/reviewerId/value}'],
+                    'invitees': ['${3/content/reviewerId/value}'],
                     'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/reviewerId/value}'],
                     'writers': [venue_id],
                     'signatures': [editors_in_chief_id],
@@ -562,11 +562,11 @@ If you have questions after reviewing the points below that are not answered on 
                     'dateprocesses': [self.reviewer_reminder_process],
                     'edit': {
                         'signatures': { 'param': { 'regex': self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True) }},
-                        'readers': [venue_id, '${1/signatures}'],
+                        'readers': [venue_id, '${2/signatures}'],
                         'note': {
                             'forum': '${4/content/noteId/value}',
                             'replyto': '${4/content/noteId/value}',
-                            'signatures': ['${2/signatures}'],
+                            'signatures': ['${3/signatures}'],
                             'readers': [editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${2/signatures}'],
                             'writers': [venue_id, '${2/signatures}'],
                             'content': {
@@ -879,6 +879,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             type='Edge',            
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_conflict_id(),
+                        'optional': True
+                    }
+                },
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -886,7 +892,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}.number}')],
+                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {
@@ -926,6 +932,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_affinity_score_id(),
+                        'optional': True
+                    }
+                },
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -933,7 +945,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}.number}'), '${2/tail}'],
+                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}'), '${2/tail}'],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {
@@ -974,6 +986,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_assignment_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1027,6 +1045,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_recommendation_id(),
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1034,9 +1058,9 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}.number}')],
-                'writers': [venue_id, self.journal.get_authors_id(number='${{2/head}.number}')],
-                'signatures': [self.journal.get_authors_id(number='${{2/head}.number}')],
+                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
+                'writers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
+                'signatures': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'head': {
                     'param': {
                         'type': 'note',
@@ -1069,6 +1093,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_custom_max_papers_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1115,6 +1145,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_availability_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1175,6 +1211,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_conflict_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1182,8 +1224,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}')],
-                'nonreaders': [self.journal.get_authors_id(number='${{2/head}.number}')],
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {
@@ -1223,6 +1265,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_affinity_score_id(),
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1230,8 +1278,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
-                'nonreaders': [self.journal.get_authors_id(number='${{2/head}.number}')],
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {
@@ -1272,6 +1320,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_assignment_id(),
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1279,9 +1333,9 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
-                'nonreaders': [self.journal.get_authors_id(number='${{2/head}.number}')],
-                'writers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}')],
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
+                'writers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
                 'signatures': {
                     'param': {
                         'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*')
@@ -1331,6 +1385,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_custom_max_papers_id(),
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1338,7 +1398,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
@@ -1377,6 +1437,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_pending_review_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1384,7 +1450,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
+                'readers': [venue_id, self.journal.get_action_editors_id(), '${2/tail}'],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {
@@ -1418,6 +1484,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_availability_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -1425,7 +1497,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}.number}'), '${2/tail}'],
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
@@ -1524,7 +1596,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             },
                             'forum': '${4/content/noteId/value}',
                             'replyto': '${4/content/noteId/value}',
-                            'signatures': ['${2/signatures}'],
+                            'signatures': ['${3/signatures}'],
                             'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
                             'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
                             'content': {
@@ -1635,7 +1707,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'writers': [ venue_id],
                         'note': {
                             'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}',
+                            'replyto': '${4/content/replytoId/value}',
                             'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
                             'writers': [ venue_id],
                             'signatures': [editors_in_chief_id],
@@ -2437,9 +2509,15 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 readers=[venue_id, authors_id],
                 writers=[venue_id],
                 signatures=[venue_id],
-                minReplies=1,
+                minReplies=3,
                 type='Edge',
                 edit={
+                    'id': {
+                        'param': {
+                            'withInvitation': ae_recommendation_invitation_id,
+                            'optional': True
+                        }
+                    },                     
                     'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
@@ -2519,6 +2597,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             date_processes=[self.ae_edge_reminder_process],
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': reviewer_assignment_invitation_id,
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -2643,7 +2727,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                     'deletable': True
                                 }
                             },
-                            'signatures': ['${2/signatures}'],
+                            'signatures': ['${3/signatures}'],
                             'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}', self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
                             'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                             'content': {
@@ -2768,7 +2852,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'cdate': '${2/content/cdate/value}',
                     'process': paper_process,
                     'dateprocesses': [{
-                        'dates': [ "#{4/content/cdate/value} + 1000" ],
+                        'dates': [ "#{4/cdate} + 1000" ],
                         'script': cdate_process
                     }, self.reviewer_reminder_process_with_EIC],
                     'edit': {
@@ -3032,8 +3116,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'invitation': {
                     'id': self.journal.get_solicit_review_approval_id(number='${2/content/noteNumber/value}', signature='${2/content/soliciter/value}'),
-                    'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}}')],
-                    'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}}')],
+                    'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+                    'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
                     'writers': [venue_id],
                     'signatures': [editors_in_chief_id], ## to compute conflicts
                     'duedate': '${2/content/duedate/value}',
@@ -3042,15 +3126,15 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'preprocess': paper_preprocess,
                     'dateprocesses': [self.ae_reminder_process],
                     'edit': {
-                        'signatures': [ self.journal.get_action_editors_id(number='${4/content/noteNumber/value}}') ],
-                        'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}}') ],
+                        'signatures': [ self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
+                        'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
                         'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                         'writers': [ venue_id ],
                         'note': {
                             'forum': '${4/content/noteId/value}',
                             'replyto': '${4/content/replytoId/value}',
-                            'signatures': [ self.journal.get_action_editors_id(number='${5/content/noteNumber/value}}') ],
-                            'readers': [ '${{2/note.replyto}.readers}' ],
+                            'signatures': [ self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
                             'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                             'writers': [ venue_id ],
                             'content': {
@@ -3258,9 +3342,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             invitation=Invitation(
                 id=revision_invitation_id,
                 edit={
-                    'readers': {
-                        'const': ['everyone']
-                    }
+                    'readers': ['everyone']
                 }
             )
         )
@@ -3358,7 +3440,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'param': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}', 'type': 'group[]' }},
+                'signatures': { 'param': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}' }},
                 'readers': [ venue_id, '${2/signatures}' ],
                 'writers': [ venue_id, '${2/signatures}' ],
                 'note': {
@@ -3384,7 +3466,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'signatures': ['${3/signatures}'],
                     'readers': {
                         'param': {
-                            'type': 'group[]',
                             'enum': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id],
                         }
                     },
@@ -3442,11 +3523,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'forum': note.id,
                             'readers': ['everyone'],
                             'writers': [venue_id, paper_action_editors_id],
-                            'signatures': { 
-                                'param': {
-                                    'regex': '~.*', 'optional': True 
-                                }
-                            },
+                            # 'signatures': { 
+                            #     'param': {
+                            #         'regex': '~.*'
+                            #     }
+                            # },
                             'content': {
                                 'title': {
                                     'order': 1,
@@ -3588,38 +3669,38 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             minReplies=1,
             maxReplies=1,
             edit={
-                'signatures': { 'const': [editors_in_chief_id] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id] },
-                'nonreaders': { 'const': [ paper_authors_id ] },
-                'writers': { 'const': [ venue_id] },
+                'signatures': [editors_in_chief_id],
+                'readers': [ venue_id, paper_action_editors_id],
+                'nonreaders': [ paper_authors_id ],
+                'writers': [ venue_id],
                 'note': {
-                    'forum': { 'const': note.id },
-                    'replyto': { 'const': decision.id },
-                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id] },
-                    'nonreaders': { 'const': [ paper_authors_id ] },
-                    'writers': { 'const': [ venue_id] },
-                    'signatures': { 'const': [editors_in_chief_id] },
+                    'forum': note.id,
+                    'replyto': decision.id,
+                    'readers': [ editors_in_chief_id, paper_action_editors_id],
+                    'nonreaders': [ paper_authors_id ],
+                    'writers': [ venue_id],
+                    'signatures': [editors_in_chief_id],
                     'content': {
                         'approval': {
                             'order': 1,
                             'value': {
-                                'type': 'string',
-                                'enum': ['I approve the AE\'s decision.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['I approve the AE\'s decision.'],
+                                    'input': 'checkbox'
+                                }
                             }
                         },
                         'comment_to_the_AE': {
                             'order': 2,
                             'description': 'Optionally add any additional notes that might be useful for the AE.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$',
-                                'optional': True
-                            },
-                            'presentation': {
-                                'markdown': True
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
@@ -3653,30 +3734,30 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         signatures=[editors_in_chief_id],
                         maxReplies=1,
                         edit={
-                            'signatures': { 'const': [paper_action_editors_id] },
-                            'readers': { 'const': [ venue_id, paper_action_editors_id] },
-                            'nonreaders': { 'const': [ paper_authors_id ] },
-                            'writers': { 'const': [ venue_id, paper_action_editors_id] },
+                            'signatures': [paper_action_editors_id],
+                            'readers': [ venue_id, paper_action_editors_id],
+                            'nonreaders': [ paper_authors_id ],
+                            'writers': [ venue_id, paper_action_editors_id],
                             'note': {
-                                'forum': { 'const': review.forum },
-                                'replyto': { 'const': review.id },
-                                'signatures': { 'const': [paper_action_editors_id] },
-                                'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id] },
-                                'nonreaders': { 'const': [ paper_authors_id ] },
-                                'writers': { 'const': [ venue_id, paper_action_editors_id] },
+                                'forum': review.forum,
+                                'replyto': review.id,
+                                'signatures': [paper_action_editors_id],
+                                'readers': [ editors_in_chief_id, paper_action_editors_id],
+                                'nonreaders': [ paper_authors_id ],
+                                'writers': [ venue_id, paper_action_editors_id],
                                 'content': {
                                     'rating': {
                                         'order': 1,
                                         'value': {
-                                            'type': 'string',
-                                            'enum': [
-                                                "Exceeds expectations",
-                                                "Meets expectations",
-                                                "Falls below expectations"
-                                            ]
-                                        },
-                                        'presentation': {
-                                            'input': 'radio'
+                                            'param': {
+                                                'type': 'string',
+                                                'enum': [
+                                                    "Exceeds expectations",
+                                                    "Meets expectations",
+                                                    "Falls below expectations"
+                                                ],
+                                                'input': 'radio'
+                                            }
                                         }
                                     }
                                 }
@@ -3702,129 +3783,139 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[venue_id],
             duedate=openreview.tools.datetime_millis(duedate),
             edit={
-                'signatures': { 'const': [paper_authors_id] },
-                'readers': { 'const': ['everyone']},
-                'writers': { 'const': [ venue_id, paper_authors_id]},
+                'signatures': [paper_authors_id],
+                'readers': ['everyone'],
+                'writers': [ venue_id, paper_authors_id],
                 'note': {
-                    'id': { 'const': note.forum },
-                    'forum': { 'const': note.forum },
+                    'id': note.forum,
+                    'forum':  note.forum,
                     'content': {
                         'title': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^.{1,250}$'
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^.{1,250}$'
+                                }
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 1
                         },
                         'abstract': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,5000}$'
+                                }
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2
                         },
                         'authors': {
                             'value': {
-                                'type': 'string[]',
-                                'const': note.content['authors']['value']
+                                'param': {
+                                    'type': 'string[]',
+                                    'const': note.content['authors']['value'],
+                                    'hidden': True
+                                }
                             },
                             'description': 'Comma separated list of author names.',
-                            'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            }
+                            'order': 3
                         },
                         'authorids': {
-                            'value': {
-                                'type': 'group[]',
-                                'const': note.content['authorids']['value']
-                            },
+                            'value': note.content['authorids']['value'],
                             'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4
                         },                        
                         'pdf': {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['pdf'],
-                                'maxSize': 50
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['pdf'],
+                                    'maxSize': 50
+                                }
                             },
                             'description': 'Upload a PDF file that ends with .pdf',
                             'order': 5,
                         },
                         "supplementary_material": {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['zip', 'pdf'],
-                                'maxSize': 100,
-                                "optional": True
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['zip', 'pdf'],
+                                    'maxSize': 100,
+                                    "optional": True
+                                }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                             "order": 6,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
-                            }
+                            'readers': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
                         },
                         f'previous_{short_name}_submission_url': {
                             'value': {
-                                'type': 'string',
-                                'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'optional': True
+                                }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'optional': True,
+                                    'markdown': True
+
+                                }
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 8,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 8
                         },
                         'competing_interests': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,5000}$'
+                                }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
                             'order': 9,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'readers': [ venue_id, paper_action_editors_id, paper_authors_id]
                         },
                         'human_subjects_reporting': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,5000}$'
+                                }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                             'order': 10,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'readers': [ venue_id, paper_action_editors_id, paper_authors_id]
                         },
                         "video": {
                             "order": 11,
                             "description": "Optionally, you may submit a link to a video summarizing your work.",
                             'value': {
-                                'type': 'string',
-                                "regex": 'https?://.+',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    "regex": 'https?://.+',
+                                    'optional': True
+                                }
                             }
                         },
                         "code": {
                             "order": 12,
                             "description": "Optionally, you may submit a link to code for your work.",
                             'value': {
-                                'type': 'string',
-                                "regex": 'https?://.+',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    "regex": 'https?://.+',
+                                    'optional': True
+                                }
                             }
                         }
                     }
@@ -3849,24 +3940,24 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'const': [ paper_action_editors_id ] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id ] },
-                'writers': { 'const': [ venue_id, paper_action_editors_id] },
+                'signatures': [ paper_action_editors_id ],
+                'readers': [ venue_id, paper_action_editors_id ],
+                'writers': [ venue_id, paper_action_editors_id],
                 'note': {
-                    'signatures': { 'const': [ paper_action_editors_id ] },
-                    'forum': { 'const': note.id },
-                    'replyto': { 'const': note.id },
-                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id ] },
-                    'writers': { 'const': [ venue_id, paper_action_editors_id ] },
+                    'signatures': [ paper_action_editors_id ],
+                    'forum': note.id,
+                    'replyto': note.id,
+                    'readers': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id ],
+                    'writers': [ venue_id, paper_action_editors_id ],
                     'content': {
                         'verification': {
                             'order': 1,
                             'value': {
-                                'type': 'string',
-                                'enum': [f'I confirm that camera ready manuscript complies with the {self.journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [f'I confirm that camera ready manuscript complies with the {self.journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.'],
+                                    'input': 'checkbox'
+                                }
                             }
                         }
                     }
@@ -3892,24 +3983,24 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[venue_id],
             maxReplies=1,
             edit={
-                'signatures': { 'const': [ paper_authors_id ] },
-                'readers': { 'const': [ venue_id, paper_authors_id ] },
-                'writers': { 'const': [ venue_id ] },
+                'signatures': [ paper_authors_id ],
+                'readers': [ venue_id, paper_authors_id ],
+                'writers': [ venue_id ],
                 'note': {
-                    'signatures': { 'const': [ paper_authors_id ] },
-                    'forum': { 'const': note.id },
-                    'replyto': { 'const': note.id },
-                    'readers': { 'const': [ editors_in_chief_id, paper_authors_id ] },
-                    'writers': { 'const': [ venue_id ] },
+                    'signatures': [ paper_authors_id ],
+                    'forum':  note.id,
+                    'replyto': note.id,
+                    'readers': [ editors_in_chief_id, paper_authors_id ],
+                    'writers': [ venue_id ],
                     'content': {
                         'confirmation': {
                             'order': 1,
                             'value': {
-                                'type': 'string',
-                                'enum': ['I want to reveal all author names on behalf of myself and my co-authors.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['I want to reveal all author names on behalf of myself and my co-authors.'],
+                                    'input': 'checkbox'
+                                }
                             }
                         }
                     }
