@@ -175,7 +175,7 @@ The OpenReview Team.
 
 We have received your request to remove the name "John Alternate Last" from your profile: https://openreview.net/profile?id=~John_Last1.
 
-The name has been removed from your profile. Please check the information listed in your profile is correct.
+The name has been removed from your profile. Please check that the information listed in your profile is correct.
 
 Thanks,
 
@@ -317,7 +317,7 @@ The OpenReview Team.
 
 We have received your request to remove the name "Ana Last" from your profile: https://openreview.net/profile?id=~Ana_Alternate_Last1.
 
-The name has been removed from your profile. Please check the information listed in your profile is correct.
+The name has been removed from your profile. Please check that the information listed in your profile is correct.
 
 Thanks,
 
@@ -541,7 +541,7 @@ The OpenReview Team.
 
 We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
-The name has been removed from your profile. Please check the information listed in your profile is correct.
+The name has been removed from your profile. Please check that the information listed in your profile is correct.
 
 Thanks,
 
@@ -683,7 +683,7 @@ The OpenReview Team.
 
 We have received your request to remove the name "Javier Last" from your profile: https://openreview.net/profile?id=~Javier_Alternate_Last1.
 
-The name has been removed from your profile. Please check the information listed in your profile is correct.
+The name has been removed from your profile. Please check that the information listed in your profile is correct.
 
 Thanks,
 
