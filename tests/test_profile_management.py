@@ -103,6 +103,25 @@ class TestProfileManagement():
             }
         ))
 
+        ## Create committee groups
+        client.post_group(openreview.Group(
+            id='ICLRR.cc',
+            readers=['everyone'],
+            writers=['ICLRR.cc'],
+            signatures=['~Super_User1'],
+            signatories=[],
+            members=[]
+        ))
+
+        client.post_group(openreview.Group(
+            id='ICLRR.cc/Reviewers',
+            readers=['everyone'],
+            writers=['ICLRR.cc'],
+            signatures=['~Super_User1'],
+            signatories=[],
+            members=['~John_Alternate_Last1']
+        ))        
+
         publications = client.get_notes(content={ 'authorids': '~John_Last1'})
         assert len(publications) == 2
 
@@ -160,6 +179,9 @@ The OpenReview Team.
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
 
+        group = client.get_group('ICLRR.cc/Reviewers')
+        assert '~John_Alternate_Last1' not in group.members
+        assert '~John_Last1' in group.members
 
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 1
