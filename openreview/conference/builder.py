@@ -264,7 +264,16 @@ class Conference(object):
                 )
 
         ## Make submissions visible to the ethics committee
-        self.create_blind_submissions(number=numbers)
+        if self.submission_stage.double_blind:
+            self.create_blind_submissions(number=numbers)
+        else:
+            self.invitation_builder.set_submission_invitation(conference=self)
+            submissions = self.get_submissions()
+            for s in submissions:
+                final_readers =  self.submission_stage.get_readers(conference=self, number=s.number)
+                if s.readers != final_readers:
+                    s.readers = final_readers
+                    self.client.post_note(s)
 
         ## Setup paper matching
         self.setup_committee_matching(self.get_ethics_reviewers_id(), compute_affinity_scores=False, compute_conflicts=True)
