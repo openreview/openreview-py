@@ -296,7 +296,7 @@ var getAllInvitations = function() {
   });
 
   var filterInvitee = function(inv) {
-    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(ETHICS_REVIEW_CHAIR_NAME) !== -1; });
+    return _.some(inv.invitees, function(invitee) { return invitee.indexOf(ETHICS_CHAIRS_NAME) !== -1; });
   };
 
   return $.when(
