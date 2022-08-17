@@ -385,7 +385,6 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
-        builder.use_legacy_anonids(True)
         builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
@@ -423,13 +422,16 @@ class TestSingleBlindConference():
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
+        anon_groups = reviewer_client.get_groups(regex='NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewer_', signatory='~Reviewer_SomeLastName1')
+        assert len(anon_groups) == 1
+        
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
             nonreaders = ['NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
-            writers = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
-            signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer1'],
+            writers = [anon_groups[0].id],
+            signatures = [anon_groups[0].id],
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
@@ -470,13 +472,16 @@ class TestSingleBlindConference():
         notes = reviewer2_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
         assert len(notes) == 0
 
+        anon_groups = reviewer2_client.get_groups(regex='NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewer_', signatory='~Reviewer_Three1')
+        assert len(anon_groups) == 1        
+        
         note = openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['NIPS.cc/2018/Workshop/MLITS/Program_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Area_Chairs', 'NIPS.cc/2018/Workshop/MLITS/Paper1/Reviewers/Submitted'],
             nonreaders = ['NIPS.cc/2018/Workshop/MLITS/Paper1/Authors'],
-            writers = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer2'],
-            signatures = ['NIPS.cc/2018/Workshop/MLITS/Paper1/AnonReviewer2'],
+            writers = [anon_groups[0].id],
+            signatures = [anon_groups[0].id],
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
@@ -501,6 +506,76 @@ class TestSingleBlindConference():
         assert 'ac2@mail.com' in recipients
         assert 'reviewer@mail.com' in recipients
 
+    def test_ethics_review_stage(self, client, test_client, selenium, request_page, helpers):
+
+        now = datetime.datetime.utcnow()
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
+        assert builder, 'builder is None'
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
+        submission = notes[0]
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.set_conference_short_name('MLITS 2018')
+        builder.has_area_chairs(True)
+        builder.has_ethics_chairs(True)
+        builder.has_ethics_reviewers(True)
+        builder.set_submission_stage(
+            due_date = now - datetime.timedelta(minutes = 2),
+            public=True,
+            email_pcs=True,
+            create_groups=False,
+            withdrawn_submission_public=True,
+            withdrawn_submission_reveal_authors=True,
+            desk_rejected_submission_public=True,
+            desk_rejected_submission_reveal_authors=True)
+        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+            'rating': {
+                'order': 3,
+                'value-dropdown': [
+                    '5',
+                    '4',
+                    '3',
+                    '2',
+                    '1'
+                ],
+                'required': True
+            }
+        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
+        builder.set_ethics_review_stage(openreview.EthicsReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_public=True, submission_numbers=[1]))
+        conference = builder.get_result()
+        
+        client.add_members_to_group('NIPS.cc/2018/Workshop/MLITS/Ethics_Reviewers', 'melisa@ethics.org')
+        conference.create_ethics_review_stage()
+
+        assert client.get_invitation('NIPS.cc/2018/Workshop/MLITS/Paper1/-/Ethics_Review')
+        assert client.get_group('NIPS.cc/2018/Workshop/MLITS/Paper1/Ethics_Reviewers')
+        assert client.get_group('NIPS.cc/2018/Workshop/MLITS/Ethics_Chairs')
+
+        reviews = client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/Paper1/-/Official_Review')
+        assert len(reviews) == 2
+        assert 'NIPS.cc/2018/Workshop/MLITS/Paper1/Ethics_Reviewers' in reviews[0].readers
+        assert 'NIPS.cc/2018/Workshop/MLITS/Ethics_Chairs' in reviews[0].readers
+        assert 'NIPS.cc/2018/Workshop/MLITS/Paper1/Ethics_Reviewers' in reviews[1].readers
+        assert 'NIPS.cc/2018/Workshop/MLITS/Ethics_Chairs' in reviews[1].readers
+
+        client.add_members_to_group('NIPS.cc/2018/Workshop/MLITS/Paper1/Ethics_Reviewers', 'melisa@ethics.org')
+        ethic_reviewer_client = helpers.create_user('melisa@ethics.org', 'Melisa', 'Ethics')
+        anon_groups = ethic_reviewer_client.get_groups(regex='NIPS.cc/2018/Workshop/MLITS/Paper1/Ethics_Reviewer_', signatory='~Melisa_Ethics1')
+        assert len(anon_groups) == 1        
+        ethic_reviewer_client.post_note(openreview.Note(invitation = 'NIPS.cc/2018/Workshop/MLITS/Paper1/-/Ethics_Review',
+            forum = submission.id,
+            replyto = submission.id,
+            readers = ['everyone'],
+            writers = [anon_groups[0].id],
+            signatures = [anon_groups[0].id],
+            content = {
+                'recommendation': '1: No serious ethical issues'
+            }
+        ))
+
+        helpers.await_queue()       
+    
     def test_consoles(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
@@ -510,7 +585,6 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
-        builder.use_legacy_anonids(True)
         builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
@@ -542,8 +616,6 @@ class TestSingleBlindConference():
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
-        tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
-        assert len(tasks.find_elements_by_class_name('empty-message')) == 1
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
@@ -565,8 +637,6 @@ class TestSingleBlindConference():
         tabs = selenium.find_element_by_class_name('tabs-container')
         assert tabs
         assert tabs.find_element_by_id('author-tasks')
-        tasks = tabs.find_element_by_id('author-tasks').find_element_by_class_name('task-list')
-        assert len(tasks.find_elements_by_class_name('empty-message')) == 1
         assert tabs.find_element_by_id('your-submissions')
         papers = tabs.find_element_by_id('your-submissions').find_element_by_class_name('console-table')
         assert len(papers.find_elements_by_tag_name('tr')) == 2
