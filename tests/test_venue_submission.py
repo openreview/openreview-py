@@ -72,10 +72,7 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
         assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Official_Review')
 
-        venue.area_chairs_name = 'Action_Editors'
-        venue.use_area_chairs = True
-
-        #recruit reviewers and action editors to create groups
+        #recruit reviewers and area chairs to create groups
         message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
         
         helpers.create_user('reviewer_venue_one@mail.com', 'Reviewer Venue', 'One')
@@ -87,10 +84,10 @@ class TestVenueSubmission():
             contact_info='testvenue@contact.com',
             reduced_load_on_decline = ['1','2','3'])
 
-        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Action Editor',
+        venue.recruit_reviewers(title='[TV 22] Invitation to serve as Area Chair',
             message=message,
             invitees = ['~Reviewer_Venue_One1'],
-            reviewers_name = 'Action_Editors',
+            reviewers_name = 'Area_Chairs',
             contact_info='testvenue@contact.com',
             allow_overlap_official_committee = True)
 
@@ -114,7 +111,7 @@ class TestVenueSubmission():
         venue.create_bid_stages()
 
         assert openreview_client.get_invitation(venue.id + '/Reviewers/-/Bid')
-        assert openreview_client.get_invitation(venue.id + '/Action_Editors/-/Bid')
+        assert openreview_client.get_invitation(venue.id + '/Area_Chairs/-/Bid')
 
         #test posting a bid edge
         openreview_client.add_members_to_group(venue.id + '/Paper1/Reviewers', '~Reviewer_Venue_One1')
@@ -122,7 +119,7 @@ class TestVenueSubmission():
         bid_edge = reviewer_client.post_edge(Edge(invitation = venue.id + '/Reviewers/-/Bid',
             head = submission.id,
             tail = '~Reviewer_Venue_One1',
-            readers = ['TestVenue.cc', 'TestVenue.cc/Action_Editors', '~Reviewer_Venue_One1'],
+            readers = ['TestVenue.cc', 'TestVenue.cc/Area_Chairs', '~Reviewer_Venue_One1'],
             writers = ['TestVenue.cc', '~Reviewer_Venue_One1'],
             signatures = ['~Reviewer_Venue_One1'],
             label = 'High'
@@ -152,11 +149,12 @@ class TestVenueSubmission():
         # #test posting proposed assignment edge
         proposed_assignment_edge = openreview_client.post_edge(Edge(
             invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
-            signatures = ['TestVenue.cc'],
+            # signatures = ['TestVenue.cc'],
+            signatures = ['TestVenue.cc/Paper1/Area_Chairs'],
             head = submission.id,
             tail = '~Reviewer_Venue_One1',
-            readers = ['TestVenue.cc','TestVenue.cc/Paper1/Action_Editors','~Reviewer_Venue_One1'],
-            writers = ['TestVenue.cc','TestVenue.cc/Paper1/Action_Editors'],
+            readers = ['TestVenue.cc','TestVenue.cc/Paper1/Area_Chairs','~Reviewer_Venue_One1'],
+            writers = ['TestVenue.cc','TestVenue.cc/Paper1/Area_Chairs'],
             weight = 0.92,
             label = 'test-matching-1'
         ))

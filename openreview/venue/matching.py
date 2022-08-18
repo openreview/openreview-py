@@ -48,7 +48,10 @@ class Matching(object):
         invitation_readers = [venue_id]
         edge_writers = [venue_id]
         edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
-        edge_nonreaders = [venue.get_authors_id(number=paper_number)]
+        edge_nonreaders = []
+
+        if edge_id.endswith('Affinity_Score'):
+            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
 
         if self.is_reviewer:
             if venue.use_senior_area_chairs:
@@ -68,6 +71,8 @@ class Matching(object):
                     edge_writers.append(venue.get_area_chairs_id(number=paper_number))
                     edge_signatures.append(venue.get_area_chairs_id(number=paper_num_signatures))
 
+                edge_nonreaders = [venue.get_authors_id(number=paper_number)]
+
         if self.is_area_chair:
             if venue.use_senior_area_chairs:
                 edge_readers.append(venue.get_senior_area_chairs_id(number=paper_number))
@@ -79,6 +84,8 @@ class Matching(object):
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
                     edge_signatures.append(venue.get_senior_area_chairs_id(number=paper_num_signatures))
 
+                edge_nonreaders = [venue.get_authors_id(number=paper_number)]
+
         if self.is_ethics_reviewer:
             if venue.use_ethics_chairs:
                 edge_readers.append(venue.get_ethics_chairs_id())
@@ -89,6 +96,8 @@ class Matching(object):
                     edge_invitees.append(venue.get_ethics_chairs_id())
                     edge_writers.append(venue.get_ethics_chairs_id())
                     edge_signatures.append(venue.get_ethics_chairs_id())
+
+                edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
         #append tail to readers
         edge_readers.append('${2/tail}')
@@ -135,6 +144,7 @@ class Matching(object):
             }
 
             edge_readers.append('${{2/head}}')
+            edge_nonreaders = []
 
         edge_tail = {
             'param': {
@@ -418,7 +428,7 @@ class Matching(object):
                         tail=profile_id,
                         weight=float(score),
                         readers=self._get_edge_readers(tail=profile_id),
-                        nonreaders=[self.venue.get_authors_id(number=paper_number)],
+                        # nonreaders=[self.venue.get_authors_id(number=paper_number)],
                         writers=[self.venue.id],
                         signatures=[self.venue.id]
                     ))
@@ -914,7 +924,6 @@ class Matching(object):
                         head=paper.id,
                         tail=proposed_edge['tail'],
                         readers=proposed_edge['readers'],
-                        nonreaders=proposed_edge['nonreaders'],
                         writers=proposed_edge['writers'],
                         signatures=proposed_edge['signatures'],
                         weight=proposed_edge.get('weight')
@@ -971,7 +980,6 @@ class Matching(object):
                     head=head,
                     tail=sac_assignment['tail'],
                     readers=sac_assignment['readers'],
-                    nonreaders=sac_assignment['nonreaders'],
                     writers=sac_assignment['writers'],
                     signatures=sac_assignment['signatures'],
                     weight=sac_assignment.get('weight')
