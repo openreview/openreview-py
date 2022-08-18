@@ -331,7 +331,7 @@ class Journal(object):
 
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
-        self.invitation_builder.set_revision_submission(note)
+        self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)

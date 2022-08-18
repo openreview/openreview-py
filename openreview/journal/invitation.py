@@ -17,6 +17,16 @@ class InvitationBuilder(object):
         seven_days = day * 7
         one_month = day * 30
 
+        self.process_script = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+
         self.author_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
@@ -69,6 +79,7 @@ class InvitationBuilder(object):
         self.set_desk_rejection_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
+        self.set_revision_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -893,6 +904,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
+                'nonreaders': [],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {
@@ -946,6 +958,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {
@@ -1000,6 +1013,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
+                'nonreaders': [],
                 'writers': [venue_id, editor_in_chief_id],
                 'signatures': [editor_in_chief_id],
                 'head': {
@@ -1059,6 +1073,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
+                'nonreaders': [],
                 'writers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
                 'signatures': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'head': {
@@ -1107,6 +1122,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
@@ -1159,6 +1175,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
@@ -1399,6 +1416,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
@@ -1451,6 +1469,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(), '${2/tail}'],
+                'nonreaders': [],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {
@@ -1498,6 +1517,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
@@ -2526,6 +2546,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         }
                     },
                     'readers': [venue_id, authors_id],
+                    'nonreaders': [],
                     'writers': [venue_id, authors_id],
                     'signatures': [authors_id],
                     'head': {
@@ -3187,149 +3208,191 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[self.journal.venue_id]
         )
 
-    def set_revision_submission(self, note):
+    def set_revision_invitation(self):
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
-        revision_invitation_id = self.journal.get_revision_id(number=note.number)
-        invitation = Invitation(id=revision_invitation_id,
-            invitees=[venue_id, paper_authors_id],
-            readers=['everyone'],
+        invitation = Invitation(id=self.journal.get_revision_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            content={
+                'process_script': {
+                    'value': self.get_process_content('process/submission_revision_process.py')
+                }
+            },
             edit={
-                'ddate': {
-                    'param': {
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
-                    }
-                },
-                'signatures': { 'param': { 'regex': f'{paper_authors_id}|{editors_in_chief_id}' }},
-                'readers': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
-                'writers': [ venue_id, paper_authors_id],
-                'note': {
-                    'id': note.id,
-                    'content': {
-                        'title': {
-                            'value': {
-                                'param': {
-                                    'type': "string",
-                                    'regex': '^.{1,250}$'
-                                }
-                            },
-                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 1
-                        },
-                        'abstract': {
-                            'value': {
-                                'param': {
-                                    'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$',
-                                    'optional': True
-                                }
-                            },
-                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 2
-                        },
-                        'pdf': {
-                            'value': {
-                                'param': {
-                                    'type': 'file',
-                                    'extensions': ['pdf'],
-                                    'maxSize': 50
-                                }
-                            },
-                            'description': 'Upload a PDF file that ends with .pdf.',
-                            'order': 5,
-                        },
-                        'submission_length': {
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
-                                    'input': 'radio'
-
-                                }
-                            },
-                            'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                            'order': 6
-                        },                        
-                        "supplementary_material": {
-                            'value': {
-                                'param': {
-                                    'type': 'file',
-                                    'extensions': ['zip', 'pdf'],
-                                    'maxSize': 100,
-                                    "optional": True
-                                }
-                            },
-                            "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 7
-                        },
-                        f'previous_{short_name}_submission_url': {
-                            'value': {
-                                'param': {
-                                    'type': "string",
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                    'optional': True
-                                }
-                            },
-                            'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
-                            'order': 8
-                        },
-                        'changes_since_last_submission': {
-                            'value': {
-                                'param': {
-                                    'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$',
-                                    'optional': True,
-                                    'markdown': True
-                                }
-                            },
-                            'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 9
-                        },
-                        'competing_interests': {
-                            'value': {
-                                'param': {
-                                    'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$'
-                                }
-                            },
-                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                            'order': 10
-                        },
-                        'human_subjects_reporting': {
-                            'value': {
-                                'param': {
-                                    'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$'
-                                }
-                            },
-                            'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                            'order': 11
-                        },
-                        'venue': {
-                            'value': {
-                                'param': {
-                                    'type': "string",
-                                    'const': f'Submitted to {short_name}',
-                                    'hidden': True
-                                }
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
+                            }
+                        }
+                    },
+                    'noteId': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
                             }
                         }
                     }
-                }
-            },
-            process=self.get_process_content('process/submission_revision_process.py')
+                },
+                'invitation': {
+                    'id': self.journal.get_revision_id(number='${2/content/noteNumber/value}'),
+                    'invitees': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'edit': {
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'signatures': { 'param': { 'regex': f"{self.journal.get_authors_id(number='${5/content/noteNumber/value}')}|{editors_in_chief_id}" }},
+                        'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
+                        'writers': [ venue_id, self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
+                        'note': {
+                            'id': '${4/content/noteId/value}',
+                            'content': {
+                                'title': {
+                                    'value': {
+                                        'param': {
+                                            'type': "string",
+                                            'regex': '^.{1,250}$'
+                                        }
+                                    },
+                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                    'order': 1
+                                },
+                                'abstract': {
+                                    'value': {
+                                        'param': {
+                                            'type': "string",
+                                            'regex': '^[\\S\\s]{1,5000}$',
+                                            'optional': True
+                                        }
+                                    },
+                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                    'order': 2
+                                },
+                                'pdf': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'extensions': ['pdf'],
+                                            'maxSize': 50
+                                        }
+                                    },
+                                    'description': 'Upload a PDF file that ends with .pdf.',
+                                    'order': 5,
+                                },
+                                'submission_length': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
+                                            'input': 'radio'
+
+                                        }
+                                    },
+                                    'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                                    'order': 6
+                                },                        
+                                "supplementary_material": {
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'extensions': ['zip', 'pdf'],
+                                            'maxSize': 100,
+                                            "optional": True
+                                        }
+                                    },
+                                    "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                                    "order": 7
+                                },
+                                f'previous_{short_name}_submission_url': {
+                                    'value': {
+                                        'param': {
+                                            'type': "string",
+                                            'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                            'optional': True
+                                        }
+                                    },
+                                    'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
+                                    'order': 8
+                                },
+                                'changes_since_last_submission': {
+                                    'value': {
+                                        'param': {
+                                            'type': "string",
+                                            'regex': '^[\\S\\s]{1,5000}$',
+                                            'optional': True,
+                                            'markdown': True
+                                        }
+                                    },
+                                    'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                    'order': 9
+                                },
+                                'competing_interests': {
+                                    'value': {
+                                        'param': {
+                                            'type': "string",
+                                            'regex': '^[\\S\\s]{1,5000}$'
+                                        }
+                                    },
+                                    'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
+                                    'order': 10
+                                },
+                                'human_subjects_reporting': {
+                                    'value': {
+                                        'param': {
+                                            'type': "string",
+                                            'regex': '^[\\S\\s]{1,5000}$'
+                                        }
+                                    },
+                                    'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
+                                    'order': 11
+                                },
+                                'venue': {
+                                    'value': {
+                                        'param': {
+                                            'type': "string",
+                                            'const': f'Submitted to {short_name}',
+                                            'hidden': True
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    'process': self.process_script                    
+                }                
+
+            }        
         )
 
         self.save_invitation(invitation)
+
+    def set_note_revision_invitation(self, note):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_revision_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
 
     def release_submission_history(self, note):
 
