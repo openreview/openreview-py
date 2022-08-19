@@ -90,7 +90,7 @@ class TestMatching():
         helpers.create_user('r1_venue@mit.edu', 'Reviewer', 'Venue')
         r1_client = OpenReviewClient(username='r1_venue@mit.edu', password='1234')
 
-        helpers.create_user('celeste@mailten.com', 'Celeste', 'Martinez')
+        helpers.create_user('celeste@mailten.com', 'Celeste', 'MartinezG')
         helpers.create_user('a1_venue@cmu.edu', 'Author', 'A')
         helpers.create_user('a2_venue@mit.edu', 'Author', 'B')
         helpers.create_user('a3_venue@umass.edu', 'Author', 'C')
@@ -104,13 +104,13 @@ class TestMatching():
         ## Paper 1
         note_1 = author_client.post_note_edit(
             invitation=f'{venue.id}/-/Submission',
-            signatures= ['~Celeste_Martinez1'],
+            signatures= ['~Celeste_MartinezG1'],
             note=Note(
                 content={
                     'title': { 'value': 'Paper title 1' },
                     'abstract': { 'value': 'This is an abstract' },
-                    'authors': { 'value': ['Celeste Martinez', 'Author A']},
-                    'authorids': { 'value': ['~Celeste_Martinez1', '~Author_A1']},
+                    'authors': { 'value': ['Celeste MartinezG', 'Author A']},
+                    'authorids': { 'value': ['~Celeste_MartinezG1', '~Author_A1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
                 }
@@ -121,13 +121,13 @@ class TestMatching():
         ## Paper 2
         note_2 = author_client.post_note_edit(
             invitation=f'{venue.id}/-/Submission',
-            signatures= ['~Celeste_Martinez1'],
+            signatures= ['~Celeste_MartinezG1'],
             note=Note(
                 content={
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'This is an abstract' },
                     'authors': { 'value': ['Celeste Martinez', 'Author B']},
-                    'authorids': { 'value': ['~Celeste_Martinez1', '~Author_B1']},
+                    'authorids': { 'value': ['~Celeste_MartinezG1', '~Author_B1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
                 }
@@ -138,13 +138,13 @@ class TestMatching():
         ## Paper 3
         note_3 = author_client.post_note_edit(
             invitation=f'{venue.id}/-/Submission',
-            signatures= ['~Celeste_Martinez1'],
+            signatures= ['~Celeste_MartinezG1'],
             note=Note(
                 content={
                     'title': { 'value': 'Paper title 3' },
                     'abstract': { 'value': 'This is an abstract' },
                     'authors': { 'value': ['Celeste Martinez', 'Author C', 'PC author']},
-                    'authorids': { 'value': ['~Celeste_Martinez1', '~Author_C1', '~PC_Author1']},
+                    'authorids': { 'value': ['~Celeste_MartinezG1', '~Author_C1', '~PC_Author1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
                 }

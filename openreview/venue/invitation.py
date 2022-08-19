@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+from sys import api_version
 from openreview.api import Invitation
 from .. import invitations
 from .. import tools
@@ -195,7 +196,7 @@ class InvitationBuilder(object):
 ''',
                     'edit': {
                         'signatures': { 'param': { 'regex': review_stage.get_signatures(self.venue, '${5/content/noteNumber/value}') }},
-                        'readers': review_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'readers': review_stage.get_readers(self.venue, '${4/content/noteNumber/value}', path='2'),
                         'nonreaders': review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id],
                         'note': {
@@ -214,7 +215,7 @@ class InvitationBuilder(object):
                                 }
                             },
                             'signatures': ['${3/signatures}'],
-                            'readers': review_stage.get_readers(self.venue, '${5/content/noteNumber/value}'),
+                            'readers': review_stage.get_readers(self.venue, '${5/content/noteNumber/value}', path='3'),
                             'nonreaders': review_stage.get_nonreaders(self.venue, '${5/content/noteNumber/value}'),
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
