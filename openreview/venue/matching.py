@@ -644,7 +644,7 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'const': venue.get_paper_assignment_id(self.match_group.id, deployed=True),
+                                    'const': venue.get_paper_assignment_id(self.match_group.id, invite=True),
                                     'hidden': True
                                 }
                             }
