@@ -54,7 +54,17 @@ class InvitationBuilder(object):
 
         self.ae_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_process_content('process/action_editor_reminder_process.py')
+            'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation("''' + self.journal.get_meta_invitation_id() + '''")
+    script = meta_invitation.content['ae_reminder_process']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+        'date_index': date_index
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+'''
         }
 
         self.ae_edge_reminder_process = {
@@ -166,6 +176,11 @@ class InvitationBuilder(object):
                 invitees=[venue_id],
                 readers=[venue_id],
                 signatures=[venue_id],
+                content={
+                    'ae_reminder_process': {
+                        'value': self.get_process_content('process/action_editor_reminder_process.py')
+                    }
+                },
                 edit=True
             )
         )
