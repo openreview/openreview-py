@@ -27,6 +27,16 @@ class InvitationBuilder(object):
     funcs['process'](client, edit, invitation)
 '''
 
+        self.preprocess_script = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+
         self.author_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
@@ -80,6 +90,7 @@ class InvitationBuilder(object):
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
         self.set_revision_invitation()
+        self.set_decision_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -3621,98 +3632,149 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 )
             )
 
-    def set_decision_invitation(self, note, duedate):
+    def set_decision_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        decision_invitation_id = self.journal.get_ae_decision_id(number=note.number)
-
-        invitation = Invitation(id=decision_invitation_id,
-            duedate=duedate,
-            invitees=[venue_id, paper_action_editors_id],
-            readers=['everyone'],
+        invitation = Invitation(id=self.journal.get_ae_decision_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
             writers=[venue_id],
-            signatures=[editors_in_chief_id],
-            maxReplies=1,
-            minReplies=1,
+            signatures=[venue_id],
+            content={
+                'process_script': {
+                    'value': self.get_process_content('process/submission_decision_process.py')
+                },
+                'preprocess_script': {
+                    'value': self.get_process_content('process/submission_decision_pre_process.py')
+                }                
+            },
             edit={
-                'signatures': [paper_action_editors_id],
-                'readers': [ venue_id, paper_action_editors_id],
-                'nonreaders': [ paper_authors_id ],
-                'writers': [ venue_id, paper_action_editors_id],
-                'note': {
-                    'id': {
-                        'param': {
-                            'withInvitation': decision_invitation_id,
-                            'optional': True
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
+                            }
                         }
                     },
-                    'forum': note.forum,
-                    'replyto': note.forum,
-                    'ddate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'deletable': True
+                    'noteId': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
                         }
                     },
-                    'signatures': [paper_action_editors_id],
-                    'readers': [ editors_in_chief_id, paper_action_editors_id ],
-                    'nonreaders': [ paper_authors_id ],
-                    'writers': [ venue_id, paper_action_editors_id],
-                    'content': {
-                        'recommendation': {
-                            'order': 1,
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': [
-                                        'Accept as is',
-                                        'Accept with minor revision',
-                                        'Reject'
-                                    ],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'comment': {
-                            'order': 2,
-                            'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
-                                    'markdown': True
-                                }
-                            }
-                        },
-                        'certifications': {
-                            'order': 3,
-                            'description': f'Optionally and if appropriate, recommend a certification for this submission. See {self.journal.website} for information about certifications.',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'enum': [
-                                        'Featured Certification',
-                                        'Reproducibility Certification',
-                                        'Survey Certification'
-                                    ],
-                                    'optional': True,
-                                    'input': 'select'
-                                }
+                    'duedate': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
                             }
                         }
                     }
+                },   
+                'invitation': {
+                    'id': self.journal.get_ae_decision_id(number='${2/content/noteNumber/value}'),  
+                    'duedate': '${2/content/duedate/value}',
+                    'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'signatures': [editors_in_chief_id],
+                    'maxReplies': 1,
+                    'minReplies': 1,
+                    'edit': {
+                        'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                        'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                        'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                        'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.journal.get_ae_decision_id(number='${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                            'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                            'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                            'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                            'content': {
+                                'recommendation': {
+                                    'order': 1,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'Accept as is',
+                                                'Accept with minor revision',
+                                                'Reject'
+                                            ],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'order': 2,
+                                    'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '^[\\S\\s]{1,200000}$',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'certifications': {
+                                    'order': 3,
+                                    'description': f'Optionally and if appropriate, recommend a certification for this submission. See {self.journal.website} for information about certifications.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'enum': [
+                                                'Featured Certification',
+                                                'Reproducibility Certification',
+                                                'Survey Certification'
+                                            ],
+                                            'optional': True,
+                                            'input': 'select'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    'preprocess': self.preprocess_script,
+                    'process': self.process_script,
+                    'dateprocesses': [self.ae_reminder_process]
                 }
-            },
-            preprocess=self.get_process_content('process/submission_decision_pre_process.py'),
-            process=self.get_process_content('process/submission_decision_process.py'),
-            date_processes=[self.ae_reminder_process]
+            }
         )
 
         self.save_invitation(invitation)
+
+    def set_note_decision_invitation(self, note, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_ae_decision_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_decision_approval_invitation(self, note, decision, duedate):
         venue_id = self.journal.venue_id

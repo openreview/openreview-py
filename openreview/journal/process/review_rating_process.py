@@ -11,4 +11,4 @@ def process(client, edit, invitation):
     reviews = client.get_notes(invitation=journal.get_review_id(number=submission.number))
     ratings = client.get_notes(invitation=journal.get_review_rating_id(signature=journal.get_reviewers_id(number=submission.number, anon=True) + '.*'))
     if len(reviews) == len(ratings):
-        journal.invitation_builder.set_decision_invitation(submission,  invitation.duedate)
+        journal.invitation_builder.set_note_decision_invitation(submission,  invitation.duedate)
