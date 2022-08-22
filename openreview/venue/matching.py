@@ -507,6 +507,20 @@ class Matching(object):
                 'readers': [venue.id],
                 'writers': [venue.id],
                 'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': '{}/-/{}'.format(self.match_group.id, 'Assignment_Configuration'),
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        # 'type': 'date',
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
                     'signatures': [venue.id],
                     'readers': [venue.id],
                     'writers': [venue.id],
@@ -589,7 +603,8 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'json',
-                                    'default': scores_specification
+                                    'default': scores_specification,
+                                    'optional': True
                                 }
                             }
                         },
