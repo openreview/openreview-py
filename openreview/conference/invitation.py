@@ -242,7 +242,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
                         'type': 'Profile'
                     },
                     'label': {
-                        'value-radio': ['Exclude'],
+                        'value-radio': ['Include' if expertise_selection_stage.include_option else 'Exclude'],
                         'required': True
                     }
                 }

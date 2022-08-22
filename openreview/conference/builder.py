@@ -2098,10 +2098,11 @@ class SubmissionStage(object):
 
 class ExpertiseSelectionStage(object):
 
-    def __init__(self, start_date = None, due_date = None):
+    def __init__(self, start_date = None, due_date = None, include_option = False):
         self.start_date = start_date
         self.due_date = due_date
         self.name = 'Expertise_Selection'
+        self.include_option = include_option
 
 class BidStage(object):
 
@@ -2862,8 +2863,8 @@ class ConferenceBuilder(object):
             papers_released
         )
 
-    def set_expertise_selection_stage(self, start_date = None, due_date = None):
-        self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date)
+    def set_expertise_selection_stage(self, start_date = None, due_date = None, include_option=False):
+        self.expertise_selection_stage = ExpertiseSelectionStage(start_date, due_date, include_option)
 
     def set_registration_stage(self, committee_id, name = 'Registration', start_date = None, due_date = None, additional_fields = {}, instructions = None):
         default_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile/edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = self.conference.get_id())

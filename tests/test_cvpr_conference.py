@@ -66,7 +66,8 @@ class TestCVPRSConference():
                 'submission_readers': 'Program chairs and paper authors only',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'use_recruitment_template': 'Yes'
+                'use_recruitment_template': 'Yes',
+                'include_expertise_selection': 'Yes'
             }))
 
         helpers.await_queue()
