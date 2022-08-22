@@ -285,9 +285,7 @@ class Conference(object):
         return invitations
 
     def __create_review_rebuttal_stage(self):
-        invitation = self.get_invitation_id(self.review_stage.name, '.*')
-        review_iterator = self.client.get_all_notes(invitation = invitation)
-        return self.invitation_builder.set_review_rebuttal_invitation(self, review_iterator)
+        return self.invitation_builder.set_review_rebuttal_invitation(self)
 
     def __create_review_revision_stage(self):
         invitation = self.get_invitation_id(self.review_stage.name, '.*')
@@ -2355,12 +2353,57 @@ class EthicsReviewStage(object):
 
 class ReviewRebuttalStage(object):
 
-    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}):
+    class Readers(Enum):
+        EVERYONE = 0
+        SENIOR_AREA_CHAIRS = 1
+        SENIOR_AREA_CHAIRS_ASSIGNED = 2
+        AREA_CHAIRS = 3
+        AREA_CHAIRS_ASSIGNED = 4
+        REVIEWERS = 5
+        REVIEWERS_ASSIGNED = 6
+
+    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, readers = []):
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
         self.email_pcs = email_pcs
         self.additional_fields = additional_fields
+        self.single_rebuttal = single_rebuttal
+        self.readers = readers
+
+    def get_invitation_readers(self, conference, number):
+
+        if self.Readers.EVERYONE in self.readers:
+            return ['everyone']
+        
+        invitation_readers=[conference.get_program_chairs_id()]
+
+        if self.Readers.SENIOR_AREA_CHAIRS in self.readers and conference.use_senior_area_chairs:
+            invitation_readers.append(conference.get_senior_area_chairs_id())
+
+        if self.Readers.SENIOR_AREA_CHAIRS_ASSIGNED in self.readers and conference.use_senior_area_chairs:
+            invitation_readers.append(conference.get_senior_area_chairs_id(number=number))
+
+        if self.Readers.AREA_CHAIRS in self.readers and conference.use_area_chairs:
+            invitation_readers.append(conference.get_area_chairs_id())
+
+        if self.Readers.AREA_CHAIRS_ASSIGNED in self.readers and conference.use_area_chairs:
+            invitation_readers.append(conference.get_area_chairs_id(number=number))
+
+        if self.Readers.REVIEWERS in self.readers:
+            invitation_readers.append(conference.get_reviewers_id())
+
+        if self.Readers.REVIEWERS_ASSIGNED in self.readers:
+            invitation_readers.append(conference.get_reviewers_id(number=number))
+
+        if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
+            if conference.use_ethics_chairs:
+                invitation_readers.append(conference.get_ethics_chairs_id())
+            if conference.use_ethics_reviewers:
+                invitation_readers.append(conference.get_ethics_reviewers_id(number=number))
+
+        invitation_readers.append(conference.get_authors_id(number=number))
+        return invitation_readers        
 
 class ReviewRevisionStage(object):
 
