@@ -1041,6 +1041,7 @@ If you would like to change your decision, please follow the link in the previou
         now = datetime.datetime.utcnow()
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         submissions=conference.get_submissions(sort='tmdate')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
@@ -1221,6 +1222,22 @@ If you would like to change your decision, please follow the link in the previou
         assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
 
         ## Check if the SAC can edit the AC assignments
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_NeurIPSChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()        
         print('http://localhost:3030/edges/browse?traverse=NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment&edit=NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment&browse=NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score&hide=NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict&maxColumns=2')
         #assert False
 
@@ -2839,9 +2856,9 @@ NeurIPS 2021 Conference Program Chairs'''
         assert submission_note.invitation == 'NeurIPS.cc/2021/Conference/-/Blind_Submission'
         assert submission_note.readers == [
                 'NeurIPS.cc/2021/Conference',
-                'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
-                'NeurIPS.cc/2021/Conference/Area_Chairs',
-                'NeurIPS.cc/2021/Conference/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper4/Reviewers',
                 'NeurIPS.cc/2021/Conference/Paper4/Authors'
                 ]
         assert submission_note.content['keywords'] == ''
