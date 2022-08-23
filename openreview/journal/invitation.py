@@ -101,6 +101,7 @@ class InvitationBuilder(object):
         self.set_camera_ready_revision_invitation()
         self.set_camera_ready_verification_invitation()
         self.set_authors_deanonymization_invitation()
+        self.set_comment_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -3420,35 +3421,55 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             edit.note.mdate = None
             self.client.post_edit(edit)         
 
-    def set_comment_invitation(self, note):
+    def set_comment_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        public_comment_invitation_id = self.journal.get_public_comment_id(number=note.number)
-        invitation=Invitation(id=public_comment_invitation_id,
-            invitees=['everyone'],
-            noninvitees=[editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/public_comment_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        invitation = {
+            'id': self.journal.get_public_comment_id(number='${2/content/noteNumber/value}'),
+            'invitees': ['everyone'],
+            'noninvitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
                 'signatures': { 'param': { 'regex': f'~.*' }},
-                'readers': [ venue_id, paper_action_editors_id, '${2/signatures}'],
-                'writers': [ venue_id, paper_action_editors_id, '${2/signatures}'],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': public_comment_invitation_id,
+                            'withInvitation': self.journal.get_public_comment_id(number='${6/content/noteNumber/value}'),
                             'optional': True
                         }
                     },
-                    'forum': note.id,
+                    'forum': '${4/content/noteId/value}',
                     'replyto': { 
                         'param': {
-                            'withForum': note.id 
+                            'withForum': '${6/content/noteId/value}', 
                         }
                     },
                     'ddate': {
@@ -3460,7 +3481,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     },
                     'signatures': ['${3/signatures}'],
                     'readers': [ 'everyone'],
-                    'writers': [ venue_id, paper_action_editors_id, '${3/signatures}'],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
                         'title': {
                             'order': 1,
@@ -3486,33 +3507,41 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 }
             },
-            process=self.get_process_content('process/public_comment_process.py')
-        )
+            'process': self.process_script
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_public_comment_id(), invitation_content, edit_content, invitation)
 
-        official_comment_invitation_id=self.journal.get_official_comment_id(number=note.number)
-        paper_reviewers_anon_id = self.journal.get_reviewers_id(number=note.number, anon=True)
-        invitation=Invitation(id=official_comment_invitation_id,
-            invitees=[venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'param': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}' }},
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/official_comment_process.py')
+            },
+            'preprocess_script': {
+                'value': self.get_process_content('process/official_comment_pre_process.py')
+            }                         
+        }
+
+        invitation= {
+            'id': self.journal.get_official_comment_id(number='${2/content/noteNumber/value}'),
+            'invitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}|{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_authors_id(number='${5/content/noteNumber/value}')}" }},
                 'readers': [ venue_id, '${2/signatures}' ],
                 'writers': [ venue_id, '${2/signatures}' ],
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': official_comment_invitation_id,
+                            'withInvitation': self.journal.get_official_comment_id(number='${6/content/noteNumber/value}'),
                             'optional': True
                         }
                     },
-                    'forum': note.id,
+                    'forum': '${4/content/noteId/value}',
                     'replyto': { 
                         'param': {
-                            'withForum': note.id 
+                            'withForum': '${6/content/noteId/value}'
                         }
                     },
                     'ddate': {
@@ -3525,7 +3554,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'signatures': ['${3/signatures}'],
                     'readers': {
                         'param': {
-                            'enum': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id],
+                            'enum': ['everyone', 
+                            editors_in_chief_id, 
+                            self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 
+                            self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), 
+                            self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True) + '.*', 
+                            self.journal.get_authors_id(number='${7/content/noteNumber/value}')],
                         }
                     },
                     'writers': ['${3/writers}'],
@@ -3554,68 +3588,97 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 }
             },
-            preprocess=self.get_process_content('process/official_comment_pre_process.py'),
-            process=self.get_process_content('process/official_comment_process.py')
-        )
+            'preprocess': self.preprocess_script,
+            'process': self.process_script
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_official_comment_id(), invitation_content, edit_content, invitation)
 
-        moderation_invitation_id=self.journal.get_moderation_id(number=note.number)
-        moderation_invitation=openreview.tools.get_invitation(self.client, moderation_invitation_id)
-
-        if not moderation_invitation:
-            invitation = self.post_invitation_edit(invitation=Invitation(id=moderation_invitation_id,
-                    invitees=[venue_id, paper_action_editors_id],
-                    readers=[venue_id, paper_action_editors_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    edit={
-                        'signatures': { 'param': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}' }},
-                        'readers': [ venue_id, paper_action_editors_id],
-                        'writers': [ venue_id, paper_action_editors_id],
-                        'note': {
-                            'id': { 
+        invitation = {
+            'id': self.journal.get_moderation_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'note': {
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_public_comment_id(number='${6/content/noteNumber/value}') 
+                        }
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'readers': ['everyone'],
+                    'writers': [venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    # 'signatures': { 
+                    #     'param': {
+                    #         'regex': '~.*'
+                    #     }
+                    # },
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your comment.',
+                            'value': {
                                 'param': {
-                                    'withInvitation': public_comment_invitation_id 
+                                    'type': 'string',
+                                    'regex': '^.{1,500}$'
                                 }
                             },
-                            'forum': note.id,
-                            'readers': ['everyone'],
-                            'writers': [venue_id, paper_action_editors_id],
-                            # 'signatures': { 
-                            #     'param': {
-                            #         'regex': '~.*'
-                            #     }
-                            # },
-                            'content': {
-                                'title': {
-                                    'order': 1,
-                                    'description': 'Brief summary of your comment.',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'regex': '^.{1,500}$'
-                                        }
-                                    },
-                                    'readers': [ venue_id, paper_action_editors_id, '${5/signatures}']
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'regex': '^[\\S\\s]{1,5000}$',
-                                            'markdown': True
-                                        }
-                                    },
-                                    'readers': [ venue_id, paper_action_editors_id, '${5/signatures}']
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), '${5/signatures}']
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'markdown': True
                                 }
-                            }
+                            },
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), '${5/signatures}']
                         }
                     }
-                )
-            )
+                }
+            }
+        }
+        self.save_super_invitation(self.journal.get_moderation_id(), {}, edit_content, invitation)
+
+    def set_note_comment_invitation(self, note):
+        
+        self.client.post_invitation_edit(invitations=self.journal.get_public_comment_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
+
+        self.client.post_invitation_edit(invitations=self.journal.get_official_comment_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
+
+        self.client.post_invitation_edit(invitations=self.journal.get_moderation_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
 
     def set_decision_invitation(self):
         venue_id = self.journal.venue_id
