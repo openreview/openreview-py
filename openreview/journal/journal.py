@@ -178,7 +178,7 @@ class Journal(object):
     def get_review_id(self, number=None):
         return self.__get_invitation_id(name='Review', number=number)
 
-    def get_review_rating_id(self, signature):
+    def get_review_rating_id(self, signature=None):
         return self.__get_invitation_id(name='Rating', prefix=signature)
 
     def get_accepted_id(self):

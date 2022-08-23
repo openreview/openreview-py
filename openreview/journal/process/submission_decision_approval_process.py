@@ -78,7 +78,7 @@ def process(client, edit, invitation):
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')
-    journal.invitation_builder.set_camera_ready_revision_invitation(submission, decision, journal.get_due_date(weeks = 4))
+    journal.invitation_builder.set_note_camera_ready_revision_invitation(submission, journal.get_due_date(weeks = 4))
 
     ## Send email to authors
     print('Send email to authors')
