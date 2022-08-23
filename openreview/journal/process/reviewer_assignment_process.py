@@ -115,19 +115,8 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         ))
 
         print('Enable assignment acknowledgement task for', edge.tail)
-        ack_invitation_edit = client.post_invitation_edit(invitations=journal.get_reviewer_assignment_acknowledgement_id(),
-            content={
-                'noteId': { 'value': note.id },
-                'noteNumber': { 'value': note.number },
-                'reviewerId': { 'value': edge.tail },
-                'duedate': { 'value': openreview.tools.datetime_millis(journal.get_due_date(days = 2)) },
-                'reviewDuedate': { 'value': duedate.strftime("%b %d, %Y") }
-             },
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id]
-        )
-
+        ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
+        
         recipients = [edge.tail]
         ignoreRecipients = [journal.get_solicit_reviewers_id(number=note.number)]
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.content['title']['value']}'''

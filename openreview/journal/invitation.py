@@ -564,92 +564,100 @@ If you have questions after reviewing the points below that are not answered on 
         venue_id=self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
-        paper_process = self.get_process_content('process/reviewer_assignment_acknowledgement_process.py')
-
-        invitation=Invitation(id=self.journal.get_reviewer_assignment_acknowledgement_id(),
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': [venue_id],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'content': {
-                    'noteId': { 
-                        'value': {
-                            'param': {
-                                'regex': '.*', 
-                                'type': 'string' 
-                            }
-                        }
-                    },
-                    'noteNumber': { 
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'integer' 
-                            }
-                        }
-                    },
-                    'reviewerId': { 
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'string' 
-                            }
-                        }
-                    },
-                    'duedate': { 
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'integer' 
-                            }
-                        }
-                    },
-                    'reviewDuedate': { 
-                        'value': {
-                            'param': {
-                                'regex': '.*', 'type': 'string' 
-                            }
-                        }
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/reviewer_assignment_acknowledgement_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 
+                        'type': 'string' 
                     }
-                },
-                'invitation': {
-                    'id': self.journal.get_reviewer_assignment_acknowledgement_id(number='${2/content/noteNumber/value}', reviewer_id='${2/content/reviewerId/value}'),
-                    'invitees': ['${3/content/reviewerId/value}'],
-                    'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/reviewerId/value}'],
-                    'writers': [venue_id],
-                    'signatures': [editors_in_chief_id],
-                    'maxReplies': 1,
-                    'duedate': '${2/content/duedate/value}',
-                    'process': paper_process,
-                    'dateprocesses': [self.reviewer_reminder_process],
-                    'edit': {
-                        'signatures': { 'param': { 'regex': self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True) }},
-                        'readers': [venue_id, '${2/signatures}'],
-                        'note': {
-                            'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}',
-                            'signatures': ['${3/signatures}'],
-                            'readers': [editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${2/signatures}'],
-                            'writers': [venue_id, '${2/signatures}'],
-                            'content': {
-                                'assignment_acknowledgement': {
-                                    'order': 1,
-                                    'value': {
-                                        'param': {
-                                            'type': "string",
-                                            'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${9/content/reviewDuedate/value} UTC time.'],
-                                            'input': 'checkbox'
-                                        }
-                                    }
-                                },
-                            }
-                        }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            },
+            'reviewerId': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            },
+            'reviewDuedate': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string' 
                     }
                 }
             }
+        }        
+
+        invitation= {
+            'id': self.journal.get_reviewer_assignment_acknowledgement_id(number='${2/content/noteNumber/value}', reviewer_id='${2/content/reviewerId/value}'),
+            'invitees': ['${3/content/reviewerId/value}'],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/reviewerId/value}'],
+            'writers': [venue_id],
+            'signatures': [editors_in_chief_id],
+            'maxReplies': 1,
+            'duedate': '${2/content/duedate/value}',
+            'process': self.process_script,
+            'dateprocesses': [self.reviewer_reminder_process],
+            'edit': {
+                'signatures': { 'param': { 'regex': self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True) }},
+                'readers': [venue_id, '${2/signatures}'],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'signatures': ['${3/signatures}'],
+                    'readers': [editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${2/signatures}'],
+                    'writers': [venue_id, '${2/signatures}'],
+                    'content': {
+                        'assignment_acknowledgement': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'type': "string",
+                                    'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${9/content/reviewDuedate/value} UTC time.'],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        },
+                    }
+                }
+            }
+        }
+        
+        self.save_super_invitation(self.journal.get_reviewer_assignment_acknowledgement_id(), invitation_content, edit_content, invitation)
+
+    def set_note_reviewer_assignment_acknowledgement_invitation(self, note, reviewer_id, duedate, review_duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_reviewer_assignment_acknowledgement_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'reviewerId': { 'value': reviewer_id },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)  },
+                'reviewDuedate': { 'value': review_duedate }
+             },
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id]
         )
-        self.save_invitation(invitation)
 
     def set_reviewer_report_invitation(self):
 
