@@ -14,7 +14,7 @@ def process(client, edit, invitation):
 
     ## Make the decision public
     print('Make decision public')
-    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_release_decision_id(number=submission.number),
             bulk=True,
             invitees=[venue_id],
             readers=['everyone'],
@@ -51,7 +51,7 @@ def process(client, edit, invitation):
 
     ## Make submission editable by the authors
     print('Make submission editable by the authors')
-    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
+    invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_submission_editable_id(number=submission.number),
             #bulk=True,
             invitees=[venue_id],
             noninvitees=[journal.get_editors_in_chief_id()],

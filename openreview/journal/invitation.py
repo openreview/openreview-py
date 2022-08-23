@@ -101,6 +101,7 @@ class InvitationBuilder(object):
         self.set_retraction_approval_invitation()
         self.set_revision_invitation()
         self.set_decision_invitation()
+        self.set_decision_approval_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -3791,66 +3792,121 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[self.journal.venue_id]
         )
 
-    def set_decision_approval_invitation(self, note, decision, duedate):
+    def set_decision_approval_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        decision_approval_invitation_id = self.journal.get_decision_approval_id(number=note.number)
-
-        invitation = Invitation(id=decision_approval_invitation_id,
-            duedate=openreview.tools.datetime_millis(duedate),
-            invitees=[venue_id, editors_in_chief_id],
-            noninvitees=[paper_authors_id],
-            readers=['everyone'],
+        invitation = Invitation(id=self.journal.get_decision_approval_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            minReplies=1,
-            maxReplies=1,
+            content={
+                'process_script': {
+                    'value': self.get_process_content('process/submission_decision_approval_process.py')
+                }               
+            },
             edit={
-                'signatures': [editors_in_chief_id],
-                'readers': [ venue_id, paper_action_editors_id],
-                'nonreaders': [ paper_authors_id ],
-                'writers': [ venue_id],
-                'note': {
-                    'forum': note.id,
-                    'replyto': decision.id,
-                    'readers': [ editors_in_chief_id, paper_action_editors_id],
-                    'nonreaders': [ paper_authors_id ],
-                    'writers': [ venue_id],
-                    'signatures': [editors_in_chief_id],
-                    'content': {
-                        'approval': {
-                            'order': 1,
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': ['I approve the AE\'s decision.'],
-                                    'input': 'checkbox'
-                                }
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
                             }
-                        },
-                        'comment_to_the_AE': {
-                            'order': 2,
-                            'description': 'Optionally add any additional notes that might be useful for the AE.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
-                                    'optional': True,
-                                    'markdown': True
-                                }
+                        }
+                    },
+                    'noteId': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    },
+                    'replytoId': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    },
+                    'duedate': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
                             }
                         }
                     }
+                }, 
+                'invitation': {
+                    'id': self.journal.get_decision_approval_id(number='${2/content/noteNumber/value}'),
+                    'duedate': '${2/content/duedate/value}',
+                    'invitees': [venue_id, editors_in_chief_id],
+                    'noninvitees': [self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'minReplies': 1,
+                    'maxReplies': 1,
+                    'edit': {
+                        'signatures': [editors_in_chief_id],
+                        'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                        'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                        'writers': [ venue_id],
+                        'note': {
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/replytoId/value}',
+                            'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                            'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                            'writers': [ venue_id],
+                            'signatures': [editors_in_chief_id],
+                            'content': {
+                                'approval': {
+                                    'order': 1,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['I approve the AE\'s decision.'],
+                                            'input': 'checkbox'
+                                        }
+                                    }
+                                },
+                                'comment_to_the_AE': {
+                                    'order': 2,
+                                    'description': 'Optionally add any additional notes that might be useful for the AE.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '^[\\S\\s]{1,200000}$',
+                                            'optional': True,
+                                            'markdown': True
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    'process': self.process_script
                 }
-            },
-            process=self.get_process_content('process/submission_decision_approval_process.py')
+            }                  
         )
 
         self.save_invitation(invitation)
 
+    def set_note_decision_approval_invitation(self, note, decision, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_decision_approval_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'replytoId': { 'value': decision.id },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_review_rating_invitation(self, note, duedate):
         venue_id = self.journal.venue_id
