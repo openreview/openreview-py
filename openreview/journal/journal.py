@@ -339,7 +339,7 @@ class Journal(object):
         self.setup_reviewer_assignment(note)
 
     def setup_under_review_submission(self, note):
-        self.invitation_builder.set_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
+        self.invitation_builder.set_note_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_comment_invitation(note)
         self.invitation_builder.release_submission_history(note)
