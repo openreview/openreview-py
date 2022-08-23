@@ -38,7 +38,7 @@ def process(client, edit, invitation):
     if len(reviews) == 3:
         print('Relese review to the public...')
         ## Change review invitation readers
-        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=submission.number),
+        invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_review_id(number=submission.number),
                 signatures=[journal.get_editors_in_chief_id()],
                 edit={
                     'note': {
@@ -48,22 +48,7 @@ def process(client, edit, invitation):
         ))
 
         ## Release the reviews to everyone
-        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_release_review_id(number=submission.number),
-                bulk=True,
-                invitees=[venue_id],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                edit={
-                    'signatures': [venue_id ],
-                    'readers': [ venue_id, journal.get_action_editors_id(number=submission.number), '${{2/note/id}/signatures}' ],
-                    'writers': [ venue_id ],
-                    'note': {
-                        'id': { 'param': { 'withInvitation': edit.invitation }},
-                        'readers': [ 'everyone' ]
-                    }
-                }
-        ))
+        invitation = journal.invitation_builder.set_note_release_review_invitation(submission)
 
         ## Release the comments to everyone
         official_comment_invitation_id = journal.get_official_comment_id(number=submission.number)

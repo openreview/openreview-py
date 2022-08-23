@@ -109,7 +109,7 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         duedate = journal.get_due_date(weeks = review_period_length)
 
         ## Update review invitation duedate
-        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=note.number),
+        invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_review_id(number=note.number),
                 signatures=[journal.get_editors_in_chief_id()],
                 duedate=openreview.tools.datetime_millis(duedate)
         ))

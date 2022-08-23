@@ -20,18 +20,6 @@ class InvitationBuilder(object):
         self.process_script = self.get_super_process_content('process_script')
         self.preprocess_script = self.get_super_process_content('preprocess_script')
 
-        self.reviewer_reminder_script = '''def process(client, invitation):
-    meta_invitation = client.get_invitation("''' + self.journal.get_meta_invitation_id() + '''")
-    script = meta_invitation.content['reviewer_reminder_process']['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime,
-        'date_index': date_index
-    }
-    exec(script, funcs)
-    funcs['process'](client, invitation)
-'''
-
         self.author_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
@@ -39,27 +27,17 @@ class InvitationBuilder(object):
 
         self.reviewer_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
-            'script': self.reviewer_reminder_script
+            'script': self.get_super_dateprocess_content('reviewer_reminder_process', self.journal.get_meta_invitation_id())
         }
 
         self.reviewer_reminder_process_with_EIC = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': self.reviewer_reminder_script
+            'script': self.get_super_dateprocess_content('reviewer_reminder_process', self.journal.get_meta_invitation_id())
         }
 
         self.ae_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': '''def process(client, invitation):
-    meta_invitation = client.get_invitation("''' + self.journal.get_meta_invitation_id() + '''")
-    script = meta_invitation.content['ae_reminder_process']['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime,
-        'date_index': date_index
-    }
-    exec(script, funcs)
-    funcs['process'](client, invitation)
-'''
+            'script': self.get_super_dateprocess_content('ae_reminder_process', self.journal.get_meta_invitation_id())
         }
 
         self.ae_edge_reminder_process = {
@@ -109,10 +87,26 @@ class InvitationBuilder(object):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content["''' + field_name + '''"]['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
+'''
+
+    def get_super_dateprocess_content(self, field_name, invitation_id=None):
+        meta_invitation = 'client.get_invitation("' + invitation_id + '")' if invitation_id else "client.get_invitation(invitation.invitations[0])"
+
+        return '''def process(client, invitation):
+    meta_invitation = ''' + meta_invitation + '''
+    script = meta_invitation.content["''' + field_name + '''"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+        'date_index': date_index
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
 '''
     
     def get_process_content(self, file_path):
@@ -2072,6 +2066,37 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
         self.save_super_invitation(self.journal.get_retraction_id(), invitation_content, edit_content, invitation)
 
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        invitation = {
+            'id': self.journal.get_retraction_release_id(number='${2/content/noteNumber/value}'),
+            'bulk': True,
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'),  self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id],
+                'note': {
+                    'id': { 'param': { 'withInvitation': self.journal.get_retraction_id(number='${6/content/noteNumber/value}') }},
+                    'readers': [ 'everyone' ],
+                    'nonreaders': []
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_retraction_release_id(), {}, edit_content, invitation)        
+
     def set_note_retraction_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_retraction_id(),
             content={ 
@@ -2082,6 +2107,16 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
+
+    def set_note_retraction_release_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_retraction_release_id(),
+            content={ 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
 
     def set_retraction_approval_invitation(self):
         venue_id = self.journal.venue_id
@@ -2826,6 +2861,40 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
+        invitation = {
+            'id': self.journal.get_release_review_id(number='${2/content/noteNumber/value}'),
+            'bulk': True,
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${{2/note/id}/signatures}'],
+                'writers': [ venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_review_id(number='${6/content/noteNumber/value}')
+                        }
+                    },
+                    'readers': [ 'everyone'],
+                }
+            }
+        }
+
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        self.save_super_invitation(self.journal.get_release_review_id(), {}, edit_content, invitation)        
+
     def set_note_review_invitation(self, note, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_review_id(),
@@ -2834,6 +2903,15 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
+
+    def set_note_release_review_invitation(self, note):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_release_review_id(),
+            content={ 'noteNumber': { 'value': note.number } },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
 
     def set_official_recommendation_invitation(self):
         venue_id = self.journal.venue_id
@@ -2891,7 +2969,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'process': self.process_script,
             'dateprocesses': [{
                 'dates': [ "#{4/cdate} + 1000" ],
-                'script': self.get_super_process_content('cdate_script')
+                'script': self.get_super_dateprocess_content('cdate_script')
             }, self.reviewer_reminder_process_with_EIC],
             'edit': {
                 'signatures': { 'param': { 'regex': f"{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
@@ -3658,8 +3736,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': self.journal.get_official_comment_id(number='${6/content/noteNumber/value}'),
-                            'optional': True
+                            'withInvitation': self.journal.get_official_comment_id(number='${6/content/noteNumber/value}')
                         }
                     },
                     'readers': [ 'everyone'],
@@ -4366,13 +4443,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'regex': '.*', 'type': 'string' 
                     }
                 }
-            },
-            'duedate': { 
-                'value': {
-                    'param': {
-                        'regex': '.*', 'type': 'integer' 
-                    }
-                }
             }
         }
 
@@ -4412,12 +4482,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
         self.save_super_invitation(self.journal.get_authors_deanonymization_id(), invitation_content, edit_content, invitation)
 
-    def set_note_authors_deanonymization_invitation(self, note, duedate):
+    def set_note_authors_deanonymization_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
             content={ 
                 'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number },
-                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+                'noteNumber': { 'value': note.number }
             },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
