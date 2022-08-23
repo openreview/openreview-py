@@ -766,8 +766,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
         self.save_invitation(invitation)
 
-
-
     def set_submission_invitation(self):
 
         venue_id=self.journal.venue_id
@@ -1994,7 +1992,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
-
 
     def set_retraction_invitation(self):
         venue_id = self.journal.venue_id
@@ -3648,6 +3645,30 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         }
         self.save_super_invitation(self.journal.get_moderation_id(), {}, edit_content, invitation)
 
+        invitation = {
+            'id': self.journal.get_release_comment_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id],
+                'readers': [ venue_id, '${{2/note/id}/signatures}'],
+                'writers': [ venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_official_comment_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
+                    },
+                    'readers': [ 'everyone'],
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_release_comment_id(), {}, edit_content, invitation)        
+
     def set_note_comment_invitation(self, note):
         
         self.client.post_invitation_edit(invitations=self.journal.get_public_comment_id(),
@@ -3679,6 +3700,17 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )        
+
+    def set_note_release_comment_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_release_comment_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
 
     def set_decision_invitation(self):
         venue_id = self.journal.venue_id
@@ -4229,7 +4261,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[self.journal.venue_id]
         )
 
-    def set_camera_ready_verification_invitation(self, note, duedate):
+    def set_camera_ready_verification_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
@@ -4357,8 +4389,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'writers': [ venue_id ],
                 'note': {
                     'signatures': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
-                    'forum':  note.id,
-                    'replyto': note.id,
+                    'forum':  '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
                     'readers': [ editors_in_chief_id, self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id ],
                     'content': {

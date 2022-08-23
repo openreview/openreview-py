@@ -68,21 +68,7 @@ def process(client, edit, invitation):
         ## Release the comments to everyone
         official_comment_invitation_id = journal.get_official_comment_id(number=submission.number)
         release_comment_invitation_id = journal.get_release_comment_id(number=submission.number)
-        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=release_comment_invitation_id,
-                invitees=[venue_id],
-                readers=['everyone'],
-                writers=[venue_id],
-                signatures=[venue_id],
-                edit={
-                    'signatures': [venue_id ],
-                    'readers': [ venue_id, '${{2/note/id}/signatures}' ],
-                    'writers': [ venue_id ],
-                    'note': {
-                        'id': { 'param': { 'withInvitation': official_comment_invitation_id }},
-                        'readers': [ 'everyone' ]
-                    }
-                }
-        ))
+        invitation = journal.invitation_builder.set_note_release_comment_invitation(submission)
 
         print(f'Get comments from invitation {official_comment_invitation_id}')
         comments = client.get_notes(invitation=official_comment_invitation_id)
