@@ -104,6 +104,8 @@ class InvitationBuilder(object):
         self.set_decision_approval_invitation()
         self.set_review_rating_invitation()
         self.set_camera_ready_revision_invitation()
+        self.set_camera_ready_verification_invitation()
+        self.set_authors_deanonymization_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -4226,26 +4228,53 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_camera_ready_verification_invitation(self, note, duedate):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        camera_ready_verification_invitation_id = self.journal.get_camera_ready_verification_id(number=note.number)
-        invitation = Invitation(id=camera_ready_verification_invitation_id,
-            duedate=openreview.tools.datetime_millis(duedate),
-            invitees=[venue_id, paper_action_editors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': [ paper_action_editors_id ],
-                'readers': [ venue_id, paper_action_editors_id ],
-                'writers': [ venue_id, paper_action_editors_id],
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/camera_ready_verification_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        invitation = { 
+            'id': self.journal.get_camera_ready_verification_id(number='${2/content/noteNumber/value}'),
+            'duedate': '${2/content/duedate/value}',
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
-                    'signatures': [ paper_action_editors_id ],
-                    'forum': note.id,
-                    'replyto': note.id,
-                    'readers': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id ],
-                    'writers': [ venue_id, paper_action_editors_id ],
+                    'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
                     'content': {
                         'verification': {
                             'order': 1,
@@ -4260,34 +4289,73 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 }
             },
-            process=self.get_process_content('process/camera_ready_verification_process.py'),
-            date_processes=[self.ae_reminder_process]
+            'process': self.process_script,
+            'dateprocesses': [self.ae_reminder_process]
+        }
+
+        self.save_super_invitation(self.journal.get_camera_ready_verification_id(), invitation_content, edit_content, invitation)
+
+    def set_note_camera_ready_verification_invitation(self, note, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_camera_ready_verification_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
         )
 
-        self.save_invitation(invitation)
-
-    def set_authors_deanonymization_invitation(self, note):
+    def set_authors_deanonymization_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        authors_deanonymization_invitation_id = self.journal.get_authors_deanonymization_id(number=note.number)
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/authors_deanonimization_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            }
+        }
 
-        invitation = Invitation(id=authors_deanonymization_invitation_id,
-            invitees=[venue_id, paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            maxReplies=1,
-            edit={
-                'signatures': [ paper_authors_id ],
-                'readers': [ venue_id, paper_authors_id ],
+        invitation = {
+            'id': self.journal.get_authors_deanonymization_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'edit': {
+                'signatures': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'readers': [ venue_id, self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id ],
                 'note': {
-                    'signatures': [ paper_authors_id ],
+                    'signatures': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'forum':  note.id,
                     'replyto': note.id,
-                    'readers': [ editors_in_chief_id, paper_authors_id ],
+                    'readers': [ editors_in_chief_id, self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id ],
                     'content': {
                         'confirmation': {
@@ -4303,7 +4371,19 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 }
             },
-            process=self.get_process_content('process/authors_deanonimization_process.py')
-        )
+            'process': self.process_script
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_authors_deanonymization_id(), invitation_content, edit_content, invitation)
+
+    def set_note_authors_deanonymization_invitation(self, note, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
