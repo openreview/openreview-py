@@ -338,6 +338,10 @@ If you would like to change your decision, please follow the link in the previou
         assert notes
         assert len(notes.find_elements_by_class_name('note')) == 3
 
+        header = selenium.find_element_by_id('header')
+        instruction = header.find_element_by_tag_name('li')
+        assert 'Please indicate your level of interest in the list of Area Chairs below, on a scale from "Very Low" interest to "Very High" interest. Area Chairs were automatically pre-ranked using the expertise information in your profile.' == instruction.text
+
         sac_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
             readers = [conference.id, '~SeniorArea_GoogleChair1'],

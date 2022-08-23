@@ -169,7 +169,7 @@ class WebfieldBuilder(object):
                     Papers can be also sorted by TPMS score, change the sorting criteria using the 'Sort By' dropdown.
                 </li>'''
 
-        default_instructions = '''
+        paper_default_instructions = '''
             <p class="dark"><strong>Instructions:</strong></p>
             <ul>
                 <li>
@@ -203,6 +203,28 @@ class WebfieldBuilder(object):
             </ul>
             <br>'''
 
+        profile_default_instructions = '''
+            <p class="dark"><strong>Instructions:</strong></p>
+            <ul>
+                <li>
+                    Please indicate your <strong>level of interest</strong> in the list of Area Chairs below, on a scale from "Very Low" interest to "Very High" interest. Area Chairs were automatically pre-ranked using the expertise information in your profile.
+                </li>
+                <li>
+                    Bid on as many Area Chairs as possible to correct errors of this automatic procedure.
+                </li>
+                <li>
+                    Bidding on the top ranked Area Chairs removes false positives.
+                </li>
+                <li>
+                    You can use the search field to find Area Chairs by keywords from the position, institution or expertise to reduce false negatives.
+                </li>                
+                <li>
+                    Ensure that you have at least <strong>{request_count} bids</strong>.
+                </li>
+            </ul>
+            <br>'''            
+
+        default_instructions = profile_default_instructions if stage.committee_id == conference.get_senior_area_chairs_id() else paper_default_instructions
         instructions_html = stage.instructions if stage.instructions else default_instructions
 
         header = {
