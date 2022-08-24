@@ -1,3 +1,4 @@
+import json
 import os
 import time
 import openreview
@@ -219,16 +220,14 @@ class Venue(object):
             host = venue_id
         )
 
-        #TODO: migrate homepage from the conference webfield
-        with open(os.path.join(os.path.dirname(__file__), '../journal/webfield/homepage.js')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
             content = f.read()
-            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            ##content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + venue_id + "/-/Submission';")
-            content = content.replace("var SUBMITTED_ID = '';", "var SUBMITTED_ID = '" + venue_id + "/Submitted';")
-            content = content.replace("var UNDER_REVIEW_ID = '';", "var UNDER_REVIEW_ID = '" + venue_id + "/Under_Review';")
-            content = content.replace("var DESK_REJECTED_ID = '';", "var DESK_REJECTED_ID = '" + venue_id + "/Desk_Rejection';")
-            content = content.replace("var WITHDRAWN_ID = '';", "var WITHDRAWN_ID = '" + venue_id + "/Withdrawn_Submission';")
-            content = content.replace("var REJECTED_ID = '';", "var REJECTED_ID = '" + venue_id + "/Rejection';")
+            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
+            # add withdrawn and desk-rejected ids when invitations are created
+            # content = content.replace("const WITHDRAWN_SUBMISSION_ID = ''", "const WITHDRAWN_SUBMISSION_ID = '" + venue_id + "/-/Withdrawn_Submission'")
+            # content = content.replace("const DESK_REJECTED_SUBMISSION_ID = ''", "const DESK_REJECTED_SUBMISSION_ID = '" + venue_id + "/-/Desk_Rejected_Submission'")
+            content = content.replace("const AUTHORS_ID = ''", "const AUTHORS_ID = '" + self.get_authors_id() + "'")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.get_homepage_options()) + ";")
             venue_group.web = content
             self.client.post_group(venue_group)
 
@@ -277,9 +276,9 @@ class Venue(object):
             content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
             ##content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.submission_stage.get_submission_id(self) + "';")
             authors_group.web = content
-            self.client.post_group(authors_group)            
+            self.client.post_group(authors_group)
 
-        meta_inv = self.client.post_invitation_edit(invitations = None, 
+        meta_inv = self.client.post_invitation_edit(invitations = None,
             readers = [venue_id],
             writers = [venue_id],
             signatures = [venue_id],

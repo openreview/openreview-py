@@ -21,6 +21,10 @@ class TestVenueSubmission():
 
         venue = Venue(openreview_client, conference_id)
         venue.use_area_chairs = True
+        venue.name = 'Test 2030 Venue V2'
+        venue.short_name = 'TV 22'
+        venue.website = 'testvenue.org'
+        venue.contact = 'testvenue@contact.com'
         venue.setup()
 
         assert openreview_client.get_group('TestVenue.cc')
