@@ -252,7 +252,7 @@ class Journal(object):
     def get_moderation_id(self, number=None):
         return self.__get_invitation_id(name='Moderation', number=number)
 
-    def get_submission_editable_id(self, number):
+    def get_submission_editable_id(self, number=None):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
     def get_request_form(self):

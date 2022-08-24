@@ -52,6 +52,7 @@ class InvitationBuilder(object):
         self.set_reviewer_responsibility_invitation()
         self.set_reviewer_report_invitation()
         self.set_submission_invitation()
+        self.set_submission_editable_invitation()
         self.set_review_approval_invitation()
         self.set_desk_rejection_approval_invitation()
         self.set_under_review_invitation()
@@ -75,6 +76,7 @@ class InvitationBuilder(object):
         self.set_revision_invitation()
         self.set_decision_invitation()
         self.set_decision_approval_invitation()
+        self.set_decision_release_invitation()
         self.set_review_rating_invitation()
         self.set_camera_ready_revision_invitation()
         self.set_camera_ready_verification_invitation()
@@ -935,6 +937,59 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             process=self.get_process_content('process/author_submission_process.py')
         )
         self.save_invitation(invitation)
+
+    def set_submission_editable_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            }
+        }        
+        
+        invitation = {
+            'id': self.journal.get_submission_editable_id(),
+            'invitees': [venue_id],
+            'noninvitees': [editors_in_chief_id],
+            'readers': [venue_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'id': '${4/content/noteId/value}',
+                    'writers': [ venue_id, self.journal.get_authors_id(number='${5/content/noteNumber/value}') ]
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_submission_editable_id(), {}, edit_content, invitation)      
+
+    def set_note_submission_editable_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_submission_editable_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )    
 
     def set_ae_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
@@ -4028,6 +4083,65 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
+        )
+
+    def set_decision_release_invitation(self):
+        venue_id = self.journal.venue_id
+
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'regex': '.*', 'type': 'integer' 
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_release_decision_id(number='${2/content/noteNumber/value}'),
+            'bulk': True,
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'id': { 'param': { 'withInvitation': self.journal.get_ae_decision_id(number='${6/content/noteNumber/value}') }},
+                    'readers': [ 'everyone' ],
+                    'nonreaders': []
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_release_decision_id(), {}, edit_content, invitation)
+
+    def set_note_decision_release_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_release_decision_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number }
+             },
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id]
         )
 
     def set_review_rating_invitation(self):

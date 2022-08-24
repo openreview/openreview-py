@@ -14,23 +14,7 @@ def process(client, edit, invitation):
 
     ## Make the decision public
     print('Make decision public')
-    invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_release_decision_id(number=submission.number),
-            bulk=True,
-            invitees=[venue_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': [venue_id ],
-                'readers': [ venue_id, journal.get_action_editors_id(number=submission.number) ],
-                'writers': [ venue_id ],
-                'note': {
-                    'id': { 'param': { 'withInvitation': journal.get_ae_decision_id(number=submission.number) }},
-                    'readers': [ 'everyone' ],
-                    'nonreaders': []
-                }
-            }
-    ))
+    journal.invitation_builder.set_note_decision_release_invitation(submission)
 
     print('Check rejection')
     print(decision.content)
@@ -51,23 +35,7 @@ def process(client, edit, invitation):
 
     ## Make submission editable by the authors
     print('Make submission editable by the authors')
-    invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_submission_editable_id(number=submission.number),
-            #bulk=True,
-            invitees=[venue_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': [venue_id ],
-                'readers': [ venue_id, journal.get_action_editors_id(number=submission.number), journal.get_authors_id(number=submission.number) ],
-                'writers': [ venue_id ],
-                'note': {
-                    'id': submission.id,
-                    'writers': [ venue_id, journal.get_authors_id(number=submission.number) ]
-                }
-            }
-    ))
+    journal.invitation_builder.set_note_submission_editable_invitation(submission)
 
     client.post_note_edit(invitation=journal.get_submission_editable_id(number=submission.number),
         signatures=[venue_id],
