@@ -1135,6 +1135,13 @@ class VenueRequest():
                 'order': 37,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
+            },
+            'include_expertise_selection': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 38,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
             }
         }
 

@@ -116,6 +116,8 @@ class Matching(object):
             if self.conference.use_senior_area_chairs:
                 readers.append(self.conference.get_senior_area_chairs_id())
             readers.append(self.conference.get_area_chairs_id())
+        if self.is_area_chair and self.conference.use_senior_area_chairs:
+            readers.append(self.conference.get_senior_area_chairs_id())
         readers.append(tail)
         return readers
 

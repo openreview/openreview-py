@@ -17,7 +17,7 @@ def process_update(client, edge, invitation, existing_edge):
         print(f'Remove member {edge.tail} from {group.id}')
         client.remove_members_from_group(group.id, edge.tail)
 
-        if SYNC_SAC_ID:
+        if SYNC_SAC_ID and SYNC_SAC_ID.format(number=note.number) not in edge.signatures:
             print(f'Remove member from SAC group')
             group = client.get_group(SYNC_SAC_ID.format(number=note.number))
             group.members = []
