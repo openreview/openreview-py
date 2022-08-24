@@ -476,7 +476,6 @@ class Journal(object):
             ]
             return '\n'.join(bibtex)
 
-
     def get_late_invitees(self, invitation_id):
 
         invitation = self.client.get_invitation(invitation_id)
@@ -594,4 +593,107 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {content}
 '''
             self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
+
+    def setup_note_invitations(self):
+
+        note_invitations = self.client.get_all_invitations(regex=f'{self.venue_id}/{self.submission_group_name}')
+        submissions_by_number = { s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id())}
+
+        def find_number(tokens):
+            for token in tokens:
+                if token.startswith(self.submission_group_name):
+                    return int(token.replace(self.submission_group_name, ''))
+
+        for invitation in note_invitations:
+
+            tokens = invitation.id.split('/')
+            name = tokens[-1]
+            note_number = find_number(tokens)
+            submission = submissions_by_number.get(note_number)
+            replyto = None
+            if 'note' in invitation.edit and 'replyto' in invitation.edit['note']:
+                replyto = invitation.edit['note']['replyto']['const'] if 'const' in invitation.edit['note']['replyto'] else invitation.edit['note']['replyto']
+
+            if name and submission:
+
+                super_invitation_name = self.__get_invitation_id(name=name)
+                if super_invitation_name == self.get_review_approval_id():
+                    self.invitation_builder.set_note_review_approval_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                
+                elif super_invitation_name == self.get_desk_rejection_approval_id():
+                    self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                
+                elif super_invitation_name == self.get_withdrawal_id():
+                    self.invitation_builder.set_note_withdrawal_invitation(submission)
+                
+                elif super_invitation_name == self.get_desk_rejection_id():
+                    self.invitation_builder.set_note_desk_rejection_invitation(submission)
+                
+                elif super_invitation_name == self.get_retraction_id():
+                    self.invitation_builder.set_note_retraction_invitation(submission)
+                
+                elif super_invitation_name == self.get_retraction_release_id():
+                    self.invitation_builder.set_note_retraction_release_invitation(submission)
+                
+                elif super_invitation_name == self.get_retraction_approval_id():
+                    self.invitation_builder.set_note_retraction_approval_invitation(submission, openreview.api.Note(id=replyto))
+                
+                elif super_invitation_name == self.get_review_id():
+                    self.invitation_builder.set_note_review_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                
+                elif super_invitation_name == self.get_release_review_id():
+                    self.invitation_builder.set_note_release_review_invitation(submission)
+
+                elif super_invitation_name == self.get_reviewer_recommendation_id():
+                    self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate = datetime.datetime.fromtimestamp(int(invitation.cdate/1000)), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_solicit_review_id():
+                    self.invitation_builder.set_note_solicit_review_invitation(submission)
+
+                elif super_invitation_name == self.get_solicit_review_approval_id():
+                    self.invitation_builder.set_note_solicit_review_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_revision_id():
+                    self.invitation_builder.set_note_revision_invitation(submission)
+
+                elif super_invitation_name == self.get_public_comment_id():
+                    self.invitation_builder.set_note_comment_invitation(submission)
+
+                elif invitation.id == self.get_official_comment_id(number=note_number):
+                    a=1
+
+                elif invitation.id == self.get_moderation_id(number=note_number):
+                    a=1
+
+                elif super_invitation_name == self.get_release_comment_id():
+                    self.invitation_builder.set_note_release_comment_invitation(submission)
+
+                elif super_invitation_name == self.get_ae_decision_id():
+                    self.invitation_builder.set_note_decision_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_decision_approval_id():
+                    self.invitation_builder.set_note_decision_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_review_rating_id():
+                    self.invitation_builder.set_note_review_rating_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_camera_ready_revision_id():
+                    self.invitation_builder.set_note_camera_ready_revision_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_camera_ready_verification_id():
+                    self.invitation_builder.set_note_camera_ready_verification_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_authors_deanonymization_id():
+                    self.invitation_builder.set_note_authors_deanonymization_invitation(submission)
+
+                elif invitation.id == self.get_reviewer_assignment_id(number=note_number):
+                    self.invitation_builder.set_reviewer_assignment_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))                    
+
+                elif invitation.id == self.get_ae_recommendation_id(number=note_number):
+                    self.invitation_builder.set_ae_recommendation_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))                    
+                else:
+                    print(f'Builder not found for {invitation.id}')
+
+            else:
+                print(f'Name or invitation not found: {name}, {submission}')
 

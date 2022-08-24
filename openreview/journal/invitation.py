@@ -186,7 +186,8 @@ class InvitationBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': edit_content,   
-                'invitation': invitation
+                'invitation': invitation,
+                'replacement': True
             }
         )
 
