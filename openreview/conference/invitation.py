@@ -1744,15 +1744,13 @@ class InvitationBuilder(object):
         return invitations
 
     def set_meta_review_invitation(self, conference, notes):
-
-        invitations = []
         self.client.post_invitation(MetaReviewInvitation(conference))
-        for note in tqdm(notes, total=len(notes), desc='set_meta_review_invitation'):
+        def post_invitation(note):
             invitation = self.client.post_invitation(PaperMetaReviewInvitation(conference, note))
             self.__update_readers(note, invitation)
-            invitations.append(invitation)
+            return invitation
 
-        return invitations
+        return tools.concurrent_requests(post_invitation, notes, desc='set_meta_review_invitation')
 
     def set_decision_invitation(self, conference, notes):
         self.client.post_invitation(DecisionInvitation(conference))
