@@ -343,7 +343,7 @@ class WebfieldBuilder(object):
 
     def set_paper_recruitment_page(self, conference, invitation):
 
-        template_name = 'paperRecruitResponseWebfield.js' if conference.use_recruitment_template else 'legacPaperRecruitResponseWebfield.js'
+        template_name = 'paperRecruitResponseWebfield.js' if conference.use_recruitment_template else 'legacyPaperRecruitResponseWebfield.js'
 
         with open(os.path.join(os.path.dirname(__file__), f'templates/{template_name}')) as f:
             content = f.read()
