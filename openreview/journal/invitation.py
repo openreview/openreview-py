@@ -961,7 +961,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         }        
         
         invitation = {
-            'id': self.journal.get_submission_editable_id(),
+            'id': self.journal.get_submission_editable_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id],
             'noninvitees': [editors_in_chief_id],
             'readers': [venue_id],
@@ -969,7 +969,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'signatures': [venue_id],
             'edit': {
                 'signatures': [venue_id ],
-                'readers': [ venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}') ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id ],
                 'note': {
                     'id': '${4/content/noteId/value}',
@@ -4100,13 +4100,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'value': {
                     'param': {
                         'regex': '.*', 'type': 'string' 
-                    }
-                }
-            },
-            'duedate': { 
-                'value': {
-                    'param': {
-                        'regex': '.*', 'type': 'integer' 
                     }
                 }
             }

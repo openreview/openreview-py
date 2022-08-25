@@ -620,6 +620,9 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if super_invitation_name == self.get_review_approval_id():
                     self.invitation_builder.set_note_review_approval_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                 
+                elif invitation.id == self.get_submission_editable_id(number=note_number):
+                    self.invitation_builder.set_submission_editable_invitation(submission)
+
                 elif super_invitation_name == self.get_desk_rejection_approval_id():
                     self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                 
@@ -670,6 +673,9 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
                 elif super_invitation_name == self.get_ae_decision_id():
                     self.invitation_builder.set_note_decision_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif invitation.id == self.get_decision_release_id(number=note_number):
+                    self.invitation_builder.set_note_decision_release_invitation(submission)
 
                 elif super_invitation_name == self.get_decision_approval_id():
                     self.invitation_builder.set_note_decision_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
