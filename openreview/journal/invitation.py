@@ -486,6 +486,7 @@ If you have questions after reviewing the points below that are not answered on 
                         }
                     }
                 },
+                'replacement': True,
                 'invitation': {
                     'id': self.journal.get_reviewer_responsibility_id(signature='${2/content/reviewerId/value}'),
                     'invitees': ['${3/content/reviewerId/value}'],
