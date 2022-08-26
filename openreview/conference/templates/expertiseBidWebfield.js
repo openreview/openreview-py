@@ -15,6 +15,8 @@ var EXPERTISE_SUBMISSION_ID = 'OpenReview.net/Archive/-/Direct_Upload';
 
 var BUFFER = 1000 * 60 * 30;  // 30 minutes
 
+var bidOptionLabel = invitation.reply.content.label['value-radio'][0];
+var bidOptionId = bidOptionLabel.toLowerCase()
 // Main is the entry point to the webfield code and runs everything
 function main() {
   if (args && args.referrer) {
@@ -155,9 +157,9 @@ function renderContent(authoredNotes, edgesMap) {
     updatedNote.details.edges[prevEdgeIndex] = edgeObj;
 
     var labelToContainerId = {
-      'Exclude': 'exclude',
       'No Selection': 'noSelection'
     };
+    labelToContainerId[bidOptionLabel] = bidOptionId;
 
     var previousNoteList = binnedNotes[labelToContainerId[prevVal]];
     var currentNoteList = binnedNotes[labelToContainerId[edgeObj.label]];
@@ -197,9 +199,9 @@ function renderContent(authoredNotes, edgesMap) {
   function updateNotes(notes) {
     // Sort notes into bins by bid
     binnedNotes = {
-      noSelection: [],
-      exclude: []
-    };
+      noSelection: []
+    }
+    binnedNotes[bidOptionId] = [];
 
     var bids, n;
     for (var i = 0; i < notes.length; i++) {
@@ -209,8 +211,8 @@ function renderContent(authoredNotes, edgesMap) {
       });
 
       if (bids.length) {
-        if (bids[0].label === 'Exclude') {
-          binnedNotes.exclude.push(n);
+        if (bids[0].label === bidOptionLabel) {
+          binnedNotes[bidOptionId].push(n);
         } else {
           binnedNotes.noSelection.push(n);
         }
@@ -225,20 +227,30 @@ function renderContent(authoredNotes, edgesMap) {
         heading: 'All My Papers  <span class="glyphicon glyphicon-search"></span>',
         id: 'allPapers',
         content: null
-      },
-      {
+      }
+    ];
+    if (bidOptionLabel == 'Exclude') {
+      sections.push({
         heading: 'My Selected Expertise',
         headingCount: binnedNotes.noSelection.length,
         id: 'noSelection',
         content: loadingContent
-      },
-      {
-        heading: 'Excluded Papers',
-        headingCount: binnedNotes.exclude.length,
-        id: 'exclude',
+      })
+      sections.push({
+        heading: bidOptionLabel + 'd Papers',
+        headingCount: binnedNotes[bidOptionId].length,
+        id: bidOptionId,
         content: loadingContent
-      }
-    ];
+      });      
+    } else {
+      sections.push({
+        heading: 'My Selected Expertise',
+        headingCount: binnedNotes[bidOptionId].length,
+        id: bidOptionId,
+        content: loadingContent
+      })      
+    }
+
     sections[activeTab].active = true;
 
     $('#notes .tabs-container').remove();
@@ -275,9 +287,8 @@ function renderContent(authoredNotes, edgesMap) {
 
   function updateCounts() {
     var containers = [
-      'noSelection',
-      'exclude'
-    ];
+      'noSelection']
+    containers.push(bidOptionId);
     var totalCount = 0;
 
     containers.forEach(function(containerId) {
@@ -297,7 +308,7 @@ function renderContent(authoredNotes, edgesMap) {
   updateNotes(authoredNotes);
 
   // Mark task a complete
-  if (user && user.profile && user.profile.id && _.isEmpty(edgesMap)) {
+  if (bidOptionLabel == 'Exclude' && user && user.profile && user.profile.id && _.isEmpty(edgesMap)) {
     Webfield.post('/edges', {
       invitation: EXPERTISE_BID_ID,
       readers: [CONFERENCE_ID, user.profile.id],

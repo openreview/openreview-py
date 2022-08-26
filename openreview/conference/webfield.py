@@ -123,13 +123,14 @@ class WebfieldBuilder(object):
 
     def set_expertise_selection_page(self, conference, invitation):
 
+        instructions = 'Please click on \"Include\" for papers that you do want to be used to represent your expertise' if conference.expertise_selection_stage.include_option else 'Please click on \"Exclude\" for papers that you do NOT want to be used to represent your expertise'
         default_header = {
             'title': conference.get_short_name() + ' Expertise Selection',
             'instructions': '''
                 <p class=\"dark\">Listed below are all the papers you have authored that exist in the OpenReview database.
                         <br>
                         <br>
-                        <b>By default, we consider all of these papers to formulate your expertise. Please click on \"Exclude\" for papers that you do  NOT want to be used to represent your expertise.</b>
+                        <b>By default, we consider all of these papers to formulate your expertise. ''' + instructions + '''.</b>
                         <br>
                         <br>
                         Your previously authored papers from selected conferences were imported automatically from <a href="https://dblp.org">DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your <a href="/profile/edit">OpenReview profile</a> and then clicking on 'Add DBLP Papers to Profile'.
