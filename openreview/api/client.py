@@ -640,7 +640,8 @@ class OpenReviewClient(object):
         details = None,
         expired = None,
         type = None,
-        with_count=False
+        with_count=False,
+        invitation = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -712,6 +713,7 @@ class OpenReviewClient(object):
         params['offset'] = offset
         params['expired'] = expired
         params['type'] = type
+        params['invitation'] = invitation
 
         response = requests.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -742,7 +744,8 @@ class OpenReviewClient(object):
         details = None,
         expired = None,
         type = None,
-        with_count=False
+        with_count=False,
+        invitation = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -804,7 +807,8 @@ class OpenReviewClient(object):
             'details': details,
             'expired': expired,
             'type': type,
-            'with_count': with_count
+            'with_count': with_count,
+            'invitation': invitation
         }
 
         return tools.concurrent_get(self, self.get_invitations, **params)

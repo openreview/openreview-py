@@ -38,15 +38,7 @@ def process_update(client, edge, invitation, existing_edge):
     ## Enable reviewer responsibility task
     if len(tail_assignment_edges) == 1 and not edge.ddate:
         print('Enable reviewer responsibility task for', edge.tail)
-        responsiblity_invitation_edit = client.post_invitation_edit(invitations=journal.get_reviewer_responsibility_id(),
-            content={ 
-                'reviewerId': { 'value': edge.tail }, 
-                'duedate': { 'value': openreview.tools.datetime_millis(journal.get_due_date(weeks = 1)) }
-            },
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id]
-        )
+        journal.invitation_builder.set_single_reviewer_responsibility_invitation(edge.tail, journal.get_due_date(weeks = 1))
 
     pending_review_edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
     pending_review_edge = None

@@ -566,6 +566,19 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
+    
+    def set_single_reviewer_responsibility_invitation(self, reviewer_id, duedate):
+
+        self.client.post_invitation_edit(invitations=self.journal.get_reviewer_responsibility_id(),
+            content={ 
+                'reviewerId': { 'value': reviewer_id }, 
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
+            },
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id]
+        )        
+    
     def set_reviewer_assignment_acknowledgement_invitation(self):
 
         venue_id=self.journal.venue_id
