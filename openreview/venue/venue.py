@@ -210,7 +210,11 @@ class Venue(object):
     def setup(self, program_chair_ids=[]):
     
         venue_id = self.venue_id
-        #TODO: create all the prefix groups
+
+        groups = self.group_builder.build_groups(venue_id)
+        for i, g in enumerate(groups[:-1]):
+            self.group_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
+
         venue_group = openreview.api.Group(id = venue_id,
             readers = ['everyone'],
             writers = [venue_id],
