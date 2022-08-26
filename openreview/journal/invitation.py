@@ -569,7 +569,7 @@ If you have questions after reviewing the points below that are not answered on 
     
     def set_single_reviewer_responsibility_invitation(self, reviewer_id, duedate):
 
-        self.client.post_invitation_edit(invitations=self.journal.get_reviewer_responsibility_id(),
+        return self.client.post_invitation_edit(invitations=self.journal.get_reviewer_responsibility_id(),
             content={ 
                 'reviewerId': { 'value': reviewer_id }, 
                 'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
