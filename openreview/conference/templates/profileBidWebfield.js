@@ -302,7 +302,7 @@ function updateNotes(notes) {
   var loadingContent = Handlebars.templates.spinner({ extraClasses: 'spinner-inline' });
   sections = [
     {
-      heading: 'All Papers  <span class="glyphicon glyphicon-search"></span>',
+      heading: 'All Area Chairs  <span class="glyphicon glyphicon-search"></span>',
       id: 'allPapers',
       content: null
     },

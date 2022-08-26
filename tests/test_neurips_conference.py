@@ -322,6 +322,9 @@ If you would like to change your decision, please follow the link in the previou
         sac_client=openreview.Client(username='sac1@google.com', password='1234')
         assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
 
+        edges=sac_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score', tail='~SeniorArea_GoogleChair1')
+        assert len(edges) == 3
+
         tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs#senior-areachair-tasks'
         request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
 
@@ -331,7 +334,13 @@ If you would like to change your decision, please follow the link in the previou
         bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid'
         request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
 
-        assert selenium.find_element_by_id('notes')
+        notes = selenium.find_element_by_id('notes')
+        assert notes
+        assert len(notes.find_elements_by_class_name('note')) == 3
+
+        header = selenium.find_element_by_id('header')
+        instruction = header.find_element_by_tag_name('li')
+        assert 'Please indicate your level of interest in the list of Area Chairs below, on a scale from "Very Low" interest to "Very High" interest. Area Chairs were automatically pre-ranked using the expertise information in your profile.' == instruction.text
 
         sac_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
