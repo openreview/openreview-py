@@ -22,12 +22,12 @@ return {
     venueId: `${VENUE_ID}`,
     submissionId: `${SUBMISSION_ID}`,
     authorSubmissionField: `${AUTHOR_SUBMISSION_FIELD}`,
-    officialReviewName:`${OFFICIAL_REVIEW_NAME}`,
-    decisionName:`${DECISION_NAME}`,
+    officialReviewName: `${OFFICIAL_REVIEW_NAME}`,
+    decisionName: `${DECISION_NAME}`,
     reviewRatingName: `${REVIEW_RATING_NAME}`,
     reviewConfidenceName: `${REVIEW_CONFIDENCE_NAME}`,
     authorName: `${AUTHOR_NAME}`,
-    submissionName:'Paper',
-    wildcardInvitation:`${WILDCARD_INVITATION}`
+    submissionName: 'Paper',
+    wildcardInvitation: `${WILDCARD_INVITATION}`
   }
 }
