@@ -123,13 +123,14 @@ class WebfieldBuilder(object):
 
     def set_expertise_selection_page(self, conference, invitation):
 
+        instructions = 'Please click on \"Include\" for papers that you do want to be used to represent your expertise' if conference.expertise_selection_stage.include_option else 'Please click on \"Exclude\" for papers that you do NOT want to be used to represent your expertise'
         default_header = {
             'title': conference.get_short_name() + ' Expertise Selection',
             'instructions': '''
                 <p class=\"dark\">Listed below are all the papers you have authored that exist in the OpenReview database.
                         <br>
                         <br>
-                        <b>By default, we consider all of these papers to formulate your expertise. Please click on \"Exclude\" for papers that you do  NOT want to be used to represent your expertise.</b>
+                        <b>By default, we consider all of these papers to formulate your expertise. ''' + instructions + '''.</b>
                         <br>
                         <br>
                         Your previously authored papers from selected conferences were imported automatically from <a href="https://dblp.org">DBLP.org</a>. The keywords in these papers will be used to rank submissions for you during the bidding process, and to assign submissions to you during the review process. If there are DBLP papers missing, you can add them by editing your <a href="/profile/edit">OpenReview profile</a> and then clicking on 'Add DBLP Papers to Profile'.
@@ -169,7 +170,7 @@ class WebfieldBuilder(object):
                     Papers can be also sorted by TPMS score, change the sorting criteria using the 'Sort By' dropdown.
                 </li>'''
 
-        default_instructions = '''
+        paper_default_instructions = '''
             <p class="dark"><strong>Instructions:</strong></p>
             <ul>
                 <li>
@@ -203,6 +204,28 @@ class WebfieldBuilder(object):
             </ul>
             <br>'''
 
+        profile_default_instructions = '''
+            <p class="dark"><strong>Instructions:</strong></p>
+            <ul>
+                <li>
+                    Please indicate your <strong>level of interest</strong> in the list of Area Chairs below, on a scale from "Very Low" interest to "Very High" interest. Area Chairs were automatically pre-ranked using the expertise information in your profile.
+                </li>
+                <li>
+                    Bid on as many Area Chairs as possible to correct errors of this automatic procedure.
+                </li>
+                <li>
+                    Bidding on the top ranked Area Chairs removes false positives.
+                </li>
+                <li>
+                    You can use the search field to find Area Chairs by keywords from the position, institution or expertise to reduce false negatives.
+                </li>                
+                <li>
+                    Ensure that you have at least <strong>{request_count} bids</strong>.
+                </li>
+            </ul>
+            <br>'''            
+
+        default_instructions = profile_default_instructions if stage.committee_id == conference.get_senior_area_chairs_id() else paper_default_instructions
         instructions_html = stage.instructions if stage.instructions else default_instructions
 
         header = {
