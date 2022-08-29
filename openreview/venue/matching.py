@@ -748,6 +748,7 @@ class Matching(object):
                                 'param': {
                                     'type': 'string',
                                     'enum':  ['Yes', 'No'],
+                                    'input': 'radio',
                                     'optional': True,
                                     'default': 'Yes'
                                 }
