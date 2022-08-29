@@ -219,7 +219,8 @@ class JournalRequest():
                                 'value' : {
                                     'param': {
                                         'type': 'string',
-                                        'regex': '[\\S\\s]{1,200000}'
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
                                     }
                                 }
                             }
@@ -260,7 +261,8 @@ Cheers!'''.replace('{short_name}', short_name)
                 'value' : {
                     'param': {
                         'type': 'string',
-                        'regex': '[\\S\\s]{1,50000}'
+                        'maxLength': 50000,
+                        'input': 'textarea'
                     }
                 }
             },
@@ -281,7 +283,8 @@ Cheers!'''.replace('{short_name}', short_name)
                 'value' : {
                     'param': {
                         'type': 'string',
-                        'regex': '[\\S\\s]{1,10000}',
+                        'maxLength': 100000,
+                        'input': 'textarea',
                         'default': default_recruitment_template,
                         'markdown': True
                     }
@@ -410,7 +413,8 @@ Cheers!
                 'value' : {
                     'param': {
                         'type': 'string',
-                        'regex': '[\\S\\s]{1,10000}',
+                        'maxLength': 10000,
+                        'input': 'textarea',
                         'default': recruitment_email_template
                     }
                 }

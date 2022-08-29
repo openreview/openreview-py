@@ -764,7 +764,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True
                                 }
                             }
@@ -817,7 +818,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$'
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                 }
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
@@ -897,7 +899,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -909,7 +912,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$'
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                 }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
@@ -920,7 +924,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$'
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                 }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
@@ -1764,7 +1769,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -1868,7 +1874,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -1960,7 +1967,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -2033,7 +2041,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -2123,7 +2132,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -2260,7 +2270,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -2324,7 +2335,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$'
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                 }
                             }
                         },
@@ -2414,7 +2426,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$'
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                 }
                             }
                         },
@@ -2456,7 +2469,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$'
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                 }
                             }
                         },
@@ -2503,7 +2517,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$'
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                 }
                             }
                         },
@@ -2555,7 +2570,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$'
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                 }
                             }
                         },
@@ -2627,7 +2643,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$'
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                 }
                             }
                         },
@@ -2885,7 +2902,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'description': 'Brief description, in the reviewer\'s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'type': 'string',
                                     'markdown': True
                                 }
@@ -2896,7 +2914,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'type': 'string',
                                     'markdown': True
                                 }
@@ -2907,7 +2926,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'type': 'string',
                                     'markdown': True
                                 }
@@ -2918,7 +2938,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'type': 'string',
                                     'markdown': True
                                 }
@@ -3105,7 +3126,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -3215,7 +3237,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -3333,7 +3356,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -3422,7 +3446,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                     'optional': True
                                 }
                             },
@@ -3479,7 +3504,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -3491,7 +3517,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$'
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                 }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
@@ -3501,7 +3528,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^[\\S\\s]{1,5000}$'
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                 }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
@@ -3634,7 +3662,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^.{1,500}$'
+                                    'maxLength': 500,
+                                    'input': 'text'
                                 }
                             }
                         },
@@ -3644,7 +3673,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                     'markdown': True
                                 }
                             }
@@ -3699,12 +3729,14 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'signatures': ['${3/signatures}'],
                     'readers': {
                         'param': {
-                            'enum': ['everyone', 
-                            editors_in_chief_id, 
-                            self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 
-                            self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), 
-                            self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True) + '.*', 
-                            self.journal.get_authors_id(number='${7/content/noteNumber/value}')],
+                            'enum': [
+                                'everyone', 
+                                editors_in_chief_id, 
+                                self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 
+                                self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), 
+                                self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True) + '.*', 
+                                self.journal.get_authors_id(number='${7/content/noteNumber/value}')
+                            ],
                         }
                     },
                     'writers': ['${3/writers}'],
@@ -3715,7 +3747,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^.{1,500}$'
+                                    'maxLength': 500,
+                                    'input': 'text'
                                 }
                             }
                         },
@@ -3725,7 +3758,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                     'markdown': True
                                 }
                             }
@@ -3770,7 +3804,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^.{1,500}$'
+                                    'maxLength': 500,
+                                    'input': 'text'
                                 }
                             },
                             'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), '${5/signatures}']
@@ -3781,7 +3816,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                     'markdown': True
                                 }
                             },
@@ -3949,7 +3985,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'markdown': True
                                 }
                             }
@@ -4072,7 +4109,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,200000}$',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
                                 }
@@ -4316,7 +4354,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^.{1,250}$'
+                                    'maxLength': 250,
+                                    'input': 'text'
                                 }
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
@@ -4326,7 +4365,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,5000}$'
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                 }
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
@@ -4387,7 +4427,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,5000}$',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                     'optional': True,
                                     'markdown': True
 
@@ -4400,7 +4441,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,5000}$'
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                 }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
@@ -4411,7 +4453,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '^[\\S\\s]{1,5000}$'
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
                                 }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
