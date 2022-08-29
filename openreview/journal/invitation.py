@@ -427,7 +427,7 @@ class InvitationBuilder(object):
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '.{0,50000}',
+                                    'maxLength': 50000,
                                     'markdown': True
                                 }
                             }
