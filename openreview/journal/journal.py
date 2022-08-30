@@ -807,7 +807,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
                         "value": {
                             'param': {
                                 "type": "string",
-                                "regex": "^[\\S\\s]{1,200000}$",
+                                "maxLength": 200000,
+                                "input": "textarea",
                                 "optional": True,
                                 "markdown": True
                             }

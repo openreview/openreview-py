@@ -262,8 +262,7 @@ class InvitationBuilder(object):
                                         'order': 2,
                                         'value': {
                                             'param': {
-                                                'type': "string",
-                                                'regex': '.*'
+                                                'type': "string"
                                             }
                                         }
                                     },
@@ -345,8 +344,7 @@ class InvitationBuilder(object):
                                         'order': 2,
                                         'value': {
                                             'param': {
-                                                'type': "string",
-                                                'regex': '.*'
+                                                'type': "string"
                                             }
                                         }
                                     },
@@ -417,8 +415,7 @@ class InvitationBuilder(object):
                             'order': 1,
                             'value': {
                                 'param': {
-                                    'type': "string",
-                                    'regex': '.*'
+                                    'type': "string"
                                 }
                             }
                         },
@@ -472,7 +469,6 @@ If you have questions after reviewing the points below that are not answered on 
                     'reviewerId': { 
                         'value': {
                             'param': {
-                                'regex': '.*', 
                                 'type': 'string' 
                             }
                         }
@@ -480,7 +476,6 @@ If you have questions after reviewing the points below that are not answered on 
                     'duedate': {
                         'value': {
                             'param': {
-                                'regex': '.*', 
                                 'type': 'integer' 
                             }
                         }
@@ -594,7 +589,6 @@ If you have questions after reviewing the points below that are not answered on 
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -602,28 +596,28 @@ If you have questions after reviewing the points below that are not answered on 
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'reviewerId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'reviewDuedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             }
@@ -965,7 +959,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -973,7 +966,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -1063,8 +1056,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'label': {
                     'param': {
-                        'regex': '.*',
-                        'optional': True
+                        'optional': True,
+                        'minLength': 1
                     }
                 }
             }
@@ -1117,8 +1110,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'label': {
                     'param': {
-                        'regex': '.*',
-                        'optional': True
+                        'optional': True,
+                        'minLength': 1
                     }
                 }
             }
@@ -1172,8 +1165,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'label': {
                     'param': {
-                        'regex': '.*',
-                        'optional': True
+                        'optional': True,
+                        'minLength': 1
                     }
                 }
             },
@@ -1401,8 +1394,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'label': {
                     'param': {
-                        'regex': '.*',
-                        'optional': True
+                        'optional': True,
+                        'minLength': 1
                     }
                 }
             }
@@ -1455,8 +1448,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'label': {
                     'param': {
-                        'regex': '.*',
-                        'optional': True
+                        'optional': True,
+                        'minLength': 1
                     }
                 }
             }
@@ -1515,8 +1508,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 },
                 'label': {
                     'param': {
-                        'regex': '.*',
-                        'optional': True
+                        'optional': True,
+                        'minLength': 1
                     }
                 }
             },
@@ -1703,7 +1696,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -1711,14 +1703,14 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -1809,28 +1801,28 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'replytoId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'date' 
+                        'type': 'date' 
                     }
                 }
             }
@@ -1915,7 +1907,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -1923,7 +1914,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -2002,7 +1993,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -2010,7 +2000,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -2080,7 +2070,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -2088,7 +2077,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -2150,7 +2139,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -2212,7 +2201,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -2220,14 +2208,14 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'replytoId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             }
@@ -2326,8 +2314,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'assigned_action_editor': {
                             'value': {
                                 'param': {
-                                    'type': 'string',
-                                    'regex': '.*'
+                                    'type': 'string'
                                 }
                             }
                         },
@@ -2841,7 +2828,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -2849,14 +2835,14 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -2978,7 +2964,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -3021,28 +3007,28 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'cdate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -3170,7 +3156,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -3178,7 +3163,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -3278,35 +3263,35 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'replytoId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'soliciter': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             }
@@ -3398,7 +3383,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -3406,7 +3390,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -3607,7 +3591,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 
                         'type': 'string' 
                     }
                 }
@@ -3615,7 +3598,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -3910,21 +3893,21 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -4043,28 +4026,28 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'replytoId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -4144,14 +4127,14 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             }
@@ -4203,35 +4186,35 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'replytoId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'signature': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -4315,21 +4298,21 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
@@ -4532,21 +4515,21 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             },
             'duedate': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             }
@@ -4614,14 +4597,14 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'noteNumber': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer' 
+                        'type': 'integer' 
                     }
                 }
             },
             'noteId': { 
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string' 
+                        'type': 'string' 
                     }
                 }
             }

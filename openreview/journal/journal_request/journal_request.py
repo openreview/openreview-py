@@ -54,8 +54,7 @@ class JournalRequest():
                 'order': 2,
                 'value' : {
                     'param': {
-                        'type': 'string',
-                        'regex': '.*'
+                        'type': 'string'
                     }
                 }
             },
@@ -64,8 +63,7 @@ class JournalRequest():
                 'order': 3,
                 'value' : {
                     'param': {
-                        'type': 'string',
-                        'regex': '.*'
+                        'type': 'string'
                     }
                 }
             },
@@ -74,8 +72,7 @@ class JournalRequest():
                 'order': 4,
                 'value' : {
                     'param': {
-                        'type': 'string',
-                        'regex': '.*'
+                        'type': 'string'
                     }
                 }
             },
@@ -93,8 +90,7 @@ class JournalRequest():
                 'order': 6,
                 'value': {
                     'param': {
-                        'type': 'string',
-                        'regex': '.*'
+                        'type': 'string'
                     }
                 }
             },
@@ -120,8 +116,7 @@ class JournalRequest():
                 'order': 9,
                 'value': {
                     'param': {
-                        'type': 'string',
-                        'regex': '.*'
+                        'type': 'string'
                     }
                 }
             }
@@ -272,7 +267,6 @@ Cheers!'''.replace('{short_name}', short_name)
                 'value' : {
                     'param': {
                         'type': 'string',
-                        'regex': '.*',
                         'default': '[{short_name}] Invitation to serve as {{role}} for {short_name}'.replace('{short_name}', short_name)
                     }
                 }
@@ -402,7 +396,6 @@ Cheers!
                 'value' : {
                     'param': {
                         'type': 'string',
-                        'regex': '.*',
                         'default': f'[{short_name}] Invitation to act as Reviewer for {short_name}'
                     }
                 }
