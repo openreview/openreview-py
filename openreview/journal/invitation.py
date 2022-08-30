@@ -4332,6 +4332,20 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'regex': '.*', 'type': 'integer' 
                     }
                 }
+            },
+            'authors': { 
+                'value': {
+                    'param': {
+                        'type': 'string[]'
+                    }
+                }
+            },
+            'authorids': { 
+                'value': {
+                    'param': {
+                        'type': 'string[]'
+                    }
+                }
             }
         }
 
@@ -4376,7 +4390,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string[]',
-                                    'const': ['${{5/id}/content/authors/value}'],
+                                    'const': ['${9/content/authors/value}'],
                                     'hidden': True
                                 }
                             },
@@ -4384,7 +4398,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'order': 3
                         },
                         'authorids': {
-                            'value': ['${{4/forum}/content/authorids/value}'],
+                            'value': ['${7/content/authorids/value}'],
                             'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4
                         },                        
@@ -4496,7 +4510,9 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             content={ 
                 'noteId': { 'value': note.id }, 
                 'noteNumber': { 'value': note.number },
-                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)},
+                'authors': { 'value': note.content['authors']['value'] },
+                'authorids': { 'value': note.content['authorids']['value'] }
             },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
