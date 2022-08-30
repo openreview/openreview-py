@@ -4352,7 +4352,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         invitation = { 
             'id': self.journal.get_camera_ready_revision_id(number='${2/content/noteNumber/value}'),
             'invitees': [self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'duedate': '${2/content/duedate/value}',
