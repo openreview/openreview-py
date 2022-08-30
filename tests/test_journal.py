@@ -40,7 +40,7 @@ class TestJournal():
         corinna_client = helpers.create_user('corinna@mail.com', 'Corinna', 'Cortes')
         ivan_client = helpers.create_user('ivan@mail.com', 'Ivan', 'Titov')
         shakir_client = helpers.create_user('shakir@mail.com', 'Shakir', 'Mohamed')
-        silvia_client = helpers.create_user('silvia@mail.com', 'Silvia', 'Villa')
+        silvia_client = helpers.create_user('silvia@apple.com', 'Silvia', 'Villa')
 
         ## Reviewers
         david_client=helpers.create_user('david@mailone.com', 'David', 'Belanger')
@@ -1670,6 +1670,7 @@ The TMLR Editors-in-Chief
 '''
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
+        assert False
 
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',

@@ -808,7 +808,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^.{1,250}$'
+                                    'maxLength': 250,
                                 }
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
@@ -3436,7 +3436,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': '^.{1,250}$'
+                                    'maxLength': 250,
                                 }
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
@@ -4376,7 +4376,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'value': {
                                 'param': {
                                     'type': 'string[]',
-                                    'const': '${{3/forum}/content/authors/value}',
+                                    'const': ['${{5/id}/content/authors/value}'],
                                     'hidden': True
                                 }
                             },
@@ -4384,7 +4384,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'order': 3
                         },
                         'authorids': {
-                            'value': '${{3/forum}/content/authorids/value}',
+                            'value': ['${{4/forum}/content/authorids/value}'],
                             'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4
                         },                        
