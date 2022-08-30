@@ -179,8 +179,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         readers=readers)
 
     paper_matching_options = note.content.get('Paper Matching', [])
+    include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
     if 'OpenReview Affinity' in paper_matching_options:
-        builder.set_expertise_selection_stage(due_date=submission_due_date)
+        builder.set_expertise_selection_stage(due_date=submission_due_date, include_option=include_expertise_selection)
 
     if not paper_matching_options or 'Organizers will assign papers manually' in paper_matching_options:
         builder.enable_reviewer_reassignment(enable=True)

@@ -242,7 +242,7 @@ class ExpertiseSelectionInvitation(openreview.Invitation):
                         'type': 'Profile'
                     },
                     'label': {
-                        'value-radio': ['Exclude'],
+                        'value-radio': ['Include' if expertise_selection_stage.include_option else 'Exclude'],
                         'required': True
                     }
                 }
@@ -1110,6 +1110,37 @@ class PaperReviewRebuttalInvitation(openreview.Invitation):
             reply = reply
         )
 
+class PaperRebuttalInvitation(openreview.Invitation):
+
+    def __init__(self, conference, note):
+
+        review_rebuttal_stage = conference.review_rebuttal_stage
+
+        reply = {
+            'forum': note.forum,
+            'replyto': note.forum,
+            'readers': {
+                'description': 'All user groups that should be able to read this rebuttal.',
+                'values': review_rebuttal_stage.get_invitation_readers(conference, note.number)
+            },
+            'signatures': {
+                'description': 'How your identity will be displayed with the above content.',
+                'values-regex': f'{conference.get_authors_id(note.number)}|{conference.get_program_chairs_id()}'
+            },
+            'writers': {
+                'description': 'Users that may modify this record.',
+                'values': [conference.get_id(), conference.get_authors_id(note.number)]
+            }
+        }
+
+        super(PaperRebuttalInvitation, self).__init__(id = conference.get_invitation_id(name=review_rebuttal_stage.name, number=note.number),
+            super = conference.get_invitation_id(review_rebuttal_stage.name),
+            writers = [conference.id],
+            signatures = [conference.id],
+            invitees = [conference.get_authors_id(note.number), conference.get_program_chairs_id(), conference.support_user],
+            reply = reply
+        )        
+
 class ReviewRevisionInvitation(openreview.Invitation):
 
     def __init__(self, conference):
@@ -1674,12 +1705,17 @@ class InvitationBuilder(object):
 
         return invitations        
 
-    def set_review_rebuttal_invitation(self, conference, reviews):
+    def set_review_rebuttal_invitation(self, conference):
+        note_iterator = conference.get_submissions() if conference.review_rebuttal_stage.single_rebuttal else self.client.get_all_notes(invitation = conference.get_invitation_id(conference.review_stage.name, '.*'))        
         invitations = []
         regex=conference.get_anon_reviewer_id(number='.*', anon_id='.*')
         self.client.post_invitation(RebuttalInvitation(conference))
-        for note in tqdm(reviews, desc='set_review_rebuttal_invitation'):
-            if re.search(regex, note.signatures[0]):
+        for note in tqdm(note_iterator, desc='set_review_rebuttal_invitation'):
+            if conference.review_rebuttal_stage.single_rebuttal:
+                invitation = self.client.post_invitation(PaperRebuttalInvitation(conference, note))
+                self.__update_readers(note, invitation)
+                invitations.append(invitation)                
+            elif re.search(regex, note.signatures[0]):
                 invitation = self.client.post_invitation(PaperReviewRebuttalInvitation(conference, note))
                 invitations.append(invitation)
 
@@ -1708,15 +1744,13 @@ class InvitationBuilder(object):
         return invitations
 
     def set_meta_review_invitation(self, conference, notes):
-
-        invitations = []
         self.client.post_invitation(MetaReviewInvitation(conference))
-        for note in tqdm(notes, total=len(notes), desc='set_meta_review_invitation'):
+        def post_invitation(note):
             invitation = self.client.post_invitation(PaperMetaReviewInvitation(conference, note))
             self.__update_readers(note, invitation)
-            invitations.append(invitation)
+            return invitation
 
-        return invitations
+        return tools.concurrent_requests(post_invitation, notes, desc='set_meta_review_invitation')
 
     def set_decision_invitation(self, conference, notes):
         self.client.post_invitation(DecisionInvitation(conference))
