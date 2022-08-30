@@ -723,7 +723,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             else:
                 print(f'Name or invitation not found: {name}, {submission}')
 
-    def setup_responsibility_acknowledgement_invitaitons(self):
+    def setup_responsibility_acknowledgement_invitations(self):
 
         reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id())
 
