@@ -1646,7 +1646,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'deletable': True
                     }
                 },
-                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'readers': [venue_id, self.journal.get_action_editors_id(), '${2/tail}'],
                 'nonreaders': [],
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
