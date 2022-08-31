@@ -3518,15 +3518,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                             'order': 11
-                        },
-                        'venue': {
-                            'value': {
-                                'param': {
-                                    'type': "string",
-                                    'const': f'Submitted to {short_name}',
-                                    'hidden': True
-                                }
-                            }
                         }
                     }
                 }

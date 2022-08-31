@@ -279,6 +279,7 @@ The TMLR Editors-in-Chief
 
         note = openreview_client.get_note(note_id_1)
         assert note
+        assert note.number == 1
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision']
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
@@ -482,6 +483,25 @@ We thank you for your essential contribution to TMLR!
 
 The TMLR Editors-in-Chief
 '''
+
+        ## Update submission 1 again
+        updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
+            signatures=['TMLR/Paper1/Authors'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title UPDATED' },
+                    'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests VERSION 2'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.number == 1
 
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
