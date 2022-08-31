@@ -707,7 +707,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[venue_id],
             edit={
                 'signatures': { 'param': { 'regex': '~.*|' + editors_in_chief_id }},
-                'readers': [venue_id, '${signatures}'],
+                'readers': [venue_id, '${2/signatures}'],
                 'note': {
                     'id': {
                         'param': {
@@ -717,9 +717,9 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     },                    
                     'forum': forum_note_id,
                     'replyto': forum_note_id,
-                    'signatures': ['${signatures}'],
-                    'readers': [venue_id, '${signatures}'],
-                    'writers': [venue_id, '${signatures}'],
+                    'signatures': ['${3/signatures}'],
+                    'readers': [venue_id, '${3/signatures}'],
+                    'writers': [venue_id, '${3/signatures}'],
                     'content': {
                         'reviewer_id': { 
                             'value': {
