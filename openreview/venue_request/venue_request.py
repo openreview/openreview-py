@@ -1140,6 +1140,11 @@ class VenueRequest():
                 'value-dropdown': ['1', '2'],
                 'default': ['1'],
                 'order': 39,
+            },
+            'include_expertise_selection': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 38,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }

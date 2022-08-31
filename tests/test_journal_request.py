@@ -88,12 +88,11 @@ class TestJournalRequest():
         helpers.create_user('support_role@mail.com', 'Support', 'Role')
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(request_form['note']['id']))
-        assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
-        assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+        invitations_container = selenium.find_element_by_class_name('invitations-container')
+        invitation_buttons = invitations_container.find_element_by_class_name('invitation-buttons')
+        buttons = invitation_buttons.find_elements_by_tag_name('button')
+        assert len(buttons) ==  4
         assert [btn for btn in buttons if btn.text == 'Comment']
 
         #check request form id is added to AE console
@@ -122,12 +121,12 @@ TJ22 Editors-in-Chief
 
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(journal['journal_request_note']['id']))
-        assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
-        assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), test_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+        invitations_container = selenium.find_element_by_class_name('invitations-container')
+        invitation_buttons = invitations_container.find_element_by_class_name('invitation-buttons')
+        buttons = invitation_buttons.find_elements_by_tag_name('button')
+        assert len(buttons) ==  3
+
         assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment']
 
         invitation = test_client.get_invitation(id='{}/Journal_Request{}/-/Reviewer_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number']))
@@ -252,12 +251,11 @@ TJ22 Editors-in-Chief
         helpers.create_user('ae_journal1@mail.com', 'First', 'AE')
         ae_client = OpenReviewClient(username='ae_journal1@mail.com', password='1234')
 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), ae_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
-        recruitment_div = selenium.find_element_by_id('note_{}'.format(journal['journal_request_note']['id']))
-        assert recruitment_div
-        reply_row = recruitment_div.find_element_by_class_name('reply_row')
-        assert reply_row
-        buttons = reply_row.find_elements_by_class_name('btn-xs')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal['journal_request_note']['id']), ae_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+        invitations_container = selenium.find_element_by_class_name('invitations-container')
+        invitation_buttons = invitations_container.find_element_by_class_name('invitation-buttons')
+        buttons = invitation_buttons.find_elements_by_tag_name('button')
+        assert len(buttons) == 1
         assert [btn for btn in buttons if btn.text == 'Reviewer Recruitment by AE']
 
         recruitment_note = ae_client.post_note_edit(

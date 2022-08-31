@@ -322,6 +322,9 @@ If you would like to change your decision, please follow the link in the previou
         sac_client=openreview.Client(username='sac1@google.com', password='1234')
         assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
 
+        edges=sac_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score', tail='~SeniorArea_GoogleChair1')
+        assert len(edges) == 3
+
         tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs#senior-areachair-tasks'
         request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
 
@@ -331,7 +334,13 @@ If you would like to change your decision, please follow the link in the previou
         bid_url = 'http://localhost:3030/invitation?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid'
         request_page(selenium, bid_url, sac_client.token, wait_for_element='notes')
 
-        assert selenium.find_element_by_id('notes')
+        notes = selenium.find_element_by_id('notes')
+        assert notes
+        assert len(notes.find_elements_by_class_name('note')) == 3
+
+        header = selenium.find_element_by_id('header')
+        instruction = header.find_element_by_tag_name('li')
+        assert 'Please indicate your level of interest in the list of Area Chairs below, on a scale from "Very Low" interest to "Very High" interest. Area Chairs were automatically pre-ranked using the expertise information in your profile.' == instruction.text
 
         sac_client.post_edge(openreview.Edge(
             invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Bid',
@@ -1041,6 +1050,7 @@ If you would like to change your decision, please follow the link in the previou
         now = datetime.datetime.utcnow()
 
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         submissions=conference.get_submissions(sort='tmdate')
 
         with open(os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'), 'w') as file_handle:
@@ -1221,6 +1231,22 @@ If you would like to change your decision, please follow the link in the previou
         assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
 
         ## Check if the SAC can edit the AC assignments
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['NeurIPS.cc/2021/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_NeurIPSChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()        
         print('http://localhost:3030/edges/browse?traverse=NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment&edit=NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment&browse=NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score&hide=NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict&maxColumns=2')
         #assert False
 
@@ -2839,9 +2865,9 @@ NeurIPS 2021 Conference Program Chairs'''
         assert submission_note.invitation == 'NeurIPS.cc/2021/Conference/-/Blind_Submission'
         assert submission_note.readers == [
                 'NeurIPS.cc/2021/Conference',
-                'NeurIPS.cc/2021/Conference/Senior_Area_Chairs',
-                'NeurIPS.cc/2021/Conference/Area_Chairs',
-                'NeurIPS.cc/2021/Conference/Reviewers',
+                'NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper4/Area_Chairs',
+                'NeurIPS.cc/2021/Conference/Paper4/Reviewers',
                 'NeurIPS.cc/2021/Conference/Paper4/Authors'
                 ]
         assert submission_note.content['keywords'] == ''
