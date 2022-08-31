@@ -56,6 +56,8 @@ var DECISION_NAME = 'Decision';
 var DECISION_APPROVAL_NAME = 'Decision_Approval';
 var CAMERA_READY_REVISION_NAME = 'Camera_Ready_Revision';
 var CAMERA_READY_VERIFICATION_NAME = 'Camera_Ready_Verification';
+var RETRACTION_NAME = 'Retraction';
+var RETRACTION_APPROVAL_NAME = 'Retraction_Approval';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
 var WITHDRAWN_STATUS = VENUE_ID + '/Withdrawn_Submission';
@@ -360,6 +362,13 @@ var formatData = function(
     var cameraReadyVerificationNotes = getReplies(submission, CAMERA_READY_VERIFICATION_NAME);
     var cameraReadyTask = null;
     var cameraReadyVerificationTask = null;
+    // Retraction by Authors
+    var retractionInvitation = invitationsById[getInvitationId(number, RETRACTION_NAME)];
+    var retractionNotes = getReplies(submission, RETRACTION_NAME);
+    // Retraction Approval by EIC
+    var retractionApprovalInvitation = invitationsById[getInvitationId(number, RETRACTION_APPROVAL_NAME)];
+    var retractionApprovalNotes = getReplies(submission, RETRACTION_APPROVAL_NAME);
+
     var earlylateTaskDueDate = 0;
 
     if (aeRecommendationInvitation) {
@@ -514,6 +523,27 @@ var formatData = function(
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, cameraReadyVerificationTask);
       tasks.push(cameraReadyVerificationTask);      
     }
+
+    if (retractionApprovalInvitation) {
+      var task = {
+        id: retractionApprovalInvitation.id,
+        cdate: retractionApprovalInvitation.cdate,
+        duedate: retractionApprovalInvitation.duedate,
+        complete: retractionApprovalNotes.length > 0,
+        replies: retractionApprovalNotes
+      };
+      earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
+      tasks.push(task);      
+      if (!task.complete) {
+        incompleteEicTasks.push([
+          {
+            id: formattedSubmission.id,
+            title: formattedSubmission.content.title || formattedSubmission.number
+          },
+          task
+        ]);
+      }
+    }    
 
     var reviews = reviewNotes;
     var recommendations = officialRecommendationNotes;
