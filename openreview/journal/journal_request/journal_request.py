@@ -430,7 +430,7 @@ Cheers!
                     'note': {
                         'forum': note.id,
                         'replyto': note.id,
-                        'signatures': ['${2/signatures}'],
+                        'signatures': ['${3/signatures}'],
                         'readers': [self.support_group_id, venue_id, '${3/signatures}'],
                         'writers': [self.support_group_id, venue_id],
                         'content': recruitment_content
