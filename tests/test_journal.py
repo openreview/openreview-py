@@ -265,7 +265,6 @@ The TMLR Editors-in-Chief
         updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
             signatures=['TMLR/Paper1/Authors'],
             note=Note(
-                id=note_id_1,
                 content={
                     'title': { 'value': 'Paper title UPDATED' },
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
@@ -1695,8 +1694,6 @@ The TMLR Editors-in-Chief
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
             note=Note(
-                id=note_id_1,
-                forum=note_id_1,
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
                     'authors': { 'value': ['Melissa Bok', 'SomeFirstName User'] }, 
@@ -1805,8 +1802,6 @@ OpenReview Team
                             signatures=[f"{venue_id}/Paper1/Action_Editors"],
                             note=Note(
                                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
-                                forum=note_id_1,
-                                replyto=note_id_1,
                                 content= {
                                     'verification': { 'value': 'I confirm that camera ready manuscript complies with the TMLR stylefile and, if appropriate, includes the minor revisions that were requested.' }
                                  }
@@ -1869,8 +1864,6 @@ note={Featured Certification, Reproducibility Certification}
                             signatures=[f"{venue_id}/Paper1/Authors"],
                             note=Note(
                                 signatures=[f"{venue_id}/Paper1/Authors"],
-                                forum=note_id_1,
-                                replyto=note_id_1,
                                 content= {
                                     'retraction_confirmation': { 'value': 'I have read and agree with the venue\'s retraction policy on behalf of myself and my co-authors.' }
                                  }
@@ -1893,8 +1886,6 @@ OpenReview Team
                             signatures=[f"{venue_id}/Editors_In_Chief"],
                             note=Note(
                                 signatures=[f"{venue_id}/Editors_In_Chief"],
-                                forum=note_id_1,
-                                replyto=retraction_note['note']['id'],
                                 content= {
                                     'approval': { 'value': 'Yes' }
                                  }
@@ -2116,8 +2107,6 @@ The TMLR Editors-in-Chief
             Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Volunteer_to_Review_Approval',
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
-                    forum=note_id_4,
-                    replyto=Volunteer_to_Review_note['note']['id'],
                     content={
                         'decision': { 'value': 'Yes, I approve the solicit review.' },
                         'comment': { 'value': 'thanks!' }
@@ -2145,8 +2134,6 @@ The TMLR Editors-in-Chief
         Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Volunteer_to_Review_Approval',
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
-                forum=note_id_4,
-                replyto=Volunteer_to_Review_note['note']['id'],
                 content={
                     'decision': { 'value': 'Yes, I approve the solicit review.' },
                     'comment': { 'value': 'thanks!' }
