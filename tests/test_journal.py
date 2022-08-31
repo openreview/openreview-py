@@ -153,6 +153,16 @@ class TestJournal():
         andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password='1234')
         hugo_client=OpenReviewClient(username='hugo@mailsix.com', password='1234')
 
+        ## Set a max quota
+        david_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Custom_Max_Papers',
+            readers=[venue_id, 'TMLR/Action_Editors', '~David_Belanger1'],
+            writers=[venue_id, '~David_Belanger1'],
+            signatures=['~David_Belanger1'],
+            head='TMLR/Reviewers',
+            tail='~David_Belanger1',
+            weight=8
+        ))
+
         peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
         peter_client=OpenReviewClient(username='petersnow@yahoo.com', password='1234')
         if os.environ.get("OPENREVIEW_USERNAME"):
