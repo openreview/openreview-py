@@ -310,8 +310,9 @@ submission_v2 = {
         'value': {
             'param': {
                 'type': 'string',
-                'regex': '^[\\S\\s]{1,5000}$',
-                'markdown': True
+                'maxLength': 5000,
+                'markdown': True,
+                'input': 'textarea'
             }
         }
     },
@@ -343,9 +344,10 @@ submission_v2 = {
         'value': {
             'param': {
                 'type': 'string',
-                'regex': '^[\\S\\s]{1,5000}$',
+                'maxLength': 5000,
                 'optional': True,
-                'markdown': True
+                'markdown': True,
+                'input': 'textarea'
             }
         }
     },
@@ -447,8 +449,9 @@ recruitment_v2 = {
         'value': {
             'param': {
                 'type': 'string',
-                'regex': '[\\S\\s]{1,5000}',
-                'optional': True
+                'maxLength': 5000,
+                'optional': True,
+                'input': 'textarea'
             }
         }
     }
