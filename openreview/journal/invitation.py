@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+from sys import prefix
 import openreview
 from openreview.api import Invitation
 from tqdm import tqdm
@@ -137,7 +138,7 @@ class InvitationBuilder(object):
     def expire_paper_invitations(self, note):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=f'{self.venue_id}/Paper{note.number}/.*', type='all')
+        invitations = self.client.get_invitations(prefix=f'{self.venue_id}/Paper{note.number}/.*', type='all')
         exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
 
         for invitation in invitations:
@@ -149,17 +150,17 @@ class InvitationBuilder(object):
                     reviews = { r.signatures[0]: r for r in self.client.get_notes(invitation=invitation.id) }
                     reviewers = self.client.get_group(self.journal.get_reviewers_id(number=note.number))
                     for reviewer in reviewers.members:
-                        signatures_group = self.client.get_groups(regex=self.journal.get_reviewers_id(number=note.number, anon=True), member=reviewer)[0]
+                        signatures_group = self.client.get_groups(prefix=self.journal.get_reviewers_id(number=note.number, anon=True), member=reviewer)[0]
                         if signatures_group.id not in reviews:
                             pending_edge = self.client.get_edges(invitation=self.journal.get_reviewer_pending_review_id(), tail=reviewer)[0]
                             pending_edge.weight -= 1
                             self.client.post_edge(pending_edge)
              
 
-    def expire_acknowledgement_invitations(self):
+    def expire_reviewer_responsibility_invitations(self):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsibility_id(signature='.*'))
+        invitations = self.client.get_invitations(invitation=self.journal.get_reviewer_responsibility_id())
 
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
@@ -3559,6 +3560,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tcdate:asc'):
             edit.readers = ['everyone']
             edit.note.mdate = None
+            # edit.note.cdate = None
+            # edit.note.forum = None
             self.client.post_edit(edit)
 
         ## Make the first edit public too

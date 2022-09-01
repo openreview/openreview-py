@@ -596,7 +596,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def setup_note_invitations(self):
 
-        note_invitations = self.client.get_all_invitations(regex=f'{self.venue_id}/{self.submission_group_name}')
+        note_invitations = self.client.get_all_invitations(prefix=f'{self.venue_id}/{self.submission_group_name}')
         submissions_by_number = { s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id())}
 
         def find_number(tokens):

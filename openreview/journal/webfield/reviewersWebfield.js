@@ -52,15 +52,24 @@ var loadData = function() {
       Webfield2.api.getAssignedInvitations(VENUE_ID, REVIEWERS_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
       Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups)}),
       Webfield2.api.getAll('/invitations', {
-        regex: REVIEWERS_ID + '/-/(' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME + '|' + REVIEWERS_AVAILABILITY_NAME + ')',
+        id: REVIEWERS_ID + '/-/' + REVIEWERS_AVAILABILITY_NAME,
         type: 'edges',
         details: 'repliedEdges'
+      }).then(function(invitations) {
+        return invitations[0];
+      }),
+      Webfield2.api.getAll('/invitations', {
+        id: REVIEWERS_ID + '/-/' + REVIEWERS_CUSTOM_MAX_PAPERS_NAME,
+        type: 'edges',
+        details: 'repliedEdges'
+      }).then(function(invitations) {
+        return invitations[0];
       })
     );
   })
 }
 
-var formatData = function(assignedGroups, actionEditorsByNumber, invitations, submissions, customQuotaInvitations) {
+var formatData = function(assignedGroups, actionEditorsByNumber, invitations, submissions, availabilityInvitation, customQuotaInvitation) {
 
   var referrerUrl = encodeURIComponent('[Reviewer Console](/group?id=' + VENUE_ID + '/' + REVIEWERS_NAME + '#assigned-papers)');
 
@@ -120,16 +129,21 @@ var formatData = function(assignedGroups, actionEditorsByNumber, invitations, su
   return venueStatusData = {
     invitations: invitations,
     rows: rows,
-    customQuotaInvitations: customQuotaInvitations
+    availabilityInvitation: availabilityInvitation,
+    customQuotaInvitation: customQuotaInvitation
   };
 
 }
 
 var renderData = function(venueStatusData) {
 
-  venueStatusData.customQuotaInvitations.forEach(function(invitation) {
-    Webfield2.ui.renderEdgeWidget('#invitation', invitation, { fieldName: invitation.edge.label ? 'label': 'weight' });  
-  });
+  if (venueStatusData.availabilityInvitation) {
+    Webfield2.ui.renderEdgeWidget('#invitation', venueStatusData.availabilityInvitation, { fieldName: venueStatusData.availabilityInvitation.edge.label ? 'label': 'weight' });  
+  }
+
+  if (venueStatusData.customQuotaInvitation) {
+    Webfield2.ui.renderEdgeWidget('#invitation', venueStatusData.customQuotaInvitation, { fieldName: venueStatusData.customQuotaInvitation.edge.label ? 'label': 'weight' });  
+  }
 
   Webfield2.ui.renderTasks('#reviewer-tasks', venueStatusData.invitations, { referrer: encodeURIComponent('[Reviewer Console](/group?id=' + VENUE_ID + '/' + REVIEWERS_NAME + '#reviewer-tasks)') + '&t=' + Date.now()});
 
