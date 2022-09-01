@@ -256,7 +256,11 @@ class Journal(object):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
     def get_request_form(self):
-        forum_note = self.client.get_notes(invitation='(openreview.net|OpenReview.net)/Support/-/Journal_Request$', content={'venue_id':self.venue_id})
+        journal_request_invitation = tools.get_invitation(self.client, 'OpenReview.net/Support/-/Journal_Request')
+        if not journal_request_invitation:
+            journal_request_invitation = tools.get_invitation(self.client, 'openreview.net/Support/-/Journal_Request')
+
+        forum_note = self.client.get_notes(invitation=journal_request_invitation.id, content={'venue_id':self.venue_id})
         if forum_note:
             return forum_note[0]
 
