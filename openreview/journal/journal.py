@@ -260,9 +260,10 @@ class Journal(object):
         if not journal_request_invitation:
             journal_request_invitation = tools.get_invitation(self.client, 'openreview.net/Support/-/Journal_Request')
 
-        forum_note = self.client.get_notes(invitation=journal_request_invitation.id, content={'venue_id':self.venue_id})
-        if forum_note:
-            return forum_note[0]
+        if journal_request_invitation:
+            forum_note = self.client.get_notes(invitation=journal_request_invitation.id, content={'venue_id':self.venue_id})
+            if forum_note:
+                return forum_note[0]
 
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
