@@ -7,8 +7,8 @@ def process(client, edit, invitation):
         return
 
     ## check all the ratings are done and enable the Decision invitation
-    submission = client.get_note(note.forum)
-    reviews = client.get_notes(invitation=journal.get_review_id(number=submission.number))
-    ratings = client.get_notes(invitation=journal.get_review_rating_id(signature=journal.get_reviewers_id(number=submission.number, anon=True) + '.*'))
+    submission = client.get_note(note.forum, details='replies')
+    reviews = [r for r in submission.details['replies'] if r['invitations'][0] == journal.get_review_id(number=submission.number)]
+    ratings = [r for r in submission.details['replies'] if r['invitations'][0].endswith('Rating')]
     if len(reviews) == len(ratings):
         journal.invitation_builder.set_note_decision_invitation(submission,  invitation.duedate)

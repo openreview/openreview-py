@@ -844,7 +844,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert reviewerrs_group.members == ['~David_Belanger1', '~Carlos_Mondragon1', '~Javier_Burroni1']
 
 
-        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
         ## Post a review edit
@@ -1047,7 +1047,7 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
         assert note.content.get('comment') is None
 
         ## Assign two more reviewers
-        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Javier_Burroni1')
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
 
         ## Post a review edit
@@ -1240,7 +1240,7 @@ The TMLR Editors-in-Chief
         assert late_reviewers
         assert '~Carlos_Mondragon1' in late_reviewers
 
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
 
         ## post the assignment ack
@@ -1313,7 +1313,7 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
         assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
         ## Reviewers should see other reviewer's identity
-        anon_groups = carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_')
+        anon_groups = carlos_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_')
         assert len(anon_groups) == 3
 
         ## All the comments should be public now
@@ -1405,7 +1405,7 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        hugo_anon_groups=hugo_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Hugo_Larochelle1')
+        hugo_anon_groups=hugo_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Hugo_Larochelle1')
         assert len(hugo_anon_groups) == 1
 
         ## Post a review edit
@@ -1861,7 +1861,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Accepted')
 
         ## Check invitations are expired
-        invitations = openreview_client.get_invitations(regex=f"{venue_id}/Paper1/.*", type = "all")
+        invitations = openreview_client.get_invitations(prefix=f"{venue_id}/Paper1/.*", type = "all")
         assert len(invitations) == 4
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -2184,7 +2184,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert len(messages) == 0
 
         ## Post a review edit
-        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
@@ -2204,7 +2204,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         messages = journal.client.get_messages(subject = '[TMLR] Review posted on TMLR submission Paper title 4')
 
         ## Post a review edit
-        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Javier_Burroni1')
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
         review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
             signatures=[javier_anon_groups[0].id],
@@ -2220,7 +2220,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
             signatures=[carlos_anon_groups[0].id],
@@ -2563,7 +2563,7 @@ note={Rejected}
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Post a review edit
-        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
@@ -2581,7 +2581,7 @@ note={Rejected}
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Javier_Burroni1')
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
         review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
             signatures=[javier_anon_groups[0].id],
@@ -2597,7 +2597,7 @@ note={Rejected}
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
             signatures=[carlos_anon_groups[0].id],
@@ -2847,7 +2847,7 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Post a review edit
-        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~David_Belanger1')
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
@@ -2865,7 +2865,7 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Javier_Burroni1')
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
         review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
             signatures=[javier_anon_groups[0].id],
@@ -2881,7 +2881,7 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
             signatures=[carlos_anon_groups[0].id],
@@ -3457,7 +3457,7 @@ The TMLR Editors-in-Chief
 
         note = openreview_client.get_note(note_id_10)
         journal.invitation_builder.expire_paper_invitations(note)
-        journal.invitation_builder.expire_acknowledgement_invitations()
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()
 
         ## Check pending review edges

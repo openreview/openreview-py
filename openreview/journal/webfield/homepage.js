@@ -123,7 +123,7 @@ function load() {
 
   var userGroupsP = $.Deferred().resolve([]);
   if (user && !_.startsWith(user.id, 'guest_')) {
-    userGroupsP = Webfield2.getAll('/groups', { regex: VENUE_ID + '/.*', member: user.id, web: true });
+    userGroupsP = Webfield2.getAll('/groups', { prefix: VENUE_ID + '/.*', member: user.id, web: true });
   }
 
   return $.when(acceptedNotesP, featuredAcceptedNotesP, reproducibilityAcceptedNotesP, surveyAcceptedNotesP, underReviewNotesP, allNotesP, userGroupsP);
