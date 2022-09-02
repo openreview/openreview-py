@@ -116,7 +116,11 @@ class InvitationBuilder(object):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+            if self.journal.request_form_id:
+                return process.replace('openreview.journal.Journal()', f'openreview.journal.JournalRequest.get_journal(client, "{self.journal.request_form_id}")')
+            else:
+                return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+
 
     def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -313,8 +317,8 @@ class InvitationBuilder(object):
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{reviewers_id}'")
             process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{reviewers_declined_id}'")
             process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{self.journal.secret_key}'")
-            if self.journal.get_request_form():
-                process_content = process_content.replace("JOURNAL_REQUEST_ID = ''", "JOURNAL_REQUEST_ID = '" + self.journal.get_request_form().id + "'")
+            if self.journal.request_form_id:
+                process_content = process_content.replace("JOURNAL_REQUEST_ID = ''", "JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "'")
                 process_content = process_content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.journal.get_support_group() + "'")
             process_content = process_content.replace("VENUE_ID = ''", f"VENUE_ID = '{self.journal.venue_id}'")
 
@@ -3237,12 +3241,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_note_solicit_review_invitation(self, note):
 
-        return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_id(),
-            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }},
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )
+        if self.journal.is_submission_public():
+            return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_id(),
+                content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }},
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )
 
     def set_solicit_review_approval_invitation(self):
 
@@ -3660,7 +3665,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'process': self.process_script
         }
 
-        self.save_super_invitation(self.journal.get_public_comment_id(), invitation_content, edit_content, invitation)
+        if self.journal.is_submission_public():
+            self.save_super_invitation(self.journal.get_public_comment_id(), invitation_content, edit_content, invitation)
 
         invitation_content = {
             'process_script': {
@@ -3802,7 +3808,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 }
             }
         }
-        self.save_super_invitation(self.journal.get_moderation_id(), {}, edit_content, invitation)
+        if self.journal.is_submission_public():
+            self.save_super_invitation(self.journal.get_moderation_id(), {}, edit_content, invitation)
 
         invitation = {
             'id': self.journal.get_release_comment_id(number='${2/content/noteNumber/value}'),
@@ -3825,20 +3832,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             }
         }
 
-        self.save_super_invitation(self.journal.get_release_comment_id(), {}, edit_content, invitation)        
+        if self.journal.is_submission_public():
+            self.save_super_invitation(self.journal.get_release_comment_id(), {}, edit_content, invitation)        
 
     def set_note_comment_invitation(self, note):
         
-        self.client.post_invitation_edit(invitations=self.journal.get_public_comment_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )        
-
         self.client.post_invitation_edit(invitations=self.journal.get_official_comment_id(),
             content={ 
                 'noteId': { 'value': note.id }, 
@@ -3849,15 +3847,27 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[self.journal.venue_id]
         )        
 
-        self.client.post_invitation_edit(invitations=self.journal.get_moderation_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )        
+        if self.journal.is_submission_public():
+            self.client.post_invitation_edit(invitations=self.journal.get_public_comment_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number }
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )        
+
+
+            self.client.post_invitation_edit(invitations=self.journal.get_moderation_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number }
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )        
 
     def set_note_release_comment_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_release_comment_id(),

@@ -27,6 +27,8 @@ class Journal(object):
         self.full_name = full_name
         self.website = website
         self.submission_name = submission_name
+        self.settings = {}
+        self.request_form_id = None
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
         self.reviewers_name = 'Reviewers'
@@ -56,7 +58,6 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
-        self.settings = {}
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -256,16 +257,6 @@ class Journal(object):
     def get_submission_editable_id(self, number=None):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
-    def get_request_form(self):
-        journal_request_invitation = tools.get_invitation(self.client, 'OpenReview.net/Support/-/Journal_Request')
-        if not journal_request_invitation:
-            journal_request_invitation = tools.get_invitation(self.client, 'openreview.net/Support/-/Journal_Request')
-
-        if journal_request_invitation:
-            forum_note = self.client.get_notes(invitation=journal_request_invitation.id, content={'venue_id':self.venue_id})
-            if forum_note:
-                return forum_note[0]
-
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
         if forum_note:
@@ -277,8 +268,8 @@ class Journal(object):
             return forum_notes[0].id                  
 
     def get_support_group(self):
-        forum_note = self.get_request_form()
-        if forum_note:
+        if self.request_form_id:
+            forum_note = self.client.get_note(self.request_form_id)
             return forum_note.invitations[0].split('/-/')[0]
 
     def get_review_period_length(self, note):

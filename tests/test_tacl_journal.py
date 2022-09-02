@@ -207,3 +207,15 @@ year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Under review}
 }'''
+
+        edits = openreview_client.get_note_edits(note.id, invitation='TACL/-/Under_Review')
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+        
+        invitations = openreview_client.get_invitations(prefix='TACL/Paper', replyForum=note_id_1)
+        assert "TACL/Paper1/-/Revision"  in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Withdrawal"  in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Review" in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Volunteer_to_Review" not in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Public_Comment" not in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations]        

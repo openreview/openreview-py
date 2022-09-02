@@ -21,6 +21,7 @@ class JournalRequest():
 
         journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, website)
         journal.settings = settings
+        journal.request_form_id = journal_request_id
 
         if setup:
             journal.setup(support_role, editors=editors, assignment_delay=assignment_delay)
