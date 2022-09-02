@@ -2310,7 +2310,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_author_submission_id() 
                         },
                     },
-                    'readers': ['everyone'],
+                    'readers': ['everyone'] if self.journal.is_submission_public() else [venue_id, self.journal.get_action_editors_id('${2/number}'), self.journal.get_reviewers_id('${2/number}'), self.journal.get_authors_id('${2/number}')] ,
                     'content': {
                         'assigned_action_editor': {
                             'value': {

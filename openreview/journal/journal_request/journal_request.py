@@ -4,6 +4,30 @@ import os
 
 class JournalRequest():
 
+
+    @classmethod
+    def get_journal(JournalRequest, client, journal_request_id, setup=False):
+        journal_request = client.get_note(journal_request_id)
+        venue_id = journal_request.content['venue_id']['value']
+        secret_key = journal_request.content['secret_key']['value']
+        contact_info = journal_request.content['contact_info']['value']
+        full_name = journal_request.content['official_venue_name']['value']
+        short_name = journal_request.content['abbreviated_venue_name']['value']
+        website = journal_request.content['website']['value']
+        support_role = journal_request.content['support_role']['value']
+        editors = journal_request.content['editors']['value']
+        assignment_delay = journal_request.content.get('settings', {}).get('value', {}).get('assignment_delay', 5)
+        settings = journal_request.content.get('settings', {}).get('value')
+
+        journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, website)
+        journal.settings = settings
+
+        if setup:
+            journal.setup(support_role, editors=editors, assignment_delay=assignment_delay)
+
+        return journal
+
+
     def __init__(self, client, support_group_id):
         self.support_group_id = support_group_id
         self.support_group = tools.get_group(client, self.support_group_id)
@@ -117,6 +141,15 @@ class JournalRequest():
                 'value': {
                     'param': {
                         'type': 'string'
+                    }
+                }
+            },
+            'settings': {
+                'order': 10,
+                'value': {
+                    'param': {
+                        'type': 'json',
+                        'optional': True
                     }
                 }
             }
@@ -440,23 +473,3 @@ Cheers!
             )
 
             self.post_invitation_edit(invitation = invitation)
-
-    def get_journal(client, journal_request_id):
-
-        request_form = client.get_note(journal_request_id)
-
-        journal = openreview.journal.Journal(
-            client, 
-            venue_id=request_form.content['venue_id']['value'],
-            secret_key=request_form.content['secret_key']['value'], 
-            contact_info=request_form.content['contact_info']['value'], 
-            full_name=request_form.content['official_venue_name']['value'], 
-            short_name=request_form.content['abbreviated_venue_name']['value'],
-            website=request_form.content['website']['value'])
-
-        journal.setup(
-            support_role=request_form.content['support_role']['value'],
-            editors=request_form.content['editors']['value']
-        )
-
-        return journal

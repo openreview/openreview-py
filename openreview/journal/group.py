@@ -66,12 +66,12 @@ class GroupBuilder(object):
             name=m.replace('~', ' ').replace('_', ' ')[:-1]
             editors+=f'<a href="https://openreview.net/profile?id={m}">{name}</a></br>'
 
-        header['instructions'] = '''
+        header['instructions'] = f'''
         <p>
             <strong>Editors-in-chief:</strong></br>
             {editors}
             <strong>Managing Editors:</strong></br>
-            <a href=\"https://openreview.net/profile?id=~Fabian_Pedregosa1\"> Fabian Pedregosa</a>
+            <a href=\"https://openreview.net/profile?id={support_role}\">{openreview.tools.pretty_id(support_role)}</a>
         </p>
         <p>
             Transactions on Machine Learning Research (TMLR) is a venue for dissemination of machine learning research that is intended to complement JMLR while supporting the unmet needs of a growing ML community.
@@ -94,7 +94,7 @@ class GroupBuilder(object):
             For more information on TMLR, visit
             <a href="http://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a>.
         </p>
-        '''.format(editors=editors)
+        '''
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
             content = f.read()

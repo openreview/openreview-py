@@ -17,7 +17,7 @@ from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, Un
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Author_Submission'):
+    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Submission'):
 
         self.client = client
         self.venue_id = venue_id
@@ -56,6 +56,7 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
+        self.settings = {}
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -353,6 +354,9 @@ class Journal(object):
     def assign_reviewer(self, note, reviewer, solicit):
         self.assignment.assign_reviewer(note, reviewer, solicit)
 
+    def is_submission_public(self):
+        return self.settings and self.settings.get('submission_public', True)
+    
     def get_due_date(self, days=0, weeks=0):
         due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
         return due_date
