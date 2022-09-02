@@ -133,8 +133,9 @@ review_v2 = {
         'value': {
             'param': {
                 'type': 'string',
-                'regex': '[\\S\\s]{1,200000}',
-                'markdown': True
+                'maxLength': 200000,
+                'markdown': True,
+                'input': 'textarea'
             }
         }
     },
