@@ -40,7 +40,8 @@ class TestJournal():
                     'website': {'value': 'transacl.org' },
                     'settings': {
                         'value': {
-                            'submission_public': False
+                            'submission_public': False,
+                            'assignment_delay': 0
                         }
                     }
                 }
@@ -50,7 +51,15 @@ class TestJournal():
 
         ## Action Editors
         helpers.create_user('graham@mailseven.com', 'Graham', 'Neubig')
-                      
+
+        openreview_client.add_members_to_group('TACL/Action_Editors', '~Graham_Neubig1')
+
+        ## Reviewers
+        david_client=helpers.create_user('david@taclone.com', 'David', 'Bensusan')
+        javier_client=helpers.create_user('javier@tacltwo.com', 'Javier', 'Barden')
+        carlos_client=helpers.create_user('carlos@taclthree.com', 'Carlos', 'Gardel')        
+
+        openreview_client.add_members_to_group('TACL/Reviewers', ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1'])
 
         return JournalRequest.get_journal(openreview_client, request_form['note']['id'])
 
@@ -218,4 +227,91 @@ note={Under review}
         assert "TACL/Paper1/-/Volunteer_to_Review" not in [i.id for i in invitations]
         assert "TACL/Paper1/-/Public_Comment" not in [i.id for i in invitations]
         assert "TACL/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations]        
+        assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations]  
+
+    def test_review(self, journal, openreview_client, helpers):
+
+        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
+
+        david_client = OpenReviewClient(username='david@taclone.com', password='1234')
+        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password='1234')
+        javier_client = OpenReviewClient(username='javier@tacltwo.com', password='1234')
+
+        # add David Belanger again
+        paper_assignment_edge = graham_client.post_edge(openreview.Edge(invitation='TACL/Reviewers/-/Assignment',
+            readers=["TACL", "TACL/Paper1/Action_Editors", '~David_Bensusan1'],
+            nonreaders=["TACL/Paper1/Authors"],
+            writers=["TACL", "TACL/Paper1/Action_Editors"],
+            signatures=["TACL/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~David_Bensusan1',
+            weight=1
+        ))
+
+         # wait for process function delay (5 seconds) and check email has been sent
+        time.sleep(6)
+        messages = journal.client.get_messages(to = 'david@taclone.com', subject = '[TACL] Assignment to review new TACL submission Paper title UPDATED')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi David Bensusan,
+
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+
+Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/Reviewers/-/~David_Bensusan1/Assignment/Acknowledgement
+
+As a reminder, reviewers are **expected to accept all assignments** for submissions that fall within their expertise and annual quota (6 papers). Acceptable exceptions are 1) if you have an active, unsubmitted review for another TACL submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render you incapable of performing your reviewing duties. Based on the above, if you think you should not review this submission, contact your AE directly (you can do so by leaving a comment on OpenReview, with only the Action Editor as Reader).
+
+To submit your review, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=TACL/Reviewers#reviewer-tasks
+
+Once submitted, your review will become privately visible to the authors and AE. Then, as soon as 3 reviews have been submitted, all reviews will become publicly visible. For more details and guidelines on performing your review, visit transacl.org.
+
+We thank you for your essential contribution to TACL!
+
+The TACL Editors-in-Chief
+note: replies to this email will go to the AE, Graham Neubig.
+'''
+        assert messages[0]['content']['replyTo'] == 'graham@mailseven.com'
+
+        ## Carlos Gardel
+        paper_assignment_edge = graham_client.post_edge(openreview.Edge(invitation='TACL/Reviewers/-/Assignment',
+            readers=["TACL", "TACL/Paper1/Action_Editors", '~Carlos_Gardel1'],
+            nonreaders=["TACL/Paper1/Authors"],
+            writers=["TACL", "TACL/Paper1/Action_Editors"],
+            signatures=["TACL/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~Carlos_Gardel1',
+            weight=1
+        ))
+
+        ## Javier Barden
+        paper_assignment_edge = graham_client.post_edge(openreview.Edge(invitation='TACL/Reviewers/-/Assignment',
+            readers=["TACL", "TACL/Paper1/Action_Editors", '~Javier_Barden1'],
+            nonreaders=["TACL/Paper1/Authors"],
+            writers=["TACL", "TACL/Paper1/Action_Editors"],
+            signatures=["TACL/Paper1/Action_Editors"],
+            head=note_id_1,
+            tail='~Javier_Barden1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id) 
+
+        reviewerrs_group = brian_client.get_group('TACL/Paper1/Reviewers')
+        assert reviewerrs_group.members == ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1']
+
+        david_anon_groups=david_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~David_Bensusan1')
+        assert len(david_anon_groups) == 1
+
+        ## Post a review edit
+        david_review_note = david_client.post_note_edit(invitation='TACL/Paper1/-/Review',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
+            )
+        )        
