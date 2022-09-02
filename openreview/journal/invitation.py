@@ -2656,83 +2656,81 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         author_submission_id = self.journal.get_author_submission_id()
 
         ae_recommendation_invitation_id=self.journal.get_ae_recommendation_id(number=note.number)
-        ae_recommendation_invitation=openreview.tools.get_invitation(self.client, ae_recommendation_invitation_id)
 
-        if not ae_recommendation_invitation:
-            invitation = Invitation(
-                id=ae_recommendation_invitation_id,
-                duedate=openreview.tools.datetime_millis(duedate),
-                invitees=[authors_id],
-                readers=[venue_id, authors_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                minReplies=3,
-                type='Edge',
-                edit={
-                    'id': {
-                        'param': {
-                            'withInvitation': ae_recommendation_invitation_id,
-                            'optional': True
-                        }
-                    },                     
-                    'ddate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'deletable': True
-                        }
-                    },
-                    'readers': [venue_id, authors_id],
-                    'nonreaders': [],
-                    'writers': [venue_id, authors_id],
-                    'signatures': [authors_id],
-                    'head': {
-                        'param': {
-                            'type': 'note',
-                            'const': note.id,
-                            'withInvitation': author_submission_id
-                        }
-                    },
-                    'tail': {
-                        'param': {
-                            'type': 'profile',
-                            'inGroup' : action_editors_id
-                        }
-                    },
-                    'weight': {
-                        'param': {
-                            'minimum': -1
-                        }
+        invitation = Invitation(
+            id=ae_recommendation_invitation_id,
+            duedate=openreview.tools.datetime_millis(duedate),
+            invitees=[authors_id],
+            readers=[venue_id, authors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=3,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': ae_recommendation_invitation_id,
+                        'optional': True
+                    }
+                },                     
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
                     }
                 },
-                date_processes=[self.author_reminder_process]
-            )
+                'readers': [venue_id, authors_id],
+                'nonreaders': [],
+                'writers': [venue_id, authors_id],
+                'signatures': [authors_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'const': note.id,
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                }
+            },
+            date_processes=[self.author_reminder_process]
+        )
 
-            header = {
-                'title': f'{self.journal.short_name} Action Editor Suggestion',
-                'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
-                    <ul>\
-                        <li>For your submission, please select at least 3 AEs to recommend.</li>\
-                        <li>AEs who have conflicts with your submission are not shown.</li>\
-                        <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
-                        <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
-                        <li>To get started click the button below.</li>\
-                    </ul>\
-                    <br>'
-            }
+        header = {
+            'title': f'{self.journal.short_name} Action Editor Suggestion',
+            'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
+                <ul>\
+                    <li>For your submission, please select at least 3 AEs to recommend.</li>\
+                    <li>AEs who have conflicts with your submission are not shown.</li>\
+                    <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
+                    <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
+                    <li>To get started click the button below.</li>\
+                </ul>\
+                <br>'
+        }
 
-            conflict_id = f'{action_editors_id}/-/Conflict'
-            score_ids = [f'{action_editors_id}/-/Affinity_Score']
-            edit_param = f'{action_editors_id}/-/Recommendation'
-            browse_param = ';'.join(score_ids)
-            params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Instructions](/invitation?id={invitation.id})&maxColumns=2&showCounter=false&version=2'
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
-                content = f.read()
-                content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
-                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-                content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
-                invitation.web = content
-                self.post_invitation_edit(invitation)
+        conflict_id = f'{action_editors_id}/-/Conflict'
+        score_ids = [f'{action_editors_id}/-/Affinity_Score']
+        edit_param = f'{action_editors_id}/-/Recommendation'
+        browse_param = ';'.join(score_ids)
+        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Instructions](/invitation?id={invitation.id})&maxColumns=2&showCounter=false&version=2'
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+            invitation.web = content
+            self.post_invitation_edit(invitation)
 
     def set_reviewer_assignment_invitation(self, note, duedate):
 
