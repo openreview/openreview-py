@@ -355,7 +355,7 @@ class Journal(object):
         self.assignment.assign_reviewer(note, reviewer, solicit)
 
     def is_submission_public(self):
-        return self.settings and self.settings.get('submission_public', True)
+        return self.settings.get('submission_public', True)
     
     def get_due_date(self, days=0, weeks=0):
         due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)

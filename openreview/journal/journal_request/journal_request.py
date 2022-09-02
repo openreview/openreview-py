@@ -17,7 +17,7 @@ class JournalRequest():
         support_role = journal_request.content['support_role']['value']
         editors = journal_request.content['editors']['value']
         assignment_delay = journal_request.content.get('settings', {}).get('value', {}).get('assignment_delay', 5)
-        settings = journal_request.content.get('settings', {}).get('value')
+        settings = journal_request.content.get('settings', {}).get('value', {})
 
         journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, website)
         journal.settings = settings
