@@ -440,3 +440,23 @@ Cheers!
             )
 
             self.post_invitation_edit(invitation = invitation)
+
+    def get_journal(client, journal_request_id):
+
+        request_form = client.get_note(journal_request_id)
+
+        journal = openreview.journal.Journal(
+            client, 
+            venue_id=request_form.content['venue_id']['value'],
+            secret_key=request_form.content['secret_key']['value'], 
+            contact_info=request_form.content['contact_info']['value'], 
+            full_name=request_form.content['official_venue_name']['value'], 
+            short_name=request_form.content['abbreviated_venue_name']['value'],
+            website=request_form.content['website']['value'])
+
+        journal.setup(
+            support_role=request_form.content['support_role']['value'],
+            editors=request_form.content['editors']['value']
+        )
+
+        return journal
