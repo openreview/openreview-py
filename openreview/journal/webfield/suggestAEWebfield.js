@@ -14,7 +14,7 @@ function main() {
   if (args && args.referrer) {
     OpenBanner.referrerLink(args.referrer);
   } else {
-    OpenBanner.venueHomepageLink(CONFERENCE_ID);
+    OpenBanner.venueHomepageLink(CONFERENCE_ID + '/Authors');
   }
 
   Webfield.ui.setup('#invitation-container', CONFERENCE_ID);  // required
