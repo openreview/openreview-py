@@ -232,7 +232,7 @@ class OpenReviewClient(object):
         i = response.json()['invitations'][0]
         return Invitation.from_json(i)
 
-    def get_note(self, id):
+    def get_note(self, id, details=None):
         """
         Get a single Note by id if available
 
@@ -242,7 +242,7 @@ class OpenReviewClient(object):
         :return: Note matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.notes_url, params = {'id':id}, headers = self.headers)
+        response = requests.get(self.notes_url, params = {'id':id, 'details': details}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['notes'][0]
         return Note.from_json(n)
@@ -546,14 +546,14 @@ class OpenReviewClient(object):
         return Profile.from_json(response.json())
 
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_groups(self, id = None, prefix = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Group
         :type id: str, optional
-        :param regex: Regex that matches several Group ids
-        :type regex: str, optional
+        :param prefix: Prefix that matches several Group ids
+        :type prefix: str, optional
         :param member: Groups that contain this member
         :type member: str, optional
         :param signatory: Groups that contain this signatory
@@ -570,7 +570,7 @@ class OpenReviewClient(object):
         """
         params = {}
         if id is not None: params['id'] = id
-        if regex is not None: params['regex'] = regex
+        if prefix is not None: params['prefix'] = prefix
         if member is not None: params['member'] = member
         if signatory is not None: params['signatory'] = signatory
         if web: params['web'] = web
@@ -586,14 +586,14 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_all_groups(self, id = None, prefix = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
         :param id: id of the Group
         :type id: str, optional
-        :param regex: Regex that matches several Group ids
-        :type regex: str, optional
+        :param prefix: Prefix that matches several Group ids
+        :type prefix: str, optional
         :param member: Groups that contain this member
         :type member: str, optional
         :param signatory: Groups that contain this signatory
@@ -610,7 +610,7 @@ class OpenReviewClient(object):
         """
         params = {
             'id': id,
-            'regex': regex,
+            'prefix': prefix,
             'member': member,
             'signatory': signatory,
             'web': web,
@@ -629,7 +629,7 @@ class OpenReviewClient(object):
         replyForum = None,
         signature = None,
         note = None,
-        regex = None,
+        prefix = None,
         tags = None,
         limit = None,
         offset = None,
@@ -640,7 +640,8 @@ class OpenReviewClient(object):
         details = None,
         expired = None,
         type = None,
-        with_count=False
+        with_count=False,
+        invitation = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -659,8 +660,8 @@ class OpenReviewClient(object):
         :type signature: optional
         :param note: Invitations that contain this note
         :type note: str, optional
-        :param regex: Invitation ids that match this regex
-        :type regex: str, optional
+        :param prefix: Invitation ids that match this prefix
+        :type prefix: str, optional
         :param tags: Invitations that contain these tags
         :type tags: Tag, optional
         :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
@@ -698,8 +699,8 @@ class OpenReviewClient(object):
             params['signature'] = signature
         if note is not None:
             params['note']=note
-        if regex:
-            params['regex'] = regex
+        if prefix:
+            params['prefix'] = prefix
         if tags:
             params['tags'] = tags
         if minduedate:
@@ -712,6 +713,7 @@ class OpenReviewClient(object):
         params['offset'] = offset
         params['expired'] = expired
         params['type'] = type
+        params['invitation'] = invitation
 
         response = requests.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -731,7 +733,7 @@ class OpenReviewClient(object):
         replyForum = None,
         signature = None,
         note = None,
-        regex = None,
+        prefix = None,
         tags = None,
         limit = None,
         offset = None,
@@ -742,7 +744,8 @@ class OpenReviewClient(object):
         details = None,
         expired = None,
         type = None,
-        with_count=False
+        with_count=False,
+        invitation = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -761,8 +764,8 @@ class OpenReviewClient(object):
         :type signature: optional
         :param note: Invitations that contain this note
         :type note: str, optional
-        :param regex: Invitation ids that match this regex
-        :type regex: str, optional
+        :param prefix: Invitation ids that match this prefix
+        :type prefix: str, optional
         :param tags: Invitations that contain these tags
         :type tags: Tag, optional
         :param int limit: Maximum amount of Invitations that this method will return. The limit parameter can range between 0 and 1000 inclusive. If a bigger number is provided, only 1000 Invitations will be returned
@@ -793,7 +796,7 @@ class OpenReviewClient(object):
             'replyForum': replyForum,
             'signature': signature,
             'note': note,
-            'regex': regex,
+            'prefix': prefix,
             'tags': tags,
             'limit': limit,
             'offset': offset,
@@ -804,7 +807,8 @@ class OpenReviewClient(object):
             'details': details,
             'expired': expired,
             'type': type,
-            'with_count': with_count
+            'with_count': with_count,
+            'invitation': invitation
         }
 
         return tools.concurrent_get(self, self.get_invitations, **params)
@@ -1616,7 +1620,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()['logs']
 
-    def post_invitation_edit(self, invitations, readers, writers, signatures, invitation=None, params=None, content=None, replacement=None):
+    def post_invitation_edit(self, invitations, readers, writers, signatures, invitation=None, content=None, replacement=None):
         """
         """
         edit_json = {
@@ -1628,8 +1632,8 @@ class OpenReviewClient(object):
         if invitations is not None:
             edit_json['invitations'] = invitations
 
-        if params is not None:
-            edit_json['params'] = params
+        if content is not None:
+            edit_json['content'] = content
 
         if content is not None:
             edit_json['content'] = content
@@ -2046,6 +2050,7 @@ class Invitation(object):
         id = None,
         invitations = None,
         domain = None,
+        invitations = None,
         readers = None,
         writers = None,
         invitees = None,
@@ -2075,6 +2080,7 @@ class Invitation(object):
         self.id = id
         self.invitations = invitations
         self.domain = domain
+        self.invitations = invitations
         self.cdate = cdate
         self.ddate = ddate
         self.duedate = duedate
@@ -2138,6 +2144,9 @@ class Invitation(object):
         
         if self.domain:
             body['domain'] = self.domain
+
+        if self.invitations:
+            body['invitations'] = self.invitations            
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -2212,6 +2221,7 @@ class Invitation(object):
         invitation = Invitation(i['id'],
             invitations = i.get('invitations'),
             domain = i.get('domain'),
+            invitations = i.get('invitations'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
             tcdate = i.get('tcdate'),

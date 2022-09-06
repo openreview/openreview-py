@@ -2,7 +2,7 @@ def process(client, invitation):
 
     journal = openreview.journal.Journal()
 
-    submission = client.get_note(invitation.edit['note']['forum']['const'])
+    submission = client.get_note(invitation.edit['note']['forum'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
 
     ## send email to reviewers
