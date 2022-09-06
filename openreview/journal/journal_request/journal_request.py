@@ -42,71 +42,82 @@ class JournalRequest():
                 'description': 'Used for display purposes. This is copied from the Official Venue Name',
                 'order': 1,
                 'value': {
-                    'type': 'string',
-                    'const': '${note.content.official_venue_name.value}'
-                },
-                'presentation': {
-                    'hidden': True
+                    'param': {
+                        'type': 'string',
+                        'const': '${2/official_venue_name/value}',
+                        'hidden': True
+                    }
                 }
             },
             'official_venue_name': {
                 'description': 'This will appear in your journal\'s OpenReview homepage.',
                 'order': 2,
                 'value' : {
-                    'type': 'string',
-                    'regex': '.*'
+                    'param': {
+                        'type': 'string'
+                    }
                 }
             },
             'abbreviated_venue_name': {
                 'description': 'This will be used to identify your journal in OpenReview and in email subject lines',
                 'order': 3,
                 'value' : {
-                    'type': 'string',
-                    'regex': '.*'
+                    'param': {
+                        'type': 'string'
+                    }
                 }
             },
             'venue_id': {
                 'description': 'Journal venue id',
                 'order': 4,
                 'value' : {
-                    'type': 'string',
-                    'regex': '.*'
+                    'param': {
+                        'type': 'string'
+                    }
                 }
             },
             'contact_info': {
                 'description': 'Single point of contact email address, which will be displayed on the journal homepage',
                 'order': 5,
                 'value' : {
-                    'type': 'string',
-                    'regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                    'param': {
+                        'type': 'string',
+                        'regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                    }
                 }
             },
             'secret_key': {
                 'order': 6,
                 'value': {
-                    'type': 'string',
-                    'regex': '.*'
+                    'param': {
+                        'type': 'string'
+                    }
                 }
             },
             'support_role': {
                 'order': 7,
                 'value': {
-                    'type': 'string',
-                    'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                    'param': {
+                        'type': 'string',
+                        'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                    }
                 }
             },
             'editors': {
                 'order': 8,
                 'value': {
-                    'type': 'string[]',
-                    'regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                    'param': {
+                        'type': 'string[]',
+                        'regex': r'~.*|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                    }
                 }
             },
             'website': {
                 'order': 9,
                 'value': {
-                    'type': 'string',
-                    'regex': '.*'
+                    'param': {
+                        'type': 'string'
+                    }
                 }
             }
         }
@@ -121,17 +132,19 @@ class JournalRequest():
                 writers = [],
                 signatures = ['~Super_User1'],
                 edit = {
-                    'signatures': { 'regex': f'~.*|{self.support_group_id}', 'type': 'group[]' },
-                    'writers': { 'const': ['${note.content.venue_id.value}'] },
-                    'readers': { 'const': ['${note.content.venue_id.value}'] },
+                    'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}' }},
+                    'writers': ['${2/note/content/venue_id/value}'],
+                    'readers': ['${2/note/content/venue_id/value}'],
                     'note': {
-                        'signatures': { 'const': ['${signatures}'] },
-                        'readers': { 'const': [self.support_group_id, '${note.content.venue_id.value}','${note.content.venue_id.value}/Action_Editors' ] },
-                        'writers': {'const': [self.support_group_id, '${note.content.venue_id.value}'] },
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, '${2/content/venue_id/value}','${2/content/venue_id/value}/Action_Editors' ],
+                        'writers': [self.support_group_id, '${2/content/venue_id/value}'],
                         'content': journal_request_content,
                         'id' : {
-                            'withInvitation': f'{self.support_group_id}/-/Journal_Request',
-                            'optional': True
+                            'param': {
+                                'withInvitation': f'{self.support_group_id}/-/Journal_Request',
+                                'optional': True
+                            }
                         }
                     }
                 },
@@ -169,34 +182,41 @@ class JournalRequest():
                 writers = [],
                 signatures = [venue_id],
                 edit = {
-                    'signatures': { 'regex': f'~.*|{venue_id}|{self.support_group_id}', 'type': 'group[]' },
-                    'writers': { 'const': [self.support_group_id, venue_id] },
-                    'readers': { 'const': [self.support_group_id, venue_id] },
+                    'signatures': { 'param': { 'regex': f'~.*|{venue_id}|{self.support_group_id}' }},
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
                     'note': {
                         'id': {
-                            'withInvitation': request_comment_invitation_id,
-                            'optional': True
+                            'param': {
+                                'withInvitation': request_comment_invitation_id,
+                                'optional': True
+                            }
                         },
-                        'signatures': { 'const': ['${signatures}'] },
-                        'readers': { 'enum': [self.support_group_id, venue_id, '~.*'], 'type': 'group[]' },
-                        'writers': { 'const': [self.support_group_id, venue_id]},
-                        'forum': { 'const': note.id },
-                        'replyto': { 'withForum': note.id },
+                        'signatures': ['${3/signatures}'],
+                        'readers': { 'param': { 'enum': [self.support_group_id, venue_id, '~.*'] }},
+                        'writers': [self.support_group_id, venue_id],
+                        'forum': note.id,
+                        'replyto': { 'param': { 'withForum': note.id }},
                         'content': {
                             'title': {
                                 'description': 'Brief summary of your comment.',
                                 'order': 1,
                                 'value': {
-                                    'type': 'string',
-                                    'regex': '.{1,500}'
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '.{1,500}'
+                                    }
                                 }
                             },
                             'comment': {
                                 'description': 'Your comment or reply (max 200000 characters).',
                                 'order': 2,
                                 'value' : {
-                                    'type': 'string',
-                                    'regex': '[\\S\\s]{1,200000}'
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                    }
                                 }
                             }
                         }
@@ -228,47 +248,47 @@ Cheers!'''.replace('{short_name}', short_name)
         recruitment_content = {
             'title': {
                 'order': 1,
-                'value': {
-                    'type': 'string',
-                    'const': 'Recruitment'
-                }
+                'value': 'Recruitment'
             },
             'invitee_details': {
                 'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee".',
                 'order': 3,
                 'value' : {
-                    'type': 'string',
-                    'regex': '[\\S\\s]{1,50000}'
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 50000,
+                        'input': 'textarea'
+                    }
                 }
             },
             'email_subject': {
                 'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
                 'order': 4,
                 'value' : {
-                    'type': 'string',
-                    'regex': '.*'
-                },
-                'presentation': {
-                    'default': '[{short_name}] Invitation to serve as {{role}} for {short_name}'.replace('{short_name}', short_name)
+                    'param': {
+                        'type': 'string',
+                        'default': '[{short_name}] Invitation to serve as {{role}} for {short_name}'.replace('{short_name}', short_name)
+                    }
                 }
             },
             'email_content': {
                 'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
                 'order': 5,
                 'value' : {
-                    'type': 'string',
-                    'regex': '[\\S\\s]{1,10000}'
-                },
-                'presentation': {
-                    'default': default_recruitment_template,
-                    'markdown': True
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 100000,
+                        'input': 'textarea',
+                        'default': default_recruitment_template,
+                        'markdown': True
+                    }
                 }
             }
         }
 
         #setup ae recruitment
         if ae_template:
-            recruitment_content['email_content']['presentation']['default'] = ae_template
+            recruitment_content['email_content']['value']['param']['default'] = ae_template
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as f:
             content = f.read()
@@ -280,15 +300,15 @@ Cheers!'''.replace('{short_name}', short_name)
                 writers = [],
                 signatures = ['~Super_User1'],
                 edit = {
-                    'signatures': { 'regex': f'~.*|{self.support_group_id}', 'type': 'group[]' },
-                    'writers': { 'const': [self.support_group_id, venue_id] },
-                    'readers': { 'const': [self.support_group_id, venue_id] },
+                    'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}'}},
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
                     'note': {
-                        'forum': { 'const': note.id },
-                        'replyto': {'const': note.id },
-                        'signatures': { 'const': ['${signatures}'] },
-                        'readers': { 'const': [self.support_group_id, venue_id] },
-                        'writers': { 'const': [self.support_group_id, venue_id]},
+                        'forum': note.id,
+                        'replyto': note.id,
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, venue_id],
+                        'writers': [self.support_group_id, venue_id],
                         'content': recruitment_content
                     }
                 },
@@ -299,7 +319,7 @@ Cheers!'''.replace('{short_name}', short_name)
 
         #setup rev recruitment
         if reviewer_template:
-            recruitment_content['email_content']['presentation']['default'] = reviewer_template
+            recruitment_content['email_content']['value']['param']['default'] = reviewer_template
 
         with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as f:
             content = f.read()
@@ -311,15 +331,15 @@ Cheers!'''.replace('{short_name}', short_name)
                 writers = [],
                 signatures = ['~Super_User1'],
                 edit = {
-                    'signatures': { 'regex': f'~.*|{self.support_group_id}', 'type': 'group[]' },
-                    'writers': { 'const': [self.support_group_id, venue_id] },
-                    'readers': { 'const': [self.support_group_id, venue_id] },
+                    'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}' }},
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
                     'note': {
-                        'forum': { 'const': note.id },
-                        'replyto': {'const': note.id },
-                        'signatures': { 'const': ['${signatures}'] },
-                        'readers': { 'const': [self.support_group_id, venue_id] },
-                        'writers': { 'const': [self.support_group_id, venue_id]},
+                        'forum': note.id,
+                        'replyto': note.id,
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, venue_id],
+                        'writers': [self.support_group_id, venue_id],
                         'content': recruitment_content
                     }
                 },
@@ -354,38 +374,42 @@ Cheers!
                 'description': 'Enter the name of the user you would like to invite.',
                 'order': 2,
                 'value' : {
-                    'type': 'string',
-                    'regex': '^[^,\n]+$'
+                    'param': {
+                        'type': 'string',
+                        'regex': '^[^,\n]+$'
+                    }
                 }
             },
             'invitee_email': {
                 'description': 'Enter the email or OpenReview profile ID of the user you would like to invite.',
                 'order': 2,
                 'value' : {
-                    'type': 'string',
-                    'regex': '^[^,\n]+$'
+                    'param': {
+                        'type': 'string',
+                        'regex': '^[^,\n]+$'
+                    }
                 }
             },
             'email_subject': {
                 'description': 'Please carefully review the email subject for the recruitment email. Make sure not to remove the parenthesized tokens.',
                 'order': 4,
                 'value' : {
-                    'type': 'string',
-                    'regex': '.*'
-                },
-                'presentation': {
-                    'default': f'[{short_name}] Invitation to act as Reviewer for {short_name}'
+                    'param': {
+                        'type': 'string',
+                        'default': f'[{short_name}] Invitation to act as Reviewer for {short_name}'
+                    }
                 }
             },
             'email_content': {
                 'description': 'Please carefully review the template below before you click submit to send out the recruitment email. Make sure not to remove the parenthesized tokens.',
                 'order': 5,
                 'value' : {
-                    'type': 'string',
-                    'regex': '[\\S\\s]{1,10000}'
-                },
-                'presentation': {
-                    'default': recruitment_email_template
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 10000,
+                        'input': 'textarea',
+                        'default': recruitment_email_template
+                    }
                 }
             }
         }
@@ -400,15 +424,15 @@ Cheers!
                 writers = [],
                 signatures = ['~Super_User1'],
                 edit = {
-                    'signatures': { 'regex': f'~.*|{self.support_group_id}', 'type': 'group[]' },
-                    'writers': { 'const': [self.support_group_id, venue_id] },
-                    'readers': { 'const': [self.support_group_id, venue_id] },
+                    'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}'}},
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
                     'note': {
-                        'forum': { 'const': note.id },
-                        'replyto': {'const': note.id },
-                        'signatures': { 'const': ['${signatures}'] },
-                        'readers': { 'const': [self.support_group_id, venue_id, '${signatures}'] },
-                        'writers': { 'const': [self.support_group_id, venue_id]},
+                        'forum': note.id,
+                        'replyto': note.id,
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, venue_id, '${3/signatures}'],
+                        'writers': [self.support_group_id, venue_id],
                         'content': recruitment_content
                     }
                 },

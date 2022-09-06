@@ -12,4 +12,4 @@ def process(client, edit, invitation):
         return
 
     submission = client.get_note(note.forum)
-    journal.invitation_builder.set_decision_approval_invitation(submission, note, journal.get_due_date(days = 7))
+    journal.invitation_builder.set_note_decision_approval_invitation(submission, note, journal.get_due_date(days = 7))
