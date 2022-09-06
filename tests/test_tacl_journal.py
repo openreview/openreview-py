@@ -316,6 +316,8 @@ note: replies to this email will go to the AE, Graham Neubig.
             )
         )        
 
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
+
         carlos_anon_groups=carlos_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Carlos_Gardel1')
         assert len(carlos_anon_groups) == 1
 
@@ -332,6 +334,8 @@ note: replies to this email will go to the AE, Graham Neubig.
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
+        
         javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
         assert len(javier_anon_groups) == 1
 
@@ -360,3 +364,50 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert reviews[2].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert reviews[2].signatures == [javier_anon_groups[0].id]
 
+    def test_official_recommendation(self, journal, openreview_client, helpers):
+
+        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
+
+        david_client = OpenReviewClient(username='david@taclone.com', password='1234')
+        carlos_client = OpenReviewClient(username='carlos@taclthree.com', password='1234')
+        javier_client = OpenReviewClient(username='javier@tacltwo.com', password='1234')
+
+        invitation = brian_client.get_invitation('TACL/Paper1/-/Official_Recommendation')
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        brian_client.post_invitation_edit(
+            invitations='TACL/-/Edit',
+            readers=['TACL'],
+            writers=['TACL'],
+            signatures=['TACL'],
+            invitation=openreview.api.Invitation(id=f'TACL/Paper1/-/Official_Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                signatures=['TACL/Editors_In_Chief']
+            )
+        )
+
+        time.sleep(5) ## wait until the process function runs
+
+        ## Check emails being sent to Reviewers and AE
+        messages = journal.client.get_messages(subject = '[TACL] Submit official recommendation for TACL submission Paper title UPDATED')
+        assert len(messages) == 3
+        messages = journal.client.get_messages(to= 'david@taclone.com', subject = '[TACL] Submit official recommendation for TACL submission Paper title UPDATED')
+        assert messages[0]['content']['text'] == f'''Hi David Bensusan,
+
+Thank you for submitting your review and engaging with the authors of TACL submission "Paper title UPDATED".
+
+You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
+
+We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Official_Recommendation
+
+For more details and guidelines on performing your review, visit transacl.org.
+
+We thank you for your essential contribution to TACL!
+
+The TACL Editors-in-Chief
+note: replies to this email will go to the AE, Graham Neubig.
+'''
+        messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission Paper title UPDATED')
+        assert len(messages) == 1        
