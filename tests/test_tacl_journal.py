@@ -315,3 +315,48 @@ note: replies to this email will go to the AE, Graham Neubig.
                 }
             )
         )        
+
+        carlos_anon_groups=carlos_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Carlos_Gardel1')
+        assert len(carlos_anon_groups) == 1
+
+        ## Post a review edit
+        carlos_review_note = carlos_client.post_note_edit(invitation='TACL/Paper1/-/Review',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
+            )
+        )
+
+        javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
+        assert len(javier_anon_groups) == 1
+
+        ## Post a review edit
+        javier_review_note = javier_client.post_note_edit(invitation='TACL/Paper1/-/Review',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
+
+        ## All the reviewes should be visible to all the reviewers now
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
+        assert len(reviews) == 3
+        assert reviews[0].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[0].signatures == [david_anon_groups[0].id]
+        assert reviews[1].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[1].signatures == [carlos_anon_groups[0].id]
+        assert reviews[2].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert reviews[2].signatures == [javier_anon_groups[0].id]
+

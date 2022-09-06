@@ -2314,7 +2314,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_author_submission_id() 
                         },
                     },
-                    'readers': ['everyone'] if self.journal.is_submission_public() else [venue_id, self.journal.get_action_editors_id('${2/number}'), self.journal.get_reviewers_id('${2/number}'), self.journal.get_authors_id('${2/number}')] ,
+                    'readers': self.journal.get_under_review_submission_readers('${2/number}'),
                     'content': {
                         'assigned_action_editor': {
                             'value': {
@@ -2958,7 +2958,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_review_id(number='${6/content/noteNumber/value}')
                         }
                     },
-                    'readers': [ 'everyone'],
+                    'readers': self.journal.get_release_review_readers(number='${5/content/noteNumber/value}'),
                 }
             }
         }
@@ -2985,6 +2985,16 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
 
     def set_note_release_review_invitation(self, note):
+
+        ## Change review invitation readers
+        invitation = self.post_invitation_edit(invitation=openreview.api.Invitation(id=self.journal.get_review_id(number=note.number),
+                signatures=[self.journal.get_editors_in_chief_id()],
+                edit={
+                    'note': {
+                        'readers': self.journal.get_release_review_readers(number='${{2/id}/number}')
+                    }
+                }
+        ))        
 
         return self.client.post_invitation_edit(invitations=self.journal.get_release_review_id(),
             content={ 'noteNumber': { 'value': note.number } },
@@ -3870,15 +3880,31 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             )        
 
     def set_note_release_comment_invitation(self, note):
-        return self.client.post_invitation_edit(invitations=self.journal.get_release_comment_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )
+        if self.journal.is_submission_public():
+            self.client.post_invitation_edit(invitations=self.journal.get_release_comment_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number }
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )
+
+            official_comment_invitation_id = self.journal.get_official_comment_id(number=note.number)
+            release_comment_invitation_id = self.journal.get_release_comment_id(number=note.number)
+            comments = self.client.get_notes(invitation=official_comment_invitation_id)
+            authors_id = self.journal.get_authors_id(number=note.number)
+            anon_reviewers_id = self.journal.get_reviewers_id(number=note.number, anon=True)
+            print(f'Releasing {len(comments)} comments...')
+            for comment in comments:
+                if authors_id in comment.readers and [r for r in comment.readers if anon_reviewers_id in r]:
+                    self.client.post_note_edit(invitation=release_comment_invitation_id,
+                        signatures=[ self.venue_id ],
+                        note=openreview.api.Note(
+                            id=comment.id
+                        )
+                    )        
 
     def set_decision_invitation(self):
         venue_id = self.journal.venue_id
