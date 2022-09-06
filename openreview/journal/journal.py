@@ -609,7 +609,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if token.startswith(self.submission_group_name):
                     return int(token.replace(self.submission_group_name, ''))
 
-        for invitation in note_invitations:
+        for invitation in tqdm(note_invitations):
 
             tokens = invitation.id.split('/')
             name = tokens[-1]
@@ -732,7 +732,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id())
 
-        for invitation in reviewer_invitations:
+        for invitation in tqdm(reviewer_invitations):
             tokens = invitation.id.split('/')
             self.invitation_builder.set_single_reviewer_responsibility_invitation(tokens[-3], duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
     
