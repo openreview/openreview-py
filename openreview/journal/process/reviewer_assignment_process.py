@@ -38,12 +38,7 @@ def process_update(client, edge, invitation, existing_edge):
     ## Enable reviewer responsibility task
     if len(tail_assignment_edges) == 1 and not edge.ddate:
         print('Enable reviewer responsibility task for', edge.tail)
-        responsiblity_invitation_edit = client.post_invitation_edit(invitations=journal.get_reviewer_responsibility_id(),
-            params={ 'reviewerId': edge.tail, 'duedate': openreview.tools.datetime_millis(journal.get_due_date(weeks = 1)) },
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id]
-        )
+        responsiblity_invitation_edit = journal.invitation_builder.set_single_reviewer_responsibility_invitation(edge.tail, journal.get_due_date(weeks = 1))
 
     pending_review_edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=edge.tail)
     pending_review_edge = None
@@ -106,25 +101,14 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
         duedate = journal.get_due_date(weeks = review_period_length)
 
         ## Update review invitation duedate
-        invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_review_id(number=note.number),
+        invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_review_id(number=note.number),
                 signatures=[journal.get_editors_in_chief_id()],
                 duedate=openreview.tools.datetime_millis(duedate)
         ))
 
         print('Enable assignment acknowledgement task for', edge.tail)
-        ack_invitation_edit = client.post_invitation_edit(invitations=journal.get_reviewer_assignment_acknowledgement_id(),
-            params={
-                'noteId': note.id,
-                'noteNumber': note.number,
-                'reviewerId': edge.tail,
-                'duedate': openreview.tools.datetime_millis(journal.get_due_date(days = 2)),
-                'reviewDuedate': duedate.strftime("%b %d, %Y")
-             },
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id]
-        )
-
+        ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
+        
         recipients = [edge.tail]
         ignoreRecipients = [journal.get_solicit_reviewers_id(number=note.number)]
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.content['title']['value']}'''
@@ -158,7 +142,7 @@ note: replies to this email will go to the AE, {assigned_action_editor.get_prefe
 
 {journal.short_name} operates somewhat differently to other journals and conferences. As a new reviewer, we'd like you to read and acknowledge some critical points of {journal.short_name} that might differ from your previous reviewing experience.
 
-To perform this quick task, simply visit the following link: https://openreview.net/forum?id={responsiblity_invitation_edit['invitation']['edit']['note']['forum']['const']}&invitationId={responsiblity_invitation_edit['invitation']['id']}
+To perform this quick task, simply visit the following link: https://openreview.net/forum?id={responsiblity_invitation_edit['invitation']['edit']['note']['forum']}&invitationId={responsiblity_invitation_edit['invitation']['id']}
 
 We thank you for your essential contribution to {journal.short_name}!
 

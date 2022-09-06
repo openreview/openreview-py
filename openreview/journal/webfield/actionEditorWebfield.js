@@ -122,7 +122,7 @@ var loadData = function() {
         Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
         Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups) }),
         Webfield2.api.getAll('/invitations', {
-          regex: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
+          prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
           type: 'all',
           select: 'id,cdate,duedate,expdate',
           sort: 'cdate:asc'
@@ -131,15 +131,24 @@ var loadData = function() {
           return _.keyBy(invitations, 'id');
         }),
         Webfield2.api.getAll('/invitations', {
-          regex: ACTION_EDITOR_ID + '/-/(' + AVAILABILITY_NAME + '|' + CUSTOM_MAX_PAPERS_NAME + ')',
+          id: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
           type: 'edges',
           details: 'repliedEdges'
+        }).then(function(invitations) {
+          return invitations[0];
+        }),
+        Webfield2.api.getAll('/invitations', {
+          id: ACTION_EDITOR_ID + '/-/' + CUSTOM_MAX_PAPERS_NAME,
+          type: 'edges',
+          details: 'repliedEdges'
+        }).then(function(invitations) {
+          return invitations[0];
         })
       );
     });
 };
 
-var formatData = function(reviewersByNumber, invitations, submissions, invitationsById, customQuotaInvitations) {
+var formatData = function(reviewersByNumber, invitations, submissions, invitationsById, availabilityInvitation, customQuotaInvitation) {
   var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + '#assigned-papers)');
 
   // build the rows
@@ -388,16 +397,21 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
   return venueStatusData = {
     invitations: invitations,
     rows: rows,
-    customQuotaInvitations: customQuotaInvitations
+    availabilityInvitation: availabilityInvitation,
+    customQuotaInvitation: customQuotaInvitation
   };
 };
 
 // Render functions
 var renderData = function(venueStatusData) {
 
-  venueStatusData.customQuotaInvitations.forEach(function(invitation) {
-    Webfield2.ui.renderEdgeWidget('#invitation', invitation, { fieldName: invitation.edge.label ? 'label': 'weight' });  
-  });
+  if (venueStatusData.availabilityInvitation) {
+    Webfield2.ui.renderEdgeWidget('#invitation', venueStatusData.availabilityInvitation, { fieldName: venueStatusData.availabilityInvitation.edge.label ? 'label': 'weight' });  
+  }
+
+  if (venueStatusData.customQuotaInvitation) {
+    Webfield2.ui.renderEdgeWidget('#invitation', venueStatusData.customQuotaInvitation, { fieldName: venueStatusData.customQuotaInvitation.edge.label ? 'label': 'weight' });  
+  }
 
   // Assigned Papers Tab
   Webfield2.ui.renderTable('#assigned-papers', venueStatusData.rows, {
