@@ -230,7 +230,12 @@ note={Under review}
         assert "TACL/Paper1/-/Volunteer_to_Review" not in [i.id for i in invitations]
         assert "TACL/Paper1/-/Public_Comment" not in [i.id for i in invitations]
         assert "TACL/Paper1/-/Official_Comment" in [i.id for i in invitations]
-        assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations]  
+        assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations] 
+
+        edits = openreview_client.get_note_edits(note.id)
+        assert len(edits) == 3
+        for edit in edits:
+            assert edit.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
     def test_review(self, journal, openreview_client, helpers):
 

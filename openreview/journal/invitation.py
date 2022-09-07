@@ -2306,7 +2306,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'signatures': [ venue_id ],
-                'readers': [ 'everyone'],
+                'readers': self.journal.get_under_review_submission_readers('${2/note/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -3567,24 +3567,22 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             invitation=Invitation(
                 id=revision_invitation_id,
                 edit={
-                    'readers': ['everyone']
+                    'readers': self.journal.get_under_review_submission_readers(note.number)
                 }
             )
         )
 
-        ## Make the edit public
+        ## Change the edit readers
         for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tcdate:asc'):
-            edit.readers = ['everyone']
+            edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
-            # edit.note.cdate = None
-            # edit.note.forum = None
             self.client.post_edit(edit)
 
-        ## Make the first edit public too
+        ## Change first edit readers
         for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tcdate:asc'):
             edit.invitation = self.journal.get_meta_invitation_id()
             edit.signatures = [self.journal.venue_id]
-            edit.readers = ['everyone']
+            edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
             self.client.post_edit(edit)         
 
