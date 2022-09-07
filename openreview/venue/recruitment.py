@@ -96,7 +96,7 @@ class Recruitment(object):
             invited_committee = committee_invited_group.members
             print("Sending reminders for recruitment invitations")
             for invited_user in tqdm(invited_committee, desc='remind recruitment'):
-                memberships = [g.id for g in self.client.get_groups(member=invited_user, regex=committee_id)] if tools.get_group(self.client, invited_user) else []   
+                memberships = [g.id for g in self.client.get_groups(member=invited_user, prefix=committee_id)] if tools.get_group(self.client, invited_user) else []
                 if committee_id not in memberships and committee_declined_id not in memberships:
                     name = 'invitee'
                     if invited_user.startswith('~') :

@@ -50,7 +50,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)
-        venue.meta_review_stage = get_meta_review_stage()
+        # venue.meta_review_stage = get_meta_review_stage(note)
 
         return venue
 
