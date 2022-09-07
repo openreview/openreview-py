@@ -226,6 +226,51 @@ meta_review = {
     }
 }
 
+meta_review_v2 = {
+    'metareview': {
+        'order': 1,
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 5000,
+                'markdown': True,
+                'input': 'textarea'
+            }
+        }
+    },
+    'recommendation': {
+        'order': 2,
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    'Accept (Oral)',
+                    'Accept (Poster)',
+                    'Reject'
+                ]
+            }
+        }
+    },
+    'confidence': {
+        'order': 3,
+        'value': {
+            'param': {
+                'type': 'string',
+                'input': 'radio',
+                'enum': [
+                    '5: The area chair is absolutely certain',
+                    '4: The area chair is confident but not absolutely certain',
+                    '3: The area chair is somewhat confident',
+                    '2: The area chair is not sure',
+                    '1: The area chair\'s evaluation is an educated guess'
+                ]
+            }
+        }
+    }
+}
+
+
 submission = {
     'title': {
         'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',

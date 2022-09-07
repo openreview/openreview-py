@@ -50,6 +50,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)
+        venue.meta_review_stage = get_meta_review_stage()
 
         return venue
 
@@ -281,7 +282,6 @@ def get_identity_readers(request_forum, field_name):
     }
 
     return [readers_map[r] for r in request_forum.content.get(field_name, [])]    
-
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()

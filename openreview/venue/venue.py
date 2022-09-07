@@ -179,6 +179,10 @@ class Venue(object):
     def get_area_chairs_id(self, number = None, anon=False):
         return self.get_committee_id('Area_Chair_.*' if anon else self.area_chairs_name, number)
 
+    ## Compatibility with Conference, refactor conference references to use get_area_chairs_id
+    def get_anon_area_chair_id(self, number, anon_id):
+        return self.get_area_chairs_id(number, True)
+
     def get_senior_area_chairs_id(self, number = None):
         return self.get_committee_id(self.senior_area_chairs_name, number)
 
@@ -373,7 +377,11 @@ class Venue(object):
                 invitation=openreview.api.Invitation()
             )
             paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
-            self.update_readers(submission, paper_invitation)    
+            self.update_readers(submission, paper_invitation)
+
+    def create_meta_review_stage(self):
+        self.invitation_builder.set_meta_review_invitation()
+
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id

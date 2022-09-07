@@ -168,3 +168,10 @@ class TestVenueSubmission():
 
         custom_load_edges = openreview_client.get_edges(invitation=f'{conference_id}/Reviewers/-/Custom_Max_Papers')
         assert (len(custom_load_edges)) == 1
+
+        now = datetime.datetime.utcnow()
+        venue.meta_review_stage = openreview.MetaReviewStage(due_date=now + datetime.timedelta(minutes = 40))
+        venue.create_meta_review_stage()
+
+        assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
+        # assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Meta_Review')
