@@ -50,7 +50,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
 
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)
-        # venue.meta_review_stage = get_meta_review_stage(note)
+        venue.meta_review_stage = get_meta_review_stage(note)
 
         return venue
 
@@ -431,9 +431,19 @@ def get_meta_review_stage(request_forum):
     meta_review_form_additional_options = request_forum.content.get('additional_meta_review_form_options', {})
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
-        meta_review_form_additional_options['recommendation'] = {
-            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
-            'required': True}
+        if request_forum.content.get('api_version') == '2':
+            meta_review_form_additional_options['recommendation'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+                    }
+                }
+            }
+        else:
+            meta_review_form_additional_options['recommendation'] = {
+                'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
+                'required': True}
 
     meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
 
