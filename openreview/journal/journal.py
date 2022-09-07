@@ -348,6 +348,9 @@ class Journal(object):
     def is_submission_public(self):
         return self.settings.get('submission_public', True)
 
+    def should_release_authors(self):
+        return self.settings.get('submission_public', True) 
+
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
@@ -358,6 +361,17 @@ class Journal(object):
             return ['everyone']
         return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]        
     
+    def get_release_decision_readers(self, number):
+        if self.is_submission_public():
+            return ['everyone']
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]        
+
+    def get_release_authors_readers(self, number):
+        if self.is_submission_public():
+            return ['everyone']
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_authors_id(number)]        
+
+
     def get_due_date(self, days=0, weeks=0):
         due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
         return due_date

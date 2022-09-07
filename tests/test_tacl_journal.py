@@ -59,6 +59,9 @@ class TestJournal():
         javier_client=helpers.create_user('javier@tacltwo.com', 'Javier', 'Barden')
         carlos_client=helpers.create_user('carlos@taclthree.com', 'Carlos', 'Gardel')        
 
+        ## Authors
+        melisa_client=helpers.create_user('melisa@taclfour.com', 'Melisa', 'Andersen')        
+
         openreview_client.add_members_to_group('TACL/Reviewers', ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1'])
 
         return JournalRequest.get_journal(openreview_client, request_form['note']['id'])
@@ -74,8 +77,8 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
-                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa Andersen']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Andersen1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -104,7 +107,7 @@ The TACL Editors-in-Chief
 
         author_group=openreview_client.get_group("TACL/Paper1/Authors")
         assert author_group
-        assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert author_group.members == ['~SomeFirstName_User1', '~Melisa_Andersen1']
         assert openreview_client.get_group("TACL/Paper1/Reviewers")
         assert openreview_client.get_group("TACL/Paper1/Action_Editors")
 
@@ -114,7 +117,7 @@ The TACL Editors-in-Chief
         assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Andersen1']
         assert note.content['venue']['value'] == 'Submitted to TACL'
         assert note.content['venueid']['value'] == 'TACL/Submitted'
 
@@ -145,7 +148,7 @@ The TACL Editors-in-Chief
         assert note.content['venue']['value'] == 'Submitted to TACL'
         assert note.content['venueid']['value'] == 'TACL/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Andersen1']
         assert note.content['authorids']['readers'] == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
 
     def test_review_approval(self, journal, openreview_client, helpers):
@@ -203,7 +206,7 @@ The TACL Editors-in-Chief
         assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Andersen1']
         assert note.content['venue']['value'] == 'Under review for TACL'
         assert note.content['venueid']['value'] == 'TACL/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Graham_Neubig1'
@@ -410,4 +413,189 @@ The TACL Editors-in-Chief
 note: replies to this email will go to the AE, Graham Neubig.
 '''
         messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission Paper title UPDATED')
-        assert len(messages) == 1        
+        assert len(messages) == 1 
+
+        david_anon_groups=david_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~David_Bensusan1')
+
+        official_recommendation_note = david_client.post_note_edit(invitation='TACL/Paper1/-/Official_Recommendation',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Leaning Accept' },
+                    'certification_recommendations': { 'value': ['Survey Certification'] },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        carlos_anon_groups=carlos_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Carlos_Gardel1')
+
+        official_recommendation_note = carlos_client.post_note_edit(invitation='TACL/Paper1/-/Official_Recommendation',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Leaning Accept' },
+                    'certification_recommendations': { 'value': ['Survey Certification'] },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
+        
+        official_recommendation_note = javier_client.post_note_edit(invitation='TACL/Paper1/-/Official_Recommendation',
+            signatures=[javier_anon_groups[0].id],
+            note=Note(
+                content={
+                    'decision_recommendation': { 'value': 'Leaning Accept' },
+                    'certification_recommendations': { 'value': ['Survey Certification'] },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=official_recommendation_note['id'])
+
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Official_Recommendation', sort= 'number:asc')
+        assert len(reviews) == 3
+        assert reviews[0].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', david_anon_groups[0].id]
+        assert reviews[0].signatures == [david_anon_groups[0].id]
+        assert reviews[1].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', carlos_anon_groups[0].id]
+        assert reviews[1].signatures == [carlos_anon_groups[0].id]
+        assert reviews[2].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', javier_anon_groups[0].id]
+        assert reviews[2].signatures == [javier_anon_groups[0].id]
+
+
+    def test_decision(self, journal, openreview_client, helpers):
+
+        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
+
+        for review in reviews:
+            signature=review.signatures[0]
+            rating_note=graham_client.post_note_edit(invitation=f'{signature}/-/Rating',
+                signatures=["TACL/Paper1/Action_Editors"],
+                note=Note(
+                    content={
+                        'rating': { 'value': 'Exceeds expectations' }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=rating_note['id'])
+
+        decision_note = graham_client.post_note_edit(invitation='TACL/Paper1/-/Decision',
+            signatures=["TACL/Paper1/Action_Editors"],
+            note=Note(
+                content={
+                    'recommendation': { 'value': 'Accept as is' },
+                    'comment': { 'value': 'This is a nice paper!' },
+                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        decision_note = graham_client.get_note(decision_note['note']['id'])
+        assert decision_note.readers == ["TACL/Editors_In_Chief", "TACL/Paper1/Action_Editors"]
+
+        ## EIC approves the decision
+        approval_note = brian_client.post_note_edit(invitation='TACL/Paper1/-/Decision_Approval',
+                            signatures=['TACL/Editors_In_Chief'],
+                            note=Note(
+                                content= {
+                                    'approval': { 'value': 'I approve the AE\'s decision.' },
+                                    'comment_to_the_AE': { 'value': 'I agree with the AE' }
+                                }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
+
+
+        decision_note = brian_client.get_note(decision_note.id)
+        assert decision_note.readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert decision_note.nonreaders == []
+
+    def test_camera_ready_revision(self, journal, openreview_client, helpers):
+
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+        note_id_1 = openreview_client.get_notes(invitation='TACL/-/Submission')[0].id
+        assert openreview_client.get_invitation("TACL/Paper1/-/Camera_Ready_Revision")
+
+        ## post a revision
+        revision_note = test_client.post_note_edit(invitation='TACL/Paper1/-/Camera_Ready_Revision',
+            signatures=["TACL/Paper1/Authors"],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title VERSION 2' },
+                    'authors': { 'value': ['Melisa Andersen', 'SomeFirstName User'] },
+                    'authorids': { 'value': ['~Melisa_Andersen1', '~SomeFirstName_User1'] },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/Paper1/-/Submission_Editable', 'TACL/Paper1/-/Camera_Ready_Revision']
+        assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert note.writers == ['TACL', 'TACL/Paper1/Authors']
+        assert note.signatures == ['TACL/Paper1/Authors']
+        assert note.content['authorids']['value'] == ['~Melisa_Andersen1', '~SomeFirstName_User1']
+        assert note.content['authors']['value'] == ['Melisa Andersen', 'SomeFirstName User']
+        assert note.content['venue']['value'] == 'Under review for TACL'
+        assert note.content['venueid']['value'] == 'TACL/Under_Review'
+        assert note.content['title']['value'] == 'Paper title VERSION 2'
+        assert note.content['abstract']['value'] == 'Paper abstract'
+
+        ## AE verifies the camera ready revision
+        verification_note = graham_client.post_note_edit(invitation='TACL/Paper1/-/Camera_Ready_Verification',
+                            signatures=["TACL/Paper1/Action_Editors"],
+                            note=Note(
+                                signatures=["TACL/Paper1/Action_Editors"],
+                                content= {
+                                    'verification': { 'value': 'I confirm that camera ready manuscript complies with the TACL stylefile and, if appropriate, includes the minor revisions that were requested.' }
+                                 }
+                            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=verification_note['id'])
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/Paper1/-/Submission_Editable', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
+        assert note.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+        assert note.writers == ['TACL']
+        assert note.signatures == ['TACL/Paper1/Authors']
+        assert note.content['authorids']['value'] == ['~Melisa_Andersen1', '~SomeFirstName_User1']
+        assert note.content['authors']['value'] == ['Melisa Andersen', 'SomeFirstName User']
+        # Check with cArlos
+        assert note.content['authorids'].get('readers') == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+        assert note.content['authors'].get('readers') == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Authors']
+        assert note.content['venue']['value'] == 'Accepted by TACL'
+        assert note.content['venueid']['value'] == 'TACL'
+        assert note.content['title']['value'] == 'Paper title VERSION 2'
+        assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['_bibtex']['value'] == '''@article{
+bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title {VERSION} 2},
+author={Melisa Andersen and SomeFirstName User},
+journal={Transactions of the Association for Computational Linguistics},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_1 + '''},
+note={Featured Certification, Reproducibility Certification}
+}'''                      

@@ -2594,18 +2594,21 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'license': {
                             'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
                             'order': 4
-                        },
-                        'authors': {
-                            'readers': ['everyone']
-                        },
-                        'authorids': {
-                            'readers': ['everyone']
                         }
                     }
                 }
             },
             process=self.get_process_content('process/accepted_submission_process.py')
         )
+
+        if self.journal.should_release_authors():
+            invitation.edit['note']['content']['authors'] = {
+                'readers': ['everyone']
+            }
+            invitation.edit['note']['content']['authorids'] = {
+                'readers': ['everyone']
+            }
+
 
         self.save_invitation(invitation)
 
@@ -4181,7 +4184,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 'param': { 'withInvitation': self.journal.get_ae_decision_id(number='${6/content/noteNumber/value}') }},
-                    'readers': [ 'everyone' ],
+                    'readers': self.journal.get_release_decision_readers('${5/content/noteNumber/value}'),
                     'nonreaders': []
                 }
             }
