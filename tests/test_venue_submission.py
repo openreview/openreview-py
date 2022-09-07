@@ -30,7 +30,7 @@ class TestVenueSubmission():
         assert openreview_client.get_group('TestVenue.cc')
         assert openreview_client.get_group('TestVenue.cc/Authors')
 
-        venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.REVIEWERS_ASSIGNED]))
+        venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.REVIEWERS_ASSIGNED, openreview.builder.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED]))
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Submission')
 
@@ -64,10 +64,11 @@ class TestVenueSubmission():
         assert openreview_client.get_group('TestVenue.cc/Paper1/Area_Chairs')
 
         submission = openreview_client.get_note(submission.id)
-        assert len(submission.readers) == 3
+        assert len(submission.readers) == 4
         assert 'TestVenue.cc' in submission.readers
         assert 'TestVenue.cc/Paper1/Authors' in submission.readers        
-        assert 'TestVenue.cc/Paper1/Reviewers' in submission.readers        
+        assert 'TestVenue.cc/Paper1/Reviewers' in submission.readers
+        assert 'TestVenue.cc/Paper1/Area_Chairs' in submission.readers
 
         now = datetime.datetime.utcnow()
         venue.review_stage = openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40))
@@ -173,5 +174,11 @@ class TestVenueSubmission():
         venue.meta_review_stage = openreview.MetaReviewStage(due_date=now + datetime.timedelta(minutes = 40))
         venue.create_meta_review_stage()
 
+        helpers.create_user('ac_venue_one@mail.com', 'Area Chair', 'Venue One')
+        ac_client = OpenReviewClient(username='ac_venue_one@mail.com', password='1234')
+
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
-        # assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Meta_Review')
+        assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Meta_Review')
+
+        openreview_client.add_members_to_group(conference_id+'/Area_Chairs', '~Area_Chair_Venue_One1')
+        openreview_client.add_members_to_group(conference_id+'/Paper1/Area_Chairs', '~Area_Chair_Venue_One1')

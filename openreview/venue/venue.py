@@ -382,6 +382,24 @@ class Venue(object):
     def create_meta_review_stage(self):
         self.invitation_builder.set_meta_review_invitation()
 
+        ## Move this to the date process function
+        for submission in self.get_submissions():
+            paper_invitation_edit = self.client.post_invitation_edit(invitations=self.get_invitation_id(self.meta_review_stage.name),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                content={
+                    'noteId': {
+                        'value': submission.id
+                    },
+                    'noteNumber': {
+                        'value': submission.number
+                    }
+                },
+                invitation=openreview.api.Invitation()
+            )
+            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
+            self.update_readers(submission, paper_invitation)
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
