@@ -165,7 +165,7 @@ class GroupBuilder(object):
         submissions = self.venue.get_submissions(sort='number:asc')
         author_group_ids = []
 
-        group_by_id = { g.id: g for g in self.client.get_all_groups(regex=f'{self.venue.id}/Paper.*') }
+        group_by_id = { g.id: g for g in self.client.get_all_groups(prefix=f'{self.venue.id}/Paper.*') }
 
         for n in tqdm(submissions, desc='create_paper_committee_groups'):
 

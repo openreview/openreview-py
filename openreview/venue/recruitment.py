@@ -121,7 +121,7 @@ class Recruitment(object):
 
         print('sending recruitment invitations')
         for index, email in enumerate(tqdm(invitees, desc='send_invitations')):
-            memberships = [g.id for g in self.client.get_groups(member=email, regex=venue_id)] if tools.get_group(self.client, email) else []
+            memberships = [g.id for g in self.client.get_groups(member=email, prefix=venue_id)] if tools.get_group(self.client, email) else []
             invited_roles = [f'{venue_id}/{role}/Invited' for role in committee_roles]
             member_roles = [f'{venue_id}/{role}' for role in committee_roles]
 
