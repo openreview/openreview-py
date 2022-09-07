@@ -986,7 +986,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'signatures': [venue_id],
             'edit': {
                 'signatures': [venue_id ],
-                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id ],
                 'note': {
                     'id': '${4/content/noteId/value}',
@@ -1941,7 +1941,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'forum': '${4/content/noteId/value}',
                     'replyto': '${4/content/noteId/value}',
                     'signatures': [self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
-                    'readers': [ 'everyone' ],
+                    'readers': self.journal.get_under_review_submission_readers('${5/content/noteNumber/value}'),
                     'writers': [ venue_id ],
                     'content': {
                         'withdrawal_confirmation': {
@@ -2405,7 +2405,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[venue_id],
             edit={
                 'signatures': [venue_id],
-                'readers': [ 'everyone' ],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -2496,7 +2496,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             edit={
                 'signatures': [venue_id],
-                'readers': [ 'everyone' ],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -2548,7 +2548,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'signatures': [venue_id],
-                'readers': [ 'everyone'],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -3721,14 +3721,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'signatures': ['${3/signatures}'],
                     'readers': {
                         'param': {
-                            'enum': [
-                                'everyone', 
-                                editors_in_chief_id, 
-                                self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 
-                                self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), 
-                                self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True) + '.*', 
-                                self.journal.get_authors_id(number='${7/content/noteNumber/value}')
-                            ],
+                            'enum': self.journal.get_official_comment_readers('${7/content/noteNumber/value}')
                         }
                     },
                     'writers': ['${3/writers}'],
@@ -4356,7 +4349,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'duedate': '${2/content/duedate/value}',
             'edit': {
                 'signatures': [self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
-                'readers': ['everyone'],
+                'readers': self.journal.get_under_review_submission_readers('${4/content/noteNumber/value}'),
                 'writers': [ venue_id, self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
                 'note': {
                     'id': '${4/content/noteId/value}',

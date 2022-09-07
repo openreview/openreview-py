@@ -372,6 +372,19 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert reviews[2].readers == ['TACL/Editors_In_Chief', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert reviews[2].signatures == [javier_anon_groups[0].id]
 
+        invitations = openreview_client.get_invitations(replyForum=note_id_1, prefix='TACL/Paper1')
+        assert len(invitations) == 6
+        assert "TACL/Paper1/-/Official_Comment" in [i.id for i in invitations]
+        assert "TACL/Paper1/-/Review" in [i.id for i in invitations]        
+        assert "TACL/Paper1/-/Revision" in [i.id for i in invitations]        
+        assert "TACL/Paper1/-/Withdrawal" in [i.id for i in invitations]        
+        assert "TACL/Paper1/-/Desk_Rejection" in [i.id for i in invitations]        
+        assert "TACL/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
+
+        official_comment_invitation = openreview_client.get_invitation("TACL/Paper1/-/Official_Comment")
+        assert 'everyone' not in official_comment_invitation.edit['note']['readers']['param']['enum']
+
+
     def test_official_recommendation(self, journal, openreview_client, helpers):
 
         brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
@@ -603,4 +616,92 @@ journal={Transactions of the Association for Computational Linguistics},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Featured Certification, Reproducibility Certification}
-}'''                      
+}'''
+
+        edits = openreview_client.get_note_edits(note.id)
+        assert len(edits) == 6
+        for edit in edits:
+            assert edit.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
+
+    def test_withdrawn_submission(self, journal, openreview_client, test_client, helpers):
+
+        test_client = OpenReviewClient(username='test@mail.com', password='1234')
+        brian_client = OpenReviewClient(username='brian@mail.com', password='1234')
+        graham_client = OpenReviewClient(username='graham@mailseven.com', password='1234')
+                
+
+        ## Post the submission 2
+        submission_note_2 = test_client.post_note_edit(invitation='TACL/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa Andersen']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_Andersen1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
+        note_id_2=submission_note_2['note']['id']
+
+        # Assign Action Editor
+        paper_assignment_edge = brian_client.post_edge(openreview.Edge(invitation='TACL/Action_Editors/-/Assignment',
+            readers=['TACL', 'TACL/Editors_In_Chief', '~Graham_Neubig1'],
+            writers=['TACL', 'TACL/Editors_In_Chief'],
+            signatures=['TACL/Editors_In_Chief'],
+            head=note_id_2,
+            tail='~Graham_Neubig1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Accept the submission 2
+        under_review_note = graham_client.post_note_edit(invitation= 'TACL/Paper2/-/Review_Approval',
+                                    signatures=['TACL/Paper2/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        ## Withdraw the submission 2
+        withdraw_note = test_client.post_note_edit(invitation='TACL/Paper2/-/Withdrawal',
+                                    signatures=['TACL/Paper2/Authors'],
+                                    note=Note(
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+
+        note = test_client.get_note(note_id_2)
+        assert note
+        assert note.invitations == ['TACL/-/Submission', 'TACL/-/Under_Review', 'TACL/-/Withdrawn']
+        assert note.readers == ['TACL', 'TACL/Paper2/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
+        assert note.writers == ['TACL', 'TACL/Paper2/Authors']
+        assert note.signatures == ['TACL/Paper2/Authors']
+        assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melisa_Andersen1']
+        assert note.content['venue']['value'] == 'Withdrawn by Authors'
+        assert note.content['venueid']['value'] == 'TACL/Withdrawn_Submission'
+        assert note.content['_bibtex']['value'] == '''@article{
+anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title 2},
+author={Anonymous},
+journal={Submitted to Transactions of the Association for Computational Linguistics},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_2 + '''},
+note={Withdrawn}
+}'''
+
+        edits = openreview_client.get_note_edits(note.id)
+        assert len(edits) == 3
+        for edit in edits:
+            assert edit.readers == ['TACL', 'TACL/Paper2/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']

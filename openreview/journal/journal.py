@@ -371,6 +371,18 @@ class Journal(object):
             return ['everyone']
         return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_authors_id(number)]        
 
+    def get_official_comment_readers(self, number):
+        readers = []
+        if self.is_submission_public():
+            readers.append('everyone')
+
+        return readers + [
+            self.get_editors_in_chief_id(), 
+            self.get_action_editors_id(number), 
+            self.get_reviewers_id(number), 
+            self.get_reviewers_id(number, anon=True) + '.*', 
+            self.get_authors_id(number)
+        ]        
 
     def get_due_date(self, days=0, weeks=0):
         due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
