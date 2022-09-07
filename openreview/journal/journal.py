@@ -460,9 +460,12 @@ class Journal(object):
 
         if new_venue_id == self.accepted_venue_id:
 
-            first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
-            first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
-            authors = ' and '.join(note.content['authors']['value'])
+            first_author_last_name = 'anonymous'
+            authors = 'Anonymous'
+            if 'everyone' in self.get_release_authors_readers(note.number):
+                first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
+                first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
+                authors = ' and '.join(note.content['authors']['value'])
 
             bibtex = [
                 '@article{',

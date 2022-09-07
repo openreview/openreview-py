@@ -591,9 +591,9 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melisa Andersen and SomeFirstName User},
+author={Anonymous},
 journal={Transactions of the Association for Computational Linguistics},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
