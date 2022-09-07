@@ -2050,7 +2050,6 @@ class Invitation(object):
         id = None,
         invitations = None,
         domain = None,
-        invitations = None,
         readers = None,
         writers = None,
         invitees = None,
@@ -2080,7 +2079,6 @@ class Invitation(object):
         self.id = id
         self.invitations = invitations
         self.domain = domain
-        self.invitations = invitations
         self.cdate = cdate
         self.ddate = ddate
         self.duedate = duedate
@@ -2144,9 +2142,6 @@ class Invitation(object):
         
         if self.domain:
             body['domain'] = self.domain
-
-        if self.invitations:
-            body['invitations'] = self.invitations            
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -2221,7 +2216,6 @@ class Invitation(object):
         invitation = Invitation(i['id'],
             invitations = i.get('invitations'),
             domain = i.get('domain'),
-            invitations = i.get('invitations'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
             tcdate = i.get('tcdate'),
