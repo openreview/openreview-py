@@ -60,6 +60,7 @@ def process(client, note, invitation):
                 paper_matching_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Paper_Matching_Setup')
                 if paper_matching_invitation:
                     paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = [conference.get_committee_id(r) for r in conference.reviewer_roles]
+                    paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] = paper_matching_invitation.reply['content']['matching_group']['value-dropdown'] + [conference.get_committee_id(r) for r in conference.area_chair_roles]
                     client.post_invitation(paper_matching_invitation)
 
             if conference.use_ethics_chairs or conference.use_ethics_reviewers:
