@@ -705,3 +705,7 @@ note={Withdrawn}
         assert len(edits) == 3
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Paper2/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
+
+        invitations = openreview_client.get_invitations(replyForum=note_id_2, prefix='TACL/Paper2')
+        assert len(invitations) == 1
+        assert "TACL/Paper2/-/Official_Comment" in [i.id for i in invitations]

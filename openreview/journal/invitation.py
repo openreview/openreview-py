@@ -4653,12 +4653,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         self.save_super_invitation(self.journal.get_authors_deanonymization_id(), invitation_content, edit_content, invitation)
 
     def set_note_authors_deanonymization_invitation(self, note):
-        return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )        
+        if self.journal.should_release_authors():
+            return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number }
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )        
