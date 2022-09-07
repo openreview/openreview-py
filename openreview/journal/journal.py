@@ -4,6 +4,7 @@ from . import group
 from .invitation import InvitationBuilder
 from .recruitment import Recruitment
 from .assignment import Assignment
+from .messages import messages
 from openreview.api import Edge
 from openreview.api import Group
 
@@ -349,7 +350,16 @@ class Journal(object):
         return self.settings.get('submission_public', True)
 
     def should_release_authors(self):
-        return self.settings.get('submission_public', True) 
+        return self.settings.get('submission_public', True)
+
+    def get_message(self, key, params={}):
+        message = self.settings.get(key, messages.get(key))
+        message = message.replace('{{short_name}}', self.short_name)
+        message = message.replace('{{website}}', self.website)
+        message = message.replace('{{venue_id}}', self.venue_id)
+        for key, value in params.items():
+            message = message.replace(key, value)
+        return message
 
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():

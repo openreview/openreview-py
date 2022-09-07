@@ -41,7 +41,8 @@ class TestJournal():
                     'settings': {
                         'value': {
                             'submission_public': False,
-                            'assignment_delay': 0
+                            'assignment_delay': 0,
+                            'author_submission_subject': '[TACL] This is a new submission'
                         }
                     }
                 }
@@ -90,7 +91,7 @@ class TestJournal():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
 
-        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TACL] Suggest candidate Action Editor for your new TACL submission')
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TACL] This is a new submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi SomeFirstName User,
 
