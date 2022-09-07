@@ -14,23 +14,7 @@ def process(client, edit, invitation):
 
     ## Make the decision public
     print('Make decision public')
-    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_release_decision_id(number=submission.number),
-            bulk=True,
-            invitees=[venue_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id ] },
-                'readers': { 'const': [ venue_id, journal.get_action_editors_id(number=submission.number) ] },
-                'writers': { 'const': [ venue_id ] },
-                'note': {
-                    'id': { 'withInvitation': journal.get_ae_decision_id(number=submission.number) },
-                    'readers': { 'const': [ 'everyone' ] },
-                    'nonreaders': { 'const': [] }
-                }
-            }
-    ))
+    journal.invitation_builder.set_note_decision_release_invitation(submission)
 
     print('Check rejection')
     print(decision.content)
@@ -51,23 +35,7 @@ def process(client, edit, invitation):
 
     ## Make submission editable by the authors
     print('Make submission editable by the authors')
-    invitation = journal.invitation_builder.post_invitation_edit(invitation=Invitation(id=journal.get_submission_editable_id(number=submission.number),
-            #bulk=True,
-            invitees=[venue_id],
-            noninvitees=[journal.get_editors_in_chief_id()],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id ] },
-                'readers': { 'const': [ venue_id, journal.get_action_editors_id(number=submission.number), journal.get_authors_id(number=submission.number) ] },
-                'writers': { 'const': [ venue_id ] },
-                'note': {
-                    'id': { 'const': submission.id },
-                    'writers': { 'const': [ venue_id, journal.get_authors_id(number=submission.number) ] }
-                }
-            }
-    ))
+    journal.invitation_builder.set_note_submission_editable_invitation(submission)
 
     client.post_note_edit(invitation=journal.get_submission_editable_id(number=submission.number),
         signatures=[venue_id],
@@ -78,7 +46,7 @@ def process(client, edit, invitation):
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')
-    journal.invitation_builder.set_camera_ready_revision_invitation(submission, decision, journal.get_due_date(weeks = 4))
+    journal.invitation_builder.set_note_camera_ready_revision_invitation(submission, journal.get_due_date(weeks = 4))
 
     ## Send email to authors
     print('Send email to authors')

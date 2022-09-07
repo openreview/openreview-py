@@ -135,7 +135,7 @@ def process(client, note, invitation):
             conference.create_ethics_review_stage()
 
         elif invitation_type == 'Meta_Review_Stage':
-            conference.set_meta_review_stage(openreview.helpers.get_meta_review_stage(client, forum_note))
+            conference.create_meta_review_stage()
 
         elif invitation_type == 'Decision_Stage':
             conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))

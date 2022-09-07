@@ -20,7 +20,7 @@ def process(client, edit, invitation):
         duedate = journal.get_due_date(weeks = 1)
 
         print('Enable review rating')
-        journal.invitation_builder.set_review_rating_invitation(submission, duedate)
+        journal.invitation_builder.set_note_review_rating_invitation(submission, duedate)
 
         ## send email to action editors
         print('Send email to AEs')

@@ -178,7 +178,7 @@ class Journal(object):
     def get_review_id(self, number=None):
         return self.__get_invitation_id(name='Review', number=number)
 
-    def get_review_rating_id(self, signature):
+    def get_review_rating_id(self, signature=None):
         return self.__get_invitation_id(name='Rating', prefix=signature)
 
     def get_accepted_id(self):
@@ -243,22 +243,27 @@ class Journal(object):
         return self.__get_invitation_id(name='Volunteer_to_Review_Approval', number=number)
 
 
-    def get_public_comment_id(self, number):
+    def get_public_comment_id(self, number=None):
         return self.__get_invitation_id(name='Public_Comment', number=number)
 
-    def get_official_comment_id(self, number):
+    def get_official_comment_id(self, number=None):
         return self.__get_invitation_id(name='Official_Comment', number=number)
 
-    def get_moderation_id(self, number):
+    def get_moderation_id(self, number=None):
         return self.__get_invitation_id(name='Moderation', number=number)
 
-    def get_submission_editable_id(self, number):
+    def get_submission_editable_id(self, number=None):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
     def get_request_form(self):
-        forum_note = self.client.get_notes(invitation='(openreview.net|OpenReview.net)/Support/-/Journal_Request$', content={'venue_id':self.venue_id})
-        if forum_note:
-            return forum_note[0]
+        journal_request_invitation = tools.get_invitation(self.client, 'OpenReview.net/Support/-/Journal_Request')
+        if not journal_request_invitation:
+            journal_request_invitation = tools.get_invitation(self.client, 'openreview.net/Support/-/Journal_Request')
+
+        if journal_request_invitation:
+            forum_note = self.client.get_notes(invitation=journal_request_invitation.id, content={'venue_id':self.venue_id})
+            if forum_note:
+                return forum_note[0]
 
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
@@ -331,7 +336,7 @@ class Journal(object):
 
     def setup_author_submission(self, note):
         self.group_builder.setup_submission_groups(self, note)
-        self.invitation_builder.set_revision_submission(note)
+        self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
         self.setup_ae_assignment(note)
@@ -339,9 +344,9 @@ class Journal(object):
         self.setup_reviewer_assignment(note)
 
     def setup_under_review_submission(self, note):
-        self.invitation_builder.set_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
+        self.invitation_builder.set_note_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
-        self.invitation_builder.set_comment_invitation(note)
+        self.invitation_builder.set_note_comment_invitation(note)
         self.invitation_builder.release_submission_history(note)
         self.invitation_builder.expire_invitation(self.get_review_approval_id(note.number))
 
@@ -476,7 +481,6 @@ class Journal(object):
             ]
             return '\n'.join(bibtex)
 
-
     def get_late_invitees(self, invitation_id):
 
         invitation = self.client.get_invitation(invitation_id)
@@ -595,3 +599,231 @@ Your {lower_formatted_invitation} on a submission has been {action}
 '''
             self.client.post_message(recipients=[self.get_editors_in_chief_id()], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info)
 
+    def setup_note_invitations(self):
+
+        note_invitations = self.client.get_all_invitations(prefix=f'{self.venue_id}/{self.submission_group_name}')
+        submissions_by_number = { s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id())}
+
+        def find_number(tokens):
+            for token in tokens:
+                if token.startswith(self.submission_group_name):
+                    return int(token.replace(self.submission_group_name, ''))
+
+        for invitation in tqdm(note_invitations):
+
+            tokens = invitation.id.split('/')
+            name = tokens[-1]
+            note_number = find_number(tokens)
+            submission = submissions_by_number.get(note_number)
+            replyto = None
+            if 'note' in invitation.edit and 'replyto' in invitation.edit['note']:
+                replyto = invitation.edit['note']['replyto']['const'] if 'const' in invitation.edit['note']['replyto'] else invitation.edit['note']['replyto']
+
+            if name and submission:
+
+                super_invitation_name = self.__get_invitation_id(name=name)
+                if invitation.id.endswith('/Assignment/Acknowledgement'):
+                    reviewer_id = tokens[-3]
+                    review_invitation = self.client.get_invitation(self.get_review_id(number=note_number))
+                    self.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(submission, reviewer_id, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)), review_duedate=datetime.datetime.fromtimestamp(int(review_invitation.duedate/1000)).strftime("%b %d, %Y"))
+
+                elif invitation.id.endswith('/-/Solicit_Review'):
+                    self.update_solicit_review(note_number, invitation)
+
+                elif invitation.id == self.get_review_approval_id(number=note_number):
+                    self.invitation_builder.set_note_review_approval_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                
+                elif invitation.id == self.get_submission_editable_id(number=note_number):
+                    self.invitation_builder.set_note_submission_editable_invitation(submission)
+
+                elif invitation.id == self.get_desk_rejection_approval_id(number=note_number):
+                    self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                
+                elif invitation.id == self.get_withdrawal_id(number=note_number):
+                    self.invitation_builder.set_note_withdrawal_invitation(submission)
+                
+                elif invitation.id == self.get_desk_rejection_id(number=note_number):
+                    self.invitation_builder.set_note_desk_rejection_invitation(submission)
+                
+                elif invitation.id == self.get_retraction_id(number=note_number):
+                    self.invitation_builder.set_note_retraction_invitation(submission)
+                
+                elif invitation.id == self.get_retraction_release_id(number=note_number):
+                    self.invitation_builder.set_note_retraction_release_invitation(submission)
+                
+                elif invitation.id == self.get_retraction_approval_id(number=note_number):
+                    self.invitation_builder.set_note_retraction_approval_invitation(submission, openreview.api.Note(id=replyto))
+                
+                elif invitation.id == self.get_review_id(number=note_number):
+                    reviews = self.client.get_notes(invitation=invitation.id, limit=1)
+                    is_public = reviews and 'everyone' in reviews[0].readers
+                    self.invitation_builder.set_note_review_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    if is_public:
+                        invitation = self.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=invitation.id,
+                                signatures=[self.get_editors_in_chief_id()],
+                                edit={
+                                    'note': {
+                                        'readers': [ 'everyone' ]
+                                    }
+                                }
+                        ))                    
+                
+                elif invitation.id == self.get_release_review_id(number=note_number):
+                    self.invitation_builder.set_note_release_review_invitation(submission)
+
+                elif invitation.id == self.get_reviewer_recommendation_id(number=note_number):
+                    self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate = datetime.datetime.fromtimestamp(int(invitation.cdate/1000)), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif invitation.id == self.get_solicit_review_id(number=note_number):
+                    self.invitation_builder.set_note_solicit_review_invitation(submission)
+
+                elif super_invitation_name == self.get_solicit_review_approval_id(number=note_number):
+                    replyto_note = self.client.get_note(replyto)
+                    self.invitation_builder.set_note_solicit_review_approval_invitation(submission, replyto_note, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif invitation.id == self.get_revision_id(number=note_number):
+                    self.invitation_builder.set_note_revision_invitation(submission)
+
+                elif invitation.id == self.get_public_comment_id(number=note_number):
+                    self.invitation_builder.set_note_comment_invitation(submission)
+
+                elif invitation.id == self.get_official_comment_id(number=note_number):
+                    a=1
+
+                elif invitation.id == self.get_moderation_id(number=note_number):
+                    a=1
+
+                elif invitation.id == self.get_release_comment_id(number=note_number):
+                    self.invitation_builder.set_note_release_comment_invitation(submission)
+
+                elif invitation.id == self.get_ae_decision_id(number=note_number):
+                    self.invitation_builder.set_note_decision_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif invitation.id == self.get_release_decision_id(number=note_number):
+                    self.invitation_builder.set_note_decision_release_invitation(submission)
+
+                elif invitation.id == self.get_decision_approval_id(number=note_number):
+                    self.invitation_builder.set_note_decision_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_review_rating_id():
+                    self.invitation_builder.set_note_review_rating_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif invitation.id == self.get_camera_ready_revision_id(number=note_number):
+                    self.invitation_builder.set_note_camera_ready_revision_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif invitation.id == self.get_camera_ready_verification_id(number=note_number):
+                    self.invitation_builder.set_note_camera_ready_verification_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif invitation.id == self.get_authors_deanonymization_id(number=note_number):
+                    self.invitation_builder.set_note_authors_deanonymization_invitation(submission)
+
+                elif invitation.id == self.get_reviewer_assignment_id(number=note_number):
+                    self.invitation_builder.set_reviewer_assignment_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))                    
+
+                elif invitation.id == self.get_ae_recommendation_id(number=note_number):
+                    self.invitation_builder.set_ae_recommendation_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))                    
+                else:
+                    print(f'Builder not found for {invitation.id}')
+
+            else:
+                print(f'Name or invitation not found: {name}, {submission}')
+
+    def setup_responsibility_acknowledgement_invitations(self):
+
+        reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id())
+
+        for invitation in tqdm(reviewer_invitations):
+            tokens = invitation.id.split('/')
+            self.invitation_builder.set_single_reviewer_responsibility_invitation(tokens[-3], duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+    
+    def update_solicit_review(self, note_number, invitation):
+
+        if 'const' not in invitation.edit['note']['forum']:
+            return 
+        
+        updated_edit = {
+            "signatures": {
+                'param': {
+                    "regex": "~.*",
+                }
+            },
+            "readers": [
+                "TMLR/Editors_In_Chief",
+                f"TMLR/Paper{note_number}/Action_Editors",
+                "${2/signatures}"
+            ],
+            "nonreaders": [
+                f"TMLR/Paper{note_number}/Authors"
+            ],
+            "writers": [
+                "TMLR",
+                f"TMLR/Paper{note_number}/Action_Editors",
+                "${2/signatures}"
+            ],  
+            "note": {
+                "id": {
+                    'param': {
+                        "withInvitation": invitation.id,
+                        "optional": True
+                    }
+                },
+                "forum": invitation.edit['note']['forum']['const'],
+                "replyto": invitation.edit['note']['replyto']['const'],
+                "ddate": {
+                    'param': {
+                        "range": [
+                        0,
+                        9999999999999
+                        ],
+                        "optional": True,
+                        "deletable": True
+                    }
+                },
+                "signatures": ['${3/signatures}'],
+                "readers": [
+                    "TMLR",
+                    f"TMLR/Paper{note_number}/Action_Editors",
+                    "${3/signatures}"
+                ],
+                "nonreaders": [
+                    f"TMLR/Paper{note_number}/Authors"
+                ],
+                "writers": [
+                    "TMLR",
+                    f"TMLR/Paper{note_number}/Action_Editors",
+                    "${3/signatures}"
+                ],
+                "content": {
+                    "solicit": {
+                        "order": 1,
+                        "value": {
+                            'param': {
+                                "type": "string",
+                                "enum": [
+                                "I solicit to review this paper."
+                                ],
+                                "input": "radio"
+                            }
+                        }
+                    },
+                    "comment": {
+                        "order": 2,
+                        "description": "Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.",
+                        "value": {
+                            'param': {
+                                "type": "string",
+                                "maxLength": 200000,
+                                "input": "textarea",
+                                "optional": True,
+                                "markdown": True
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+        invitation.edit = updated_edit
+        invitation.domain = None
+        invitation.invitations = None
+        self.invitation_builder.post_invitation_edit(invitation, replacement=True)

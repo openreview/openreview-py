@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+from sys import prefix
 import openreview
 from openreview.api import Invitation
 from tqdm import tqdm
@@ -17,28 +18,31 @@ class InvitationBuilder(object):
         seven_days = day * 7
         one_month = day * 30
 
+        self.process_script = self.get_super_process_content('process_script')
+        self.preprocess_script = self.get_super_process_content('preprocess_script')
+
         self.author_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
             'script': self.get_process_content('process/author_edge_reminder_process.py')
         }
 
         self.reviewer_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days)],
-            'script': self.get_process_content('process/reviewer_reminder_process.py')
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_process', self.journal.get_meta_invitation_id())
         }
 
         self.reviewer_reminder_process_with_EIC = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
-            'script': self.get_process_content('process/reviewer_reminder_process.py')
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('reviewer_reminder_process', self.journal.get_meta_invitation_id())
         }
 
         self.ae_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
-            'script': self.get_process_content('process/action_editor_reminder_process.py')
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('ae_reminder_process', self.journal.get_meta_invitation_id())
         }
 
         self.ae_edge_reminder_process = {
-            'dates': ["#{duedate} + " + str(day), "#{duedate} + " + str(seven_days), "#{duedate} + " + str(one_month)],
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
             'script': self.get_process_content('process/action_editor_edge_reminder_process.py')
         }
 
@@ -49,6 +53,7 @@ class InvitationBuilder(object):
         self.set_reviewer_responsibility_invitation()
         self.set_reviewer_report_invitation()
         self.set_submission_invitation()
+        self.set_submission_editable_invitation()
         self.set_review_approval_invitation()
         self.set_desk_rejection_approval_invitation()
         self.set_under_review_invitation()
@@ -61,7 +66,7 @@ class InvitationBuilder(object):
         self.set_ae_assignment(assignment_delay)
         self.set_reviewer_assignment(assignment_delay)
         self.set_reviewer_assignment_acknowledgement_invitation()
-        self.set_super_review_invitation()
+        self.set_review_invitation()
         self.set_official_recommendation_invitation()
         self.set_solicit_review_invitation()
         self.set_solicit_review_approval_invitation()
@@ -69,7 +74,44 @@ class InvitationBuilder(object):
         self.set_desk_rejection_invitation()
         self.set_retraction_invitation()
         self.set_retraction_approval_invitation()
+        self.set_revision_invitation()
+        self.set_decision_invitation()
+        self.set_decision_approval_invitation()
+        self.set_decision_release_invitation()
+        self.set_review_rating_invitation()
+        self.set_camera_ready_revision_invitation()
+        self.set_camera_ready_verification_invitation()
+        self.set_authors_deanonymization_invitation()
+        self.set_comment_invitation()
 
+    
+    def get_super_process_content(self, field_name):
+        return '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content["''' + field_name + '''"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+
+    def get_super_dateprocess_content(self, field_name, invitation_id=None):
+        meta_invitation = 'client.get_invitation("' + invitation_id + '")' if invitation_id else "client.get_invitation(invitation.invitations[0])"
+
+        return '''def process(client, invitation):
+    meta_invitation = ''' + meta_invitation + '''
+    script = meta_invitation.content["''' + field_name + '''"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+        'date_index': date_index
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+'''
+    
     def get_process_content(self, file_path):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
@@ -96,7 +138,7 @@ class InvitationBuilder(object):
     def expire_paper_invitations(self, note):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=f'{self.venue_id}/Paper{note.number}/.*', type='all')
+        invitations = self.client.get_invitations(prefix=f'{self.venue_id}/Paper{note.number}/.*', type='all')
         exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
 
         for invitation in invitations:
@@ -108,17 +150,17 @@ class InvitationBuilder(object):
                     reviews = { r.signatures[0]: r for r in self.client.get_notes(invitation=invitation.id) }
                     reviewers = self.client.get_group(self.journal.get_reviewers_id(number=note.number))
                     for reviewer in reviewers.members:
-                        signatures_group = self.client.get_groups(regex=self.journal.get_reviewers_id(number=note.number, anon=True), member=reviewer)[0]
+                        signatures_group = self.client.get_groups(prefix=self.journal.get_reviewers_id(number=note.number, anon=True), member=reviewer)[0]
                         if signatures_group.id not in reviews:
                             pending_edge = self.client.get_edges(invitation=self.journal.get_reviewer_pending_review_id(), tail=reviewer)[0]
                             pending_edge.weight -= 1
                             self.client.post_edge(pending_edge)
              
 
-    def expire_acknowledgement_invitations(self):
+    def expire_reviewer_responsibility_invitations(self):
 
         now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitations = self.client.get_invitations(regex=self.journal.get_reviewer_responsibility_id(signature='.*'))
+        invitations = self.client.get_invitations(invitation=self.journal.get_reviewer_responsibility_id())
 
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
@@ -133,6 +175,28 @@ class InvitationBuilder(object):
 
         return self.post_invitation_edit(invitation, replacement=True)
 
+    def save_super_invitation(self, invitation_id, invitation_content, edit_content, invitation):
+        venue_id = self.venue_id
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            content=invitation_content,
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': edit_content,   
+                'invitation': invitation,
+                'replacement': True
+            }
+        )
+
+        self.save_invitation(invitation)
+
+
     def set_meta_invitation(self):
 
         venue_id=self.journal.venue_id
@@ -144,6 +208,14 @@ class InvitationBuilder(object):
                 invitees=[venue_id],
                 readers=[venue_id],
                 signatures=[venue_id],
+                content={
+                    'ae_reminder_process': {
+                        'value': self.get_process_content('process/action_editor_reminder_process.py')
+                    },
+                    'reviewer_reminder_process': {
+                        'value': self.get_process_content('process/reviewer_reminder_process.py')
+                    }
+                },
                 edit=True
             )
         )
@@ -175,45 +247,45 @@ class InvitationBuilder(object):
                         writers = [venue_id],
                         signatures = [venue_id],
                         edit = {
-                            'signatures': { 'const': ['(anonymous)'] },
-                            'readers': { 'const': [venue_id] },
+                            'signatures': ['(anonymous)'],
+                            'readers': [venue_id],
                             'note': {
-                                'signatures': { 'const': ['${signatures}'] },
-                                'readers': { 'const': [venue_id] },
-                                'writers': { 'const': [venue_id] },
+                                'signatures': ['${3/signatures}'],
+                                'readers': [venue_id],
+                                'writers': [venue_id],
                                 'content': {
                                     'title': {
                                         'order': 1,
-                                        'value': {
-                                            'type': "string",
-                                            'const': 'Recruit response'
-                                        }
+                                        'value': 'Recruit response'
                                     },
                                     'user': {
                                         'description': 'email address',
                                         'order': 2,
                                         'value': {
-                                            'type': "string",
-                                            'regex': '.*'
+                                            'param': {
+                                                'type': "string"
+                                            }
                                         }
                                     },
                                     'key': {
                                         'description': 'Email key hash',
                                         'order': 3,
                                         'value': {
-                                            'type': "string",
-                                            'regex': '.{0,100}'
+                                            'param': {
+                                                'type': "string",
+                                                'regex': '.{0,100}'
+                                            }
                                         }
                                     },
                                     'response': {
                                         'description': 'Invitation response',
                                         'order': 4,
                                         'value': {
-                                            'type': "string",
-                                            'enum': ['Yes', 'No']
-                                        },
-                                        'presentation': {
-                                            'input': 'radio'
+                                            'param': {
+                                                'type': "string",
+                                                'enum': ['Yes', 'No'],
+                                                'input': 'radio'
+                                            }
                                         }
                                     }
                                 }
@@ -257,45 +329,45 @@ class InvitationBuilder(object):
                         writers = [venue_id],
                         signatures = [venue_id],
                         edit = {
-                            'signatures': { 'const': ['(anonymous)'] },
-                            'readers': { 'const': [venue_id] },
+                            'signatures': ['(anonymous)'],
+                            'readers': [venue_id],
                             'note': {
-                                'signatures': { 'const': ['${signatures}'] },
-                                'readers': { 'const': [venue_id] },
-                                'writers': { 'const': [venue_id] },
+                                'signatures': ['${3/signatures}'],
+                                'readers': [venue_id],
+                                'writers': [venue_id],
                                 'content': {
                                     'title': {
                                         'order': 1,
-                                        'value': {
-                                            'type': "string",
-                                            'const': 'Recruit response'
-                                        }
+                                        'value': 'Recruit response'
                                     },
                                     'user': {
                                         'description': 'email address',
                                         'order': 2,
                                         'value': {
-                                            'type': "string",
-                                            'regex': '.*'
+                                            'param': {
+                                                'type': "string"
+                                            }
                                         }
                                     },
                                     'key': {
                                         'description': 'Email key hash',
                                         'order': 3,
                                         'value': {
-                                            'type': "string",
-                                            'regex': '.{0,100}'
+                                            'param': {
+                                                'type': "string",
+                                                'regex': '.{0,100}'
+                                            }
                                         }
                                     },
                                     'response': {
                                         'description': 'Invitation response',
                                         'order': 4,
                                         'value': {
-                                            'type': "string",
-                                            'enum': ['Yes', 'No']
-                                        },
-                                        'presentation': {
-                                            'input': 'radio'
+                                            'param': {
+                                                'type': "string",
+                                                'enum': ['Yes', 'No'],
+                                                'input': 'radio'
+                                            }
                                         }
                                     }
                                 }
@@ -311,7 +383,6 @@ class InvitationBuilder(object):
     def set_reviewer_responsibility_invitation(self):
 
         venue_id=self.journal.venue_id
-        reviewers_id = self.journal.get_reviewers_id()
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
         invitation=Invitation(id=self.journal.get_form_id(),
@@ -320,39 +391,43 @@ class InvitationBuilder(object):
             writers = [venue_id],
             signatures = [venue_id],
             edit = {
-                'signatures': { 'const': [venue_id], 'type': 'group[]' },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
                 'note': {
                     'id': {
-                        'withInvitation': self.journal.get_form_id(),
-                        'optional': True
+                        'param': {
+                            'withInvitation': self.journal.get_form_id(),
+                            'optional': True
+                        }
                     },
                     'ddate': {
-                        'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     },
-                    'signatures': { 'const': [editors_in_chief_id] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
+                    'signatures': [editors_in_chief_id],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
                     'content': {
                         'title': {
                             'order': 1,
                             'value': {
-                                'type': "string",
-                                'regex': '.*'
+                                'param': {
+                                    'type': "string"
+                                }
                             }
                         },
                         'description': {
                             'order': 2,
                             'value': {
-                                'type': "string",
-                                'regex': '.{0,50000}'
-                            },
-                            'presentation': {
-                                'markdown': True
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 50000,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
@@ -388,85 +463,98 @@ If you have questions after reviewing the points below that are not answered on 
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'reviewerId': { 'regex': '.*', 'type': 'string' },
-                    'duedate': { 'regex': '.*', 'type': 'integer' }
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'reviewerId': { 
+                        'value': {
+                            'param': {
+                                'type': 'string' 
+                            }
+                        }
+                    },
+                    'duedate': {
+                        'value': {
+                            'param': {
+                                'type': 'integer' 
+                            }
+                        }
+                    }
                 },
+                'replacement': True,
                 'invitation': {
-                    'id': { 'const': self.journal.get_reviewer_responsibility_id(signature='${params.reviewerId}') },
-                    'invitees': { 'const': ['${params.reviewerId}'] },
-                    'readers': { 'const': [venue_id, '${params.reviewerId}'] },
-                    'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [editors_in_chief_id] },
-                    'maxReplies': { 'const': 1},
-                    'duedate': { 'const': '${params.duedate}' },
-                    'dateprocesses': { 'const': [self.reviewer_reminder_process]},
+                    'id': self.journal.get_reviewer_responsibility_id(signature='${2/content/reviewerId/value}'),
+                    'invitees': ['${3/content/reviewerId/value}'],
+                    'readers': [venue_id, '${3/content/reviewerId/value}'],
+                    'writers': [venue_id],
+                    'signatures': [editors_in_chief_id],
+                    'maxReplies': 1,
+                    'duedate': '${2/content/duedate/value}',
+                    'dateprocesses': [self.reviewer_reminder_process],
                     'edit': {
-                        'signatures': { 'const': { 'regex': '~.*', 'type': 'group[]' }},
-                        'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
+                        'signatures': { 'param': { 'regex': '~.*' }},
+                        'readers': [venue_id, '${2/signatures}'],
                         'note': {
-                            'forum': { 'const': { 'const': forum_note_id }},
-                            'replyto': { 'const': { 'const': forum_note_id }},
-                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
-                            'writers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
+                            'forum': forum_note_id,
+                            'replyto': forum_note_id,
+                            'signatures': ['${3/signatures}'],
+                            'readers': [venue_id, '${3/signatures}'],
+                            'writers': [venue_id, '${3/signatures}'],
                             'content': {
-                                'paper_assignment': { 'const': {
+                                'paper_assignment': { 
                                     'order': 1,
                                     'description': "Assignments may be refused under certain circumstances only (see website).",
                                     'value': {
-                                        'type': "string",
-                                        'enum': ['I understand that I am required to review submissions that are assigned, as long as they fill in my area of expertise and are within my annual quota']
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
+                                        'param': {
+                                            'type': "string",
+                                            'enum': ['I understand that I am required to review submissions that are assigned, as long as they fill in my area of expertise and are within my annual quota'],
+                                            'input': 'checkbox'
+                                        }
                                     }
-                                }},
-                                'review_process': { 'const': {
+                                },
+                                'review_process': { 
                                     'order': 2,
                                     'value': {
-                                        'type': "string",
-                                        'enum': ['I understand that TMLR has a strict 6 week review process (for submissions of at most 12 pages of main content), and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.']
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
+                                        'param': {
+                                            'type': "string",
+                                            'enum': ['I understand that TMLR has a strict 6 week review process (for submissions of at most 12 pages of main content), and that I will need to submit an initial review (within 2 weeks), engage in discussion, and enter a recommendation within that period.'],
+                                            'input': 'checkbox'
+                                        }
                                     }
-                                }},
-                                'submissions': { 'const': {
+                                },
+                                'submissions': {
                                     'order': 3,
                                     'description': 'Versions of papers that have been released as pre-prints (e.g. on arXiv) or non-archival workshop submissions may be submitted',
                                     'value': {
-                                        'type': "string",
-                                        'enum': ['I understand that TMLR does not accept submissions which are expanded or modified versions of previously published papers.']
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
+                                        'param': {
+                                            'type': "string",
+                                            'enum': ['I understand that TMLR does not accept submissions which are expanded or modified versions of previously published papers.'],
+                                            'input': 'checkbox'
+                                        }
                                     }
-                                }},
-                                'acceptance_criteria': { 'const': {
+                                },
+                                'acceptance_criteria': { 
                                     'order': 4,
                                     'value': {
-                                        'type': "string",
-                                        'enum': ['I understand that the acceptance criteria for TMLR is technical correctness and clarity of presentation rather than significance or impact.']
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
+                                        'param': {
+                                            'type': "string",
+                                            'enum': ['I understand that the acceptance criteria for TMLR is technical correctness and clarity of presentation rather than significance or impact.'],
+                                            'input': 'checkbox'
+                                        }
                                     }
-                                }},
-                                'action_editor_visibility': { 'const': {
+                                },
+                                'action_editor_visibility': {
                                     'order': 5,
                                     'description': 'TMLR is double blind for reviewers and authors, but the Action Editor assigned to a submission is visible to both reviewers and authors.',
                                     'value': {
-                                        'type': "string",
-                                        'enum': ['I understand that Action Editors are not anonymous.']
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
+                                        'param': {
+                                            'type': "string",
+                                            'enum': ['I understand that Action Editors are not anonymous.'],
+                                            'input': 'checkbox'
+                                        }
                                     }
-                                }}
+                                }
                             }
                         }
                     }
@@ -475,69 +563,117 @@ If you have questions after reviewing the points below that are not answered on 
         )
         self.save_invitation(invitation)
 
+    
+    def set_single_reviewer_responsibility_invitation(self, reviewer_id, duedate):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_reviewer_responsibility_id(),
+            content={ 
+                'reviewerId': { 'value': reviewer_id }, 
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
+            },
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id]
+        )        
+    
     def set_reviewer_assignment_acknowledgement_invitation(self):
 
         venue_id=self.journal.venue_id
-        action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        reviewer_id_regex = self.journal.get_reviewers_id(number='${params.noteNumber}', anon=True) 
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
-        paper_process = self.get_process_content('process/reviewer_assignment_acknowledgement_process.py')
-
-        invitation=Invitation(id=self.journal.get_reviewer_assignment_acknowledgement_id(),
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteId': { 'regex': '.*', 'type': 'string' },
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'reviewerId': { 'regex': '.*', 'type': 'string' },
-                    'duedate': { 'regex': '.*', 'type': 'integer' },
-                    'reviewDuedate': { 'regex': '.*', 'type': 'string' }
-                },
-                'invitation': {
-                    'id': { 'const': self.journal.get_reviewer_assignment_acknowledgement_id(number='${params.noteNumber}', reviewer_id='${params.reviewerId}') },
-                    'invitees': { 'const': ['${params.reviewerId}'] },
-                    'readers': { 'const': [venue_id, action_editors_id, '${params.reviewerId}'] },
-                    'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [editors_in_chief_id] },
-                    'maxReplies': { 'const': 1 },
-                    'duedate': { 'const': '${params.duedate}' },
-                    'expdate': { 'const': None },
-                    'process': { 'const': paper_process },
-                    'dateprocesses': { 'const': [self.reviewer_reminder_process]},
-                    'edit': {
-                        'signatures': { 'const': { 'regex': reviewer_id_regex, 'type': 'group[]' }},
-                        'readers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
-                        'note': {
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.noteId}' }},
-                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [editors_in_chief_id, action_editors_id, '\\${signatures}'] }},
-                            'writers': { 'const': { 'const': [venue_id, '\\${signatures}'] }},
-                            'content': {
-                                'assignment_acknowledgement': { 'const': {
-                                    'order': 1,
-                                    'value': {
-                                        'type': "string",
-                                        'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${params.reviewDuedate} UTC time.']
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
-                                    }
-                                }},
-                            }
-                        }
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/reviewer_assignment_acknowledgement_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'reviewerId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'reviewDuedate': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
                     }
                 }
             }
+        }        
+
+        invitation= {
+            'id': self.journal.get_reviewer_assignment_acknowledgement_id(number='${2/content/noteNumber/value}', reviewer_id='${2/content/reviewerId/value}'),
+            'invitees': ['${3/content/reviewerId/value}'],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/reviewerId/value}'],
+            'writers': [venue_id],
+            'signatures': [editors_in_chief_id],
+            'maxReplies': 1,
+            'duedate': '${2/content/duedate/value}',
+            'process': self.process_script,
+            'dateprocesses': [self.reviewer_reminder_process],
+            'edit': {
+                'signatures': { 'param': { 'regex': self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True) }},
+                'readers': [venue_id, '${2/signatures}'],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'signatures': ['${3/signatures}'],
+                    'readers': [editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${2/signatures}'],
+                    'writers': [venue_id, '${2/signatures}'],
+                    'content': {
+                        'assignment_acknowledgement': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'type': "string",
+                                    'enum': ['I acknowledge my responsibility to submit a review for this submission by the end of day on ${9/content/reviewDuedate/value} UTC time.'],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        },
+                    }
+                }
+            }
+        }
+        
+        self.save_super_invitation(self.journal.get_reviewer_assignment_acknowledgement_id(), invitation_content, edit_content, invitation)
+
+    def set_note_reviewer_assignment_acknowledgement_invitation(self, note, reviewer_id, duedate, review_duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_reviewer_assignment_acknowledgement_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'reviewerId': { 'value': reviewer_id },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)  },
+                'reviewDuedate': { 'value': review_duedate }
+             },
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id]
         )
-        self.save_invitation(invitation)
 
     def set_reviewer_report_invitation(self):
 
@@ -571,55 +707,62 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'regex': '~.*|' + editors_in_chief_id, 'type': 'group[]' },
-                'readers': { 'const': [venue_id, '${signatures}'] },
+                'signatures': { 'param': { 'regex': '~.*|' + editors_in_chief_id }},
+                'readers': [venue_id, '${2/signatures}'],
                 'note': {
                     'id': {
-                        'withInvitation': reviewer_report_id,
-                        'optional': True
+                        'param': {
+                            'withInvitation': reviewer_report_id,
+                            'optional': True
+                        }
                     },                    
-                    'forum': { 'const': forum_note_id },
-                    'replyto': { 'const': forum_note_id },
-                    'signatures': { 'const': ['${signatures}'] },
-                    'readers': { 'const': [venue_id, '${signatures}'] },
-                    'writers': { 'const': [venue_id, '${signatures}'] },
+                    'forum': forum_note_id,
+                    'replyto': forum_note_id,
+                    'signatures': ['${3/signatures}'],
+                    'readers': [venue_id, '${3/signatures}'],
+                    'writers': [venue_id, '${3/signatures}'],
                     'content': {
                         'reviewer_id': { 
                             'value': {
-                                'type': "string",
-                                'regex': '~.*'
+                                'param': {
+                                    'type': "string",
+                                    'regex': '~.*'
+                                }
                             },
                             'description': 'OpenReview profile id of the reviewer that you want to report. It is being displayed in the Action Editor console with the property "profileID"',
                             'order': 1                            
                         },
                         'report_reason': {
                             'value': {
-                                'type': "string[]",
-                                'enum': [
-                                    'Reviewer never submitted their review',
-                                    'Reviewer was significantly late in submitting their review',
-                                    'Reviewer submitted a poor review',
-                                    'Reviewer did not sufficiently engage with the authors',
-                                    'Reviewer never responded to my messages to them',
-                                    'Reviewer used inappropriate language, was aggressive, or showed significant bias.',
-                                    'Reviewer plagiarized all or part of their review',
-                                    'Reviewer violated the TMLR Code of Conduct',                            
-                                    'Other'
-                                ]
+                                'param': {
+                                    'type': "string[]",
+                                    'enum': [
+                                        'Reviewer never submitted their review',
+                                        'Reviewer was significantly late in submitting their review',
+                                        'Reviewer submitted a poor review',
+                                        'Reviewer did not sufficiently engage with the authors',
+                                        'Reviewer never responded to my messages to them',
+                                        'Reviewer used inappropriate language, was aggressive, or showed significant bias.',
+                                        'Reviewer plagiarized all or part of their review',
+                                        'Reviewer violated the TMLR Code of Conduct',                            
+                                        'Other'
+                                    ],
+                                    'input': 'checkbox'
+                                }
                             },
                             'description': f'Select one or more of the given reasons.',
-                            'order': 2,
-                            'presentation': {
-                                'input': 'checkbox'
-                            }                           
+                            'order': 2
                         },
                         'comment': {
                             'order': 3,
                             'description': 'Add additional details in a comment.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
                             }
                         }                                                
                     }
@@ -630,20 +773,14 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
         self.save_invitation(invitation)
 
-
-
     def set_submission_invitation(self):
 
         venue_id=self.journal.venue_id
         short_name = self.journal.short_name
         editor_in_chief_id=self.journal.get_editors_in_chief_id()
-        action_editors_id=self.journal.get_action_editors_id()
-        authors_id=self.journal.get_authors_id()
-        authors_regex=self.journal.get_authors_id(number='.*')
-        action_editors_value=self.journal.get_action_editors_id(number='${note.number}')
-        action_editors_regex=self.journal.get_action_editors_id(number='.*')
-        reviewers_value=self.journal.get_reviewers_id(number='${note.number}')
-        authors_value=self.journal.get_authors_id(number='${note.number}')
+        action_editors_value=self.journal.get_action_editors_id(number='${4/number}')
+        reviewers_value=self.journal.get_reviewers_id(number='${4/number}')
+        authors_value=self.journal.get_authors_id(number='${4/number}')
 
 
         ## Submission invitation
@@ -654,147 +791,158 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[editor_in_chief_id],
             edit={
-                'signatures': { 'type': 'group[]', 'regex': '~.*' },
-                'readers': { 'const': [ venue_id, action_editors_value, authors_value]},
-                'writers': { 'const': [ venue_id ]},
+                'signatures': { 'param': { 'regex': '~.*' }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${2/note/number}'), self.journal.get_authors_id(number='${2/note/number}')],
+                'writers': [ venue_id ],
                 'note': {
-                    'signatures': { 'const': [authors_value] },
-                    'readers': { 'const': [ venue_id, action_editors_value, authors_value]},
-                    'writers': { 'const': [ venue_id, authors_value]},
+                    'signatures': [self.journal.get_authors_id(number='${2/number}')],
+                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${2/number}'), self.journal.get_authors_id(number='${2/number}')],
+                    'writers': [ venue_id, self.journal.get_authors_id(number='${2/number}')],
                     'content': {
                         'title': {
                             'value': {
-                                'type': "string",
-                                'regex': '^.{1,250}$'
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 250,
+                                }
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 1
                         },
                         'abstract': {
                             'value': {
-                                'type': "string",
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2
                         },
                         'authors': {
                             'value': {
-                                'type': "string[]",
-                                'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                'param': {
+                                    'type': "string[]",
+                                    'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'hidden': True
+                                }
                             },
                             'description': 'Comma separated list of author names.',
                             'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            },
-                            'readers': {
-                                'const': [ venue_id, action_editors_value, authors_value]
-                            }
+                            'readers': [ venue_id, action_editors_value, authors_value]
                         },
                         'authorids': {
                             'value': {
-                                'type': "group[]",
-                                'regex': r'~.*'
+                                'param': {
+                                    'type': "group[]",
+                                    'regex': r'~.*'
+                                }
                             },
                             'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4,
-                            'readers': {
-                                'const': [ venue_id, action_editors_value, authors_value]
-                            }
+                            'readers': [ venue_id, action_editors_value, authors_value]
                         },
                         'pdf': {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['pdf'],
-                                'maxSize': 50
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['pdf'],
+                                    'maxSize': 50
+                                }
                             },
                             'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
                         'submission_length': {
                             'value': {
-                                'type': 'string',
-                                'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)']
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
+                                    'input': 'radio'
+
+                                }
                             },
                             'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                            'order': 6,
-                            'presentation': {
-                                'input': 'radio'
-                            }
+                            'order': 6
                         },                        
                         "supplementary_material": {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['zip', 'pdf'],
-                                'maxSize': 100,
-                                "optional": True
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['zip', 'pdf'],
+                                    'maxSize': 100,
+                                    "optional": True
+                                }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                             "order": 7,
-                            'readers': {
-                                'const': [ venue_id, action_editors_value, reviewers_value, authors_value]
-                            }
+                            'readers': [ venue_id, action_editors_value, reviewers_value, authors_value]
                         },
                         f'previous_{short_name}_submission_url': {
                             'value': {
-                                'type': "string",
-                                'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'optional': True
+                                }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
-                            'order': 8,
+                            'order': 8
                         },
                         'changes_since_last_submission': {
                             'value': {
-                                'type': "string",
-                                'regex': '^[\\S\\s]{1,5000}$',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 9,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 9
                         },
                         'competing_interests': {
                             'value': {
-                                'type': "string",
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
                             'order': 10,
-                            'readers': {
-                                'const': [ venue_id, action_editors_value, authors_value]
-                            }
+                            'readers': [ venue_id, action_editors_value, authors_value]
                         },
                         'human_subjects_reporting': {
                             'value': {
-                                'type': "string",
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                             'order': 11,
-                            'readers': {
-                                'const': [ venue_id, action_editors_value, authors_value]
-                            }
+                            'readers': [ venue_id, action_editors_value, authors_value]
                         },
                         'venue': {
                             'value': {
-                                'type': "string",
-                                'const': f'Submitted to {short_name}',
-                            },
-                            'presentation': {
-                                'hidden': True,
+                                'param': {
+                                    'type': "string",
+                                    'const': f'Submitted to {short_name}',
+                                    'hidden': True
+                                }
                             }
                         },
                         'venueid': {
                             'value': {
-                                'type': "string",
-                                'const': self.journal.submitted_venue_id,
-                            },
-                            'presentation': {
-                                'hidden': True,
+                                'param': {
+                                    'type': "string",
+                                    'const': self.journal.submitted_venue_id,
+                                    'hidden': True
+                                }
                             }
                         }
                     }
@@ -804,13 +952,64 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
         self.save_invitation(invitation)
 
+    def set_submission_editable_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
+        
+        invitation = {
+            'id': self.journal.get_submission_editable_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'noninvitees': [editors_in_chief_id],
+            'readers': [venue_id],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'id': '${4/content/noteId/value}',
+                    'writers': [ venue_id, self.journal.get_authors_id(number='${5/content/noteNumber/value}') ]
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_submission_editable_id(), {}, edit_content, invitation)      
+
+    def set_note_submission_editable_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_submission_editable_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )    
+
     def set_ae_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id
         author_submission_id = self.journal.get_author_submission_id()
         editor_in_chief_id = self.journal.get_editors_in_chief_id()
         action_editors_id = self.journal.get_action_editors_id()
         authors_id = self.journal.get_authors_id()
-        paper_authors_id = self.journal.get_authors_id(number='${{head}.number}')
 
         invitation = Invitation(
             id=self.journal.get_ae_conflict_id(),
@@ -819,40 +1018,48 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
-            maxReplies=1,            
-            type='Edge',
+            maxReplies=1,
+            type='Edge',            
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_conflict_id(),
+                        'optional': True
+                    }
+                },
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, paper_authors_id]
-                },
-                'writers': {
-                    'const': [venue_id]
-                },
-                'signatures': {
-                    'const': [venue_id]
-                },
+                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
                 'head': {
-                    'type': 'note',
-                    'withInvitation': author_submission_id
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'inGroup' : action_editors_id
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 },
                 'label': {
-                    'type': 'string',
-                    'regex': '.*',
-                    'optional': True
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
                 }
             }
         )
@@ -868,37 +1075,45 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_affinity_score_id(),
+                        'optional': True
+                    }
+                },
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, paper_authors_id, '${tail}']
-                },
-                'writers': {
-                    'const': [venue_id]
-                },
-                'signatures': {
-                    'const': [venue_id]
-                },
+                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
                 'head': {
-                    'type': 'note',
-                    'withInvitation': author_submission_id
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'inGroup' : action_editors_id
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 },
                 'label': {
-                    'type': 'string',
-                    'regex': '.*',
-                    'optional': True
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
                 }
             }
         )
@@ -915,43 +1130,45 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_assignment_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, editor_in_chief_id, '${tail}']
-                },
-                'nonreaders': {
-                    'const': [],
-                    'optional': True,
-                    'nullable': True # make it compatible with the UI
-                },
-                'writers': {
-                    'const': [venue_id, editor_in_chief_id]
-                },
-                'signatures': {
-                    'const': [editor_in_chief_id]
-                },
+                'readers': [venue_id, editor_in_chief_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, editor_in_chief_id],
+                'signatures': [editor_in_chief_id],
                 'head': {
-                    'type': 'note',
-                    'withInvitation': author_submission_id ## keep this to make the edge browser work
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'regex': '^~.*$',
-                    'inGroup' : action_editors_id
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 },
                 'label': {
-                    'type': 'string',
-                    'regex': '.*',
-                    'optional': True
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
                 }
             },
             preprocess=self.get_process_content('process/ae_assignment_pre_process.py'),
@@ -973,38 +1190,40 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_recommendation_id(),
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, paper_authors_id]
-                },
-                'nonreaders': {
-                    'const': [],
-                    'optional': True
-                },
-                'writers': {
-                    'const': [venue_id, paper_authors_id]
-                },
-                'signatures': {
-                    'const': [paper_authors_id]
-                },
+                'readers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
+                'nonreaders': [],
+                'writers': [venue_id, self.journal.get_authors_id(number='${{2/head}/number}')],
+                'signatures': [self.journal.get_authors_id(number='${{2/head}/number}')],
                 'head': {
-                    'type': 'note',
-                    'withInvitation': author_submission_id
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'inGroup' : action_editors_id,
-                    'regex': '^~.*$',
-                    'description': 'select at least 3 AEs to recommend. AEs who have conflicts with your submission are not shown.'
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id,
+                        #'description': 'select at least 3 AEs to recommend. AEs who have conflicts with your submission are not shown.'                
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 }
             }
         )
@@ -1020,36 +1239,43 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_custom_max_papers_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, '${tail}']
-                },
-                'writers': {
-                    'const': [venue_id, '${tail}']
-                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, '${2/tail}'],
                 'signatures': {
-                    'type': 'group[]',
-                    'regex': f'{editor_in_chief_id}|~.*'
+                    'param': {
+                        'regex': f'{editor_in_chief_id}|~.*'
+                    }
                 },
                 'head': {
-                    'type': 'group',
-                    'const': action_editors_id
+                    'param': {
+                        'type': 'group',
+                        'const': action_editors_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'inGroup': action_editors_id
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
                 },
                 'weight': {
-                    'type': 'integer',
-                    'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                    'presentation': {
-                        'default': 12,
-                        #'input': 'select'
+                    'param': {
+                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        'default': 12
                     }
                 }
             }
@@ -1066,34 +1292,42 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_availability_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, '${tail}']
-                },
-                'writers': {
-                    'const': [venue_id, '${tail}']
-                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, '${2/tail}'],
                 'signatures': {
-                    'type': 'group[]',
-                    'regex': f'{editor_in_chief_id}|~.*'
+                    'param': {
+                        'regex': f'{editor_in_chief_id}|~.*'
+                    }
                 },
                 'head': {
-                    'type': 'group',
-                    'const': action_editors_id
+                    'param': {
+                        'type': 'group',
+                        'const': action_editors_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'inGroup': action_editors_id
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
                 },
                 'label': {
-                    'type': 'string',
-                    'enum': ['Available', 'Unavailable'],
-                    'presentation': {
+                    'param': {
+                        'enum': ['Available', 'Unavailable'],
                         'default': 'Available'
                     }
                 }
@@ -1114,8 +1348,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         action_editors_id = self.journal.get_action_editors_id()
         reviewers_id = self.journal.get_reviewers_id()
         authors_id = self.journal.get_authors_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${{head}.number}')
-        paper_authors_id = self.journal.get_authors_id(number='${{head}.number}')
 
         invitation = Invitation(
             id=self.journal.get_reviewer_conflict_id(),
@@ -1127,39 +1359,45 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_conflict_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, paper_action_editors_id]
-                },
-                'nonreaders': {
-                    'const': [paper_authors_id]
-                },
-                'writers': {
-                    'const': [venue_id]
-                },
-                'signatures': {
-                    'const': [venue_id]
-                },
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
+                'writers': [venue_id],
+                'signatures': [venue_id],
                 'head': {
-                    'type': 'note',
-                    'withInvitation': author_submission_id
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile'
+                    'param': {
+                        'type': 'profile',
+                        #'inGroup' : reviewers_id
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 },
                 'label': {
-                    'type': 'string',
-                    'regex': '.*',
-                    'optional': True
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
                 }
             }
         )
@@ -1175,40 +1413,45 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_affinity_score_id(),
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, paper_action_editors_id, '${tail}']
-                },
-                'nonreaders': {
-                    'const': [paper_authors_id]
-                },
-                'writers': {
-                    'const': [venue_id]
-                },
-                'signatures': {
-                    'const': [venue_id]
-                },
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
+                'writers': [venue_id],
+                'signatures': [venue_id],
                 'head': {
-                    'type': 'note',
-                    'withInvitation': author_submission_id
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile'
-                    #'member-of' : reviewers_id
+                    'param': {
+                        'type': 'profile',
+                        #'inGroup' : reviewers_id
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 },
                 'label': {
-                    'type': 'string',
-                    'regex': '.*',
-                    'optional': True
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
                 }
             }
         )
@@ -1225,45 +1468,50 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_assignment_id(),
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, paper_action_editors_id, '${tail}']
-                },
-                'nonreaders': {
-                    'const': [paper_authors_id]
-                },
-                'writers': {
-                    'const': [venue_id, paper_action_editors_id]
-                },
+                'readers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}'), '${2/tail}'],
+                'nonreaders': [self.journal.get_authors_id(number='${{2/head}/number}')],
+                'writers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
                 'signatures': {
-                    'type': 'group[]',
-                    'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*')
+                    'param': {
+                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*')
+                    }
                 },
                 'head': {
-                    'type': 'note',
-                    'withInvitation': author_submission_id ## keep this to make the edge browser work
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'regex': '^~.*$',
-                    #'member-of' : reviewers_id
-                    'presentation': {
-                        'options': { 'group': reviewers_id }
+                    'param': {
+                        'type': 'profile',
+                        #'inGroup' : reviewers_id,
+                         'options': { 'group': reviewers_id }
                     }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 },
                 'label': {
-                    'type': 'string',
-                    'regex': '.*',
-                    'optional': True
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
                 }
             },
             preprocess=self.get_process_content('process/reviewer_assignment_pre_process.py'),
@@ -1285,34 +1533,42 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_custom_max_papers_id(),
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, action_editors_id, '${tail}']
-                },
-                'writers': {
-                    'const': [venue_id, '${tail}']
-                },
+                'readers': [venue_id, self.journal.get_action_editors_id(), '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, '${2/tail}'],
                 'signatures': {
-                    'type': 'group[]',
-                    'regex': f'{editor_in_chief_id}|~.*'
+                    'param': {
+                        'regex': f'{editor_in_chief_id}|~.*'
+                    }
                 },
                 'head': {
-                    'type': 'group',
-                    'const': reviewers_id
+                    'param': {
+                        'type': 'group',
+                        'const': reviewers_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'inGroup': reviewers_id
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : reviewers_id
+                    }
                 },
                 'weight': {
-                    'type': 'integer',
-                    'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15],
-                    'presentation': {
+                    'param': {
+                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         'default': 6
                     }
                 }
@@ -1330,31 +1586,39 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_pending_review_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, action_editors_id, '${tail}']
-                },
-                'writers': {
-                    'const': [venue_id]
-                },
-                'signatures': {
-                    'const': [venue_id]
-                },
+                'readers': [venue_id, self.journal.get_action_editors_id(), '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
                 'head': {
-                    'type': 'group',
-                    'const': reviewers_id
+                    'param': {
+                        'type': 'group',
+                        'const': reviewers_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile'
+                    'param': {
+                        'type': 'profile',
+                        #'inGroup' : reviewers_id
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 }
             }
         )
@@ -1370,34 +1634,42 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,            
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_reviewer_availability_id(),
+                        'optional': True
+                    }
+                },                
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, action_editors_id, '${tail}']
-                },
-                'writers': {
-                    'const': [venue_id, '${tail}']
-                },
+                'readers': [venue_id, self.journal.get_action_editors_id(), '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, '${2/tail}'],
                 'signatures': {
-                    'type': 'group[]',
-                    'regex': f'{editor_in_chief_id}|~.*'
+                    'param': {
+                        'regex': f'{editor_in_chief_id}|~.*'
+                    }
                 },
                 'head': {
-                    'type': 'group',
-                    'const': reviewers_id
+                    'param': {
+                        'type': 'group',
+                        'const': reviewers_id
+                    }
                 },
                 'tail': {
-                    'type': 'profile',
-                    'inGroup': reviewers_id
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : reviewers_id
+                    }
                 },
                 'label': {
-                    'type': 'string',
-                    'enum': ['Available', 'Unavailable'],
-                    'presentation': {
+                    'param': {
+                        'enum': ['Available', 'Unavailable'],
                         'default': 'Available'
                     }
                 }
@@ -1415,91 +1687,102 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
 
-        review_approval_invitation_id=self.journal.get_review_approval_id()
-        paper_review_approval_invitation_id=self.journal.get_review_approval_id(number='${params.noteNumber}')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/review_approval_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
 
-        paper_process = self.get_process_content('process/review_approval_process.py')
-
-        invitation = Invitation(id=review_approval_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string' },
-                    'duedate': { 'regex': '.*', 'type': 'integer' }
-                },
-                'invitation': {
-                    'id': { 'const': paper_review_approval_invitation_id },
-                    'invitees': { 'const': [venue_id, paper_action_editors_id] },
-                    'noninvitees': { 'const': [editors_in_chief_id] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
-                    'maxReplies': { 'const': 1},
-                    'duedate': { 'const': '${params.duedate}' },
-                    'process': { 'const': paper_process },
-                    'dateprocesses': { 'const': [self.ae_reminder_process]},
-                    'edit': {
-                        'signatures': { 'const': { 'regex': paper_action_editors_id, 'type': 'group[]' }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
-                        'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
-                        'note': {
-                            'id': { 
-                                'const': {
-                                    'withInvitation': paper_review_approval_invitation_id,
-                                    'optional': True
-                                }                                
-                            },
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.noteId}' }},
-                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id ] }},
-                            'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id ] }},
-                            'content': {
-                                'under_review': { 'const':  {
-                                    'order': 1,
-                                    'description': f'Determine whether this submission is appropriate for review at {short_name} or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
-                                    'value': {
-                                        'type': 'string',
-                                        'enum': ['Appropriate for Review', 'Desk Reject']
-                                    },
-                                    'presentation': {
-                                        'input': 'radio'
-                                    }
-                                }},
-                                'comment': { 'const': {
-                                    'order': 2,
-                                    'description': 'Give an explanation for the desk reject decision. Be specific so that authors understand the decision, and explain why the submission does not meet TMLR\'s acceptance criteria if the rejection is based on the content rather than the format: https://jmlr.org/tmlr/reviewer-guide.html',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                }}
+        invitation = {
+            'id': self.journal.get_review_approval_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'noninvitees': [editors_in_chief_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'duedate': '${2/content/duedate/value}',
+            'process': self.process_script,
+            'dateprocesses': [self.ae_reminder_process],
+            'edit': {
+                'signatures': { 'param': { 'regex': self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'note': {
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_review_approval_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }                                
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                    'content': {
+                        'under_review': {
+                            'order': 1,
+                            'description': f'Determine whether this submission is appropriate for review at {short_name} or should be desk rejected. Clear cases of desk rejection include submissions that are not anonymized, submissions that do not use the unmodified {short_name} stylefile and submissions that clearly overlap with work already published in proceedings (or currently under review for publication at another venue).',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Appropriate for Review', 'Desk Reject'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Give an explanation for the desk reject decision. Be specific so that authors understand the decision, and explain why the submission does not meet TMLR\'s acceptance criteria if the rejection is based on the content rather than the format: https://jmlr.org/tmlr/reviewer-guide.html',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
                 }
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_review_approval_id(),invitation_content, edit_content, invitation)
 
     def set_note_review_approval_invitation(self, note, duedate):
         return self.client.post_invitation_edit(invitations=self.journal.get_review_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate) },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }, 
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -1508,85 +1791,104 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_desk_rejection_approval_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
-
         desk_rejection_approval_invitation_id=self.journal.get_desk_rejection_approval_id()
-        paper_desk_rejection_approval_invitation_id=self.journal.get_desk_rejection_approval_id(number='${params.noteNumber}')
 
-        paper_process = self.get_process_content('process/desk_rejection_approval_process.py')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/desk_rejection_approval_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'replytoId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'date' 
+                    }
+                }
+            }
+        }
 
-        invitation = Invitation(id=desk_rejection_approval_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string' },
-                    'replytoId': { 'regex': '.*', 'type': 'string' },
-                    'duedate': { 'regex': '.*', 'type': 'date' },
-                },
-                'invitation': {
-                    'id': { 'const': paper_desk_rejection_approval_invitation_id },
-                    'invitees': { 'const': [venue_id, editors_in_chief_id] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
-                    'minReplies': { 'const': 1},
-                    'maxReplies': { 'const': 1},
-                    'process': { 'const': paper_process },
-                    'duedate': { 'const': '${params.duedate}'},
-                    'edit': {
-                        'signatures': { 'const': { 'const': [editors_in_chief_id] }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
-                        'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
-                        'writers': { 'const': { 'const': [ venue_id] }},
-                        'note': {
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.replytoId}' }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id] }},
-                            'writers': { 'const': { 'const': [ venue_id] }},
-                            'signatures': { 'const': { 'const': [editors_in_chief_id] }},
-                            'content': {
-                                'approval': { 'const': {
-                                    'order': 1,
-                                    'value': {
-                                        'type': 'string',
-                                        'enum': ['I approve the AE\'s decision.']
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
-                                    }
-                                }},
-                                'comment': { 'const': {
-                                    'order': 2,
-                                    'description': 'Optionally add any additional notes that might be useful for the action editor.',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                }}
+        invitation = {
+            'id': self.journal.get_desk_rejection_approval_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, editors_in_chief_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'minReplies': 1,
+            'maxReplies': 1,
+            'process': self.process_script,
+            'duedate': '${2/content/duedate/value}',
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/replytoId/value}',
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'writers': [ venue_id],
+                    'signatures': [editors_in_chief_id],
+                    'content': {
+                        'approval': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['I approve the AE\'s decision.'],
+                                    'input': 'checkbox'
+                                }
+                            }
+                        },
+                        'comment': { 
+                            'order': 2,
+                            'description': 'Optionally add any additional notes that might be useful for the action editor.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
                 }
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_desk_rejection_approval_id(), invitation_content, edit_content, invitation)
 
     def set_note_desk_rejection_approval_invitation(self, note, review_approval, duedate):
         return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'replytoId': review_approval.id, 'duedate': openreview.tools.datetime_millis(duedate) },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }, 
+                'replytoId': { 'value': review_approval.id }, 
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -1595,84 +1897,85 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_withdrawal_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
-
         withdrawal_invitation_id = self.journal.get_withdrawal_id()
-        paper_withdrawal_invitation_id = self.journal.get_withdrawal_id(number='${params.noteNumber}')
 
-        paper_process = self.get_process_content('process/withdrawal_submission_process.py')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/withdrawal_submission_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
 
-        invitation = Invitation(id=withdrawal_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string'  }
-                },
-                'invitation': {
-                    'id': { 'const': paper_withdrawal_invitation_id },
-                    'invitees': { 'const': [venue_id, paper_authors_id] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
-                    'maxReplies': { 'const': 1 },
-                    'process': { 'const': paper_process },
-                    'edit': {
-                        'signatures': { 'const': { 'regex': paper_authors_id, 'type': 'group[]'  }},
-                        'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
-                        'writers': { 'const': { 'const': [ venue_id, paper_authors_id] }},
-                        'note': {
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.noteId}' }},
-                            'signatures': { 'const': { 'const': [paper_authors_id] }},
-                            'readers': { 'const': { 'const': [ 'everyone' ] }},
-                            'writers': { 'const': { 'const': [ venue_id ] }},
-                            'content': {
-                                'withdrawal_confirmation': { 'const': {
-                                    'value': {
-                                        'type': 'string',
-                                        'enum': [
-                                            'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-                                        ]
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
-                                    },
-                                    'description': 'Please confirm to withdraw.',
-                                    'order': 1
-                                }},
-                                'comment': { 'const': {
-                                    'order': 2,
-                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                }}
+        invitation = {
+            'id': self.journal.get_withdrawal_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'process': self.process_script,
+            'edit': {
+                'signatures': { 'param': { 'regex': self.journal.get_authors_id(number='${5/content/noteNumber/value}')  }},
+                'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id, self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'signatures': [self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
+                    'readers': [ 'everyone' ],
+                    'writers': [ venue_id ],
+                    'content': {
+                        'withdrawal_confirmation': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                                    ],
+                                    'input': 'checkbox'
+                                }
+                            },
+                            'description': 'Please confirm to withdraw.',
+                            'order': 1
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
                 }
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_withdrawal_id(), invitation_content, edit_content, invitation)
 
     def set_note_withdrawal_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_withdrawal_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number },
+            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number} },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -1681,243 +1984,298 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_desk_rejection_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
 
-        desk_rejection_invitation_id = self.journal.get_desk_rejection_id()
-        paper_desk_rejection_invitation_id = self.journal.get_desk_rejection_id(number='${params.noteNumber}')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/desk_rejection_submission_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
 
-        paper_process = self.get_process_content('process/desk_rejection_submission_process.py')
-
-        invitation = Invitation(id=desk_rejection_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string'  }
-                },
-                'invitation': {
-                    'id': { 'const': paper_desk_rejection_invitation_id },
-                    'invitees': { 'const': [venue_id] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
-                    'maxReplies': { 'const': 1 },
-                    'process': { 'const': paper_process },
-                    'edit': {
-                        'signatures': { 'const': { 'const': [editors_in_chief_id]  }},
-                        'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
-                        'writers': { 'const': { 'const': [ venue_id] }},
-                        'note': {
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.noteId}' }},
-                            'signatures': { 'const': { 'const': [editors_in_chief_id] }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id ] }},
-                            'writers': { 'const': { 'const': [ venue_id ] }},
-                            'content': {
-                                'desk_reject_comments': { 'const': {
-                                    'order': 2,
-                                    'description': 'Brief summary of reasons for marking this submission as desk rejected. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                }}
+        invitation = {
+            'id': self.journal.get_desk_rejection_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'process': self.process_script,
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'signatures': [editors_in_chief_id],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id ],
+                    'content': {
+                        'desk_reject_comments': {
+                            'order': 2,
+                            'description': 'Brief summary of reasons for marking this submission as desk rejected. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
                 }
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_desk_rejection_id(), invitation_content, edit_content, invitation)
 
     def set_note_desk_rejection_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_desk_rejection_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
-
 
     def set_retraction_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
-
         retraction_invitation_id = self.journal.get_retraction_id()
-        paper_retraction_invitation_id = self.journal.get_retraction_id(number='${params.noteNumber}')
 
-        paper_process = self.get_process_content('process/retraction_submission_process.py')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/retraction_submission_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
 
-        invitation = Invitation(id=retraction_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string' }
-                },
-                'invitation': {
-                    'id': { 'const': paper_retraction_invitation_id },
-                    'invitees': { 'const': [venue_id, paper_authors_id] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
-                    'maxReplies': { 'const': 1 },
-                    'process': { 'const': paper_process },
-                    'edit': {
-                        'signatures': { 'const': { 'regex': paper_authors_id, 'type': 'group[]' }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, paper_authors_id ] }},
-                        'writers': { 'const': { 'const': [ venue_id, paper_authors_id] }},
-                        'note': {
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.noteId}' }},
-                            'signatures': { 'const': { 'const': [paper_authors_id] }},
-                            'readers': { 'const': { 'const': [ editors_in_chief, paper_action_editors_id, paper_authors_id ] }},
-                            'writers': { 'const': { 'const': [ venue_id ] }},
-                            'content': {
-                                'retraction_confirmation': { 'const': {
-                                    'value': {
-                                        'type': 'string',
-                                        'enum': [
-                                            'I have read and agree with the venue\'s retraction policy on behalf of myself and my co-authors.'
-                                        ]
-                                    },
-                                    'presentation': {
-                                        'input': 'checkbox'
-                                    },
-                                    'description': 'Please confirm to retract.',
-                                    'order': 1
-                                }},
-                                'comment': { 'const': {
-                                    'order': 2,
-                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                }}
+        invitation = {
+            'id': self.journal.get_retraction_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id,  self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'process': self.process_script,
+            'edit': {
+                'signatures': { 'param': { 'regex': self.journal.get_authors_id(number='${5/content/noteNumber/value}') }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'),  self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id,  self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'signatures': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
+                    'readers': [ editors_in_chief, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id ],
+                    'content': {
+                        'retraction_confirmation': { 
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'I have read and agree with the venue\'s retraction policy on behalf of myself and my co-authors.'
+                                    ],
+                                    'input': 'checkbox'
+                                }
+                            },
+                            'description': 'Please confirm to retract.',
+                            'order': 1
+                        },
+                        'comment': { 
+                            'order': 2,
+                            'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
                 }
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_retraction_id(), invitation_content, edit_content, invitation)
+
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        invitation = {
+            'id': self.journal.get_retraction_release_id(number='${2/content/noteNumber/value}'),
+            'bulk': True,
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'),  self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id],
+                'note': {
+                    'id': { 'param': { 'withInvitation': self.journal.get_retraction_id(number='${6/content/noteNumber/value}') }},
+                    'readers': [ 'everyone' ],
+                    'nonreaders': []
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_retraction_release_id(), {}, edit_content, invitation)        
 
     def set_note_retraction_invitation(self, note):
         return self.client.post_invitation_edit(invitations=self.journal.get_retraction_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
 
+    def set_note_retraction_release_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_retraction_release_id(),
+            content={ 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
+
     def set_retraction_approval_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
-
         retraction_approval_invitation_id=self.journal.get_retraction_approval_id()
-        paper_retraction_approval_invitation_id=self.journal.get_retraction_approval_id(number='${params.noteNumber}')
 
-        paper_process = self.get_process_content('process/retraction_approval_process.py')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/retraction_approval_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'replytoId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            }
+        }        
 
-        invitation = Invitation(id=retraction_approval_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string' },
-                    'replytoId': { 'regex': '.*', 'type': 'string' }
-                },
-                'invitation': {
-                    'id': { 'const': paper_retraction_approval_invitation_id },
-                    'invitees': { 'const': [venue_id, editors_in_chief_id] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'signatures': { 'const': [venue_id] },
-                    'minReplies': { 'const': 1},
-                    'maxReplies': { 'const': 1},
-                    'process': { 'const': paper_process },
-                    'edit': {
-                        'signatures': { 'const': { 'const': [editors_in_chief_id] }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id] }},
-                        'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
-                        'writers': { 'const': { 'const': [ venue_id] }},
-                        'note': {
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.replytoId}' }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id] }},
-                            'writers': { 'const': { 'const': [ venue_id] }},
-                            'signatures': { 'const': { 'const': [editors_in_chief_id] }},
-                            'content': {
-                                'approval': { 'const': {
-                                    'order': 1,
-                                    'value': {
-                                        'type': 'string',
-                                        'enum': ['Yes', 'No']
-                                    },
-                                    'presentation': {
-                                        'input': 'radio'
-                                    },
-                                }},
-                                'comment': { 'const': {
-                                    'order': 2,
-                                    'description': 'Optionally add any additional notes that might be useful for the Authors.',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                }}
+        invitation = {
+            'id': self.journal.get_retraction_approval_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, editors_in_chief_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'minReplies': 1,
+            'maxReplies': 1,
+            'process': self.process_script,
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/replytoId/value}',
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
+                    'writers': [ venue_id],
+                    'signatures': [editors_in_chief_id],
+                    'content': {
+                        'approval': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'comment': { 
+                            'order': 2,
+                            'description': 'Optionally add any additional notes that might be useful for the Authors.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
                 }
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_retraction_approval_id(), invitation_content, edit_content, invitation)
 
     def set_note_retraction_approval_invitation(self, note, retraction):
         return self.client.post_invitation_edit(invitations=self.journal.get_retraction_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'replytoId': retraction.id },
+            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }, 'replytoId': { 'value': retraction.id }},
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -1937,43 +2295,44 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             edit={
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'signatures': { 'const': [ venue_id ] },
-                'readers': { 'const': [ 'everyone']},
-                'writers': { 'const': [ venue_id ]},
+                'signatures': [ venue_id ],
+                'readers': [ 'everyone'],
+                'writers': [ venue_id ],
                 'note': {
-                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
-                    'readers': {
-                        'const': ['everyone']
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_author_submission_id() 
+                        },
                     },
+                    'readers': ['everyone'],
                     'content': {
                         'assigned_action_editor': {
                             'value': {
-                                'type': 'string',
-                                'regex': '.*'
+                                'param': {
+                                    'type': 'string'
+                                }
                             }
                         },
                         '_bibtex': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                }
                             }
                         },
                         'venue': {
-                            'value': {
-                                'type': 'string',
-                                'const': f'Under review for {self.journal.short_name}'
-                            }
+                            'value': f'Under review for {self.journal.short_name}'
                         },
                         'venueid': {
-                            'value': {
-                                'type': 'string',
-                                'const': self.journal.under_review_venue_id
-                            }
+                            'value': self.journal.under_review_venue_id
                         }
                     }
                 }
@@ -1985,9 +2344,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_desk_rejected_invitation(self):
         venue_id = self.journal.venue_id
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${note.number}')
-        paper_authors_id = self.journal.get_authors_id(number='${note.number}')
-
         desk_rejected_invitation_id = self.journal.get_desk_rejected_id()
 
         invitation = Invitation(id=desk_rejected_invitation_id,
@@ -1999,32 +2355,31 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             edit={
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_authors_id]},
-                'writers': { 'const': [ venue_id, paper_action_editors_id]},
+                'signatures': [venue_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${2/note/number}'), self.journal.get_authors_id(number='${2/note/number}')],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${2/note/number}')],
                 'note': {
-                    'id': { 'withInvitation': self.journal.get_author_submission_id()  },
-                    'readers': { 'const': [ venue_id, paper_action_editors_id, paper_authors_id] },
-                    'writers': { 'const': [venue_id, paper_action_editors_id] },
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_author_submission_id()  
+                        }
+                    },
+                    'readers': [venue_id, self.journal.get_action_editors_id(number='${2/number}'), self.journal.get_authors_id(number='${2/number}')],
+                    'writers': [venue_id, self.journal.get_action_editors_id(number='${2/number}')],
                     'content': {
                         'venue': {
                             'order': 2,
-                            'value': {
-                                'type': 'string',
-                                'const': f'Desk rejected by {self.journal.short_name}'
-                            }
+                            'value': f'Desk rejected by {self.journal.short_name}'
                         },
                         'venueid': {
                             'order': 3,
-                            'value': {
-                                'type': 'string',
-                                'const': self.journal.desk_rejected_venue_id
-                            }
+                            'value': self.journal.desk_rejected_venue_id
                         }
                     }
                 }
@@ -2045,29 +2400,30 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [ 'everyone' ] },
-                'writers': { 'const': [ venue_id ]},
+                'signatures': [venue_id],
+                'readers': [ 'everyone' ],
+                'writers': [ venue_id ],
                 'note': {
-                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_author_submission_id() 
+                        }
+                    },
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                }
                             }
                         },
                         'venue': {
-                            'value': {
-                                'type': 'string',
-                                'const': 'Withdrawn by Authors'
-                            }
+                            'value': 'Withdrawn by Authors'
                         },
                         'venueid': {
-                            'value': {
-                                'type': 'string',
-                                'const': self.journal.withdrawn_venue_id
-                            }
+                            'value': self.journal.withdrawn_venue_id
                         }
                     }
                 }
@@ -2087,29 +2443,30 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             writers=[venue_id],
             signatures=[venue_id],
             edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [ 'everyone' ] },
-                'writers': { 'const': [ venue_id ]},
+                'signatures': [venue_id],
+                'readers': [ 'everyone' ],
+                'writers': [ venue_id ],
                 'note': {
-                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_author_submission_id() 
+                        }
+                    },
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                }
                             }
                         },
                         'venue': {
-                            'value': {
-                                'type': 'string',
-                                'const': 'Retracted by Authors'
-                            }
+                            'value': 'Retracted by Authors'
                         },
                         'venueid': {
-                            'value': {
-                                'type': 'string',
-                                'const': self.journal.retracted_venue_id
-                            }
+                            'value': self.journal.retracted_venue_id
                         }
                     }
                 }
@@ -2134,29 +2491,30 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[venue_id],
             maxReplies=1,
             edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [ 'everyone' ] },
-                'writers': { 'const': [ venue_id ]},
+                'signatures': [venue_id],
+                'readers': [ 'everyone' ],
+                'writers': [ venue_id ],
                 'note': {
-                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_author_submission_id() 
+                        }
+                    },
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                }
                             }
                         },
                         'venue': {
-                            'value': {
-                                'type': 'string',
-                                'const': f'Rejected by {self.journal.short_name}'
-                            }
+                            'value': f'Rejected by {self.journal.short_name}'
                         },
                         'venueid': {
-                            'value': {
-                                'type': 'string',
-                                'const': self.journal.rejected_venue_id
-                            }
+                            'value': self.journal.rejected_venue_id
                         }
                     }
                 }
@@ -2179,72 +2537,65 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             edit={
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [ 'everyone']},
-                'writers': { 'const': [ venue_id ]},
+                'signatures': [venue_id],
+                'readers': [ 'everyone'],
+                'writers': [ venue_id ],
                 'note': {
-                    'id': { 'withInvitation': self.journal.get_under_review_id() },
-                    'writers': { 'const': [ venue_id ]},
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_under_review_id() 
+                        }
+                    },
+                    'writers': [ venue_id ],
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                }
                             }
                         },
                         'venue': {
-                            'value': {
-                                'type': 'string',
-                                'const': 'Accepted by ' + self.journal.short_name
-                            },
+                            'value': 'Accepted by ' + self.journal.short_name,
                             'order': 1
                         },
                         'venueid': {
-                            'value': {
-                                'type': 'string',
-                                'const': self.journal.accepted_venue_id
-                            },
+                            'value': self.journal.accepted_venue_id,
                             'order': 2
                         },
                         'certifications': {
                             'order': 3,
                             'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
                             'value': {
-                                'type': 'string[]',
-                                'enum': [
-                                    'Featured Certification',
-                                    'Reproducibility Certification',
-                                    'Survey Certification'
-                                ],
-                                'optional': True
-                            },
-                            'presentation': {
-                                'input': 'select'
+                                'param': {
+                                    'type': 'string[]',
+                                    'enum': [
+                                        'Featured Certification',
+                                        'Reproducibility Certification',
+                                        'Survey Certification'
+                                    ],
+                                    'optional': True,
+                                    'input': 'select'
+                                }
                             }
                         },
                         'license': {
-                            'value': {
-                                'type': 'string',
-                                'const': 'Creative Commons Attribution 4.0 International (CC BY 4.0)'
-                            },
+                            'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
                             'order': 4
                         },
                         'authors': {
-                            'readers': {
-                                'type': 'group[]',
-                                'const': ['everyone']
-                            }
+                            'readers': ['everyone']
                         },
                         'authorids': {
-                            'readers': {
-                                'type': 'group[]',
-                                'const': ['everyone']
-                            }
+                            'readers': ['everyone']
                         }
                     }
                 }
@@ -2266,27 +2617,30 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[venue_id],
             maxReplies=1,
             edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [ 'everyone' ] },
-                'writers': { 'const': [ venue_id ]},
+                'signatures': [venue_id],
+                'readers': [ 'everyone' ],
+                'writers': [ venue_id ],
                 'note': {
-                    'id': { 'withInvitation': self.journal.get_author_submission_id() },
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_author_submission_id() 
+                        }
+                    },
                     'content': {
                         '_bibtex': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                }
                             }
                         },
                         'authors': {
-                            'readers': {
-                                'const': ['everyone']
-                            }
+                            'readers': ['everyone']
                         },
                         'authorids': {
-                            'readers': {
-                                'const': ['everyone']
-                            }
+                            'readers': ['everyone']
                         }
                     }
                 }
@@ -2302,80 +2656,81 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         author_submission_id = self.journal.get_author_submission_id()
 
         ae_recommendation_invitation_id=self.journal.get_ae_recommendation_id(number=note.number)
-        ae_recommendation_invitation=openreview.tools.get_invitation(self.client, ae_recommendation_invitation_id)
 
-        if not ae_recommendation_invitation:
-            invitation = Invitation(
-                id=ae_recommendation_invitation_id,
-                duedate=openreview.tools.datetime_millis(duedate),
-                invitees=[authors_id],
-                readers=[venue_id, authors_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                minReplies=1,
-                type='Edge',
-                edit={
-                    'ddate': {
-                        'type': 'date',
+        invitation = Invitation(
+            id=ae_recommendation_invitation_id,
+            duedate=openreview.tools.datetime_millis(duedate),
+            invitees=[authors_id],
+            readers=[venue_id, authors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=3,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': ae_recommendation_invitation_id,
+                        'optional': True
+                    }
+                },                     
+                'ddate': {
+                    'param': {
                         'range': [ 0, 9999999999999 ],
                         'optional': True,
-                        'nullable': True
-                    },
-                    'readers': {
-                        'const': [venue_id, authors_id]
-                    },
-                    'nonreaders': {
-                        'const': [],
-                        'optional': True
-                    },
-                    'writers': {
-                        'const': [venue_id, authors_id]
-                    },
-                    'signatures': {
-                        'const': [authors_id]
-                    },
-                    'head': {
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, authors_id],
+                'nonreaders': [],
+                'writers': [venue_id, authors_id],
+                'signatures': [authors_id],
+                'head': {
+                    'param': {
                         'type': 'note',
                         'const': note.id,
                         'withInvitation': author_submission_id
-                    },
-                    'tail': {
-                        'type': 'profile',
-                        'inGroup' : action_editors_id
-                    },
-                    'weight': {
-                        'type': 'float',
-                        'regex': r'[-+]?[0-9]*\.?[0-9]*'
                     }
                 },
-                date_processes=[self.author_reminder_process]
-            )
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                }
+            },
+            date_processes=[self.author_reminder_process]
+        )
 
-            header = {
-                'title': f'{self.journal.short_name} Action Editor Suggestion',
-                'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
-                    <ul>\
-                        <li>For your submission, please select at least 3 AEs to recommend.</li>\
-                        <li>AEs who have conflicts with your submission are not shown.</li>\
-                        <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
-                        <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
-                        <li>To get started click the button below.</li>\
-                    </ul>\
-                    <br>'
-            }
+        header = {
+            'title': f'{self.journal.short_name} Action Editor Suggestion',
+            'instructions': '<p class="dark"><strong>Instructions:</strong></p>\
+                <ul>\
+                    <li>For your submission, please select at least 3 AEs to recommend.</li>\
+                    <li>AEs who have conflicts with your submission are not shown.</li>\
+                    <li>The list of AEs for a given paper can be sorted by affinity score. In addition, the search box can be used to search for a specific AE by name or institution.</li>\
+                    <li>See <a href="https://jmlr.org/tmlr/editorial-board.html" target="_blank" rel="nofollow">this page</a> for the list of Action Editors and their expertise.</li>\
+                    <li>To get started click the button below.</li>\
+                </ul>\
+                <br>'
+        }
 
-            conflict_id = f'{action_editors_id}/-/Conflict'
-            score_ids = [f'{action_editors_id}/-/Affinity_Score']
-            edit_param = f'{action_editors_id}/-/Recommendation'
-            browse_param = ';'.join(score_ids)
-            params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Instructions](/invitation?id={invitation.id})&maxColumns=2&showCounter=false&version=2'
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
-                content = f.read()
-                content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
-                content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
-                content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
-                invitation.web = content
-                self.post_invitation_edit(invitation)
+        conflict_id = f'{action_editors_id}/-/Conflict'
+        score_ids = [f'{action_editors_id}/-/Affinity_Score']
+        edit_param = f'{action_editors_id}/-/Recommendation'
+        browse_param = ';'.join(score_ids)
+        params = f'start=staticList,type:head,ids:{note.id}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&version=2&referrer=[Instructions](/invitation?id={invitation.id})&maxColumns=2&showCounter=false&version=2'
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/suggestAEWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
+            content = content.replace("var EDGE_BROWSER_PARAMS = '';", "var EDGE_BROWSER_PARAMS = '" + params + "';")
+            invitation.web = content
+            self.post_invitation_edit(invitation)
 
     def set_reviewer_assignment_invitation(self, note, duedate):
 
@@ -2398,35 +2753,39 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             date_processes=[self.ae_edge_reminder_process],
             type='Edge',
             edit={
+                'id': {
+                    'param': {
+                        'withInvitation': reviewer_assignment_invitation_id,
+                        'optional': True
+                    }
+                },                 
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'readers': {
-                    'const': [venue_id, paper_action_editors_id]
-                },
-                'nonreaders': {
-                    'const': [paper_authors_id]
-                },
-                'writers': {
-                    'const': [venue_id]
-                },
-                'signatures': {
-                    'const': [paper_action_editors_id]
-                },
+                'readers': [venue_id, paper_action_editors_id],
+                'nonreaders': [paper_authors_id],
+                'writers': [venue_id],
+                'signatures': [paper_action_editors_id],
                 'head': {
-                    'type': 'note',
-                    'const': note.id
+                    'param': {
+                        'type': 'note',
+                        'const': note.id
+                    }
                 },
                 'tail': {
-                    'type': 'group',
-                    'const' : reviewers_id
+                    'param': {
+                        'type': 'group',
+                        'const' : reviewers_id
+                    }
                 },
                 'weight': {
-                    'type': 'float',
-                    'regex': r'[-+]?[0-9]*\.?[0-9]*'
+                    'param': {
+                        'minimum': -1
+                    }
                 }
             }
         )
@@ -2454,269 +2813,327 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             invitation.web = content
             self.save_invitation(invitation)
 
-    def set_super_review_invitation(self):
+    def set_review_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
-        paper_reviewers_anon_id = self.journal.get_reviewers_id(number='${params.noteNumber}', anon=True)
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
-
         review_invitation_id = self.journal.get_review_id()
-        paper_review_invitation_id = self.journal.get_review_id(number='${params.noteNumber}')
 
-        paper_process = self.get_process_content('process/review_process.py')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/review_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
 
-        invitation = Invitation(id=review_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string' },
-                    'duedate': { 'regex': '.*', 'type': 'integer' }
-                },
-                'invitation': {
-                    'id': { 'const': paper_review_invitation_id },
-                    'signatures': { 'const': [ venue_id ] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'invitees': { 'const': [venue_id, paper_reviewers_id] },
-                    'noninvitees': { 'const': [editors_in_chief_id] },
-                    'maxReplies': { 'const': 1 },
-                    'duedate': { 'const': '${params.duedate}' },
-                    'process': { 'const': paper_process },
-                    'dateprocesses': { 'const': [self.reviewer_reminder_process_with_EIC]},
-                    'edit': {
-                        'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                        'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                        'note': {
-                            'id': {
-                                'const': {
-                                    'withInvitation': paper_review_invitation_id,
-                                    'optional': True
+        invitation = {
+            'id': self.journal.get_review_id(number='${2/content/noteNumber/value}'),
+            'signatures': [ venue_id ],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'invitees': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
+            'noninvitees': [editors_in_chief_id],
+            'maxReplies': 1,
+            'duedate': '${2/content/duedate/value}',
+            'process': self.process_script,
+            'dateprocesses': [self.reviewer_reminder_process_with_EIC],
+            'edit': {
+                'signatures': { 'param': { 'regex': f"{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_review_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'ddate': { 
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}', self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'content': {
+                        'summary_of_contributions': {
+                            'order': 1,
+                            'description': 'Brief description, in the reviewer\'s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'type': 'string',
+                                    'markdown': True
                                 }
-                            },
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.noteId}' }},
-                            'ddate': { 'const': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
-                            }},
-                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}', paper_authors_id] }},
-                            'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                            'content': {
-                                'summary_of_contributions': {
-                                    'const': {
-                                        'order': 1,
-                                        'description': 'Brief description, in the reviewer’s words, of the contributions and new knowledge presented by the submission (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                        'value': {
-                                            'regex': '^[\\S\\s]{1,200000}$',
-                                            'type': 'string'
-                                        },
-                                        'presentation': {
-                                            'markdown': True
-                                        }
-                                    }
-                                },
-                                'strengths_and_weaknesses': {
-                                    'const': {
-                                        'order': 2,
-                                        'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                        'value': {
-                                            'regex': '^[\\S\\s]{1,200000}$',
-                                            'type': 'string'
-                                        },
-                                        'presentation': {
-                                            'markdown': True
-                                        }
-                                    }
-                                },
-                                'requested_changes': {
-                                    'const': {
-                                        'order': 3,
-                                        'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                        'value': {
-                                            'regex': '^[\\S\\s]{1,200000}$',
-                                            'type': 'string'
-                                        },
-                                        'presentation': {
-                                            'markdown': True
-                                        }
-                                    }
-                                },
-                                'broader_impact_concerns': {
-                                    'const': {
-                                        'order': 4,
-                                        'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                        'value': {
-                                            'regex': '^[\\S\\s]{1,200000}$',
-                                            'type': 'string'
-                                        },
-                                        'presentation': {
-                                            'markdown': True
-                                        }
-                                    }
+                            }
+                        },
+                        'strengths_and_weaknesses': {
+                            'order': 2,
+                            'description': 'List of the strong aspects of the submission as well as weaker elements (if any) that you think require attention from the authors (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'type': 'string',
+                                    'markdown': True
+                                }
+                            }
+                        },
+                        'requested_changes': {
+                            'order': 3,
+                            'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'type': 'string',
+                                    'markdown': True
+                                }
+                            }
+                        },
+                        'broader_impact_concerns': {
+                            'order': 4,
+                            'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'type': 'string',
+                                    'markdown': True
                                 }
                             }
                         }
                     }
                 }
-
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
-    def set_review_invitation(self, note, duedate):
+        invitation = {
+            'id': self.journal.get_release_review_id(number='${2/content/noteNumber/value}'),
+            'bulk': True,
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${{2/note/id}/signatures}'],
+                'writers': [ venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_review_id(number='${6/content/noteNumber/value}')
+                        }
+                    },
+                    'readers': [ 'everyone'],
+                }
+            }
+        }
+
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        self.save_super_invitation(self.journal.get_release_review_id(), {}, edit_content, invitation)        
+
+    def set_note_review_invitation(self, note, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_review_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate) },
+            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }, 'duedate': { 'value': openreview.tools.datetime_millis(duedate)} },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
 
+    def set_note_release_review_invitation(self, note):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_release_review_id(),
+            content={ 'noteNumber': { 'value': note.number } },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
+
     def set_official_recommendation_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_reviewers_anon_id = self.journal.get_reviewers_id(number='${params.noteNumber}', anon=True)
-        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
-
         recommendation_invitation_id = self.journal.get_reviewer_recommendation_id()
-        paper_recommendation_invitation_id = self.journal.get_reviewer_recommendation_id(number='${params.noteNumber}')
 
-        paper_process = self.get_process_content('process/official_recommendation_process.py')
-        cdate_process = self.get_process_content('process/official_recommendation_cdate_process.py')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/official_recommendation_process.py')
+            },
+            'cdate_script': {
+                'value': self.get_process_content('process/official_recommendation_cdate_process.py')
+            }                            
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'cdate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }         
 
-        invitation = Invitation(id=recommendation_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string' },
-                    'duedate': { 'regex': '.*', 'type': 'date' },
-                    'cdate': { 'regex': '.*', 'type': 'date' }
-                },
-                'invitation': {
-                    'id': { 'const': paper_recommendation_invitation_id },
-                    'signatures': { 'const': [ venue_id ] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'invitees': { 'const': [venue_id, paper_reviewers_id] },
-                    'maxReplies': { 'const': 1 },
-                    'duedate': { 'const': '${params.duedate}' },
-                    'cdate': { 'const': '${params.cdate}' },
-                    'process': { 'const': paper_process },
-                    'dateprocesses': { 'const': [{
-                        'dates': [ "#{cdate} + 1000" ],
-                        'script': cdate_process
-                    }, self.reviewer_reminder_process_with_EIC]},
-                    'edit': {
-                        'signatures': { 'const': { 'regex': f'{paper_reviewers_anon_id}.*|{paper_action_editors_id}', 'type': 'group[]' }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                        'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
-                        'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                        'note': {
-                            'id': {
-                                'const': {
-                                    'withInvitation': paper_recommendation_invitation_id,
-                                    'optional': True
+        invitation = {
+            'id': self.journal.get_reviewer_recommendation_id(number='${2/content/noteNumber/value}'),
+            'signatures': [ venue_id ],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'invitees': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
+            'maxReplies': 1,
+            'duedate': '${2/content/duedate/value}',
+            'cdate': '${2/content/cdate/value}',
+            'process': self.process_script,
+            'dateprocesses': [{
+                'dates': [ "#{4/cdate} + 1000" ],
+                'script': self.get_super_dateprocess_content('cdate_script')
+            }, self.reviewer_reminder_process_with_EIC],
+            'edit': {
+                'signatures': { 'param': { 'regex': f"{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_reviewer_recommendation_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'ddate': { 
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'content': {
+                        'decision_recommendation': {
+                            'order': 1,
+                            'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Accept',
+                                        'Leaning Accept',
+                                        'Leaning Reject',
+                                        'Reject'
+                                    ],
+                                    'input': 'radio'
                                 }
-                            },
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.noteId}' }},
-                            'ddate': { 'const': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
-                            }},
-                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}'] }},
-                            'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
-                            'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                            'content': {
-                                'decision_recommendation': {
-                                    'const': {
-                                        'order': 1,
-                                        'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
-                                        'value': {
-                                            'type': 'string',
-                                            'enum': [
-                                                'Accept',
-                                                'Leaning Accept',
-                                                'Leaning Reject',
-                                                'Reject'
-                                            ]
-                                        },
-                                        'presentation': {
-                                            'input': 'radio'
-                                        }
-                                    }
-                                },
-                                'certification_recommendations': {
-                                    'const': {
-                                        'order': 2,
-                                        'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
-                                        'value': {
-                                            'type': 'string[]',
-                                            'enum': [
-                                                'Featured Certification',
-                                                'Reproducibility Certification',
-                                                'Survey Certification'
-                                            ],
-                                            'optional': True
-                                        },
-                                        'presentation': {
-                                            'input': 'select'
-                                        }
-                                    }
-                                },
-                                'comment': {
-                                    'const': {
-                                        'order': 3,
-                                        'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
-                                        'value': {
-                                            'type': 'string',
-                                            'regex': '^[\\S\\s]{1,200000}$',
-                                            'optional': True
-                                        },
-                                        'presentation': {
-                                            'markdown': True
-                                        }
-                                    }
+                            }
+                        },
+                        'certification_recommendations': {
+                            'order': 2,
+                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                            'value': {
+                                'param': {
+                                    'type': 'string[]',
+                                    'enum': [
+                                        'Featured Certification',
+                                        'Reproducibility Certification',
+                                        'Survey Certification'
+                                    ],
+                                    'optional': True,
+                                    'input': 'select'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 3,
+                            'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
                                 }
                             }
                         }
                     }
                 }
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_reviewer_recommendation_id(), invitation_content, edit_content, invitation)
 
     def set_note_official_recommendation_invitation(self, note, cdate, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_reviewer_recommendation_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'cdate': openreview.tools.datetime_millis(cdate), 'duedate': openreview.tools.datetime_millis(duedate) },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                 'cdate': { 'value': openreview.tools.datetime_millis(cdate) }, 
+                 'duedate': { 'value': openreview.tools.datetime_millis(duedate) }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2725,106 +3142,103 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
     def set_solicit_review_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
-        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
 
-        solicit_review_invitation_id = self.journal.get_solicit_review_id()
-        paper_solicit_review_invitation_id = self.journal.get_solicit_review_id(number='${params.noteNumber}')
-
-        paper_process = self.get_process_content('process/solicit_review_process.py')
-        paper_preprocess = self.get_process_content('process/solicit_review_pre_process.py')
-
-        invitation = Invitation(id=solicit_review_invitation_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string' }
-                },
-                'invitation': {
-                    'id': { 'const': paper_solicit_review_invitation_id },
-                    'signatures': { 'const': [ venue_id ] },
-                    'readers': { 'const': ['everyone'] },
-                    'writers': { 'const': [venue_id] },
-                    'invitees': { 'const': [venue_id, '~'] },
-                    'noninvitees': { 'const': [editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id] },
-                    'maxReplies': { 'const': 1 },
-                    'process': { 'const': paper_process },
-                    'preprocess': { 'const': paper_preprocess },
-                    'edit': {
-                        'signatures': { 'const': { 'regex': f'~.*', 'type': 'group[]' }},
-                        'readers': { 'const': { 'const': [ editors_in_chief_id, paper_action_editors_id, '\\${signatures}'] }},
-                        'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
-                        'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                        'note': {
-                            'id': {
-                                'const': {
-                                    'withInvitation': paper_solicit_review_invitation_id,
-                                    'optional': True
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/solicit_review_process.py')
+            },
+            'preprocess_script': {
+                'value': self.get_process_content('process/solicit_review_pre_process.py')
+            }              
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        } 
+        invitation = {
+            'id': self.journal.get_solicit_review_id(number='${2/content/noteNumber/value}'),
+            'signatures': [ venue_id ],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'invitees': [venue_id, '~'],
+            'noninvitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'maxReplies': 1,
+            'process': self.process_script,
+            'preprocess': self.preprocess_script,
+            'edit': {
+                'signatures': { 'param': { 'regex': f'~.*' }},
+                'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_solicit_review_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'ddate': { 
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'nonreaders':[ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'content': {
+                        'solicit': {
+                            'order': 1,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'I solicit to review this paper.'
+                                    ],
+                                    'input': 'radio'
                                 }
-                            },
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.noteId}' }},
-                            'ddate': { 'const': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'nullable': True
-                            }},
-                            'signatures': { 'const': { 'const': ['\\${signatures}'] }},
-                            'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                            'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
-                            'writers': { 'const': { 'const': [ venue_id, paper_action_editors_id, '\\${signatures}'] }},
-                            'content': {
-                                'solicit': {
-                                    'const': {
-                                        'order': 1,
-                                        'description': '',
-                                        'value': {
-                                            'type': 'string',
-                                            'enum': [
-                                                'I solicit to review this paper.'
-                                            ]
-                                        },
-                                        'presentation': {
-                                            'input': 'radio'
-                                        }
-                                    }
-                                },
-                                'comment': {
-                                    'const': {
-                                        'order': 2,
-                                        'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
-                                        'value': {
-                                            'type': 'string',
-                                            'regex': '^[\\S\\s]{1,200000}$',
-                                            'optional': True
-                                        },
-                                        'presentation': {
-                                            'markdown': True
-                                        }
-                                    }
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Explain to the Action Editor for this submission why you believe you are qualified to be a reviewer for this work.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
                                 }
                             }
                         }
                     }
                 }
             }
-        )
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_solicit_review_id(), invitation_content, edit_content, invitation)
 
     def set_note_solicit_review_invitation(self, note):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number },
+            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }},
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
@@ -2834,227 +3248,295 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_authors_id = self.journal.get_authors_id(number='${params.noteNumber}')
-        paper_reviewers_id = self.journal.get_reviewers_id(number='${params.noteNumber}')
-        paper_action_editors_id = self.journal.get_action_editors_id(number='${params.noteNumber}')
-
         solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id()
-        paper_solicit_review_invitation_approval_id = self.journal.get_solicit_review_approval_id(number='${params.noteNumber}', signature='${params.soliciter}')
 
-        paper_process = self.get_process_content('process/solicit_review_approval_process.py')
-        paper_preprocess = self.get_process_content('process/solicit_review_approval_pre_process.py')
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/solicit_review_approval_process.py')
+            },
+            'preprocess_script': {
+                'value': self.get_process_content('process/solicit_review_approval_pre_process.py')
+            }              
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'replytoId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'soliciter': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            }
+        }
 
-        invitation = Invitation(id=solicit_review_invitation_approval_id,
-            invitees=[venue_id],
-            readers=[venue_id],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [venue_id] },
-                'readers': { 'const': [venue_id] },
-                'writers': { 'const': [venue_id] },
-                'params': {
-                    'noteNumber': { 'regex': '.*', 'type': 'integer' },
-                    'noteId': { 'regex': '.*', 'type': 'string' },
-                    'replytoId': { 'regex': '.*', 'type': 'string' },
-                    'soliciter': { 'regex': '.*', 'type': 'string' },
-                    'duedate': { 'regex': '.*', 'type': 'integer' }
-                },
-                'invitation': {
-                    'id': { 'const': paper_solicit_review_invitation_approval_id },
-                    'invitees': { 'const': [venue_id, paper_action_editors_id]},
-                    'readers': { 'const': [venue_id, paper_action_editors_id]},
-                    'writers': { 'const': [venue_id]},
-                    'signatures': { 'const': [editors_in_chief_id]}, ## to compute conflicts
-                    'duedate': { 'const': '${params.duedate}'},
-                    'maxReplies': { 'const': 1},
-                    'process': { 'const': paper_process },
-                    'preprocess': { 'const': paper_preprocess },
-                    'dateprocesses': { 'const': [self.ae_reminder_process]},
-                    'edit': {
-                        'signatures': { 'const': { 'const': [ paper_action_editors_id ] }},
-                        'readers': { 'const': { 'const': [ venue_id, paper_action_editors_id ] }},
-                        'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
-                        'writers': { 'const': { 'const': [ venue_id ] }},
-                        'note': {
-                            'forum': { 'const': { 'const': '${params.noteId}' }},
-                            'replyto': { 'const': { 'const': '${params.replytoId}' }},
-                            'signatures': { 'const': { 'const': [ paper_action_editors_id ] }},
-                            'readers': { 'const': { 'const': [ '\\${{note.replyto}.readers}' ] }},
-                            'nonreaders': { 'const': { 'const': [ paper_authors_id ] }},
-                            'writers': { 'const': { 'const': [ venue_id ] }},
-                            'content': {
-                                'decision': { 'const': {
-                                    'order': 1,
-                                    'description': 'Select you decision about approving the solicit review.',
-                                    'value': {
-                                        'type': 'string',
-                                        'enum': [
-                                            'Yes, I approve the solicit review.',
-                                            'No, I decline the solicit review.'
-                                        ]
-                                    },
-                                    'presentation': {
-                                        'input': 'radio'
-                                    }
-                                }},
-                                'comment': { 'const': {
-                                    'order': 2,
-                                    'description': '',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,200000}$',
-                                        'optional': True
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    }
-                                }}
+        invitation = {
+            'id': self.journal.get_solicit_review_approval_id(number='${2/content/noteNumber/value}', signature='${2/content/soliciter/value}'),
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'signatures': [editors_in_chief_id], ## to compute conflicts
+            'duedate': '${2/content/duedate/value}',
+            'maxReplies': 1,
+            'process': self.process_script,
+            'preprocess': self.preprocess_script,
+            'dateprocesses': [self.ae_reminder_process],
+            'edit': {
+                'signatures': [ self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/replytoId/value}',
+                    'signatures': [ self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
+                    'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id ],
+                    'content': {
+                        'decision': { 
+                            'order': 1,
+                            'description': 'Select you decision about approving the solicit review.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Yes, I approve the solicit review.',
+                                        'No, I decline the solicit review.'
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'comment': { 
+                            'order': 2,
+                            'description': 'Leave a comment',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
                 }
             }
-        )
-        self.save_invitation(invitation)
+        }
+        self.save_super_invitation(self.journal.get_solicit_review_approval_id(), invitation_content, edit_content, invitation)
 
     def set_note_solicit_review_approval_invitation(self, note, solicit_note, duedate):
 
         return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_approval_id(),
-            params={ 'noteId': note.id, 'noteNumber': note.number, 'duedate': openreview.tools.datetime_millis(duedate), 'replytoId': solicit_note.id, 'soliciter': solicit_note.signatures[0] },
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}, 
+                'replytoId': { 'value': solicit_note.id }, 
+                'soliciter': { 'value': solicit_note.signatures[0] }
+            },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
             signatures=[self.journal.venue_id]
         )
 
-    def set_revision_submission(self, note):
+    def set_revision_invitation(self):
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
 
-        revision_invitation_id = self.journal.get_revision_id(number=note.number)
-        invitation = Invitation(id=revision_invitation_id,
-            invitees=[venue_id, paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/submission_revision_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        invitation = {
+            'id': self.journal.get_revision_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
                 'ddate': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'nullable': True
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
                 },
-                'signatures': { 'regex': f'{paper_authors_id}|{editors_in_chief_id}', 'type': 'group[]' },
-                'readers': { 'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]},
-                'writers': { 'const': [ venue_id, paper_authors_id]},
+                'signatures': { 'param': { 'regex': f"{self.journal.get_authors_id(number='${5/content/noteNumber/value}')}|{editors_in_chief_id}" }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
+                'writers': [ venue_id, self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
                 'note': {
-                    'id': { 'const': note.id },
+                    'id': '${4/content/noteId/value}',
                     'content': {
                         'title': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^.{1,250}$',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 250,
+                                }
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 1
                         },
                         'abstract': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2
                         },
                         'pdf': {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['pdf'],
-                                'maxSize': 50
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['pdf'],
+                                    'maxSize': 50
+                                }
                             },
-                            'description': 'Upload a PDF file that ends with .pdf',
+                            'description': 'Upload a PDF file that ends with .pdf.',
                             'order': 5,
                         },
                         'submission_length': {
                             'value': {
-                                'type': 'string',
-                                'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)']
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Regular submission (no more than 12 pages of main content)', 'Long submission (more than 12 pages of main content)'],
+                                    'input': 'radio'
+
+                                }
                             },
                             'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                            'order': 6,
-                            'presentation': {
-                                'input': 'radio'
-                            }
-                        },                         
+                            'order': 6
+                        },                        
                         "supplementary_material": {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['zip', 'pdf'],
-                                'maxSize': 100,
-                                "optional": True
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['zip', 'pdf'],
+                                    'maxSize': 100,
+                                    "optional": True
+                                }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 7,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
-                            }
+                            "order": 7
                         },
                         f'previous_{short_name}_submission_url': {
                             'value': {
-                                'type': 'string',
-                                'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'optional': True
+                                }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
-                            'order': 8,
+                            'order': 8
                         },
                         'changes_since_last_submission': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$',
-                                'optional': True
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 9,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 9
                         },
                         'competing_interests': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                            'order': 10,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'order': 10
                         },
                         'human_subjects_reporting': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': "string",
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                            'order': 11,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'order': 11
                         }
                     }
                 }
             },
-            process=self.get_process_content('process/submission_revision_process.py')
-        )
+            'process': self.process_script                    
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_revision_id(), invitation_content, edit_content, invitation)
+
+    def set_note_revision_invitation(self, note):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_revision_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
 
     def release_submission_history(self, note):
 
@@ -3067,9 +3549,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             invitation=Invitation(
                 id=revision_invitation_id,
                 edit={
-                    'readers': {
-                        'const': ['everyone']
-                    }
+                    'readers': ['everyone']
                 }
             )
         )
@@ -3078,6 +3558,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tcdate:asc'):
             edit.readers = ['everyone']
             edit.note.mdate = None
+            # edit.note.cdate = None
+            # edit.note.forum = None
             self.client.post_edit(edit)
 
         ## Make the first edit public too
@@ -3088,621 +3570,1065 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             edit.note.mdate = None
             self.client.post_edit(edit)         
 
-    def set_comment_invitation(self, note):
+    def set_comment_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        public_comment_invitation_id = self.journal.get_public_comment_id(number=note.number)
-        invitation=Invitation(id=public_comment_invitation_id,
-            invitees=['everyone'],
-            noninvitees=[editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'regex': f'~.*', 'type': 'group[]' },
-                'readers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
-                'writers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/public_comment_process.py')
+            }                
+        }
+        edit_content = {
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        invitation = {
+            'id': self.journal.get_public_comment_id(number='${2/content/noteNumber/value}'),
+            'invitees': ['everyone'],
+            'noninvitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': { 'param': { 'regex': f'~.*' }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
                 'note': {
                     'id': {
-                        'withInvitation': public_comment_invitation_id,
-                        'optional': True
+                        'param': {
+                            'withInvitation': self.journal.get_public_comment_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
                     },
-                    'forum': { 'const': note.id },
-                    'replyto': { 'withForum': note.id },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': { 
+                        'param': {
+                            'withForum': '${6/content/noteId/value}', 
+                        }
+                    },
                     'ddate': {
-                        'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     },
-                    'signatures': { 'const': ['${signatures}'] },
-                    'readers': { 'const': [ 'everyone']},
-                    'writers': { 'const': [ venue_id, paper_action_editors_id, '${signatures}']},
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ 'everyone'],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
                         'title': {
                             'order': 1,
                             'description': 'Brief summary of your comment.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^.{1,500}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 500,
+                                    'input': 'text'
+                                }
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
-                            },
-                            'presentation': {
-                                'markdown': True
-                            }
-                        }
-                    }
-                }
-            },
-            process=self.get_process_content('process/public_comment_process.py')
-        )
-
-        self.save_invitation(invitation)
-
-        official_comment_invitation_id=self.journal.get_official_comment_id(number=note.number)
-        paper_reviewers_anon_id = self.journal.get_reviewers_id(number=note.number, anon=True)
-        invitation=Invitation(id=official_comment_invitation_id,
-            invitees=[venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}|{paper_reviewers_anon_id}.*|{paper_authors_id}', 'type': 'group[]' },
-                'readers': { 'const': [ venue_id, '${signatures}' ] },
-                'writers': { 'const': [ venue_id, '${signatures}' ] },
-                'note': {
-                    'id': {
-                        'withInvitation': official_comment_invitation_id,
-                        'optional': True
-                    },
-                    'forum': { 'const': note.id },
-                    'replyto': { 'withForum': note.id },
-                    'ddate': {
-                        'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
-                    },
-                    'signatures': { 'const': ['${signatures}'] },
-                    'readers': {
-                       'type': 'group[]',
-                       'enum': ['everyone', editors_in_chief_id, paper_action_editors_id, paper_reviewers_id, paper_reviewers_anon_id + '.*', paper_authors_id],
-                    #    'presentation': {
-                    #        'input': 'select'
-                    #    }
-                    },
-                    'writers': { 'const': ['${writers}'] },
-                    'content': {
-                        'title': {
-                            'order': 1,
-                            'description': 'Brief summary of your comment.',
-                            'value': {
-                                'type': 'string',
-                                'regex': '^.{1,500}$'
-                            }
-                        },
-                        'comment': {
-                            'order': 2,
-                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                            'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
-                            },
-                            'presentation': {
-                                'markdown': True
-                            }
-                        }
-                    }
-                }
-            },
-            preprocess=self.get_process_content('process/official_comment_pre_process.py'),
-            process=self.get_process_content('process/official_comment_process.py')
-        )
-
-        self.save_invitation(invitation)
-
-        moderation_invitation_id=self.journal.get_moderation_id(number=note.number)
-        moderation_invitation=openreview.tools.get_invitation(self.client, moderation_invitation_id)
-
-        if not moderation_invitation:
-            invitation = self.post_invitation_edit(invitation=Invitation(id=moderation_invitation_id,
-                    invitees=[venue_id, paper_action_editors_id],
-                    readers=[venue_id, paper_action_editors_id],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    edit={
-                        'signatures': { 'regex': f'{editors_in_chief_id}|{paper_action_editors_id}', 'type': 'group[]' },
-                        'readers': { 'const': [ venue_id, paper_action_editors_id]},
-                        'writers': { 'const': [ venue_id, paper_action_editors_id]},
-                        'note': {
-                            'id': { 'withInvitation': public_comment_invitation_id },
-                            'forum': { 'const': note.id },
-                            'readers': {
-                                'const': ['everyone']
-                            },
-                            'writers': {
-                                'const': [venue_id, paper_action_editors_id]
-                            },
-                            'signatures': { 'regex': '~.*', 'optional': True, 'type': 'group[]' },
-                            'content': {
-                                'title': {
-                                    'order': 1,
-                                    'description': 'Brief summary of your comment.',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^.{1,500}$'
-                                    },
-                                    'readers': {
-                                        'const': [ venue_id, paper_action_editors_id, '${signatures}']
-                                    }
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'type': 'string',
-                                        'regex': '^[\\S\\s]{1,5000}$'
-                                    },
-                                    'presentation': {
-                                        'markdown': True
-                                    },
-                                    'readers': {
-                                        'const': [ venue_id, paper_action_editors_id, '${signatures}']
-                                    }
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'markdown': True
                                 }
                             }
                         }
                     }
-                )
-            )
+                }
+            },
+            'process': self.process_script
+        }
 
-    def set_decision_invitation(self, note, duedate):
-        venue_id = self.journal.venue_id
-        editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        self.save_super_invitation(self.journal.get_public_comment_id(), invitation_content, edit_content, invitation)
 
-        decision_invitation_id = self.journal.get_ae_decision_id(number=note.number)
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/official_comment_process.py')
+            },
+            'preprocess_script': {
+                'value': self.get_process_content('process/official_comment_pre_process.py')
+            }                         
+        }
 
-        invitation = Invitation(id=decision_invitation_id,
-            duedate=duedate,
-            invitees=[venue_id, paper_action_editors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[editors_in_chief_id],
-            maxReplies=1,
-            minReplies=1,
-            edit={
-                'signatures': { 'const': [paper_action_editors_id] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id] },
-                'nonreaders': { 'const': [ paper_authors_id ] },
-                'writers': { 'const': [ venue_id, paper_action_editors_id] },
+        invitation= {
+            'id': self.journal.get_official_comment_id(number='${2/content/noteNumber/value}'),
+            'invitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}|{self.journal.get_reviewers_id(number='${5/content/noteNumber/value}', anon=True)}.*|{self.journal.get_authors_id(number='${5/content/noteNumber/value}')}" }},
+                'readers': [ venue_id, '${2/signatures}' ],
+                'writers': [ venue_id, '${2/signatures}' ],
                 'note': {
                     'id': {
-                        'withInvitation': decision_invitation_id,
-                        'optional': True
+                        'param': {
+                            'withInvitation': self.journal.get_official_comment_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
                     },
-                    'forum': { 'const': note.forum },
-                    'replyto': { 'const': note.forum },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': { 
+                        'param': {
+                            'withForum': '${6/content/noteId/value}'
+                        }
+                    },
                     'ddate': {
-                        'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'nullable': True
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     },
-                    'signatures': { 'const': [paper_action_editors_id] },
-                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id ] },
-                    'nonreaders': { 'const': [ paper_authors_id ] },
-                    'writers': { 'const': [ venue_id, paper_action_editors_id] },
+                    'signatures': ['${3/signatures}'],
+                    'readers': {
+                        'param': {
+                            'enum': [
+                                'everyone', 
+                                editors_in_chief_id, 
+                                self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 
+                                self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), 
+                                self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True) + '.*', 
+                                self.journal.get_authors_id(number='${7/content/noteNumber/value}')
+                            ],
+                        }
+                    },
+                    'writers': ['${3/writers}'],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your comment.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 500,
+                                    'input': 'text'
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            'preprocess': self.preprocess_script,
+            'process': self.process_script
+        }
+
+        self.save_super_invitation(self.journal.get_official_comment_id(), invitation_content, edit_content, invitation)
+
+        invitation = {
+            'id': self.journal.get_moderation_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': { 'param': { 'regex': f"{editors_in_chief_id}|{self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')}" }},
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'note': {
+                    'id': { 
+                        'param': {
+                            'withInvitation': self.journal.get_public_comment_id(number='${6/content/noteNumber/value}') 
+                        }
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'readers': ['everyone'],
+                    'writers': [venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    # 'signatures': { 
+                    #     'param': {
+                    #         'regex': '~.*'
+                    #     }
+                    # },
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Brief summary of your comment.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 500,
+                                    'input': 'text'
+                                }
+                            },
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), '${5/signatures}']
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            },
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), '${5/signatures}']
+                        }
+                    }
+                }
+            }
+        }
+        self.save_super_invitation(self.journal.get_moderation_id(), {}, edit_content, invitation)
+
+        invitation = {
+            'id': self.journal.get_release_comment_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id],
+                'readers': [ venue_id, '${{2/note/id}/signatures}'],
+                'writers': [ venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_official_comment_id(number='${6/content/noteNumber/value}')
+                        }
+                    },
+                    'readers': [ 'everyone'],
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_release_comment_id(), {}, edit_content, invitation)        
+
+    def set_note_comment_invitation(self, note):
+        
+        self.client.post_invitation_edit(invitations=self.journal.get_public_comment_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
+
+        self.client.post_invitation_edit(invitations=self.journal.get_official_comment_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
+
+        self.client.post_invitation_edit(invitations=self.journal.get_moderation_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
+
+    def set_note_release_comment_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_release_comment_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
+    def set_decision_invitation(self):
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/submission_decision_process.py')
+            },
+            'preprocess_script': {
+                'value': self.get_process_content('process/submission_decision_pre_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_ae_decision_id(number='${2/content/noteNumber/value}'),  
+            'duedate': '${2/content/duedate/value}',
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [editors_in_chief_id],
+            'maxReplies': 1,
+            'minReplies': 1,
+            'edit': {
+                'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_ae_decision_id(number='${6/content/noteNumber/value}'),
+                            'optional': True
+                        }
+                    },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                    'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
                     'content': {
                         'recommendation': {
                             'order': 1,
                             'value': {
-                                'type': 'string',
-                                'enum': [
-                                    'Accept as is',
-                                    'Accept with minor revision',
-                                    'Reject'
-                                ]
-                            },
-                            'presentation': {
-                                'input': 'radio'
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Accept as is',
+                                        'Accept with minor revision',
+                                        'Reject'
+                                    ],
+                                    'input': 'radio'
+                                }
                             }
                         },
                         'comment': {
                             'order': 2,
                             'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$'
-                            },
-                            'presentation': {
-                                'markdown': True
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
                             }
                         },
                         'certifications': {
                             'order': 3,
                             'description': f'Optionally and if appropriate, recommend a certification for this submission. See {self.journal.website} for information about certifications.',
                             'value': {
-                                'type': 'string[]',
-                                'enum': [
-                                    'Featured Certification',
-                                    'Reproducibility Certification',
-                                    'Survey Certification'
-                                ],
-                                'optional': True
-                            },
-                            'presentation': {
-                                'input': 'select'
+                                'param': {
+                                    'type': 'string[]',
+                                    'enum': [
+                                        'Featured Certification',
+                                        'Reproducibility Certification',
+                                        'Survey Certification'
+                                    ],
+                                    'optional': True,
+                                    'input': 'select'
+                                }
                             }
                         }
                     }
                 }
             },
-            preprocess=self.get_process_content('process/submission_decision_pre_process.py'),
-            process=self.get_process_content('process/submission_decision_process.py'),
-            date_processes=[self.ae_reminder_process]
+            'preprocess': self.preprocess_script,
+            'process': self.process_script,
+            'dateprocesses': [self.ae_reminder_process]
+        }
+
+        self.save_super_invitation(self.journal.get_ae_decision_id(), invitation_content, edit_content, invitation)
+
+    def set_note_decision_invitation(self, note, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_ae_decision_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
         )
 
-        self.save_invitation(invitation)
-
-    def set_decision_approval_invitation(self, note, decision, duedate):
+    def set_decision_approval_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        decision_approval_invitation_id = self.journal.get_decision_approval_id(number=note.number)
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/submission_decision_approval_process.py')
+            }               
+        }
 
-        invitation = Invitation(id=decision_approval_invitation_id,
-            duedate=openreview.tools.datetime_millis(duedate),
-            invitees=[venue_id, editors_in_chief_id],
-            noninvitees=[paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            minReplies=1,
-            maxReplies=1,
-            edit={
-                'signatures': { 'const': [editors_in_chief_id] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id] },
-                'nonreaders': { 'const': [ paper_authors_id ] },
-                'writers': { 'const': [ venue_id] },
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'replytoId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_decision_approval_id(number='${2/content/noteNumber/value}'),
+            'duedate': '${2/content/duedate/value}',
+            'invitees': [venue_id, editors_in_chief_id],
+            'noninvitees': [self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'minReplies': 1,
+            'maxReplies': 1,
+            'edit': {
+                'signatures': [editors_in_chief_id],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id],
                 'note': {
-                    'forum': { 'const': note.id },
-                    'replyto': { 'const': decision.id },
-                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id] },
-                    'nonreaders': { 'const': [ paper_authors_id ] },
-                    'writers': { 'const': [ venue_id] },
-                    'signatures': { 'const': [editors_in_chief_id] },
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/replytoId/value}',
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id],
+                    'signatures': [editors_in_chief_id],
                     'content': {
                         'approval': {
                             'order': 1,
                             'value': {
-                                'type': 'string',
-                                'enum': ['I approve the AE\'s decision.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['I approve the AE\'s decision.'],
+                                    'input': 'checkbox'
+                                }
                             }
                         },
                         'comment_to_the_AE': {
                             'order': 2,
                             'description': 'Optionally add any additional notes that might be useful for the AE.',
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,200000}$',
-                                'optional': True
-                            },
-                            'presentation': {
-                                'markdown': True
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+                                }
                             }
                         }
                     }
                 }
             },
-            process=self.get_process_content('process/submission_decision_approval_process.py')
+            'process': self.process_script
+        }
+
+        self.save_super_invitation(self.journal.get_decision_approval_id(), invitation_content, edit_content, invitation)
+
+    def set_note_decision_approval_invitation(self, note, decision, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_decision_approval_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'replytoId': { 'value': decision.id },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
         )
 
-        self.save_invitation(invitation)
+    def set_decision_release_invitation(self):
+        venue_id = self.journal.venue_id
 
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            }
+        }
 
-    def set_review_rating_invitation(self, note, duedate):
+        invitation = {
+            'id': self.journal.get_release_decision_id(number='${2/content/noteNumber/value}'),
+            'bulk': True,
+            'invitees': [venue_id],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [venue_id ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'id': { 'param': { 'withInvitation': self.journal.get_ae_decision_id(number='${6/content/noteNumber/value}') }},
+                    'readers': [ 'everyone' ],
+                    'nonreaders': []
+                }
+            }
+        }
+
+        self.save_super_invitation(self.journal.get_release_decision_id(), {}, edit_content, invitation)
+
+    def set_note_decision_release_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_release_decision_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number }
+             },
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id]
+        )
+
+    def set_review_rating_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        reviews = self.client.get_notes(forum=note.forum, invitation=self.journal.get_review_id(number=note.number))
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/review_rating_process.py')
+            }               
+        }
+
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'replytoId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'signature': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }              
+
+        invitation = {
+            'id': self.journal.get_review_rating_id(signature='${2/content/signature/value}'),
+            'duedate': '${2/content/duedate/value}',
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'signatures': [editors_in_chief_id],
+            'maxReplies': 1,
+            'edit': {
+                    'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                    'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                    'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                    'note': {
+                        'forum': '${4/content/noteId/value}',
+                        'replyto': '${4/content/replytoId/value}',
+                        'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                        'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}') ],
+                        'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                        'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                        'content': {
+                            'rating': {
+                                'order': 1,
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'enum': [
+                                            "Exceeds expectations",
+                                            "Meets expectations",
+                                            "Falls below expectations"
+                                        ],
+                                        'input': 'radio'
+                                    }
+                                }
+                            }
+                        }
+                    }                
+            },
+            'process': self.process_script,
+            'dateprocesses': [self.ae_reminder_process]            
+        }
+
+        self.save_super_invitation(self.journal.get_review_rating_id(), invitation_content, edit_content, invitation)
+
+    def set_note_review_rating_invitation(self, note, duedate):
+
         paper_reviewers_id = self.journal.get_reviewers_id(number=note.number, anon=True)
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
+        reviews = self.client.get_notes(forum=note.forum, invitation=self.journal.get_review_id(number=note.number))
 
         for review in reviews:
             signature=review.signatures[0]
             if signature.startswith(paper_reviewers_id):
-                rating_invitation_id = self.journal.get_review_rating_id(signature=signature)
-                rating_invitation=openreview.tools.get_invitation(self.client, rating_invitation_id)
-                if not rating_invitation:
-                    invitation = Invitation(id=rating_invitation_id,
-                        duedate=openreview.tools.datetime_millis(duedate),
-                        invitees=[venue_id, paper_action_editors_id],
-                        readers=[venue_id, paper_action_editors_id],
-                        writers=[venue_id],
-                        signatures=[editors_in_chief_id],
-                        maxReplies=1,
-                        edit={
-                            'signatures': { 'const': [paper_action_editors_id] },
-                            'readers': { 'const': [ venue_id, paper_action_editors_id] },
-                            'nonreaders': { 'const': [ paper_authors_id ] },
-                            'writers': { 'const': [ venue_id, paper_action_editors_id] },
-                            'note': {
-                                'forum': { 'const': review.forum },
-                                'replyto': { 'const': review.id },
-                                'signatures': { 'const': [paper_action_editors_id] },
-                                'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id] },
-                                'nonreaders': { 'const': [ paper_authors_id ] },
-                                'writers': { 'const': [ venue_id, paper_action_editors_id] },
-                                'content': {
-                                    'rating': {
-                                        'order': 1,
-                                        'value': {
-                                            'type': 'string',
-                                            'enum': [
-                                                "Exceeds expectations",
-                                                "Meets expectations",
-                                                "Falls below expectations"
-                                            ]
-                                        },
-                                        'presentation': {
-                                            'input': 'radio'
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        process=self.get_process_content('process/review_rating_process.py'),
-                        date_processes=[self.ae_reminder_process]
-                    )
-                    self.save_invitation(invitation)
+                self.client.post_invitation_edit(invitations=self.journal.get_review_rating_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number },
+                    'replytoId': { 'value': review.id },
+                    'signature': { 'value': signature },
+                    'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+        )
 
-    def set_camera_ready_revision_invitation(self, note, decision, duedate):
+    def set_camera_ready_revision_invitation(self):
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
-        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number)
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        revision_invitation_id = self.journal.get_camera_ready_revision_id(number=note.number)
 
-        invitation = Invitation(id=revision_invitation_id,
-            invitees=[paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            duedate=openreview.tools.datetime_millis(duedate),
-            edit={
-                'signatures': { 'const': [paper_authors_id] },
-                'readers': { 'const': ['everyone']},
-                'writers': { 'const': [ venue_id, paper_authors_id]},
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/camera_ready_revision_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }
+
+        invitation = { 
+            'id': self.journal.get_camera_ready_revision_id(number='${2/content/noteNumber/value}'),
+            'invitees': [self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'duedate': '${2/content/duedate/value}',
+            'edit': {
+                'signatures': [self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
+                'readers': ['everyone'],
+                'writers': [ venue_id, self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
                 'note': {
-                    'id': { 'const': note.forum },
-                    'forum': { 'const': note.forum },
+                    'id': '${4/content/noteId/value}',
+                    'forum': '${4/content/noteId/value}',
                     'content': {
                         'title': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^.{1,250}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 250,
+                                    'input': 'text'
+                                }
                             },
                             'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 1
                         },
                         'abstract': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
                             },
                             'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                             'order': 2
                         },
                         'authors': {
                             'value': {
-                                'type': 'string[]',
-                                'const': note.content['authors']['value']
+                                'param': {
+                                    'type': 'string[]',
+                                    'const': ['${{6/id}/content/authors/value}'],
+                                    'hidden': True
+                                }
                             },
                             'description': 'Comma separated list of author names.',
-                            'order': 3,
-                            'presentation': {
-                                'hidden': True,
-                            }
+                            'order': 3
                         },
                         'authorids': {
-                            'value': {
-                                'type': 'group[]',
-                                'const': note.content['authorids']['value']
-                            },
+                            'value': ['${{4/id}/content/authorids/value}'],
                             'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4
                         },                        
                         'pdf': {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['pdf'],
-                                'maxSize': 50
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['pdf'],
+                                    'maxSize': 50
+                                }
                             },
                             'description': 'Upload a PDF file that ends with .pdf',
                             'order': 5,
                         },
                         "supplementary_material": {
                             'value': {
-                                'type': 'file',
-                                'extensions': ['zip', 'pdf'],
-                                'maxSize': 100,
-                                "optional": True
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['zip', 'pdf'],
+                                    'maxSize': 100,
+                                    "optional": True
+                                }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                             "order": 6,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_reviewers_id, paper_authors_id]
-                            }
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
                         },
                         f'previous_{short_name}_submission_url': {
                             'value': {
-                                'type': 'string',
-                                'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'optional': True
+                                }
                             },
                             'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
                             'order': 7,
                         },
                         'changes_since_last_submission': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+
+                                }
                             },
                             'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-                            'order': 8,
-                            'presentation': {
-                                'markdown': True
-                            }
+                            'order': 8
                         },
                         'competing_interests': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
                             'order': 9,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
                         },
                         'human_subjects_reporting': {
                             'value': {
-                                'type': 'string',
-                                'regex': '^[\\S\\s]{1,5000}$'
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
                             'order': 10,
-                            'readers': {
-                                'const': [ venue_id, paper_action_editors_id, paper_authors_id]
-                            }
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
                         },
                         "video": {
                             "order": 11,
                             "description": "Optionally, you may submit a link to a video summarizing your work.",
                             'value': {
-                                'type': 'string',
-                                "regex": 'https?://.+',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    "regex": 'https?://.+',
+                                    'optional': True
+                                }
                             }
                         },
                         "code": {
                             "order": 12,
                             "description": "Optionally, you may submit a link to code for your work.",
                             'value': {
-                                'type': 'string',
-                                "regex": 'https?://.+',
-                                'optional': True
+                                'param': {
+                                    'type': 'string',
+                                    "regex": 'https?://.+',
+                                    'optional': True
+                                }
                             }
                         }
                     }
                 }
             },
-            process=self.get_process_content('process/camera_ready_revision_process.py')
+            'process': self.process_script
+        }
+
+        self.save_super_invitation(self.journal.get_camera_ready_revision_id(), invitation_content, edit_content, invitation)
+
+    def set_note_camera_ready_revision_invitation(self, note, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_camera_ready_revision_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
         )
 
-        self.save_invitation(invitation)
-
-    def set_camera_ready_verification_invitation(self, note, duedate):
+    def set_camera_ready_verification_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_action_editors_id = self.journal.get_action_editors_id(number=note.number)
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        camera_ready_verification_invitation_id = self.journal.get_camera_ready_verification_id(number=note.number)
-        invitation = Invitation(id=camera_ready_verification_invitation_id,
-            duedate=openreview.tools.datetime_millis(duedate),
-            invitees=[venue_id, paper_action_editors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            edit={
-                'signatures': { 'const': [ paper_action_editors_id ] },
-                'readers': { 'const': [ venue_id, paper_action_editors_id ] },
-                'writers': { 'const': [ venue_id, paper_action_editors_id] },
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/camera_ready_verification_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            },
+            'duedate': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            }
+        }        
+
+        invitation = { 
+            'id': self.journal.get_camera_ready_verification_id(number='${2/content/noteNumber/value}'),
+            'duedate': '${2/content/duedate/value}',
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
-                    'signatures': { 'const': [ paper_action_editors_id ] },
-                    'forum': { 'const': note.id },
-                    'replyto': { 'const': note.id },
-                    'readers': { 'const': [ editors_in_chief_id, paper_action_editors_id, paper_authors_id ] },
-                    'writers': { 'const': [ venue_id, paper_action_editors_id ] },
+                    'signatures': [self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
                     'content': {
                         'verification': {
                             'order': 1,
                             'value': {
-                                'type': 'string',
-                                'enum': [f'I confirm that camera ready manuscript complies with the {self.journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [f'I confirm that camera ready manuscript complies with the {self.journal.short_name} stylefile and, if appropriate, includes the minor revisions that were requested.'],
+                                    'input': 'checkbox'
+                                }
                             }
                         }
                     }
                 }
             },
-            process=self.get_process_content('process/camera_ready_verification_process.py'),
-            date_processes=[self.ae_reminder_process]
+            'process': self.process_script,
+            'dateprocesses': [self.ae_reminder_process]
+        }
+
+        self.save_super_invitation(self.journal.get_camera_ready_verification_id(), invitation_content, edit_content, invitation)
+
+    def set_note_camera_ready_verification_invitation(self, note, duedate):
+        return self.client.post_invitation_edit(invitations=self.journal.get_camera_ready_verification_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number },
+                'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
         )
 
-        self.save_invitation(invitation)
-
-    def set_authors_deanonymization_invitation(self, note):
+    def set_authors_deanonymization_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
-        paper_authors_id = self.journal.get_authors_id(number=note.number)
 
-        authors_deanonymization_invitation_id = self.journal.get_authors_deanonymization_id(number=note.number)
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/authors_deanonimization_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            }
+        }
 
-        invitation = Invitation(id=authors_deanonymization_invitation_id,
-            invitees=[venue_id, paper_authors_id],
-            readers=['everyone'],
-            writers=[venue_id],
-            signatures=[venue_id],
-            maxReplies=1,
-            edit={
-                'signatures': { 'const': [ paper_authors_id ] },
-                'readers': { 'const': [ venue_id, paper_authors_id ] },
-                'writers': { 'const': [ venue_id ] },
+        invitation = {
+            'id': self.journal.get_authors_deanonymization_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': ['everyone'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'maxReplies': 1,
+            'edit': {
+                'signatures': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'readers': [ venue_id, self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
                 'note': {
-                    'signatures': { 'const': [ paper_authors_id ] },
-                    'forum': { 'const': note.id },
-                    'replyto': { 'const': note.id },
-                    'readers': { 'const': [ editors_in_chief_id, paper_authors_id ] },
-                    'writers': { 'const': [ venue_id ] },
+                    'signatures': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'forum':  '${4/content/noteId/value}',
+                    'replyto': '${4/content/noteId/value}',
+                    'readers': [ editors_in_chief_id, self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id ],
                     'content': {
                         'confirmation': {
                             'order': 1,
                             'value': {
-                                'type': 'string',
-                                'enum': ['I want to reveal all author names on behalf of myself and my co-authors.']
-                            },
-                            'presentation': {
-                                'input': 'checkbox'
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['I want to reveal all author names on behalf of myself and my co-authors.'],
+                                    'input': 'checkbox'
+                                }
                             }
                         }
                     }
                 }
             },
-            process=self.get_process_content('process/authors_deanonimization_process.py')
-        )
+            'process': self.process_script
+        }
 
-        self.save_invitation(invitation)
+        self.save_super_invitation(self.journal.get_authors_deanonymization_id(), invitation_content, edit_content, invitation)
+
+    def set_note_authors_deanonymization_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )        
