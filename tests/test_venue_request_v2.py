@@ -1280,9 +1280,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         meta_reviewer_client = helpers.create_user('venue_ac1@mail.com', 'Venue', 'Ac')
 
-#         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-#         conference.setup_post_submission_stage(force=True)
-
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
         assert submissions and len(submissions) == 2
 
@@ -1292,12 +1289,11 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Area_Chairs', '~Venue_Ac1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Area_Chairs', '~Venue_Ac1')
-        # openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
-        # openreview.tools.add_assignment(client, paper_number=2, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
 
         ac_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         assert ac_group and len(ac_group.members) == 2
 
+        # no AC console yet
         # ac_page_url = 'http://localhost:3030/group?id={}/Area_Chairs'.format(venue['venue_id'])
         # request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='1-metareview-status')
 
@@ -1321,13 +1317,19 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'recommendation_options': 'Accept, Reject',
                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-                # 'additional_meta_review_form_options': {
-                #     'suggestions' : {
-                #         'value-regex': '[\\S\\s]{1,5000}',
-                #         'description': 'Please provide suggestions on how to improve the paper',
-                #         'required': False,
-                #     }
-                # },
+                'additional_meta_review_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
                 'remove_meta_review_form_options': 'confidence'
             },
             forum=venue['request_form_note'].forum,
@@ -1345,28 +1347,29 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-#         # Assert that AC now see the Submit button for assigned papers
-#         request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='note-summary-2')
+        # add AC console
+        # # Assert that AC now see the Submit button for assigned papers
+        # request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='note-summary-2')
 
-#         note_div_1 = selenium.find_element_by_id('note-summary-1')
-#         assert note_div_1
-#         note_div_2 = selenium.find_element_by_id('note-summary-2')
-#         assert note_div_2
-#         assert 'test submission' == note_div_1.find_element_by_link_text('test submission').text
-#         assert 'test submission 2' == note_div_2.find_element_by_link_text('test submission 2').text
+        # note_div_1 = selenium.find_element_by_id('note-summary-1')
+        # assert note_div_1
+        # note_div_2 = selenium.find_element_by_id('note-summary-2')
+        # assert note_div_2
+        # assert 'test submission' == note_div_1.find_element_by_link_text('test submission').text
+        # assert 'test submission 2' == note_div_2.find_element_by_link_text('test submission 2').text
 
-#         submit_div_1 = selenium.find_element_by_id('1-metareview-status')
-#         assert submit_div_1.find_element_by_link_text('Submit')
+        # submit_div_1 = selenium.find_element_by_id('1-metareview-status')
+        # assert submit_div_1.find_element_by_link_text('Submit')
 
-#         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
-#         assert submit_div_2.find_element_by_link_text('Submit')
+        # submit_div_2 = selenium.find_element_by_id('2-metareview-status')
+        # assert submit_div_2.find_element_by_link_text('Submit')
 
         meta_review_invitation = openreview_client.get_invitation(id='{}/Paper1/-/Meta_Review'.format(venue['venue_id']))
         assert meta_review_invitation
         meta_review_invitation = openreview_client.get_invitation(id='{}/Paper2/-/Meta_Review'.format(venue['venue_id']))
         assert meta_review_invitation
         assert 'confidence' not in meta_review_invitation.edit['note']['content']
-        # assert 'suggestions' in meta_review_invitations[0].reply['content']
+        assert 'suggestions' in meta_review_invitation.edit['note']['content']
         assert 'Accept' in meta_review_invitation.edit['note']['content']['recommendation']['value']['param']['enum']
         assert len(meta_review_invitation.edit['note']['readers']) == 4
 
