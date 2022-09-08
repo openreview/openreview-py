@@ -1179,36 +1179,34 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert note_div
         assert 'test submission' == note_div.find_element_by_link_text('test submission').text
 
-        review_invitations = openreview_client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
+        review_invitations = openreview_client.get_invitations(invitation='{}/-/Official_Review'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 2
         assert 'title' not in review_invitations[0].edit['note']['content']
 
-        reviewer_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Reviewers$')
-        assert len(reviewer_groups) == 2
-        assert 'V2.cc/2030/Conference' in reviewer_groups[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviewer_groups[0].readers
+        reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Paper1/Reviewers')
+        assert 'V2.cc/2030/Conference' in reviewer_group.readers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_group.readers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviewer_group.readers
 
-        assert 'V2.cc/2030/Conference' in reviewer_groups[0].deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference' in reviewer_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in reviewer_group.deanonymizers
+        reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Paper2/Reviewers')
 
-        ac_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Area_Chairs$')
-        assert len(ac_groups) == 2
-        assert 'V2.cc/2030/Conference' in ac_groups[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].readers
+        ac_group = openreview_client.get_group('V2.cc/2030/Conference/Paper1/Area_Chairs')
+        assert 'V2.cc/2030/Conference' in ac_group.readers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in ac_group.readers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_group.readers
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_group.readers
 
-        assert 'V2.cc/2030/Conference' in ac_groups[0].deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' not in ac_groups[0].deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
+        assert 'V2.cc/2030/Conference' in ac_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' not in ac_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_group.deanonymizers
 
-        sac_groups = openreview_client.get_groups('V2.cc/2030/Conference/Paper.*/Senior_Area_Chairs$')
-        assert len(sac_groups) == 2
-        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
-        assert 'V2.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
+        sac_group = openreview_client.get_group('V2.cc/2030/Conference/Paper1/Senior_Area_Chairs')
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_group.readers
+        assert 'V2.cc/2030/Conference/Program_Chairs' in sac_group.readers
 
         ## Post a review
         reviewer_anon_groups=reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Paper1/Reviewer_.*', signatory='~Venue_Reviewer2')

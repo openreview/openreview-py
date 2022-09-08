@@ -2205,7 +2205,7 @@ class ReviewStage(object):
         self.confidence_field_name = confidence_field_name
         self.process_path = process_path
 
-    def _get_reviewer_readers(self, conference, number, path):
+    def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
             return conference.get_reviewers_id()
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
@@ -2213,12 +2213,12 @@ class ReviewStage(object):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
             return conference.get_reviewers_id(number = number) + '/Submitted'
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
-            if path:
-                return '${' + f'{path}/signatures' + '}'
+            if review_signature:
+                return review_signature
             return '{signatures}'
         raise openreview.OpenReviewException('Unrecognized readers option')
 
-    def get_readers(self, conference, number, path):
+    def get_readers(self, conference, number, review_signature=None):
 
         if self.public:
             return ['everyone']
@@ -2231,7 +2231,7 @@ class ReviewStage(object):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
-        readers.append(self._get_reviewer_readers(conference, number, path))
+        readers.append(self._get_reviewer_readers(conference, number, review_signature))
 
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
             if conference.use_ethics_chairs:
