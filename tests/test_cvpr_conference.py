@@ -132,22 +132,6 @@ class TestCVPRSConference():
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Revision')
     
     def test_author_registration_stage(self, conference, client, helpers):
-        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        conference=openreview.helpers.get_conference(client, request_form.id)
-        conference.set_registration_stage(
-            openreview.RegistrationStage(
-                committee_id = conference.get_area_chairs_id(),
-                instructions ="Please confirm the following.",
-                name = 'Registration',
-                title = 'Area Chairs Registration Form',
-                start_date = datetime.datetime.utcnow(),
-                due_date = datetime.datetime.utcnow() + datetime.timedelta(days = 5),
-            )
-        )
-        helpers.await_queue()
-        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Registration')
-        
         authorids = conference.get_authors_id()
         assert authorids
         authorgroup = client.get_group(authorids)
@@ -165,6 +149,69 @@ class TestCVPRSConference():
         )
         helpers.await_queue()
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Authors/-/Registration')
+    
+    def test_ac_registration_stage(self, conference, client, helpers):
+        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+        fields = {
+            "Subject Area Selection": {
+                "order": 3, 
+                "description": "Please select at least one of the following subject areas. The selected subject area(s) are used to ensure an adequate coverage of subject areas by the ACs. The subject areas play no role in the paper matching.", 
+                "values-dropdown": [
+                    "3D from multi-view and sensors",
+                    "3D from single images",	
+                    "Adversarial attack and defense",	
+                    "Autonomous driving",
+                    "Biometrics",	
+                    "Computational imaging",	
+                    "Computer vision for social good",	
+                    "Computer vision theory",	
+                    "Datasets and evaluation",	
+                    "Deep learning architectures and techniques",	
+                    "Document analysis and understanding",	
+                    "Efficient and scalable vision",	
+                    "Embodied vision: Active agents, simulation",
+                    "Explainable computer vision",	
+                    "Humans: Face, body, pose, gesture, movement",	
+                    "Image and video synthesis and generation",	
+                    "Low-level vision",	
+                    "Machine learning (other than deep learning)",
+                    "Medical and biological vision, cell microscopy",	
+                    "Multi-modal learning",
+                    "Optimization methods (other than deep learning)",
+                    "Others",	
+                    "Photogrammetry and remote sensing",	
+                    "Physics-based vision and shape-from-X",	
+                    "Recognition: Categorization, detection, retrieval",	
+                    "Robotics",	
+                    "Scene analysis and understanding",	
+                    "Segmentation, grouping and shape analysis",	
+                    "Self-supervised/unsupervised representation learning",	
+                    "Transfer/ meta/ low-shot/ continual/ long-tail learning",	
+                    "Transparency, fairness, accountability, privacy, ethics in vision",	
+                    "Video: Action and event understanding",
+                    "Video: Low-level analysis, motion, and tracking",	
+                    "Vision + graphics",	
+                    "Vision, language, and reasoning",	
+                    "Vision applications and systems"
+                ],
+                "required": True
+            }
+        }
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_area_chairs_id(),
+                instructions ="Please confirm that your profile is complete and select your areas of expertise from the dropdown.",
+                name = 'Registration',
+                title = 'Area Chairs Registration Form',
+                additional_fields= fields,
+                start_date = datetime.datetime.utcnow(),
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(days = 5),
+            )
+        )
+        helpers.await_queue()
+        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Registration')
     
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 
