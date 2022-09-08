@@ -130,8 +130,42 @@ class TestCVPRSConference():
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Withdraw')
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Desk_Reject')
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Revision')
-
-
+    
+    def test_author_registration_stage(self, conference, client, helpers):
+        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        conference=openreview.helpers.get_conference(client, request_form.id)
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = conference.get_area_chairs_id(),
+                instructions ="Please confirm the following.",
+                name = 'Registration',
+                title = 'Area Chairs Registration Form',
+                start_date = datetime.datetime.utcnow(),
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(days = 5),
+            )
+        )
+        helpers.await_queue()
+        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Registration')
+        
+        authorids = conference.get_authors_id()
+        assert authorids
+        authorgroup = client.get_group(authorids)
+        assert authorgroup 
+        assert len(authorgroup.members) > 0 
+        conference.set_registration_stage(
+            openreview.RegistrationStage(
+                committee_id = authorids,
+                instructions ="Please confirm the following.",
+                name = 'Registration',
+                title = 'Authors Registration Form',
+                start_date = datetime.datetime.utcnow(),
+                due_date = datetime.datetime.utcnow() + datetime.timedelta(days = 5),
+            )
+        )
+        helpers.await_queue()
+        assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Authors/-/Registration')
+    
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 
         #conference.setup_final_deadline_stage(force=True)
