@@ -834,7 +834,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             },
                             'description': 'Comma separated list of author names.',
                             'order': 3,
-                            'readers': [ venue_id, action_editors_value, authors_value]
                         },
                         'authorids': {
                             'value': {
@@ -845,7 +844,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             },
                             'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4,
-                            'readers': [ venue_id, action_editors_value, authors_value]
                         },
                         'pdf': {
                             'value': {
@@ -954,6 +952,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             },
             process=self.get_process_content('process/author_submission_process.py')
         )
+
+        author_submission_readers = self.journal.get_author_submission_readers('${4/number}')
+        if author_submission_readers:
+            invitation.edit['note']['content']['authorids']['readers'] = author_submission_readers
+            invitation.edit['note']['content']['authors']['readers'] = author_submission_readers
+
         self.save_invitation(invitation)
 
     def set_submission_editable_invitation(self):

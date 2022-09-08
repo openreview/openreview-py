@@ -11,7 +11,7 @@ from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
 
-class TestJournal():
+class TestTACLJournal():
 
 
     @pytest.fixture(scope="class")

@@ -348,9 +348,16 @@ class Journal(object):
     def is_submission_public(self):
         return self.settings.get('submission_public', True)
 
-    def should_release_authors(self):
-        return self.settings.get('submission_public', True) 
+    def are_authors_anonymous(self):
+        return self.settings.get('author_anonymity', True)
 
+    def should_release_authors(self):
+        return self.is_submission_public() and self.are_authors_anonymous()
+
+    def get_author_submission_readers(self, number):
+        if self.are_authors_anonymous():
+            return [ self.venue_id, self.get_action_editors_id(number), self.get_authors_id(number)]
+    
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
