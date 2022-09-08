@@ -5,7 +5,6 @@ def process(client, note, invitation):
 
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
-
     invitation_type = invitation.id.split('/')[-1]
     forum_note = client.get_note(note.forum)
 
@@ -13,6 +12,7 @@ def process(client, note, invitation):
 
     try:
         conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
+        short_name = conference.get_short_name()
         comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
         if invitation_type in ['Bid_Stage', 'Review_Stage', 'Meta_Review_Stage', 'Decision_Stage', 'Submission_Revision_Stage', 'Comment_Stage']:
             conference.setup_post_submission_stage(hide_fields=forum_note.content.get('hide_fields', []))
@@ -45,9 +45,10 @@ def process(client, note, invitation):
                 if paper_withdraw_super_invitation:
                     paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
                     client.post_invitation(paper_withdraw_super_invitation)
-
+            recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
+            if f'[{short_name}]' not in recruitment_invitation.reply['content']['invitation_email_subject']:
+                conference.setup_venue_recruitment()
             if max(len(conference.reviewer_roles), len(conference.area_chair_roles), len(conference.senior_area_chair_roles)) > 1:
-                recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
                 if recruitment_invitation:
                     recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
                     client.post_invitation(recruitment_invitation)
@@ -179,7 +180,6 @@ def process(client, note, invitation):
                 'required': True,
                 'default': 'No, I will send the emails to the authors'
             }
-            short_name = conference.get_short_name()
             for decision in decision_options:
                 if 'Accept' in decision:
                     content[f'{decision.lower().replace(" ", "_")}_email_content'] = {
