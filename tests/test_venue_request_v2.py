@@ -249,8 +249,8 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
-        assert openreview.tools.get_group(openreview_client, 'V2.cc/2021')
-        assert openreview.tools.get_group(openreview_client, 'V2.cc')
+        # assert openreview.tools.get_group(openreview_client, 'V2.cc/2021')
+        # assert openreview.tools.get_group(openreview_client, 'V2.cc')
         assert openreview.tools.get_invitation(openreview_client, 'V2.cc/2021/Conference/-/Submission_Test')
         assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2021/Conference/-/Submission')
 
@@ -1278,73 +1278,74 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'V2.cc/2030/Conference/Paper1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
 
+    def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-#     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue):
-
-#         meta_reviewer_client = helpers.create_user('venue_ac1@mail.com', 'Venue', 'Ac')
+        meta_reviewer_client = helpers.create_user('venue_ac1@mail.com', 'Venue', 'Ac')
 
 #         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
 #         conference.setup_post_submission_stage(force=True)
 
-#         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
-#         assert blind_submissions and len(blind_submissions) == 2
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
+        assert submissions and len(submissions) == 2
 
-#         # Assert that ACs do not see the Submit button for meta reviews at this point
-#         meta_reviewer_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
-#         client.add_members_to_group(meta_reviewer_group, '~Venue_Ac1')
+        # Assert that ACs do not see the Submit button for meta reviews at this point
+        meta_reviewer_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
+        openreview_client.add_members_to_group(meta_reviewer_group, '~Venue_Ac1')
 
-#         openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
-#         openreview.tools.add_assignment(client, paper_number=2, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Area_Chairs', '~Venue_Ac1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Area_Chairs', '~Venue_Ac1')
+        # openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
+        # openreview.tools.add_assignment(client, paper_number=2, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
 
-#         ac_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
-#         assert ac_group and len(ac_group.members) == 1
+        ac_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
+        assert ac_group and len(ac_group.members) == 2
 
-#         ac_page_url = 'http://localhost:3030/group?id={}/Area_Chairs'.format(venue['venue_id'])
-#         request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='1-metareview-status')
+        # ac_page_url = 'http://localhost:3030/group?id={}/Area_Chairs'.format(venue['venue_id'])
+        # request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='1-metareview-status')
 
-#         submit_div_1 = selenium.find_element_by_id('1-metareview-status')
-#         with pytest.raises(NoSuchElementException):
-#             assert submit_div_1.find_element_by_link_text('Submit')
+        # submit_div_1 = selenium.find_element_by_id('1-metareview-status')
+        # with pytest.raises(NoSuchElementException):
+        #     assert submit_div_1.find_element_by_link_text('Submit')
 
-#         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
-#         with pytest.raises(NoSuchElementException):
-#             assert submit_div_2.find_element_by_link_text('Submit')
+        # submit_div_2 = selenium.find_element_by_id('2-metareview-status')
+        # with pytest.raises(NoSuchElementException):
+        #     assert submit_div_2.find_element_by_link_text('Submit')
 
-#         # Post a meta review stage note
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         due_date = now + datetime.timedelta(days=3)
-#         meta_review_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
-#                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'recommendation_options': 'Accept, Reject',
-#                 'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
-#                 'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-#                 'additional_meta_review_form_options': {
-#                     'suggestions' : {
-#                         'value-regex': '[\\S\\s]{1,5000}',
-#                         'description': 'Please provide suggestions on how to improve the paper',
-#                         'required': False,
-#                     }
-#                 },
-#                 'remove_meta_review_form_options': 'confidence'
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert meta_review_stage_note
-#         helpers.await_queue()
+        # Post a meta review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        meta_review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'recommendation_options': 'Accept, Reject',
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                # 'additional_meta_review_form_options': {
+                #     'suggestions' : {
+                #         'value-regex': '[\\S\\s]{1,5000}',
+                #         'description': 'Please provide suggestions on how to improve the paper',
+                #         'required': False,
+                #     }
+                # },
+                'remove_meta_review_form_options': 'confidence'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert meta_review_stage_note
+        helpers.await_queue()
 
-#         process_logs = client.get_process_logs(id = meta_review_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        process_logs = client.get_process_logs(id = meta_review_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
 #         # Assert that AC now see the Submit button for assigned papers
 #         request_page(selenium, ac_page_url, token=meta_reviewer_client.token, wait_for_element='note-summary-2')
@@ -1362,12 +1363,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 #         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
 #         assert submit_div_2.find_element_by_link_text('Submit')
 
-#         meta_review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Meta_Review$'.format(venue['venue_id']))
-#         assert meta_review_invitations and len(meta_review_invitations) == 2
-#         assert 'confidence' not in meta_review_invitations[0].reply['content']
-#         assert 'suggestions' in meta_review_invitations[0].reply['content']
-#         assert 'Accept' in meta_review_invitations[0].reply['content']['recommendation']['value-dropdown']
-#         assert len(meta_review_invitations[0].reply['readers']['values']) == 4
+        meta_review_invitation = openreview_client.get_invitation(id='{}/Paper1/-/Meta_Review'.format(venue['venue_id']))
+        assert meta_review_invitation
+        meta_review_invitation = openreview_client.get_invitation(id='{}/Paper2/-/Meta_Review'.format(venue['venue_id']))
+        assert meta_review_invitation
+        assert 'confidence' not in meta_review_invitation.edit['note']['content']
+        # assert 'suggestions' in meta_review_invitations[0].reply['content']
+        assert 'Accept' in meta_review_invitation.edit['note']['content']['recommendation']['value']['param']['enum']
+        assert len(meta_review_invitation.edit['note']['readers']) == 4
 
 #     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
