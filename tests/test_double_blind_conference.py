@@ -1232,9 +1232,10 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED)
+        builder.set_meta_review_stage(openreview.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED))
         builder.use_legacy_anonids(True)
-        builder.get_result()
+        conference = builder.get_result()
+        conference.create_meta_review_stage()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
@@ -1274,14 +1275,15 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
+        builder.set_meta_review_stage(openreview.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
                 'required' : True
             }
-        })
+        }))
         conference = builder.get_result()
+        conference.create_meta_review_stage()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
@@ -1317,14 +1319,15 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_meta_review_stage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
+        builder.set_meta_review_stage(openreview.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
                 'required' : True
             }
-        }, remove_fields = ['confidence'])
+        }, remove_fields = ['confidence']))
         conference = builder.get_result()
+        conference.create_meta_review_stage()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
@@ -1883,7 +1886,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         builder.set_conference_year(2019)
-        builder.set_meta_review_stage(public=True, additional_fields = {
+        builder.set_meta_review_stage(openreview.MetaReviewStage(public=True, additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
@@ -1899,8 +1902,9 @@ class TestDoubleBlindConference():
                 ],
                 'required': False
             }
-        })
-        builder.get_result()
+        }))
+        conference = builder.get_result()
+        conference.create_meta_review_stage()
 
         reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Meta_Review')
         assert(reviews)

@@ -211,6 +211,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_review_stage(get_review_stage(note))
     builder.set_ethics_review_stage(get_ethics_review_stage(note))
     builder.set_bid_stages(get_bid_stages(note))
+    builder.set_meta_review_stage(get_meta_review_stage(note))
 
     decision_heading_map = note.content.get('home_page_tab_names')
     if decision_heading_map:
@@ -344,7 +345,7 @@ def get_ethics_review_stage(request_forum):
         submission_numbers = flagged_submissions
     )
 
-def get_meta_review_stage(client, request_forum):
+def get_meta_review_stage(request_forum):
     meta_review_start_date = request_forum.content.get('meta_review_start_date', '').strip()
     if meta_review_start_date:
         try:

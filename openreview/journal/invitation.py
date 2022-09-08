@@ -3470,7 +3470,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 }
                             },
                             "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                            "order": 7
+                            "order": 7,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
                         },
                         f'previous_{short_name}_submission_url': {
                             'value': {
@@ -3505,7 +3506,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 }
                             },
                             'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
-                            'order': 10
+                            'order': 10,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
                         },
                         'human_subjects_reporting': {
                             'value': {
@@ -3516,7 +3518,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 }
                             },
                             'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
-                            'order': 11
+                            'order': 11,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
                         }
                     }
                 }

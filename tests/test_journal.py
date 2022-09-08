@@ -182,7 +182,7 @@ class TestJournal():
                     'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
                     'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
@@ -297,6 +297,7 @@ The TMLR Editors-in-Chief
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
+        assert note.content['supplementary_material']['readers'] == ["TMLR", "TMLR/Paper1/Action_Editors", "TMLR/Paper1/Reviewers", "TMLR/Paper1/Authors"]
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['authorids']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
 
