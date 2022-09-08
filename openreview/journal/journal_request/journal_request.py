@@ -153,7 +153,7 @@ class JournalRequest():
                         'optional': True
                     }
                 }
-            }            
+            }
         }
 
         with open(os.path.join(os.path.dirname(__file__), 'process/deploy_process.py')) as f:
