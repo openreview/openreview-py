@@ -155,7 +155,7 @@ class TestCVPRSConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         conference=openreview.helpers.get_conference(client, request_form.id)
         fields = {
-            "Subject Area Selection": {
+            "subject_areas": {
                 "order": 3, 
                 "description": "Please select at least one of the following subject areas. The selected subject area(s) are used to ensure an adequate coverage of subject areas by the ACs. The subject areas play no role in the paper matching.", 
                 "values-dropdown": [
