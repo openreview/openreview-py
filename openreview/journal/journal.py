@@ -17,7 +17,7 @@ from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, Un
 
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Author_Submission'):
+    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Submission'):
 
         self.client = client
         self.venue_id = venue_id
@@ -27,6 +27,8 @@ class Journal(object):
         self.full_name = full_name
         self.website = website
         self.submission_name = submission_name
+        self.settings = {}
+        self.request_form_id = None
         self.editors_in_chief_name = 'Editors_In_Chief'
         self.action_editors_name = 'Action_Editors'
         self.reviewers_name = 'Reviewers'
@@ -255,16 +257,6 @@ class Journal(object):
     def get_submission_editable_id(self, number=None):
         return self.__get_invitation_id(name='Submission_Editable', number=number)
 
-    def get_request_form(self):
-        journal_request_invitation = tools.get_invitation(self.client, 'OpenReview.net/Support/-/Journal_Request')
-        if not journal_request_invitation:
-            journal_request_invitation = tools.get_invitation(self.client, 'openreview.net/Support/-/Journal_Request')
-
-        if journal_request_invitation:
-            forum_note = self.client.get_notes(invitation=journal_request_invitation.id, content={'venue_id':self.venue_id})
-            if forum_note:
-                return forum_note[0]
-
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
         if forum_note:
@@ -276,8 +268,8 @@ class Journal(object):
             return forum_notes[0].id                  
 
     def get_support_group(self):
-        forum_note = self.get_request_form()
-        if forum_note:
+        if self.request_form_id:
+            forum_note = self.client.get_note(self.request_form_id)
             return forum_note.invitations[0].split('/-/')[0]
 
     def get_review_period_length(self, note):
@@ -352,6 +344,52 @@ class Journal(object):
 
     def assign_reviewer(self, note, reviewer, solicit):
         self.assignment.assign_reviewer(note, reviewer, solicit)
+
+    def is_submission_public(self):
+        return self.settings.get('submission_public', True)
+
+    def are_authors_anonymous(self):
+        return self.settings.get('author_anonymity', True)
+
+    def should_release_authors(self):
+        return self.is_submission_public() and self.are_authors_anonymous()
+
+    def get_author_submission_readers(self, number):
+        if self.are_authors_anonymous():
+            return [ self.venue_id, self.get_action_editors_id(number), self.get_authors_id(number)]
+    
+    def get_under_review_submission_readers(self, number):
+        if self.is_submission_public():
+            return ['everyone']
+        return [self.venue_id, self.get_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]
+
+    def get_release_review_readers(self, number):
+        if self.is_submission_public():
+            return ['everyone']
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]        
+    
+    def get_release_decision_readers(self, number):
+        if self.is_submission_public():
+            return ['everyone']
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_reviewers_id(number), self.get_authors_id(number)]        
+
+    def get_release_authors_readers(self, number):
+        if self.is_submission_public():
+            return ['everyone']
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(number), self.get_authors_id(number)]        
+
+    def get_official_comment_readers(self, number):
+        readers = []
+        if self.is_submission_public():
+            readers.append('everyone')
+
+        return readers + [
+            self.get_editors_in_chief_id(), 
+            self.get_action_editors_id(number), 
+            self.get_reviewers_id(number), 
+            self.get_reviewers_id(number, anon=True) + '.*', 
+            self.get_authors_id(number)
+        ]        
 
     def get_due_date(self, days=0, weeks=0):
         due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
@@ -441,9 +479,12 @@ class Journal(object):
 
         if new_venue_id == self.accepted_venue_id:
 
-            first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
-            first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
-            authors = ' and '.join(note.content['authors']['value'])
+            first_author_last_name = 'anonymous'
+            authors = 'Anonymous'
+            if 'everyone' in self.get_release_authors_readers(note.number):
+                first_author_profile = self.client.get_profile(note.content['authorids']['value'][0])
+                first_author_last_name = openreview.tools.get_preferred_name(first_author_profile, last_name_only=True).lower()
+                authors = ' and '.join(note.content['authors']['value'])
 
             bibtex = [
                 '@article{',
@@ -609,7 +650,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if token.startswith(self.submission_group_name):
                     return int(token.replace(self.submission_group_name, ''))
 
-        for invitation in tqdm(note_invitations):
+        for invitation in note_invitations:
 
             tokens = invitation.id.split('/')
             name = tokens[-1]
@@ -732,7 +773,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         reviewer_invitations = self.client.get_all_invitations(invitation=self.get_reviewer_responsibility_id())
 
-        for invitation in tqdm(reviewer_invitations):
+        for invitation in reviewer_invitations:
             tokens = invitation.id.split('/')
             self.invitation_builder.set_single_reviewer_responsibility_invitation(tokens[-3], duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
     

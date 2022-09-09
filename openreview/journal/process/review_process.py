@@ -29,45 +29,19 @@ def process(client, edit, invitation):
     journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=submission.number, reviewer_id=profile.id))
 
     review_note=client.get_note(note.id)
-    if review_note.readers == ['everyone']:
-        print('Review already public, exit')
+    if journal.get_release_review_id(number=note.number) in review_note.invitations:
+        print('Review already released, exit')
         return
 
     reviews=client.get_notes(forum=note.forum, invitation=edit.invitation)
     print(f'Reviews found {len(reviews)}')
     if len(reviews) == 3:
-        print('Relese review to the public...')
-        ## Change review invitation readers
-        invitation = journal.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=journal.get_review_id(number=submission.number),
-                signatures=[journal.get_editors_in_chief_id()],
-                edit={
-                    'note': {
-                        'readers': [ 'everyone' ]
-                    }
-                }
-        ))
 
-        ## Release the reviews to everyone
+        print('Release reviews...')
         invitation = journal.invitation_builder.set_note_release_review_invitation(submission)
 
-        ## Release the comments to everyone
-        official_comment_invitation_id = journal.get_official_comment_id(number=submission.number)
-        release_comment_invitation_id = journal.get_release_comment_id(number=submission.number)
+        print('Release comments...')
         invitation = journal.invitation_builder.set_note_release_comment_invitation(submission)
-
-        print(f'Get comments from invitation {official_comment_invitation_id}')
-        comments = client.get_notes(invitation=official_comment_invitation_id)
-        authors_id = journal.get_authors_id(number=submission.number)
-        anon_reviewers_id = journal.get_reviewers_id(number=submission.number, anon=True)
-        print(f'Releasing {len(comments)} comments...')
-        for comment in comments:
-            if authors_id in comment.readers and [r for r in comment.readers if anon_reviewers_id in r]:
-                client.post_note_edit(invitation=release_comment_invitation_id,
-                    signatures=[ venue_id ],
-                    note=openreview.api.Note(
-                        id=comment.id
-                    )
-                )
 
         ## Enable official recommendation
         print('Enable official recommendations')
