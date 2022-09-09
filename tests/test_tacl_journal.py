@@ -701,6 +701,9 @@ url={https://openreview.net/forum?id=''' + note_id_2 + '''},
 note={Withdrawn}
 }'''
 
+        
+        helpers.await_queue_edit(openreview_client, invitation='TACL/-/Withdrawn')
+
         edits = openreview_client.get_note_edits(note.id)
         assert len(edits) == 3
         for edit in edits:
