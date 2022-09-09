@@ -113,6 +113,7 @@ The OpenReview Team.
         
         group = client.get_group(username)
         group.members = []
+        group.signatures = ['~Super_User1']
         client.post_group(group)
         
         client.post_profile(openreview.Profile(

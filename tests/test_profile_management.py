@@ -30,6 +30,10 @@ class TestProfileManagement():
         assert 'username' in profile.content['names'][1]
         assert profile.content['names'][1]['username'] == '~John_Alternate_Last1'
 
+        assert client.get_group('~John_Last1').members == ['john@profile.org']
+        assert client.get_group('john@profile.org').members == ['~John_Last1', '~John_Alternate_Last1']
+        assert client.get_group('~John_Alternate_Last1').members == ['john@profile.org']
+
         ## Try to remove the unexisting name and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~John_Last'):
             request_note = john_client.post_note(openreview.Note(
@@ -191,6 +195,9 @@ The OpenReview Team.
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~John_Alternate_Last1'):
             client.get_group('~John_Alternate_Last1')
 
+        assert client.get_group('~John_Last1').members == ['john@profile.org']
+        assert client.get_group('john@profile.org').members == ['~John_Last1']
+
         messages = client.get_messages(to='john@profile.org', subject='Profile name removal request has been accepted')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi John Last,
@@ -223,6 +230,10 @@ The OpenReview Team.
         assert profile.content['names'][1]['username'] == '~Ana_Alternate_Last1'
         assert profile.content['names'][1]['preferred'] == True
         assert profile.content['names'][0]['preferred'] == False
+
+        assert client.get_group('~Ana_Last1').members == ['ana@profile.org']
+        assert client.get_group('ana@profile.org').members == ['~Ana_Last1', '~Ana_Alternate_Last1']
+        assert client.get_group('~Ana_Alternate_Last1').members == ['ana@profile.org']        
 
         ## Try to remove the name that is marked as preferred an get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Can not remove preferred name'):
@@ -332,6 +343,9 @@ The OpenReview Team.
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ana_Last1'):
             client.get_group('~Ana_Last1')
+
+        assert client.get_group('ana@profile.org').members == ['~Ana_Alternate_Last1']
+        assert client.get_group('~Ana_Alternate_Last1').members == ['ana@profile.org']              
 
         messages = client.get_messages(to='ana@profile.org', subject='Profile name removal request has been accepted')
         assert len(messages) == 1
@@ -445,6 +459,10 @@ The OpenReview Team.
         assert 'username' in profile.content['names'][1]
         assert profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
 
+        assert client.get_group('~Ella_Last1').members == ['ella@profile.org']
+        assert client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
+        assert client.get_group('~Ella_Alternate_Last1').members == ['ella@profile.org']        
+
         ## Add publications
         ella_client.post_note(openreview.Note(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -466,6 +484,9 @@ The OpenReview Team.
         ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ella', 'Last', alternates=[], institution='deepmind.com')
         profile = ella_client_2.get_profile()
         assert '~Ella_Last2' == profile.id
+
+        assert client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
+        assert client.get_group('ella_two@profile.org').members == ['~Ella_Last2']
 
         ella_client_2.post_note(openreview.Note(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -491,7 +512,12 @@ The OpenReview Team.
         profile.content['names'][0]['preferred'] == True
         profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
         profile.content['names'][2]['username'] == '~Ella_Last2'
-    
+
+        assert client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
+        assert client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
+        assert client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
+        assert client.get_group('ella_two@profile.org').members == ['~Ella_Last2', '~Ella_Last1']
+        assert client.get_group('~Ella_Alternate_Last1').members == ['ella@profile.org']             
  
         request_note = ella_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
@@ -556,6 +582,11 @@ The OpenReview Team.
 
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ella_Last2'):
             client.get_group('~Ella_Last2')
+
+        assert client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
+        assert client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
+        assert client.get_group('ella_two@profile.org').members == ['~Ella_Last1']
+        assert client.get_group('~Ella_Alternate_Last1').members == ['ella@profile.org']            
 
         messages = client.get_messages(to='ella@profile.org', subject='Profile name removal request has been accepted')
         assert len(messages) == 1
