@@ -84,7 +84,7 @@ class TestVenueRequest():
         helpers.await_queue()
 
         # Post a deploy note
-        client.post_note(openreview.Note(
+        deploy_note = client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2030/Conference'},
             forum=request_form_note.forum,
             invitation='{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number),
@@ -574,6 +574,30 @@ class TestVenueRequest():
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
+    
+    def test_venue_recruitment_change_short_name(self, client, test_client, selenium, request_page, venue, helpers): 
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
+        request_form_note = venue['request_form_note']
+        support_group_id = venue['support_group_id']
+        deploy_note = venue['deploy_note']
+        venue_revision_note = openreview.Note(
+        content={
+            'Abbreviated Venue Name': request_form_note.content['Abbreviated Venue Name'] + ' Modified'
+        },
+        forum=request_form_note.forum,
+        invitation='{}/-/Request{}/Revision'.format(support_group_id, request_form_note.number),
+        readers=['{}/Program_Chairs'.format(deploy_note.content['venue_id']), support_group_id],
+        referent=request_form_note.forum,
+        replyto=request_form_note.forum,
+        signatures=['~NewFirstName_User1'],
+        writers=[]
+        )
+
+        venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
+        venue_revision_note=client.post_note(venue_revision_note)
+
+        helpers.await_queue()
+        assert venue['request_form_note']['content']['Abbreviated Venue Name'].endswith('Modified')
 
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 

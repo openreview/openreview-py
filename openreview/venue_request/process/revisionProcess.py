@@ -46,8 +46,47 @@ def process(client, note, invitation):
                     paper_withdraw_super_invitation.expdate = openreview.tools.datetime_millis(withdraw_submission_expiration)
                     client.post_invitation(paper_withdraw_super_invitation)
             recruitment_invitation = openreview.tools.get_invitation(client, SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Recruitment')
-            if f'[{short_name}]' not in recruitment_invitation.reply['content']['invitation_email_subject']:
-                conference.setup_venue_recruitment()
+            if f'[{short_name}]' not in recruitment_invitation.reply['content']['invitation_email_subject']['default']:
+                recruitment_invitation.reply['content']['invitation_email_subject'] = {
+                'value-regex': '.*',
+                'description': 'Please carefully review the email subject for the recruitment emails. Make sure not to remove the parenthesized tokens.',
+                'order': 6,
+                'required': True,
+                'default': '[{short_name}] Invitation to serve as {{invitee_role}}'
+            }
+                recruitment_invitation.reply["content"]["invitation_email_content"] ={
+                'value-regex': '[\\S\\s]{1,10000}',
+                'description': 'Please carefully review the template below before you click submit to send out recruitment emails. Make sure not to remove the parenthesized tokens.',
+                'order': 7,
+                'required': True,
+                'default': '''Dear {{fullname}},
+
+        You have been nominated by the program chair committee of {short_name} to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make {short_name} a success.
+
+        You are also welcome to submit papers, so please also consider submitting to {short_name}.
+
+        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+        To ACCEPT the invitation, please click on the following link:
+
+        {{accept_url}}
+
+        To DECLINE the invitation, please click on the following link:
+
+        {{decline_url}}
+
+        Please answer within 10 days.
+
+        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+        If you have any questions, please contact us at info@openreview.net.
+
+        Cheers!
+
+        Program Chairs
+        '''
+            }
+
             if max(len(conference.reviewer_roles), len(conference.area_chair_roles), len(conference.senior_area_chair_roles)) > 1:
                 if recruitment_invitation:
                     recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
