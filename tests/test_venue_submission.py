@@ -34,18 +34,18 @@ class TestVenueSubmission():
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Submission')
 
-        helpers.create_user('celeste@mailnine.com', 'Celeste', 'Martinez')
-        author_client = OpenReviewClient(username='celeste@mailnine.com', password='1234')
+        helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
+        author_client = OpenReviewClient(username='celeste@maileleven.com', password='1234')
 
         submission_note_1 = author_client.post_note_edit(
             invitation=f'{conference_id}/-/Submission',
-            signatures= ['~Celeste_Martinez1'],
+            signatures= ['~Celeste_MartinezEleven1'],
             note=Note(
                 content={
                     'title': { 'value': 'Paper 1 Title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['Celeste Martinez']},
-                    'authorids': { 'value': ['~Celeste_Martinez1']},
+                    'authors': { 'value': ['Celeste MartinezEleven']},
+                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
                 }
