@@ -1,6 +1,7 @@
 import json
 
 import openreview
+from openreview import venue_request
 import pytest
 import time
 import datetime
@@ -84,7 +85,7 @@ class TestVenueRequest():
         helpers.await_queue()
 
         # Post a deploy note
-        deploy_note = client.post_note(openreview.Note(
+        client.post_note(openreview.Note(
             content={'venue_id': 'TEST.cc/2030/Conference'},
             forum=request_form_note.forum,
             invitation='{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number),
@@ -575,30 +576,6 @@ class TestVenueRequest():
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
     
-    def test_venue_recruitment_change_short_name(self, client, test_client, selenium, request_page, venue, helpers): 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
-        request_form_note = venue['request_form_note']
-        support_group_id = venue['support_group_id']
-        deploy_note = venue['deploy_note']
-        venue_revision_note = openreview.Note(
-        content={
-            'Abbreviated Venue Name': request_form_note.content['Abbreviated Venue Name'] + ' Modified'
-        },
-        forum=request_form_note.forum,
-        invitation='{}/-/Request{}/Revision'.format(support_group_id, request_form_note.number),
-        readers=['{}/Program_Chairs'.format(deploy_note.content['venue_id']), support_group_id],
-        referent=request_form_note.forum,
-        replyto=request_form_note.forum,
-        signatures=['~NewFirstName_User1'],
-        writers=[]
-        )
-
-        venue_revision_note.content['desk_rejected_submissions_author_anonymity'] = 'Yes, author identities of desk rejected submissions should be revealed.'
-        venue_revision_note=client.post_note(venue_revision_note)
-
-        helpers.await_queue()
-        assert venue['request_form_note']['content']['Abbreviated Venue Name'].endswith('Modified')
-
     def test_venue_recruitment_tilde_IDs(self, client, test_client, selenium, request_page, venue, helpers):
 
         # Test Reviewer Recruitment
@@ -702,6 +679,145 @@ class TestVenueRequest():
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Remind Recruitment Status' not in last_message['content']['text']
+
+    def test_venue_recruitment_change_short_name(self, client, test_client, selenium, request_page, venue, helpers): 
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
+        
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'] + ' Modified',
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline':  venue['request_form_note'].content['Submission Deadline'],
+                'Venue Start Date':  venue['request_form_note'].content['Venue Start Date'],
+                'contact_email': venue['request_form_note'].content['contact_email']
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        updated_request_form_note = client.get_note(venue['request_form_note'].id)
+        assert updated_request_form_note.content['Abbreviated Venue Name'].endswith('Modified')
+
+        helpers.create_user('reviewer_three_tilde@mail.com', 'Reviewer', 'ThreeTilde')
+        reviewer_details = '''~Reviewer_ThreeTilde1'''
+        recruitment_invitation = client.get_invitation('{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
+
+        assert recruitment_invitation.reply['content']['invitation_email_subject']['default'] == "[TestVenue@OR'2030 Modified] Invitation to serve as {{invitee_role}}"
+        assert recruitment_invitation.reply['content']['invitation_email_content']['default'] == '''Dear {{fullname}},
+
+        You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make TestVenue@OR'2030 Modified a success.
+
+        You are also welcome to submit papers, so please also consider submitting to TestVenue@OR'2030 Modified.
+
+        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+        To ACCEPT the invitation, please click on the following link:
+
+        {{accept_url}}
+
+        To DECLINE the invitation, please click on the following link:
+
+        {{decline_url}}
+
+        Please answer within 10 days.
+
+        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+        If you have any questions, please contact us at info@openreview.net.
+
+        Cheers!
+
+        Program Chairs
+        '''
+        recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': recruitment_invitation.reply['content']['invitation_email_subject']['default'],
+                'invitation_email_content': recruitment_invitation.reply['content']['invitation_email_content']['default']
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='reviewer_three_tilde@mail.com')
+        assert messages and len(messages) == 2
+
+        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
+        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[1]['content']['text']
+        
+        remind_recruitment_invitation = client.get_invitation('{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
+        
+        remind_recruitment_note = test_client.post_note(openreview.Note(
+            content={
+                'title': 'Remind Recruitment',
+                'invitee_role': 'Reviewers',
+                'invitation_email_subject': remind_recruitment_invitation.reply['content']['invitation_email_subject']['default'],
+                'invitation_email_content': remind_recruitment_invitation.reply['content']['invitation_email_content']['default']
+            },
+            forum=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+    
+        assert remind_recruitment_note
+        helpers.await_queue()
+
+        messages = client.get_messages(to='reviewer_three_tilde@mail.com')
+        assert messages and len(messages) == 3
+
+        assert messages[2]['content']['subject'] == "Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
+        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[2]['content']['text']
+        
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'Submission Deadline':  venue['request_form_note'].content['Submission Deadline'],
+                'Venue Start Date':  venue['request_form_note'].content['Venue Start Date'],
+                'contact_email': venue['request_form_note'].content['contact_email']
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        updated_request_form_note = client.get_note(venue['request_form_note'].id)
+        assert not updated_request_form_note.content['Abbreviated Venue Name'].endswith('Modified')
 
     def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
         now = datetime.datetime.utcnow()
