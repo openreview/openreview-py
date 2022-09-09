@@ -197,6 +197,18 @@ class TestCVPRSConference():
                     "Vision applications and systems"
                 ],
                 "required": True
+            },
+            "profile_confirmed": {
+                "description": "In order to avoid conflicts of interest in reviewing, we ask that all Area Chairs take a moment to update their OpenReview profiles (link in instructions above) with their latest information regarding email addresses, work history and professional relationships. Please confirm that your OpenReview profile is up-to-date by selecting \"Yes\".",
+                "value-checkbox": "Yes",
+                "required": True,
+                "order": 1
+            },
+            "expertise_confirmed": {
+                "description": "We will be using OpenReview's Expertise System as a factor in calculating paper-area chair affinity scores. Please take a moment to ensure that your latest papers are visible at the Expertise Selection (link in instructions above). Please confirm finishing this step by selecting \"Yes\".",
+                "value-checkbox": "Yes",
+                "required": True,
+                "order": 2
             }
         }
         conference.set_registration_stage(
