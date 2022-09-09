@@ -116,7 +116,11 @@ class InvitationBuilder(object):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+            if self.journal.request_form_id:
+                return process.replace('openreview.journal.Journal()', f'openreview.journal.JournalRequest.get_journal(client, "{self.journal.request_form_id}")')
+            else:
+                return process.replace('openreview.journal.Journal()', f'openreview.journal.Journal(client, "{self.journal.venue_id}", "{self.journal.secret_key}", contact_info="{self.journal.contact_info}", full_name="{self.journal.full_name}", short_name="{self.journal.short_name}", website="{self.journal.website}", submission_name="{self.journal.submission_name}")')
+
 
     def post_invitation_edit(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.journal.get_meta_invitation_id(),
@@ -313,8 +317,8 @@ class InvitationBuilder(object):
             process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{reviewers_id}'")
             process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{reviewers_declined_id}'")
             process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{self.journal.secret_key}'")
-            if self.journal.get_request_form():
-                process_content = process_content.replace("JOURNAL_REQUEST_ID = ''", "JOURNAL_REQUEST_ID = '" + self.journal.get_request_form().id + "'")
+            if self.journal.request_form_id:
+                process_content = process_content.replace("JOURNAL_REQUEST_ID = ''", "JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "'")
                 process_content = process_content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.journal.get_support_group() + "'")
             process_content = process_content.replace("VENUE_ID = ''", f"VENUE_ID = '{self.journal.venue_id}'")
 
@@ -830,7 +834,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             },
                             'description': 'Comma separated list of author names.',
                             'order': 3,
-                            'readers': [ venue_id, action_editors_value, authors_value]
                         },
                         'authorids': {
                             'value': {
@@ -841,7 +844,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             },
                             'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
                             'order': 4,
-                            'readers': [ venue_id, action_editors_value, authors_value]
                         },
                         'pdf': {
                             'value': {
@@ -950,6 +952,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             },
             process=self.get_process_content('process/author_submission_process.py')
         )
+
+        author_submission_readers = self.journal.get_author_submission_readers('${4/number}')
+        if author_submission_readers:
+            invitation.edit['note']['content']['authorids']['readers'] = author_submission_readers
+            invitation.edit['note']['content']['authors']['readers'] = author_submission_readers
+
         self.save_invitation(invitation)
 
     def set_submission_editable_invitation(self):
@@ -982,7 +990,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'signatures': [venue_id],
             'edit': {
                 'signatures': [venue_id ],
-                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
                 'writers': [ venue_id ],
                 'note': {
                     'id': '${4/content/noteId/value}',
@@ -1937,7 +1945,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'forum': '${4/content/noteId/value}',
                     'replyto': '${4/content/noteId/value}',
                     'signatures': [self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
-                    'readers': [ 'everyone' ],
+                    'readers': self.journal.get_under_review_submission_readers('${5/content/noteNumber/value}'),
                     'writers': [ venue_id ],
                     'content': {
                         'withdrawal_confirmation': {
@@ -2302,7 +2310,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'signatures': [ venue_id ],
-                'readers': [ 'everyone'],
+                'readers': self.journal.get_under_review_submission_readers('${2/note/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -2310,7 +2318,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_author_submission_id() 
                         },
                     },
-                    'readers': ['everyone'],
+                    'readers': self.journal.get_under_review_submission_readers('${2/number}'),
                     'content': {
                         'assigned_action_editor': {
                             'value': {
@@ -2401,7 +2409,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[venue_id],
             edit={
                 'signatures': [venue_id],
-                'readers': [ 'everyone' ],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -2492,7 +2500,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             maxReplies=1,
             edit={
                 'signatures': [venue_id],
-                'readers': [ 'everyone' ],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -2544,7 +2552,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     }
                 },
                 'signatures': [venue_id],
-                'readers': [ 'everyone'],
+                'readers': self.journal.get_under_review_submission_readers('${{2/note/id}/number}'),
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 
@@ -2590,18 +2598,21 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'license': {
                             'value': 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
                             'order': 4
-                        },
-                        'authors': {
-                            'readers': ['everyone']
-                        },
-                        'authorids': {
-                            'readers': ['everyone']
                         }
                     }
                 }
             },
             process=self.get_process_content('process/accepted_submission_process.py')
         )
+
+        if self.journal.should_release_authors():
+            invitation.edit['note']['content']['authors'] = {
+                'readers': ['everyone']
+            }
+            invitation.edit['note']['content']['authorids'] = {
+                'readers': ['everyone']
+            }
+
 
         self.save_invitation(invitation)
 
@@ -2954,7 +2965,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             'withInvitation': self.journal.get_review_id(number='${6/content/noteNumber/value}')
                         }
                     },
-                    'readers': [ 'everyone'],
+                    'readers': self.journal.get_release_review_readers(number='${5/content/noteNumber/value}'),
                 }
             }
         }
@@ -2981,6 +2992,16 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
 
     def set_note_release_review_invitation(self, note):
+
+        ## Change review invitation readers
+        invitation = self.post_invitation_edit(invitation=openreview.api.Invitation(id=self.journal.get_review_id(number=note.number),
+                signatures=[self.journal.get_editors_in_chief_id()],
+                edit={
+                    'note': {
+                        'readers': self.journal.get_release_review_readers(number='${{2/id}/number}')
+                    }
+                }
+        ))        
 
         return self.client.post_invitation_edit(invitations=self.journal.get_release_review_id(),
             content={ 'noteNumber': { 'value': note.number } },
@@ -3237,12 +3258,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
 
     def set_note_solicit_review_invitation(self, note):
 
-        return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_id(),
-            content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }},
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )
+        if self.journal.is_submission_public():
+            return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_id(),
+                content={ 'noteId': { 'value': note.id }, 'noteNumber': { 'value': note.number }},
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )
 
     def set_solicit_review_approval_invitation(self):
 
@@ -3552,24 +3574,22 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             invitation=Invitation(
                 id=revision_invitation_id,
                 edit={
-                    'readers': ['everyone']
+                    'readers': self.journal.get_under_review_submission_readers(note.number)
                 }
             )
         )
 
-        ## Make the edit public
+        ## Change the edit readers
         for edit in self.client.get_note_edits(note.id, invitation=revision_invitation_id, sort='tcdate:asc'):
-            edit.readers = ['everyone']
+            edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
-            # edit.note.cdate = None
-            # edit.note.forum = None
             self.client.post_edit(edit)
 
-        ## Make the first edit public too
+        ## Change first edit readers
         for edit in self.client.get_note_edits(note.id, invitation=self.journal.get_author_submission_id(), sort='tcdate:asc'):
             edit.invitation = self.journal.get_meta_invitation_id()
             edit.signatures = [self.journal.venue_id]
-            edit.readers = ['everyone']
+            edit.readers = self.journal.get_under_review_submission_readers(note.number)
             edit.note.mdate = None
             self.client.post_edit(edit)         
 
@@ -3663,7 +3683,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'process': self.process_script
         }
 
-        self.save_super_invitation(self.journal.get_public_comment_id(), invitation_content, edit_content, invitation)
+        if self.journal.is_submission_public():
+            self.save_super_invitation(self.journal.get_public_comment_id(), invitation_content, edit_content, invitation)
 
         invitation_content = {
             'process_script': {
@@ -3707,14 +3728,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'signatures': ['${3/signatures}'],
                     'readers': {
                         'param': {
-                            'enum': [
-                                'everyone', 
-                                editors_in_chief_id, 
-                                self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), 
-                                self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), 
-                                self.journal.get_reviewers_id(number='${7/content/noteNumber/value}', anon=True) + '.*', 
-                                self.journal.get_authors_id(number='${7/content/noteNumber/value}')
-                            ],
+                            'enum': self.journal.get_official_comment_readers('${7/content/noteNumber/value}')
                         }
                     },
                     'writers': ['${3/writers}'],
@@ -3805,7 +3819,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 }
             }
         }
-        self.save_super_invitation(self.journal.get_moderation_id(), {}, edit_content, invitation)
+        if self.journal.is_submission_public():
+            self.save_super_invitation(self.journal.get_moderation_id(), {}, edit_content, invitation)
 
         invitation = {
             'id': self.journal.get_release_comment_id(number='${2/content/noteNumber/value}'),
@@ -3828,20 +3843,11 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             }
         }
 
-        self.save_super_invitation(self.journal.get_release_comment_id(), {}, edit_content, invitation)        
+        if self.journal.is_submission_public():
+            self.save_super_invitation(self.journal.get_release_comment_id(), {}, edit_content, invitation)        
 
     def set_note_comment_invitation(self, note):
         
-        self.client.post_invitation_edit(invitations=self.journal.get_public_comment_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )        
-
         self.client.post_invitation_edit(invitations=self.journal.get_official_comment_id(),
             content={ 
                 'noteId': { 'value': note.id }, 
@@ -3852,26 +3858,54 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[self.journal.venue_id]
         )        
 
-        self.client.post_invitation_edit(invitations=self.journal.get_moderation_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )        
+        if self.journal.is_submission_public():
+            self.client.post_invitation_edit(invitations=self.journal.get_public_comment_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number }
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )        
+
+
+            self.client.post_invitation_edit(invitations=self.journal.get_moderation_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number }
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )        
 
     def set_note_release_comment_invitation(self, note):
-        return self.client.post_invitation_edit(invitations=self.journal.get_release_comment_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )
+        if self.journal.is_submission_public():
+            self.client.post_invitation_edit(invitations=self.journal.get_release_comment_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number }
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )
+
+            official_comment_invitation_id = self.journal.get_official_comment_id(number=note.number)
+            release_comment_invitation_id = self.journal.get_release_comment_id(number=note.number)
+            comments = self.client.get_notes(invitation=official_comment_invitation_id)
+            authors_id = self.journal.get_authors_id(number=note.number)
+            anon_reviewers_id = self.journal.get_reviewers_id(number=note.number, anon=True)
+            print(f'Releasing {len(comments)} comments...')
+            for comment in comments:
+                if authors_id in comment.readers and [r for r in comment.readers if anon_reviewers_id in r]:
+                    self.client.post_note_edit(invitation=release_comment_invitation_id,
+                        signatures=[ self.venue_id ],
+                        note=openreview.api.Note(
+                            id=comment.id
+                        )
+                    )        
 
     def set_decision_invitation(self):
         venue_id = self.journal.venue_id
@@ -4148,7 +4182,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'writers': [ venue_id ],
                 'note': {
                     'id': { 'param': { 'withInvitation': self.journal.get_ae_decision_id(number='${6/content/noteNumber/value}') }},
-                    'readers': [ 'everyone' ],
+                    'readers': self.journal.get_release_decision_readers('${5/content/noteNumber/value}'),
                     'nonreaders': []
                 }
             }
@@ -4322,7 +4356,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             'duedate': '${2/content/duedate/value}',
             'edit': {
                 'signatures': [self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
-                'readers': ['everyone'],
+                'readers': self.journal.get_under_review_submission_readers('${4/content/noteNumber/value}'),
                 'writers': [ venue_id, self.journal.get_authors_id(number='${4/content/noteNumber/value}')],
                 'note': {
                     'id': '${4/content/noteId/value}',
@@ -4626,12 +4660,13 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         self.save_super_invitation(self.journal.get_authors_deanonymization_id(), invitation_content, edit_content, invitation)
 
     def set_note_authors_deanonymization_invitation(self, note):
-        return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )        
+        if self.journal.should_release_authors():
+            return self.client.post_invitation_edit(invitations=self.journal.get_authors_deanonymization_id(),
+                content={ 
+                    'noteId': { 'value': note.id }, 
+                    'noteNumber': { 'value': note.number }
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+            )        
