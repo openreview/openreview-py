@@ -298,6 +298,8 @@ class Venue(object):
             ))
 
         self.group_builder.create_reviewers_group()
+        if self.use_area_chairs:
+            self.group_builder.create_area_chairs_group()
         self.client.add_members_to_group('venues', venue_id)
         self.client.add_members_to_group('host', venue_id)
 
@@ -332,6 +334,7 @@ class Venue(object):
         self.set_group_variable(self.venue_id, 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
         self.set_group_variable(self.get_authors_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
         self.set_group_variable(self.get_reviewers_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
+        self.set_group_variable(self.get_area_chairs_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
 
     def update_readers(self, submission, invitation):
         ## Update readers of current notes
@@ -359,6 +362,7 @@ class Venue(object):
     def create_review_stage(self):
         self.invitation_builder.set_review_invitation()
         self.set_group_variable(self.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
+        self.set_group_variable(self.get_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
 
         ## Move this to the date process function
         for submission in self.get_submissions():
@@ -381,6 +385,7 @@ class Venue(object):
 
     def create_meta_review_stage(self):
         self.invitation_builder.set_meta_review_invitation()
+        self.set_group_variable(self.get_area_chairs_id(), 'META_REVIEW_NAME', self.meta_review_stage.name)
 
         ## Move this to the date process function
         for submission in self.get_submissions():

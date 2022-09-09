@@ -159,6 +159,32 @@ class GroupBuilder(object):
             reviewer_group.web = content
             self.client.post_group(reviewer_group)        
 
+    def create_area_chairs_group(self):
+
+        venue_id = self.venue.id
+        area_chairs_id = self.venue.get_area_chairs_id()
+        senior_area_chairs_id = self.venue.get_senior_area_chairs_id()
+        reviewer_group = openreview.tools.get_group(self.client, area_chairs_id)
+        if not reviewer_group:
+            reviewer_group = Group(id=area_chairs_id,
+                            readers=[venue_id, senior_area_chairs_id, area_chairs_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
+            content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
+            content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
+            content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
+            content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = 'Paper'")
+            #content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.get_custom_max_papers_id(reviewers_id)}'")
+            #content = content.replace("const META_REVIEW_NAME = ''", f"const META_REVIEW_NAME = '{self.venue.get_recruitment_id(reviewers_id)}'")
+            reviewer_group.web = content
+            self.client.post_group(reviewer_group) 
 
     def create_paper_committee_groups(self, overwrite=False):
         print('create_paper_committee_groups')
