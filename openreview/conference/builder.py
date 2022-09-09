@@ -413,6 +413,10 @@ class Conference(object):
         if self.ethics_review_stage:
             return self.__create_ethics_review_stage()
 
+    def create_meta_review_stage(self):
+        if self.meta_review_stage:
+            return self.__create_meta_review_stage()
+
     def set_review_rebuttal_stage(self, stage):
         self.review_rebuttal_stage = stage
         return self.__create_review_rebuttal_stage()
@@ -429,6 +433,7 @@ class Conference(object):
         self.comment_stage = stage
         return self.__create_comment_stage()
 
+    @deprecated(version='1.8.0')
     def set_meta_review_stage(self, stage):
         self.meta_review_stage = stage
         return self.__create_meta_review_stage()
@@ -484,6 +489,12 @@ class Conference(object):
             name=self.reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
+    
+    def get_authors_name(self, pretty=True):
+        if pretty:
+            name=self.authors_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.authors_name
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
@@ -2891,8 +2902,8 @@ class ConferenceBuilder(object):
     def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, reader_selection = False, email_pcs = False, invitees=[], readers=[]):
         self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, reader_selection, email_pcs, readers=readers, invitees=invitees)
 
-    def set_meta_review_stage(self, name='Meta_Review', start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = MetaReviewStage.Readers.NO_REVIEWERS, additional_fields = {}, remove_fields = [], process = None):
-        self.meta_review_stage = MetaReviewStage(name, start_date, due_date, public, release_to_authors, release_to_reviewers, additional_fields, remove_fields, process)
+    def set_meta_review_stage(self, stage):
+        self.conference.meta_review_stage = stage
 
     def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs=False, email_authors = False, additional_fields={}):
         self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, release_to_area_chairs, email_authors, additional_fields=additional_fields)
@@ -2997,9 +3008,6 @@ class ConferenceBuilder(object):
 
         if self.comment_stage:
             self.conference.set_comment_stage(self.comment_stage)
-
-        if self.meta_review_stage:
-            self.conference.set_meta_review_stage(self.meta_review_stage)
 
         if self.decision_stage:
             self.conference.set_decision_stage(self.decision_stage)

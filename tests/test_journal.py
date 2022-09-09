@@ -40,7 +40,7 @@ class TestJournal():
         corinna_client = helpers.create_user('corinna@mail.com', 'Corinna', 'Cortes')
         ivan_client = helpers.create_user('ivan@mail.com', 'Ivan', 'Titov')
         shakir_client = helpers.create_user('shakir@mail.com', 'Shakir', 'Mohamed')
-        silvia_client = helpers.create_user('silvia@mail.com', 'Silvia', 'Villa')
+        silvia_client = helpers.create_user('silvia@apple.com', 'Silvia', 'Villa')
 
         ## Reviewers
         david_client=helpers.create_user('david@mailone.com', 'David', 'Belanger')
@@ -50,7 +50,7 @@ class TestJournal():
         hugo_client = helpers.create_user('hugo@mailsix.com', 'Hugo', 'Larochelle')
         david2_client=helpers.create_user('david_2@mailone.com', 'David K', 'Belanger')
         openreview_client.merge_profiles('~David_Belanger1', '~David_K_Belanger1')
-        
+
         ## Authors
         melisa_client = helpers.create_user('melissa@maileight.com', 'Melissa', 'Bok')
         celeste_client = helpers.create_user('celeste@mailnine.com', 'Celeste Ana', 'Martinez')
@@ -153,6 +153,16 @@ class TestJournal():
         andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password='1234')
         hugo_client=OpenReviewClient(username='hugo@mailsix.com', password='1234')
 
+        ## Set a max quota
+        david_client.post_edge(openreview.Edge(invitation='TMLR/Reviewers/-/Custom_Max_Papers',
+            readers=[venue_id, 'TMLR/Action_Editors', '~David_Belanger1'],
+            writers=[venue_id, '~David_Belanger1'],
+            signatures=['~David_Belanger1'],
+            head='TMLR/Reviewers',
+            tail='~David_Belanger1',
+            weight=8
+        ))
+
         peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
         peter_client=OpenReviewClient(username='petersnow@yahoo.com', password='1234')
         if os.environ.get("OPENREVIEW_USERNAME"):
@@ -172,7 +182,7 @@ class TestJournal():
                     'authors': { 'value': ['SomeFirstName User', 'Melissa Bok']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melissa_Bok1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
                     'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
@@ -265,7 +275,6 @@ The TMLR Editors-in-Chief
         updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
             signatures=['TMLR/Paper1/Authors'],
             note=Note(
-                id=note_id_1,
                 content={
                     'title': { 'value': 'Paper title UPDATED' },
                     'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
@@ -279,6 +288,7 @@ The TMLR Editors-in-Chief
 
         note = openreview_client.get_note(note_id_1)
         assert note
+        assert note.number == 1
         assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision']
         assert note.readers == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
@@ -287,6 +297,7 @@ The TMLR Editors-in-Chief
         assert note.content['venue']['value'] == 'Submitted to TMLR'
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
         assert note.content['supplementary_material']['value'] == '/attachment/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zip'
+        assert note.content['supplementary_material']['readers'] == ["TMLR", "TMLR/Paper1/Action_Editors", "TMLR/Paper1/Reviewers", "TMLR/Paper1/Authors"]
         assert note.content['authorids']['value'] == ['~SomeFirstName_User1', '~Melissa_Bok1']
         assert note.content['authorids']['readers'] == ['TMLR', 'TMLR/Paper1/Action_Editors', 'TMLR/Paper1/Authors']
 
@@ -407,7 +418,7 @@ The TMLR Editors-in-Chief
                 tail='~Joelle_Pineau1',
                 weight=1
             ))
-            
+
         ## Check action editor recommendation is expired
         invitation = openreview_client.get_invitation(id='TMLR/Paper1/Action_Editors/-/Recommendation')
         assert invitation.expdate is not None
@@ -483,6 +494,25 @@ We thank you for your essential contribution to TMLR!
 The TMLR Editors-in-Chief
 '''
 
+        ## Update submission 1 again
+        updated_submission_note_1 = test_client.post_note_edit(invitation='TMLR/Paper1/-/Revision',
+            signatures=['TMLR/Paper1/Authors'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title UPDATED' },
+                    'supplementary_material': { 'value': '/attachment/' + 'z' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests VERSION 2'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=updated_submission_note_1['id'])
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.number == 1
+
         ## Check active invitations
         invitations = joelle_client.get_invitations(replyForum=note_id_1)
         assert len(invitations) == 2
@@ -499,7 +529,7 @@ The TMLR Editors-in-Chief
             weight=1
         ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)     
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper2/-/Review_Approval',
@@ -523,7 +553,7 @@ The TMLR Editors-in-Chief
                                  }
                             ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])        
+        helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
         messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] Decision for your TMLR submission Paper title 2')
         assert len(messages) == 1
@@ -815,7 +845,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert reviewerrs_group.members == ['~David_Belanger1', '~Carlos_Mondragon1', '~Javier_Burroni1']
 
 
-        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
         ## Post a review edit
@@ -951,7 +981,7 @@ To view the official comment, click here: https://openreview.net/forum?id={note_
         helpers.await_queue_edit(openreview_client, edit_id=comment_note['id'])
 
         messages = journal.client.get_messages(to='raia@mail.com', subject = '[TMLR] Official Comment posted on submission Paper title UPDATED')
-        assert len(messages) == 1        
+        assert len(messages) == 1
 
         # Post a public comment
         comment_note = peter_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Public_Comment',
@@ -1018,7 +1048,7 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
         assert note.content.get('comment') is None
 
         ## Assign two more reviewers
-        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Javier_Burroni1')
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
 
         ## Post a review edit
@@ -1047,7 +1077,7 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
 
 
         ## Poster another review with the same signature and get an error
-        with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number 1 of replies for this Invitation'):
+        with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number \(1\) of replies for this Invitation'):
             review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
                 signatures=[javier_anon_groups[0].id],
                 note=Note(
@@ -1171,7 +1201,7 @@ Submission: Paper title UPDATED
 Link: https://openreview.net/forum?id={note_id_1}
 
 OpenReview Team
-'''        
+'''
 
 
         ## Check reviewer assignment acknowledge reminders
@@ -1211,7 +1241,7 @@ The TMLR Editors-in-Chief
         assert late_reviewers
         assert '~Carlos_Mondragon1' in late_reviewers
 
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
 
         ## post the assignment ack
@@ -1284,7 +1314,7 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
         assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
         ## Reviewers should see other reviewer's identity
-        anon_groups = carlos_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_')
+        anon_groups = carlos_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_')
         assert len(anon_groups) == 3
 
         ## All the comments should be public now
@@ -1376,7 +1406,7 @@ The TMLR Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
-        hugo_anon_groups=hugo_client.get_groups(regex=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Hugo_Larochelle1')
+        hugo_anon_groups=hugo_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Hugo_Larochelle1')
         assert len(hugo_anon_groups) == 1
 
         ## Post a review edit
@@ -1618,7 +1648,7 @@ The TMLR Editors-in-Chief
 
 
         ## Second decision note and get an error
-        with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number 1 of replies for this Invitation'):
+        with pytest.raises(openreview.OpenReviewException, match=r'You have reached the maximum number \(1\) of replies for this Invitation'):
             decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
                 note=Note(
@@ -1675,12 +1705,10 @@ The TMLR Editors-in-Chief
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
             signatures=[f"{venue_id}/Paper1/Authors"],
             note=Note(
-                id=note_id_1,
-                forum=note_id_1,
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
-                    'authors': { 'value': ['Melissa Bok', 'SomeFirstName User'] }, 
-                    'authorids': { 'value': ['~Melissa_Bok1', '~SomeFirstName_User1'] }, 
+                    'authors': { 'value': ['Melissa Bok', 'SomeFirstName User'] },
+                    'authorids': { 'value': ['~Melissa_Bok1', '~SomeFirstName_User1'] },
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -1785,8 +1813,6 @@ OpenReview Team
                             signatures=[f"{venue_id}/Paper1/Action_Editors"],
                             note=Note(
                                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
-                                forum=note_id_1,
-                                replyto=note_id_1,
                                 content= {
                                     'verification': { 'value': 'I confirm that camera ready manuscript complies with the TMLR stylefile and, if appropriate, includes the minor revisions that were requested.' }
                                  }
@@ -1836,7 +1862,7 @@ note={Featured Certification, Reproducibility Certification}
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Accepted')
 
         ## Check invitations are expired
-        invitations = openreview_client.get_invitations(regex=f"{venue_id}/Paper1/.*", type = "all")
+        invitations = openreview_client.get_invitations(prefix=f"{venue_id}/Paper1/.*", type = "all")
         assert len(invitations) == 4
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
@@ -1849,8 +1875,6 @@ note={Featured Certification, Reproducibility Certification}
                             signatures=[f"{venue_id}/Paper1/Authors"],
                             note=Note(
                                 signatures=[f"{venue_id}/Paper1/Authors"],
-                                forum=note_id_1,
-                                replyto=note_id_1,
                                 content= {
                                     'retraction_confirmation': { 'value': 'I have read and agree with the venue\'s retraction policy on behalf of myself and my co-authors.' }
                                  }
@@ -1873,8 +1897,6 @@ OpenReview Team
                             signatures=[f"{venue_id}/Editors_In_Chief"],
                             note=Note(
                                 signatures=[f"{venue_id}/Editors_In_Chief"],
-                                forum=note_id_1,
-                                replyto=retraction_note['note']['id'],
                                 content= {
                                     'approval': { 'value': 'Yes' }
                                  }
@@ -2096,8 +2118,6 @@ The TMLR Editors-in-Chief
             Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Tom_Rain1_Volunteer_to_Review_Approval',
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
-                    forum=note_id_4,
-                    replyto=Volunteer_to_Review_note['note']['id'],
                     content={
                         'decision': { 'value': 'Yes, I approve the solicit review.' },
                         'comment': { 'value': 'thanks!' }
@@ -2125,8 +2145,6 @@ The TMLR Editors-in-Chief
         Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Volunteer_to_Review_Approval',
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
-                forum=note_id_4,
-                replyto=Volunteer_to_Review_note['note']['id'],
                 content={
                     'decision': { 'value': 'Yes, I approve the solicit review.' },
                     'comment': { 'value': 'thanks!' }
@@ -2167,7 +2185,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         assert len(messages) == 0
 
         ## Post a review edit
-        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
@@ -2187,7 +2205,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         messages = journal.client.get_messages(subject = '[TMLR] Review posted on TMLR submission Paper title 4')
 
         ## Post a review edit
-        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Javier_Burroni1')
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
         review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
             signatures=[javier_anon_groups[0].id],
@@ -2203,7 +2221,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
             signatures=[carlos_anon_groups[0].id],
@@ -2229,7 +2247,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
             weight=1
         ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)     
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Check pending review edges
         edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
@@ -2546,7 +2564,7 @@ note={Rejected}
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Post a review edit
-        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
@@ -2564,7 +2582,7 @@ note={Rejected}
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Javier_Burroni1')
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
         review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
             signatures=[javier_anon_groups[0].id],
@@ -2580,7 +2598,7 @@ note={Rejected}
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
             signatures=[carlos_anon_groups[0].id],
@@ -2830,7 +2848,7 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Post a review edit
-        david_anon_groups=david_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~David_Belanger1')
+        david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
         review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
@@ -2848,7 +2866,7 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        javier_anon_groups=javier_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Javier_Burroni1')
+        javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
         review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
             signatures=[javier_anon_groups[0].id],
@@ -2864,7 +2882,7 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## Post a review edit
-        carlos_anon_groups=carlos_client.get_groups(regex=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Carlos_Mondragon1')
+        carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
         review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
             signatures=[carlos_anon_groups[0].id],
@@ -3245,7 +3263,7 @@ The TMLR Editors-in-Chief
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 2                 
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 2
 
         note = openreview_client.get_note(note_id_7)
         journal.invitation_builder.expire_paper_invitations(note)
@@ -3257,7 +3275,7 @@ The TMLR Editors-in-Chief
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 1          
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 1
 
         note = openreview_client.get_note(note_id_8)
         journal.invitation_builder.expire_paper_invitations(note)
@@ -3288,7 +3306,7 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         submission = raia_client.get_note(note_id_8)
-        assert '~Samy_Bengio1' == submission.content['assigned_action_editor']['value']                
+        assert '~Samy_Bengio1' == submission.content['assigned_action_editor']['value']
 
 
     def test_desk_rejected_submission_by_eic(self, journal, openreview_client, helpers):
@@ -3326,7 +3344,7 @@ The TMLR Editors-in-Chief
                                         'desk_reject_comments': { 'value': 'PDF is not anonymized.' }
                                     }))
 
-        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])   
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
 
         note = openreview_client.get_note(note_id_9)
         assert note
@@ -3355,8 +3373,8 @@ To know more about the decision, please follow this link: https://openreview.net
 For more details and guidelines on the TMLR review process, visit jmlr.org/tmlr.
 
 The TMLR Editors-in-Chief
-'''        
-        
+'''
+
 
         note = openreview_client.get_note(note_id_9)
         journal.invitation_builder.expire_paper_invitations(note)
@@ -3435,12 +3453,12 @@ The TMLR Editors-in-Chief
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0               
-        
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
+
 
         note = openreview_client.get_note(note_id_10)
         journal.invitation_builder.expire_paper_invitations(note)
-        journal.invitation_builder.expire_acknowledgement_invitations()
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()
 
         ## Check pending review edges
@@ -3450,7 +3468,7 @@ The TMLR Editors-in-Chief
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Hugo_Larochelle1')[0].weight == 0
-        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0               
+        assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Peter_Snow1')[0].weight == 0
 
 
 

@@ -13,7 +13,6 @@ class GroupBuilder(object):
 
         group = self.client.get_group(group_id)
         group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
-        print(group.web[:1000])
         self.client.post_group(group)
     
     def set_groups(self, journal, support_role, editors):
