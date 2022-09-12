@@ -3091,7 +3091,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'certification_recommendations': {
                             'order': 2,
-                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
                             'value': {
                                 'param': {
                                     'type': 'string[]',
@@ -3101,7 +3101,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                         'Survey Certification'
                                     ],
                                     'optional': True,
-                                    'input': 'select'
+                                    'input': 'checkbox'
                                 }
                             }
                         },
@@ -3971,7 +3971,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'certifications': {
                             'order': 3,
-                            'description': f'Optionally and if appropriate, recommend a certification for this submission. See {self.journal.website} for information about certifications.',
+                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
                             'value': {
                                 'param': {
                                     'type': 'string[]',
@@ -3981,7 +3981,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                         'Survey Certification'
                                     ],
                                     'optional': True,
-                                    'input': 'select'
+                                    'input': 'checkbox'
                                 }
                             }
                         }
