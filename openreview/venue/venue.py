@@ -205,11 +205,11 @@ class Venue(object):
 
     def set_group_variable(self, group_id, variable_name, value):
 
-        group = self.client.get_group(group_id)
-        group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
-        group.web = group.web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
-        # print(group.web[:1000])
-        self.client.post_group(group)
+        group = openreview.tools.get_group(self.client, group_id)
+        if group and group.web:
+            group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
+            group.web = group.web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
+            self.client.post_group(group)
 
     def setup(self, program_chair_ids=[]):
     
