@@ -1129,6 +1129,61 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         self.save_invitation(invitation)
 
         invitation = Invitation(
+            id=self.journal.get_ae_aggregate_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id, authors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_aggregate_score_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)        
+
+        invitation = Invitation(
             id=self.journal.get_ae_assignment_id(),
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id],
@@ -1187,6 +1242,61 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
 
         self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_ae_assignment_id(proposed=True),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id], 
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_assignment_id(proposed=True),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [editor_in_chief_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)        
 
         invitation = Invitation(
             id=self.journal.get_ae_recommendation_id(),
@@ -4669,4 +4779,253 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 readers=[self.journal.venue_id],
                 writers=[self.journal.venue_id],
                 signatures=[self.journal.venue_id]
-            )        
+            )
+
+    def set_assignment_configuration_invitation(self):
+
+        venue_id = self.journal.venue_id
+
+        scores_specification = {}
+        scores_specification[self.journal.get_ae_affinity_score_id()] = {
+            'weight': 1,
+            'default': 0
+        }
+        scores_specification[self.journal.get_ae_recommendation_id()] = {
+            'weight': 1,
+            'default': 0
+        }
+
+        invitation = Invitation(
+            id = self.journal.get_ae_assignment_configuration_id(),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_ae_assignment_configuration_id(),
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        # 'type': 'date',
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Title of the configuration.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{1,250}'
+                                }
+                            }
+                        },
+                        'user_demand': {
+                            'order': 2,
+                            'description': 'Number of users that can review a paper',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'max_papers': {
+                            'order': 3,
+                            'description': 'Max number of reviews a user has to do',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'min_papers': {
+                            'order': 4,
+                            'description': 'Min number of reviews a user should do',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'alternates': {
+                            'order': 5,
+                            'description': 'The number of alternate reviewers to save (per-paper)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'paper_invitation': {
+                            'order': 6,
+                            'description': 'Invitation to get the paper metadata or Group id to get the users to be matched',
+                            'value': self.journal.get_author_submission_id()
+                        },
+                        'match_group': {
+                            'order': 7,
+                            'description': 'Group id containing users to be matched',
+                            'value': self.journal.get_action_editors_id()
+                        },
+                        'scores_specification': {
+                            'order': 8,
+                            'description': 'Manually entered JSON score specification',
+                            'value': {
+                                'param': {
+                                    'type': 'json',
+                                    'default': scores_specification
+                                }
+                            }
+                        },
+                        'aggregate_score_invitation': {
+                            'order': 9,
+                            'description': 'Invitation to store aggregated scores',
+                            'value': self.journal.get_ae_aggregate_score_id()
+                        },
+                        'conflicts_invitation': {
+                            'order': 10,
+                            'description': 'Invitation to store conflict scores',
+                            'value': self.journal.get_ae_conflict_id(),
+                        },
+                        'assignment_invitation': {
+                            'order': 11,
+                            'description': 'Invitation to store paper user assignments',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': self.journal.get_ae_assignment_id(proposed=True),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'deployed_assignment_invitation': {
+                            'order': 12,
+                            'description': 'Invitation to store deployed paper user assignments',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': self.journal.get_ae_assignment_id(),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'custom_user_demand_invitation': {
+                            'order': 14,
+                            'description': 'Invitation to store custom number of users required by papers',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    #'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'custom_max_papers_invitation': {
+                            'order': 15,
+                            'description': 'Invitation to store custom max number of papers that can be assigned to reviewers',
+                            'value': self.journal.get_ae_custom_max_papers_id()
+                        },
+                        'solver': {
+                            'order': 17,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'status': {
+                            'order': 18,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Initialized',
+                                        'Running',
+                                        'Error',
+                                        'No Solution',
+                                        'Complete',
+                                        'Deploying',
+                                        'Deployed',
+                                        'Deployment Error',
+                                        'Queued',
+                                        'Cancelled'
+                                    ],
+                                    'input': 'select',
+                                    'default': 'Initialized'
+                                }
+                            }
+                        },
+                        'error_message': {
+                            'order': 19,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  '.*',
+                                    'optional': True,
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'allow_zero_score_assignments': {
+                            'order': 20,
+                            'description': 'Select "No" only if you do not want to allow assignments with 0 scores. Note that if there are any users without publications, you need to select "Yes" in order to run a paper matching.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum':  ['Yes', 'No'],
+                                    'input': 'radio',
+                                    'optional': True,
+                                    'default': 'Yes'
+                                }
+                            }
+                        },
+                        'randomized_probability_limits': {
+                            'order': 21,
+                            'description': 'Enter the probability limits if the selected solver is Randomized',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  r'[-+]?[0-9]*\.?[0-9]*',
+                                    'optional': True,
+                                    'default': '1'
+                                }
+                            }
+                        },
+                        'randomized_fraction_of_opt': {
+                            'order': 22,
+                            'description': 'result of randomized assignment',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  r'[-+]?[0-9]*\.?[0-9]*',
+                                    'optional': True,
+                                    'default': '',
+                                    'hidden': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)               

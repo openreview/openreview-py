@@ -162,8 +162,14 @@ class Journal(object):
     def get_ae_affinity_score_id(self):
         return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_action_editors_id())
 
-    def get_ae_assignment_id(self):
-        return self.__get_invitation_id(name='Assignment', prefix=self.get_action_editors_id())
+    def get_ae_aggregate_score_id(self):
+        return self.__get_invitation_id(name='Aggregate_Score', prefix=self.get_action_editors_id())
+
+    def get_ae_assignment_configuration_id(self):
+        return self.__get_invitation_id(name='Assignment_Configuration', prefix=self.get_action_editors_id())
+
+    def get_ae_assignment_id(self, proposed=False):
+        return self.__get_invitation_id(name='Proposed_Assignment' if proposed else 'Assignment', prefix=self.get_action_editors_id())
 
     def get_ae_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
@@ -287,6 +293,10 @@ class Journal(object):
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
+    def setup_ae_matching(self):
+        self.invitation_builder.set_assignment_configuration_invitation()
+    
+    
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
         aes=self.get_action_editors_id()
