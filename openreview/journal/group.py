@@ -19,7 +19,6 @@ class GroupBuilder(object):
         header = journal.header
         venue_id=journal.venue_id
         editor_in_chief_id=journal.get_editors_in_chief_id()
-        journal_request = journal.get_request_form()
         reviewer_report_form = journal.get_reviewer_report_form()
 
         ## venue group
@@ -53,8 +52,8 @@ class GroupBuilder(object):
             content = content.replace("var EDITORS_IN_CHIEF_NAME = '';", "var EDITORS_IN_CHIEF_NAME = '" + journal.editors_in_chief_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
-            if journal_request:
-                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal_request.id + "';")
+            if journal.request_form_id:
+                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal.request_form_id + "';")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
 
@@ -66,12 +65,12 @@ class GroupBuilder(object):
             name=m.replace('~', ' ').replace('_', ' ')[:-1]
             editors+=f'<a href="https://openreview.net/profile?id={m}">{name}</a></br>'
 
-        header['instructions'] = '''
+        header['instructions'] = f'''
         <p>
             <strong>Editors-in-chief:</strong></br>
             {editors}
             <strong>Managing Editors:</strong></br>
-            <a href=\"https://openreview.net/profile?id=~Fabian_Pedregosa1\"> Fabian Pedregosa</a>
+            <a href=\"https://openreview.net/profile?id={support_role}\">{openreview.tools.pretty_id(support_role)}</a>
         </p>
         <p>
             Transactions on Machine Learning Research (TMLR) is a venue for dissemination of machine learning research that is intended to complement JMLR while supporting the unmet needs of a growing ML community.
@@ -94,7 +93,7 @@ class GroupBuilder(object):
             For more information on TMLR, visit
             <a href="http://jmlr.org/tmlr" target="_blank" rel="nofollow">jmlr.org/tmlr</a>.
         </p>
-        '''.format(editors=editors)
+        '''
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepage.js')) as f:
             content = f.read()
@@ -130,8 +129,8 @@ class GroupBuilder(object):
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
             content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + journal.submission_group_name + "';")
-            if journal_request:
-                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal_request.id + "';")
+            if journal.request_form_id:
+                content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal.request_form_id + "';")
             if reviewer_report_form:
                 content = content.replace("var REVIEWER_REPORT_ID = '';", "var REVIEWER_REPORT_ID = '" + reviewer_report_form + "';")
 

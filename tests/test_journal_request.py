@@ -81,10 +81,6 @@ class TestJournalRequest():
         helpers.await_queue_edit(openreview_client, request_form['id'])
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
 
-        process_logs = openreview_client.get_process_logs(invitation = support_group_id + '/-/Journal_Request')
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-
         helpers.create_user('support_role@mail.com', 'Support', 'Role')
         test_client = OpenReviewClient(username='support_role@mail.com', password='1234')
 
@@ -155,10 +151,6 @@ TJ22 Editors-in-Chief
         assert recruitment_note
 
         helpers.await_queue_edit(openreview_client, recruitment_note['id'])
-        process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
 
         invited_group = openreview_client.get_group('{}/Reviewers/Invited'.format(journal['journal_request_note']['content']['venue_id']['value']))
         assert invited_group
@@ -216,10 +208,6 @@ TJ22 Editors-in-Chief
         assert recruitment_note
 
         helpers.await_queue_edit(openreview_client, recruitment_note['id'])
-        process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Action_Editor_Recruitment'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
 
         messages = openreview_client.get_messages(to = 'ae_journal1@mail.com')
         assert len(messages) == 0
@@ -364,10 +352,6 @@ TJ22 Editors-in-Chief
         assert recruitment_note
 
         helpers.await_queue_edit(openreview_client, recruitment_note['id'])
-        process_logs = openreview_client.get_process_logs(id = recruitment_note['id'])
-        assert len(process_logs) == 1
-        assert process_logs[0]['status'] == 'ok'
-        assert process_logs[0]['invitation'] == '{}/Journal_Request{}/-/Reviewer_Recruitment_by_AE'.format(journal['suppot_group_id'],journal['journal_request_note']['number'])
 
         #check reviewer received another invitation even after declining
         messages = openreview_client.get_messages(to = 'new_reviewer@mail.com', subject = '[TJ22] Invitation to act as Reviewer for TJ22')
