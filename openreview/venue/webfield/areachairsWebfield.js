@@ -17,7 +17,7 @@ const reviewerGroup=`${VENUE_ID}/${REVIEWERS_NAME}`
 
 return {
   component: 'AreaChairConsole',
-  version: 2,
+  version: 1,
   properties: {
     header: {
       "title": "Area Chairs Console",
