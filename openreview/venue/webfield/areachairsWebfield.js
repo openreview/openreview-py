@@ -15,28 +15,6 @@ const reviewerAssignmentTitle=null
 const areaChairsId=`${VENUE_ID}/${AREA_CHAIRS_NAME}`
 const reviewerGroup=`${VENUE_ID}/${REVIEWERS_NAME}`
 
-// query search is disabled if filterOperators or propertiesAllowed is missing
-const filterOperators = ['!=','>=','<=','>','<','=']; // sequence matters
-const propertiesAllowed ={
-    number:['note.number'],
-    id:['note.id'],
-    title:['note.content.title'],
-    author:['note.content.authors','note.content.authorids'], // multi props
-    keywords:['note.content.keywords'],
-    reviewer:['reviewProgressData.reviewers'],
-    numReviewersAssigned:['reviewProgressData.numReviewers'],
-    numReviewsDone:['reviewProgressData.numSubmittedReviews'],
-    ratingAvg:['reviewProgressData.averageRating'],
-    ratingMax:['reviewProgressData.maxRating'],
-    ratingMin:['reviewProgressData.minRating'],
-    confidenceAvg:['reviewProgressData.averageConfidence'],
-    confidenceMax:['reviewProgressData.maxConfidence'],
-    confidenceMin:['reviewProgressData.minConfidence'],
-    replyCount:['reviewProgressData.forumReplyCount'],
-    recommendation:['metaReviewData.recommendation'],
-    ranking:['metaReviewData.ranking']
-}
-
 return {
   component: 'AreaChairConsole',
   version: 2,
@@ -47,11 +25,13 @@ return {
     },
     apiVersion:2,
     venueId: VENUE_ID,
-    enableEditReviewAssignments: true,
-    reviewerAssignmentTitle:'',
-    edgeBrowserProposedUrl:`/edges/browse?start=${areaChairsId}/-/Assignment,tail:${user.id}&traverse=${reviewerGroup}/-/Proposed_Assignment,label:${reviewerAssignmentTitle}&edit=${reviewerGroup}/-/Proposed_Assignment,label:${reviewerAssignmentTitle};${reviewerGroup}/-/Invite_Assignment&browse=${reviewerGroup}/-/Aggregate_Score,label:${reviewerAssignmentTitle};${reviewerGroup}/-/Affinity_Score;${reviewerGroup}/-/Bid;${reviewerGroup}/-/Custom_Max_Papers,head:ignore;${reviewerGroup}/-/Reviews_Submitted,head:ignore&hide=${reviewerGroup}/-/Conflict&maxColumns=2&referrer=[AC Console](/group?id=${areaChairsId})`,
-    edgeBrowserDeployedUrl:`/edges/browse?start=${areaChairsId}/-/Assignment,tail:${user.id}&traverse=${reviewerGroup}/-/Assignment&edit=${reviewerGroup}/-/Invite_Assignment&browse=${reviewerGroup}/-/Affinity_Score;${reviewerGroup}/-/Bid;${reviewerGroup}/-/Custom_Max_Papers,head:ignore;${reviewerGroup}/-/Reviews_Submitted,head:ignore&hide=${reviewerGroup}/-/Conflict&maxColumns=2&referrer=[AC Console](/group?id=${areaChairsId})`,
-    blindSubmissionInvitationId: SUBMISSION_ID,
+    reviewerAssignment: {
+      showEdgeBrowserUrl: false,
+      proposedAssignmentTitle: '',      
+      edgeBrowserProposedUrl:`/edges/browse?start=${areaChairsId}/-/Assignment,tail:${user.id}&traverse=${reviewerGroup}/-/Proposed_Assignment,label:${reviewerAssignmentTitle}&edit=${reviewerGroup}/-/Proposed_Assignment,label:${reviewerAssignmentTitle};${reviewerGroup}/-/Invite_Assignment&browse=${reviewerGroup}/-/Aggregate_Score,label:${reviewerAssignmentTitle};${reviewerGroup}/-/Affinity_Score;${reviewerGroup}/-/Bid;${reviewerGroup}/-/Custom_Max_Papers,head:ignore&hide=${reviewerGroup}/-/Conflict&maxColumns=2&referrer=[AC Console](/group?id=${areaChairsId})`,
+      edgeBrowserDeployedUrl:`/edges/browse?start=${areaChairsId}/-/Assignment,tail:${user.id}&traverse=${reviewerGroup}/-/Assignment&edit=${reviewerGroup}/-/Invite_Assignment&browse=${reviewerGroup}/-/Affinity_Score;${reviewerGroup}/-/Bid;${reviewerGroup}/-/Custom_Max_Papers,head:ignore;${reviewerGroup}/-/Reviews_Submitted,head:ignore&hide=${reviewerGroup}/-/Conflict&maxColumns=2&referrer=[AC Console](/group?id=${areaChairsId})`,
+    },
+    submissionInvitationId: SUBMISSION_ID,
     seniorAreaChairsId:'',
     areaChairName: AREA_CHAIRS_NAME,
     submissionName: SUBMISSION_NAME,
@@ -61,7 +41,6 @@ return {
     officialMetaReviewName: META_REVIEW_NAME,
     metaReviewContentField: META_REVIEW_CONFIDENCE_NAME,
     shortPhrase: SHORT_PHRASE,
-    filterOperators,
-    propertiesAllowed
+    enableQuerySearch: true
   }
 }
