@@ -93,6 +93,11 @@ class BlindSubmissionsInvitation(openreview.Invitation):
                     'values': ['Anonymous'],
                     'order': original_content[key]['order']
                     }
+            elif key == 'authorids':
+                content[key] = {
+                    'values-regex': '.*',
+                    'order': original_content[key]['order']
+                    }
             else:
                 content[key] = {
                     'value-regex': '.*',
