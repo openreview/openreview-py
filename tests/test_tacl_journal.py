@@ -15,20 +15,25 @@ class TestTACLJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client, helpers):
-        super_id = 'openreview.net'
-        support_group_id = super_id + '/Support'
-        journal_request = JournalRequest(openreview_client, support_group_id)
-        journal_request.setup_journal_request()
+    def journal(self, openreview_client):
+
+        eic_client=OpenReviewClient(username='brian@mail.com', password='1234')
+        eic_client.impersonate('TACL/Editors_In_Chief')
+
+        requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'TACL' })
+
+        return JournalRequest.get_journal(eic_client, requests[0].id)
+
+    def test_setup(self, openreview_client, request_page, selenium, helpers, journal_request):
 
         ## Editors in Chief
         helpers.create_user('brian@mail.com', 'Brian', 'Roark')
 
         #post journal request form
-        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
-            signatures = [support_group_id],
+        request_form = openreview_client.post_note_edit(invitation= 'openreview.net/Support/-/Journal_Request',
+            signatures = ['openreview.net/Support'],
             note = Note(
-                signatures = [support_group_id],
+                signatures = ['openreview.net/Support'],
                 content = {
                     'official_venue_name': {'value': 'Transactions of the Association for Computational Linguistics'},
                     'abbreviated_venue_name' : {'value': 'TACL'},
@@ -64,7 +69,6 @@ class TestTACLJournal():
 
         openreview_client.add_members_to_group('TACL/Reviewers', ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1'])
 
-        return JournalRequest.get_journal(openreview_client, request_form['note']['id'])
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
