@@ -54,10 +54,6 @@ class TestJournalRequest():
 
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
-        journal_request = JournalRequest(openreview_client, support_group_id)
-        journal_request.setup_journal_request()
-
-        request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), openreview_client.token)
 
         request_form = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request',
             signatures = [support_group_id],
