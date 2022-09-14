@@ -1093,7 +1093,7 @@ var renderOverviewTab = function(conferenceStats) {
   html += '<div class="row text-center" style="margin-top: .5rem;">';
   html += renderStatContainer(
     'Submitted Papers:',
-    '<h3>' + conferenceStats.numSubmissions + '</h3>'
+    '<h3>' + conferenceStats.numSubmitted + '</h3>'
   );
   html += renderStatContainer(
     'Papers Under Review:',
