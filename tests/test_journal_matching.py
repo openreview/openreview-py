@@ -219,7 +219,6 @@ class TestJournalMatching():
                     }
                 ))
 
-        assert False
         ## Run the matching and get proposed assignments
         openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
             head=submissions[0].id,
