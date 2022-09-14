@@ -50,6 +50,7 @@ class Client(object):
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.profiles_rename = self.baseurl + '/profiles/rename'
+        self.profiles_moderate = self.baseurl + '/profile/moderate'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
@@ -589,6 +590,27 @@ class Client(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def moderate_profile(self, profile_id, decision):
+        """
+        Updates a Profile
+
+        :param profile: Profile object
+        :type profile: Profile
+
+        :return: The new updated Profile
+        :rtype: Profile
+        """
+        response = requests.post(
+            self.profiles_moderate,
+            json = {
+                'id': profile_id,
+                'decision': decision
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())        
 
     def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
         """
