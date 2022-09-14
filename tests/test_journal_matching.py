@@ -9,21 +9,22 @@ import re
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
+from openreview.journal import JournalRequest
 
 class TestJournalMatching():
 
 
     @pytest.fixture(scope="class")
-    def journal(self):
-        venue_id = 'CARP'
+    def journal(self, openreview_client):
+
         manuel_client=OpenReviewClient(username='manuel@mail.com', password='1234')
         manuel_client.impersonate('CARP/Editors_In_Chief')
-        journal=Journal(manuel_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='CARP Journal', short_name='CARP', submission_name='Submission')
-        return journal
 
-    def test_setup(self, openreview_client, request_page, selenium, helpers):
+        requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'CARP' })
 
-        venue_id = 'CARP'
+        return JournalRequest.get_journal(manuel_client, requests[0].id)
+
+    def test_setup(self, openreview_client, request_page, selenium, helpers, journal_request):
 
         ## Support Role
         helpers.create_user('manuel@mail.com', 'Manuel', 'Puig')
@@ -31,9 +32,29 @@ class TestJournalMatching():
         ## Editors in Chief
         helpers.create_user('emily@mail.com', 'Emily', 'Dickinson')
 
+        request_form = openreview_client.post_note_edit(invitation= 'openreview.net/Support/-/Journal_Request',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                signatures = ['openreview.net/Support'],
+                content = {
+                    'official_venue_name': {'value': 'CARP Journal'},
+                    'abbreviated_venue_name' : {'value': 'CARP'},
+                    'venue_id': {'value': 'CARP'},
+                    'contact_info': {'value': 'carp@venue.org'},
+                    'secret_key': {'value': '4567'},
+                    'support_role': {'value': 'manuel@mail.com' },
+                    'editors': {'value': ['~Emily_Dickinson1'] },
+                    'website': {'value': 'testjournal.org' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        JournalRequest.get_journal(openreview_client, request_form['note']['id'], setup=True)
+
         ## Action Editors
         helpers.create_user('ana@prada.com', 'Ana', 'Prada')
-        helpers.create_user('paul@mail.com', 'Paul', 'McCartney')
+        helpers.create_user('paul@mc.com', 'Paul', 'McCartney')
         helpers.create_user('john@lennon.com', 'John', 'Lennon')
         helpers.create_user('janis@joplin.com', 'Janis', 'Joplin')
         helpers.create_user('diego@armando.com', 'Diego', 'Armando')
@@ -42,9 +63,6 @@ class TestJournalMatching():
         ## Authors
         helpers.create_user('sigur@ros.com', 'Sigur', 'Ros')
         helpers.create_user('john@travolta.com', 'John', 'Travolta')
-
-        journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='CARP Journal', short_name='CARP', submission_name='Submission')
-        journal.setup(support_role='manuel@mail.com', editors=['~Emily_Dickinson1'])
 
         openreview_client.add_members_to_group('CARP/Action_Editors', ['~Ana_Prada1', '~Paul_McCartney1', '~John_Lennon1', '~Janis_Joplin1', '~Diego_Armando1', '~Ken_Beck1'])
 
@@ -80,6 +98,8 @@ class TestJournalMatching():
                         'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                     }
                 ))
+
+        helpers.await_queue_edit(openreview_client, invitation='CARP/-/Submission')
        
         submissions = openreview_client.get_notes(invitation='CARP/-/Submission', sort='number:asc')
 
@@ -199,3 +219,49 @@ class TestJournalMatching():
                     }
                 ))
 
+        assert False
+        ## Run the matching and get proposed assignments
+        openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
+            head=submissions[0].id,
+            tail='~Ana_Prada1',
+            label='test-1',
+            weight=1
+        )) 
+
+        openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
+            head=submissions[1].id,
+            tail='~John_Lennon1',
+            label='test-1',
+            weight=1
+        )) 
+
+        openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
+            head=submissions[2].id,
+            tail='~Paul_McCartney1',
+            label='test-1',
+            weight=1
+        )) 
+
+        openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
+            head=submissions[3].id,
+            tail='~Diego_Armando1',
+            label='test-1',
+            weight=1
+        ))                 
+
+        openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
+            head=submissions[4].id,
+            tail='~Ken_Beck1',
+            label='test-1',
+            weight=1
+        ))
+
+        ## Deploy assignments                
+        journal.set_assignments(assignment_title='test=1')
+
+        assignments = openreview_client.get_edges(invitation='CARP/Action_Editors/-/Assignment')
+        assert len(assignments) == 5
+
+        helpers.await_queue_edit(openreview_client, invitation='CARP/Action_Editors/-/Assignment')
+
+        messages = openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] Assignment to new CARP submission Paper title 1')

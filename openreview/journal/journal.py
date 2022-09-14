@@ -295,7 +295,21 @@ class Journal(object):
 
     def setup_ae_matching(self):
         self.invitation_builder.set_assignment_configuration_invitation()
-    
+
+    def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
+        committee_id = self.get_action_editors_id()
+        proposed_assignments = self.client.get_all_edges(invitation=self.get_ae_assignment_id(proposed=True))
+        submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id()) }
+
+        for assignment in tqdm(proposed_assignments):
+            submission = submission_by_id.get(assignment.head)
+            if submission and submission.content['venueid']['value'] == self.submitted_venue_id:
+                self.client.post_edge(openreview.api.Edge(
+                    invitation = self.get_ae_assignment_id(),
+                    head = assignment.head,
+                    tail = assignment.tail,
+                    weight = 1
+                ))
     
     def set_action_editors(self, editors, custom_papers):
         venue_id=self.venue_id
