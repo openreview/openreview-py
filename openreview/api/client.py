@@ -2246,7 +2246,7 @@ class Invitation(object):
         return invitation
 
 class Edge(object):
-    def __init__(self, head, tail, invitation, readers, writers, signatures, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
+    def __init__(self, head, tail, invitation, readers=None, writers=None, signatures=None, id=None, weight=None, label=None, cdate=None, ddate=None, nonreaders=None, tcdate=None, tmdate=None, tddate=None, tauthor=None):
         self.id = id
         self.invitation = invitation
         self.head = head
@@ -2270,23 +2270,24 @@ class Edge(object):
         '''
         body = {
             'invitation': self.invitation,
-            'readers': self.readers,
-            'writers': self.writers,
-            'signatures': self.signatures,
             'head': self.head,
             'tail': self.tail,
         }
         if self.id:
             body['id'] = self.id
-        # if self.cdate:
-        #     body['cdate'] = self.cdate
         if self.ddate:
             body['ddate'] = self.ddate
-        if self.nonreaders:
+        if self.readers is not None:
+            body['readers'] = self.readers
+        if self.writers is not None:
+            body['writers'] = self.writers
+        if self.nonreaders is not None:
             body['nonreaders'] = self.nonreaders
+        if self.signatures is not None:
+            body['signatures'] = self.signatures
         if self.weight is not None:
             body['weight'] = self.weight
-        if self.label:
+        if self.label is not None:
             body['label'] = self.label
 
         return body
@@ -2513,6 +2514,5 @@ class Group(object):
         :type client: Client
         """
         client.post_group(self)
-
 
 
