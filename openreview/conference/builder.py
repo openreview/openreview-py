@@ -489,6 +489,12 @@ class Conference(object):
             name=self.reviewers_name.replace('_', ' ')
             return name[:-1] if name.endswith('s') else name
         return self.reviewers_name
+    
+    def get_authors_name(self, pretty=True):
+        if pretty:
+            name=self.authors_name.replace('_', ' ')
+            return name[:-1] if name.endswith('s') else name
+        return self.authors_name
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:

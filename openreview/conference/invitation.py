@@ -93,6 +93,11 @@ class BlindSubmissionsInvitation(openreview.Invitation):
                     'values': ['Anonymous'],
                     'order': original_content[key]['order']
                     }
+            elif key == 'authorids':
+                content[key] = {
+                    'values-regex': '.*',
+                    'order': original_content[key]['order']
+                    }
             else:
                 content[key] = {
                     'value-regex': '.*',
@@ -2177,7 +2182,18 @@ class InvitationBuilder(object):
                 committee_id=conference.get_reviewers_id(),
                 committee_name=conference.get_reviewers_name(pretty=True)
             )
-
+        if stage.committee_id == conference.get_authors_id():
+            return self.__set_registration_invitation(conference=conference,
+                name=stage.name,
+                start_date=stage.start_date,
+                due_date=stage.due_date,
+                additional_fields=stage.additional_fields,
+                remove_fields=stage.remove_fields,
+                instructions=stage.instructions,
+                title=stage.title,
+                committee_id=conference.get_authors_id(),
+                committee_name=conference.get_authors_name(pretty=True)
+            )
 
     def set_paper_group_invitation(self, conference, committee_id, with_process_function=False):
 
