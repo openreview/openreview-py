@@ -72,6 +72,7 @@ class TestJournalMatching():
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password='1234')
         ana_client = OpenReviewClient(username='ana@prada.com', password='1234')
+        ken_client = OpenReviewClient(username='ken@beck.com', password='1234')
 
         ## Set a max quota
         ana_client.post_edge(openreview.Edge(invitation='CARP/Action_Editors/-/Custom_Max_Papers',
@@ -82,6 +83,16 @@ class TestJournalMatching():
             tail='~Ana_Prada1',
             weight=3
         ))
+
+        ## Set unavailable
+        ken_client.post_edge(openreview.Edge(invitation='CARP/Action_Editors/-/Assignment_Availability',
+            readers=[venue_id, '~Ken_Beck1'],
+            writers=[venue_id, '~Ken_Beck1'],
+            signatures=['~Ken_Beck1'],
+            head='CARP/Action_Editors',
+            tail='~Ken_Beck1',
+            label='Unavailable'
+        ))        
 
         for i in range(1,6):
             test_client.post_note_edit(invitation='CARP/-/Submission',
@@ -195,71 +206,47 @@ class TestJournalMatching():
         )) 
 
         ### Setup matching
-        journal.setup_ae_matching()
+        journal.setup_ae_matching(label='1234')
 
-        ## Post a configuration note
-        emily_client=OpenReviewClient(username='emily@mail.com', password='1234')
-        
-        emily_client.post_note_edit(invitation='CARP/Action_Editors/-/Assignment_Configuration',
-                signatures=['CARP'],
-                note=Note(
-                    content={
-                        'title': { 'value': 'test-1' },
-                        'min_papers': { 'value': '0' },
-                        'max_papers': { 'value': '1' },
-                        'user_demand': { 'value': '1' },
-                        'alternates': { 'value': '2' },
-                        'scores_specification': { 'value': {
-                            'CARP/Action_Editors/-/Affinity_Score': {'weight': 1, 'default': 0},
-                            'CARP/Action_Editors/-/Recommendation': {'weight': 1, 'default': 0}
-                        } },
-                        'solver': { 'value': 'MinMax' },
-                        'allow_zero_score_assignments': { 'value': 'No' },
-                        'status': { 'value': 'Initialized' },
-                    }
-                ))
+        assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assign_AE_1234' })
+        assert len(assigning_submissions) == 3
+
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Ana_Prada1')[0].weight == 3
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Paul_McCartney1')[0].weight == 12
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~John_Lennon1')[0].weight == 12
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Janis_Joplin1')[0].weight == 12
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Diego_Armando1')[0].weight == 12
+        assert not openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Ken_Beck1')
 
         ## Run the matching and get proposed assignments
-        openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
+        edge = openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
             head=submissions[0].id,
             tail='~Ana_Prada1',
-            label='test-1',
+            label='matching-1234',
             weight=1
-        )) 
+        ))
+
+        assert edge.readers == ['CARP', '~Ana_Prada1']
 
         openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
             head=submissions[1].id,
             tail='~John_Lennon1',
-            label='test-1',
+            label='matching-1234',
             weight=1
         )) 
 
         openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
             head=submissions[2].id,
             tail='~Paul_McCartney1',
-            label='test-1',
+            label='matching-1234',
             weight=1
         )) 
 
-        openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
-            head=submissions[3].id,
-            tail='~Diego_Armando1',
-            label='test-1',
-            weight=1
-        ))                 
-
-        openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
-            head=submissions[4].id,
-            tail='~Ken_Beck1',
-            label='test-1',
-            weight=1
-        ))
-
         ## Deploy assignments                
-        journal.set_assignments(assignment_title='test=1')
+        journal.set_assignments(assignment_title='matching-1234')
 
         assignments = openreview_client.get_edges(invitation='CARP/Action_Editors/-/Assignment')
-        assert len(assignments) == 5
+        assert len(assignments) == 3
 
         helpers.await_queue_edit(openreview_client, invitation='CARP/Action_Editors/-/Assignment')
 

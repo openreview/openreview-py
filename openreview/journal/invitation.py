@@ -83,6 +83,7 @@ class InvitationBuilder(object):
         self.set_camera_ready_verification_invitation()
         self.set_authors_deanonymization_invitation()
         self.set_comment_invitation()
+        self.set_assignment_configuration_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -1131,7 +1132,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         invitation = Invitation(
             id=self.journal.get_ae_aggregate_score_id(),
             invitees=[venue_id],
-            readers=[venue_id, authors_id],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             minReplies=1,
@@ -1181,7 +1182,62 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             }
         )
 
-        self.save_invitation(invitation)        
+        self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_ae_resubmission_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_resubmission_score_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)              
 
         invitation = Invitation(
             id=self.journal.get_ae_assignment_id(),
@@ -1393,12 +1449,66 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'weight': {
                     'param': {
                         'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                        'default': 12
+                        'default': self.journal.ae_custom_max_papers
                     }
                 }
             }
         )
         self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_ae_local_custom_max_papers_id(),
+            invitees=[venue_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_local_custom_max_papers_id(),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, '${2/tail}'],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'group',
+                        'const': action_editors_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        'default': 0
+                    }
+                },
+                'label': {
+                    'param': {
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)        
 
         invitation = Invitation(
             id=self.journal.get_ae_availability_id(),
@@ -4877,7 +4987,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'paper_invitation': {
                             'order': 6,
                             'description': 'Invitation to get the paper metadata or Group id to get the users to be matched',
-                            'value': self.journal.get_author_submission_id()
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'minLength': 1
+                                }
+                            }
                         },
                         'match_group': {
                             'order': 7,
@@ -4940,7 +5055,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         'custom_max_papers_invitation': {
                             'order': 15,
                             'description': 'Invitation to store custom max number of papers that can be assigned to reviewers',
-                            'value': self.journal.get_ae_custom_max_papers_id()
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'minLength': 1
+                                }
+                            }
                         },
                         'solver': {
                             'order': 17,

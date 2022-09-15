@@ -1,3 +1,4 @@
+from itertools import groupby
 from .. import openreview
 from .. import tools
 from . import group
@@ -41,6 +42,7 @@ class Journal(object):
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
         self.retracted_venue_id = f'{venue_id}/Retracted_Acceptance'
+        self.assign_AE_venue_id_prefix = f'{venue_id}/Assign_AE'
         self.accepted_venue_id = venue_id
         self.invitation_builder = InvitationBuilder(self)
         self.group_builder = group.GroupBuilder(client)
@@ -58,6 +60,7 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
+        self.ae_custom_max_papers = 12
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -165,6 +168,9 @@ class Journal(object):
     def get_ae_aggregate_score_id(self):
         return self.__get_invitation_id(name='Aggregate_Score', prefix=self.get_action_editors_id())
 
+    def get_ae_resubmission_score_id(self):
+        return self.__get_invitation_id(name='Resubmission_Score', prefix=self.get_action_editors_id())
+
     def get_ae_assignment_configuration_id(self):
         return self.__get_invitation_id(name='Assignment_Configuration', prefix=self.get_action_editors_id())
 
@@ -176,6 +182,9 @@ class Journal(object):
 
     def get_ae_custom_max_papers_id(self, number=None):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_action_editors_id(number=number))
+
+    def get_ae_local_custom_max_papers_id(self, number=None):
+        return self.__get_invitation_id(name='Local_Custom_Max_Papers', prefix=self.get_action_editors_id(number=number))
 
     def get_ae_availability_id(self):
         return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_action_editors_id())
@@ -293,17 +302,106 @@ class Journal(object):
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
-    def setup_ae_matching(self):
-        self.invitation_builder.set_assignment_configuration_invitation()
+    def setup_ae_matching(self, label):
+
+        submitted_submissions = self.client.get_notes(invitation= self.get_author_submission_id(), content = { 'venueid': self.submitted_venue_id })
+
+        for submission in submitted_submissions:
+            ## Get AE recommendations
+            ae_recommendations = self.client.get_edges(invitation=self.get_ae_recommendation_id(), head=submission.id)
+            if len(ae_recommendations) >= 3:
+                ## Mark the papers that needs assignments. use venue: "TMLR Assigning AE" and venueid: 'TMLR/Assign_AE_20220928'
+                self.client.post_note_edit(
+                    invitation = self.get_meta_invitation_id(),
+                    signatures = [self.venue_id],
+                    note = openreview.api.Note(
+                        id = submission.id,
+                        content = {
+                            'venue': { 'value': f'{self.short_name} Assigning AE' },
+                            'venueid': { 'value': f'{self.assign_AE_venue_id_prefix}_{label}' }
+                        }
+                    )
+
+                )
+
+                ## Compute resubmission scores, TMLR/Action_Editors/-/Resubmission_Score with weigth = 10
+                if f'previous_{self.short_name}_submission_url' in submission.content:
+                    previous_forum_url = submission.content[f'previous_{self.short_name}_submission_url']['value']
+                    previous_forum_url = previous_forum_url.replace('https://openreview.net/forum?id=', '')
+                    previous_forum_id = previous_forum_url.split('&')[0]
+                    previous_assignments = self.client.get_edges(invitation=self.get_ae_assignment_id(), head = previous_forum_id)
+                    for assignment in previous_assignments:
+                        self.client.post_edge(openreview.api.Edge(
+                            invitation=self.get_ae_resubmission_score_id(),
+                            head=submission.id,
+                            tail=assignment.tail,
+                            weight=1
+                        ))
+
+        ## Compute the AE quota and use invitation: TMLR/Assign_AE_20220928/-/Custom_Max_Papers:
+        under_review_submissions = { s.id: s for s in self.client.get_all_notes(invitation= self.get_author_submission_id(), content = { 'venueid': self.under_review_venue_id }, details='directReplies')}
+        action_editors = self.client.get_group(self.get_action_editors_id()).members
+        available_edges = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=self.get_ae_availability_id(), groupby='tail', select='label') }
+        assignment_edges = { e['id']['tail']: [v['head'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail', select='head') }
+        quota_edges = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail', select='weight') }
+
+        for action_editor in action_editors:
+            quota = 0
+            # they are available
+            assignment_availability = available_edges.get(action_editor, 'Available')
+            if assignment_availability == 'Available':
+                # they have 0 or 1 assigned AE for which no decision was made
+                assignments = assignment_edges.get(action_editor, [])
+                no_decision_count = 0
+                for assignment in assignments:
+                    under_review_submission = under_review_submissions.get(assignment.head)
+                    if under_review_submission and not [d for d in under_review_submission.details['directReplies'] if self.get_ae_decision_id(number=under_review_submission.number) in d['invitations']]:
+                        no_decision_count += 1
+                if no_decision_count <= 1:
+                    # they have sufficient total quota of assignment
+                    quota = max(quota, quota_edges.get(action_editor, self.ae_custom_max_papers) - len(assignments))
+
+                    if quota:
+                        self.client.post_edge(openreview.api.Edge(
+                            signatures=[self.venue_id],
+                            invitation = self.get_ae_local_custom_max_papers_id(),
+                            head = self.get_action_editors_id(),
+                            tail = action_editor,
+                            weight = quota,
+                            label = label
+                        ))
+
+        ## Create the configuration note with the title: TMLR/Assign_AE_20220928
+        scores_spec = {}
+        scores_spec[self.get_ae_affinity_score_id()] = {'weight': 1, 'default': 0}
+        scores_spec[self.get_ae_recommendation_id()] = {'weight': 0.1, 'default': 0}
+        scores_spec[self.get_ae_resubmission_score_id()] = {'weight': 10, 'default': 0}
+        self.client.post_note_edit(invitation=self.get_ae_assignment_configuration_id(),
+                signatures=[self.venue_id],
+                note=openreview.api.Note(
+                    content={
+                        'title': { 'value': f'matching-{label}' },
+                        'min_papers': { 'value': '0' },
+                        'max_papers': { 'value': '1' },
+                        'user_demand': { 'value': '1' },
+                        'alternates': { 'value': '2' },
+                        'paper_invitation': { 'value': f'{self.get_author_submission_id()}&content.venueid={self.assign_AE_venue_id_prefix}_{label}'},
+                        'custom_max_papers_invitation': { 'value': f'{self.get_ae_local_custom_max_papers_id()}&label={label}'},
+                        'scores_specification': { 'value': scores_spec },
+                        'solver': { 'value': 'MinMax' },
+                        'allow_zero_score_assignments': { 'value': 'No' },
+                        'status': { 'value': 'Initialized' },
+                    }
+                ))
 
     def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
-        committee_id = self.get_action_editors_id()
-        proposed_assignments = self.client.get_all_edges(invitation=self.get_ae_assignment_id(proposed=True))
+        label = assignment_title.split('-')[-1]
+        proposed_assignments = self.client.get_all_edges(invitation=self.get_ae_assignment_id(proposed=True), label=assignment_title)
         submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id()) }
 
         for assignment in tqdm(proposed_assignments):
             submission = submission_by_id.get(assignment.head)
-            if submission and submission.content['venueid']['value'] == self.submitted_venue_id:
+            if submission and submission.content['venueid']['value'] == f'{self.assign_AE_venue_id_prefix}_{label}':
                 self.client.post_edge(openreview.api.Edge(
                     invitation = self.get_ae_assignment_id(),
                     head = assignment.head,
@@ -311,24 +409,6 @@ class Journal(object):
                     weight = 1
                 ))
     
-    def set_action_editors(self, editors, custom_papers):
-        venue_id=self.venue_id
-        aes=self.get_action_editors_id()
-        self.client.add_members_to_group(aes, editors)
-        for index,ae in enumerate(editors):
-            edge = Edge(invitation = f'{aes}/-/Custom_Max_Papers',
-                readers = [venue_id, ae],
-                writers = [venue_id, ae],
-                signatures = [venue_id],
-                head = aes,
-                tail = ae,
-                weight=custom_papers[index]
-            )
-            self.client.post_edge(edge)
-
-    def set_reviewers(self, reviewers):
-        self.client.add_members_to_group(self.get_reviewers_id(), reviewers)
-
     def get_action_editors(self):
         return self.client.get_group(self.get_action_editors_id()).members
 
