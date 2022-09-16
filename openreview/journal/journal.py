@@ -310,11 +310,12 @@ class Journal(object):
     def setup_ae_matching(self, label):
 
         submitted_submissions = self.client.get_notes(invitation= self.get_author_submission_id(), content = { 'venueid': self.submitted_venue_id })
+        assignment_edges = { e['id']['tail']: [v['head'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail', select='head') }
 
         for submitted_submission in submitted_submissions:
             ## Get AE recommendations
             ae_recommendations = self.client.get_edges(invitation=self.get_ae_recommendation_id(), head=submitted_submission.id)
-            if len(ae_recommendations) >= 3:
+            if len(ae_recommendations) >= 3 and assignment_edges.get(submitted_submission.id) is None:
                 ## Mark the papers that needs assignments. use venue: "TMLR Assigning AE" and venueid: 'TMLR/Assign_AE_20220928'
                 self.client.post_note_edit(
                     invitation = self.get_meta_invitation_id(),
@@ -347,12 +348,12 @@ class Journal(object):
         all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= self.get_author_submission_id(), details='directReplies')}
         action_editors = self.client.get_group(self.get_action_editors_id()).members
         available_edges = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=self.get_ae_availability_id(), groupby='tail', select='label') }
-        assignment_edges = { e['id']['tail']: [v['head'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail', select='head') }
         quota_edges = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail', select='weight') }
 
         ## Clear the quotas
         self.client.delete_edges(invitation=self.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
 
+        custom_load_edges = []
         for action_editor in action_editors:
             quota = 0
             # they are available
@@ -369,14 +370,14 @@ class Journal(object):
                     # they have sufficient total quota of assignment
                     quota = max(quota, quota_edges.get(action_editor, self.ae_custom_max_papers) - len(assignments))
 
-                    if quota:
-                        self.client.post_edge(openreview.api.Edge(
-                            signatures=[self.venue_id],
-                            invitation = self.get_ae_local_custom_max_papers_id(),
-                            head = self.get_action_editors_id(),
-                            tail = action_editor,
-                            weight = quota
-                        ))
+            custom_load_edges.append(openreview.api.Edge(
+                signatures=[self.venue_id],
+                invitation = self.get_ae_local_custom_max_papers_id(),
+                head = self.get_action_editors_id(),
+                tail = action_editor,
+                weight = quota
+            ))
+        openreview.tools.post_bulk_edges(client=self.client, edges=custom_load_edges)
 
         ## Create the configuration note with the title: TMLR/Assign_AE_20220928
         scores_spec = {}
