@@ -1329,7 +1329,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'head': {
                     'param': {
                         'type': 'note',
-                        'withInvitation': author_submission_id
+                        'withVenueid': self.journal.assigning_AE_venue_id
                     }
                 },
                 'tail': {
@@ -1499,11 +1499,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'param': {
                         'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         'default': 0
-                    }
-                },
-                'label': {
-                    'param': {
-                        'minLength': 1
                     }
                 }
             }

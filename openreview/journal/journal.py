@@ -42,7 +42,8 @@ class Journal(object):
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
         self.retracted_venue_id = f'{venue_id}/Retracted_Acceptance'
-        self.assign_AE_venue_id_prefix = f'{venue_id}/Assign_AE'
+        self.assigning_AE_venue_id = f'{venue_id}/Assigning_AE'
+        self.assigned_AE_venue_id = f'{venue_id}/Assigned_AE'
         self.accepted_venue_id = venue_id
         self.invitation_builder = InvitationBuilder(self)
         self.group_builder = group.GroupBuilder(client)
@@ -318,7 +319,7 @@ class Journal(object):
                         id = submission.id,
                         content = {
                             'venue': { 'value': f'{self.short_name} Assigning AE' },
-                            'venueid': { 'value': f'{self.assign_AE_venue_id_prefix}_{label}' }
+                            'venueid': { 'value': self.assigning_AE_venue_id }
                         }
                     )
 
@@ -345,6 +346,9 @@ class Journal(object):
         assignment_edges = { e['id']['tail']: [v['head'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail', select='head') }
         quota_edges = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail', select='weight') }
 
+        ## Clear the quotas
+        self.client.delete_edges(invitation=self.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
+
         for action_editor in action_editors:
             quota = 0
             # they are available
@@ -354,7 +358,7 @@ class Journal(object):
                 assignments = assignment_edges.get(action_editor, [])
                 no_decision_count = 0
                 for assignment in assignments:
-                    under_review_submission = under_review_submissions.get(assignment.head)
+                    under_review_submission = under_review_submissions.get(assignment)
                     if under_review_submission and not [d for d in under_review_submission.details['directReplies'] if self.get_ae_decision_id(number=under_review_submission.number) in d['invitations']]:
                         no_decision_count += 1
                 if no_decision_count <= 1:
@@ -367,8 +371,7 @@ class Journal(object):
                             invitation = self.get_ae_local_custom_max_papers_id(),
                             head = self.get_action_editors_id(),
                             tail = action_editor,
-                            weight = quota,
-                            label = label
+                            weight = quota
                         ))
 
         ## Create the configuration note with the title: TMLR/Assign_AE_20220928
@@ -385,8 +388,8 @@ class Journal(object):
                         'max_papers': { 'value': '1' },
                         'user_demand': { 'value': '1' },
                         'alternates': { 'value': '2' },
-                        'paper_invitation': { 'value': f'{self.get_author_submission_id()}&content.venueid={self.assign_AE_venue_id_prefix}_{label}'},
-                        'custom_max_papers_invitation': { 'value': f'{self.get_ae_local_custom_max_papers_id()}&label={label}'},
+                        'paper_invitation': { 'value': f'{self.get_author_submission_id()}&content.venueid={self.assigning_AE_venue_id}'},
+                        'custom_max_papers_invitation': { 'value': f'{self.get_ae_local_custom_max_papers_id()}'},
                         'scores_specification': { 'value': scores_spec },
                         'solver': { 'value': 'MinMax' },
                         'allow_zero_score_assignments': { 'value': 'No' },
@@ -401,7 +404,7 @@ class Journal(object):
 
         for assignment in tqdm(proposed_assignments):
             submission = submission_by_id.get(assignment.head)
-            if submission and submission.content['venueid']['value'] == f'{self.assign_AE_venue_id_prefix}_{label}':
+            if submission and submission.content['venueid']['value'] == self.assigning_AE_venue_id:
                 self.client.post_edge(openreview.api.Edge(
                     invitation = self.get_ae_assignment_id(),
                     head = assignment.head,

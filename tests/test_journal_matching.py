@@ -208,16 +208,17 @@ class TestJournalMatching():
         ### Setup matching
         journal.setup_ae_matching(label='1234')
 
-        assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assign_AE_1234' })
+        assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigning_AE' })
         assert len(assigning_submissions) == 3
 
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Ana_Prada1')[0].weight == 3
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Paul_McCartney1')[0].weight == 12
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~John_Lennon1')[0].weight == 12
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Janis_Joplin1')[0].weight == 12
-        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Diego_Armando1')[0].weight == 12
-        assert not openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', label='1234', tail='~Ken_Beck1')
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 3
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Paul_McCartney1')[0].weight == 12
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~John_Lennon1')[0].weight == 12
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Janis_Joplin1')[0].weight == 12
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Diego_Armando1')[0].weight == 12
+        assert not openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', tail='~Ken_Beck1')
 
+        #assert False
         ## Run the matching and get proposed assignments
         edge = openreview_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Proposed_Assignment',
             head=submissions[0].id,
@@ -248,6 +249,51 @@ class TestJournalMatching():
         assignments = openreview_client.get_edges(invitation='CARP/Action_Editors/-/Assignment')
         assert len(assignments) == 3
 
-        helpers.await_queue_edit(openreview_client, invitation='CARP/Action_Editors/-/Assignment')
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[0].id)
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[1].id)
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[2].id)
 
         messages = openreview_client.get_messages(to = 'ana@prada.com', subject = '[CARP] Assignment to new CARP submission Paper title 1')
+
+        assert openreview_client.get_note(submissions[0].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[1].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+        assert openreview_client.get_note(submissions[2].id).content['venueid']['value'] == 'CARP/Assigned_AE'
+
+        assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigning_AE' })
+        assert len(assigning_submissions) == 0
+
+        ### Setup matching again
+        journal.setup_ae_matching(label='12345')
+
+        assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigning_AE' })
+        assert len(assigning_submissions) == 0
+
+        assigning_submissions = openreview_client.get_notes(content={ 'venueid': 'CARP/Assigned_AE' })
+        assert len(assigning_submissions) == 3
+
+        ## Paper 4
+        test_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Recommendation',
+            head=submissions[3].id,
+            tail='~Janis_Joplin1',
+            weight=1
+        ))    
+
+
+        test_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Recommendation',
+            head=submissions[3].id,
+            tail='~Paul_McCartney1',
+            weight=1
+        ))    
+
+        test_client.post_edge(openreview.api.Edge(invitation='CARP/Action_Editors/-/Recommendation',
+            head=submissions[3].id,
+            tail='~John_Lennon1',
+            weight=1
+        ))
+
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Ana_Prada1')[0].weight == 2
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Paul_McCartney1')[0].weight == 11
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~John_Lennon1')[0].weight == 11
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Janis_Joplin1')[0].weight == 12
+        assert openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers',  tail='~Diego_Armando1')[0].weight == 12
+        assert not openreview_client.get_edges(invitation='CARP/Action_Editors/-/Local_Custom_Max_Papers', tail='~Ken_Beck1')                                     
