@@ -364,9 +364,11 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
     # always post Paper_Matching_Setup invitation
     matching_group_ids = [conference.get_committee_id(r) for r in conference.reviewer_roles]
     if conference.use_area_chairs:
-        matching_group_ids.append(conference.get_area_chairs_id())
+        area_chairs = [conference.get_committee_id(r) for r in conference.area_chair_roles]
+        matching_group_ids = matching_group_ids + area_chairs
     if conference.use_senior_area_chairs:
-        matching_group_ids.append(conference.get_senior_area_chairs_id())
+        senior_area_chairs = [conference.get_committee_id(r) for r in conference.senior_area_chair_roles]
+        matching_group_ids = matching_group_ids + senior_area_chairs
     matching_invitation = openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Paper_Matching_Setup',
         super = SUPPORT_GROUP + '/-/Paper_Matching_Setup',
