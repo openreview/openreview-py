@@ -168,7 +168,7 @@ class Assignment(object):
 
         for submitted_submission in tqdm(submitted_submissions):
             ## Get AE group is empty
-            if not self.client.get_group(journal.get_action_editors_id(submitted_submission.number)).members():
+            if not self.client.get_group(journal.get_action_editors_id(submitted_submission.number)).members:
                 ## Get AE recommendations
                 ae_recommendations = self.client.get_edges(invitation=journal.get_ae_recommendation_id(), head=submitted_submission.id)
                 if len(ae_recommendations) >= 3:
