@@ -2210,8 +2210,8 @@ class InvitationBuilder(object):
     def set_assignment_invitation(self, conference, committee_id):
 
         invitation = self.client.get_invitation(conference.get_paper_assignment_id(committee_id, deployed=True))
-        is_area_chair = committee_id == conference.get_area_chairs_id()
-        is_senior_area_chair = committee_id == conference.get_senior_area_chairs_id()
+        is_area_chair = committee_id == conference.get_area_chairs_id() or committee_id.split("/")[-1] in conference.area_chair_roles
+        is_senior_area_chair = committee_id == conference.get_senior_area_chairs_id() or committee_id.split("/")[-1] in conference.senior_area_chair_roles
         is_reviewer = committee_id == conference.get_reviewers_id()
         is_ethics_reviewer = committee_id == conference.get_ethics_reviewers_id()
 
