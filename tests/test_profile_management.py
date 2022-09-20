@@ -2,6 +2,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import openreview
 from openreview import ProfileManagement
+from openreview.api import OpenReviewClient
+from openreview.api import Note
+from openreview.journal import Journal
 import pytest
 
 class TestProfileManagement():
@@ -737,6 +740,184 @@ The OpenReview Team.
         assert messages[0]['content']['text'] == '''Hi Javier Alternate Last,
 
 We have received your request to remove the name "Javier Last" from your profile: https://openreview.net/profile?id=~Javier_Alternate_Last1.
+
+The name has been removed from your profile. Please check that the information listed in your profile is correct.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+    def test_rename_publications_from_api2(self, client, profile_management, helpers, openreview_client):
+
+        journal=Journal(openreview_client, 'CABJ', '1234', contact_info='cabj@mail.org', full_name='Transactions on Machine Learning Research', short_name='CABJ', submission_name='Submission')
+        journal.setup(support_role='test@mail.com', editors=[])        
+
+        paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
+        profile = paul_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Paul',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        paul_client.post_profile(profile)
+        profile = paul_client.get_profile(email_or_id='~Paul_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Paul_Alternate_Last1'
+
+        assert client.get_group('~Paul_Last1').members == ['paul@profile.org']
+        assert client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
+        assert client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
+
+        ## Add publications
+        paul_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Paul_Alternate_Last1'],
+            writers = ['~Paul_Alternate_Last1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['Paul Alternate Last', 'Test Client'],
+                'authorids': ['~Paul_Alternate_Last1', 'test@mail.com']
+            }
+        ))
+
+        paul_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~Paul_Alternate_Last1'],
+            writers = ['~Paul_Alternate_Last1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'Paper abstract 2',
+                'authors': ['Paul Last', 'Test Client'],
+                'authorids': ['~Paul_Last1', 'test@mail.com']
+            }
+        ))
+
+        paul_client_v2 = openreview.api.OpenReviewClient(username='paul@profile.org', password='1234')
+        paul_client_v2.post_note_edit(invitation='CABJ/-/Submission',
+            signatures=['~Paul_Alternate_Last1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Paul Alternate Last']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Alternate_Last1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))        
+
+        ## Create committee groups
+        client.post_group(openreview.Group(
+            id='ICLRR.cc',
+            readers=['everyone'],
+            writers=['ICLRR.cc'],
+            signatures=['~Super_User1'],
+            signatories=[],
+            members=[]
+        ))
+
+        client.post_group(openreview.Group(
+            id='ICLRR.cc/Reviewers',
+            readers=['everyone'],
+            writers=['ICLRR.cc'],
+            signatures=['~Super_User1'],
+            signatories=[],
+            members=['~Paul_Alternate_Last1']
+        ))        
+
+        publications = client.get_notes(content={ 'authorids': '~Paul_Last1'})
+        assert len(publications) == 2
+
+        request_note = paul_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            readers=['openreview.net/Support', '~Paul_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Paul_Last1'],
+            content={
+                'name': 'Paul Alternate Last',
+                'usernames': ['~Paul_Alternate_Last1'],
+                'comment': 'typo in my name',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='paul@profile.org', subject='Profile name removal request has been received')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Paul Last,
+
+We have received your request to remove the name "Paul Alternate Last" from your profile: https://openreview.net/profile?id=~Paul_Last1.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+        ## Accept the request
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Name_Removal_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Accepted'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        note = paul_client.get_note(request_note.id)
+        assert note.content['status'] == 'Accepted'
+
+        publications = client.get_notes(content={ 'authorids': '~Paul_Last1'})
+        assert len(publications) == 2
+        assert '~Paul_Last1' in publications[0].writers
+        assert '~Paul_Last1' in publications[0].signatures
+        assert '~Paul_Last1' in publications[1].writers
+        assert '~Paul_Last1' in publications[1].signatures
+
+        publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
+        assert len(publications) == 1
+
+        group = client.get_group('ICLRR.cc/Reviewers')
+        assert '~Paul_Alternate_Last1' not in group.members
+        assert '~Paul_Last1' in group.members
+
+        group = client.get_group('CABJ/Paper1/Authors')
+        assert '~Paul_Alternate_Last1' not in group.members
+        assert '~Paul_Last1' in group.members
+
+        profile = paul_client.get_profile(email_or_id='~Paul_Last1')
+        assert len(profile.content['names']) == 1
+        assert 'username' in profile.content['names'][0]
+        assert profile.content['names'][0]['username'] == '~Paul_Last1'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Paul_Alternate_Last1'):
+            client.get_group('~Paul_Alternate_Last1')
+
+        assert client.get_group('~Paul_Last1').members == ['paul@profile.org']
+        assert client.get_group('paul@profile.org').members == ['~Paul_Last1']
+
+        messages = client.get_messages(to='paul@profile.org', subject='Profile name removal request has been accepted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Paul Last,
+
+We have received your request to remove the name "Paul Alternate Last" from your profile: https://openreview.net/profile?id=~Paul_Last1.
 
 The name has been removed from your profile. Please check that the information listed in your profile is correct.
 

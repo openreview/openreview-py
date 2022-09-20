@@ -57,6 +57,40 @@ The OpenReview Team.
                     }
                 ))
 
+        baseurl_v2 = 'http://localhost:3001'
+
+        if 'https://devapi' in client.baseurl:
+            baseurl_v2 = 'https://devapi2.openreview.net'
+        if 'https://api' in client.baseurl:
+            baseurl_v2 = 'https://api2.openreview.net'                
+
+        client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
+        publications = client_v2.get_all_notes(content={ 'authorids': username})
+        for publication in publications:
+            authors = []
+            authorids = []
+            needs_change = False
+            for index, author in enumerate(publication.content.get('authorids', {}).get('value')):
+                if username == author:
+                    authors.append(preferred_name)
+                    authorids.append(profile.id)
+                    needs_change = True
+                else:
+                    if publication.content.get('authors'):
+                        authors.append(publication.content['authors']['value'][index])
+                    authorids.append(publication.content['authorids']['value'][index])
+            if needs_change:
+                client_v2.post_note_edit(
+                    invitation = publication.domain + '/-/Edit',
+                    readers = [publication.domain],
+                    signatures = [SUPPORT_USER_ID],
+                    note = openreview.api.Note(
+                        id=publication.id, 
+                        content={
+                            'authors': { 'value': authors },
+                            'authorids': { 'value': authorids }
+                        }
+                ))
         
         print('Change all the notes that contain the name to remove as signatures')
         signed_notes = client.get_all_notes(signature=username)
@@ -89,15 +123,50 @@ The OpenReview Team.
             except Exception as e:
                 print(f'note id {note.id} not updated: {e}')
 
+        signed_notes = client_v2.get_all_notes(signature=username)
+        for note in signed_notes:
+            signatures = []
+            for signature in note.signatures:
+                if username == signature:
+                    signatures.append(profile.id)
+                else:
+                    signatures.append(signature)
+
+            readers = []
+            for reader in note.readers:
+                if username == reader:
+                    readers.append(profile.id)
+                else:
+                    readers.append(reader)
+            writers = []
+            for writer in note.writers:
+                if username == writer:
+                    writers.append(profile.id)
+                else:
+                    writers.append(writer)
+            ## catch the error, some notes may not match with the invitation
+            try:
+                client_v2.post_note_edit(
+                    invitation = note.domain + '/-/Edit',
+                    readers = [note.domain],
+                    signatures = [SUPPORT_USER_ID],
+                    note = openreview.api.Note(
+                        id=note.id, 
+                        readers=readers,
+                        writers=writers,
+                        signatures=signatures
+                ))
+            except Exception as e:
+                print(f'note id {note.id} not updated: {e}')                
+
         print('Rename all the edges')
-        head_edges = client.get_edges(head=username)
-        tail_edges = client.get_edges(tail=username)
+        head_edges = client.get_edges(head=username, limit=1)
+        tail_edges = client.get_edges(tail=username, limit=1)
         if head_edges or tail_edges:
             client.rename_edges(username, profile.id)
         
         print('Replace all the group members that contain the name to remove')
         memberships = client.get_all_groups(member=username)
-        print()
 
         for group in memberships:
             if username in group.members:
