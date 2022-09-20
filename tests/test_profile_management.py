@@ -325,6 +325,7 @@ The OpenReview Team.
 
         helpers.await_queue()
 
+        ana_client = openreview.Client(username='ana@profile.org', password='1234')
         note = ana_client.get_note(request_note.id)
         assert note.content['status'] == 'Accepted'
 
@@ -712,6 +713,7 @@ The OpenReview Team.
 
         helpers.await_queue()
 
+        javier_client = openreview.Client(username='javier@profile.org', password='1234')
         note = javier_client.get_note(request_note.id)
         assert note.content['status'] == 'Accepted'
 
