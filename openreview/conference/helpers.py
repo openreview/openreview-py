@@ -8,6 +8,15 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
     if note.content.get('api_version') == '2':
         openreview_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', token=client.token)
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'])
+        venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
+        venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
+        venue.short_name = note.content.get('Abbreviated Venue Name')
+        venue.name = note.content.get('Official Venue Name')
+        venue.website = note.content.get('Official Website URL')
+        venue.contact = note.content.get('contact_email')
+        venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
+        venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
+        venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
         venue.setup(note.content.get('program_chair_emails'))
         name = note.content.get('submission_name', 'Submission').strip()
         double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
@@ -37,16 +46,6 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
             double_blind=double_blind, 
             readers=readers)
         )
-
-        venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'           
-        venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'            
-        venue.short_name = note.content.get('Abbreviated Venue Name')
-        venue.name = note.content.get('Official Venue Name')
-        venue.website = note.content.get('Official Website URL')
-        venue.contact = note.content.get('contact_email')
-        venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
-        venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
-        venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
 
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)

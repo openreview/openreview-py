@@ -8,18 +8,18 @@ const PARENT_GROUP = ''
 
 var HEADER = {};
   
-  return {
-    component: 'VenueHomepage',
-    version: 1,
-    properties: {
-      header: HEADER,
-      parentGroupId: PARENT_GROUP,
-      apiVersion: 2,
-      submissionId: SUBMISSION_ID,
-      blindSubmissionId: SUBMISSION_ID,
-      withdrawnSubmissionId: WITHDRAWN_SUBMISSION_ID,
-      deskRejectedSubmissionId: DESK_REJECTED_SUBMISSION_ID,
-      authorsGroupId: AUTHORS_ID,
-      showSubmissions: true,
-    }
+return {
+  component: 'VenueHomepage',
+  version: 1,
+  properties: {
+    header: HEADER,
+    parentGroupId: PARENT_GROUP,
+    apiVersion: 2,
+    submissionId: SUBMISSION_ID,
+    blindSubmissionId: SUBMISSION_ID,
+    withdrawnSubmissionId: WITHDRAWN_SUBMISSION_ID,
+    deskRejectedSubmissionId: DESK_REJECTED_SUBMISSION_ID,
+    authorsGroupId: AUTHORS_ID,
+    showSubmissions: true,
   }
+}

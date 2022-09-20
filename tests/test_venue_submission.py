@@ -21,7 +21,7 @@ class TestVenueSubmission():
 
         venue = Venue(openreview_client, conference_id)
         venue.use_area_chairs = True
-        venue.name = 'Test 2030 Venue V2'
+        venue.name = 'Test Venue V2'
         venue.short_name = 'TV 22'
         venue.website = 'testvenue.org'
         venue.contact = 'testvenue@contact.com'
@@ -79,7 +79,7 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Official_Review')
 
         #recruit reviewers and area chairs to create groups
-        message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+        message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
         
         helpers.create_user('reviewer_venue_one@mail.com', 'Reviewer Venue', 'One')
         reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password='1234')
