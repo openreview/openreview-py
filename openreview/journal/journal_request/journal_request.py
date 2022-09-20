@@ -18,8 +18,9 @@ class JournalRequest():
         editors = journal_request.content['editors']['value']
         assignment_delay = journal_request.content.get('settings', {}).get('value', {}).get('assignment_delay', 5)
         settings = journal_request.content.get('settings', {}).get('value', {})
+        submission_name = journal_request.content.get('settings', {}).get('value', {}).get('submission_name')
 
-        journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, website)
+        journal = openreview.journal.Journal(client, venue_id, secret_key, contact_info, full_name, short_name, website, submission_name)
         journal.settings = settings
         journal.request_form_id = journal_request_id
 
