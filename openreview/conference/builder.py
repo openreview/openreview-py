@@ -1106,7 +1106,7 @@ class Conference(object):
 
         if self.submission_stage.second_due_date:
             if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
-                self.setup_first_deadline_stage(force, hide_fields)
+                self.setup_first_deadline_stage(force, hide_fields, self.submission_stage.author_reorder_after_first_deadline)
             elif self.submission_stage.second_due_date < now:
                 self.setup_final_deadline_stage(force, hide_fields)
             elif force:
@@ -1952,7 +1952,8 @@ class SubmissionStage(object):
             desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
-            papers_released=False
+            papers_released=False,
+            author_reorder_after_first_deadline=False
         ):
 
         self.start_date = start_date
@@ -1977,6 +1978,7 @@ class SubmissionStage(object):
         self.author_names_revealed = author_names_revealed
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
+        self.author_reorder_after_first_deadline = author_reorder_after_first_deadline
 
     def get_readers(self, conference, number, decision_note=None):
 
@@ -2839,7 +2841,8 @@ class ConferenceBuilder(object):
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
             papers_released=False,
-            readers=None
+            readers=None,
+            author_reorder_after_first_deadline=False
         ):
 
         submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
@@ -2871,7 +2874,8 @@ class ConferenceBuilder(object):
             desk_rejected_submission_reveal_authors,
             email_pcs_on_desk_reject,
             author_names_revealed,
-            papers_released
+            papers_released,
+            author_reorder_after_first_deadline
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None, include_option=False):
