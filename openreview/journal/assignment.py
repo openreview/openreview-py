@@ -172,7 +172,7 @@ class Assignment(object):
                 ## Get AE recommendations
                 ae_recommendations = self.client.get_edges(invitation=journal.get_ae_recommendation_id(), head=submitted_submission.id)
                 if len(ae_recommendations) >= 3:
-                    ## Mark the papers that needs assignments. use venue: "TMLR Assigning AE" and venueid: 'TMLR/Assign_AE_20220928'
+                    ## Mark the papers that needs assignments. use venue: "TMLR Assigning AE" and venueid: 'TMLR/Assign_AE'
                     self.client.post_note_edit(
                         invitation = journal.get_meta_invitation_id(),
                         signatures = [journal.venue_id],
@@ -186,7 +186,7 @@ class Assignment(object):
 
                     )
 
-                    ## Compute resubmission scores, TMLR/Action_Editors/-/Resubmission_Score with weigth = 10
+                    ## Compute resubmission scores, TMLR/Action_Editors/-/Resubmission_Score with weigth = 10 in the matching system
                     if f'previous_{journal.short_name}_submission_url' in submitted_submission.content:
                         previous_forum_url = submitted_submission.content[f'previous_{journal.short_name}_submission_url']['value']
                         previous_forum_url = previous_forum_url.replace('https://openreview.net/forum?id=', '')
@@ -200,7 +200,7 @@ class Assignment(object):
                                 weight=1
                             ))
 
-        ## Compute the AE quota and use invitation: TMLR/Assign_AE_20220928/-/Custom_Max_Papers:
+        ## Compute the AE quota and use invitation: TMLR/Action_Editors/-/Local_Custom_Max_Papers:
         all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies')}
         action_editors = self.client.get_group(journal.get_action_editors_id()).members
         available_edges = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_availability_id(), groupby='tail', select='label') }
@@ -236,7 +236,7 @@ class Assignment(object):
             ))
         openreview.tools.post_bulk_edges(client=self.client, edges=custom_load_edges)
 
-        ## Create the configuration note with the title: TMLR/Assign_AE_20220928
+        ## Create the configuration note with the title: matching-label
         scores_spec = {}
         scores_spec[journal.get_ae_affinity_score_id()] = {'weight': 1, 'default': 0}
         scores_spec[journal.get_ae_recommendation_id()] = {'weight': 0.1, 'default': 0}
