@@ -112,7 +112,7 @@ class TestMatching():
                     'authors': { 'value': ['Celeste MartinezG', 'Author A']},
                     'authorids': { 'value': ['~Celeste_MartinezG1', '~Author_A1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
+                    'keywords': {'value': ['aa'] }
                 }
             ))
 
@@ -129,7 +129,7 @@ class TestMatching():
                     'authors': { 'value': ['Celeste Martinez', 'Author B']},
                     'authorids': { 'value': ['~Celeste_MartinezG1', '~Author_B1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
+                    'keywords': {'value': ['aa'] }
                 }
             ))
 
@@ -146,7 +146,7 @@ class TestMatching():
                     'authors': { 'value': ['Celeste Martinez', 'Author C', 'PC author']},
                     'authorids': { 'value': ['~Celeste_MartinezG1', '~Author_C1', '~PC_Author1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
+                    'keywords': {'value': ['aa'] }
                 }
             ))
 
