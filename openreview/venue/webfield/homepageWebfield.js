@@ -5,6 +5,7 @@ const WITHDRAWN_SUBMISSION_ID = ''
 const DESK_REJECTED_SUBMISSION_ID = ''
 const AUTHORS_ID = ''
 const PARENT_GROUP = ''
+const PUBLIC = false
 
 var HEADER = {};
   
@@ -16,10 +17,9 @@ return {
     parentGroupId: PARENT_GROUP,
     apiVersion: 2,
     submissionId: SUBMISSION_ID,
-    blindSubmissionId: SUBMISSION_ID,
     withdrawnSubmissionId: WITHDRAWN_SUBMISSION_ID,
     deskRejectedSubmissionId: DESK_REJECTED_SUBMISSION_ID,
     authorsGroupId: AUTHORS_ID,
-    showSubmissions: true,
+    showSubmissions: PUBLIC,
   }
 }

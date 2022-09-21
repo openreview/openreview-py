@@ -211,6 +211,15 @@ class Venue(object):
             group.web = group.web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
             self.client.post_group(group)
 
+    def update_homepage_submissions_readership(self, public):
+        group = openreview.tools.get_group(self.client, self.venue_id)
+        if group and group.web:
+            if public:
+                group.web = group.web.replace("const PUBLIC = false", "const PUBLIC = true")
+            else:
+                group.web = group.web.replace("const PUBLIC = true", "const PUBLIC = false")
+            self.client.post_group(group)
+
     def setup(self, program_chair_ids=[]):
     
         venue_id = self.venue_id
@@ -332,6 +341,7 @@ class Venue(object):
         self.submission_stage = stage
         self.invitation_builder.set_submission_invitation()
         self.set_group_variable(self.venue_id, 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
+        self.update_homepage_submissions_readership(self.submission_stage.public)
         self.set_group_variable(self.get_authors_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
         self.set_group_variable(self.get_reviewers_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
         self.set_group_variable(self.get_area_chairs_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
