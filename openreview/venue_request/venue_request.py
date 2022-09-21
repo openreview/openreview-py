@@ -1143,6 +1143,13 @@ class VenueRequest():
                 'order': 38,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
+            },
+            'submission_deadline_author_reorder': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 39,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
             }
         }
 

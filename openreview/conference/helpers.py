@@ -157,6 +157,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     name = note.content.get('submission_name', 'Submission').strip()
 
+    author_reorder_after_first_deadline = note.content.get('submission_deadline_author_reorder', 'No') == 'Yes'
+
     builder.set_submission_stage(
         name=name,
         double_blind=double_blind,
@@ -177,7 +179,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
-        readers=readers)
+        readers=readers,
+        author_reorder_after_first_deadline=author_reorder_after_first_deadline)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
