@@ -248,6 +248,9 @@ class Journal(object):
     def get_camera_ready_verification_id(self, number=None):
         return self.__get_invitation_id(name='Camera_Ready_Verification', number=number)
 
+    def get_eic_revision_id(self, number=None):
+        return self.__get_invitation_id(name='EIC_Revision', number=number)
+    
     def get_revision_id(self, number=None):
         return self.__get_invitation_id(name='Revision', number=number)
 

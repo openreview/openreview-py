@@ -28,17 +28,17 @@ class InvitationBuilder(object):
 
         self.reviewer_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_process', self.journal.get_meta_invitation_id())
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.reviewer_reminder_process_with_EIC = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_process', self.journal.get_meta_invitation_id())
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.ae_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_super_dateprocess_content('ae_reminder_process', self.journal.get_meta_invitation_id())
+            'script': self.get_super_dateprocess_content('ae_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.ae_edge_reminder_process = {
@@ -84,6 +84,7 @@ class InvitationBuilder(object):
         self.set_authors_deanonymization_invitation()
         self.set_comment_invitation()
         self.set_assignment_configuration_invitation()
+        self.set_eic_revision_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -134,6 +135,10 @@ class InvitationBuilder(object):
 
     def expire_invitation(self, invitation_id, expdate=None):
         invitation = self.client.get_invitation(invitation_id)
+        
+        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+            return
+
         self.post_invitation_edit(invitation=Invitation(id=invitation.id,
                 expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.utcnow()),
                 signatures=[self.venue_id]
@@ -214,10 +219,10 @@ class InvitationBuilder(object):
                 readers=[venue_id],
                 signatures=[venue_id],
                 content={
-                    'ae_reminder_process': {
+                    'ae_reminder_script': {
                         'value': self.get_process_content('process/action_editor_reminder_process.py')
                     },
-                    'reviewer_reminder_process': {
+                    'reviewer_reminder_script': {
                         'value': self.get_process_content('process/reviewer_reminder_process.py')
                     }
                 },
@@ -4806,6 +4811,203 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'noteId': { 'value': note.id }, 
                 'noteNumber': { 'value': note.number },
                 'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
+    def set_eic_revision_invitation(self):
+        venue_id = self.journal.venue_id
+        short_name = self.journal.short_name
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/eic_revision_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            }
+        }
+
+        invitation = { 
+            'id': self.journal.get_eic_revision_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [self.journal.get_editors_in_chief_id()],
+                'readers': self.journal.get_under_review_submission_readers('${4/content/noteNumber/value}'),
+                'writers': [ venue_id ],
+                'note': {
+                    'id': '${4/content/noteId/value}',
+                    'forum': '${4/content/noteId/value}',
+                    'content': {
+                        'title': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 250,
+                                    'input': 'text'
+                                }
+                            },
+                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 1
+                        },
+                        'abstract': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
+                            },
+                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 2
+                        },
+                        'authors': {
+                            'value': {
+                                'param': {
+                                    'type': "string[]",
+                                    'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'hidden': True
+                                }
+                            },
+                            'description': 'Comma separated list of author names.',
+                            'order': 3,
+                        },
+                        'authorids': {
+                            'value': {
+                                'param': {
+                                    'type': "group[]",
+                                    'regex': r'~.*'
+                                }
+                            },
+                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'order': 4,
+                        },                       
+                        'pdf': {
+                            'value': {
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['pdf'],
+                                    'maxSize': 50
+                                }
+                            },
+                            'description': 'Upload a PDF file that ends with .pdf',
+                            'order': 5,
+                        },
+                        "supplementary_material": {
+                            'value': {
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['zip', 'pdf'],
+                                    'maxSize': 100,
+                                    "optional": True
+                                }
+                            },
+                            "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                            "order": 6,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
+                        },
+                        f'previous_{short_name}_submission_url': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'optional': True
+                                }
+                            },
+                            'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
+                            'order': 7,
+                        },
+                        'changes_since_last_submission': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+
+                                }
+                            },
+                            'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 8
+                        },
+                        'competing_interests': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
+                            },
+                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
+                            'order': 9,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
+                        },
+                        'human_subjects_reporting': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
+                            },
+                            'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
+                            'order': 10,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
+                        },
+                        "video": {
+                            "order": 11,
+                            "description": "Optionally, you may submit a link to a video summarizing your work.",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    "regex": 'https?://.+',
+                                    'optional': True
+                                }
+                            }
+                        },
+                        "code": {
+                            "order": 12,
+                            "description": "Optionally, you may submit a link to code for your work.",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    "regex": 'https?://.+',
+                                    'optional': True
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            'process': self.process_script
+        }
+
+        self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
+
+    def set_note_eic_revision_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_eic_revision_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
             },
             readers=[self.journal.venue_id],
             writers=[self.journal.venue_id],
