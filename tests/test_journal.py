@@ -856,7 +856,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -1059,7 +1061,9 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
             )
         )
 
@@ -1082,10 +1086,12 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
                 signatures=[javier_anon_groups[0].id],
                 note=Note(
                     content={
-                        'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                        'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                        'requested_changes': { 'value': 'requested_changes' },
-                        'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                    }
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                    }
                 )
             )
 
@@ -1282,7 +1288,9 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
             )
         )
 
@@ -1382,7 +1390,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions V2 ' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses V2' },
                     'requested_changes': { 'value': 'requested_changes V2' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                     
                 }
             )
         )
@@ -1417,7 +1427,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                 }
             )
         )
 
@@ -1480,6 +1492,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification'] },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -1503,6 +1517,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -1526,6 +1542,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -1582,6 +1600,8 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -1634,6 +1654,9 @@ The TMLR Editors-in-Chief
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             note=Note(
                 content={
+                    'main_claims': { 'value': 'Accept as is' },
+                    'claims_support': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' },
                     'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
@@ -1653,6 +1676,9 @@ The TMLR Editors-in-Chief
                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
                 note=Note(
                     content={
+                        'main_claims': { 'value': 'Accept as is' },
+                        'claims_support': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Accept as is' },
                         'comment': { 'value': 'This is a nice paper!' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
@@ -2244,7 +2270,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2263,7 +2291,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
             )
         )
 
@@ -2279,7 +2309,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
             )
         )
 
@@ -2326,7 +2358,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                    
                 }
             )
         )
@@ -2338,7 +2372,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2350,7 +2386,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2376,6 +2414,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
                     content={
+                        'main_claims': { 'value': 'Accept as is' },
+                        'claims_support': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Accept as is' },                        
                         'recommendation': { 'value': 'Reject' },
                         'comment': { 'value': 'This is not a good paper' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
@@ -2387,6 +2428,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
                 content={
+                    'main_claims': { 'value': 'Accept as is' },
+                    'claims_support': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },                    
                     'recommendation': { 'value': 'Reject' },
                     'comment': { 'value': 'This is not a good paper' }
                 }
@@ -2623,7 +2667,9 @@ note={Rejected}
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2640,7 +2686,9 @@ note={Rejected}
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
             )
         )
 
@@ -2656,7 +2704,9 @@ note={Rejected}
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
             )
         )
 
@@ -2682,7 +2732,9 @@ note={Rejected}
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2694,7 +2746,9 @@ note={Rejected}
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2706,7 +2760,9 @@ note={Rejected}
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2731,6 +2787,9 @@ note={Rejected}
             signatures=[f"{venue_id}/Paper5/Action_Editors"],
             note=Note(
                 content={
+                    'main_claims': { 'value': 'Accept as is' },
+                    'claims_support': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept with minor revision' },
                     'comment': { 'value': 'This is a good paper' }
                 }
@@ -2907,7 +2966,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2924,7 +2985,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
             )
         )
 
@@ -2940,7 +3003,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
             )
         )
 
@@ -2966,7 +3031,9 @@ The TMLR Editors-in-Chief
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2978,7 +3045,9 @@ The TMLR Editors-in-Chief
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2990,7 +3059,9 @@ The TMLR Editors-in-Chief
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )

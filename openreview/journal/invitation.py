@@ -3160,6 +3160,28 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                     'markdown': True
                                 }
                             }
+                        },
+                        'evidence': {
+                            'order': 5,
+                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'audience': {
+                            'order': 6,
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper?',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
                         }
                     }
                 }
@@ -3314,8 +3336,30 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
-                        'decision_recommendation': {
+                        'evidence': {
                             'order': 1,
+                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'audience': {
+                            'order': 2,
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper?',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'decision_recommendation': {
+                            'order': 3,
                             'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
                             'value': {
                                 'param': {
@@ -3331,7 +3375,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             }
                         },
                         'certification_recommendations': {
-                            'order': 2,
+                            'order': 4,
                             'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
                             'value': {
                                 'param': {
@@ -3347,7 +3391,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             }
                         },
                         'comment': {
-                            'order': 3,
+                            'order': 5,
                             'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
                             'value': {
                                 'param': {
@@ -4197,8 +4241,44 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
                     'content': {
-                        'recommendation': {
+                        'main_claims': {
                             'order': 1,
+                            'description': 'What are the main claims made by this submission?',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        },
+                        'claims_support': {
+                            'order': 2,
+                            'description': 'Are these claims well supported by evidence? If not, why?',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        },
+                        'audience': {
+                            'order': 3,
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? If not, why?',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        },
+                        'recommendation': {
+                            'order': 4,
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -4212,7 +4292,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             }
                         },
                         'comment': {
-                            'order': 2,
+                            'order': 5,
                             'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
@@ -4224,7 +4304,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             }
                         },
                         'certifications': {
-                            'order': 3,
+                            'order': 6,
                             'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
                             'value': {
                                 'param': {
