@@ -886,7 +886,7 @@ class TestVenueRequest():
                     'authors': { 'value': ['VenueTwo Author']},
                     'authorids': { 'value': ['~VenueTwo_Author1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
+                    'keywords': {'value': ['aa'] }
                 }
             ))
 
@@ -905,7 +905,7 @@ class TestVenueRequest():
                     'authors': { 'value': ['VenueThree Author']},
                     'authorids': { 'value': ['~VenueThree_Author1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
+                    'keywords': {'value': ['aa'] }
                 }
         ))
         

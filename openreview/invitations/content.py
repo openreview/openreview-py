@@ -350,8 +350,30 @@ submission_v2 = {
             }
         }
     },
-    'abstract': {
+    'keywords': {
+        'description': 'Comma separated list of keywords.',
         'order': 4,
+        'value': {
+            'param': {
+                'type': 'string[]',
+                'regex': '(^$)|[^;,\\n]+(,[^,\\n]+)*'
+            }
+        }
+    },
+    'TLDR': {
+        'order': 5,
+        'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+        'value': {
+            'param': {
+                'fieldName': 'TL;DR',
+                'type': 'string',
+                'maxLength': 250,
+                'optional': True
+            }
+        }        
+    },
+    'abstract': {
+        'order': 6,
         'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
         'value': {
             'param': {
@@ -363,7 +385,7 @@ submission_v2 = {
         }
     },
     'pdf': {
-        'order': 5,
+        'order': 7,
         'description': 'Upload a PDF file that ends with .pdf.',
         'value': {
             'param': {
@@ -372,45 +394,7 @@ submission_v2 = {
                 'extensions': ['pdf']
             }
         }
-    },
-    "previous_submission_url": {
-        'order': 6,
-        'description': 'If a version of this submission was previously rejected, give the OpenReview link to the original submission (which must still be anonymous) and describe the changes below.',
-        'value':{
-            'param': {
-                'type': 'string',
-                'regex': 'https:\\/\\/openreview\\.net\\/forum\\?id=.*',
-                'optional': True
-            }
-        }
-    },
-    'changes_since_last_submission': {
-        'order': 7,
-        'description': 'Describe changes since last submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
-        'value': {
-            'param': {
-                'type': 'string',
-                'maxLength': 5000,
-                'optional': True,
-                'markdown': True,
-                'input': 'textarea'
-            }
-        }
-    },
-    "submission_length": {
-        'order': 8,
-        'description': 'Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.',
-        'value': {
-            'param': {
-                'type': 'string',
-                'enum': [
-                    'Regular submission (no more than 12 pages of main content)',
-                    'Long submission (more than 12 pages of main content)'
-                ],
-                'input': 'radio'
-            }
-        }
-    }
+    }    
 }
 
 recruitment = {

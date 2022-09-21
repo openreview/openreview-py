@@ -48,7 +48,7 @@ class TestVenueSubmission():
                     'authors': { 'value': ['Celeste MartinezEleven']},
                     'authorids': { 'value': ['~Celeste_MartinezEleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'submission_length': {'value': 'Regular submission (no more than 12 pages of main content)' }
+                    'keywords': {'value': ['aa'] }
                 }
             ))
 
