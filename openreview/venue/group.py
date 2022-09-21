@@ -63,7 +63,13 @@ class GroupBuilder(object):
     def set_landing_page(self, group, parentGroup, options = {}):
         # sets webfield to show links to child groups
 
-        children_groups = self.client.get_groups(regex = group.id + '/[^/]+/?$')
+        baseurl = 'http://localhost:3000'
+        if 'https://devapi' in self.client.baseurl:
+            baseurl = 'https://devapi.openreview.net'
+        if 'https://api' in self.client.baseurl:
+            baseurl = 'https://api.openreview.net'
+        api1_client = openreview.Client(baseurl=baseurl, token=self.client.token)
+        children_groups = api1_client.get_groups(regex = group.id + '/[^/]+/?$')
 
         links = []
         for children in children_groups:

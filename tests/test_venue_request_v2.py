@@ -249,8 +249,8 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Deploy'.format(support_group_id, request_form_note.number)
 
-        # assert openreview.tools.get_group(openreview_client, 'V2.cc/2021')
-        # assert openreview.tools.get_group(openreview_client, 'V2.cc')
+        assert openreview.tools.get_group(openreview_client, 'V2.cc/2022')
+        assert openreview.tools.get_group(openreview_client, 'V2.cc')
         assert openreview.tools.get_invitation(openreview_client, 'V2.cc/2022/Conference/-/Submission_Test')
         assert not openreview.tools.get_invitation(openreview_client, 'V2.cc/2022/Conference/-/Submission')
 
