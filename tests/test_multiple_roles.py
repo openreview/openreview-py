@@ -54,7 +54,7 @@ class TestMultipleRoles():
                 'Official Website URL': 'https://lifelong-ml.cc/',
                 'program_chair_emails': ['pc@lifelong-ml.cc'],
                 'contact_email': 'pc@lifelong-ml.cc',
-                'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
+                'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'No, our venue does not have Senior Area Chairs',
                 'Venue Start Date': '2021/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -63,12 +63,13 @@ class TestMultipleRoles():
                     'Reviewer Bid Scores',
                     'OpenReview Affinity'],
                 'Author and Reviewer Anonymity': 'Double-blind',
-                'reviewer_identity': ['Program Chairs', 'Assigned Reviewers'],
+                'reviewer_identity': ['Program Chairs', 'Assigned Reviewers', 'Assigned Area Chair'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'reviewer_roles': ['Program_Committee', 'Senior_Program_Committee']
+                'reviewer_roles': ['Program_Committee', 'Senior_Program_Committee'],
+                'area_chair_roles': ['First_Group_AC', 'Second_Group_AC']
             }))
 
         helpers.await_queue()
@@ -193,6 +194,53 @@ class TestMultipleRoles():
         blinded_notes = test_client.get_notes(invitation='lifelong-ml.cc/CoLLAs/2022/Conference/-/Blind_Submission')
         assert len(blinded_notes) == 5
 
+    def test_ac_assignment_invitation(self, test_client, client, helpers):
+        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
+        ac_details = '''ac1@lifelong-ml.cc, AreaChair UMass\nac2@lifelong-ml.cc, ac3@lifelong-ml.cc, AreaChair UMass\nac4@lifelong-ml.cc'''
+        recruitment_note = client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'First_Group_AC',
+                'invitee_reduced_load': ['2', '3', '4'],
+                'invitee_details': ac_details,
+                'invitation_email_subject': '[' + request_form.content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nIf you have any questions, please contact {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['lifelong-ml.cc/CoLLAs/2022/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CoLLAsChair1'],
+            writers=[]
+        ))
+        assert recruitment_note
+
+        helpers.await_queue()
+
+        client.add_members_to_group('lifelong-ml.cc/CoLLAs/2022/Conference/First_Group_AC', ['ac1@lifelong-ml.cc', 'ac2@lifelong-ml.cc', 'ac3@lifelong-ml.cc', 'ac4@lifelong-ml.cc'])
+
+        ## Setup Matching for Program Committee
+        matching_setup_note = client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'lifelong-ml.cc/CoLLAs/2022/Conference/First_Group_AC',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'No'
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['lifelong-ml.cc/CoLLAs/2022/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CoLLAsChair1'],
+            writers=[]
+        ))
+        assert matching_setup_note
+        helpers.await_queue()
+
+        invitation = client.get_invitation("lifelong-ml.cc/CoLLAs/2022/Conference/First_Group_AC/-/Assignment")
+        assert invitation
+        assert "PAPER_GROUP_ID = 'lifelong-ml.cc/CoLLAs/2022/Conference/Paper{number}/Area_Chairs'" in invitation.process
 
     def test_setup_matching(self, conference, client, helpers):
 

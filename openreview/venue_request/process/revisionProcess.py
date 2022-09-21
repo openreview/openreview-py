@@ -204,6 +204,7 @@ def process(client, note, invitation):
                     'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                     'value-radio': [
                         'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                        'All area chairs only',
                         'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                         'Program chairs and paper authors only',
                         'Everyone (submissions are public)',

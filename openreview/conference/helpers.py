@@ -105,6 +105,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     readers_map = {
         'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS],
+        'All area chairs only': [openreview.SubmissionStage.Readers.AREA_CHAIRS],
         'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
         'Program chairs and paper authors only': [],
         'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
@@ -156,6 +157,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     name = note.content.get('submission_name', 'Submission').strip()
 
+    author_reorder_after_first_deadline = note.content.get('submission_deadline_author_reorder', 'No') == 'Yes'
+
     builder.set_submission_stage(
         name=name,
         double_blind=double_blind,
@@ -176,7 +179,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
-        readers=readers)
+        readers=readers,
+        author_reorder_after_first_deadline=author_reorder_after_first_deadline)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'

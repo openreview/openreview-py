@@ -1012,6 +1012,7 @@ class VenueRequest():
                 'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue had one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
                     'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                    'All area chairs only',
                     'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                     'Program chairs and paper authors only',
                     'Everyone (submissions are public)'
@@ -1142,6 +1143,13 @@ class VenueRequest():
                 'order': 38,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
+            },
+            'submission_deadline_author_reorder': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 39,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
             }
         }
 
@@ -1270,6 +1278,7 @@ class VenueRequest():
                 'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
                     'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                    'All area chairs only',
                     'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                     'Program chairs and paper authors only',
                     'Everyone (submissions are public)'

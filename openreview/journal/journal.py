@@ -137,7 +137,7 @@ class Journal(object):
         return self.__get_invitation_id(name='Withdrawn')
 
     def get_author_submission_id(self):
-        return self.__get_invitation_id(name=self.submission_name)
+        return self.__get_invitation_id(name=self.submission_name if self.submission_name else 'Submission')
 
     def get_release_review_id(self, number=None):
         return self.__get_invitation_id(name='Review_Release', number=number)

@@ -67,7 +67,8 @@ class TestCVPRSConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
-                'include_expertise_selection': 'Yes'
+                'include_expertise_selection': 'Yes',
+                'submission_deadline_author_reorder': 'Yes'
             }))
 
         helpers.await_queue()
@@ -225,6 +226,67 @@ class TestCVPRSConference():
         helpers.await_queue()
         assert client.get_invitation('thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Registration')
     
+    def test_setup_first_deadline(self, conference, helpers, test_client, client, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+        first_date = now        
+
+        request_form_note = pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision',
+            referent=request_form.id,
+            forum=request_form.id,
+            signatures=['~Program_CVPRChair1'],
+            readers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            writers=[],
+            content={
+                'title': 'Conference on Computer Vision and Pattern Recognition 2023',
+                'Official Venue Name': 'Conference on Computer Vision and Pattern Recognition 2023',
+                'Abbreviated Venue Name': 'CVPR 2023',
+                'Official Website URL': 'https://cvpr.cc',
+                'program_chair_emails': ['pc@cvpr.cc'],
+                'contact_email': 'pc@cvpr.cc',
+                'Venue Start Date': '2023/12/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'include_expertise_selection': 'Yes',
+                'submission_deadline_author_reorder': 'Yes'
+            }))
+
+        helpers.await_queue()        
+
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'All area chairs only'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_CVPRChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        submissions = client.get_notes(invitation='thecvf.com/CVPR/2023/Conference/-/Blind_Submission')
+        assert len(submissions) == 5
+        'thecvf.com/CVPR/2023/Area_Chairs' in submissions[0].readers
+
+        invitation = client.get_invitation('thecvf.com/CVPR/2023/Conference/Paper5/-/Revision')
+        assert 'values' in invitation.reply['content']['authors']
+        assert 'values' in invitation.reply['content']['authorids']
+
     def test_post_submission_stage(self, conference, helpers, test_client, client, request_page, selenium):
 
         #conference.setup_final_deadline_stage(force=True)
