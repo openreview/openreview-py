@@ -323,7 +323,9 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                    
                 }
             )
         )        
@@ -341,7 +343,9 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -359,7 +363,9 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                    
                 }
             )
         )
@@ -445,6 +451,8 @@ note: replies to this email will go to the AE, Graham Neubig.
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -459,6 +467,8 @@ note: replies to this email will go to the AE, Graham Neubig.
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -473,6 +483,8 @@ note: replies to this email will go to the AE, Graham Neubig.
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
+                    'evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -512,6 +524,9 @@ note: replies to this email will go to the AE, Graham Neubig.
             signatures=["TACL/Paper1/Action_Editors"],
             note=Note(
                 content={
+                    'main_claims': { 'value': 'Accept as is' },
+                    'claims_support': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' },
                     'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
