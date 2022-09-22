@@ -1,18 +1,22 @@
 def process(client, invitation):
     VENUE_ID = ''
     SUBMISSION_ID = ''
-    for submission in client.get_all_notes(invitation=SUBMISSION_ID, sort='number:asc'):
-        client.post_invitation_edit(invitations=invitation.id,
+
+    def post_invitation(note):
+        return client.post_invitation_edit(invitations=invitation.id,
             readers=[VENUE_ID],
             writers=[VENUE_ID],
             signatures=[VENUE_ID],
             content={
                 'noteId': {
-                    'value': submission.id
+                    'value': note.id
                 },
                 'noteNumber': {
-                    'value': submission.number
+                    'value': note.number
                 }
             },
             invitation=openreview.api.Invitation()
         )
+
+    notes = client.get_all_notes(invitation=SUBMISSION_ID, sort='number:asc')
+    invitations = openreview.tools.concurrent_requests(post_invitation, notes, desc='invitation_start_process')        

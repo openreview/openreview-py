@@ -220,6 +220,29 @@ class Venue(object):
                 group.web = group.web.replace("const PUBLIC = true", "const PUBLIC = false")
             self.client.post_group(group)
 
+    def create_paper_invitations(self, stage_name):
+
+        def post_invitation(note):
+            paper_invitation_edit = self.client.post_invitation_edit(invitations=self.get_invitation_id(stage_name),
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                content={
+                    'noteId': {
+                        'value': note.id
+                    },
+                    'noteNumber': {
+                        'value': note.number
+                    }
+                },
+                invitation=openreview.api.Invitation()
+            )
+            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
+            self.update_readers(note, paper_invitation)
+
+        notes = self.get_submissions()
+        return openreview.tools.concurrent_requests(post_invitation, notes, desc=f'create_{stage_name}_stage')            
+
     def setup(self, program_chair_ids=[]):
     
         venue_id = self.venue_id
@@ -373,48 +396,12 @@ class Venue(object):
         self.invitation_builder.set_review_invitation()
         self.set_group_variable(self.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
         self.set_group_variable(self.get_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
-
-        ## Move this to the date process function
-        for submission in self.get_submissions():
-            paper_invitation_edit = self.client.post_invitation_edit(invitations=self.get_invitation_id(self.review_stage.name),
-                readers=[self.venue_id],
-                writers=[self.venue_id],
-                signatures=[self.venue_id],
-                content={
-                    'noteId': {
-                        'value': submission.id
-                    },
-                    'noteNumber': {
-                        'value': submission.number
-                    }
-                },
-                invitation=openreview.api.Invitation()
-            )
-            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
-            self.update_readers(submission, paper_invitation)
+        self.create_paper_invitations(self.review_stage.name)            
 
     def create_meta_review_stage(self):
         self.invitation_builder.set_meta_review_invitation()
         self.set_group_variable(self.get_area_chairs_id(), 'META_REVIEW_NAME', self.meta_review_stage.name)
-
-        ## Move this to the date process function
-        for submission in self.get_submissions():
-            paper_invitation_edit = self.client.post_invitation_edit(invitations=self.get_invitation_id(self.meta_review_stage.name),
-                readers=[self.venue_id],
-                writers=[self.venue_id],
-                signatures=[self.venue_id],
-                content={
-                    'noteId': {
-                        'value': submission.id
-                    },
-                    'noteNumber': {
-                        'value': submission.number
-                    }
-                },
-                invitation=openreview.api.Invitation()
-            )
-            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
-            self.update_readers(submission, paper_invitation)
+        self.create_paper_invitations(self.meta_review_stage.name)            
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
