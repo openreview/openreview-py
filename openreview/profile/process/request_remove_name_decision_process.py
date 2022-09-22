@@ -45,16 +45,19 @@ The OpenReview Team.
                         authors.append(publication.content['authors'][index])
                     authorids.append(publication.content['authorids'][index])
             if needs_change:
+                content = {
+                    'authors': { 'value': authors },
+                    'authorids': { 'value': authorids }
+                }
+                if '_bibtex' in publication.content:
+                    content['_bibtex'] = { 'value': publication.content['_bibtex']['value'].replace(openreview.tools.pretty_id(username), preferred_name) }                
                 client.post_note(openreview.Note(
                     invitation=AUTHOR_RENAME_INVITATION_ID,
                     referent=publication.id, 
                     readers=publication.readers,
                     writers=[SUPPORT_USER_ID],
                     signatures=[SUPPORT_USER_ID],
-                    content={
-                        'authors': authors,
-                        'authorids': authorids
-                    }
+                    content=content
                 ))
 
         baseurl_v2 = 'http://localhost:3001'
@@ -80,16 +83,19 @@ The OpenReview Team.
                         authors.append(publication.content['authors']['value'][index])
                     authorids.append(publication.content['authorids']['value'][index])
             if needs_change:
+                content = {
+                    'authors': { 'value': authors },
+                    'authorids': { 'value': authorids }
+                }
+                if '_bibtex' in publication.content:
+                    content['_bibtex'] = { 'value': publication.content['_bibtex']['value'].replace(openreview.tools.pretty_id(username), preferred_name) }
                 client_v2.post_note_edit(
                     invitation = publication.domain + '/-/Edit',
                     readers = [publication.domain],
                     signatures = [SUPPORT_USER_ID],
                     note = openreview.api.Note(
                         id=publication.id, 
-                        content={
-                            'authors': { 'value': authors },
-                            'authorids': { 'value': authorids }
-                        }
+                        content=content
                 ))
         
         print('Change all the notes that contain the name to remove as signatures')
