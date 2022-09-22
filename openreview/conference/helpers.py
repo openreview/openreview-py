@@ -4,6 +4,55 @@ import json
 
 def get_conference(client, request_form_id, support_user='OpenReview.net/Support'):
 
+    note = client.get_note(request_form_id)
+    if note.content.get('api_version') == '2':
+        openreview_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', token=client.token)
+        venue = openreview.venue.Venue(openreview_client, note.content['venue_id'])
+        venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
+        venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
+        venue.short_name = note.content.get('Abbreviated Venue Name')
+        venue.name = note.content.get('Official Venue Name')
+        venue.website = note.content.get('Official Website URL')
+        venue.contact = note.content.get('contact_email')
+        venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
+        venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
+        venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
+        venue.setup(note.content.get('program_chair_emails'))
+        name = note.content.get('submission_name', 'Submission').strip()
+        double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
+        readers_map = {
+            'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS],
+            'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
+            'Program chairs and paper authors only': [],
+            'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
+            'Make accepted submissions public and hide rejected submissions': [openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
+        }
+
+        # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
+        if 'submission_readers' in note.content:
+            readers = readers_map[note.content.get('submission_readers')]
+            public = 'Everyone (submissions are public)' in readers
+        else:
+            public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
+            bidding_enabled = 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', '')
+            if bidding_enabled and not public:
+                readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS]
+            elif public:
+                readers = [openreview.SubmissionStage.Readers.EVERYONE]
+            else:
+                readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+
+        venue.set_submission_stage(openreview.builder.SubmissionStage(name = name, 
+            double_blind=double_blind, 
+            readers=readers)
+        )
+
+        venue.review_stage = get_review_stage(note)
+        venue.bid_stages = get_bid_stages(note)
+        venue.meta_review_stage = get_meta_review_stage(note)
+
+        return venue
+
     builder = get_conference_builder(client, request_form_id, support_user)
     return builder.get_result()
 
@@ -206,9 +255,9 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
     }
 
-    builder.set_reviewer_identity_readers([readers_map[r] for r in note.content.get('reviewer_identity', [])])
-    builder.set_area_chair_identity_readers([readers_map[r] for r in note.content.get('area_chair_identity', [])])
-    builder.set_senior_area_chair_identity_readers([readers_map[r] for r in note.content.get('senior_area_chair_identity', [])])
+    builder.set_reviewer_identity_readers(get_identity_readers(note, 'reviewer_identity'))
+    builder.set_area_chair_identity_readers(get_identity_readers(note, 'area_chair_identity'))
+    builder.set_senior_area_chair_identity_readers(get_identity_readers(note, 'senior_area_chair_identity'))
     builder.set_reviewer_roles(note.content.get('reviewer_roles', ['Reviewers']))
     builder.set_area_chair_roles(note.content.get('area_chair_roles', ['Area_Chairs']))
     builder.set_senior_area_chair_roles(note.content.get('senior_area_chair_roles', ['Senior_Area_Chairs']))
@@ -223,6 +272,20 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         builder.set_venue_heading_map(decision_heading_map)
 
     return builder
+
+def get_identity_readers(request_forum, field_name):
+
+    readers_map = {
+        'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
+        'All Senior Area Chairs': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS,
+        'Assigned Senior Area Chair': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+        'All Area Chairs': openreview.Conference.IdentityReaders.AREA_CHAIRS,
+        'Assigned Area Chair': openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+        'All Reviewers': openreview.Conference.IdentityReaders.REVIEWERS,
+        'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+    }
+
+    return [readers_map[r] for r in request_forum.content.get(field_name, [])]    
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
@@ -371,9 +434,19 @@ def get_meta_review_stage(request_forum):
     meta_review_form_additional_options = request_forum.content.get('additional_meta_review_form_options', {})
     options = request_forum.content.get('recommendation_options', '').strip()
     if options:
-        meta_review_form_additional_options['recommendation'] = {
-            'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
-            'required': True}
+        if request_forum.content.get('api_version') == '2':
+            meta_review_form_additional_options['recommendation'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': [s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')]
+                    }
+                }
+            }
+        else:
+            meta_review_form_additional_options['recommendation'] = {
+                'value-dropdown':[s.translate(str.maketrans('', '', '"\'')).strip() for s in options.split(',')],
+                'required': True}
 
     meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
 

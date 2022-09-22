@@ -352,7 +352,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         tasks = selenium.find_element_by_id('reviewer-tasks')
         assert tasks
         assert len(tasks.find_elements_by_class_name('note')) == 2
-        assert len(tasks.find_elements_by_class_name('completed')) == 2
+        assert len(tasks.find_elements_by_class_name('completed')) == 1
 
     def test_remind_registration(self, conference, helpers, client):
 

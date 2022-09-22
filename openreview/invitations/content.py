@@ -115,6 +115,67 @@ review = {
     }
 }
 
+
+review_v2 = {
+    'title': {
+        'order': 1,
+        'description': 'Brief summary of your review.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'regex': '.{0,500}',
+            }
+        }
+    },
+    'review': {
+        'order': 2,
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 200000,
+                'markdown': True,
+                'input': 'textarea'
+            }
+        }
+    },
+    'rating': {
+        'order': 3,
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    '10: Top 5% of accepted papers, seminal paper',
+                    '9: Top 15% of accepted papers, strong accept',
+                    '8: Top 50% of accepted papers, clear accept',
+                    '7: Good paper, accept',
+                    '6: Marginally above acceptance threshold',
+                    '5: Marginally below acceptance threshold',
+                    '4: Ok but not good enough - rejection',
+                    '3: Clear rejection',
+                    '2: Strong rejection',
+                    '1: Trivial or wrong'
+                ]
+            }
+        }
+    },
+    'confidence': {
+        'order': 4,
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature',
+                    '4: The reviewer is confident but not absolutely certain that the evaluation is correct',
+                    '3: The reviewer is fairly confident that the evaluation is correct',
+                    '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper',
+                    '1: The reviewer\'s evaluation is an educated guess'
+                ]
+            }
+        }
+    }
+}
+
 ethics_review = {
     "recommendation": {
         "order": 1,
@@ -165,6 +226,51 @@ meta_review = {
     }
 }
 
+meta_review_v2 = {
+    'metareview': {
+        'order': 1,
+        'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 5000,
+                'markdown': True,
+                'input': 'textarea'
+            }
+        }
+    },
+    'recommendation': {
+        'order': 2,
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    'Accept (Oral)',
+                    'Accept (Poster)',
+                    'Reject'
+                ]
+            }
+        }
+    },
+    'confidence': {
+        'order': 3,
+        'value': {
+            'param': {
+                'type': 'string',
+                'input': 'radio',
+                'enum': [
+                    '5: The area chair is absolutely certain',
+                    '4: The area chair is confident but not absolutely certain',
+                    '3: The area chair is somewhat confident',
+                    '2: The area chair is not sure',
+                    '1: The area chair\'s evaluation is an educated guess'
+                ]
+            }
+        }
+    }
+}
+
+
 submission = {
     'title': {
         'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$',
@@ -213,6 +319,84 @@ submission = {
     }
 }
 
+submission_v2 = {
+    'title': {
+        'order': 1,
+        'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+        'value': { 
+            'param': { 
+                'type': 'string',
+                'regex': '^.{1,250}$'
+            }
+        }
+    },
+    'authors': {
+        'order': 2,
+        'value': {
+            'param': {
+                'type': 'string[]',
+                'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                'hidden': True
+            }
+        }
+    },
+    'authorids': {
+        'order': 3,
+        'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+        'value': {
+            'param': {
+                'type': 'group[]',
+                'regex': '~.*'
+            }
+        }
+    },
+    'keywords': {
+        'description': 'Comma separated list of keywords.',
+        'order': 4,
+        'value': {
+            'param': {
+                'type': 'string[]',
+                'regex': '(^$)|[^;,\\n]+(,[^,\\n]+)*'
+            }
+        }
+    },
+    'TLDR': {
+        'order': 5,
+        'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+        'value': {
+            'param': {
+                'fieldName': 'TL;DR',
+                'type': 'string',
+                'maxLength': 250,
+                'optional': True
+            }
+        }        
+    },
+    'abstract': {
+        'order': 6,
+        'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 5000,
+                'markdown': True,
+                'input': 'textarea'
+            }
+        }
+    },
+    'pdf': {
+        'order': 7,
+        'description': 'Upload a PDF file that ends with .pdf.',
+        'value': {
+            'param': {
+                'type': 'file',
+                'maxSize': 50,
+                'extensions': ['pdf']
+            }
+        }
+    }    
+}
+
 recruitment = {
     'title': {
         'description': '',
@@ -244,6 +428,62 @@ recruitment = {
         'description': '(Optionally) Leave a comment to the organizers of the venue.',
         'required': False,
         'markdown': False
+    }
+}
+
+recruitment_v2 = {
+    'title': {
+        'order': 1,
+        'description': 'Title',
+        'value': { 
+            'param': { 
+                'type': 'string',
+                'const': 'Recruit response'
+            }
+        }
+    },
+    'user': {
+        'order': 2,
+        'description': 'email address',
+        'value': { 
+            'param': { 
+                'type': 'string',
+                'regex': '.*'
+            }
+        }
+    },
+    'key': {
+        'order': 3,
+        'description': 'Email key hash',
+        'value': { 
+            'param': { 
+                'type': 'string',
+                'regex': '.{0,100}'
+            }
+        }
+    },
+    "response": {
+        'order': 4,
+        'description': 'Invitation response',
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': ['Yes', 'No'],
+                'input': 'radio'
+            }
+        }
+    },
+    'comment': {
+        'order': 5,
+        'description': '(Optionally) Leave a comment to the organizers of the venue.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 5000,
+                'optional': True,
+                'input': 'textarea'
+            }
+        }
     }
 }
 
