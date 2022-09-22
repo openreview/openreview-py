@@ -567,7 +567,9 @@ class Journal(object):
         action = 'posted' if note.tcdate == note.tmdate else 'edited'
 
         readers = note.readers
-        nonreaders = note.nonreaders + [edit.tauthor]
+        nonreaders = [edit.tauthor]
+        if note.nonreaders:
+            nonreaders += note.nonreaders
         formatted_invitation = edit.invitation.split('/-/')[1].replace('_', ' ')
         lower_formatted_invitation = formatted_invitation.lower()
         before_invitation = 'An' if lower_formatted_invitation[0] in vowels else 'A'
