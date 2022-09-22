@@ -135,6 +135,11 @@ class TestVenueRequest():
 
         helpers.await_queue()
         request_page(selenium, 'http://localhost:3030/group?id={}&mode=default'.format(support_group_id), client.token)
+        header_div = selenium.find_element_by_id('header')
+        assert header_div
+        title_tag = header_div.find_element_by_tag_name('h1')
+        assert title_tag
+        assert title_tag.text == 'Host a Venue'
 
         pc_client = helpers.create_user('new_test_user@mail.com', 'NewFirstName', 'User')
 
