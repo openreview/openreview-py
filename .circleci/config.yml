@@ -104,7 +104,7 @@ jobs:
           command: |
             cd ~/openreview-py-repo
             pip install -U pytest
-            pip install selenium
+            pip install selenium==4.2.0
             pip install pytest-selenium
             pip install pytest-cov
             pip install codecov
