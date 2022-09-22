@@ -3174,7 +3174,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'audience': {
                             'order': 6,
-                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper?',
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -3349,7 +3349,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'audience': {
                             'order': 2,
-                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper?',
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -4243,7 +4243,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'content': {
                         'main_claims': {
                             'order': 1,
-                            'description': 'What are the main claims made by this submission?',
+                            'description': 'What are the main claims made by this submission? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -4255,7 +4255,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'claims_support': {
                             'order': 2,
-                            'description': 'Are these claims well supported by evidence? If not, why?',
+                            'description': 'Are these claims well supported by evidence? If not, why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -4267,7 +4267,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                         },
                         'audience': {
                             'order': 3,
-                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? If not, why?',
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? If not, why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                             'value': {
                                 'param': {
                                     'type': 'string',
