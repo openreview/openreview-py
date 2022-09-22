@@ -857,7 +857,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }
                 }
             )
@@ -1062,7 +1062,7 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                }
             )
         )
@@ -1090,7 +1090,7 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                    }
                 )
             )
@@ -1289,7 +1289,7 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }               }
             )
         )
@@ -1391,7 +1391,7 @@ The TMLR Editors-in-Chief
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses V2' },
                     'requested_changes': { 'value': 'requested_changes V2' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                     
                 }
             )
@@ -1428,7 +1428,7 @@ The TMLR Editors-in-Chief
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                 }
             )
         )
@@ -1492,7 +1492,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification'] },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -1517,7 +1517,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -1542,7 +1542,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -1600,7 +1600,7 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -2271,7 +2271,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }
                 }
             )
@@ -2292,7 +2292,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }               }
             )
         )
@@ -2310,7 +2310,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }               }
             )
         )
@@ -2359,7 +2359,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                    
                 }
             )
@@ -2373,7 +2373,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -2387,7 +2387,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -2668,7 +2668,7 @@ note={Rejected}
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }
                 }
             )
@@ -2687,7 +2687,7 @@ note={Rejected}
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }               }
             )
         )
@@ -2705,7 +2705,7 @@ note={Rejected}
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                }
             )
         )
@@ -2733,7 +2733,7 @@ note={Rejected}
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -2747,7 +2747,7 @@ note={Rejected}
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -2761,7 +2761,7 @@ note={Rejected}
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -2967,7 +2967,7 @@ The TMLR Editors-in-Chief
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }
                 }
             )
@@ -2986,7 +2986,7 @@ The TMLR Editors-in-Chief
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                }
             )
         )
@@ -3004,7 +3004,7 @@ The TMLR Editors-in-Chief
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                }
             )
         )
@@ -3032,7 +3032,7 @@ The TMLR Editors-in-Chief
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -3046,7 +3046,7 @@ The TMLR Editors-in-Chief
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -3060,7 +3060,7 @@ The TMLR Editors-in-Chief
             note=Note(
                 content={
                     'decision_recommendation': { 'value': 'Reject' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )

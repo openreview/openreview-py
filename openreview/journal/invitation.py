@@ -3161,9 +3161,9 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                 }
                             }
                         },
-                        'evidence': {
+                        'claims_and_evidence': {
                             'order': 5,
-                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
+                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -3336,9 +3336,9 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
-                        'evidence': {
+                        'claims_and_evidence': {
                             'order': 1,
-                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
+                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                             'value': {
                                 'param': {
                                     'type': 'string',

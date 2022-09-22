@@ -324,7 +324,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                    
                 }
             )
@@ -344,7 +344,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }
                 }
             )
@@ -364,7 +364,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                    
                 }
             )
@@ -451,7 +451,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -467,7 +467,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
@@ -483,7 +483,7 @@ note: replies to this email will go to the AE, Graham Neubig.
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
-                    'evidence': { 'value': 'Yes' },
+                    'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' }                  
                 }
             )
