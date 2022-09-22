@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import openreview
+import datetime
 from openreview import ProfileManagement
 from openreview.api import OpenReviewClient
 from openreview.api import Note
@@ -748,7 +749,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_rename_publications_from_api2(self, client, profile_management, helpers, openreview_client):
+    def test_rename_publications_from_api2(self, client, profile_management, test_client, helpers, openreview_client):
 
         journal=Journal(openreview_client, 'CABJ', '1234', contact_info='cabj@mail.org', full_name='Transactions on Machine Learning Research', short_name='CABJ', submission_name='Submission')
         journal.setup(support_role='test@mail.com', editors=[])        
@@ -800,7 +801,7 @@ The OpenReview Team.
         ))
 
         paul_client_v2 = openreview.api.OpenReviewClient(username='paul@profile.org', password='1234')
-        paul_client_v2.post_note_edit(invitation='CABJ/-/Submission',
+        submission_note_1 = paul_client_v2.post_note_edit(invitation='CABJ/-/Submission',
             signatures=['~Paul_Alternate_Last1'],
             note=Note(
                 content={
@@ -813,7 +814,77 @@ The OpenReview Team.
                     'human_subjects_reporting': { 'value': 'Not applicable'},
                     'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
                 }
-            ))        
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])                   
+
+        submission_note_2 = paul_client_v2.post_note_edit(invitation='CABJ/-/Submission',
+            signatures=['~Paul_Alternate_Last1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['SomeFirstName User', 'Paul Alternate Last']},
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Paul_Alternate_Last1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id'])
+        note_id_2=submission_note_2['note']['id']
+
+        submission = openreview_client.get_note(note_id_2)
+
+        helpers.create_user('carlos@cabj.org', 'Carlos', 'Tevez')
+                       
+        paper_assignment_edge = openreview_client.post_edge(openreview.Edge(invitation='CABJ/Action_Editors/-/Assignment',
+            readers=['CABJ', 'CABJ/Editors_In_Chief', '~Carlos_Tevez1'],
+            writers=['CABJ', 'CABJ/Editors_In_Chief'],
+            signatures=['CABJ/Editors_In_Chief'],
+            head=note_id_2,
+            tail='~Carlos_Tevez1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        carlos_client = openreview.api.OpenReviewClient(username='carlos@cabj.org', password='1234')
+
+        under_review_note = carlos_client.post_note_edit(invitation= 'CABJ/Paper2/-/Review_Approval',
+                                    signatures=['CABJ/Paper2/Action_Editors'],
+                                    note=Note(content={
+                                        'under_review': { 'value': 'Appropriate for Review' }
+                                    }))
+
+        helpers.await_queue_edit(openreview_client, edit_id=under_review_note['id'])
+
+        acceptance_note = openreview_client.post_note_edit(invitation=journal.get_accepted_id(),
+            signatures=['CABJ'],
+            note=openreview.api.Note(id=submission.id,
+                content= {
+                    '_bibtex': {
+                        'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=[])
+                    },
+                    'certifications': { 'value': [] }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=acceptance_note['id'])
+
+        note = openreview_client.get_note(note_id_2)
+        assert note.content['_bibtex']['value'] == '''@article{
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title 2},
+author={SomeFirstName User and Paul Alternate Last},
+journal={Transactions on Machine Learning Research},
+year={''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_2 + '''},
+note={}
+}'''       
 
         ## Create committee groups
         client.post_group(openreview.Group(
@@ -892,7 +963,18 @@ The OpenReview Team.
         assert '~Paul_Last1' in publications[1].signatures
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
-        assert len(publications) == 1
+        assert len(publications) == 2
+
+        note = openreview_client.get_note(note_id_2)
+        assert note.content['_bibtex']['value'] == '''@article{
+user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title 2},
+author={SomeFirstName User and Paul Last},
+journal={Transactions on Machine Learning Research},
+year={''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''},
+url={https://openreview.net/forum?id=''' + note_id_2 + '''},
+note={}
+}'''         
 
         group = client.get_group('ICLRR.cc/Reviewers')
         assert '~Paul_Alternate_Last1' not in group.members
