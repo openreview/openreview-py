@@ -469,6 +469,7 @@ class VenueStages():
             invitees=['everyone'],
             multiReply=True,
             process_string=self.file_content,
+            preprocess=self.pre_process_file_content,
             reply={
                 'readers': {
                     'values-copied': [

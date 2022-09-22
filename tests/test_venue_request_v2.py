@@ -1226,7 +1226,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
-        ## All the reviews should be public now
+        ## reviews should be private
         reviews = reviewer_client.get_notes(invitation=f'V2.cc/2030/Conference/Paper1/-/Official_Review', sort= 'number:asc')
         assert len(reviews) == 1
         assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
@@ -1278,7 +1278,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-        meta_reviewer_client = helpers.create_user('venue_ac_v2@mail.com', 'VenueTwo', 'Ac')
+        helpers.create_user('venue_ac_v2@mail.com', 'VenueTwo', 'Ac')
+        meta_reviewer_client = openreview.api.OpenReviewClient(username='venue_ac_v2@mail.com', password='1234')
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
         assert submissions and len(submissions) == 2
@@ -1309,9 +1310,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        meta_review_stage_note = test_client.post_note(openreview.Note(
+        meta_review_stage_note = openreview.Note(
             content={
-                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'make_meta_reviews_public': 'Yes, meta reviews should be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
                 'recommendation_options': 'Accept, Reject',
@@ -1339,7 +1340,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Meta reviews cannot be released to the public since all papers are private'):
+            meta_review_stage_note=test_client.post_note(meta_review_stage_note)
+
+        meta_review_stage_note.content['make_meta_reviews_public'] = 'No, meta reviews should NOT be revealed publicly when they are posted'
+        meta_review_stage_note=test_client.post_note(meta_review_stage_note)
+
         assert meta_review_stage_note
         helpers.await_queue()
 
@@ -1372,6 +1380,84 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'suggestions' in meta_review_invitation.edit['note']['content']
         assert 'Accept' in meta_review_invitation.edit['note']['content']['recommendation']['value']['param']['enum']
         assert len(meta_review_invitation.edit['note']['readers']) == 4
+
+        #post a meta review
+        ac_anon_groups=meta_reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Paper1/Area_Chair_.*', signatory='~VenueTwo_Ac1')
+        assert len(ac_anon_groups) == 1
+
+        meta_review_note = meta_reviewer_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Paper1/-/Meta_Review',
+            signatures=[ac_anon_groups[0].id],
+            note=Note(
+                content={
+                    'metareview': { 'value': 'This is a metarview' },
+                    'recommendation': { 'value': 'Accept' }
+                }
+            )
+        )
+
+        # helpers.await_queue_edit(openreview_client, edit_id=meta_review_note['id'])
+
+        meta_reviews = meta_reviewer_client.get_notes(invitation=f'V2.cc/2030/Conference/Paper1/-/Meta_Review', sort= 'number:asc')
+        assert len(meta_reviews) == 1
+        assert 'V2.cc/2030/Conference/Program_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers/Submitted' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Authors' not in meta_reviews[0].readers
+
+    def test_release_meta_reviews_to_authors_and_reviewers(self, test_client, helpers, venue, openreview_client):
+
+        # Post a meta review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        meta_review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'recommendation_options': 'Accept, Reject',
+                'release_meta_reviews_to_authors': 'Yes, meta reviews should be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers',
+                'additional_meta_review_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'remove_meta_review_form_options': 'confidence'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert meta_review_stage_note
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Paper1/-/Meta_Review')
+        assert len(invitation.edit['note']['readers']) == 5
+        assert 'V2.cc/2030/Conference/Paper1/Authors' in invitation.edit['note']['readers']
+        assert len(invitation.edit['note']['nonreaders']) == 0
+
+        meta_reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Paper1/-/Meta_Review')
+        assert len(meta_reviews) == 1
+        assert 'V2.cc/2030/Conference/Program_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Reviewers' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Paper1/Authors' in meta_reviews[0].readers
+        assert len(meta_reviews[0].nonreaders) == 0
 
 #     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
