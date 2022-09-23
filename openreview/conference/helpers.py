@@ -265,6 +265,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_ethics_review_stage(get_ethics_review_stage(note))
     builder.set_bid_stages(get_bid_stages(note))
     builder.set_meta_review_stage(get_meta_review_stage(note))
+    builder.set_comment_stage(get_comment_stage(note))
 
     decision_heading_map = note.content.get('home_page_tab_names')
     if decision_heading_map:
@@ -556,7 +557,7 @@ def get_submission_revision_stage(client, request_forum):
         only_accepted=only_accepted,
         allow_author_reorder=allow_author_reorder)
 
-def get_comment_stage(client, request_forum):
+def get_comment_stage(request_forum):
 
     commentary_start_date = request_forum.content.get('commentary_start_date', '').strip()
     if commentary_start_date:
