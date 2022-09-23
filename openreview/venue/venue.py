@@ -121,7 +121,7 @@ class Venue(object):
         if prefix:
             invitation_id = prefix
         if number:
-            invitation_id = invitation_id + '/Paper' + str(number) + '/-/'
+            invitation_id = f'{invitation_id}/{self.submission_stage.name}{number}/-/'
         else:
             invitation_id = invitation_id + '/-/'
 
@@ -131,7 +131,7 @@ class Venue(object):
     def get_committee_id(self, name, number=None):
         committee_id = self.id + '/'
         if number:
-            committee_id = f'{committee_id}Paper{number}/{name}'
+            committee_id = f'{committee_id}{self.submission_stage.name}{number}/{name}'
         else:
             committee_id = committee_id + name
         return committee_id
@@ -330,11 +330,13 @@ class Venue(object):
         self.group_builder.set_submission_variables()
 
     def create_review_stage(self):
-        self.invitation_builder.set_review_invitation()
+        invitation = self.invitation_builder.set_review_invitation()
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
         self.group_builder.set_review_variables()
 
     def create_meta_review_stage(self):
-        self.invitation_builder.set_meta_review_invitation()
+        invitation = self.invitation_builder.set_meta_review_invitation()
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
         self.group_builder.set_meta_review_variables()
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):

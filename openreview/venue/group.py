@@ -171,12 +171,12 @@ class GroupBuilder(object):
             content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
             content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
             content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
-            content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = 'Paper'")
             content = content.replace("const CUSTOM_MAX_PAPERS_ID = ''", f"const CUSTOM_MAX_PAPERS_ID = '{self.venue.get_custom_max_papers_id(reviewers_id)}'")
             content = content.replace("const RECRUITMENT_ID = ''", f"const RECRUITMENT_ID = '{self.venue.get_recruitment_id(reviewers_id)}'")
 
             if self.venue.submission_stage:
                 content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+                content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
 
             if self.venue.review_stage:
                 content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
@@ -205,9 +205,14 @@ class GroupBuilder(object):
             content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
             content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
             content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
-            content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = 'Paper'")
-            #content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.get_custom_max_papers_id(reviewers_id)}'")
-            #content = content.replace("const META_REVIEW_NAME = ''", f"const META_REVIEW_NAME = '{self.venue.get_recruitment_id(reviewers_id)}'")
+
+            if self.venue.submission_stage:
+                content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+                content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
+
+            if self.venue.review_stage:
+                content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
+
             reviewer_group.web = content
             self.client.post_group(reviewer_group) 
 
@@ -286,14 +291,20 @@ class GroupBuilder(object):
 
         submission_stage = self.venue.submission_stage
         submission_id = submission_stage.get_submission_id(self.venue)
+        submission_name = submission_stage.name
 
         self.set_group_variable(self.venue_id, 'SUBMISSION_ID', submission_id)
         self.set_group_variable(self.venue_id, 'SUBMISSIONS_PUBLIC', submission_stage.public)
         self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_NAME', submission_name)
         self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_NAME', submission_name)
         self.set_group_variable(self.venue.get_area_chairs_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_area_chairs_id(), 'SUBMISSION_NAME', submission_name)
         self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'SUBMISSION_NAME', submission_name)
         self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_NAME', submission_name)
 
     def set_review_variables(self):
 

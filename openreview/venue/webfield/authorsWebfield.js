@@ -3,6 +3,7 @@ var VENUE_ID = '';
 var SUBMISSION_ID = '';
 var OFFICIAL_REVIEW_NAME = '';
 var DECISION_NAME = 'Decision';
+var SUBMISSION_NAME = '';
 var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
 var HEADER = {
@@ -27,7 +28,7 @@ return {
     reviewRatingName: `${REVIEW_RATING_NAME}`,
     reviewConfidenceName: `${REVIEW_CONFIDENCE_NAME}`,
     authorName: `${AUTHOR_NAME}`,
-    submissionName: 'Paper',
+    submissionName: SUBMISSION_NAME,
     wildcardInvitation: `${WILDCARD_INVITATION}`
   }
 }
