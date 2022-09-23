@@ -50,7 +50,7 @@ The OpenReview Team.
                     'authorids': authorids
                 }
                 if '_bibtex' in publication.content:
-                    content['_bibtex'] = publication.content['_bibtex']['value'].replace(openreview.tools.pretty_id(username), preferred_name)                
+                    content['_bibtex'] = publication.content['_bibtex'].replace(openreview.tools.pretty_id(username), preferred_name)                
                 client.post_note(openreview.Note(
                     invitation=AUTHOR_RENAME_INVITATION_ID,
                     referent=publication.id, 
