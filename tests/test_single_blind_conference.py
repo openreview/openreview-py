@@ -542,7 +542,7 @@ class TestSingleBlindConference():
                 'required': True
             }
         }, release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED))
-        builder.set_ethics_review_stage(openreview.EthicsReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_public=True, submission_numbers=[1]))
+        builder.set_ethics_review_stage(openreview.stages.EthicsReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_public=True, submission_numbers=[1]))
         conference = builder.get_result()
         
         client.add_members_to_group('NIPS.cc/2018/Workshop/MLITS/Ethics_Reviewers', 'melisa@ethics.org')
