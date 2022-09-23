@@ -73,7 +73,7 @@ class TestVenueSubmission():
         assert 'TestVenue.cc/Submission1/Area_Chairs' in submission.readers
 
         now = datetime.datetime.utcnow()
-        venue.review_stage = openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40))
+        venue.review_stage = openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40))
         venue.create_review_stage()
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
@@ -173,7 +173,7 @@ class TestVenueSubmission():
         assert (len(custom_load_edges)) == 1
 
         now = datetime.datetime.utcnow()
-        venue.meta_review_stage = openreview.MetaReviewStage(due_date=now + datetime.timedelta(minutes = 40))
+        venue.meta_review_stage = openreview.stages.MetaReviewStage(due_date=now + datetime.timedelta(minutes = 40))
         venue.create_meta_review_stage()
 
         helpers.create_user('ac_venue_one@mail.com', 'Area Chair', 'Venue One')

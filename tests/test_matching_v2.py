@@ -703,7 +703,7 @@ class TestMatching():
         assert ['r2_venue@google.com'] == revs_paper2.members
 
     #     now = datetime.datetime.now()
-    #     venue.set_review_stage(openreview.ReviewStage(start_date = now))
+    #     venue.set_review_stage(openreview.stages.ReviewStage(start_date = now))
 
     #     invitation = pc_client.get_invitation(id=f'{venue.id}/-/Official_Review')
     #     assert invitation

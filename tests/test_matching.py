@@ -1032,7 +1032,7 @@ class TestMatching():
             assert pc_client.get_group(conference.get_id()+'/Paper{x}/AnonReviewer2'.format(x=blinded_notes[2].number))
 
         now = datetime.datetime.now()
-        conference.set_review_stage(openreview.ReviewStage(start_date = now))
+        conference.set_review_stage(openreview.stages.ReviewStage(start_date = now))
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2019/Conference/-/Official_Review')
         assert invitation

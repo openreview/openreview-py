@@ -1061,7 +1061,7 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
         now = datetime.datetime.now()
-        conference.set_review_stage(openreview.ReviewStage(start_date = now))
+        conference.set_review_stage(openreview.stages.ReviewStage(start_date = now))
 
         invitation = pc_client.get_invitation(id='auai.org/UAI/2021/Conference/-/Official_Review')
         assert invitation

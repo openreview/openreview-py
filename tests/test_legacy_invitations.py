@@ -36,8 +36,8 @@ class TestLegacyInvitations():
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_public=True,
             desk_rejected_submission_reveal_authors=True)
-        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 40)))
-        builder.set_meta_review_stage(openreview.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 40)))
+        builder.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 40)))
+        builder.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 40)))
         conference = builder.get_result()
         conference.create_review_stage()
         conference.create_meta_review_stage()
@@ -69,9 +69,9 @@ class TestLegacyInvitations():
         conference.set_assignment('reviewer_legacy@mail.com', 1)
         conference.set_assignment('ac_legacy@mail.com', 1, True)
 
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
-                            openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees))
         conference.open_reviews()
         conference.open_meta_reviews()
         conference.open_decisions()
