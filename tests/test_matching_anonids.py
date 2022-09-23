@@ -56,7 +56,7 @@ class TestMatchingWithAnonIds():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ],
-        readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS])
+        readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS])
         additional_registration_content = {
             'reviewing_experience': {
                 'description': 'How many times have you been a reviewer for any conference or journal?',
@@ -74,8 +74,8 @@ class TestMatchingWithAnonIds():
         builder.set_registration_stage('auai.org/UAI/2021/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40))
         builder.set_registration_stage('auai.org/UAI/2021/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), additional_fields = additional_registration_content)
 
-        builder.set_bid_stage(openreview.BidStage('auai.org/UAI/2021/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50))
-        builder.set_bid_stage(openreview.BidStage('auai.org/UAI/2021/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50))
+        builder.set_bid_stage(openreview.stages.BidStage('auai.org/UAI/2021/Conference/Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50))
+        builder.set_bid_stage(openreview.stages.BidStage('auai.org/UAI/2021/Conference/Senior_Program_Committee', due_date = now + datetime.timedelta(minutes = 40), request_count = 50))
         conference = builder.get_result()
         conference.create_bid_stages()
         return conference

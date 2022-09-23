@@ -106,6 +106,13 @@ class InvitationBuilder(object):
         if submission_stage.second_due_date and 'pdf' in content:
             content['pdf']['optional'] = True
 
+        content['venue'] = {
+            'value': f'{self.venue.short_name} {submission_name}'
+        }
+        content['venueid'] = {
+            'value': f'{venue_id}/{submission_name}'
+        }
+
         edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/note/number}}/Authors']
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/number}}/Authors']
 
@@ -129,7 +136,6 @@ class InvitationBuilder(object):
                         }
                     },
                     'ddate': {
-                        # 'type': 'date',
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'optional': True,

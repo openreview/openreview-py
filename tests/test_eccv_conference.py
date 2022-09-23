@@ -249,7 +249,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             email_pcs_on_withdraw=True,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS])
+            readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS])
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
@@ -276,8 +276,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             </li>
         </ul>
         <br>'''
-        builder.set_bid_stage(openreview.BidStage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions))
-        builder.set_bid_stage(openreview.BidStage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions))
+        builder.set_bid_stage(openreview.stages.BidStage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions))
+        builder.set_bid_stage(openreview.stages.BidStage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions))
         #builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])

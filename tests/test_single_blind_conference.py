@@ -762,7 +762,7 @@ class TestSingleBlindConference():
         )
         note = client.post_note(note)
 
-        conference.post_decision_stage(submission_readers=[openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
+        conference.post_decision_stage(submission_readers=[openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
 
         submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1

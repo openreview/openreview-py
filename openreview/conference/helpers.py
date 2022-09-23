@@ -127,12 +127,12 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
     readers_map = {
-        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS],
-        'All area chairs only': [openreview.SubmissionStage.Readers.AREA_CHAIRS],
-        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
+        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS],
+        'All area chairs only': [openreview.stages.SubmissionStage.Readers.AREA_CHAIRS],
+        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
         'Program chairs and paper authors only': [],
-        'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
-        'Make accepted submissions public and hide rejected submissions': [openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
+        'Everyone (submissions are public)': [openreview.stages.SubmissionStage.Readers.EVERYONE],
+        'Make accepted submissions public and hide rejected submissions': [openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
     }
 
     # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
@@ -143,11 +143,11 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
         bidding_enabled = 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', '')
         if bidding_enabled and not public:
-            readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS]
+            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS]
         elif public:
-            readers = [openreview.SubmissionStage.Readers.EVERYONE]
+            readers = [openreview.stages.SubmissionStage.Readers.EVERYONE]
         else:
-            readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
     submission_additional_options = note.content.get('Additional Submission Options', {})
     if isinstance(submission_additional_options, str):
@@ -268,11 +268,11 @@ def get_submission_stage(request_forum):
     double_blind = (request_forum.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
 
     readers_map = {
-        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS],
-        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
+        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS],
+        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
         'Program chairs and paper authors only': [],
-        'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
-        'Make accepted submissions public and hide rejected submissions': [openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
+        'Everyone (submissions are public)': [openreview.stages.SubmissionStage.Readers.EVERYONE],
+        'Make accepted submissions public and hide rejected submissions': [openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
     }
 
     # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
@@ -283,13 +283,13 @@ def get_submission_stage(request_forum):
         public = (request_forum.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
         bidding_enabled = 'Reviewer Bid Scores' in request_forum.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in request_forum.content.get('Paper Matching', '')
         if bidding_enabled and not public:
-            readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS]
+            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS]
         elif public:
-            readers = [openreview.SubmissionStage.Readers.EVERYONE]
+            readers = [openreview.stages.SubmissionStage.Readers.EVERYONE]
         else:
-            readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+            readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
-    return openreview.builder.SubmissionStage(name = name, 
+    return openreview.stages.SubmissionStage(name = name, 
         double_blind=double_blind, 
         readers=readers)
 
@@ -313,11 +313,11 @@ def get_bid_stages(request_forum):
     else:
         bid_due_date = None
 
-    reviewer_bid_stage = openreview.BidStage(request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+    reviewer_bid_stage = openreview.stages.BidStage(request_forum.content['venue_id'] + '/Reviewers', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
     bid_stages = [reviewer_bid_stage]
 
     if 'Yes, our venue has Area Chairs' in request_forum.content.get('Area Chairs (Metareviewers)', ''):
-        ac_bid_stage = openreview.BidStage(request_forum.content['venue_id'] + '/Area_Chairs', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
+        ac_bid_stage = openreview.stages.BidStage(request_forum.content['venue_id'] + '/Area_Chairs', start_date = bid_start_date, due_date = bid_due_date, request_count = int(request_forum.content.get('bid_count', 50)))
         bid_stages.append(ac_bid_stage)
 
     return bid_stages
@@ -346,20 +346,20 @@ def get_review_stage(request_forum):
     review_form_remove_options = request_forum.content.get('remove_review_form_options', '').replace(',', ' ').split()
 
     readers_map = {
-        'Reviews should be immediately revealed to all reviewers': openreview.ReviewStage.Readers.REVIEWERS,
-        'Reviews should be immediately revealed to the paper\'s reviewers': openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED,
-        'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED,
-        'Review should not be revealed to any reviewer, except to the author of the review': openreview.ReviewStage.Readers.REVIEWER_SIGNATURE
+        'Reviews should be immediately revealed to all reviewers': openreview.stages.ReviewStage.Readers.REVIEWERS,
+        'Reviews should be immediately revealed to the paper\'s reviewers': openreview.stages.ReviewStage.Readers.REVIEWERS_ASSIGNED,
+        'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED,
+        'Review should not be revealed to any reviewer, except to the author of the review': openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE
     }
     reviewer_readers= request_forum.content.get('release_reviews_to_reviewers', '')
 
     #Deprecated
     if reviewer_readers.startswith('Yes'):
-        release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED
+        release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_ASSIGNED
     else:
-        release_to_reviewers = readers_map.get(reviewer_readers, openreview.ReviewStage.Readers.REVIEWER_SIGNATURE)
+        release_to_reviewers = readers_map.get(reviewer_readers, openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE)
 
-    return openreview.ReviewStage(
+    return openreview.stages.ReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
         allow_de_anonymization = (request_forum.content.get('Author and Reviewer Anonymity', None) == 'No anonymity'),
@@ -397,18 +397,18 @@ def get_ethics_review_stage(request_forum):
     review_form_remove_options = request_forum.content.get('remove_ethics_review_form_options', '').replace(',', ' ').split()
 
     readers_map = {
-        'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers': openreview.EthicsReviewStage.Readers.ALL_COMMITTEE,
-        'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers': openreview.EthicsReviewStage.Readers.ALL_ASSIGNED_COMMITTEE,
-        'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers': openreview.EthicsReviewStage.Readers.ASSIGNED_ETHICS_REVIEWERS,
-        'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review': openreview.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE
+        'Ethics reviews should be immediately revealed to all reviewers and ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ALL_COMMITTEE,
+        'Ethics reviews should be immediately revealed to the paper\'s reviewers and ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ALL_ASSIGNED_COMMITTEE,
+        'Ethics reviews should be immediately revealed to the paper\'s ethics reviewers': openreview.stages.EthicsReviewStage.Readers.ASSIGNED_ETHICS_REVIEWERS,
+        'Ethics Review should not be revealed to any reviewer, except to the author of the ethics review': openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE
     }
-    release_to_reviewers = readers_map.get(request_forum.content.get('release_ethics_reviews_to_reviewers', ''), openreview.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE)
+    release_to_reviewers = readers_map.get(request_forum.content.get('release_ethics_reviews_to_reviewers', ''), openreview.stages.EthicsReviewStage.Readers.ETHICS_REVIEWER_SIGNATURE)
 
     flagged_submissions = []
     if request_forum.content.get('ethics_review_submissions'):
         flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
 
-    return openreview.EthicsReviewStage(
+    return openreview.stages.EthicsReviewStage(
         start_date = review_start_date,
         due_date = review_due_date,
         release_to_public = (request_forum.content.get('make_ethics_reviews_public', None) == 'Yes, ethics reviews should be revealed publicly when they are posted'),
@@ -458,17 +458,17 @@ def get_meta_review_stage(request_forum):
     meta_review_form_remove_options = request_forum.content.get('remove_meta_review_form_options', '').replace(',', ' ').split()
 
     readers_map = {
-        'Meta reviews should be immediately revealed to all reviewers': openreview.MetaReviewStage.Readers.REVIEWERS,
-        'Meta reviews should be immediately revealed to the paper\'s reviewers': openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED,
-        'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.MetaReviewStage.Readers.REVIEWERS_SUBMITTED,
-        'Meta review should not be revealed to any reviewer': openreview.MetaReviewStage.Readers.NO_REVIEWERS
+        'Meta reviews should be immediately revealed to all reviewers': openreview.stages.MetaReviewStage.Readers.REVIEWERS,
+        'Meta reviews should be immediately revealed to the paper\'s reviewers': openreview.stages.MetaReviewStage.Readers.REVIEWERS_ASSIGNED,
+        'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review': openreview.stages.MetaReviewStage.Readers.REVIEWERS_SUBMITTED,
+        'Meta review should not be revealed to any reviewer': openreview.stages.MetaReviewStage.Readers.NO_REVIEWERS
     }
 
     reviewer_readers= request_forum.content.get('release_meta_reviews_to_reviewers', '')
 
-    release_to_reviewers = readers_map.get(reviewer_readers, openreview.MetaReviewStage.Readers.NO_REVIEWERS)
+    release_to_reviewers = readers_map.get(reviewer_readers, openreview.stages.MetaReviewStage.Readers.NO_REVIEWERS)
 
-    return openreview.MetaReviewStage(
+    return openreview.stages.MetaReviewStage(
         start_date = meta_review_start_date,
         due_date = meta_review_due_date,
         public = request_forum.content.get('make_meta_reviews_public', '').startswith('Yes'),
@@ -505,7 +505,7 @@ def get_decision_stage(client, request_forum):
 
     decisions_file = request_forum.content.get('decisions_file')
 
-    return openreview.DecisionStage(
+    return openreview.stages.DecisionStage(
         options = decision_options,
         start_date = decision_start_date,
         due_date = decision_due_date,
@@ -554,7 +554,7 @@ def get_submission_revision_stage(client, request_forum):
 
     allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
 
-    return openreview.SubmissionRevisionStage(
+    return openreview.stages.SubmissionRevisionStage(
         name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
@@ -591,41 +591,41 @@ def get_comment_stage(request_forum):
     invitees = []
     readers = []
     if 'Assigned Reviewers' in participants:
-        invitees.append(openreview.CommentStage.Readers.REVIEWERS_ASSIGNED)
-        readers.append(openreview.CommentStage.Readers.REVIEWERS_ASSIGNED)
+        invitees.append(openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED)
+        readers.append(openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED)
     elif 'Assigned Reviewers' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.REVIEWERS_ASSIGNED)
+        readers.append(openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED)
 
     if 'Assigned Submitted Reviewers' in participants:
-        invitees.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
-        readers.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
+        invitees.append(openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED)
+        readers.append(openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED)
     elif 'Assigned Submitted Reviewers' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.REVIEWERS_SUBMITTED)
+        readers.append(openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED)
 
     if 'Assigned Area Chairs' in participants:
-        invitees.append(openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
-        readers.append(openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
+        invitees.append(openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
+        readers.append(openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
     elif 'Assigned Area Chairs' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
+        readers.append(openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED)
 
     if 'Assigned Senior Area Chairs' in participants:
-        invitees.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
-        readers.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+        invitees.append(openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+        readers.append(openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
     elif 'Assigned Senior Area Chairs' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
+        readers.append(openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED)
 
     if 'Authors' in participants:
-        invitees.append(openreview.CommentStage.Readers.AUTHORS)
-        readers.append(openreview.CommentStage.Readers.AUTHORS)
+        invitees.append(openreview.stages.CommentStage.Readers.AUTHORS)
+        readers.append(openreview.stages.CommentStage.Readers.AUTHORS)
     elif 'Authors' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.AUTHORS)
+        readers.append(openreview.stages.CommentStage.Readers.AUTHORS)
 
     if 'Public' in additional_readers:
-        readers.append(openreview.CommentStage.Readers.EVERYONE)
+        readers.append(openreview.stages.CommentStage.Readers.EVERYONE)
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
 
-    return openreview.CommentStage(
+    return openreview.stages.CommentStage(
         start_date=commentary_start_date,
         end_date=commentary_end_date,
         allow_public_comments=allow_public_comments,

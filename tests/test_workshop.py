@@ -529,7 +529,7 @@ class TestWorkshop():
             'Accept (Oral)': 'Oral Presentations',
             'Accept (Poster)': 'Post Presentations',
             'Reject': 'All Presentations'
-        }, submission_readers=[openreview.SubmissionStage.Readers.EVERYONE])
+        }, submission_readers=[openreview.stages.SubmissionStage.Readers.EVERYONE])
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client.token, wait_for_element='oral-presentations')
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title

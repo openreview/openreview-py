@@ -39,7 +39,7 @@ class TestMatching():
         venue.set_submission_stage(openreview.builder.SubmissionStage(
             due_date = now + datetime.timedelta(minutes = 40),
             double_blind=True, 
-            readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS]))
+            readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS]))
 
         assert openreview_client.get_invitation('VenueV2.cc/-/Submission')
 
@@ -59,8 +59,8 @@ class TestMatching():
             allow_overlap_official_committee = True)
 
         bid_stages = [
-            openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
-            openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
+            openreview.stages.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
+            openreview.stages.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
         ]
         venue.bid_stages = bid_stages
         venue.create_bid_stages()

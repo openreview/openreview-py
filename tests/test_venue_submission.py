@@ -13,6 +13,7 @@ from openreview.api import Invitation
 from openreview.api import Edge
 
 from openreview.venue import Venue
+from openreview.stages import SubmissionStage, BidStage
 
 class TestVenueSubmission():
 
@@ -31,7 +32,7 @@ class TestVenueSubmission():
         assert openreview_client.get_group('TestVenue.cc')
         assert openreview_client.get_group('TestVenue.cc/Authors')
 
-        venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.REVIEWERS_ASSIGNED, openreview.builder.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED]))
+        venue.set_submission_stage(SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.REVIEWERS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED]))
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Submission')
 
@@ -110,8 +111,8 @@ class TestVenueSubmission():
         #bid stages
         now = datetime.datetime.utcnow()
         bid_stages = [
-            openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
-            openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
+            BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
+            BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
         ]
         venue.bid_stages = bid_stages
         venue.create_bid_stages()
