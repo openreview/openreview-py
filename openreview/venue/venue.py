@@ -408,33 +408,6 @@ class Venue(object):
         submissions = self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self))
         
         self.group_builder.create_paper_committee_groups()
-        ## Create paper groups for each submission, given the authors group is going to be created during the submission time, we could consider creating all these groups
-        ## during the setup matching stage, we don't to have them created right after the submission deadline. 
-        # for submission in submissions:
-        #     editors_in_chief_id = f'{venue_id}/Editors_In_Chief'
-        #     action_editors_id = f'{venue_id}/Paper{submission.number}/Action_Editors'
-        #     reviewers_id = self.get_reviewers_id(submission.number)
-        #     authors_id = self.get_authors_id(submission.number)
-
-        #     action_editors_group=self.client.post_group(Group(id=action_editors_id,
-        #             readers=[venue_id, action_editors_id],
-        #             nonreaders=[authors_id],
-        #             writers=[venue_id],
-        #             signatures=[venue_id],
-        #             signatories=[venue_id, action_editors_id],
-        #             members=[]
-        #         ))
-
-        #     reviewers_group=self.client.post_group(Group(id=reviewers_id,
-        #             readers=[venue_id, action_editors_id, reviewers_id],
-        #             deanonymizers=[venue_id, action_editors_id],
-        #             nonreaders=[authors_id],
-        #             writers=[venue_id, action_editors_id],
-        #             signatures=[venue_id],
-        #             signatories=[venue_id],
-        #             members=[],
-        #             anonids=True
-        #         ))            
         
         ## Release the submissions to specified readers
         for submission in submissions:
