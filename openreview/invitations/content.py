@@ -30,6 +30,31 @@ comment = {
     }
 }
 
+comment_v2 = {
+    'title': {
+        'order': 1,
+        'description': 'Brief summary of your comment.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'regex': '.{1,500}',
+            }
+        }
+    },
+    'comment': {
+        'order': 2,
+        'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 5000,
+                'markdown': True,
+                'input': 'textarea'
+            }
+        }
+    }
+}
+
 withdraw = {
     'title': {
         'value': 'Submission Withdrawn by the Authors',

@@ -481,6 +481,112 @@ class InvitationBuilder(object):
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
 
+    def set_comment_invitation(self):
+        venue_id = self.venue_id
+        comment_stage = self.venue.comment_stage
+        official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
+        # public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_duedate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else None)
+
+        content = invitations.comment_v2.copy()
+        invitees = comment_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
+
+        comment_readers = comment_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
+        if comment_stage.reader_selection:
+            comment_readers = {
+                'param': {
+                    'enum': comment_stage.get_readers(self.venue, '${7/content/noteNumber/value}')
+                }
+            }
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
+        with open(process_file) as f:
+            invitation_start_process = f.read()
+
+            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
+            invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+
+        invitation = Invitation(id=official_comment_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=comment_cdate,
+            duedate=comment_duedate,
+            date_processes=[{
+                'dates': ["#{4/cdate}"],
+                'script': invitation_start_process
+            }],
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(comment_stage.official_comment_name, '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': invitees,
+                    'duedate': comment_duedate,
+                    'cdate': comment_cdate,
+#                     'process': '''def process(client, edit, invitation):
+#     meta_invitation = client.get_invitation(invitation.invitations[0])
+#     script = meta_invitation.content['review_process_script']['value']
+#     funcs = {}
+#     exec(script, funcs)
+#     funcs['process'](client, edit, invitation)
+# ''',
+                    'edit': {
+                        'signatures': { 'param': { 'regex': comment_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
+                        'readers': comment_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                        # 'nonreaders': [],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id(comment_stage.official_comment_name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': comment_readers,
+                            # 'nonreaders': [],
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                }
+
+            }
+        )
+
+        return self.save_invitation(invitation, replacement=True)
+
     def set_assignment_invitation(self, committee_id):
         client = self.client
         venue = self.venue
