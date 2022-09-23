@@ -203,23 +203,6 @@ class Venue(object):
     def get_submissions(self, sort=None):
         return self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self), sort=sort)
 
-    def set_group_variable(self, group_id, variable_name, value):
-
-        group = openreview.tools.get_group(self.client, group_id)
-        if group and group.web:
-            group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
-            group.web = group.web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
-            self.client.post_group(group)
-
-    def update_homepage_submissions_readership(self, public):
-        group = openreview.tools.get_group(self.client, self.venue_id)
-        if group and group.web:
-            if public:
-                group.web = group.web.replace("const PUBLIC = false", "const PUBLIC = true")
-            else:
-                group.web = group.web.replace("const PUBLIC = true", "const PUBLIC = false")
-            self.client.post_group(group)
-
     def setup(self, program_chair_ids=[]):
     
         venue_id = self.venue_id
@@ -337,23 +320,22 @@ class Venue(object):
             # default_load, ##can this be removed? We never get it from the request form
             allow_overlap_official_committee)
 
+    ## deprecated?
     def set_submission_stage(self, stage):
         self.submission_stage = stage
+        self.create_submission_stage()
+
+    def create_submission_stage(self):
         self.invitation_builder.set_submission_invitation()
-        self.set_group_variable(self.venue_id, 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
-        self.update_homepage_submissions_readership(self.submission_stage.public)
-        self.set_group_variable(self.get_authors_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
-        self.set_group_variable(self.get_reviewers_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
-        self.set_group_variable(self.get_area_chairs_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
+        self.group_builder.set_submission_variables()
 
     def create_review_stage(self):
         self.invitation_builder.set_review_invitation()
-        self.set_group_variable(self.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
-        self.set_group_variable(self.get_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
+        self.group_builder.set_review_variables()
 
     def create_meta_review_stage(self):
         self.invitation_builder.set_meta_review_invitation()
-        self.set_group_variable(self.get_area_chairs_id(), 'META_REVIEW_NAME', self.meta_review_stage.name)
+        self.group_builder.set_meta_review_variables()
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id

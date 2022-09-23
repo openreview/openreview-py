@@ -11,6 +11,7 @@ class GroupBuilder(object):
     def __init__(self, venue):
         self.venue = venue
         self.client = venue.client
+        self.venue_id = venue.id
 
     def __should_update(self, entity):
         return entity.details.get('writable', False) and (not entity.web or entity.web.startswith('// webfield_template') or entity.web.startswith('// Webfield component'))
@@ -59,6 +60,17 @@ class GroupBuilder(object):
             groups.append(group)
 
         return groups
+
+    def set_group_variable(self, group_id, variable_name, value):
+
+        group = openreview.tools.get_group(self.client, group_id)
+        if group and group.web:
+            print(group.id, variable_name, value)
+            group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
+            group.web = group.web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
+            group.web = group.web.replace(f"const {variable_name} = false", f"const {variable_name} = {'true' if value else 'false'}")
+            group.web = group.web.replace(f"const {variable_name} = true", f"const {variable_name} = {'true' if value else 'false'}")
+            self.client.post_group(group)
 
     def set_landing_page(self, group, parentGroup, options = {}):
         # sets webfield to show links to child groups
@@ -162,6 +174,13 @@ class GroupBuilder(object):
             content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = 'Paper'")
             content = content.replace("const CUSTOM_MAX_PAPERS_ID = ''", f"const CUSTOM_MAX_PAPERS_ID = '{self.venue.get_custom_max_papers_id(reviewers_id)}'")
             content = content.replace("const RECRUITMENT_ID = ''", f"const RECRUITMENT_ID = '{self.venue.get_recruitment_id(reviewers_id)}'")
+
+            if self.venue.submission_stage:
+                content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+
+            if self.venue.review_stage:
+                content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
+
             reviewer_group.web = content
             self.client.post_group(reviewer_group)        
 
@@ -263,3 +282,35 @@ class GroupBuilder(object):
         openreview.tools.concurrent_requests(create_paper_commmitee_group, submissions, desc='create_paper_committee_groups')
 
 
+    def set_submission_variables(self):
+
+        submission_stage = self.venue.submission_stage
+        submission_id = submission_stage.get_submission_id(self.venue)
+
+        self.set_group_variable(self.venue_id, 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue_id, 'SUBMISSIONS_PUBLIC', submission_stage.public)
+        self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_area_chairs_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_ID', submission_id)
+
+    def set_review_variables(self):
+
+        review_stage = self.venue.review_stage
+ 
+        self.set_group_variable(self.venue.get_authors_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)
+        self.set_group_variable(self.venue.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)
+        self.set_group_variable(self.venue.get_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
+        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
+        self.set_group_variable(self.venue.get_program_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
+
+    def set_meta_review_variables(self):
+
+        meta_review_stage = self.venue.meta_review_stage
+ 
+        self.set_group_variable(self.venue.get_authors_id(), 'META_REVIEW_NAME', meta_review_stage.name)
+        self.set_group_variable(self.venue.get_reviewers_id(), 'META_REVIEW_NAME', meta_review_stage.name)
+        self.set_group_variable(self.venue.get_area_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)
+        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)        
+        self.set_group_variable(self.venue.get_program_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)        

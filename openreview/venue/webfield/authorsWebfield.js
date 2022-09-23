@@ -1,7 +1,7 @@
 // Webfield component
 var VENUE_ID = '';
 var SUBMISSION_ID = '';
-var OFFICIAL_REVIEW_NAME = 'Review';
+var OFFICIAL_REVIEW_NAME = '';
 var DECISION_NAME = 'Decision';
 var REVIEW_RATING_NAME = 'rating';
 var REVIEW_CONFIDENCE_NAME = 'confidence';
