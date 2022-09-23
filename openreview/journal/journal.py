@@ -1,3 +1,4 @@
+from itertools import groupby
 from .. import openreview
 from .. import tools
 from . import group
@@ -41,6 +42,8 @@ class Journal(object):
         self.desk_rejected_venue_id = f'{venue_id}/Desk_Rejected'
         self.withdrawn_venue_id = f'{venue_id}/Withdrawn_Submission'
         self.retracted_venue_id = f'{venue_id}/Retracted_Acceptance'
+        self.assigning_AE_venue_id = f'{venue_id}/Assigning_AE'
+        self.assigned_AE_venue_id = f'{venue_id}/Assigned_AE'
         self.accepted_venue_id = venue_id
         self.invitation_builder = InvitationBuilder(self)
         self.group_builder = group.GroupBuilder(client)
@@ -58,6 +61,7 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
+        self.ae_custom_max_papers = 12
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -162,14 +166,26 @@ class Journal(object):
     def get_ae_affinity_score_id(self):
         return self.__get_invitation_id(name='Affinity_Score', prefix=self.get_action_editors_id())
 
-    def get_ae_assignment_id(self):
-        return self.__get_invitation_id(name='Assignment', prefix=self.get_action_editors_id())
+    def get_ae_aggregate_score_id(self):
+        return self.__get_invitation_id(name='Aggregate_Score', prefix=self.get_action_editors_id())
+
+    def get_ae_resubmission_score_id(self):
+        return self.__get_invitation_id(name='Resubmission_Score', prefix=self.get_action_editors_id())
+
+    def get_ae_assignment_configuration_id(self):
+        return self.__get_invitation_id(name='Assignment_Configuration', prefix=self.get_action_editors_id())
+
+    def get_ae_assignment_id(self, proposed=False):
+        return self.__get_invitation_id(name='Proposed_Assignment' if proposed else 'Assignment', prefix=self.get_action_editors_id())
 
     def get_ae_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
 
     def get_ae_custom_max_papers_id(self, number=None):
         return self.__get_invitation_id(name='Custom_Max_Papers', prefix=self.get_action_editors_id(number=number))
+
+    def get_ae_local_custom_max_papers_id(self, number=None):
+        return self.__get_invitation_id(name='Local_Custom_Max_Papers', prefix=self.get_action_editors_id(number=number))
 
     def get_ae_availability_id(self):
         return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_action_editors_id())
@@ -232,6 +248,9 @@ class Journal(object):
     def get_camera_ready_verification_id(self, number=None):
         return self.__get_invitation_id(name='Camera_Ready_Verification', number=number)
 
+    def get_eic_revision_id(self, number=None):
+        return self.__get_invitation_id(name='EIC_Revision', number=number)
+    
     def get_revision_id(self, number=None):
         return self.__get_invitation_id(name='Revision', number=number)
 
@@ -279,6 +298,10 @@ class Journal(object):
             if 'Long submission' in note.content['submission_length']['value']:
                 return 4 ## weeks
         return 2 ## weeks
+
+    def is_active_submission(self, submission):
+        venue_id = submission.content.get('venueid', {}).get('value')
+        return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
     
     def setup(self, support_role, editors=[], assignment_delay=5):
         self.group_builder.set_groups(self, support_role, editors)
@@ -287,24 +310,13 @@ class Journal(object):
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
-    def set_action_editors(self, editors, custom_papers):
-        venue_id=self.venue_id
-        aes=self.get_action_editors_id()
-        self.client.add_members_to_group(aes, editors)
-        for index,ae in enumerate(editors):
-            edge = Edge(invitation = f'{aes}/-/Custom_Max_Papers',
-                readers = [venue_id, ae],
-                writers = [venue_id, ae],
-                signatures = [venue_id],
-                head = aes,
-                tail = ae,
-                weight=custom_papers[index]
-            )
-            self.client.post_edge(edge)
+    def setup_ae_matching(self, label):
+        self.assignment.setup_ae_matching(label)
 
-    def set_reviewers(self, reviewers):
-        self.client.add_members_to_group(self.get_reviewers_id(), reviewers)
-
+    ## Same interface like Conference and Venue class
+    def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
+        self.assignment.set_ae_assignments(assignment_title)
+    
     def get_action_editors(self):
         return self.client.get_group(self.get_action_editors_id()).members
 
@@ -532,6 +544,8 @@ class Journal(object):
                 if invitee.startswith('~'):
                     profile = self.client.get_profile(invitee)
                     invitee_members.append(profile.id)
+                elif '@' in invitee:
+                    invitee_members.append(invitee)
                 else:
                     invitee_members = invitee_members + self.client.get_group(invitee).members
 
@@ -567,7 +581,9 @@ class Journal(object):
         action = 'posted' if note.tcdate == note.tmdate else 'edited'
 
         readers = note.readers
-        nonreaders = note.nonreaders + [edit.tauthor]
+        nonreaders = [edit.tauthor]
+        if note.nonreaders:
+            nonreaders += note.nonreaders
         formatted_invitation = edit.invitation.split('/-/')[1].replace('_', ' ')
         lower_formatted_invitation = formatted_invitation.lower()
         before_invitation = 'An' if lower_formatted_invitation[0] in vowels else 'A'

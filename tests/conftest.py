@@ -137,6 +137,13 @@ def openreview_client():
     yield openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password='1234')
 
 @pytest.fixture(scope="session")
+def journal_request():
+    client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username='openreview.net', password='1234')
+    journal_request = openreview.journal.JournalRequest(client, 'openreview.net/Support')
+    journal_request.setup_journal_request()
+    yield journal_request
+
+@pytest.fixture(scope="session")
 def test_client():
     client = Helpers.create_user('test@mail.com', 'SomeFirstName', 'User')
     yield client

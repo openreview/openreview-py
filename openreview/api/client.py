@@ -1635,6 +1635,9 @@ class OpenReviewClient(object):
         if content is not None:
             edit_json['content'] = content
 
+        if content is not None:
+            edit_json['content'] = content
+
         if replacement is not None:
             edit_json['replacement'] = replacement
 
@@ -1960,7 +1963,7 @@ class Note(object):
         self.forum = forum
         self.replyto = replyto
         self.readers = readers
-        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.nonreaders = nonreaders
         self.signatures = signatures
         self.writers = writers
         self.number = number
@@ -2001,7 +2004,7 @@ class Note(object):
             body['mdate'] = self.mdate
         if self.ddate:
             body['ddate'] = self.ddate
-        if self.nonreaders:
+        if self.nonreaders is not None:
             body['nonreaders'] = self.nonreaders
         if self.signatures:
             body['signatures'] = self.signatures
@@ -2048,13 +2051,14 @@ class Invitation(object):
     """
     def __init__(self,
         id = None,
-        domain = None,
         invitations = None,
+        domain = None,
         readers = None,
         writers = None,
         invitees = None,
         signatures = None,
         edit = None,
+        edge = None,
         type = 'Note',
         noninvitees = None,
         nonreaders = None,
@@ -2076,8 +2080,8 @@ class Invitation(object):
         details = None):
 
         self.id = id
-        self.domain = domain
         self.invitations = invitations
+        self.domain = domain
         self.cdate = cdate
         self.ddate = ddate
         self.duedate = duedate
@@ -2091,6 +2095,7 @@ class Invitation(object):
         self.minReplies = minReplies
         self.maxReplies = maxReplies
         self.edit = edit
+        self.edge = edge
         self.type = type
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -2135,11 +2140,11 @@ class Invitation(object):
             'id': self.id
         }
 
+        if self.invitations:
+            body['invitations'] = self.invitations
+        
         if self.domain:
             body['domain'] = self.domain
-
-        if self.invitations:
-            body['invitations'] = self.invitations            
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -2194,6 +2199,8 @@ class Invitation(object):
                 body['edit']=self.edit
             if self.type == 'Edge':
                 body['edge']=self.edit
+        if self.edge:
+            body['edge']=self.edge
         if self.bulk is not None:
             body['bulk']=self.bulk
         return body
@@ -2210,8 +2217,8 @@ class Invitation(object):
         :rtype: Invitation
         """
         invitation = Invitation(i['id'],
-            domain = i.get('domain'),
             invitations = i.get('invitations'),
+            domain = i.get('domain'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
             tcdate = i.get('tcdate'),

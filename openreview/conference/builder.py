@@ -417,6 +417,10 @@ class Conference(object):
         if self.meta_review_stage:
             return self.__create_meta_review_stage()
 
+    def create_comment_stage(self):
+        if self.comment_stage:
+            return self.__create_comment_stage()
+
     def set_review_rebuttal_stage(self, stage):
         self.review_rebuttal_stage = stage
         return self.__create_review_rebuttal_stage()
@@ -429,6 +433,7 @@ class Conference(object):
         self.review_rating_stage = stage
         return self.__create_review_rating_stage()
 
+    @deprecated(version='1.9.0')
     def set_comment_stage(self, stage):
         self.comment_stage = stage
         return self.__create_comment_stage()
@@ -1106,7 +1111,7 @@ class Conference(object):
 
         if self.submission_stage.second_due_date:
             if self.submission_stage.due_date < now and now < self.submission_stage.second_due_date:
-                self.setup_first_deadline_stage(force, hide_fields)
+                self.setup_first_deadline_stage(force, hide_fields, self.submission_stage.author_reorder_after_first_deadline)
             elif self.submission_stage.second_due_date < now:
                 self.setup_final_deadline_stage(force, hide_fields)
             elif force:
@@ -1952,7 +1957,8 @@ class SubmissionStage(object):
             desk_rejected_submission_reveal_authors=False,
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
-            papers_released=False
+            papers_released=False,
+            author_reorder_after_first_deadline=False
         ):
 
         self.start_date = start_date
@@ -1977,13 +1983,14 @@ class SubmissionStage(object):
         self.author_names_revealed = author_names_revealed
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
+        self.author_reorder_after_first_deadline = author_reorder_after_first_deadline
 
     def get_readers(self, conference, number, decision_note=None):
 
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
 
-        submission_readers=[conference.get_id()]
+        submission_readers=[conference.id]
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
             hide = not decision_note or decision_note and 'Reject' in decision_note.content['decision']
@@ -2211,7 +2218,7 @@ class ReviewStage(object):
         self.confidence_field_name = confidence_field_name
         self.process_path = process_path
 
-    def _get_reviewer_readers(self, conference, number):
+    def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
             return conference.get_reviewers_id()
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_ASSIGNED:
@@ -2219,10 +2226,12 @@ class ReviewStage(object):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS_SUBMITTED:
             return conference.get_reviewers_id(number = number) + '/Submitted'
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWER_SIGNATURE:
+            if review_signature:
+                return review_signature
             return '{signatures}'
         raise openreview.OpenReviewException('Unrecognized readers option')
 
-    def get_readers(self, conference, number):
+    def get_readers(self, conference, number, review_signature=None):
 
         if self.public:
             return ['everyone']
@@ -2235,7 +2244,7 @@ class ReviewStage(object):
         if conference.use_area_chairs:
             readers.append(conference.get_area_chairs_id(number = number))
 
-        readers.append(self._get_reviewer_readers(conference, number))
+        readers.append(self._get_reviewer_readers(conference, number, review_signature))
 
         if conference.ethics_review_stage and number in conference.ethics_review_stage.submission_numbers:
             if conference.use_ethics_chairs:
@@ -2839,7 +2848,8 @@ class ConferenceBuilder(object):
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
             papers_released=False,
-            readers=None
+            readers=None,
+            author_reorder_after_first_deadline=False
         ):
 
         submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
@@ -2871,7 +2881,8 @@ class ConferenceBuilder(object):
             desk_rejected_submission_reveal_authors,
             email_pcs_on_desk_reject,
             author_names_revealed,
-            papers_released
+            papers_released,
+            author_reorder_after_first_deadline
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None, include_option=False):
@@ -2899,8 +2910,8 @@ class ConferenceBuilder(object):
     def set_review_rating_stage(self, start_date = None, due_date = None,  name = None, additional_fields = {}, remove_fields = [], public = False, release_to_reviewers=ReviewRatingStage.Readers.NO_REVIEWERS):
         self.review_rating_stage = ReviewRatingStage(start_date, due_date, name, additional_fields, remove_fields, public, release_to_reviewers)
 
-    def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, reader_selection = False, email_pcs = False, invitees=[], readers=[]):
-        self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, reader_selection, email_pcs, readers=readers, invitees=invitees)
+    def set_comment_stage(self, stage):
+        self.conference.comment_stage = stage
 
     def set_meta_review_stage(self, stage):
         self.conference.meta_review_stage = stage
@@ -3005,9 +3016,6 @@ class ConferenceBuilder(object):
 
         if self.review_rebuttal_stage:
             self.conference.set_review_rebuttal_stage(self.review_rebuttal_stage)
-
-        if self.comment_stage:
-            self.conference.set_comment_stage(self.comment_stage)
 
         if self.decision_stage:
             self.conference.set_decision_stage(self.decision_stage)
