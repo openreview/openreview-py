@@ -15,20 +15,25 @@ class TestJMLRJournal():
 
 
     @pytest.fixture(scope="class")
-    def journal(self, openreview_client, helpers):
-        super_id = 'openreview.net'
-        support_group_id = super_id + '/Support'
-        journal_request = JournalRequest(openreview_client, support_group_id)
-        journal_request.setup_journal_request()
+    def journal(self, openreview_client):
+
+        eic_client=OpenReviewClient(username='rajarshi@mail.com', password='1234')
+        eic_client.impersonate('JMLR/Editors_In_Chief')
+
+        requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'JMLR' })
+
+        return JournalRequest.get_journal(eic_client, requests[0].id)
+
+    def test_setup(self, openreview_client, request_page, selenium, helpers, journal_request):
 
         ## Editors in Chief
         helpers.create_user('rajarshi@mail.com', 'Rajarshi', 'Das')
 
         #post journal request form
-        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
-            signatures = [support_group_id],
+        request_form = openreview_client.post_note_edit(invitation= 'openreview.net/Support/-/Journal_Request',
+            signatures = ['openreview.net/Support'],
             note = Note(
-                signatures = [support_group_id],
+                signatures = ['openreview.net/Support'],
                 content = {
                     'official_venue_name': {'value': 'Journal of Machine Learning Research'},
                     'abbreviated_venue_name' : {'value': 'JMLR'},
@@ -51,10 +56,10 @@ class TestJMLRJournal():
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
         ## Authors
-        celeste_client=helpers.create_user('celeste@jmlrone.com', 'Celeste', 'Azul')         
+        celeste_client=helpers.create_user('celeste@jmlrone.com', 'Celeste', 'Azul')
 
-        return JournalRequest.get_journal(openreview_client, request_form['note']['id'])
-
+    
+    
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
         test_client = OpenReviewClient(username='test@mail.com', password='1234')

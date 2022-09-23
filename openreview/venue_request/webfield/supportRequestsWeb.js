@@ -83,7 +83,7 @@ var paperDisplayOptions = {
 
 // Main is the entry point to the webfield code and runs everything
 function main() {
-  Webfield.ui.setup('#group-container', GROUP_PREFIX);  // required
+  Webfield.ui.setup('#group-container', SUPPORT_GROUP);  // required
 
   renderConferenceHeader();
 

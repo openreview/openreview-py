@@ -417,6 +417,10 @@ class Conference(object):
         if self.meta_review_stage:
             return self.__create_meta_review_stage()
 
+    def create_comment_stage(self):
+        if self.comment_stage:
+            return self.__create_comment_stage()
+
     def set_review_rebuttal_stage(self, stage):
         self.review_rebuttal_stage = stage
         return self.__create_review_rebuttal_stage()
@@ -429,6 +433,7 @@ class Conference(object):
         self.review_rating_stage = stage
         return self.__create_review_rating_stage()
 
+    @deprecated(version='1.9.0')
     def set_comment_stage(self, stage):
         self.comment_stage = stage
         return self.__create_comment_stage()
@@ -2905,8 +2910,8 @@ class ConferenceBuilder(object):
     def set_review_rating_stage(self, start_date = None, due_date = None,  name = None, additional_fields = {}, remove_fields = [], public = False, release_to_reviewers=ReviewRatingStage.Readers.NO_REVIEWERS):
         self.review_rating_stage = ReviewRatingStage(start_date, due_date, name, additional_fields, remove_fields, public, release_to_reviewers)
 
-    def set_comment_stage(self, name = None, start_date = None, end_date=None, allow_public_comments = False, anonymous = False, reader_selection = False, email_pcs = False, invitees=[], readers=[]):
-        self.comment_stage = CommentStage(name, start_date, end_date, allow_public_comments, anonymous, reader_selection, email_pcs, readers=readers, invitees=invitees)
+    def set_comment_stage(self, stage):
+        self.conference.comment_stage = stage
 
     def set_meta_review_stage(self, stage):
         self.conference.meta_review_stage = stage
@@ -3011,9 +3016,6 @@ class ConferenceBuilder(object):
 
         if self.review_rebuttal_stage:
             self.conference.set_review_rebuttal_stage(self.review_rebuttal_stage)
-
-        if self.comment_stage:
-            self.conference.set_comment_stage(self.comment_stage)
 
         if self.decision_stage:
             self.conference.set_decision_stage(self.decision_stage)

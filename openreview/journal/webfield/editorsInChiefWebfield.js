@@ -60,6 +60,8 @@ var RETRACTION_NAME = 'Retraction';
 var RETRACTION_APPROVAL_NAME = 'Retraction_Approval';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var SUBMITTED_STATUS = VENUE_ID + '/Submitted';
+var ASSIGNING_AE_STATUS = VENUE_ID + '/Assigning_AE';
+var ASSIGNED_AE_STATUS = VENUE_ID + '/Assigned_AE';
 var WITHDRAWN_STATUS = VENUE_ID + '/Withdrawn_Submission';
 var RETRACTED_STATUS = VENUE_ID + '/Retracted_Acceptance';
 var REJECTED_STATUS = VENUE_ID + '/Rejected';
@@ -124,7 +126,7 @@ var main = function() {
       'Under Discussion',
       'Under Decision',
       'Camera Ready',
-      'Submission Complete',
+      'All Submissions',
       'Action Editor Status',
       'Reviewer Status'
     ],
@@ -666,7 +668,7 @@ var formatData = function(
 
     overdueTasks.concat(tasks.filter(function(inv) { return !inv.complete; }));
 
-    var aeActions = [UNDER_REVIEW_STATUS, SUBMITTED_STATUS].includes(submission.content.venueid.value) ? [
+    var aeActions = [UNDER_REVIEW_STATUS, SUBMITTED_STATUS, ASSIGNED_AE_STATUS, ASSIGNING_AE_STATUS].includes(submission.content.venueid.value) ? [
       {
         name: 'Edit Assignments',
         url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
@@ -743,8 +745,10 @@ var formatData = function(
     });
   });
 
-  var submissionStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid === SUBMITTED_STATUS;
+  var submittedStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === SUBMITTED_STATUS
+    || row.submission.content.venueid === ASSIGNING_AE_STATUS
+    || row.submission.content.venueid === ASSIGNED_AE_STATUS;
   });
   var underReviewStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
@@ -762,10 +766,11 @@ var formatData = function(
     return row.submission.content.venueid === UNDER_REVIEW_STATUS
       && row.actionEditorProgressData.cameraReadyPending;
   });
-  var completeSubmissionStatusRows = paperStatusRows.filter(function(row) {
-    return row.submission.content.venueid !== SUBMITTED_STATUS
-      && row.submission.content.venueid !== UNDER_REVIEW_STATUS;
-  });
+  var submissionStatusRows = paperStatusRows;
+  var acceptedStatusRows = paperStatusRows.filter(function(row) {
+    return row.submission.content.venueid === VENUE_ID;
+  });  
+
   var withdrawnStatusRows = paperStatusRows.filter(function(row) {
     return row.submission.content.venueid === WITHDRAWN_STATUS;
   });
@@ -781,11 +786,11 @@ var formatData = function(
   var journalStats = {
     numReviewers: reviewers.members.length,
     numActionEditors: actionEditors.members.length,
-    numSubmissions: submissionStatusRows.length,
+    numSubmitted: submittedStatusRows.length,
     numUnderReview: underReviewStatusRows.length,
     numUnderDiscussion: underDiscussionStatusRows.length,
     numUnderDecision: underDecisionStatusRows.length,
-    numAccepted: completeSubmissionStatusRows.length - withdrawnStatusRows.length - retractedStatusRows.length - rejectedStatusRows.length,
+    numAccepted: acceptedStatusRows.length,
     numWithdrawn: withdrawnStatusRows.length,
     numRetracted: retractedStatusRows.length,
     numRejected: rejectedStatusRows.length,
@@ -807,12 +812,12 @@ var formatData = function(
   };
 
   return {
+    submittedStatusRows: submittedStatusRows,
     submissionStatusRows: submissionStatusRows,
     underReviewStatusRows: underReviewStatusRows,
     underDiscussionStatusRows: underDiscussionStatusRows,
     underDecisionStatusRows: underDecisionStatusRows,
     cameraReadyStatusRows: cameraReadyStatusRows,
-    completeSubmissionStatusRows: completeSubmissionStatusRows,
     reviewerStatusRows: Object.values(reviewerStatusById),
     actionEditorStatusRows: Object.values(actionEditorStatusById),
     journalStats: journalStats,
@@ -1092,7 +1097,7 @@ var renderOverviewTab = function(conferenceStats) {
   html += '<div class="row text-center" style="margin-top: .5rem;">';
   html += renderStatContainer(
     'Submitted Papers:',
-    '<h3>' + conferenceStats.numSubmissions + '</h3>'
+    '<h3>' + conferenceStats.numSubmitted + '</h3>'
   );
   html += renderStatContainer(
     'Papers Under Review:',
@@ -1184,12 +1189,12 @@ var renderOverviewTab = function(conferenceStats) {
 var renderData = function(venueStatusData) {
   renderOverviewTab(venueStatusData.journalStats);
 
-  renderTable('submitted', venueStatusData.submissionStatusRows);
+  renderTable('submitted', venueStatusData.submittedStatusRows);
   renderTable('under-review', venueStatusData.underReviewStatusRows);
   renderTable('under-discussion', venueStatusData.underDiscussionStatusRows);
   renderTable('under-decision', venueStatusData.underDecisionStatusRows);
   renderTable('camera-ready', venueStatusData.cameraReadyStatusRows);
-  renderTable('submission-complete', venueStatusData.completeSubmissionStatusRows);
+  renderTable('all-submissions', venueStatusData.submissionStatusRows);
 
   Webfield2.ui.renderTable('#reviewer-status', venueStatusData.reviewerStatusRows, {
     headings: ['#', 'Reviewer', 'Review Progress', 'Rating <span id="rating-info" class="glyphicon glyphicon-info-sign"></span>', 'Status'],
