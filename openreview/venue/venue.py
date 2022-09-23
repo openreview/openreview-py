@@ -220,29 +220,6 @@ class Venue(object):
                 group.web = group.web.replace("const PUBLIC = true", "const PUBLIC = false")
             self.client.post_group(group)
 
-    def create_paper_invitations(self, stage_name):
-
-        def post_invitation(note):
-            paper_invitation_edit = self.client.post_invitation_edit(invitations=self.get_invitation_id(stage_name),
-                readers=[self.venue_id],
-                writers=[self.venue_id],
-                signatures=[self.venue_id],
-                content={
-                    'noteId': {
-                        'value': note.id
-                    },
-                    'noteNumber': {
-                        'value': note.number
-                    }
-                },
-                invitation=openreview.api.Invitation()
-            )
-            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
-            self.update_readers(note, paper_invitation)
-
-        notes = self.get_submissions()
-        return openreview.tools.concurrent_requests(post_invitation, notes, desc=f'create_{stage_name}_stage')            
-
     def setup(self, program_chair_ids=[]):
     
         venue_id = self.venue_id
@@ -369,56 +346,33 @@ class Venue(object):
         self.set_group_variable(self.get_reviewers_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
         self.set_group_variable(self.get_area_chairs_id(), 'SUBMISSION_ID', self.submission_stage.get_submission_id(self))
 
-    def update_readers(self, submission, invitation):
-        ## Update readers of current notes
-        notes = self.client.get_notes(invitation=invitation.id)
-        invitation_readers = invitation.edit['note']['readers']
-
-        ## if the invitation indicates readers is everyone but the submission is not, we ignore the update
-        if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
-            return
-
-        for note in notes:
-            if type(invitation_readers) is list and note.readers != invitation_readers:
-                self.client.post_note_edit(
-                    invitation = self.get_meta_invitation_id(),
-                    readers = invitation_readers,
-                    writers = [self.venue_id],
-                    signatures = [self.venue_id],
-                    note = openreview.api.Note(
-                        id = note.id,
-                        readers = invitation_readers,
-                        nonreaders = invitation.edit['note']['nonreaders']
-                    )
-                ) 
-
     def create_review_stage(self):
         self.invitation_builder.set_review_invitation()
         self.set_group_variable(self.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
         self.set_group_variable(self.get_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', self.review_stage.name)
-        self.create_paper_invitations(self.review_stage.name)            
 
     def create_meta_review_stage(self):
         self.invitation_builder.set_meta_review_invitation()
         self.set_group_variable(self.get_area_chairs_id(), 'META_REVIEW_NAME', self.meta_review_stage.name)
-        self.create_paper_invitations(self.meta_review_stage.name)            
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id
-        submissions = self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self))
+        submissions = self.get_submissions()
         
-        self.group_builder.create_paper_committee_groups()
+        self.group_builder.create_paper_committee_groups(submissions)
         
-        ## Release the submissions to specified readers
-        for submission in submissions:
-            self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
+        def update_submission_readers(submission):
+            return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
                 readers=[venue_id],
                 writers=[venue_id],
                 signatures=[venue_id],
                 note=openreview.api.Note(id=submission.id,
                         readers = self.submission_stage.get_readers(self, submission.number)
                     )
-                )             
+                )            
+        ## Release the submissions to specified readers
+        openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
+             
         ## Create revision invitation if there is a second deadline?
         ## Create withdraw and desk reject invitations
         #    

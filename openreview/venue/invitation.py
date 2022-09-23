@@ -3,6 +3,7 @@ import json
 import os
 from sys import api_version
 from openreview.api import Invitation
+from openreview.api import Note
 from .. import invitations
 from .. import tools
 
@@ -37,6 +38,52 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process.replace('VENUE_ID = ''', f"VENUE_ID = '{self.venue_id}'")
+
+    def update_note_readers(self, submission, invitation):
+        ## Update readers of current notes
+        notes = self.client.get_notes(invitation=invitation.id)
+        invitation_readers = invitation.edit['note']['readers']
+
+        ## if the invitation indicates readers is everyone but the submission is not, we ignore the update
+        if 'everyone' in invitation_readers and 'everyone' not in submission.readers:
+            return
+
+        for note in notes:
+            if type(invitation_readers) is list and note.readers != invitation_readers:
+                self.client.post_note_edit(
+                    invitation = self.venue.get_meta_invitation_id(),
+                    readers = invitation_readers,
+                    writers = [self.venue_id],
+                    signatures = [self.venue_id],
+                    note = Note(
+                        id = note.id,
+                        readers = invitation_readers,
+                        nonreaders = invitation.edit['note']['nonreaders']
+                    )
+                )            
+
+    def create_paper_invitations(self, invitation_id):
+
+        def post_invitation(note):
+            paper_invitation_edit = self.client.post_invitation_edit(invitations=invitation_id,
+                readers=[self.venue_id],
+                writers=[self.venue_id],
+                signatures=[self.venue_id],
+                content={
+                    'noteId': {
+                        'value': note.id
+                    },
+                    'noteNumber': {
+                        'value': note.number
+                    }
+                },
+                invitation=Invitation()
+            )
+            paper_invitation = self.client.get_invitation(paper_invitation_edit['invitation']['id'])
+            self.update_note_readers(note, paper_invitation)
+
+        notes = self.venue.get_submissions()
+        return tools.concurrent_requests(post_invitation, notes, desc=f'create_paper_invitations')             
 
     def set_submission_invitation(self):
         venue_id = self.venue_id
@@ -226,7 +273,8 @@ class InvitationBuilder(object):
             }
         )
 
-        return self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=True)
+        self.create_paper_invitations(invitation.id)
 
     def set_meta_review_invitation(self):
 
@@ -322,7 +370,8 @@ class InvitationBuilder(object):
             }
         )
 
-        return self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=True)
+        self.create_paper_invitations(invitation.id)
 
     def set_recruitment_invitation(self, committee_name, options):
         venue = self.venue

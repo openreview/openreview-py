@@ -192,7 +192,7 @@ class GroupBuilder(object):
             reviewer_group.web = content
             self.client.post_group(reviewer_group) 
 
-    def create_paper_committee_groups(self, overwrite=False):
+    def create_paper_committee_groups(self, submissions, overwrite=False):
 
         group_by_id = { g.id: g for g in self.client.get_all_groups(prefix=f'{self.venue.id}/Paper.*') }
 
@@ -260,7 +260,6 @@ class GroupBuilder(object):
                         members=group.members if group else []
                     ))
 
-        submissions = self.venue.get_submissions(sort='number:asc')
         openreview.tools.concurrent_requests(create_paper_commmitee_group, submissions, desc='create_paper_committee_groups')
 
 
