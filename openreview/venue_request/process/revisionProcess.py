@@ -332,7 +332,7 @@ Best,
             conference.set_submission_revision_stage(openreview.helpers.get_submission_revision_stage(client, forum_note))
 
         elif invitation_type == 'Comment_Stage':
-            conference.set_comment_stage(openreview.helpers.get_comment_stage(client, forum_note))
+            conference.create_comment_stage()
 
         elif invitation_type == 'Post_Decision_Stage':
             #expire post_submission invitation

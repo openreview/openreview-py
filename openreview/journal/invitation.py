@@ -28,17 +28,17 @@ class InvitationBuilder(object):
 
         self.reviewer_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_process', self.journal.get_meta_invitation_id())
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.reviewer_reminder_process_with_EIC = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_super_dateprocess_content('reviewer_reminder_process', self.journal.get_meta_invitation_id())
+            'script': self.get_super_dateprocess_content('reviewer_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.ae_reminder_process = {
             'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(seven_days), "#{4/duedate} + " + str(one_month)],
-            'script': self.get_super_dateprocess_content('ae_reminder_process', self.journal.get_meta_invitation_id())
+            'script': self.get_super_dateprocess_content('ae_reminder_script', self.journal.get_meta_invitation_id())
         }
 
         self.ae_edge_reminder_process = {
@@ -83,6 +83,8 @@ class InvitationBuilder(object):
         self.set_camera_ready_verification_invitation()
         self.set_authors_deanonymization_invitation()
         self.set_comment_invitation()
+        self.set_assignment_configuration_invitation()
+        self.set_eic_revision_invitation()
 
     
     def get_super_process_content(self, field_name):
@@ -133,6 +135,10 @@ class InvitationBuilder(object):
 
     def expire_invitation(self, invitation_id, expdate=None):
         invitation = self.client.get_invitation(invitation_id)
+        
+        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+            return
+
         self.post_invitation_edit(invitation=Invitation(id=invitation.id,
                 expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.utcnow()),
                 signatures=[self.venue_id]
@@ -213,10 +219,10 @@ class InvitationBuilder(object):
                 readers=[venue_id],
                 signatures=[venue_id],
                 content={
-                    'ae_reminder_process': {
+                    'ae_reminder_script': {
                         'value': self.get_process_content('process/action_editor_reminder_process.py')
                     },
-                    'reviewer_reminder_process': {
+                    'reviewer_reminder_script': {
                         'value': self.get_process_content('process/reviewer_reminder_process.py')
                     }
                 },
@@ -1129,6 +1135,116 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         self.save_invitation(invitation)
 
         invitation = Invitation(
+            id=self.journal.get_ae_aggregate_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_aggregate_score_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_ae_resubmission_score_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_resubmission_score_id(),
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': author_submission_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)              
+
+        invitation = Invitation(
             id=self.journal.get_ae_assignment_id(),
             invitees=[venue_id, editor_in_chief_id],
             readers=[venue_id, action_editors_id],
@@ -1187,6 +1303,61 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
         )
 
         self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_ae_assignment_id(proposed=True),
+            invitees=[venue_id, editor_in_chief_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id], 
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_assignment_id(proposed=True),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [editor_in_chief_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withVenueid': self.journal.assigning_AE_venue_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'optional': True,
+                        'minLength': 1
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)        
 
         invitation = Invitation(
             id=self.journal.get_ae_recommendation_id(),
@@ -1283,12 +1454,61 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 'weight': {
                     'param': {
                         'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                        'default': 12
+                        'default': self.journal.ae_custom_max_papers
                     }
                 }
             }
         )
         self.save_invitation(invitation)
+
+        invitation = Invitation(
+            id=self.journal.get_ae_local_custom_max_papers_id(),
+            invitees=[venue_id],
+            readers=[venue_id, action_editors_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,            
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_ae_local_custom_max_papers_id(),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [venue_id, '${2/tail}'],
+                'nonreaders': [],
+                'writers': [venue_id, '${2/tail}'],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'group',
+                        'const': action_editors_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : action_editors_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        'default': 0
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation)        
 
         invitation = Invitation(
             id=self.journal.get_ae_availability_id(),
@@ -2940,6 +3160,28 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                     'markdown': True
                                 }
                             }
+                        },
+                        'claims_and_evidence': {
+                            'order': 5,
+                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'audience': {
+                            'order': 6,
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
                         }
                     }
                 }
@@ -3094,8 +3336,30 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
                     'content': {
-                        'decision_recommendation': {
+                        'claims_and_evidence': {
                             'order': 1,
+                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'audience': {
+                            'order': 2,
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['Yes', 'No'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'decision_recommendation': {
+                            'order': 3,
                             'description': 'Whether or not you recommend accepting the submission, based on your initial assessment and the discussion with the authors that followed.',
                             'value': {
                                 'param': {
@@ -3111,8 +3375,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             }
                         },
                         'certification_recommendations': {
-                            'order': 2,
-                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
+                            'order': 4,
+                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
                             'value': {
                                 'param': {
                                     'type': 'string[]',
@@ -3122,12 +3386,12 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                         'Survey Certification'
                                     ],
                                     'optional': True,
-                                    'input': 'select'
+                                    'input': 'checkbox'
                                 }
                             }
                         },
                         'comment': {
-                            'order': 3,
+                            'order': 5,
                             'description': 'Briefly explain your recommendation, including justification for certification recommendation (if applicable). Refer to TMLR acceptance criteria here: https://jmlr.org/tmlr/reviewer-guide.html',
                             'value': {
                                 'param': {
@@ -3977,8 +4241,44 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
                     'content': {
-                        'recommendation': {
+                        'main_claims': {
                             'order': 1,
+                            'description': 'What are the main claims made by this submission? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        },
+                        'claims_support': {
+                            'order': 2,
+                            'description': 'Are these claims well supported by evidence? If not, why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        },
+                        'audience': {
+                            'order': 3,
+                            'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? If not, why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        },
+                        'recommendation': {
+                            'order': 4,
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -3992,7 +4292,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             }
                         },
                         'comment': {
-                            'order': 2,
+                            'order': 5,
                             'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
@@ -4004,8 +4304,8 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                             }
                         },
                         'certifications': {
-                            'order': 3,
-                            'description': f'Optionally and if appropriate, recommend a certification for this submission. See {self.journal.website} for information about certifications.',
+                            'order': 6,
+                            'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: https://jmlr.org/tmlr/editorial-policies.html',
                             'value': {
                                 'param': {
                                     'type': 'string[]',
@@ -4015,7 +4315,7 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                                         'Survey Certification'
                                     ],
                                     'optional': True,
-                                    'input': 'select'
+                                    'input': 'checkbox'
                                 }
                             }
                         }
@@ -4597,6 +4897,203 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             signatures=[self.journal.venue_id]
         )
 
+    def set_eic_revision_invitation(self):
+        venue_id = self.journal.venue_id
+        short_name = self.journal.short_name
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/eic_revision_process.py')
+            }                
+        }
+        edit_content = {
+            'noteNumber': { 
+                'value': {
+                    'param': {
+                        'type': 'integer' 
+                    }
+                }
+            },
+            'noteId': { 
+                'value': {
+                    'param': {
+                        'type': 'string' 
+                    }
+                }
+            }
+        }
+
+        invitation = { 
+            'id': self.journal.get_eic_revision_id(number='${2/content/noteNumber/value}'),
+            'invitees': [venue_id],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'edit': {
+                'signatures': [self.journal.get_editors_in_chief_id()],
+                'readers': self.journal.get_under_review_submission_readers('${4/content/noteNumber/value}'),
+                'writers': [ venue_id ],
+                'note': {
+                    'id': '${4/content/noteId/value}',
+                    'forum': '${4/content/noteId/value}',
+                    'content': {
+                        'title': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 250,
+                                    'input': 'text'
+                                }
+                            },
+                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 1
+                        },
+                        'abstract': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
+                            },
+                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 2
+                        },
+                        'authors': {
+                            'value': {
+                                'param': {
+                                    'type': "string[]",
+                                    'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                    'hidden': True
+                                }
+                            },
+                            'description': 'Comma separated list of author names.',
+                            'order': 3,
+                        },
+                        'authorids': {
+                            'value': {
+                                'param': {
+                                    'type': "group[]",
+                                    'regex': r'~.*'
+                                }
+                            },
+                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'order': 4,
+                        },                       
+                        'pdf': {
+                            'value': {
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['pdf'],
+                                    'maxSize': 50
+                                }
+                            },
+                            'description': 'Upload a PDF file that ends with .pdf',
+                            'order': 5,
+                        },
+                        "supplementary_material": {
+                            'value': {
+                                'param': {
+                                    'type': 'file',
+                                    'extensions': ['zip', 'pdf'],
+                                    'maxSize': 100,
+                                    "optional": True
+                                }
+                            },
+                            "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                            "order": 6,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
+                        },
+                        f'previous_{short_name}_submission_url': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'optional': True
+                                }
+                            },
+                            'description': f'If a version of this submission was previously rejected by {short_name}, give the OpenReview link to the original {short_name} submission (which must still be anonymous) and describe the changes below.',
+                            'order': 7,
+                        },
+                        'changes_since_last_submission': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True,
+                                    'markdown': True
+
+                                }
+                            },
+                            'description': f'Describe changes since last {short_name} submission. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                            'order': 8
+                        },
+                        'competing_interests': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
+                            },
+                            'description': "Beyond those reflected in the authors' OpenReview profile, disclose relationships (notably financial) of any author with entities that could potentially be perceived to influence what you wrote in the submitted work, during the last 36 months prior to this submission. This would include engagements with commercial companies or startups (sabbaticals, employments, stipends), honorariums, donations of hardware or cloud computing services. Enter \"N/A\" if this question isn't applicable to your situation.",
+                            'order': 9,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
+                        },
+                        'human_subjects_reporting': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                }
+                            },
+                            'description': 'If the submission reports experiments involving human subjects, provide information available on the approval of these experiments, such as from an Institutional Review Board (IRB). Enter \"N/A\" if this question isn\'t applicable to your situation.',
+                            'order': 10,
+                            'readers': [ venue_id, self.journal.get_action_editors_id(number='${7/content/noteNumber/value}'), self.journal.get_authors_id(number='${7/content/noteNumber/value}')]
+                        },
+                        "video": {
+                            "order": 11,
+                            "description": "Optionally, you may submit a link to a video summarizing your work.",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    "regex": 'https?://.+',
+                                    'optional': True
+                                }
+                            }
+                        },
+                        "code": {
+                            "order": 12,
+                            "description": "Optionally, you may submit a link to code for your work.",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    "regex": 'https?://.+',
+                                    'optional': True
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            'process': self.process_script
+        }
+
+        self.save_super_invitation(self.journal.get_eic_revision_id(), invitation_content, edit_content, invitation)
+
+    def set_note_eic_revision_invitation(self, note):
+        return self.client.post_invitation_edit(invitations=self.journal.get_eic_revision_id(),
+            content={ 
+                'noteId': { 'value': note.id }, 
+                'noteNumber': { 'value': note.number }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
     def set_authors_deanonymization_invitation(self):
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
@@ -4669,4 +5166,263 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                 readers=[self.journal.venue_id],
                 writers=[self.journal.venue_id],
                 signatures=[self.journal.venue_id]
-            )        
+            )
+
+    def set_assignment_configuration_invitation(self):
+
+        venue_id = self.journal.venue_id
+
+        scores_specification = {}
+        scores_specification[self.journal.get_ae_affinity_score_id()] = {
+            'weight': 1,
+            'default': 0
+        }
+        scores_specification[self.journal.get_ae_recommendation_id()] = {
+            'weight': 1,
+            'default': 0
+        }
+
+        invitation = Invitation(
+            id = self.journal.get_ae_assignment_configuration_id(),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.journal.get_ae_assignment_configuration_id(),
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        # 'type': 'date',
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': 'Title of the configuration.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{1,250}'
+                                }
+                            }
+                        },
+                        'user_demand': {
+                            'order': 2,
+                            'description': 'Number of users that can review a paper',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'max_papers': {
+                            'order': 3,
+                            'description': 'Max number of reviews a user has to do',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'min_papers': {
+                            'order': 4,
+                            'description': 'Min number of reviews a user should do',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'alternates': {
+                            'order': 5,
+                            'description': 'The number of alternate reviewers to save (per-paper)',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '[0-9]+'
+                                }
+                            }
+                        },
+                        'paper_invitation': {
+                            'order': 6,
+                            'description': 'Invitation to get the paper metadata or Group id to get the users to be matched',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'minLength': 1
+                                }
+                            }
+                        },
+                        'match_group': {
+                            'order': 7,
+                            'description': 'Group id containing users to be matched',
+                            'value': self.journal.get_action_editors_id()
+                        },
+                        'scores_specification': {
+                            'order': 8,
+                            'description': 'Manually entered JSON score specification',
+                            'value': {
+                                'param': {
+                                    'type': 'json',
+                                    'default': scores_specification
+                                }
+                            }
+                        },
+                        'aggregate_score_invitation': {
+                            'order': 9,
+                            'description': 'Invitation to store aggregated scores',
+                            'value': self.journal.get_ae_aggregate_score_id()
+                        },
+                        'conflicts_invitation': {
+                            'order': 10,
+                            'description': 'Invitation to store conflict scores',
+                            'value': self.journal.get_ae_conflict_id(),
+                        },
+                        'assignment_invitation': {
+                            'order': 11,
+                            'description': 'Invitation to store paper user assignments',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': self.journal.get_ae_assignment_id(proposed=True),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'deployed_assignment_invitation': {
+                            'order': 12,
+                            'description': 'Invitation to store deployed paper user assignments',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'const': self.journal.get_ae_assignment_id(),
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'custom_user_demand_invitation': {
+                            'order': 14,
+                            'description': 'Invitation to store custom number of users required by papers',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    #'default': '{}/-/Custom_User_Demands'.format(self.match_group.id),
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'custom_max_papers_invitation': {
+                            'order': 15,
+                            'description': 'Invitation to store custom max number of papers that can be assigned to reviewers',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'minLength': 1
+                                }
+                            }
+                        },
+                        'solver': {
+                            'order': 17,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence'],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'status': {
+                            'order': 18,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Initialized',
+                                        'Running',
+                                        'Error',
+                                        'No Solution',
+                                        'Complete',
+                                        'Deploying',
+                                        'Deployed',
+                                        'Deployment Error',
+                                        'Queued',
+                                        'Cancelled'
+                                    ],
+                                    'input': 'select',
+                                    'default': 'Initialized'
+                                }
+                            }
+                        },
+                        'error_message': {
+                            'order': 19,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  '.*',
+                                    'optional': True,
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'allow_zero_score_assignments': {
+                            'order': 20,
+                            'description': 'Select "No" only if you do not want to allow assignments with 0 scores. Note that if there are any users without publications, you need to select "Yes" in order to run a paper matching.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum':  ['Yes', 'No'],
+                                    'input': 'radio',
+                                    'optional': True,
+                                    'default': 'Yes'
+                                }
+                            }
+                        },
+                        'randomized_probability_limits': {
+                            'order': 21,
+                            'description': 'Enter the probability limits if the selected solver is Randomized',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  r'[-+]?[0-9]*\.?[0-9]*',
+                                    'optional': True,
+                                    'default': '1'
+                                }
+                            }
+                        },
+                        'randomized_fraction_of_opt': {
+                            'order': 22,
+                            'description': 'result of randomized assignment',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex':  r'[-+]?[0-9]*\.?[0-9]*',
+                                    'optional': True,
+                                    'default': '',
+                                    'hidden': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)               

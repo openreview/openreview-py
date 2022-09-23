@@ -856,7 +856,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -1059,7 +1061,9 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
             )
         )
 
@@ -1082,10 +1086,12 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
                 signatures=[javier_anon_groups[0].id],
                 note=Note(
                     content={
-                        'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                        'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                        'requested_changes': { 'value': 'requested_changes' },
-                        'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                    }
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                    }
                 )
             )
 
@@ -1282,7 +1288,9 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
             )
         )
 
@@ -1382,7 +1390,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions V2 ' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses V2' },
                     'requested_changes': { 'value': 'requested_changes V2' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                     
                 }
             )
         )
@@ -1417,7 +1427,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                 }
             )
         )
 
@@ -1480,6 +1492,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification'] },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -1503,6 +1517,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -1526,6 +1542,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 content={
                     'decision_recommendation': { 'value': 'Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -1582,6 +1600,8 @@ The TMLR Editors-in-Chief
                 content={
                     'decision_recommendation': { 'value': 'Leaning Accept' },
                     'certification_recommendations': { 'value': ['Survey Certification'] },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -1634,6 +1654,9 @@ The TMLR Editors-in-Chief
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             note=Note(
                 content={
+                    'main_claims': { 'value': 'Accept as is' },
+                    'claims_support': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' },
                     'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
@@ -1653,6 +1676,9 @@ The TMLR Editors-in-Chief
                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
                 note=Note(
                     content={
+                        'main_claims': { 'value': 'Accept as is' },
+                        'claims_support': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Accept as is' },
                         'comment': { 'value': 'This is a nice paper!' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
@@ -1700,6 +1726,7 @@ The TMLR Editors-in-Chief
 '''
 
         assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Camera_Ready_Revision")
+        #assert False
 
         ## post a revision
         revision_note = test_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
@@ -1863,11 +1890,59 @@ note={Featured Certification, Reproducibility Certification}
 
         ## Check invitations are expired
         invitations = openreview_client.get_invitations(prefix=f"{venue_id}/Paper1/.*", type = "all")
-        assert len(invitations) == 4
+        assert len(invitations) == 5
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Retraction" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/EIC_Revision" in [i.id for i in invitations]
+
+        ## Update the paper by the EICs
+        revision_note = raia_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/EIC_Revision',
+            signatures=[f"{venue_id}/Editors_In_Chief"],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title VERSION 2' },
+                    'authors': { 'value': ['Melissa Bok', 'SomeFirstName User', 'Celeste Ana Martinez'] },
+                    'authorids': { 'value': ['~Melissa_Bok1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1'] },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'video': { 'value': 'https://youtube.com/dfenxkw'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        note = openreview_client.get_note(note_id_1)
+        assert note
+        assert note.forum == note_id_1
+        assert note.replyto is None
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
+        assert note.readers == ['everyone']
+        assert note.writers == ['TMLR']
+        assert note.signatures == ['TMLR/Paper1/Authors']
+        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
+        assert note.content['authors']['value'] == ['Melissa Bok', 'SomeFirstName User', 'Celeste Ana Martinez']
+        # Check with cArlos
+        assert note.content['authorids'].get('readers') == ['everyone']
+        assert note.content['authors'].get('readers') == ['everyone']
+        assert note.content['venue']['value'] == 'Accepted by TMLR'
+        assert note.content['venueid']['value'] == 'TMLR'
+        assert note.content['title']['value'] == 'Paper title VERSION 2'
+        assert note.content['abstract']['value'] == 'Paper abstract'
+        assert note.content['_bibtex']['value'] == '''@article{
+bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+title={Paper title {VERSION} 2},
+author={Melissa Bok and SomeFirstName User and Celeste Ana Martinez},
+journal={Transactions on Machine Learning Research},
+year={2022},
+url={https://openreview.net/forum?id=''' + note_id_1 + '''},
+note={Featured Certification, Reproducibility Certification}
+}'''
 
 
         ## Retract the paper
@@ -1905,7 +1980,7 @@ OpenReview Team
         helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
-        assert len(messages) == 2
+        assert len(messages) == 3
         messages = journal.client.get_messages(to='test@mail.com', subject = '[TMLR] Decision available for retraction request of TMLR submission Paper title VERSION 2')
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
@@ -1925,11 +2000,11 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
-        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1']
+        assert note.content['authorids']['value'] == ['~Melissa_Bok1', '~SomeFirstName_User1', '~Celeste_Ana_Martinez1']
         # Check with cArlos
         assert note.content['authorids'].get('readers') == ['everyone']
         assert note.content['authors'].get('readers') == ['everyone']
@@ -1940,7 +2015,7 @@ The TMLR Editors-in-Chief
         assert note.content['_bibtex']['value'] == '''@article{
 bok''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melissa Bok and SomeFirstName User},
+author={Melissa Bok and SomeFirstName User and Celeste Ana Martinez},
 journal={Submitted to Transactions on Machine Learning Research},
 year={2022},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
@@ -2195,7 +2270,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2214,7 +2291,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
             )
         )
 
@@ -2230,7 +2309,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
             )
         )
 
@@ -2277,7 +2358,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                    
                 }
             )
         )
@@ -2289,7 +2372,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2301,7 +2386,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2327,6 +2414,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
                     content={
+                        'main_claims': { 'value': 'Accept as is' },
+                        'claims_support': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Accept as is' },                        
                         'recommendation': { 'value': 'Reject' },
                         'comment': { 'value': 'This is not a good paper' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] }
@@ -2338,6 +2428,9 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
                 content={
+                    'main_claims': { 'value': 'Accept as is' },
+                    'claims_support': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },                    
                     'recommendation': { 'value': 'Reject' },
                     'comment': { 'value': 'This is not a good paper' }
                 }
@@ -2574,7 +2667,9 @@ note={Rejected}
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2591,7 +2686,9 @@ note={Rejected}
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }               }
             )
         )
 
@@ -2607,7 +2704,9 @@ note={Rejected}
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
             )
         )
 
@@ -2633,7 +2732,9 @@ note={Rejected}
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2645,7 +2746,9 @@ note={Rejected}
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2657,7 +2760,9 @@ note={Rejected}
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2682,6 +2787,9 @@ note={Rejected}
             signatures=[f"{venue_id}/Paper5/Action_Editors"],
             note=Note(
                 content={
+                    'main_claims': { 'value': 'Accept as is' },
+                    'claims_support': { 'value': 'Accept as is' },
+                    'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept with minor revision' },
                     'comment': { 'value': 'This is a good paper' }
                 }
@@ -2858,7 +2966,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }
                 }
             )
         )
@@ -2875,7 +2985,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
             )
         )
 
@@ -2891,7 +3003,9 @@ The TMLR Editors-in-Chief
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
                     'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
                     'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                }
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
             )
         )
 
@@ -2917,7 +3031,9 @@ The TMLR Editors-in-Chief
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2929,7 +3045,9 @@ The TMLR Editors-in-Chief
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )
@@ -2941,7 +3059,9 @@ The TMLR Editors-in-Chief
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
-                    'decision_recommendation': { 'value': 'Reject' }
+                    'decision_recommendation': { 'value': 'Reject' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                  
                 }
             )
         )

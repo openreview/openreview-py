@@ -62,13 +62,20 @@ The {journal.short_name} Editors-in-Chief
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
 
         ## update assigned_action_editor if exists in the submission
+        content = {}
         if 'assigned_action_editor' in note.content:
+            content['assigned_action_editor'] = { 'value': edge.tail}
+
+        if journal.assigning_AE_venue_id == note.content['venueid']['value']:
+            content['venueid'] = { 'value': journal.assigned_AE_venue_id }
+            content['venue'] = { 'value': f'{journal.short_name} Assigned AE' }
+
+
+        if content:
             client.post_note_edit(invitation= journal.get_meta_invitation_id(),
                                 signatures=[journal.venue_id],
                                 note=openreview.api.Note(id=note.id,
-                                content = {
-                                    'assigned_action_editor': { 'value': edge.tail}
-                                } 
-            ))            
+                                content = content 
+            ))                        
 
         return
