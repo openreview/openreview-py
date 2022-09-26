@@ -549,12 +549,39 @@ class InvitationBuilder(object):
                 }
             }
 
+        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
+        with open(process_file) as f:
+            process_content = f.read()
+
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
+            process_content = process_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
+            process_content = process_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
+
+            if self.venue.use_area_chairs:
+                process_content = process_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
+
+            if self.venue.use_senior_area_chairs:
+                process_content = process_content.replace("PAPER_SENIOR_AREA_CHAIRS_ID = ''", f"PAPER_SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id('{number}')}'")
+
+            if comment_stage.email_pcs:
+                process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
+
         process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
         with open(process_file) as f:
             invitation_start_process = f.read()
 
             invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
             invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_pre_process.py')
+        with open(process_file) as f:
+            pre_process_content = f.read()
+            mandatory_readers = [self.venue.get_program_chairs_id()]
+            if self.venue.use_senior_area_chairs:
+                mandatory_readers.append(self.venue.get_senior_area_chairs_id(number='{number}'))
+
+            pre_process_content = pre_process_content.replace("MANDATORY_READERS = []", "MANDATORY_READERS = " + json.dumps(mandatory_readers))
 
         invitation = Invitation(id=official_comment_invitation_id,
             invitees=[venue_id],
@@ -567,6 +594,14 @@ class InvitationBuilder(object):
                 'dates': ["#{4/cdate}"],
                 'script': invitation_start_process
             }],
+            content={
+                'comment_preprocess_script': {
+                    'value': pre_process_content
+                },
+                'comment_process_script': {
+                    'value': process_content
+                }
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -595,13 +630,24 @@ class InvitationBuilder(object):
                     'invitees': invitees,
                     'duedate': comment_duedate,
                     'cdate': comment_cdate,
-#                     'process': '''def process(client, edit, invitation):
-#     meta_invitation = client.get_invitation(invitation.invitations[0])
-#     script = meta_invitation.content['review_process_script']['value']
-#     funcs = {}
-#     exec(script, funcs)
-#     funcs['process'](client, edit, invitation)
-# ''',
+                    'preprocess': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                     'edit': {
                         'signatures': { 'param': { 'regex': comment_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
                         'readers': ['${2/note/readers}'],

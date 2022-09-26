@@ -1522,7 +1522,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'title': {'value': 'test official comment title'}
             }
         ))
-        assert official_comment_note
+        helpers.await_queue_edit(openreview_client, edit_id=official_comment_note['id'])
 
 #         process_logs = client.get_process_logs(id=official_comment_note.id)
 #         assert len(process_logs) == 1
