@@ -57,26 +57,26 @@ class TestVenueSubmission():
         submission = openreview_client.get_note(submission_note_1['note']['id'])
         assert len(submission.readers) == 2
         assert 'TestVenue.cc' in submission.readers
-        assert 'TestVenue.cc/Paper1/Authors' in submission.readers
+        assert 'TestVenue.cc/Submission1/Authors' in submission.readers
                 
         venue.setup_post_submission_stage()
-        assert openreview_client.get_group('TestVenue.cc/Paper1/Authors')
-        assert openreview_client.get_group('TestVenue.cc/Paper1/Reviewers')
-        assert openreview_client.get_group('TestVenue.cc/Paper1/Area_Chairs')
+        assert openreview_client.get_group('TestVenue.cc/Submission1/Authors')
+        assert openreview_client.get_group('TestVenue.cc/Submission1/Reviewers')
+        assert openreview_client.get_group('TestVenue.cc/Submission1/Area_Chairs')
 
         submission = openreview_client.get_note(submission.id)
         assert len(submission.readers) == 4
         assert 'TestVenue.cc' in submission.readers
-        assert 'TestVenue.cc/Paper1/Authors' in submission.readers        
-        assert 'TestVenue.cc/Paper1/Reviewers' in submission.readers
-        assert 'TestVenue.cc/Paper1/Area_Chairs' in submission.readers
+        assert 'TestVenue.cc/Submission1/Authors' in submission.readers        
+        assert 'TestVenue.cc/Submission1/Reviewers' in submission.readers
+        assert 'TestVenue.cc/Submission1/Area_Chairs' in submission.readers
 
         now = datetime.datetime.utcnow()
         venue.review_stage = openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40))
         venue.create_review_stage()
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
-        assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Official_Review')
+        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
 
         #recruit reviewers and area chairs to create groups
         message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
@@ -120,7 +120,7 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation(venue.id + '/Area_Chairs/-/Bid')
 
         #test posting a bid edge
-        openreview_client.add_members_to_group(venue.id + '/Paper1/Reviewers', '~Reviewer_Venue_One1')
+        openreview_client.add_members_to_group(venue.id + '/Submission1/Reviewers', '~Reviewer_Venue_One1')
 
         bid_edge = reviewer_client.post_edge(Edge(invitation = venue.id + '/Reviewers/-/Bid',
             head = submission.id,
@@ -156,17 +156,17 @@ class TestVenueSubmission():
         proposed_assignment_edge = openreview_client.post_edge(Edge(
             invitation = venue.id + '/Reviewers/-/Proposed_Assignment',
             # signatures = ['TestVenue.cc'],
-            signatures = ['TestVenue.cc/Paper1/Area_Chairs'],
+            signatures = ['TestVenue.cc/Submission1/Area_Chairs'],
             head = submission.id,
             tail = '~Reviewer_Venue_One1',
-            readers = ['TestVenue.cc','TestVenue.cc/Paper1/Area_Chairs','~Reviewer_Venue_One1'],
-            writers = ['TestVenue.cc','TestVenue.cc/Paper1/Area_Chairs'],
+            readers = ['TestVenue.cc','TestVenue.cc/Submission1/Area_Chairs','~Reviewer_Venue_One1'],
+            writers = ['TestVenue.cc','TestVenue.cc/Submission1/Area_Chairs'],
             weight = 0.92,
             label = 'test-matching-1'
         ))
 
         assert proposed_assignment_edge
-        assert proposed_assignment_edge.nonreaders == ['TestVenue.cc/Paper1/Authors']
+        assert proposed_assignment_edge.nonreaders == ['TestVenue.cc/Submission1/Authors']
 
         custom_load_edges = openreview_client.get_edges(invitation=f'{conference_id}/Reviewers/-/Custom_Max_Papers')
         assert (len(custom_load_edges)) == 1
@@ -179,7 +179,7 @@ class TestVenueSubmission():
         ac_client = OpenReviewClient(username='ac_venue_one@mail.com', password='1234')
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
-        assert openreview_client.get_invitation('TestVenue.cc/Paper1/-/Meta_Review')
+        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Meta_Review')
 
         openreview_client.add_members_to_group(conference_id+'/Area_Chairs', '~Area_Chair_Venue_One1')
-        openreview_client.add_members_to_group(conference_id+'/Paper1/Area_Chairs', '~Area_Chair_Venue_One1')
+        openreview_client.add_members_to_group(conference_id+'/Submission1/Area_Chairs', '~Area_Chair_Venue_One1')

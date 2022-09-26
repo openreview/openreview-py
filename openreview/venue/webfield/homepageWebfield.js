@@ -5,7 +5,7 @@ const WITHDRAWN_SUBMISSION_ID = ''
 const DESK_REJECTED_SUBMISSION_ID = ''
 const AUTHORS_ID = ''
 const PARENT_GROUP = ''
-const PUBLIC = false
+const SUBMISSIONS_PUBLIC = false
 
 var HEADER = {};
   
@@ -20,6 +20,6 @@ return {
     withdrawnSubmissionId: WITHDRAWN_SUBMISSION_ID,
     deskRejectedSubmissionId: DESK_REJECTED_SUBMISSION_ID,
     authorsGroupId: AUTHORS_ID,
-    showSubmissions: PUBLIC,
+    showSubmissions: SUBMISSIONS_PUBLIC,
   }
 }

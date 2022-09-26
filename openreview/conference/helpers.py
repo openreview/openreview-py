@@ -17,40 +17,14 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
-        venue.setup(note.content.get('program_chair_emails'))
-        name = note.content.get('submission_name', 'Submission').strip()
-        double_blind = (note.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
-        readers_map = {
-            'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS],
-            'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
-            'Program chairs and paper authors only': [],
-            'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
-            'Make accepted submissions public and hide rejected submissions': [openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
-        }
 
-        # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
-        if 'submission_readers' in note.content:
-            readers = readers_map[note.content.get('submission_readers')]
-            public = 'Everyone (submissions are public)' in readers
-        else:
-            public = (note.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
-            bidding_enabled = 'Reviewer Bid Scores' in note.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in note.content.get('Paper Matching', '')
-            if bidding_enabled and not public:
-                readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS]
-            elif public:
-                readers = [openreview.SubmissionStage.Readers.EVERYONE]
-            else:
-                readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
-
-        venue.set_submission_stage(openreview.builder.SubmissionStage(name = name, 
-            double_blind=double_blind, 
-            readers=readers)
-        )
-
+        venue.submission_stage = get_submission_stage(note)
         venue.review_stage = get_review_stage(note)
         venue.bid_stages = get_bid_stages(note)
         venue.meta_review_stage = get_meta_review_stage(note)
 
+        venue.setup(note.content.get('program_chair_emails'))
+        venue.create_submission_stage()
         return venue
 
     builder = get_conference_builder(client, request_form_id, support_user)
@@ -287,6 +261,38 @@ def get_identity_readers(request_forum, field_name):
     }
 
     return [readers_map[r] for r in request_forum.content.get(field_name, [])]    
+
+def get_submission_stage(request_forum):
+
+    name = request_forum.content.get('submission_name', 'Submission').strip()
+    double_blind = (request_forum.content.get('Author and Reviewer Anonymity', '') == 'Double-blind')
+
+    readers_map = {
+        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS],
+        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
+        'Program chairs and paper authors only': [],
+        'Everyone (submissions are public)': [openreview.SubmissionStage.Readers.EVERYONE],
+        'Make accepted submissions public and hide rejected submissions': [openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
+    }
+
+    # Prioritize submission_readers over Open Reviewing Policy (because PCs can keep changing this)
+    if 'submission_readers' in request_forum.content:
+        readers = readers_map[request_forum.content.get('submission_readers')]
+        public = 'Everyone (submissions are public)' in readers
+    else:
+        public = (request_forum.content.get('Open Reviewing Policy', '') in ['Submissions and reviews should both be public.', 'Submissions should be public, but reviews should be private.'])
+        bidding_enabled = 'Reviewer Bid Scores' in request_forum.content.get('Paper Matching', '') or 'Reviewer Recommendation Scores' in request_forum.content.get('Paper Matching', '')
+        if bidding_enabled and not public:
+            readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS]
+        elif public:
+            readers = [openreview.SubmissionStage.Readers.EVERYONE]
+        else:
+            readers = [openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+
+    return openreview.builder.SubmissionStage(name = name, 
+        double_blind=double_blind, 
+        readers=readers)
+
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()

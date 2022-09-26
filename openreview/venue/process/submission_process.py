@@ -2,10 +2,10 @@ def process(client, edit, invitation):
     VENUE_ID = ''
     venue_id = VENUE_ID
     note = client.get_note(edit.note.id)
-    submission_group_name = 'Paper'
+    submission_name = invitation.id.split('/-/')[-1]
     authors_name = 'Authors'
     
-    paper_group_id=f'{venue_id}/{submission_group_name}{note.number}'
+    paper_group_id=f'{venue_id}/{submission_name}{note.number}'
     paper_group=openreview.tools.get_group(client, paper_group_id)
     if not paper_group:
         paper_group=client.post_group(openreview.api.Group(id=paper_group_id,
