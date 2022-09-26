@@ -366,8 +366,8 @@ class Venue(object):
         self.invitation_builder.set_bid_invitations()
 
     def create_comment_stage(self):
-        self.invitation_builder.set_comment_invitation()
-        self.create_paper_invitations(self.comment_stage.official_comment_name)
+        comment_invitation = self.invitation_builder.set_official_comment_invitation()
+        self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions())
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:

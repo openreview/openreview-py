@@ -530,7 +530,7 @@ class InvitationBuilder(object):
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
 
-    def set_comment_invitation(self):
+    def set_official_comment_invitation(self):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
@@ -634,7 +634,8 @@ class InvitationBuilder(object):
             }
         )
 
-        return self.save_invitation(invitation, replacement=True)
+        self.save_invitation(invitation, replacement=True)
+        return invitation
 
     def set_assignment_invitation(self, committee_id):
         client = self.client

@@ -1456,81 +1456,81 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'V2.cc/2030/Conference/Submission1/Authors' in meta_reviews[0].readers
         assert len(meta_reviews[0].nonreaders) == 0
 
-    # def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
+    def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-    #     submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number')
-    #     assert submissions and len(submissions) == 2
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number')
+        assert submissions and len(submissions) == 2
 
-    #     # Assert that official comment invitation is not available already
-    #     official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
-    #     assert official_comment_invitation is None
+        # Assert that official comment invitation is not available already
+        official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
+        assert official_comment_invitation is None
 
-    #     # Post an official comment stage note
-    #     now = datetime.datetime.utcnow()
-    #     start_date = now - datetime.timedelta(days=2)
-    #     end_date = now + datetime.timedelta(days=3)
-    #     comment_stage_note = test_client.post_note(openreview.Note(
-    #         content={
-    #             'commentary_start_date': start_date.strftime('%Y/%m/%d'),
-    #             'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-    #             'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors'],
-    #             'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
 
-    #         },
-    #         forum=venue['request_form_note'].forum,
-    #         invitation='{}/-/Request{}/Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-    #         readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-    #         referent=venue['request_form_note'].forum,
-    #         replyto=venue['request_form_note'].forum,
-    #         signatures=['~SomeFirstName_User1'],
-    #         writers=[]
-    #     ))
-    #     assert comment_stage_note
-    #     helpers.await_queue()
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert comment_stage_note
+        helpers.await_queue()
 
-    #     process_logs = client.get_process_logs(id=comment_stage_note.id)
-    #     assert len(process_logs) == 1
-    #     assert process_logs[0]['status'] == 'ok'
+        process_logs = client.get_process_logs(id=comment_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-    #     # Assert that official comment invitation is now available
-    #     official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
-    #     assert official_comment_invitation
+        # Assert that official comment invitation is now available
+        official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
+        assert official_comment_invitation
 
-    #     paper_official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/Submission1/-/Official_Comment'.format(venue['venue_id']))
-    #     assert paper_official_comment_invitation
-    #     assert 'V2.cc/2030/Conference/Program_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-    #     assert 'V2.cc/2030/Conference/Submission1/Reviewer_.*' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-    #     assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-    #     assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-    #     assert 'V2.cc/2030/Conference/Submission1/Reviewers' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
-    #     assert 'V2.cc/2030/Conference/Submission1/Authors' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        paper_official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/Submission1/-/Official_Comment'.format(venue['venue_id']))
+        assert paper_official_comment_invitation
+        assert 'V2.cc/2030/Conference/Program_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Reviewer_.*' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
 
-    #     author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
-    #     # Assert that an official comment can be posted by the paper author
-    #     official_comment_note = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Official_Comment',
-    #     signatures=['V2.cc/2030/Conference/Submission1/Authors'],
-    #     note=Note(
-    #         readers=[
-    #             'V2.cc/2030/Conference/Program_Chairs',
-    #             'V2.cc/2030/Conference/Submission1/Area_Chairs',
-    #             'V2.cc/2030/Conference/Submission1/Authors',
-    #             'V2.cc/2030/Conference/Submission1/Reviewers',
-    #             'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs'
-    #         ],
-    #         content={
-    #             'comment': {'value': 'test comment'},
-    #             'title': {'value': 'test official comment title'}
-    #         }
-    #     ))
-    #     assert official_comment_note
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
+        # Assert that an official comment can be posted by the paper author
+        official_comment_note = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Official_Comment',
+        signatures=['V2.cc/2030/Conference/Submission1/Authors'],
+        note=Note(
+            readers=[
+                'V2.cc/2030/Conference/Program_Chairs',
+                'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                'V2.cc/2030/Conference/Submission1/Authors',
+                'V2.cc/2030/Conference/Submission1/Reviewers',
+                'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs'
+            ],
+            content={
+                'comment': {'value': 'test comment'},
+                'title': {'value': 'test official comment title'}
+            }
+        ))
+        assert official_comment_note
 
 #         process_logs = client.get_process_logs(id=official_comment_note.id)
 #         assert len(process_logs) == 1
 #         assert process_logs[0]['status'] == 'ok'
 
-#         # Assert that public comment invitation is not available
-#         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
-#         assert public_comment_invitation is None
+        # Assert that public comment invitation is not available
+        public_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Public_Comment'.format(venue['venue_id']))
+        assert public_comment_invitation is None
 
 #     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
 
