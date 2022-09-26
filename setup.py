@@ -17,7 +17,6 @@ setup(
     packages=[
         'openreview',
         'openreview/conference',
-        'openreview/invitations',
         'openreview/agora',
         'openreview/venue',
         'openreview/venue_request',
