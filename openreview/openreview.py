@@ -13,6 +13,7 @@ import pprint
 import os
 import re
 import jwt
+import traceback
 
 
 class OpenReviewException(Exception):
@@ -108,7 +109,19 @@ class Client(object):
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            raise OpenReviewException(response.json())
+            if 'application/json' in response.headers.get('Content-Type'):
+                error = response.json()
+            elif response.text:
+                error = {
+                    'name': 'Error',
+                    'message': response.text
+                }
+            else:
+                error = {
+                    'name': 'Error',
+                    'message': response.reason
+                }
+            raise OpenReviewException(error)
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
