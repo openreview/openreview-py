@@ -791,19 +791,12 @@ class VenueRequest():
         self.client = client
         self.super_user = super_user
 
-        if not self.support_group:
+        if self.support_group:
             with open(os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')) as f:
                 file_content = f.read()
                 file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
-                support_group = openreview.Group(
-                    id=self.support_group_id,
-                    readers=['everyone'],
-                    writers=[self.support_group_id],
-                    signatures=[super_user],
-                    signatories=[self.support_group_id],
-                    members=[],
-                    web_string=file_content)
-                self.support_group = client.post_group(support_group)
+                self.support_group.web = file_content
+                self.support_group = client.post_group(self.support_group)
 
         self.support_process = os.path.join(os.path.dirname(__file__), 'process/support_process.py')
         self.support_pre_process = os.path.join(os.path.dirname(__file__), 'process/request_form_pre_process.py')
@@ -1012,6 +1005,7 @@ class VenueRequest():
                 'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue had one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
                     'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                    'All area chairs only',
                     'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                     'Program chairs and paper authors only',
                     'Everyone (submissions are public)'
@@ -1136,10 +1130,22 @@ class VenueRequest():
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
+            'api_version': {
+                'value-dropdown': ['1', '2'],
+                'default': ['1'],
+                'order': 39,
+            },
             'include_expertise_selection': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
                 'order': 38,
+                'required': False,
+                'hidden': True # Change this value on exception request from the PCs.
+            },
+            'submission_deadline_author_reorder': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 39,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }
@@ -1270,6 +1276,7 @@ class VenueRequest():
                 'description': 'Please select who should have access to the submissions after the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
                     'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                    'All area chairs only',
                     'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                     'Program chairs and paper authors only',
                     'Everyone (submissions are public)'
