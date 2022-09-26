@@ -220,13 +220,13 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.use_recruitment_template(note.content.get('use_recruitment_template', 'No') == 'Yes')
 
     readers_map = {
-        'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
-        'All Senior Area Chairs': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS,
-        'Assigned Senior Area Chair': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
-        'All Area Chairs': openreview.Conference.IdentityReaders.AREA_CHAIRS,
-        'Assigned Area Chair': openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
-        'All Reviewers': openreview.Conference.IdentityReaders.REVIEWERS,
-        'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+        'Program Chairs': openreview.stages.IdentityReaders.PROGRAM_CHAIRS,
+        'All Senior Area Chairs': openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS,
+        'Assigned Senior Area Chair': openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+        'All Area Chairs': openreview.stages.IdentityReaders.AREA_CHAIRS,
+        'Assigned Area Chair': openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+        'All Reviewers': openreview.stages.IdentityReaders.REVIEWERS,
+        'Assigned Reviewers': openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED
     }
 
     builder.set_reviewer_identity_readers(get_identity_readers(note, 'reviewer_identity'))
@@ -251,13 +251,13 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 def get_identity_readers(request_forum, field_name):
 
     readers_map = {
-        'Program Chairs': openreview.Conference.IdentityReaders.PROGRAM_CHAIRS,
-        'All Senior Area Chairs': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS,
-        'Assigned Senior Area Chair': openreview.Conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
-        'All Area Chairs': openreview.Conference.IdentityReaders.AREA_CHAIRS,
-        'Assigned Area Chair': openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED,
-        'All Reviewers': openreview.Conference.IdentityReaders.REVIEWERS,
-        'Assigned Reviewers': openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED
+        'Program Chairs': openreview.stages.IdentityReaders.PROGRAM_CHAIRS,
+        'All Senior Area Chairs': openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS,
+        'Assigned Senior Area Chair': openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED,
+        'All Area Chairs': openreview.stages.IdentityReaders.AREA_CHAIRS,
+        'Assigned Area Chair': openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED,
+        'All Reviewers': openreview.stages.IdentityReaders.REVIEWERS,
+        'Assigned Reviewers': openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED
     }
 
     return [readers_map[r] for r in request_forum.content.get(field_name, [])]    

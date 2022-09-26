@@ -3,6 +3,35 @@ import datetime
 from enum import Enum
 from . import default_content 
 
+class IdentityReaders(Enum):
+    PROGRAM_CHAIRS = 0
+    SENIOR_AREA_CHAIRS = 1
+    SENIOR_AREA_CHAIRS_ASSIGNED = 2
+    AREA_CHAIRS = 3
+    AREA_CHAIRS_ASSIGNED = 4
+    REVIEWERS = 5
+    REVIEWERS_ASSIGNED = 6
+
+    @classmethod
+    def get_readers(self, conference, number, identity_readers):
+        readers = [conference.id]
+        if self.PROGRAM_CHAIRS in identity_readers:
+            readers.append(conference.get_program_chairs_id())
+        if self.SENIOR_AREA_CHAIRS in identity_readers:
+            readers.append(conference.get_senior_area_chairs_id())
+        if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
+            readers.append(conference.get_senior_area_chairs_id(number))
+        if self.AREA_CHAIRS in identity_readers:
+            readers.append(conference.get_area_chairs_id())
+        if self.AREA_CHAIRS_ASSIGNED in identity_readers:
+            readers.append(conference.get_area_chairs_id(number))
+        if self.REVIEWERS in identity_readers:
+            readers.append(conference.get_reviewers_id())
+        if self.REVIEWERS_ASSIGNED in identity_readers:
+            readers.append(conference.get_reviewers_id(number))
+        return readers
+
+
 class SubmissionStage(object):
 
     class Readers(Enum):

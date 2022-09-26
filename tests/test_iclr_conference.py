@@ -176,7 +176,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
                 }
             },
             readers=[openreview.stages.SubmissionStage.Readers.AREA_CHAIRS])
-        builder.set_reviewer_identity_readers([openreview.Conference.IdentityReaders.PROGRAM_CHAIRS, openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED])
+        builder.set_reviewer_identity_readers([openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED])
 
         conference = builder.get_result()
         conference.set_program_chairs(['pc@iclr.cc'])

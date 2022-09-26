@@ -27,34 +27,6 @@ from deprecated.sphinx import deprecated
 
 class Conference(object):
 
-    class IdentityReaders(Enum):
-        PROGRAM_CHAIRS = 0
-        SENIOR_AREA_CHAIRS = 1
-        SENIOR_AREA_CHAIRS_ASSIGNED = 2
-        AREA_CHAIRS = 3
-        AREA_CHAIRS_ASSIGNED = 4
-        REVIEWERS = 5
-        REVIEWERS_ASSIGNED = 6
-
-        @classmethod
-        def get_readers(self, conference, number, identity_readers):
-            readers = [conference.id]
-            if self.PROGRAM_CHAIRS in identity_readers:
-                readers.append(conference.get_program_chairs_id())
-            if self.SENIOR_AREA_CHAIRS in identity_readers:
-                readers.append(conference.get_senior_area_chairs_id())
-            if self.SENIOR_AREA_CHAIRS_ASSIGNED in identity_readers:
-                readers.append(conference.get_senior_area_chairs_id(number))
-            if self.AREA_CHAIRS in identity_readers:
-                readers.append(conference.get_area_chairs_id())
-            if self.AREA_CHAIRS_ASSIGNED in identity_readers:
-                readers.append(conference.get_area_chairs_id(number))
-            if self.REVIEWERS in identity_readers:
-                readers.append(conference.get_reviewers_id())
-            if self.REVIEWERS_ASSIGNED in identity_readers:
-                readers.append(conference.get_reviewers_id(number))
-            return readers
-
     def __init__(self, client):
         self.client = client
         self.request_form_id = None
@@ -785,7 +757,7 @@ class Conference(object):
                 identity_readers.append(self.get_area_chairs_id(number))
             return identity_readers
 
-        return self.IdentityReaders.get_readers(self, number, self.reviewer_identity_readers)
+        return openreview.stages.IdentityReaders.get_readers(self, number, self.reviewer_identity_readers)
 
     def get_area_chair_identity_readers(self, number):
         ## default value
@@ -796,14 +768,14 @@ class Conference(object):
             identity_readers.append(self.get_area_chairs_id(number))
             return identity_readers
 
-        return self.IdentityReaders.get_readers(self, number, self.area_chair_identity_readers)
+        return openreview.stages.IdentityReaders.get_readers(self, number, self.area_chair_identity_readers)
 
     def get_senior_area_chair_identity_readers(self, number):
         ## default value
         if not self.senior_area_chair_identity_readers:
             return [self.id, self.get_senior_area_chairs_id(number)]
 
-        return self.IdentityReaders.get_readers(self, number, self.senior_area_chair_identity_readers)
+        return openreview.stages.IdentityReaders.get_readers(self, number, self.senior_area_chair_identity_readers)
 
     def get_reviewer_paper_group_readers(self, number):
         readers=[self.id]
@@ -828,7 +800,7 @@ class Conference(object):
         if self.use_senior_area_chairs:
             readers.append(self.get_senior_area_chairs_id(number))
         readers.append(self.get_area_chairs_id(number))
-        if self.IdentityReaders.REVIEWERS_ASSIGNED in self.area_chair_identity_readers:
+        if openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED in self.area_chair_identity_readers:
             readers.append(self.get_reviewers_id(number))
         return readers
 
@@ -2170,10 +2142,10 @@ class ConferenceBuilder(object):
     def get_result(self):
 
         if self.conference.reviewer_identity_readers:
-            if self.conference.use_area_chairs and self.conference.IdentityReaders.AREA_CHAIRS_ASSIGNED not in self.conference.reviewer_identity_readers and self.conference.IdentityReaders.AREA_CHAIRS not in self.conference.reviewer_identity_readers:
+            if self.conference.use_area_chairs and openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED not in self.conference.reviewer_identity_readers and openreview.stages.IdentityReaders.AREA_CHAIRS not in self.conference.reviewer_identity_readers:
                 raise openreview.OpenReviewException('Assigned area chairs must see the reviewer identity')
 
-            if self.conference.use_senior_area_chairs and self.conference.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED not in self.conference.reviewer_identity_readers and self.conference.IdentityReaders.SENIOR_AREA_CHAIRS not in self.conference.reviewer_identity_readers:
+            if self.conference.use_senior_area_chairs and openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS_ASSIGNED not in self.conference.reviewer_identity_readers and openreview.stages.IdentityReaders.SENIOR_AREA_CHAIRS not in self.conference.reviewer_identity_readers:
                 raise openreview.OpenReviewException('Assigned senior area chairs must see the reviewer identity')
 
         id = self.conference.get_id()
