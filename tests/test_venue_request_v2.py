@@ -1166,7 +1166,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         helpers.await_queue()
 
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Reviewers', '~VenueThree_Reviewer1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password='1234')
         reviewer_group = client.get_group('V2.cc/2030/Conference/Reviewers')
@@ -1183,37 +1183,37 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert review_invitations and len(review_invitations) == 2
         assert 'title' not in review_invitations[0].edit['note']['content']
 
-        reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Paper1/Reviewers')
+        reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Submission1/Reviewers')
         assert 'V2.cc/2030/Conference' in reviewer_group.readers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_group.readers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviewer_group.readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in reviewer_group.readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviewer_group.readers
 
         assert 'V2.cc/2030/Conference' in reviewer_group.deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_group.deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in reviewer_group.deanonymizers
-        reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Paper2/Reviewers')
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in reviewer_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' not in reviewer_group.deanonymizers
+        reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Submission2/Reviewers')
 
-        ac_group = openreview_client.get_group('V2.cc/2030/Conference/Paper1/Area_Chairs')
+        ac_group = openreview_client.get_group('V2.cc/2030/Conference/Submission1/Area_Chairs')
         assert 'V2.cc/2030/Conference' in ac_group.readers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in ac_group.readers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_group.readers
-        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_group.readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in ac_group.readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' not in ac_group.readers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in ac_group.readers
 
         assert 'V2.cc/2030/Conference' in ac_group.deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' not in ac_group.deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' not in ac_group.deanonymizers
-        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' not in ac_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' not in ac_group.deanonymizers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in ac_group.deanonymizers
 
-        sac_group = openreview_client.get_group('V2.cc/2030/Conference/Paper1/Senior_Area_Chairs')
-        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_group.readers
+        sac_group = openreview_client.get_group('V2.cc/2030/Conference/Submission1/Senior_Area_Chairs')
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in sac_group.readers
         assert 'V2.cc/2030/Conference/Program_Chairs' in sac_group.readers
 
         ## Post a review
-        reviewer_anon_groups=reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Paper1/Reviewer_.*', signatory='~VenueThree_Reviewer1')
+        reviewer_anon_groups=reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Submission1/Reviewer_.*', signatory='~VenueThree_Reviewer1')
         assert len(reviewer_anon_groups) == 1
 
         ## Post a review edit
-        review_note = reviewer_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Paper1/-/Official_Review',
+        review_note = reviewer_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Submission1/-/Official_Review',
             signatures=[reviewer_anon_groups[0].id],
             note=Note(
                 content={
@@ -1227,13 +1227,13 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
         ## reviews should be private
-        reviews = reviewer_client.get_notes(invitation=f'V2.cc/2030/Conference/Paper1/-/Official_Review', sort= 'number:asc')
+        reviews = reviewer_client.get_notes(invitation=f'V2.cc/2030/Conference/Submission1/-/Official_Review', sort= 'number:asc')
         assert len(reviews) == 1
         assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in reviews[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviews[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers/Submitted' in reviews[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Authors' not in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers/Submitted' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Authors' not in reviews[0].readers
 
     def test_release_reviews_to_authors(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
@@ -1262,18 +1262,18 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert review_stage_note
         helpers.await_queue()
 
-        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Paper1/-/Official_Review')
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(invitation.edit['note']['readers']) == 5
-        assert 'V2.cc/2030/Conference/Paper1/Authors' in invitation.edit['note']['readers']
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in invitation.edit['note']['readers']
         assert len(invitation.edit['note']['nonreaders']) == 0
 
-        reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Paper1/-/Official_Review')
+        reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 1
         assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Senior_Area_Chairs' in reviews[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Area_Chairs' in reviews[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Reviewers' in reviews[0].readers
-        assert 'V2.cc/2030/Conference/Paper1/Authors' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in reviews[0].readers
         assert len(reviews[0].nonreaders) == 0
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
@@ -1288,8 +1288,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         meta_reviewer_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         openreview_client.add_members_to_group(meta_reviewer_group, '~VenueTwo_Ac1')
 
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Area_Chairs', '~VenueTwo_Ac1')
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Paper1/Area_Chairs', '~VenueTwo_Ac1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Area_Chairs', '~VenueTwo_Ac1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Area_Chairs', '~VenueTwo_Ac1')
 
         ac_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         assert ac_group and len(ac_group.members) == 2
@@ -1372,9 +1372,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         # submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         # assert submit_div_2.find_element_by_link_text('Submit')
 
-        meta_review_invitation = openreview_client.get_invitation(id='{}/Paper1/-/Meta_Review'.format(venue['venue_id']))
+        meta_review_invitation = openreview_client.get_invitation(id='{}/Submission1/-/Meta_Review'.format(venue['venue_id']))
         assert meta_review_invitation
-        meta_review_invitation = openreview_client.get_invitation(id='{}/Paper2/-/Meta_Review'.format(venue['venue_id']))
+        meta_review_invitation = openreview_client.get_invitation(id='{}/Submission2/-/Meta_Review'.format(venue['venue_id']))
         assert meta_review_invitation
         assert 'confidence' not in meta_review_invitation.edit['note']['content']
         assert 'suggestions' in meta_review_invitation.edit['note']['content']
@@ -1937,8 +1937,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 #             invitation='{venue_id}/Paper.*/-/Decision'.format(venue_id=venue['venue_id'])
 #         )[0]
 
-#         assert f'TEST.cc/2030/Conference/Paper1/Authors' in decision_note.readers
-#         assert f'TEST.cc/2030/Conference/Paper1/Reviewers' in decision_note.readers
+#         assert f'TEST.cc/2030/Conference/Submission1/Authors' in decision_note.readers
+#         assert f'TEST.cc/2030/Conference/Submission1/Reviewers' in decision_note.readers
 #         assert not decision_note.nonreaders
 
 #         #get post_decision invitation
@@ -2382,12 +2382,12 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
     #     assert review_stage_note
     #     helpers.await_queue()
 
-    #     invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Paper1/-/Official_Review')
+    #     invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review')
     #     assert len(invitation.edit['note']['readers']) == 1
     #     assert 'everyone' in invitation.edit['note']['readers']
     #     assert len(invitation.edit['note']['nonreaders']) == 0
 
-    #     notes = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Paper1/-/Official_Review')
+    #     notes = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
     #     assert notes[0].readers == ['everyone']
         
 

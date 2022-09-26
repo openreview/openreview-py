@@ -11,6 +11,7 @@ class GroupBuilder(object):
     def __init__(self, venue):
         self.venue = venue
         self.client = venue.client
+        self.venue_id = venue.id
 
     def __should_update(self, entity):
         return entity.details.get('writable', False) and (not entity.web or entity.web.startswith('// webfield_template') or entity.web.startswith('// Webfield component'))
@@ -59,6 +60,17 @@ class GroupBuilder(object):
             groups.append(group)
 
         return groups
+
+    def set_group_variable(self, group_id, variable_name, value):
+
+        group = openreview.tools.get_group(self.client, group_id)
+        if group and group.web:
+            print(group.id, variable_name, value)
+            group.web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
+            group.web = group.web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
+            group.web = group.web.replace(f"const {variable_name} = false", f"const {variable_name} = {'true' if value else 'false'}")
+            group.web = group.web.replace(f"const {variable_name} = true", f"const {variable_name} = {'true' if value else 'false'}")
+            self.client.post_group(group)
 
     def set_landing_page(self, group, parentGroup, options = {}):
         # sets webfield to show links to child groups
@@ -159,9 +171,16 @@ class GroupBuilder(object):
             content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
             content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
             content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
-            content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = 'Paper'")
             content = content.replace("const CUSTOM_MAX_PAPERS_ID = ''", f"const CUSTOM_MAX_PAPERS_ID = '{self.venue.get_custom_max_papers_id(reviewers_id)}'")
             content = content.replace("const RECRUITMENT_ID = ''", f"const RECRUITMENT_ID = '{self.venue.get_recruitment_id(reviewers_id)}'")
+
+            if self.venue.submission_stage:
+                content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+                content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
+
+            if self.venue.review_stage:
+                content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
+
             reviewer_group.web = content
             self.client.post_group(reviewer_group)        
 
@@ -186,30 +205,31 @@ class GroupBuilder(object):
             content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
             content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
             content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
-            content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = 'Paper'")
-            #content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.get_custom_max_papers_id(reviewers_id)}'")
-            #content = content.replace("const META_REVIEW_NAME = ''", f"const META_REVIEW_NAME = '{self.venue.get_recruitment_id(reviewers_id)}'")
+
+            if self.venue.submission_stage:
+                content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+                content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
+
+            if self.venue.review_stage:
+                content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
+
             reviewer_group.web = content
             self.client.post_group(reviewer_group) 
 
-    def create_paper_committee_groups(self, overwrite=False):
-        print('create_paper_committee_groups')
-        submissions = self.venue.get_submissions(sort='number:asc')
-        author_group_ids = []
+    def create_paper_committee_groups(self, submissions, overwrite=False):
 
         group_by_id = { g.id: g for g in self.client.get_all_groups(prefix=f'{self.venue.id}/Paper.*') }
 
-        for n in tqdm(submissions, desc='create_paper_committee_groups'):
-
+        def create_paper_commmitee_group(note):
             # Reviewers Paper group
-            reviewers_id=self.venue.get_reviewers_id(number=n.number)
+            reviewers_id=self.venue.get_reviewers_id(number=note.number)
             group = group_by_id.get(reviewers_id)
             if not group or overwrite:
                 self.client.post_group(openreview.api.Group(id=reviewers_id,
-                    readers=self.get_reviewer_paper_group_readers(n.number),
-                    nonreaders=[self.venue.get_authors_id(n.number)],
-                    deanonymizers=self.get_reviewer_identity_readers(n.number),
-                    writers=self.get_reviewer_paper_group_writers(n.number),
+                    readers=self.get_reviewer_paper_group_readers(note.number),
+                    nonreaders=[self.venue.get_authors_id(note.number)],
+                    deanonymizers=self.get_reviewer_identity_readers(note.number),
+                    writers=self.get_reviewer_paper_group_writers(note.number),
                     signatures=[self.venue.id],
                     signatories=[self.venue.id],
                     anonids=True,
@@ -217,14 +237,14 @@ class GroupBuilder(object):
                 ))
 
             # Reviewers Submitted Paper group
-            reviewers_submitted_id = self.venue.get_reviewers_id(number=n.number) + '/Submitted'
+            reviewers_submitted_id = self.venue.get_reviewers_id(number=note.number) + '/Submitted'
             group = group_by_id.get(reviewers_submitted_id)
             if not group or overwrite:
                 readers=[self.venue.id]
                 if self.venue.use_senior_area_chairs:
-                    readers.append(self.venue.get_senior_area_chairs_id(n.number))
+                    readers.append(self.venue.get_senior_area_chairs_id(note.number))
                 if self.venue.use_area_chairs:
-                    readers.append(self.venue.get_area_chairs_id(n.number))
+                    readers.append(self.venue.get_area_chairs_id(note.number))
                 readers.append(reviewers_submitted_id)
                 self.client.post_group(openreview.api.Group(id=reviewers_submitted_id,
                     readers=readers,
@@ -236,13 +256,13 @@ class GroupBuilder(object):
 
             # Area Chairs Paper group
             if self.venue.use_area_chairs:
-                area_chairs_id=self.venue.get_area_chairs_id(number=n.number)
+                area_chairs_id=self.venue.get_area_chairs_id(number=note.number)
                 group = group_by_id.get(area_chairs_id)
                 if not group or overwrite:
                     self.client.post_group(openreview.api.Group(id=area_chairs_id,
-                        readers=self.get_area_chair_paper_group_readers(n.number),
-                        nonreaders=[self.venue.get_authors_id(n.number)],
-                        deanonymizers=self.get_area_chair_identity_readers(n.number),
+                        readers=self.get_area_chair_paper_group_readers(note.number),
+                        nonreaders=[self.venue.get_authors_id(note.number)],
+                        deanonymizers=self.get_area_chair_identity_readers(note.number),
                         writers=[self.venue.id],
                         signatures=[self.venue.id],
                         signatories=[self.venue.id],
@@ -252,14 +272,56 @@ class GroupBuilder(object):
 
             # Senior Area Chairs Paper group
             if self.venue.use_senior_area_chairs:
-                senior_area_chairs_id=self.venue.get_senior_area_chairs_id(number=n.number)
+                senior_area_chairs_id=self.venue.get_senior_area_chairs_id(number=note.number)
                 group = group_by_id.get(senior_area_chairs_id)
                 if not group or overwrite:
                     self.client.post_group(openreview.api.Group(id=senior_area_chairs_id,
-                        readers=self.get_senior_area_chair_identity_readers(n.number),
-                        nonreaders=[self.venue.get_authors_id(n.number)],
+                        readers=self.get_senior_area_chair_identity_readers(note.number),
+                        nonreaders=[self.venue.get_authors_id(note.number)],
                         writers=[self.venue.id],
                         signatures=[self.venue.id],
                         signatories=[self.venue.id, senior_area_chairs_id],
                         members=group.members if group else []
                     ))
+
+        openreview.tools.concurrent_requests(create_paper_commmitee_group, submissions, desc='create_paper_committee_groups')
+
+
+    def set_submission_variables(self):
+
+        submission_stage = self.venue.submission_stage
+        submission_id = submission_stage.get_submission_id(self.venue)
+        submission_name = submission_stage.name
+
+        self.set_group_variable(self.venue_id, 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue_id, 'SUBMISSIONS_PUBLIC', submission_stage.public)
+        self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_NAME', submission_name)
+        self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_NAME', submission_name)
+        self.set_group_variable(self.venue.get_area_chairs_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_area_chairs_id(), 'SUBMISSION_NAME', submission_name)
+        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'SUBMISSION_NAME', submission_name)
+        self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_ID', submission_id)
+        self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_NAME', submission_name)
+
+    def set_review_variables(self):
+
+        review_stage = self.venue.review_stage
+ 
+        self.set_group_variable(self.venue.get_authors_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)
+        self.set_group_variable(self.venue.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)
+        self.set_group_variable(self.venue.get_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
+        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
+        self.set_group_variable(self.venue.get_program_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
+
+    def set_meta_review_variables(self):
+
+        meta_review_stage = self.venue.meta_review_stage
+ 
+        self.set_group_variable(self.venue.get_authors_id(), 'META_REVIEW_NAME', meta_review_stage.name)
+        self.set_group_variable(self.venue.get_reviewers_id(), 'META_REVIEW_NAME', meta_review_stage.name)
+        self.set_group_variable(self.venue.get_area_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)
+        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)        
+        self.set_group_variable(self.venue.get_program_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)        
