@@ -21,7 +21,6 @@ from .. import tools
 from . import webfield
 from . import invitation
 from . import matching
-from .. import invitations
 from openreview.stages import *
 from deprecated.sphinx import deprecated
 
