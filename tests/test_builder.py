@@ -136,7 +136,7 @@ class TestBuilder():
                 'value-regex': '.*'
             }
         }
-        conference.review_stage.release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED
+        conference.review_stage.release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED
         conference.set_review_stage(conference.review_stage)
         official_review_invitations = reviewer_client.get_invitations(regex = conference.get_invitation_id('Official_Review', blind_submissions[0].number))
         assert len(official_review_invitations) == 1

@@ -1825,10 +1825,10 @@ Program Chairs
 
         def post_decision(paper_decision):
             if len(paper_decision) < 2:
-                raise OpenReviewException(
+                raise openreview.OpenReviewException(
                     "Not enough values provided in the decision file. Expected values are: paper_number, decision, comment")
             if len(paper_decision) > 3:
-                raise OpenReviewException(
+                raise openreview.OpenReviewException(
                     "Too many values provided in the decision file. Expected values are: paper_number, decision, comment"
                 )
             if len(paper_decision) == 3:
@@ -1842,7 +1842,7 @@ Program Chairs
             print(f"Posting Decision {decision} for Paper {paper_number}")
             paper_note = paper_notes.get(paper_number, None)
             if not paper_note:
-                raise OpenReviewException(
+                raise openreview.OpenReviewException(
                     f"Paper {paper_number} not found. Please check the submitted paper numbers."
                 )
 
@@ -1890,7 +1890,7 @@ Program Chairs
                 try:
                     results.append(future.result())
                 except Exception as e:
-                    errors[futures_param_mapping[future]] = e.args[0] if isinstance(e, OpenReviewException) else repr(e)
+                    errors[futures_param_mapping[future]] = e.args[0] if isinstance(e, openreview.OpenReviewException) else repr(e)
 
             gathering_responses.close()
 
