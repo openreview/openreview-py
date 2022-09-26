@@ -15,6 +15,7 @@ import os
 import re
 import time
 import jwt
+import traceback
 from openreview import Profile
 from openreview import OpenReviewException
 from .. import tools
@@ -103,7 +104,19 @@ class OpenReviewClient(object):
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            raise OpenReviewException(response.json())
+            if 'application/json' in response.headers.get('Content-Type'):
+                error = response.json()
+            elif response.text:
+                error = {
+                    'name': 'Error',
+                    'message': response.text
+                }
+            else:
+                error = {
+                    'name': 'Error',
+                    'message': response.reason
+                }
+            raise OpenReviewException(error)
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
