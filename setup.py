@@ -23,6 +23,7 @@ setup(
         'openreview/venue_request',
         'openreview/journal',
         'openreview/journal/journal_request',
+        'openreview/stages',
         'openreview.api'
     ],
     install_requires=[
