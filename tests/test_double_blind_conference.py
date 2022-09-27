@@ -1369,7 +1369,7 @@ class TestDoubleBlindConference():
 
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
-        builder.set_decision_stage(openreview.DecisionStage(release_to_area_chairs=True, email_authors=True, release_to_authors=True))
+        builder.set_decision_stage(openreview.stages.DecisionStage(release_to_area_chairs=True, email_authors=True, release_to_authors=True))
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         conference = builder.get_result()
@@ -1414,7 +1414,7 @@ class TestDoubleBlindConference():
         assert accepted_author_group.members == [conference.id + '/Paper{}/Authors'.format(submission.number)]
 
         # Change readership of decision and make sure no emails are sent
-        builder.set_decision_stage(openreview.DecisionStage(public=True,email_authors=True))
+        builder.set_decision_stage(openreview.stages.DecisionStage(public=True,email_authors=True))
         conference = builder.get_result()
         conference.create_decision_stage()
 
@@ -1424,7 +1424,7 @@ class TestDoubleBlindConference():
         messages = client.get_messages(subject = '[AKBC 2019] Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
         assert len(messages) == 3
 
-        builder.set_decision_stage(openreview.DecisionStage(release_to_authors=True, release_to_area_chairs=True,email_authors=True))
+        builder.set_decision_stage(openreview.stages.DecisionStage(release_to_authors=True, release_to_area_chairs=True,email_authors=True))
         conference = builder.get_result()
         conference.create_decision_stage()
 
@@ -1574,7 +1574,7 @@ class TestDoubleBlindConference():
             }
         }
         builder.set_submission_stage(double_blind = True, public = True, additional_fields=additional_fields)
-        builder.set_decision_stage(openreview.DecisionStage())
+        builder.set_decision_stage(openreview.stages.DecisionStage())
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
         conference = builder.get_result()
@@ -1927,7 +1927,7 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
-        builder.set_decision_stage(openreview.DecisionStage(public=True))
+        builder.set_decision_stage(openreview.stages.DecisionStage(public=True))
         conference = builder.get_result()
         conference.create_decision_stage()
 
@@ -1974,7 +1974,7 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
-        builder.set_decision_stage(openreview.DecisionStage(public=True))
+        builder.set_decision_stage(openreview.stages.DecisionStage(public=True))
         conference = builder.get_result()
         conference.create_decision_stage()
 
@@ -2043,7 +2043,7 @@ url={'''
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
-        builder.set_decision_stage(openreview.DecisionStage(public=True))
+        builder.set_decision_stage(openreview.stages.DecisionStage(public=True))
         conference = builder.get_result()
         conference.create_decision_stage()
 
@@ -2104,7 +2104,7 @@ url={'''
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
-        builder.set_decision_stage(openreview.DecisionStage(public=True))
+        builder.set_decision_stage(openreview.stages.DecisionStage(public=True))
         conference = builder.get_result()
         conference.create_decision_stage()
 
@@ -2188,7 +2188,7 @@ url={'''
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
-        builder.set_decision_stage(openreview.DecisionStage(public=True))
+        builder.set_decision_stage(openreview.stages.DecisionStage(public=True))
         conference = builder.get_result()
         conference.create_decision_stage()
 
