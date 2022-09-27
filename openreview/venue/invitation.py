@@ -689,11 +689,6 @@ class InvitationBuilder(object):
 
         content = invitations.comment_v2.copy()
 
-        ## should we allow anonymous public comments??
-        signature_regex = { 'param': { 'regex': '~.*' }}
-        if comment_stage.anonymous:
-            signature_regex = { 'param': { 'regex': '~.*|\\(anonymous\\)' }}
-
         process_file = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
         with open(process_file) as f:
             process_content = f.read()
