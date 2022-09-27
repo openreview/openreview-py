@@ -129,6 +129,27 @@ class Venue(object):
         invitation_id =  invitation_id + name
         return invitation_id
 
+    def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
+        committee = [self.id]
+
+        if with_authors:
+            committee.append(self.get_authors_id(number))
+
+        if submitted_reviewers:
+            committee.append(self.get_reviewers_id(number, submitted=True))
+        else:
+            committee.append(self.get_reviewers_id(number))
+
+        if self.use_area_chairs:
+            committee.append(self.get_area_chairs_id(number))
+
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
+
+        committee.append(self.get_program_chairs_id())
+
+        return committee
+
     def get_committee_id(self, name, number=None):
         committee_id = self.id + '/'
         if number:
@@ -368,6 +389,10 @@ class Venue(object):
     def create_comment_stage(self):
         comment_invitation = self.invitation_builder.set_official_comment_invitation()
         self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions())
+        if self.comment_stage.allow_public_comments:
+            public_notes = [note for note in self.get_submissions() if 'everyone' in note.readers]
+            comment_invitation = self.invitation_builder.set_public_comment_invitation()
+            self.invitation_builder.create_paper_invitations(comment_invitation.id, public_notes)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:

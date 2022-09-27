@@ -183,3 +183,24 @@ class TestVenueSubmission():
 
         openreview_client.add_members_to_group(conference_id+'/Area_Chairs', '~Area_Chair_Venue_One1')
         openreview_client.add_members_to_group(conference_id+'/Submission1/Area_Chairs', '~Area_Chair_Venue_One1')
+
+        #release papers to the public
+        venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE]))
+        venue.setup_post_submission_stage()
+
+        submissions = venue.get_submissions()
+        assert submissions and len(submissions) == 1
+        assert submissions[0].readers == ['everyone']
+
+        venue.comment_stage = openreview.CommentStage(
+            end_date=now + datetime.timedelta(minutes = 40),
+            allow_public_comments=True,
+            reader_selection=True,
+            email_pcs=True,
+            check_mandatory_readers=True,
+            readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
+            invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
+        venue.create_comment_stage()
+
+        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Official_Comment')
+        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')

@@ -534,9 +534,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
-        # public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
-        comment_duedate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else None)
 
         content = invitations.comment_v2.copy()
         invitees = comment_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
@@ -589,7 +587,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            duedate=comment_duedate,
+            duedate=tools.datetime_millis(comment_stage.end_date),
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': invitation_start_process
@@ -628,7 +626,7 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': invitees,
-                    'duedate': comment_duedate,
+                    'duedate': tools.datetime_millis(comment_stage.end_date),
                     'cdate': comment_cdate,
                     'preprocess': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -638,7 +636,7 @@ class InvitationBuilder(object):
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
-''',
+''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['comment_process_script']['value']
@@ -671,6 +669,132 @@ class InvitationBuilder(object):
                             'signatures': ['${3/signatures}'],
                             'readers': comment_readers,
                             # 'nonreaders': [],
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_public_comment_invitation(self):
+        venue_id = self.venue_id
+        comment_stage = self.venue.comment_stage
+        public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+
+        content = invitations.comment_v2.copy()
+
+        ## should we allow anonymous public comments??
+        signature_regex = { 'param': { 'regex': '~.*' }}
+        if comment_stage.anonymous:
+            signature_regex = { 'param': { 'regex': '~.*|\\(anonymous\\)' }}
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
+        with open(process_file) as f:
+            process_content = f.read()
+
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
+            process_content = process_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
+            process_content = process_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
+
+            if self.venue.use_area_chairs:
+                process_content = process_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
+
+            if self.venue.use_senior_area_chairs:
+                process_content = process_content.replace("PAPER_SENIOR_AREA_CHAIRS_ID = ''", f"PAPER_SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id('{number}')}'")
+
+            if comment_stage.email_pcs:
+                process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
+        with open(process_file) as f:
+            invitation_start_process = f.read()
+
+            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
+            invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+
+        invitation = Invitation(id=public_comment_invitation,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=comment_cdate,
+            duedate=tools.datetime_millis(comment_stage.end_date),
+            date_processes=[{
+                'dates': ["#{4/cdate}"],
+                'script': invitation_start_process
+            }],
+            content={
+                'comment_process_script': {
+                    'value': process_content
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(comment_stage.public_name, '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': ['everyone'],
+                    'noninvitees': self.venue.get_committee('${3/content/noteNumber/value}', with_authors = True),
+                    'duedate': tools.datetime_millis(comment_stage.end_date),
+                    'cdate': comment_cdate,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': { 'param': { 'regex': '~.*' }},
+                        'readers': ['${2/note/readers}'],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id(comment_stage.public_name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': ['everyone'],
                             'writers': [venue_id, '${3/signatures}'],
                             'content': content
                         }

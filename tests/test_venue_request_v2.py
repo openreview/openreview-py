@@ -1524,10 +1524,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         ))
         helpers.await_queue_edit(openreview_client, edit_id=official_comment_note['id'])
 
-#         process_logs = client.get_process_logs(id=official_comment_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-
         # Assert that public comment invitation is not available
         public_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Public_Comment'.format(venue['venue_id']))
         assert public_comment_invitation is None
