@@ -165,26 +165,29 @@ class Assignment(object):
 
         journal = self.journal
         submitted_submissions = self.client.get_notes(invitation= journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id })
-
-        for submitted_submission in tqdm(submitted_submissions):
+        assigning_AE_submissions = self.client.get_notes(invitation= journal.get_author_submission_id(), content = { 'venueid': journal.assigning_AE_venue_id })
+        matching_submissions = submitted_submissions + assigning_AE_submissions
+        
+        print(f'Found {len(matching_submissions)} submissions to assign an AE')
+        for submitted_submission in tqdm(matching_submissions):
             ## Get AE group is empty
             if not self.client.get_group(journal.get_action_editors_id(submitted_submission.number)).members:
                 ## Get AE recommendations
                 ae_recommendations = self.client.get_edges(invitation=journal.get_ae_recommendation_id(), head=submitted_submission.id)
                 if len(ae_recommendations) >= 3:
                     ## Mark the papers that needs assignments. use venue: "TMLR Assigning AE" and venueid: 'TMLR/Assign_AE'
-                    self.client.post_note_edit(
-                        invitation = journal.get_meta_invitation_id(),
-                        signatures = [journal.venue_id],
-                        note = openreview.api.Note(
-                            id = submitted_submission.id,
-                            content = {
-                                'venue': { 'value': f'{journal.short_name} Assigning AE' },
-                                'venueid': { 'value': journal.assigning_AE_venue_id }
-                            }
+                    if journal.assigning_AE_venue_id not in submitted_submission.invitations:
+                        self.client.post_note_edit(
+                            invitation = journal.get_meta_invitation_id(),
+                            signatures = [journal.venue_id],
+                            note = openreview.api.Note(
+                                id = submitted_submission.id,
+                                content = {
+                                    'venue': { 'value': f'{journal.short_name} Assigning AE' },
+                                    'venueid': { 'value': journal.assigning_AE_venue_id }
+                                }
+                            )
                         )
-
-                    )
 
                     ## Compute resubmission scores, TMLR/Action_Editors/-/Resubmission_Score with weigth = 10 in the matching system
                     if f'previous_{journal.short_name}_submission_url' in submitted_submission.content:
