@@ -447,6 +447,15 @@ class Conference(object):
         self.submission_revision_stage = stage
         return self.__create_submission_revision_stage()
 
+    def create_decision_stage(self):
+        if self.decision_stage:
+            self.__create_decision_stage()
+
+            if self.decision_stage.decisions_file:
+                decisions = self.client.get_attachment(id=self.request_form_id, field_name='decisions_file')
+                self.post_decisions(decisions)
+
+    @deprecated(version='1.10.0')
     def set_decision_stage(self, stage):
         self.decision_stage = stage
         self.__create_decision_stage()
@@ -2916,8 +2925,8 @@ class ConferenceBuilder(object):
     def set_meta_review_stage(self, stage):
         self.conference.meta_review_stage = stage
 
-    def set_decision_stage(self, options = ['Accept (Oral)', 'Accept (Poster)', 'Reject'], start_date = None, due_date = None, public = False, release_to_authors = False, release_to_reviewers = False, release_to_area_chairs=False, email_authors = False, additional_fields={}):
-        self.decision_stage = DecisionStage(options, start_date, due_date, public, release_to_authors, release_to_reviewers, release_to_area_chairs, email_authors, additional_fields=additional_fields)
+    def set_decision_stage(self, stage):
+        self.conference.decision_stage = stage
 
     def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, allow_author_reorder=False):
         self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted, allow_author_reorder)
@@ -3016,8 +3025,5 @@ class ConferenceBuilder(object):
 
         if self.review_rebuttal_stage:
             self.conference.set_review_rebuttal_stage(self.review_rebuttal_stage)
-
-        if self.decision_stage:
-            self.conference.set_decision_stage(self.decision_stage)
 
         return self.conference

@@ -197,7 +197,7 @@ def process(client, note, invitation):
             conference.create_meta_review_stage()
 
         elif invitation_type == 'Decision_Stage':
-            conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))
+            conference.create_decision_stage()
 
             content = {
                 'submission_readers': {
