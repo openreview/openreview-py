@@ -18,6 +18,7 @@ setup(
         'openreview',
         'openreview/conference',
         'openreview/invitations',
+        'openreview/profile',
         'openreview/agora',
         'openreview/venue',
         'openreview/venue_request',
