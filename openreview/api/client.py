@@ -1962,6 +1962,7 @@ class Note(object):
         forum=None,
         replyto=None,
         nonreaders=None,
+        domain=None,
         details = None):
 
         self.id = id
@@ -1981,6 +1982,7 @@ class Note(object):
         self.number = number
         self.details = details
         self.invitations = invitations
+        self.domain = domain
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2052,7 +2054,8 @@ class Note(object):
         nonreaders=n.get('nonreaders'),
         signatures=n.get('signatures'),
         writers=n.get('writers'),
-        details=n.get('details')
+        details=n.get('details'),
+        domain=n.get('domain')
         )
         return note
 
