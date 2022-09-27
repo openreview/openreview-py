@@ -234,7 +234,7 @@ class TestWorkshop():
     def test_set_authors(self, client, conference, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
-        conference.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED))
+        conference.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors= True, release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_ASSIGNED))
 
         group = client.get_group(id = conference.get_authors_id())
         assert group
@@ -314,8 +314,8 @@ class TestWorkshop():
         assert len(notes) == 1
 
     def test_open_comments(self, client, conference, test_client, selenium, request_page, helpers):
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, reader_selection=True, allow_public_comments = True, invitees=comment_invitees, readers=comment_invitees + [openreview.CommentStage.Readers.EVERYONE]))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(email_pcs = True, reader_selection=True, allow_public_comments = True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE]))
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
@@ -529,7 +529,7 @@ class TestWorkshop():
             'Accept (Oral)': 'Oral Presentations',
             'Accept (Poster)': 'Post Presentations',
             'Reject': 'All Presentations'
-        }, submission_readers=[openreview.SubmissionStage.Readers.EVERYONE])
+        }, submission_readers=[openreview.stages.SubmissionStage.Readers.EVERYONE])
 
         request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client.token, wait_for_element='oral-presentations')
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title

@@ -17,13 +17,13 @@ setup(
     packages=[
         'openreview',
         'openreview/conference',
-        'openreview/invitations',
         'openreview/profile',
         'openreview/agora',
         'openreview/venue',
         'openreview/venue_request',
         'openreview/journal',
         'openreview/journal/journal_request',
+        'openreview/stages',
         'openreview.api'
     ],
     install_requires=[

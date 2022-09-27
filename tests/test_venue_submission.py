@@ -13,6 +13,7 @@ from openreview.api import Invitation
 from openreview.api import Edge
 
 from openreview.venue import Venue
+from openreview.stages import SubmissionStage, BidStage
 
 class TestVenueSubmission():
 
@@ -25,13 +26,13 @@ class TestVenueSubmission():
         venue.short_name = 'TV 22'
         venue.website = 'testvenue.org'
         venue.contact = 'testvenue@contact.com'
-        venue.reviewer_identity_readers = [openreview.Conference.IdentityReaders.PROGRAM_CHAIRS, openreview.Conference.IdentityReaders.AREA_CHAIRS_ASSIGNED]
+        venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
         venue.setup()
 
         assert openreview_client.get_group('TestVenue.cc')
         assert openreview_client.get_group('TestVenue.cc/Authors')
 
-        venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.REVIEWERS_ASSIGNED, openreview.builder.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED]))
+        venue.set_submission_stage(SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.REVIEWERS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED]))
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Submission')
 
@@ -72,7 +73,7 @@ class TestVenueSubmission():
         assert 'TestVenue.cc/Submission1/Area_Chairs' in submission.readers
 
         now = datetime.datetime.utcnow()
-        venue.review_stage = openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40))
+        venue.review_stage = openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40))
         venue.create_review_stage()
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
@@ -110,8 +111,8 @@ class TestVenueSubmission():
         #bid stages
         now = datetime.datetime.utcnow()
         bid_stages = [
-            openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
-            openreview.BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
+            BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
+            BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
         ]
         venue.bid_stages = bid_stages
         venue.create_bid_stages()
@@ -172,7 +173,7 @@ class TestVenueSubmission():
         assert (len(custom_load_edges)) == 1
 
         now = datetime.datetime.utcnow()
-        venue.meta_review_stage = openreview.MetaReviewStage(due_date=now + datetime.timedelta(minutes = 40))
+        venue.meta_review_stage = openreview.stages.MetaReviewStage(due_date=now + datetime.timedelta(minutes = 40))
         venue.create_meta_review_stage()
 
         helpers.create_user('ac_venue_one@mail.com', 'Area Chair', 'Venue One')

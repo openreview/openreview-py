@@ -88,7 +88,7 @@ class TestReviewersConference():
         })
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(due_date = now + datetime.timedelta(minutes = 40), public=True, withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
-        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
+        builder.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), allow_de_anonymization = True, release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
         conference.create_review_stage()
 

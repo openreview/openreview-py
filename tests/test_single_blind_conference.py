@@ -322,8 +322,8 @@ class TestSingleBlindConference():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        comment_invitees = [openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees))
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -385,7 +385,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
-        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -397,7 +397,7 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
+        }, release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
         conference.set_program_chairs(emails = ['pc2@mail.com'])
         conference.set_area_chairs(emails = ['ac2@mail.com'])
@@ -529,7 +529,7 @@ class TestSingleBlindConference():
             withdrawn_submission_reveal_authors=True,
             desk_rejected_submission_public=True,
             desk_rejected_submission_reveal_authors=True)
-        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -541,8 +541,8 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
-        builder.set_ethics_review_stage(openreview.EthicsReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_public=True, submission_numbers=[1]))
+        }, release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED))
+        builder.set_ethics_review_stage(openreview.stages.EthicsReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_public=True, submission_numbers=[1]))
         conference = builder.get_result()
         
         client.add_members_to_group('NIPS.cc/2018/Workshop/MLITS/Ethics_Reviewers', 'melisa@ethics.org')
@@ -585,7 +585,7 @@ class TestSingleBlindConference():
         builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
         builder.set_conference_short_name('MLITS 2018')
         builder.has_area_chairs(True)
-        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
+        builder.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 100), additional_fields = {
             'rating': {
                 'order': 3,
                 'value-dropdown': [
@@ -597,7 +597,7 @@ class TestSingleBlindConference():
                 ],
                 'required': True
             }
-        }, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
+        }, release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         conference = builder.get_result()
         conference.create_review_stage()
 
@@ -744,7 +744,7 @@ class TestSingleBlindConference():
                 'value-regex': '.*'
             }
         }
-        conference.set_decision_stage(openreview.DecisionStage(public=True, additional_fields=decision_additional_fields))
+        conference.set_decision_stage(openreview.stages.DecisionStage(public=True, additional_fields=decision_additional_fields))
 
         submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
@@ -762,7 +762,7 @@ class TestSingleBlindConference():
         )
         note = client.post_note(note)
 
-        conference.post_decision_stage(submission_readers=[openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
+        conference.post_decision_stage(submission_readers=[openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
 
         submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1
@@ -791,7 +791,7 @@ url={https://openreview.net/forum?id='''
         builder.set_conference_name('NIPS Workshop MLITS')
         conference = builder.get_result()
 
-        conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
+        conference.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
 
         notes = conference.get_submissions(sort='tmdate')
         assert notes
