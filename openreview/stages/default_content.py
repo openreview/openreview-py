@@ -557,3 +557,35 @@ paper_recruitment = {
         'required':True
     }
 }
+
+decision_v2 = {
+    'title': {
+        'order': 1,
+        'value': 'Paper Decision'
+    },
+    'decision': {
+        'order': 2,
+        'description': 'Decision',
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    'Accept (Oral)',
+                    'Accept (Poster)',
+                    'Reject'
+                ]
+            }
+        }
+    },
+    'comment': {
+        'order': 3,
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 5000,
+                'markdown': True,
+                'input': 'textarea'
+            }
+        }
+    }
+}
