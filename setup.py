@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='openreview-py',
 
-    version='1.9.0',
+    version='1.10.0',
 
     description='OpenReview API Python client library',
     url='https://github.com/openreview/openreview-py',
@@ -17,12 +17,13 @@ setup(
     packages=[
         'openreview',
         'openreview/conference',
-        'openreview/invitations',
+        'openreview/profile',
         'openreview/agora',
         'openreview/venue',
         'openreview/venue_request',
         'openreview/journal',
         'openreview/journal/journal_request',
+        'openreview/stages',
         'openreview.api'
     ],
     install_requires=[

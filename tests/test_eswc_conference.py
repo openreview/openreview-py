@@ -37,7 +37,7 @@ class TestESWCConference():
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=True,
             desk_rejected_submission_reveal_authors=True,
-            readers = [openreview.SubmissionStage.Readers.REVIEWERS],
+            readers = [openreview.stages.SubmissionStage.Readers.REVIEWERS],
             additional_fields={
                 "lead_author_is_phD_student": {
                     "required": True,
@@ -332,7 +332,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
     def test_post_submission_stage(self, conference, helpers, test_client, client):
         year = datetime.datetime.now().year
         conference.submission_stage.public = True
-        conference.submission_stage.readers = [openreview.SubmissionStage.Readers.EVERYONE]
+        conference.submission_stage.readers = [openreview.stages.SubmissionStage.Readers.EVERYONE]
         conference.setup_final_deadline_stage(force=True)
 
         submissions = conference.get_submissions(sort='number:desc')

@@ -197,7 +197,7 @@ def process(client, note, invitation):
             conference.create_meta_review_stage()
 
         elif invitation_type == 'Decision_Stage':
-            conference.set_decision_stage(openreview.helpers.get_decision_stage(client, forum_note))
+            conference.create_decision_stage()
 
             content = {
                 'submission_readers': {
@@ -348,11 +348,11 @@ Best,
                 reveal_authors_accepted=forum_note.content.get('reveal_authors') == 'Reveal author identities of only accepted submissions to the public'
             if 'release_submissions' in forum_note.content:
                 if 'Release only accepted submission to the public' in forum_note.content['release_submissions']:
-                    submission_readers=[openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
+                    submission_readers=[openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
                 elif 'Release all submissions to the public' in forum_note.content['release_submissions']:
-                    submission_readers=[openreview.SubmissionStage.Readers.EVERYONE]
+                    submission_readers=[openreview.stages.SubmissionStage.Readers.EVERYONE]
                 elif 'No, I don\'t want to release any submissions' in forum_note.content['release_submissions']:
-                    submission_readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
+                    submission_readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
             conference.post_decision_stage(reveal_all_authors,reveal_authors_accepted,decision_heading_map=forum_note.content.get('home_page_tab_names'), submission_readers=submission_readers)
             if note.content.get('send_decision_notifications') == 'Yes, send an email notification to the authors':

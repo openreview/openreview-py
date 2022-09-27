@@ -4,7 +4,7 @@ import os
 from sys import api_version
 from openreview.api import Invitation
 from openreview.api import Note
-from .. import invitations
+from openreview.stages import *
 from .. import tools
 
 SHORT_BUFFER_MIN = 30
@@ -89,7 +89,7 @@ class InvitationBuilder(object):
         submission_stage = self.venue.submission_stage
         submission_name = submission_stage.name
 
-        content = invitations.submission_v2
+        content = default_content.submission_v2
         
         if submission_stage.double_blind:
             content['authors']['readers'] = [venue_id, f'{venue_id}/{submission_name}${{4/number}}/Authors']
@@ -105,6 +105,13 @@ class InvitationBuilder(object):
 
         if submission_stage.second_due_date and 'pdf' in content:
             content['pdf']['optional'] = True
+
+        content['venue'] = {
+            'value': f'{self.venue.short_name} {submission_name}'
+        }
+        content['venueid'] = {
+            'value': f'{venue_id}/{submission_name}'
+        }
 
         edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/note/number}}/Authors']
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/number}}/Authors']
@@ -129,7 +136,6 @@ class InvitationBuilder(object):
                         }
                     },
                     'ddate': {
-                        # 'type': 'date',
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'optional': True,
@@ -155,7 +161,7 @@ class InvitationBuilder(object):
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
 
-        content = invitations.review_v2.copy()
+        content = default_content.review_v2.copy()
 
         for key in review_stage.additional_fields:
             content[key] = review_stage.additional_fields[key]
@@ -283,7 +289,7 @@ class InvitationBuilder(object):
         meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage.name)
         meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
 
-        content = invitations.meta_review_v2.copy()
+        content = default_content.meta_review_v2.copy()
 
         for key in meta_review_stage.additional_fields:
             content[key] = meta_review_stage.additional_fields[key]
@@ -377,7 +383,7 @@ class InvitationBuilder(object):
         venue = self.venue
         venue_id = self.venue_id
 
-        content = invitations.recruitment_v2.copy()
+        content = default_content.recruitment_v2.copy()
 
         reduced_load = options.get('reduced_load_on_decline', None)
         reduced_load_dict = {}

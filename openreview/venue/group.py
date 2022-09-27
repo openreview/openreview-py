@@ -115,13 +115,13 @@ class GroupBuilder(object):
 
     def get_reviewer_identity_readers(self, number):
         print("REVIEWER IDENTITY READUERS", self.venue.reviewer_identity_readers)
-        return openreview.Conference.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
+        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
 
     def get_area_chair_identity_readers(self, number):
-        return openreview.Conference.IdentityReaders.get_readers(self.venue, number, self.venue.area_chair_identity_readers)
+        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.area_chair_identity_readers)
 
     def get_senior_area_chair_identity_readers(self, number):
-        return openreview.Conference.IdentityReaders.get_readers(self.venue, number, self.venue.senior_area_chair_identity_readers)
+        return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.senior_area_chair_identity_readers)
 
     def get_reviewer_paper_group_readers(self, number):
         readers=[self.venue.id]
@@ -146,7 +146,7 @@ class GroupBuilder(object):
         if self.venue.use_senior_area_chairs:
             readers.append(self.venue.get_senior_area_chairs_id(number))
         readers.append(self.venue.get_area_chairs_id(number))
-        if openreview.Conference.IdentityReaders.REVIEWERS_ASSIGNED in self.venue.area_chair_identity_readers:
+        if openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED in self.venue.area_chair_identity_readers:
             readers.append(self.venue.get_reviewers_id(number))
         return readers
 

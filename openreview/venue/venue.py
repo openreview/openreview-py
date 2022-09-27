@@ -222,8 +222,8 @@ class Venue(object):
         options['contact'] = self.contact
         return options
 
-    def get_submissions(self, sort=None):
-        return self.client.get_all_notes(invitation=self.submission_stage.get_submission_id(self), sort=sort)
+    def get_submissions(self, venueid=None, sort=None):
+        return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.venue_id}/{self.submission_stage.name}'}, sort=sort)
 
     def setup(self, program_chair_ids=[]):
     
