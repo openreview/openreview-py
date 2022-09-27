@@ -240,6 +240,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_bid_stages(get_bid_stages(note))
     builder.set_meta_review_stage(get_meta_review_stage(note))
     builder.set_comment_stage(get_comment_stage(note))
+    builder.set_decision_stage(get_decision_stage(note))
 
     decision_heading_map = note.content.get('home_page_tab_names')
     if decision_heading_map:
@@ -292,7 +293,6 @@ def get_submission_stage(request_forum):
     return openreview.stages.SubmissionStage(name = name, 
         double_blind=double_blind, 
         readers=readers)
-
 
 def get_bid_stages(request_forum):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
@@ -478,7 +478,7 @@ def get_meta_review_stage(request_forum):
         remove_fields = meta_review_form_remove_options
     )
 
-def get_decision_stage(client, request_forum):
+def get_decision_stage(request_forum):
     decision_start_date = request_forum.content.get('decision_start_date', '').strip()
     if decision_start_date:
         try:
