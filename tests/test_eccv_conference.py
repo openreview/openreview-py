@@ -249,7 +249,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             email_pcs_on_withdraw=True,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            readers=[openreview.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.SubmissionStage.Readers.AREA_CHAIRS, openreview.SubmissionStage.Readers.REVIEWERS])
+            readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS])
 
 
         instructions = '''<p class="dark"><strong>Instructions:</strong></p>
@@ -276,8 +276,8 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             </li>
         </ul>
         <br>'''
-        builder.set_bid_stage(openreview.BidStage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions))
-        builder.set_bid_stage(openreview.BidStage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions))
+        builder.set_bid_stage(openreview.stages.BidStage('thecvf.com/ECCV/2020/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 40, score_ids=['thecvf.com/ECCV/2020/Conference/Reviewers/-/Affinity_Score'], instructions = instructions))
+        builder.set_bid_stage(openreview.stages.BidStage('thecvf.com/ECCV/2020/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 1440), request_count = 60, score_ids=['thecvf.com/ECCV/2020/Conference/Area_Chairs/-/Affinity_Score'], instructions = instructions))
         #builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_program_chairs(['pc@eccv.org'])
@@ -1097,7 +1097,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_stage(openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+        conference.set_review_stage(openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
             additional_fields = {
                 'summary_of_contributions': {
                     'order': 1,
@@ -1278,8 +1278,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         assert '~ReviewerFirstName_Eccv1' in paper_reviewer_group.members
 
     def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
-        conference.set_comment_stage(openreview.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
+        conference.set_comment_stage(openreview.stages.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
 
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
 
@@ -1325,7 +1325,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         now = datetime.datetime.utcnow()
 
         ## Release reviews to authors and reviewers
-        conference.set_review_stage(openreview.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+        conference.set_review_stage(openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
             additional_fields = {
                 'summary_of_contributions': {
                     'order': 1,
@@ -1380,7 +1380,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                     'required': True
                 }
             },
-            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True ))
+            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True ))
 
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')
@@ -1674,7 +1674,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_meta_review_stage(openreview.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440)))
+        conference.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440)))
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'

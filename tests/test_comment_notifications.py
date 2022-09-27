@@ -61,8 +61,8 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails= ['programchair@midl.io'])
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, email_pcs=True, invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, email_pcs=True, invitees=comment_invitees, readers=comment_invitees))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -335,8 +335,8 @@ class TestCommentNotification():
             "Algorithms: Distributed and Parallel",
             "Algorithms: Exact Inference",
         ])
-        builder.set_comment_stage(openreview.CommentStage(email_pcs = True, invitees=[openreview.CommentStage.Readers.AUTHORS], readers=[openreview.CommentStage.Readers.AUTHORS]))
-        builder.set_review_stage(openreview.ReviewStage(release_to_authors=True, release_to_reviewers=openreview.ReviewStage.Readers.REVIEWERS_SUBMITTED))
+        builder.set_comment_stage(openreview.stages.CommentStage(email_pcs = True, invitees=[openreview.stages.CommentStage.Readers.AUTHORS], readers=[openreview.stages.CommentStage.Readers.AUTHORS]))
+        builder.set_review_stage(openreview.stages.ReviewStage(release_to_authors=True, release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED))
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
@@ -436,9 +436,9 @@ class TestCommentNotification():
         assert 'author@mail.com' in recipients
         assert 'test@mail.com' in recipients
 
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
-                            openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = paper_note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = paper_note.number)
         reviewers_group_id = '{conference_id}/Paper{number}/Reviewers/Submitted'.format(conference_id = conference.id, number = paper_note.number)
@@ -620,8 +620,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public = True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
-        builder.set_comment_stage(openreview.CommentStage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        builder.set_comment_stage(openreview.stages.CommentStage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.create_comment_stage()
@@ -650,9 +650,9 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails = ['programchair@colt.io'])
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
-                            openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection = True, email_pcs = True, invitees=comment_invitees, readers=comment_invitees))
 
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
@@ -913,8 +913,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10), withdrawn_submission_reveal_authors=True, desk_rejected_submission_reveal_authors=True)
         builder.has_area_chairs(True)
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
-        builder.set_comment_stage(openreview.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        builder.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.create_comment_stage()
@@ -943,9 +943,9 @@ class TestCommentNotification():
 
         conference.setup_post_submission_stage(force=True)
         conference.set_program_chairs(emails = ['programchair@colt17.io'])
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
-                            openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
 
         comment_invitation_id = '{conference_id}/Paper{number}/-/Official_Comment'.format(conference_id = conference.id, number = note.number)
         authors_group_id = '{conference_id}/Paper{number}/Authors'.format(conference_id = conference.id, number = note.number)
@@ -1134,8 +1134,8 @@ class TestCommentNotification():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(name = 'Full_Submission', public= True, due_date = now + datetime.timedelta(minutes = 10) )
         builder.has_area_chairs(True)
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS, openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
-        builder.set_comment_stage(openreview.CommentStage(reader_selection = True, invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
+        builder.set_comment_stage(openreview.stages.CommentStage(reader_selection = True, invitees=comment_invitees, readers=comment_invitees))
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.create_comment_stage()

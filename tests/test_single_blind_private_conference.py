@@ -28,7 +28,7 @@ class TestSingleBlindPrivateConference():
         builder.has_area_chairs(True)
 
         builder.set_submission_stage(double_blind = False,
-            readers=[openreview.SubmissionStage.Readers.REVIEWERS_ASSIGNED, openreview.SubmissionStage.Readers.AREA_CHAIRS],
+            readers=[openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS],
             due_date = now + datetime.timedelta(minutes = 10),
             withdrawn_submission_public=False,
             withdrawn_submission_reveal_authors=True,
@@ -98,14 +98,14 @@ class TestSingleBlindPrivateConference():
         notes = test_client.get_notes(invitation='MICCAI.org/2021/Challenges/-/Submission', sort='tmdate')
         assert len(notes) == 5
 
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.CommentStage.Readers.EVERYONE]))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE]))
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
         assert public_comment_invitation is None
 
     def test_decisions(self, conference, helpers, test_client, client):
 
-        conference.set_decision_stage(openreview.DecisionStage(release_to_area_chairs=True))
+        conference.set_decision_stage(openreview.stages.DecisionStage(release_to_area_chairs=True))
 
         submissions=conference.get_submissions(sort='tmdate')
         assert len(submissions) == 5
@@ -154,7 +154,7 @@ class TestSingleBlindPrivateConference():
 
     def test_post_decisions(self, conference, helpers, test_client, client, request_page, selenium):
 
-        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={ 'Accept (Poster)': 'Poster', 'Accept (Oral)': 'Oral'}, submission_readers=[openreview.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
+        conference.post_decision_stage(reveal_authors_accepted=True, decision_heading_map={ 'Accept (Poster)': 'Poster', 'Accept (Oral)': 'Oral'}, submission_readers=[openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED])
 
         submissions=conference.get_submissions(number=5)
         assert submissions[0].readers != ['everyone']
@@ -187,8 +187,8 @@ class TestSingleBlindPrivateConference():
         assert len(notes) == 5
 
         conference.submission_stage.papers_released=True
-        comment_invitees = [openreview.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.CommentStage.Readers.EVERYONE]))
+        comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, email_pcs=True, allow_public_comments=True, invitees=comment_invitees, readers=comment_invitees + [openreview.stages.CommentStage.Readers.EVERYONE]))
         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=4))
         assert public_comment_invitation
 

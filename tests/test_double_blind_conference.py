@@ -938,9 +938,9 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         conference = builder.get_result()
 
-        comment_invitees = [openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
-                            openreview.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.CommentStage(invitees=comment_invitees, readers=comment_invitees))
+        comment_invitees = [openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
+                            openreview.stages.CommentStage.Readers.AUTHORS]
+        conference.set_comment_stage(openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees))
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
@@ -984,8 +984,8 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         now = datetime.datetime.utcnow()
-        builder.set_bid_stage(openreview.BidStage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50))
-        builder.set_bid_stage(openreview.BidStage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50))
+        builder.set_bid_stage(openreview.stages.BidStage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50))
+        builder.set_bid_stage(openreview.stages.BidStage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50))
         conference = builder.get_result()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com', 'reviewer@domain.com'])
@@ -1003,8 +1003,8 @@ class TestDoubleBlindConference():
         notes = selenium.find_elements_by_class_name('note')
         assert len(notes) == 3
 
-        builder.set_bid_stage(openreview.BidStage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Reviewers/-/Affinity_Score']))
-        builder.set_bid_stage(openreview.BidStage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Area_Chairs/-/Affinity_Score']))
+        builder.set_bid_stage(openreview.stages.BidStage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Reviewers/-/Affinity_Score']))
+        builder.set_bid_stage(openreview.stages.BidStage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Area_Chairs/-/Affinity_Score']))
         conference = builder.get_result()
         conference.create_bid_stages()
 
@@ -1066,7 +1066,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_review_stage(openreview.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = openreview.ReviewStage.Readers.REVIEWERS_ASSIGNED, email_pcs = True))
+        builder.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_ASSIGNED, email_pcs = True))
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_area_chairs(emails = ['ac@mail.com'])
@@ -1232,7 +1232,7 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_meta_review_stage(openreview.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED))
+        builder.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_ASSIGNED))
         builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.create_meta_review_stage()
@@ -1275,7 +1275,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_meta_review_stage(openreview.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
+        builder.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
@@ -1319,7 +1319,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.set_meta_review_stage(openreview.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
+        builder.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
@@ -1869,7 +1869,7 @@ class TestDoubleBlindConference():
         builder.set_conference_year(2019)
         builder.get_result()
 
-        builder.set_review_stage(openreview.ReviewStage(public=True))
+        builder.set_review_stage(openreview.stages.ReviewStage(public=True))
         conference = builder.get_result()
         conference.create_review_stage()
 
@@ -1890,7 +1890,7 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.use_legacy_anonids(True)
         builder.set_conference_year(2019)
-        builder.set_meta_review_stage(openreview.MetaReviewStage(public=True, additional_fields = {
+        builder.set_meta_review_stage(openreview.stages.MetaReviewStage(public=True, additional_fields = {
             'best paper' : {
                 'description' : 'Nominate as best paper?',
                 'value-radio' : ['Yes', 'No'],
@@ -1978,7 +1978,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.create_decision_stage()
 
-        conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(only_accepted=True))
+        conference.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(only_accepted=True))
         notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
@@ -2192,7 +2192,7 @@ url={'''
         conference = builder.get_result()
         conference.create_decision_stage()
 
-        conference.set_submission_revision_stage(openreview.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
+        conference.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
 
         notes = conference.get_submissions(sort='tmdate')
         assert notes

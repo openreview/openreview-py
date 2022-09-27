@@ -20,7 +20,7 @@ def process(client, edge, invitation):
         ## Get the submission
         notes=client.get_notes(id=edge.head, details='original')
         if not notes:
-            raise OpenReviewException(f'Note not found: {edge.head}')
+            raise openreview.OpenReviewException(f'Note not found: {edge.head}')
         submission=notes[0]
 
         ## - Get profile

@@ -6,7 +6,7 @@ import datetime
 import re
 import openreview
 from tqdm import tqdm
-from .. import invitations
+from openreview.stages import *
 from .. import tools
 
 SHORT_BUFFER_MIN = 30
@@ -259,7 +259,7 @@ class CommentInvitation(openreview.Invitation):
 
     def __init__(self, conference):
 
-        content = invitations.comment.copy()
+        content = default_content.comment.copy()
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/commentProcess.js')) as f:
             with open(os.path.join(os.path.dirname(__file__), 'templates/comment_pre_process.py')) as g:
@@ -358,7 +358,7 @@ class WithdrawnSubmissionInvitation(openreview.Invitation):
 class WithdrawSuperInvitation(openreview.Invitation):
 
     def __init__(self, conference, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
-        content = invitations.withdraw.copy()
+        content = default_content.withdraw.copy()
         exp_date = tools.datetime_millis(conference.submission_stage.withdraw_submission_exp_date) if conference.submission_stage.withdraw_submission_exp_date else None
 
         withdraw_process_file = 'templates/withdraw_process.py'
@@ -549,7 +549,7 @@ class PaperDeskRejectInvitation(openreview.Invitation):
 
     def __init__(self, conference, note, reveal_authors, reveal_submission, hide_fields=None):
 
-        content = invitations.desk_reject.copy()
+        content = default_content.desk_reject.copy()
 
         desk_reject_process_file = 'templates/desk_reject_process.py'
 
@@ -866,7 +866,7 @@ class ReviewInvitation(openreview.Invitation):
 
     def __init__(self, conference):
         review_stage = conference.review_stage
-        content = invitations.review.copy()
+        content = default_content.review.copy()
 
         for key in review_stage.additional_fields:
             content[key] = review_stage.additional_fields[key]
@@ -957,7 +957,7 @@ class EthicsReviewInvitation(openreview.Invitation):
 
     def __init__(self, conference):
         ethics_review_stage = conference.ethics_review_stage
-        content = invitations.ethics_review.copy()
+        content = default_content.ethics_review.copy()
 
         for key in ethics_review_stage.additional_fields:
             content[key] = ethics_review_stage.additional_fields[key]
@@ -1151,7 +1151,7 @@ class ReviewRevisionInvitation(openreview.Invitation):
     def __init__(self, conference):
 
         review_revision_stage = conference.review_revision_stage
-        content = invitations.review.copy()
+        content = default_content.review.copy()
 
         for key in review_revision_stage.additional_fields:
             content[key] = review_revision_stage.additional_fields[key]
@@ -1224,7 +1224,7 @@ class ReviewRatingInvitation(openreview.Invitation):
     def __init__(self, conference):
 
         review_rating_stage = conference.review_rating_stage
-        content = invitations.review_rating.copy()
+        content = default_content.review_rating.copy()
 
         for key in review_rating_stage.additional_fields:
             content[key] = review_rating_stage.additional_fields[key]
@@ -1284,7 +1284,7 @@ class PaperReviewRatingInvitation(openreview.Invitation):
 class MetaReviewInvitation(openreview.Invitation):
 
     def __init__(self, conference):
-        content = invitations.meta_review.copy()
+        content = default_content.meta_review.copy()
         meta_review_stage = conference.meta_review_stage
         additional_fields = meta_review_stage.additional_fields
         start_date = meta_review_stage.start_date
@@ -1488,7 +1488,7 @@ class PaperRecruitmentInvitation(openreview.Invitation):
 
     def __init__(self, conference, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title, due_date, web, process_file, invited_label, accepted_label, declined_label):
 
-        content=invitations.paper_recruitment
+        content=default_content.paper_recruitment
 
         with open(os.path.join(os.path.dirname(__file__), 'templates/paper_recruitment_pre_process.py')) as pre:
             with open(os.path.join(os.path.dirname(__file__), process_file)) as post:
@@ -1871,7 +1871,7 @@ class InvitationBuilder(object):
                     '(anonymous)'
                 ]
             },
-            'content': invitations.recruitment
+            'content': default_content.recruitment
         }
         reply = self.__build_options(default_reply, options.get('reply', {}))
 
