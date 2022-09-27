@@ -41,7 +41,7 @@ class TestVenueRequest():
                 support_group_id,
                 '~SomeFirstName_User1',
                 'test@mail.com',
-                'tom@mail.com'
+                'tom_venue@mail.com'
             ],
             writers=[],
             content={
@@ -51,7 +51,7 @@ class TestVenueRequest():
                 'Official Website URL': 'https://testvenue2030.gitlab.io/venue/',
                 'program_chair_emails': [
                     'test@mail.com',
-                    'tom@mail.com'],
+                    'tom_venue@mail.com'],
                 'contact_email': 'test@mail.com',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
@@ -160,7 +160,7 @@ class TestVenueRequest():
                 support_group_id,
                 '~ProgramChair_User1',
                 'pc_venue_v2@mail.com',
-                'tom@mail.com'
+                'tom_venue@mail.com'
             ],
             writers=[],
             content={
@@ -170,7 +170,7 @@ class TestVenueRequest():
                 'Official Website URL': 'https://testvenue2021.gitlab.io/venue/',
                 'program_chair_emails': [
                     'pc_venue_v2@mail.com',
-                    'tom@mail.com'],
+                    'tom_venue@mail.com'],
                 'contact_email': 'pc_venue_v2@mail.com',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
@@ -221,7 +221,7 @@ class TestVenueRequest():
             readers=[
                 support_group_id,
                 'pc_venue_v2@mail.com',
-                'tom@mail.com'
+                'tom_venue@mail.com'
             ],
             replyto=None,
             signatures=['~ProgramChair_User1'],
@@ -309,7 +309,7 @@ class TestVenueRequest():
 #         assert messages and len(messages) == 2
 #         recipients = [msg['content']['to'] for msg in messages]
 #         assert 'test@mail.com' in recipients
-#         assert 'tom@mail.com' in recipients
+#         assert 'tom_venue@mail.com' in recipients
 #         assert 'Venue home page: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference\">https://openreview.net/group?id=TEST.cc/2030/Conference</a>' in messages[0]['content']['text']
 #         assert 'Venue Program Chairs console: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs\">https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs</a>' in messages[0]['content']['text']
 
@@ -375,7 +375,7 @@ class TestVenueRequest():
 #         assert messages and len(messages) == 2
 #         recipients = [msg['content']['to'] for msg in messages]
 #         assert 'test@mail.com' in recipients
-#         assert 'tom@mail.com' in recipients
+#         assert 'tom_venue@mail.com' in recipients
 #         assert 'Venue home page: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference\">https://openreview.net/group?id=TEST.cc/2030/Conference</a>' in messages[0]['content']['text']
 #         assert 'Venue Program Chairs console: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs\">https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs</a>' in messages[0]['content']['text']
 
@@ -839,7 +839,7 @@ class TestVenueRequest():
         # assert messages and len(messages) == 3
         # recipients = [msg['content']['to'] for msg in messages]
         # assert 'test@mail.com' in recipients
-        # assert 'tom@mail.com' in recipients
+        # assert 'tom_venue@mail.com' in recipients
         # assert 'pc@test.com' in recipients
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
@@ -1528,15 +1528,79 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         public_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Public_Comment'.format(venue['venue_id']))
         assert public_comment_invitation is None
 
-#     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
 
-#         submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
-#         assert submissions and len(submissions) == 2
-#         submission = submissions[0]
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
+        assert submissions and len(submissions) == 2
+        submission = submissions[0]
 
-#         # Assert that PC does not have access to the Decision invitation
-#         decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
-#         assert decision_invitation is None
+        helpers.create_user('tom_venue@mail.com', 'ProgramChair', 'Venue')
+        pc_client = openreview.api.OpenReviewClient(username='tom_venue@mail.com', password='1234')
+
+        # Assert that PC does not have access to the Decision invitation
+        decision_invitation = openreview.tools.get_invitation(pc_client, '{}/Submission{}/-/Decision'.format(venue['venue_id'], submission.number))
+        assert decision_invitation is None
+
+        # Post a decision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                }
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id = decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        # Assert that PC now has access to the Decision invitation
+        decision_invitation = openreview.tools.get_invitation(pc_client, '{}/Submission{}/-/Decision'.format(venue['venue_id'], submission.number))
+        assert decision_invitation
+
+        decision_invitation = openreview_client.get_invitation(id='{}/Submission1/-/Decision'.format(venue['venue_id']))
+        assert decision_invitation
+        decision_invitation = openreview_client.get_invitation(id='{}/Submission2/-/Decision'.format(venue['venue_id']))
+        assert decision_invitation
+        assert 'comment' in decision_invitation.edit['note']['content']
+        assert 'suggestions' in decision_invitation.edit['note']['content']
+        assert 'decision' in decision_invitation.edit['note']['content']
+        assert 'Revision Needed' in decision_invitation.edit['note']['content']['decision']['value']['param']['enum']
+        assert len(decision_invitation.edit['note']['readers']) == 3
+        assert 'V2.cc/2030/Conference/Program_Chairs' in decision_invitation.edit['note']['readers']
+        assert 'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs' in decision_invitation.edit['note']['readers']
+        assert 'V2.cc/2030/Conference/Submission2/Area_Chairs' in decision_invitation.edit['note']['readers']
 
 #         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'), 'w') as file_handle:
 #             writer = csv.writer(file_handle)

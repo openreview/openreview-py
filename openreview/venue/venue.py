@@ -14,6 +14,7 @@ class Venue(object):
     def __init__(self, client, venue_id):
 
         self.client = client
+        self.request_form_id = None
         self.venue_id = venue_id
         self.name = 'TBD'
         self.short_name = 'TBD'
@@ -38,6 +39,7 @@ class Venue(object):
         self.bid_stages = []
         self.meta_review_stage = None
         self.comment_stage = None
+        self.decision_stage = None
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
@@ -393,6 +395,14 @@ class Venue(object):
             public_notes = [note for note in self.get_submissions() if 'everyone' in note.readers]
             comment_invitation = self.invitation_builder.set_public_comment_invitation()
             self.invitation_builder.create_paper_invitations(comment_invitation.id, public_notes)
+
+    def create_decision_stage(self):
+        invitation = self.invitation_builder.set_decision_invitation()
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+
+        # if self.decision_stage.decisions_file:
+        #     decisions = self.client.get_attachment(id=self.request_form_id, field_name='decisions_file')
+        #     self.invitation_builder.post_decisions(decisions)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:
