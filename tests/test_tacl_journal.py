@@ -524,8 +524,7 @@ note: replies to this email will go to the AE, Graham Neubig.
             signatures=["TACL/Paper1/Action_Editors"],
             note=Note(
                 content={
-                    'main_claims': { 'value': 'Accept as is' },
-                    'claims_support': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'Accept as is' },
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' },

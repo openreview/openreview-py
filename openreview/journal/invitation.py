@@ -4241,21 +4241,9 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
                     'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
                     'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}')],
                     'content': {
-                        'main_claims': {
-                            'order': 1,
-                            'description': 'What are the main claims made by this submission? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 200000,
-                                    'input': 'textarea',
-                                    'markdown': True
-                                }
-                            }
-                        },
-                        'claims_support': {
+                        'claims_and_evidence': {
                             'order': 2,
-                            'description': 'Are these claims well supported by evidence? If not, why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                            'description': 'Are the claims made in the submission supported by accurate, convincing and clear evidence? If not why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                             'value': {
                                 'param': {
                                     'type': 'string',
