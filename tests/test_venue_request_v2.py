@@ -1552,10 +1552,10 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
                 'decision_options': 'Accept, Revision Needed, Reject',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-                'notify_authors': 'No, I will send the emails to the authors',
+                'notify_authors': 'Yes, send an email notification to the authors',
                 'additional_decision_form_options': {
                     'suggestions': {
                         'description': 'Please provide suggestions on how to improve the paper',
@@ -1597,10 +1597,34 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'suggestions' in decision_invitation.edit['note']['content']
         assert 'decision' in decision_invitation.edit['note']['content']
         assert 'Revision Needed' in decision_invitation.edit['note']['content']['decision']['value']['param']['enum']
-        assert len(decision_invitation.edit['note']['readers']) == 3
+        assert len(decision_invitation.edit['note']['readers']) == 4
         assert 'V2.cc/2030/Conference/Program_Chairs' in decision_invitation.edit['note']['readers']
         assert 'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs' in decision_invitation.edit['note']['readers']
         assert 'V2.cc/2030/Conference/Submission2/Area_Chairs' in decision_invitation.edit['note']['readers']
+        assert 'V2.cc/2030/Conference/Submission2/Authors' in decision_invitation.edit['note']['readers']
+
+        #post decision
+        decision_note = pc_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Decision',
+        signatures=['V2.cc/2030/Conference/Program_Chairs'],
+        note=Note(
+            readers=[
+                'V2.cc/2030/Conference/Program_Chairs',
+                'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                'V2.cc/2030/Conference/Submission1/Authors',
+                'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs'
+            ],
+            content={
+                'decision': {'value': 'Accept'},
+                'comment': {'value': 'This is a comment.'}
+            }
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
+
+        messages = client.get_messages(
+            to='venue_author_v2@mail.com',
+            subject="[TestVenue@OR'2030] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision_note['note']['id']}'''
 
 #         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'), 'w') as file_handle:
 #             writer = csv.writer(file_handle)

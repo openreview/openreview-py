@@ -584,7 +584,8 @@ decision_v2 = {
                 'type': 'string',
                 'maxLength': 5000,
                 'markdown': True,
-                'input': 'textarea'
+                'input': 'textarea',
+                'optional': True
             }
         }
     }

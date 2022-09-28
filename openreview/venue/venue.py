@@ -197,6 +197,9 @@ class Venue(object):
     def get_authors_id(self, number = None):
         return self.get_committee_id(self.authors_name, number)
 
+    def get_authors_accepted_id(self, number = None):
+        return self.get_committee_id(self.authors_name) + '/Accepted'
+
     def get_program_chairs_id(self):
         return self.get_committee_id(self.program_chairs_name)
 
@@ -301,6 +304,16 @@ class Venue(object):
             ##content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.submission_stage.get_submission_id(self) + "';")
             authors_group.web = content
             self.client.post_group(authors_group)
+
+        authors_accepted_id = self.get_authors_accepted_id()
+        authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
+        if not authors_accepted_group:
+            authors_accepted_group = self.client.post_group(Group(id=authors_accepted_id,
+                            readers=[venue_id, authors_accepted_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]))
 
         meta_inv = self.client.post_invitation_edit(invitations = None,
             readers = [venue_id],

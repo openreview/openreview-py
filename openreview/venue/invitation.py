@@ -826,19 +826,12 @@ class InvitationBuilder(object):
         with open(process_file) as f:
             process_content = f.read()
 
-            # process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
-            # process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
-            # process_content = process_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
-            # process_content = process_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
+            process_content = process_content.replace("AUTHORS_ID_ACCEPTED = ''", f"AUTHORS_ID_ACCEPTED = '{self.venue.get_authors_id()}/Accepted'")
 
-            # if self.venue.use_area_chairs:
-            #     process_content = process_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
-
-            # if self.venue.use_senior_area_chairs:
-            #     process_content = process_content.replace("PAPER_SENIOR_AREA_CHAIRS_ID = ''", f"PAPER_SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id('{number}')}'")
-
-            # if decision_stage.email_pcs:
-            #     process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
+            if decision_stage.email_authors:
+                process_content = process_content.replace("EMAIL_AUTHORS = False", "EMAIL_AUTHORS = True")
 
         process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
         with open(process_file) as f:
