@@ -200,8 +200,15 @@ class Venue(object):
         options['contact'] = self.contact
         return options
 
+    def get_submission_venue_id(self, submission_invitation_name=None):
+        if submission_invitation_name:
+            return f'{self.venue_id}/{submission_invitation_name}'
+        if self.submission_stage:
+            return f'{self.venue_id}/{self.submission_stage.name}'
+        return f'{self.venue_id}/Submission'
+
     def get_submissions(self, venueid=None, sort=None):
-        return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.venue_id}/{self.submission_stage.name}'}, sort=sort)
+        return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort)
 
     def setup(self, program_chair_ids=[]):
     
@@ -278,16 +285,7 @@ class Venue(object):
             authors_group.web = content
             self.client.post_group(authors_group)
 
-        meta_inv = self.client.post_invitation_edit(invitations = None,
-            readers = [venue_id],
-            writers = [venue_id],
-            signatures = [venue_id],
-            invitation = openreview.api.Invitation(id = self.get_meta_invitation_id(),
-                invitees = [venue_id],
-                readers = [venue_id],
-                signatures = [venue_id],
-                edit = True
-            ))
+        self.invitation_builder.set_meta_invitation()
 
         self.group_builder.create_reviewers_group()
         if self.use_area_chairs:
@@ -319,11 +317,6 @@ class Venue(object):
             reduced_load_on_decline,
             # default_load, ##can this be removed? We never get it from the request form
             allow_overlap_official_committee)
-
-    ## deprecated?
-    def set_submission_stage(self, stage):
-        self.submission_stage = stage
-        self.create_submission_stage()
 
     def create_submission_stage(self):
         self.invitation_builder.set_submission_invitation()

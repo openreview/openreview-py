@@ -36,11 +36,11 @@ class TestMatching():
         venue.setup(program_chair_ids=['pc1_venue@mail.com', 'pc3_venue@mail.com'])
 
         now = datetime.datetime.utcnow()
-        venue.set_submission_stage(openreview.builder.SubmissionStage(
+        venue.submission_stage = openreview.stages.SubmissionStage(
             due_date = now + datetime.timedelta(minutes = 40),
             double_blind=True, 
-            readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS]))
-
+            readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS])
+        venue.create_submission_stage()
         assert openreview_client.get_invitation('VenueV2.cc/-/Submission')
 
         message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of VV2 2022 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'

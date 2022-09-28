@@ -106,6 +106,9 @@ class Helpers:
         if quota:
             buttons[1].click() ## Decline
             time.sleep(0.5)
+            reduce_quota_link = selenium.find_element_by_class_name('reduced-load-link')
+            reduce_quota_link.click()
+            time.sleep(0.5)
             dropdown = selenium.find_element_by_class_name('dropdown-select__input-container')
             dropdown.click()
             time.sleep(0.5)
@@ -113,7 +116,7 @@ class Helpers:
             assert len(values) > 0
             values[0].click()
             time.sleep(0.5)
-            button = selenium.find_element_by_xpath('//button[text()="Accept with Reduced Quota"]')
+            button = selenium.find_element_by_xpath('//button[text()="Submit"]')
             button.click()
         elif accept:
             buttons[0].click()
