@@ -228,14 +228,18 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Meta_Review')
 
+    def test_comment_stage(self, venue, openreview_client, helpers):
+
         #release papers to the public
-        venue.set_submission_stage(openreview.builder.SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE]))
+        venue.submission_stage = SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE])
+        venue.create_submission_stage()
         venue.setup_post_submission_stage()
 
         submissions = venue.get_submissions()
         assert submissions and len(submissions) == 1
         assert submissions[0].readers == ['everyone']
 
+        now = datetime.datetime.utcnow()
         venue.comment_stage = openreview.CommentStage(
             end_date=now + datetime.timedelta(minutes = 40),
             allow_public_comments=True,

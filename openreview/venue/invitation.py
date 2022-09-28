@@ -595,13 +595,6 @@ class InvitationBuilder(object):
             if comment_stage.email_pcs:
                 process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
-        with open(process_file) as f:
-            invitation_start_process = f.read()
-
-            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
-
         process_file = os.path.join(os.path.dirname(__file__), 'process/comment_pre_process.py')
         with open(process_file) as f:
             pre_process_content = f.read()
@@ -620,7 +613,7 @@ class InvitationBuilder(object):
             duedate=tools.datetime_millis(comment_stage.end_date),
             date_processes=[{
                 'dates': ["#{4/cdate}"],
-                'script': invitation_start_process
+                'script': self.cdate_invitation_process
             }],
             content={
                 'comment_preprocess_script': {
@@ -737,13 +730,6 @@ class InvitationBuilder(object):
             if comment_stage.email_pcs:
                 process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
-        with open(process_file) as f:
-            invitation_start_process = f.read()
-
-            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
-
         invitation = Invitation(id=public_comment_invitation,
             invitees=[venue_id],
             readers=[venue_id],
@@ -753,7 +739,7 @@ class InvitationBuilder(object):
             expdate=tools.datetime_millis(comment_stage.end_date),
             date_processes=[{
                 'dates': ["#{4/cdate}"],
-                'script': invitation_start_process
+                'script': self.cdate_invitation_process
             }],
             content={
                 'comment_process_script': {
@@ -857,13 +843,6 @@ class InvitationBuilder(object):
             if decision_stage.email_authors:
                 process_content = process_content.replace("EMAIL_AUTHORS = False", "EMAIL_AUTHORS = True")
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
-        with open(process_file) as f:
-            invitation_start_process = f.read()
-
-            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
-
         invitation = Invitation(id=decision_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -873,7 +852,7 @@ class InvitationBuilder(object):
             duedate=tools.datetime_millis(decision_stage.due_date),
             date_processes=[{
                 'dates': ["#{4/cdate}"],
-                'script': invitation_start_process
+                'script': self.cdate_invitation_process
             }],
             content={
                 'decision_process_script': {
