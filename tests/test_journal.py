@@ -1654,8 +1654,7 @@ The TMLR Editors-in-Chief
             signatures=[f"{venue_id}/Paper1/Action_Editors"],
             note=Note(
                 content={
-                    'main_claims': { 'value': 'Accept as is' },
-                    'claims_support': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'Accept as is' },
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept as is' },
                     'comment': { 'value': 'This is a nice paper!' },
@@ -1676,8 +1675,7 @@ The TMLR Editors-in-Chief
                 signatures=[f"{venue_id}/Paper1/Action_Editors"],
                 note=Note(
                     content={
-                        'main_claims': { 'value': 'Accept as is' },
-                        'claims_support': { 'value': 'Accept as is' },
+                        'claims_and_evidence': { 'value': 'Accept as is' },
                         'audience': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Accept as is' },
                         'comment': { 'value': 'This is a nice paper!' },
@@ -2414,8 +2412,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
                 signatures=[f"{venue_id}/Paper4/Action_Editors"],
                 note=Note(
                     content={
-                        'main_claims': { 'value': 'Accept as is' },
-                        'claims_support': { 'value': 'Accept as is' },
+                        'claims_and_evidence': { 'value': 'Accept as is' },
                         'audience': { 'value': 'Accept as is' },                        
                         'recommendation': { 'value': 'Reject' },
                         'comment': { 'value': 'This is not a good paper' },
@@ -2428,8 +2425,7 @@ note: replies to this email will go to the AE, Joelle Pineau.
             signatures=[f"{venue_id}/Paper4/Action_Editors"],
             note=Note(
                 content={
-                    'main_claims': { 'value': 'Accept as is' },
-                    'claims_support': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'Accept as is' },
                     'audience': { 'value': 'Accept as is' },                    
                     'recommendation': { 'value': 'Reject' },
                     'comment': { 'value': 'This is not a good paper' }
@@ -2787,8 +2783,7 @@ note={Rejected}
             signatures=[f"{venue_id}/Paper5/Action_Editors"],
             note=Note(
                 content={
-                    'main_claims': { 'value': 'Accept as is' },
-                    'claims_support': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'Accept as is' },
                     'audience': { 'value': 'Accept as is' },
                     'recommendation': { 'value': 'Accept with minor revision' },
                     'comment': { 'value': 'This is a good paper' }
