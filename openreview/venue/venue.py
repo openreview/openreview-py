@@ -287,17 +287,6 @@ class Venue(object):
 
         self.invitation_builder.set_meta_invitation()
 
-        # meta_inv = self.client.post_invitation_edit(invitations = None,
-        #     readers = [venue_id],
-        #     writers = [venue_id],
-        #     signatures = [venue_id],
-        #     invitation = openreview.api.Invitation(id = self.get_meta_invitation_id(),
-        #         invitees = [venue_id],
-        #         readers = [venue_id],
-        #         signatures = [venue_id],
-        #         edit = True
-        #     ))
-
         self.group_builder.create_reviewers_group()
         if self.use_area_chairs:
             self.group_builder.create_area_chairs_group()
