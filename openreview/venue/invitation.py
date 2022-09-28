@@ -15,6 +15,17 @@ class InvitationBuilder(object):
         self.client = venue.client
         self.venue = venue
         self.venue_id = venue.venue_id
+        self.cdate_invitation_process = '''def process(client, invitation):
+    meta_invitation = client.get_invitation("''' + self.venue.get_meta_invitation_id() + '''")
+    script = meta_invitation.content["cdate_invitation_script"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+        'date_index': date_index
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+'''
 
     def save_invitation(self, invitation, replacement=None):
         return self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
@@ -84,6 +95,34 @@ class InvitationBuilder(object):
 
         return tools.concurrent_requests(post_invitation, notes, desc=f'create_paper_invitations')             
 
+    def set_meta_invitation(self):
+        venue_id=self.venue_id
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
+        with open(process_file) as f:
+            invitation_start_process = f.read()
+
+            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{self.venue.id}"')
+            invitation_start_process = invitation_start_process.replace("UNDER_SUBMISSION_ID = ''", f"UNDER_SUBMISSION_ID = '{self.venue.get_submission_venue_id()}'")
+
+        self.client.post_invitation_edit(invitations=None,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=Invitation(id=self.venue.get_meta_invitation_id(),
+                invitees=[venue_id],
+                readers=[venue_id],
+                signatures=[venue_id],
+                content={
+                    'cdate_invitation_script': {
+                        'value': invitation_start_process
+                    }
+                },
+                edit=True
+            )
+        )
+       
+    
     def set_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
@@ -187,14 +226,6 @@ class InvitationBuilder(object):
             if review_stage.email_pcs:
                 file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
-        with open(process_file) as f:
-            invitation_start_process = f.read()
-
-            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{self.venue.id}"')
-            invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
-
-
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -204,7 +235,7 @@ class InvitationBuilder(object):
             duedate=tools.datetime_millis(review_stage.due_date),
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
-                'script': invitation_start_process                
+                'script': self.cdate_invitation_process              
             }],
             content={
                 'review_process_script': {
@@ -298,13 +329,6 @@ class InvitationBuilder(object):
             if field in content:
                 del content[field]
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
-        with open(process_file) as f:
-            invitation_start_process = f.read()
-
-            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            invitation_start_process = invitation_start_process.replace("SUBMISSION_ID = ''", f"SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
-
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -314,7 +338,7 @@ class InvitationBuilder(object):
             duedate=tools.datetime_millis(meta_review_stage.due_date),
             date_processes=[{ 
                     'dates': ["#{4/cdate}"],
-                    'script': invitation_start_process                
+                    'script': self.cdate_invitation_process                
             }],
             edit={
                 'signatures': [venue_id],
