@@ -200,9 +200,9 @@ class Venue(object):
         options['contact'] = self.contact
         return options
 
-    def get_submission_venue_id(self, submission_invitation_id=None):
-        if submission_invitation_id:
-            return f'{self.venue_id}/{submission_invitation_id}'
+    def get_submission_venue_id(self, submission_invitation_name=None):
+        if submission_invitation_name:
+            return f'{self.venue_id}/{submission_invitation_name}'
         if self.submission_stage:
             return f'{self.venue_id}/{self.submission_stage.name}'
         return f'{self.venue_id}/Submission'
