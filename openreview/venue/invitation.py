@@ -592,7 +592,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            cdate=comment_cdate,
+            expdate=comment_cdate,
             duedate=tools.datetime_millis(comment_stage.end_date),
             date_processes=[{
                 'dates': ["#{4/cdate}"],
@@ -632,7 +632,7 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': invitees,
-                    'duedate': tools.datetime_millis(comment_stage.end_date),
+                    'expdate': tools.datetime_millis(comment_stage.end_date),
                     'cdate': comment_cdate,
                     'preprocess': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -726,7 +726,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            duedate=tools.datetime_millis(comment_stage.end_date),
+            expdate=tools.datetime_millis(comment_stage.end_date),
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': invitation_start_process
@@ -763,7 +763,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': ['everyone'],
                     'noninvitees': self.venue.get_committee('${3/content/noteNumber/value}', with_authors = True),
-                    'duedate': tools.datetime_millis(comment_stage.end_date),
+                    'expdate': tools.datetime_millis(comment_stage.end_date),
                     'cdate': comment_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -890,6 +890,7 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [self.venue.get_program_chairs_id(), self.venue.support_user],
                     'maxReplies': 1,
+                    'minReplies': 1,
                     'duedate': tools.datetime_millis(decision_stage.due_date),
                     'cdate': decision_cdate,
                     'process': '''def process(client, edit, invitation):
