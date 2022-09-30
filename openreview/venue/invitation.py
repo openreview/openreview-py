@@ -131,8 +131,8 @@ class InvitationBuilder(object):
         content = default_content.submission_v2
         
         if submission_stage.double_blind:
-            content['authors']['readers'] = [venue_id, f'{venue_id}/{submission_name}${{4/number}}/Authors']
-            content['authorids']['readers'] = [venue_id, f'{venue_id}/{submission_name}${{4/number}}/Authors']
+            content['authors']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
+            content['authorids']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
 
         for field in submission_stage.remove_fields:
             del content[field]
@@ -146,14 +146,14 @@ class InvitationBuilder(object):
             content['pdf']['optional'] = True
 
         content['venue'] = {
-            'value': f'{self.venue.short_name} {submission_name}'
+            'value': tools.pretty_id(self.venue.get_submission_venue_id())
         }
         content['venueid'] = {
-            'value': f'{venue_id}/{submission_name}'
+            'value': self.venue.get_submission_venue_id()
         }
 
-        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/note/number}}/Authors']
-        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/number}}/Authors']
+        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/note/number}')]
+        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/number}')]
 
         submission_id = submission_stage.get_submission_id(self.venue)
 
@@ -166,7 +166,7 @@ class InvitationBuilder(object):
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },
                 'readers': edit_readers,
-                'writers': [venue_id, f'{venue_id}/{submission_name}${{2/note/number}}/Authors'],
+                'writers': [venue_id, self.venue.get_authors_id('${2/note/number}')],
                 'note': {
                     'id': {
                         'param': {
@@ -181,9 +181,9 @@ class InvitationBuilder(object):
                             'deletable': True
                         }
                     },                    
-                    'signatures': [ f'{venue_id}/{submission_name}${{2/number}}/Authors' ],
+                    'signatures': [ self.venue.get_authors_id('${2/number}') ],
                     'readers': note_readers,
-                    'writers': [venue_id, f'{venue_id}/{submission_name}${{2/number}}/Authors'],
+                    'writers': [venue_id, self.venue.get_authors_id('${2/number}')],
                     'content': content
                 }
             },
@@ -559,6 +559,148 @@ class InvitationBuilder(object):
             )
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
+
+    def set_withdrawal_invitation(self):
+        venue_id = self.venue_id
+        submission_stage = self.venue.submission_stage
+        exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
+
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/withdrawal_submission_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
+            file_content = file_content.replace("WITHDRAWN_INVITATION_ID = ''", f"WITHDRAWN_INVITATION_ID = '{self.venue.get_withdrawn_id()}'")
+
+        invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            expdate=exp_date,
+            content={
+                'process_script': {
+                    'value': file_content
+                }
+            },            
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(submission_stage.withdrawal_name, '${2/content/noteNumber/value}'),
+                    'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'maxReplies': 1,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                    'edit': {
+                        'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}')  }},
+                        'readers': submission_stage.get_withdrawal_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
+                        'note': {
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'signatures': [self.venue.get_authors_id(number='${5/content/noteNumber/value}')],
+                            'readers': ['${3/readers}'],
+                            'writers': [ venue_id ],
+                            'content': {
+                                'withdrawal_confirmation': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                                            ],
+                                            'input': 'checkbox'
+                                        }
+                                    },
+                                    'description': 'Please confirm to withdraw.',
+                                    'order': 1
+                                },
+                                'comment': {
+                                    'order': 2,
+                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'optional': True,
+                                            'markdown': True
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        )            
+
+
+        self.save_invitation(invitation, replacement=True)
+
+        withdrawn_invitation = Invitation (
+            id=self.venue.get_withdrawn_id(),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            #'withVenueId': self.venue.get_submission_venue_id()
+                            'withInvitation': submission_stage.get_submission_id(self.venue)
+                        }
+                    },                    
+                    #'readers': note_readers,
+                    'content': {
+                        'venue': {
+                            'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
+                        },
+                        'venueid': {
+                            'value': self.venue.get_withdrawn_submission_venue_id()
+                        }
+                    }
+                }
+            },
+            #process=self.get_process_content('process/withdrawn_submission_process.py')
+        )
+
+        self.save_invitation(withdrawn_invitation, replacement=True)
+
 
     def set_assignment_invitation(self, committee_id):
         client = self.client

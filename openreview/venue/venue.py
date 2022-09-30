@@ -192,6 +192,12 @@ class Venue(object):
     def get_ethics_reviewers_id(self, number = None, anon=False):
         return self.get_committee_id('Ethics_Reviewer_.*' if anon else self.ethics_reviewers_name, number)
 
+    def get_withdrawal_id(self, number = None):
+        return self.get_invitation_id(self.submission_stage.withdrawal_name, number)        
+
+    def get_withdrawn_id(self):
+        return self.get_invitation_id(f'Withdrawn_{self.submission_stage.name}') 
+
     def get_homepage_options(self):
         options = {}
         options['title'] = self.name
@@ -206,6 +212,13 @@ class Venue(object):
         if self.submission_stage:
             return f'{self.venue_id}/{self.submission_stage.name}'
         return f'{self.venue_id}/Submission'
+
+    def get_withdrawn_submission_venue_id(self, submission_invitation_name=None):
+        if submission_invitation_name:
+            return f'{self.venue_id}/Withdrawn_{submission_invitation_name}'
+        if self.submission_stage:
+            return f'{self.venue_id}/Withdrawn_{self.submission_stage.name}'
+        return f'{self.venue_id}/Withdrawn_Submission'        
 
     def get_submissions(self, venueid=None, sort=None):
         return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort)
@@ -320,6 +333,7 @@ class Venue(object):
 
     def create_submission_stage(self):
         self.invitation_builder.set_submission_invitation()
+        self.invitation_builder.set_withdrawal_invitation()
         self.group_builder.set_submission_variables()
 
     def create_review_stage(self):
@@ -352,6 +366,8 @@ class Venue(object):
              
         ## Create revision invitation if there is a second deadline?
         ## Create withdraw and desk reject invitations
+        self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
+        
         #    
 
     def create_bid_stages(self):
