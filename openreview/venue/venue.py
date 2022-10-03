@@ -117,7 +117,10 @@ class Venue(object):
         return self.get_invitation_id('Recommendation', prefix=committee_id)
 
     def get_paper_group_prefix(self, number=None):
-        return f'{self.venue_id}/{self.submission_stage.name}{number}'
+        prefix = f'{self.venue_id}/{self.submission_stage.name}'
+        if number:
+            prefix = f'{prefix}{number}'
+        return prefix
     
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id

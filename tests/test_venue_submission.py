@@ -270,6 +270,10 @@ class TestVenueSubmission():
         assert note.content['venueid']['value'] == 'TestVenue.cc/Withdrawn_Submission'
         assert 'readers' not in note.content['authors']
         assert 'readers' not in note.content['authorids']
-        # 
-        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')     
-        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
+
+        helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Withdrawn_Submission')
+        
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')     
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())

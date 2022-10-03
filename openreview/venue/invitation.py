@@ -732,7 +732,7 @@ class InvitationBuilder(object):
                 'invitation': {
                     'id': {
                         'param': {
-                            'withInvitation': self.venue.get_meta_invitation_id()
+                            'withInvitation': 'TestVenue.cc/-/Official_Review'#self.venue.get_invitation_id(submission_stage.withdrawal_name)
                         }
                     },
                     'signatures': [venue_id],                  
