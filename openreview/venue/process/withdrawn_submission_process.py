@@ -12,7 +12,6 @@ def process(client, edit, invitation):
 
     for invitation in invitations:
         print(f'Expiring invitation {invitation.id}')
-        invitation.id = 'TestVenue.cc/Submission2/-/Official_Review'
         client.post_invitation_edit(
             invitations=EXPIRE_INVITATION_ID,
             invitation=openreview.api.Invitation(id=invitation.id,

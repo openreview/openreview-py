@@ -732,7 +732,7 @@ class InvitationBuilder(object):
                 'invitation': {
                     'id': {
                         'param': {
-                            'withInvitation': 'TestVenue.cc/-/Official_Review'#self.venue.get_invitation_id(submission_stage.withdrawal_name)
+                            'regex': self.venue.get_paper_group_prefix()
                         }
                     },
                     'signatures': [venue_id],                  
