@@ -668,6 +668,30 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
+        process_file = os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
+            file_content = file_content.replace("PAPER_INVITATION_PREFIX = ''", f"PAPER_INVITATION_PREFIX = '{self.venue.get_paper_group_prefix()}'")
+            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Withdraw_Expiration')}'")
+
+        content = {
+            'venue': {
+                'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
+            },
+            'venueid': {
+                'value': self.venue.get_withdrawn_submission_venue_id()
+            }
+        }
+        if submission_stage.withdrawn_submission_reveal_authors:
+            content['authors'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }
+            content['authorids'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }
+
         withdrawn_invitation = Invitation (
             id=self.venue.get_withdrawn_id(),
             invitees = [venue_id],
@@ -681,25 +705,48 @@ class InvitationBuilder(object):
                 'note': {
                     'id': {
                         'param': {
-                            #'withVenueId': self.venue.get_submission_venue_id()
-                            'withInvitation': submission_stage.get_submission_id(self.venue)
+                            'withVenueid': self.venue.get_submission_venue_id()
                         }
                     },                    
-                    #'readers': note_readers,
-                    'content': {
-                        'venue': {
-                            'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
-                        },
-                        'venueid': {
-                            'value': self.venue.get_withdrawn_submission_venue_id()
+                    'content': content
+                }
+            },
+            process=file_content
+        )
+
+        if SubmissionStage.Readers.EVERYONE not in submission_stage.readers and submission_stage.withdrawn_submission_public:
+            withdrawn_invitation.edit['note']['readers'] = ['everyone']
+
+        self.save_invitation(withdrawn_invitation, replacement=True)
+
+        expire_invitation = Invitation (
+            id=self.venue.get_invitation_id('Withdraw_Expiration'),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.venue.get_meta_invitation_id()
+                        }
+                    },
+                    'signatures': [venue_id],                  
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'deletable': True
                         }
                     }
                 }
-            },
-            #process=self.get_process_content('process/withdrawn_submission_process.py')
+            }
         )
 
-        self.save_invitation(withdrawn_invitation, replacement=True)
+        self.save_invitation(expire_invitation, replacement=True)
 
 
     def set_assignment_invitation(self, committee_id):

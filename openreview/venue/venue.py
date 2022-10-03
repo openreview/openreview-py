@@ -116,12 +116,15 @@ class Venue(object):
             committee_id = self.get_reviewers_id()
         return self.get_invitation_id('Recommendation', prefix=committee_id)
 
+    def get_paper_group_prefix(self, number=None):
+        return f'{self.venue_id}/{self.submission_stage.name}{number}'
+    
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
         if prefix:
             invitation_id = prefix
         if number:
-            invitation_id = f'{invitation_id}/{self.submission_stage.name}{number}/-/'
+            invitation_id = f'{self.get_paper_group_prefix(number)}/-/'
         else:
             invitation_id = invitation_id + '/-/'
 
@@ -131,7 +134,7 @@ class Venue(object):
     def get_committee_id(self, name, number=None):
         committee_id = self.id + '/'
         if number:
-            committee_id = f'{committee_id}{self.submission_stage.name}{number}/{name}'
+            committee_id = f'{self.get_paper_group_prefix(number)}/{name}'
         else:
             committee_id = committee_id + name
         return committee_id

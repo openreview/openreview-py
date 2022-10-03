@@ -30,7 +30,7 @@ class TestVenueSubmission():
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
         now = datetime.datetime.utcnow()
-        venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.REVIEWERS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED])
+        venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.EVERYONE], withdrawn_submission_public=True, withdrawn_submission_reveal_authors=True)
         venue.bid_stages = [
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
@@ -169,16 +169,13 @@ class TestVenueSubmission():
         assert len(bid_edges) == 1
 
         ## after bidding stage the submissions should be visible to the assigned committee
-        venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED]
+        venue.submission_stage.readers = [SubmissionStage.Readers.EVERYONE]
         venue.setup_post_submission_stage()
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 2
         submission = submissions[0]
-        assert len(submission.readers) == 4
-        assert 'TestVenue.cc' in submission.readers
-        assert 'TestVenue.cc/Submission1/Authors' in submission.readers        
-        assert 'TestVenue.cc/Submission1/Reviewers' in submission.readers
-        assert 'TestVenue.cc/Submission1/Area_Chairs' in submission.readers              
+        assert len(submission.readers) == 1
+        assert 'everyone' in submission.readers
     
     def test_setup_matching(self, venue, openreview_client, helpers):
 
@@ -205,30 +202,6 @@ class TestVenueSubmission():
         assert (len(custom_load_edges)) == 1
     
     
-    def test_withdraw_submission(self, venue, openreview_client, helpers):
-
-        author_client = OpenReviewClient(username='celeste@maileleven.com', password='1234')
-
-        withdraw_note = author_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal',
-                                    signatures=['TestVenue.cc/Submission2/Authors'],
-                                    note=Note(
-                                        content={
-                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
-                                        }
-                                    ))
-
-        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
-
-        note = author_client.get_note(withdraw_note['note']['forum'])
-        assert note
-        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Withdrawn_Submission']
-        assert note.readers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Area_Chairs', 'TestVenue.cc/Submission2/Reviewers', 'TestVenue.cc/Submission2/Authors']
-        assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
-        assert note.signatures == ['TestVenue.cc/Submission2/Authors']
-        assert note.content['venue']['value'] == 'TestVenue Withdrawn Submission'
-        assert note.content['venueid']['value'] == 'TestVenue.cc/Withdrawn_Submission'
-
-
     def test_review_stage(self, venue, openreview_client, helpers):
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
@@ -272,3 +245,31 @@ class TestVenueSubmission():
         
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Meta_Review')
+
+    def test_withdraw_submission(self, venue, openreview_client, helpers):
+
+        author_client = OpenReviewClient(username='celeste@maileleven.com', password='1234')
+
+        withdraw_note = author_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal',
+                                    signatures=['TestVenue.cc/Submission2/Authors'],
+                                    note=Note(
+                                        content={
+                                            'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdraw_note['id'])
+
+        note = author_client.get_note(withdraw_note['note']['forum'])
+        assert note
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Withdrawn_Submission']
+        assert note.readers == ['everyone']
+        assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
+        assert note.signatures == ['TestVenue.cc/Submission2/Authors']
+        assert note.content['venue']['value'] == 'TestVenue Withdrawn Submission'
+        assert note.content['venueid']['value'] == 'TestVenue.cc/Withdrawn_Submission'
+        assert 'readers' not in note.content['authors']
+        assert 'readers' not in note.content['authorids']
+        # 
+        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')     
+        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
