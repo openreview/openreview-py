@@ -9,6 +9,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         openreview_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', token=client.token)
         venue = openreview.venue.Venue(openreview_client, note.content['venue_id'])
         venue.request_form_id = request_form_id
+        venue.support_user = support_user
         venue.use_area_chairs = note.content.get('Area Chairs (Metareviewers)', '') == 'Yes, our venue has Area Chairs'
         venue.use_senior_area_chairs = note.content.get('senior_area_chairs') == 'Yes, our venue has Senior Area Chairs'
         venue.short_name = note.content.get('Abbreviated Venue Name')
