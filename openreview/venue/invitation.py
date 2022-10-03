@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
 SHORT_BUFFER_MIN = 30
+LONG_BUFFER_DAYS = 10
 
 class InvitationBuilder(object):
 
@@ -238,6 +239,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=review_cdate,
             duedate=tools.datetime_millis(review_stage.due_date),
+            expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None,
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process              
@@ -341,6 +343,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=meta_review_cdate,
             duedate=tools.datetime_millis(meta_review_stage.due_date),
+            expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None,
             date_processes=[{ 
                     'dates': ["#{4/cdate}"],
                     'script': self.cdate_invitation_process                
@@ -614,8 +617,8 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            expdate=comment_cdate,
-            duedate=tools.datetime_millis(comment_stage.end_date),
+            cdate=comment_cdate,
+            expdate=tools.datetime_millis(comment_stage.end_date),
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process
@@ -855,6 +858,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=decision_cdate,
             duedate=tools.datetime_millis(decision_stage.due_date),
+            expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None,
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process
