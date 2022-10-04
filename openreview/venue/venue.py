@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import time
@@ -235,6 +236,7 @@ class Venue(object):
         return f'{self.venue_id}/Submission'
 
     def get_submissions(self, venueid=None, sort=None, details=None):
+        print('venue id:', self.get_submission_venue_id())
         return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
 
     def setup(self, program_chair_ids=[]):
@@ -406,7 +408,9 @@ class Venue(object):
         invitation = self.invitation_builder.set_decision_invitation()
         self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
 
-        if self.decision_stage.decisions_file:
+        decision_file = self.decision_stage.decisions_file
+        if decision_file:
+
             baseurl = 'http://localhost:3000'
             if 'https://devapi' in self.client.baseurl:
                 baseurl = 'https://devapi.openreview.net'
@@ -414,7 +418,13 @@ class Venue(object):
                 baseurl = 'https://api.openreview.net'
             api1_client = openreview.Client(baseurl=baseurl, token=self.client.token)
 
-            decisions = api1_client.get_attachment(id=self.request_form_id, field_name='decisions_file')
+            if '/attachment' in decision_file:
+                decisions = api1_client.get_attachment(id=self.request_form_id, field_name='decisions_file')
+
+            else:
+                with open(decision_file, 'rb') as file_handle:
+                    decisions = file_handle.read()
+
             self.invitation_builder.post_decisions(decisions, api1_client)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):

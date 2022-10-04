@@ -1,3 +1,4 @@
+import csv
 import openreview
 import pytest
 import time
@@ -253,3 +254,23 @@ class TestVenueSubmission():
         assert openreview_client.get_invitation(venue.id + '/Submission1/-/Official_Comment')
         assert openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
 
+    def test_decision_stage(self, venue, openreview_client, helpers):
+
+        submissions = venue.get_submissions()
+        assert submissions and len(submissions) == 1
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/venue_decision.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Accept (Oral)', 'Good Paper'])
+
+        now = datetime.datetime.utcnow()
+        venue.decision_stage = openreview.DecisionStage(
+            due_date=now + datetime.timedelta(minutes = 40),
+            decisions_file = os.path.join(os.path.dirname(__file__), 'data/venue_decision.csv'))
+        venue.create_decision_stage()
+
+        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Decision')
+
+        decision = openreview_client.get_notes(invitation=venue.id + '/Submission1/-/Decision')
+        assert len(decision) == 1
+        assert 'Accept (Oral)' == decision[0].content['decision']['value']

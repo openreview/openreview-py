@@ -1002,8 +1002,6 @@ class InvitationBuilder(object):
 
         paper_notes = {n.number: n for n in venue.get_submissions(details='directReplies')}
 
-        forum_note = api1_client.get_note(venue.request_form_id)
-
         def post_decision(paper_decision):
             if len(paper_decision) < 2:
                 raise openreview.OpenReviewException(
@@ -1087,19 +1085,20 @@ Total Errors: {len(errors)}
 {json.dumps({key: errors[key] for key in list(errors.keys())[:10]}, indent=2)}
 ```
 '''
-        status_note = openreview.Note(
-            invitation=venue.support_user + '/-/Request' + str(forum_note.number) + '/Decision_Upload_Status',
-            forum=venue.request_form_id,
-            replyto=venue.request_form_id,
-            readers=[venue.get_program_chairs_id(), venue.support_user],
-            writers=[],
-            signatures=[venue.support_user],
-            content={
-                'title': 'Decision Upload Status',
-                'decision_posted': f'''{len(results)} Papers''',
-                'error': error_status
-            }
-        )
+        if venue.request_form_id:
+            forum_note = api1_client.get_note(venue.request_form_id)
+            status_note = openreview.Note(
+                invitation=venue.support_user + '/-/Request' + str(forum_note.number) + '/Decision_Upload_Status',
+                forum=venue.request_form_id,
+                replyto=venue.request_form_id,
+                readers=[venue.get_program_chairs_id(), venue.support_user],
+                writers=[],
+                signatures=[venue.support_user],
+                content={
+                    'title': 'Decision Upload Status',
+                    'decision_posted': f'''{len(results)} Papers''',
+                    'error': error_status
+                }
+            )
 
-        api1_client.post_note(status_note)
-
+            api1_client.post_note(status_note)
