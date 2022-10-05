@@ -277,3 +277,30 @@ class TestVenueSubmission():
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+
+        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion')     
+
+        withdrawal_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal_Reversion',
+                                    signatures=['TestVenue.cc/Program_Chairs'],
+                                    note=Note(
+                                        content={
+                                            'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')     
+        #assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate is None
+
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
+        assert invitation.expdate is None
+
+        note = author_client.get_note(withdraw_note['note']['forum'])
+        assert note
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
+        assert note.content['venue']['value'] == 'TestVenue Submission'
+        assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'        
+

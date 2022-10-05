@@ -20,3 +20,20 @@ def process(client, edit, invitation):
         )
 
     ## TODO: send emails to all the readers of the submission
+
+
+    ## TODO: create undo withdrawal invitation
+    withdrawal_notes = client.get_notes(forum=submission.id, invitation=PAPER_INVITATION_PREFIX + f'{submission.number}/-/Withdrawal')
+    if withdrawal_notes:
+        print(f'Create withdrawal reversion invitation')
+        client.post_invitation_edit(
+            invitations=VENUE_ID + '/-/Withdrawal_Reversion',
+            content={
+                'noteId': {
+                    'value': submission.id
+                },                
+                'withdrawalId': {
+                    'value': withdrawal_notes[0].id
+                }
+            }
+        )

@@ -841,6 +841,31 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
+    def get_invitation_edits(self, invitation_id = None, invitation = None, with_count=False, sort=None):
+        """
+        Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
+
+        :return: List of edits
+        :rtype: list[Edit]
+        """
+        params = {}
+        if invitation_id:
+            params['invitation.id'] = invitation_id
+        if invitation:
+            params['invitation'] = invitation
+        if sort:
+            params['sort'] = sort
+
+        response = requests.get(self.invitation_edits_url, params=tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+
+        edits = [Edit.from_json(n) for n in response.json()['edits']]
+
+        if with_count and params.get('offset') is None:
+            return edits, response.json()['count']
+
+        return edits        
+
     def get_notes(self, id = None,
             paperhash = None,
             forum = None,
@@ -1691,7 +1716,13 @@ class OpenReviewClient(object):
         """
         """
 
-        response = requests.post(self.note_edits_url, json = edit.to_json(), headers = self.headers)
+        edit_json = edit.to_json()
+
+        if 'note' in edit_json:
+            response = requests.post(self.note_edits_url, json = edit_json, headers = self.headers)
+        if 'invitation' in edit_json:
+            response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
+
         response = self.__handle_response(response)
 
         return response.json()
@@ -1848,6 +1879,7 @@ class Edit(object):
     """
     def __init__(self,
         id = None,
+        invitations = None,
         readers = None,
         writers = None,
         signatures = None,
@@ -1859,6 +1891,7 @@ class Edit(object):
         tauthor = None):
 
         self.id = id
+        self.invitations = invitations
         self.cdate = cdate
         self.ddate = ddate
         self.readers = readers
@@ -1888,6 +1921,8 @@ class Edit(object):
 
         if (self.id):
             body['id'] = self.id
+        if self.invitations:
+            body['invitations'] = self.invitations
         if (self.readers):
             body['readers'] = self.readers
         if (self.nonreaders):
@@ -1899,7 +1934,7 @@ class Edit(object):
         if (self.note):
             body['note'] = self.note.to_json()
         if (self.invitation):
-            body['invitation'] = self.invitation
+            body['invitation'] = self.invitation.to_json()
         if (self.ddate):
             body['ddate'] = self.ddate
 
@@ -1917,6 +1952,7 @@ class Edit(object):
         :rtype: Edit
         """
         edit = Edit(e.get('id'),
+            invitations = e.get('invitations'),
             cdate = e.get('cdate'),
             ddate = e.get('ddate'),
             readers = e.get('readers'),
@@ -1927,6 +1963,10 @@ class Edit(object):
             invitation = e.get('invitation'),
             tauthor = e.get('tauthor')
             )
+
+        if isinstance(edit.invitation, dict):
+            edit.invitation = Invitation.from_json(edit.invitation)
+        
         return edit
 
 class Note(object):
