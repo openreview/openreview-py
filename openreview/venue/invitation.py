@@ -169,6 +169,8 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            duedate=tools.datetime_millis(submission_stage.due_date),
+            expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },
                 'readers': edit_readers,
