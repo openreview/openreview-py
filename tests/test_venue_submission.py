@@ -274,3 +274,7 @@ class TestVenueSubmission():
         decision = openreview_client.get_notes(invitation=venue.id + '/Submission1/-/Decision')
         assert len(decision) == 1
         assert 'Accept (Oral)' == decision[0].content['decision']['value']
+
+    def test_post_decision_stage(self, venue, openreview_client):
+
+        venue.post_decision_stage()

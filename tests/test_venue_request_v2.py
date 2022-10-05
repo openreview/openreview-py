@@ -2140,131 +2140,123 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 #         revision_invitation = test_client.get_invitation('{}/Paper{}/-/Revision'.format(venue['venue_id'], blind_submissions[0].number))
 #         assert revision_invitation.expdate < round(time.time() * 1000)
 
-#     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
-#         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
-#         assert blind_submissions and len(blind_submissions) == 3
+    def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-#         # Assert that submissions are still blind
-#         assert blind_submissions[0].content['authors'] == ['Anonymous']
-#         assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
-#         assert blind_submissions[1].content['authors'] == ['Anonymous']
-#         assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
-#         assert blind_submissions[2].content['authors'] == ['Anonymous']
-#         assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
+        assert submissions and len(submissions) == 2
 
-#         # Assert that submissions are private
-#         assert blind_submissions[0].readers == [venue['venue_id'],
-#             '{}/Senior_Area_Chairs'.format(venue['venue_id']),
-#             '{}/Area_Chairs'.format(venue['venue_id']),
-#             '{}/Reviewers'.format(venue['venue_id']),
-#             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
-#         assert blind_submissions[1].readers == [venue['venue_id'],
-#             '{}/Senior_Area_Chairs'.format(venue['venue_id']),
-#             '{}/Area_Chairs'.format(venue['venue_id']),
-#             '{}/Reviewers'.format(venue['venue_id']),
-#             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
-#         assert blind_submissions[2].readers == [venue['venue_id'],
-#             '{}/Senior_Area_Chairs'.format(venue['venue_id']),
-#             '{}/Area_Chairs'.format(venue['venue_id']),
-#             '{}/Reviewers'.format(venue['venue_id']),
-#             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+        # Assert that submissions are still blind
+        assert submissions[0].content['authors']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission1/Authors"]
+        assert submissions[0].content['authorids']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission1/Authors"]
+        assert submissions[1].content['authors']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission2/Authors"]
+        assert submissions[1].content['authorids']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission2/Authors"]
+        # Assert that submissions are private
+        assert submissions[0].readers == [venue['venue_id'],
+            '{}/Senior_Area_Chairs'.format(venue['venue_id']),
+            '{}/Area_Chairs'.format(venue['venue_id']),
+            '{}/Reviewers'.format(venue['venue_id']),
+            '{}/Submission{}/Authors'.format(venue['venue_id'], submissions[0].number)]
+        assert submissions[1].readers == [venue['venue_id'],
+            '{}/Senior_Area_Chairs'.format(venue['venue_id']),
+            '{}/Area_Chairs'.format(venue['venue_id']),
+            '{}/Reviewers'.format(venue['venue_id']),
+            '{}/Submission{}/Authors'.format(venue['venue_id'], submissions[1].number)]
 
-#         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
-#         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-#         client.post_invitation(invitation)
+        invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
 
-#         invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
 
-#         assert 'Accept' in invitation.reply['content']['home_page_tab_names']['default']
-#         assert invitation.reply['content']['home_page_tab_names']['default']['Accept'] == 'Accept'
-#         assert 'Revision Needed' in invitation.reply['content']['home_page_tab_names']['default']
-#         assert invitation.reply['content']['home_page_tab_names']['default']['Revision Needed'] == 'Revision Needed'
-#         assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
-#         assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
+        assert 'Accept' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Accept'] == 'Accept'
+        assert 'Revision Needed' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Revision Needed'] == 'Revision Needed'
+        assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
 
-#         #Post a post decision note
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         due_date = now + datetime.timedelta(days=3)
-#         short_name = 'TestVenue@OR\'2030'
-#         post_decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
-#                 'submission_readers': 'Everyone (submissions are public)',
-#                 'home_page_tab_names': {
-#                     'Accept': 'Accept',
-#                     'Revision Needed': 'Revision Needed',
-#                     'Reject': 'Reject'
-#                 },
-#                 'send_decision_notifications': 'Yes, send an email notification to the authors',
-#                 'accept_email_content': f'''Dear {{{{fullname}}}},
+        #Post a post decision note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        short_name = 'TestVenue@OR\'2030'
+        post_decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Reject'
+                },
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
 
-# Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
-# You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
-# Best,
-# {short_name} Program Chairs
-# ''',
-#                 'reject_email_content': f'''Dear {{{{fullname}}}},
-                        
-# Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
-# You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
 
-# Best,
-# {short_name} Program Chairs
-# ''',
-#                 'revision_needed_email_content': f'''Dear {{{{fullname}}}},
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
-# Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
-# You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+Best,
+{short_name} Program Chairs
+''',
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
 
-# Best,
-# {short_name} Program Chairs
-# '''
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert post_decision_stage_note
-#         helpers.await_queue()
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
-#         process_logs = client.get_process_logs(id = post_decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
 
-#         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
-#         assert blind_submissions and len(blind_submissions) == 3
+        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         assert blind_submissions[0].content['authors'] == ['Anonymous']
-#         assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
-#         assert blind_submissions[1].content['authors'] == ['Anonymous']
-#         assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
-#         assert blind_submissions[2].content['authors'] == ['Anonymous']
-#         assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
+        assert submissions and len(submissions) == 2
 
-#         last_message = client.get_messages(to='venue_author1@mail.com')[-1]
-#         assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
-#         assert "Dear Venue Author,</p>\n<p>Thank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message['content']['text']
-#         assert f"https://openreview.net/forum?id={blind_submissions[0].id}" in last_message['content']['text']
+        # Assert accepted submission is public and rejected submission is private
+        assert submissions[0].readers == ['everyone']
+        assert submissions[1].readers == [venue['venue_id'],
+            '{}/Submission{}/Senior_Area_Chairs'.format(venue['venue_id'], submissions[1].number),
+            '{}/Submission{}/Area_Chairs'.format(venue['venue_id'], submissions[1].number),
+            '{}/Submission{}/Reviewers'.format(venue['venue_id'], submissions[1].number),
+            '{}/Submission{}/Authors'.format(venue['venue_id'], submissions[1].number)]
 
-#         # Assert that submissions are public
-#         assert blind_submissions[0].readers == ['everyone']
-#         assert blind_submissions[1].readers == ['everyone']
-#         assert blind_submissions[2].readers == ['everyone']
+        # assert authors of accepted paper were released
+        assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030'
+        assert submissions[0].content['venueid']['value'] == 'V2 2030 Conference'
+        assert 'readers' not in submissions[0].content['authors']
+        assert 'readers' not in submissions[0].content['authorids']
 
-#         #check venue and venueid for accepted, venue for rejected
-#         submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
-#         assert submissions and len(submissions) == 3
+        # assert author identities of rejected paper are still hidden
+        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030'
+        assert submissions[1].content['venueid']['value'] == 'V2 2030 Conference'
+        assert submissions[1].content['authors']['readers'] == [venue['venue_id'],'{}/Submission{}/Authors'.format(venue['venue_id'], submissions[1].number)]
+        assert submissions[1].content['authorids']['readers'] == [venue['venue_id'],'{}/Submission{}/Authors'.format(venue['venue_id'], submissions[1].number)]
 
-#         assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
-#         assert 'venueid' in submissions[0].content and 'TEST.cc/2030/Conference' in submissions[0].content['venueid']
-#         assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
-#         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
+        last_message = client.get_messages(to='venue_author_v2@mail.com')[-1]
+        assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
+        assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message['content']['text']
+        assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
 
 #         note_id = submissions[0].id
 #         assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{
