@@ -47,7 +47,7 @@ class TestVenueRequest():
             content={
                 'title': 'Test 2030 Venue V2',
                 'Official Venue Name': 'Test 2030 Venue V2',
-                'Abbreviated Venue Name': "TestVenue@OR'2030",
+                'Abbreviated Venue Name': "TestVenue@OR'2030V2",
                 'Official Website URL': 'https://testvenue2030.gitlab.io/venue/',
                 'program_chair_emails': [
                     'test@mail.com',
@@ -528,12 +528,12 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer One,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -548,7 +548,7 @@ class TestVenueRequest():
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030] Reviewer Invitation accepted")
+        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Reviewer Invitation accepted")
         assert messages and len(messages) == 1
 
         #reinvite reviewer, no email should be sent
@@ -574,7 +574,7 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
@@ -623,12 +623,12 @@ class TestVenueRequest():
         messages = client.get_messages(to='reviewer_one_tilde_v2@mail.com')
         assert messages and len(messages) == 2
 
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear Reviewer OneTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         messages = client.get_messages(to='reviewer_two_tilde_v2@mail.com')
         assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear Reviewer TwoTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -670,12 +670,12 @@ class TestVenueRequest():
         messages = client.get_messages(to='ac_one@mail.com')
         assert messages and len(messages) == 1
 
-        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Area Chair"
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Area Chair"
         assert messages[0]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
 
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert messages and len(messages) == 3
-        assert messages[2]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Area Chair"
+        assert messages[2]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Area Chair"
         assert messages[2]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -688,7 +688,7 @@ class TestVenueRequest():
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030] Area Chair Invitation accepted")
+        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted")
         assert messages and len(messages) == 1
 
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
@@ -726,16 +726,16 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert not messages
 
-        messages = client.get_messages(to='reviewer_one_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        messages = client.get_messages(to='reviewer_one_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
 
-        messages = client.get_messages(to='reviewer_two_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        messages = client.get_messages(to='reviewer_two_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
 
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
@@ -1622,7 +1622,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         messages = client.get_messages(
             to='venue_author_v2@mail.com',
-            subject="[TestVenue@OR'2030] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
+            subject="[TestVenue@OR'2030V2] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision_note['note']['id']}'''
 
@@ -2151,16 +2151,16 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert submissions[1].content['authors']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission2/Authors"]
         assert submissions[1].content['authorids']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission2/Authors"]
         # Assert that submissions are private
-        assert submissions[0].readers == [venue['venue_id'],
-            '{}/Senior_Area_Chairs'.format(venue['venue_id']),
-            '{}/Area_Chairs'.format(venue['venue_id']),
-            '{}/Reviewers'.format(venue['venue_id']),
-            '{}/Submission{}/Authors'.format(venue['venue_id'], submissions[0].number)]
-        assert submissions[1].readers == [venue['venue_id'],
-            '{}/Senior_Area_Chairs'.format(venue['venue_id']),
-            '{}/Area_Chairs'.format(venue['venue_id']),
-            '{}/Reviewers'.format(venue['venue_id']),
-            '{}/Submission{}/Authors'.format(venue['venue_id'], submissions[1].number)]
+        assert submissions[0].readers == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Area_Chairs',
+            'V2.cc/2030/Conference/Reviewers',
+            'V2.cc/2030/Conference/Submission1/Authors']
+        assert submissions[1].readers == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Area_Chairs',
+            'V2.cc/2030/Conference/Reviewers',
+            'V2.cc/2030/Conference/Submission2/Authors']
 
         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
@@ -2179,7 +2179,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        short_name = 'TestVenue@OR\'2030'
+        short_name = 'TestVenue@OR\'2030V2'
         post_decision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
@@ -2230,32 +2230,31 @@ Best,
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
+        submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 2
 
         # Assert accepted submission is public and rejected submission is private
         assert submissions[0].readers == ['everyone']
-        assert submissions[1].readers == [venue['venue_id'],
-            '{}/Submission{}/Senior_Area_Chairs'.format(venue['venue_id'], submissions[1].number),
-            '{}/Submission{}/Area_Chairs'.format(venue['venue_id'], submissions[1].number),
-            '{}/Submission{}/Reviewers'.format(venue['venue_id'], submissions[1].number),
-            '{}/Submission{}/Authors'.format(venue['venue_id'], submissions[1].number)]
+        assert submissions[1].readers == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Submission2/Area_Chairs',
+            'V2.cc/2030/Conference/Submission2/Reviewers',
+            'V2.cc/2030/Conference/Submission2/Authors']
 
         # assert authors of accepted paper were released
-        assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030'
+        assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030V2'
         assert submissions[0].content['venueid']['value'] == 'V2 2030 Conference'
         assert 'readers' not in submissions[0].content['authors']
         assert 'readers' not in submissions[0].content['authorids']
 
         # assert author identities of rejected paper are still hidden
-        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030'
+        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
         assert submissions[1].content['venueid']['value'] == 'V2 2030 Conference'
-        assert submissions[1].content['authors']['readers'] == [venue['venue_id'],'{}/Submission{}/Authors'.format(venue['venue_id'], submissions[1].number)]
-        assert submissions[1].content['authorids']['readers'] == [venue['venue_id'],'{}/Submission{}/Authors'.format(venue['venue_id'], submissions[1].number)]
+        assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
+        assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
-        last_message = client.get_messages(to='venue_author_v2@mail.com')[-1]
-        assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
-        assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message['content']['text']
+        last_message = client.get_messages(to='venue_author_v2@mail.com', subject='[TestVenue@OR\'2030V2] Decision notification for your submission 1: test submission')[0]
+        assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2." in last_message['content']['text']
         assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
 
 #         note_id = submissions[0].id
