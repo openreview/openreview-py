@@ -149,7 +149,7 @@ class InvitationBuilder(object):
             content[key] = value
 
         if submission_stage.second_due_date and 'pdf' in content:
-            content['pdf']['optional'] = True
+            content['pdf']['value']['param']['optional'] = True
 
         content['venue'] = {
             'value': f'{self.venue.short_name} {submission_name}'
@@ -162,6 +162,7 @@ class InvitationBuilder(object):
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/number}}/Authors']
 
         submission_id = submission_stage.get_submission_id(self.venue)
+        submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.utcnow())
 
         submission_invitation = Invitation(
             id=submission_id,
@@ -169,6 +170,7 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            cdate=submission_cdate,
             duedate=tools.datetime_millis(submission_stage.due_date),
             expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
             edit = {
