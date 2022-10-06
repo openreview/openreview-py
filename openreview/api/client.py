@@ -1933,8 +1933,11 @@ class Edit(object):
             body['signatures'] = self.signatures
         if (self.note):
             body['note'] = self.note.to_json()
-        if (self.invitation):
+        if isinstance(self.invitation, Invitation):
             body['invitation'] = self.invitation.to_json()
+        if isinstance(self.invitation, str):
+            body['invitations'] = self.invitation
+            body['invitation'] = self.invitation
         if (self.ddate):
             body['ddate'] = self.ddate
 

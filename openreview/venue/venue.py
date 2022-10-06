@@ -224,7 +224,14 @@ class Venue(object):
             return f'{self.venue_id}/Withdrawn_{submission_invitation_name}'
         if self.submission_stage:
             return f'{self.venue_id}/Withdrawn_{self.submission_stage.name}'
-        return f'{self.venue_id}/Withdrawn_Submission'        
+        return f'{self.venue_id}/Withdrawn_Submission' 
+
+    def get_desk_rejected_submission_venue_id(self, submission_invitation_name=None):
+        if submission_invitation_name:
+            return f'{self.venue_id}/Desk_Rejected_{submission_invitation_name}'
+        if self.submission_stage:
+            return f'{self.venue_id}/Desk_Rejected_{self.submission_stage.name}'
+        return f'{self.venue_id}/Desk_Rejected_Submission'                
 
     def get_submissions(self, venueid=None, sort=None):
         return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort)
@@ -237,25 +244,9 @@ class Venue(object):
         for i, g in enumerate(groups[:-1]):
             self.group_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        venue_group = openreview.api.Group(id = venue_id,
-            readers = ['everyone'],
-            writers = [venue_id],
-            signatures = ['~Super_User1'],
-            signatories = [venue_id],
-            members = [],
-            host = venue_id
-        )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
-            # add withdrawn and desk-rejected ids when invitations are created
-            # content = content.replace("const WITHDRAWN_SUBMISSION_ID = ''", "const WITHDRAWN_SUBMISSION_ID = '" + venue_id + "/-/Withdrawn_Submission'")
-            # content = content.replace("const DESK_REJECTED_SUBMISSION_ID = ''", "const DESK_REJECTED_SUBMISSION_ID = '" + venue_id + "/-/Desk_Rejected_Submission'")
-            content = content.replace("const AUTHORS_ID = ''", "const AUTHORS_ID = '" + self.get_authors_id() + "'")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.get_homepage_options()) + ";")
-            venue_group.web = content
-            self.client.post_group(venue_group)
+        venue_group = groups[-1]
+        print(venue_group)
+        self.group_builder.set_home_page(venue_group, groups[-2] if len(groups) > 1 else None)
 
         ## pc group
         #to-do add pc group webfield

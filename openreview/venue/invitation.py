@@ -702,10 +702,17 @@ class InvitationBuilder(object):
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                 
                 'note': {
                     'id': {
                         'param': {
-                            'withVenueid': self.venue.get_submission_venue_id()
+                            'withInvitation': self.venue.submission_stage.get_submission_id(self.venue)
                         }
                     },                    
                     'content': content
