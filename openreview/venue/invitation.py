@@ -771,6 +771,8 @@ class InvitationBuilder(object):
 
             file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Withdraw_Expiration')}'")
             file_content = file_content.replace("WITHDRAWN_INVITATION_ID = ''", f"WITHDRAWN_INVITATION_ID = '{self.venue.get_withdrawn_id()}'")
+            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
+            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_authors=True))}')
 
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name + '_Reversion'),

@@ -1720,7 +1720,7 @@ class OpenReviewClient(object):
 
         if 'note' in edit_json:
             response = requests.post(self.note_edits_url, json = edit_json, headers = self.headers)
-        if 'invitation' in edit_json:
+        elif 'invitation' in edit_json:
             response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
 
         response = self.__handle_response(response)

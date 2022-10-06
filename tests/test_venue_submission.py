@@ -280,10 +280,9 @@ class TestVenueSubmission():
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == 'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.'
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n    \nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion') 
-        assert False    
 
         withdrawal_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal_Reversion',
                                     signatures=['TestVenue.cc/Program_Chairs'],
@@ -307,4 +306,8 @@ class TestVenueSubmission():
         assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
         assert note.content['venue']['value'] == 'TestVenue Submission'
         assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'        
+
+        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n    \nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 

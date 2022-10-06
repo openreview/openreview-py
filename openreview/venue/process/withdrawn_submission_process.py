@@ -23,7 +23,10 @@ def process(client, edit, invitation):
 
     formatted_committee = [committee.format(number=submission.number) for committee in COMMITTEE]
     email_subject = f'''[{SHORT_NAME}]: Paper #{submission.number} withdrawn by paper authors'''
-    email_body = f'''The {SHORT_NAME} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been withdrawn by the paper authors.'''
+    email_body = f'''The {SHORT_NAME} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been withdrawn by the paper authors.
+    
+For more information, click here https://openreview.net/forum?id={submission.id}
+'''
 
     client.post_message(email_subject, formatted_committee, email_body)    
 
