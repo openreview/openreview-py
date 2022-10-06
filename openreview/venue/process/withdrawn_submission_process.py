@@ -1,8 +1,10 @@
 def process(client, edit, invitation):
 
     VENUE_ID = ''
+    SHORT_NAME = ''
     PAPER_INVITATION_PREFIX = ''
     EXPIRE_INVITATION_ID = ''
+    COMMITTEE = []
 
     submission = client.get_note(edit.note.id)
 
@@ -19,10 +21,12 @@ def process(client, edit, invitation):
             )            
         )
 
-    ## TODO: send emails to all the readers of the submission
+    formatted_committee = [committee.format(number=submission.number) for committee in COMMITTEE]
+    email_subject = f'''[{SHORT_NAME}]: Paper #{submission.number} withdrawn by paper authors'''
+    email_body = f'''The {SHORT_NAME} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been withdrawn by the paper authors.'''
 
+    client.post_message(email_subject, formatted_committee, email_body)    
 
-    ## TODO: create undo withdrawal invitation
     withdrawal_notes = client.get_notes(forum=submission.id, invitation=PAPER_INVITATION_PREFIX + f'{submission.number}/-/Withdrawal')
     if withdrawal_notes:
         print(f'Create withdrawal reversion invitation')

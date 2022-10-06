@@ -212,6 +212,19 @@ class Venue(object):
         options['contact'] = self.contact
         return options
 
+    def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
+        committee = []
+        if with_program_chairs:
+            committee.append(self.get_program_chairs_id())
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
+        if self.use_area_chairs:
+            committee.append(self.get_area_chairs_id(number))
+        committee.append(self.get_reviewers_id(number))
+        if with_authors:
+            committee.append(self.get_authors_id(number))
+        return committee
+
     def get_submission_venue_id(self, submission_invitation_name=None):
         if submission_invitation_name:
             return f'{self.venue_id}/{submission_invitation_name}'

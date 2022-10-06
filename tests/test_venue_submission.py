@@ -278,8 +278,12 @@ class TestVenueSubmission():
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
+        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == 'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.'
 
-        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion')     
+        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion') 
+        assert False    
 
         withdrawal_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal_Reversion',
                                     signatures=['TestVenue.cc/Program_Chairs'],
