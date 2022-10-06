@@ -18,7 +18,7 @@ from openreview.api import Note
 class TestVenueRequest():
 
     @pytest.fixture(scope='class')
-    def venue(self, client, test_client, helpers):
+    def venue(self, client, test_client, helpers, openreview_client):
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
         VenueRequest(client, support_group_id, super_id)
@@ -98,6 +98,12 @@ class TestVenueRequest():
             signatures=[support_group_id],
             writers=[support_group_id]
         ))
+
+        helpers.await_queue()
+
+        submission_inv = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
+        assert submission_inv.duedate
+        assert submission_inv.expdate
 
         # Return venue details as a dict
         venue_details = {
