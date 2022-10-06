@@ -446,7 +446,7 @@ class Venue(object):
                         decision_note = reply
                         break
             note_accepted = decision_note and 'Accept' in decision_note['content']['decision']['value']
-            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note)
+            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None)
 
             venue = self.short_name
             decision_option = decision_note['content']['decision']['value'] if decision_note else ''
@@ -474,7 +474,7 @@ class Venue(object):
                 writers=[venue_id],
                 signatures=[venue_id],
                 note=openreview.api.Note(id=submission.id,
-                        readers = self.submission_stage.get_readers(self, submission.number, decision_note),
+                        readers = submission_readers,
                         content = content
                     )
                 )

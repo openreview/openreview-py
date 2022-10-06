@@ -1709,7 +1709,7 @@ Program Chairs
         for submission in tqdm(submissions):
             decision_note = decisions_by_forum.get(submission.forum, None)
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
-            submission.readers = self.submission_stage.get_readers(self, submission.number, decision_note)
+            submission.readers = self.submission_stage.get_readers(self, submission.number, decision_note.content['decision'] if decision_note else None)
             #double-blind
             if self.submission_stage.double_blind:
                 release_authors = is_release_authors(note_accepted)
