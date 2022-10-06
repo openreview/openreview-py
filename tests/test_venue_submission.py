@@ -1,3 +1,4 @@
+import csv
 import openreview
 import pytest
 import time
@@ -227,3 +228,53 @@ class TestVenueSubmission():
         
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Meta_Review')
+
+    def test_comment_stage(self, venue, openreview_client, helpers):
+
+        #release papers to the public
+        venue.submission_stage = SubmissionStage(double_blind=True, readers=[openreview.builder.SubmissionStage.Readers.EVERYONE])
+        venue.create_submission_stage()
+        venue.setup_post_submission_stage()
+
+        submissions = venue.get_submissions()
+        assert submissions and len(submissions) == 1
+        assert submissions[0].readers == ['everyone']
+
+        now = datetime.datetime.utcnow()
+        venue.comment_stage = openreview.CommentStage(
+            end_date=now + datetime.timedelta(minutes = 40),
+            allow_public_comments=True,
+            reader_selection=True,
+            email_pcs=True,
+            check_mandatory_readers=True,
+            readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
+            invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
+        venue.create_comment_stage()
+
+        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Official_Comment')
+        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
+
+    def test_decision_stage(self, venue, openreview_client, helpers):
+
+        submissions = venue.get_submissions()
+        assert submissions and len(submissions) == 1
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/venue_decision.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Accept (Oral)', 'Good Paper'])
+
+        now = datetime.datetime.utcnow()
+        venue.decision_stage = openreview.DecisionStage(
+            due_date=now + datetime.timedelta(minutes = 40),
+            decisions_file = os.path.join(os.path.dirname(__file__), 'data/venue_decision.csv'))
+        venue.create_decision_stage()
+
+        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Decision')
+
+        decision = openreview_client.get_notes(invitation=venue.id + '/Submission1/-/Decision')
+        assert len(decision) == 1
+        assert 'Accept (Oral)' == decision[0].content['decision']['value']
+
+    def test_post_decision_stage(self, venue, openreview_client):
+
+        venue.post_decision_stage()

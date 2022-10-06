@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import time
@@ -6,6 +7,7 @@ from openreview import tools
 from .invitation import InvitationBuilder
 from .group import GroupBuilder
 from openreview.api import Group
+from openreview.api import Note
 from .recruitment import Recruitment
 from . import matching
 
@@ -14,6 +16,7 @@ class Venue(object):
     def __init__(self, client, venue_id):
 
         self.client = client
+        self.request_form_id = None
         self.venue_id = venue_id
         self.name = 'TBD'
         self.short_name = 'TBD'
@@ -37,6 +40,8 @@ class Venue(object):
         self.ethics_review_stage = None
         self.bid_stages = []
         self.meta_review_stage = None
+        self.comment_stage = None
+        self.decision_stage = None
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
@@ -128,6 +133,27 @@ class Venue(object):
         invitation_id =  invitation_id + name
         return invitation_id
 
+    def get_committee(self, number = None, submitted_reviewers = False, with_authors = False):
+        committee = [self.id]
+
+        if with_authors:
+            committee.append(self.get_authors_id(number))
+
+        if submitted_reviewers:
+            committee.append(self.get_reviewers_id(number, submitted=True))
+        else:
+            committee.append(self.get_reviewers_id(number))
+
+        if self.use_area_chairs:
+            committee.append(self.get_area_chairs_id(number))
+
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
+
+        committee.append(self.get_program_chairs_id())
+
+        return committee
+
     def get_committee_id(self, name, number=None):
         committee_id = self.id + '/'
         if number:
@@ -173,6 +199,9 @@ class Venue(object):
     def get_authors_id(self, number = None):
         return self.get_committee_id(self.authors_name, number)
 
+    def get_authors_accepted_id(self, number = None):
+        return self.get_committee_id(self.authors_name) + '/Accepted'
+
     def get_program_chairs_id(self):
         return self.get_committee_id(self.program_chairs_name)
 
@@ -207,8 +236,8 @@ class Venue(object):
             return f'{self.venue_id}/{self.submission_stage.name}'
         return f'{self.venue_id}/Submission'
 
-    def get_submissions(self, venueid=None, sort=None):
-        return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort)
+    def get_submissions(self, venueid=None, sort=None, details=None):
+        return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
 
     def setup(self, program_chair_ids=[]):
     
@@ -285,6 +314,16 @@ class Venue(object):
             authors_group.web = content
             self.client.post_group(authors_group)
 
+        authors_accepted_id = self.get_authors_accepted_id()
+        authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
+        if not authors_accepted_group:
+            authors_accepted_group = self.client.post_group(Group(id=authors_accepted_id,
+                            readers=[venue_id, authors_accepted_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]))
+
         self.invitation_builder.set_meta_invitation()
 
         self.group_builder.create_reviewers_group()
@@ -356,6 +395,111 @@ class Venue(object):
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
+
+    def create_comment_stage(self):
+        comment_invitation = self.invitation_builder.set_official_comment_invitation()
+        self.invitation_builder.create_paper_invitations(comment_invitation.id, self.get_submissions())
+        if self.comment_stage.allow_public_comments:
+            public_notes = [note for note in self.get_submissions() if 'everyone' in note.readers]
+            comment_invitation = self.invitation_builder.set_public_comment_invitation()
+            self.invitation_builder.create_paper_invitations(comment_invitation.id, public_notes)
+
+    def create_decision_stage(self):
+        invitation = self.invitation_builder.set_decision_invitation()
+        self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
+
+        decision_file = self.decision_stage.decisions_file
+        if decision_file:
+
+            baseurl = 'http://localhost:3000'
+            if 'https://devapi' in self.client.baseurl:
+                baseurl = 'https://devapi.openreview.net'
+            if 'https://api' in self.client.baseurl:
+                baseurl = 'https://api.openreview.net'
+            api1_client = openreview.Client(baseurl=baseurl, token=self.client.token)
+
+            if '/attachment' in decision_file:
+                decisions = api1_client.get_attachment(id=self.request_form_id, field_name='decisions_file')
+
+            else:
+                with open(decision_file, 'rb') as file_handle:
+                    decisions = file_handle.read()
+
+            self.invitation_builder.post_decisions(decisions, api1_client)
+
+    def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
+
+        venue_id = self.venue_id
+        submissions = self.get_submissions(sort='number:asc', details='directReplies')
+
+        def is_release_authors(is_note_accepted):
+            return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
+
+        if submission_readers:
+            self.submission_stage.readers = submission_readers
+
+        for submission in submissions:
+            decision_note = None
+            if submission.details:
+                for reply in submission.details['directReplies']:
+                    if f'{self.venue_id}/{self.submission_stage.name}{submission.number}/-/{self.decision_stage.name}' in reply['invitations']:
+                        decision_note = reply
+                        break
+            note_accepted = decision_note and 'Accept' in decision_note['content']['decision']['value']
+            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None)
+
+            venue = self.short_name
+            decision_option = decision_note['content']['decision']['value'] if decision_note else ''
+            venue = tools.decision_to_venue(venue, decision_option)
+
+            content = {
+                'venueid': {
+                    'value': tools.pretty_id(venue_id)
+                },
+                'venue': {
+                    'value': venue
+                }
+            }
+
+            if is_release_authors(note_accepted):
+                content['authorids'] = {
+                    'readers': { 'delete': True }
+                }
+                content['authors'] = {
+                    'readers': { 'delete': True }
+                }
+
+            self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                note=openreview.api.Note(id=submission.id,
+                        readers = submission_readers,
+                        content = content
+                    )
+                )
+
+    def send_decision_notifications(self, decision_options, messages):
+        paper_notes = self.get_submissions(venueid=tools.pretty_id(self.venue_id), details='directReplies')
+
+        def send_notification(note):
+            decision_note = None
+            for reply in note.details['directReplies']:
+                if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
+                    decision_note = reply
+                    break
+            subject = "[{SHORT_NAME}] Decision notification for your submission {submission_number}: {submission_title}".format(
+                SHORT_NAME=self.short_name,
+                submission_number=note.number,
+                submission_title=note.content['title']['value']
+            )
+            if decision_note and not self.client.get_messages(subject=subject):
+                message = messages[decision_note['content']['decision']['value']]
+                final_message = message.replace("{{submission_title}}", note.content['title']['value'])
+                final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
+                self.client.post_message(subject, recipients=note.content['authorids']['value'], message=final_message)
+
+        tools.concurrent_requests(send_notification, paper_notes)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:

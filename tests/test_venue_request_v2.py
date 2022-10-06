@@ -41,17 +41,17 @@ class TestVenueRequest():
                 support_group_id,
                 '~SomeFirstName_User1',
                 'test@mail.com',
-                'tom@mail.com'
+                'tom_venue@mail.com'
             ],
             writers=[],
             content={
                 'title': 'Test 2030 Venue V2',
                 'Official Venue Name': 'Test 2030 Venue V2',
-                'Abbreviated Venue Name': "TestVenue@OR'2030",
+                'Abbreviated Venue Name': "TestVenue@OR'2030V2",
                 'Official Website URL': 'https://testvenue2030.gitlab.io/venue/',
                 'program_chair_emails': [
                     'test@mail.com',
-                    'tom@mail.com'],
+                    'tom_venue@mail.com'],
                 'contact_email': 'test@mail.com',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
@@ -160,7 +160,7 @@ class TestVenueRequest():
                 support_group_id,
                 '~ProgramChair_User1',
                 'pc_venue_v2@mail.com',
-                'tom@mail.com'
+                'tom_venue@mail.com'
             ],
             writers=[],
             content={
@@ -170,7 +170,7 @@ class TestVenueRequest():
                 'Official Website URL': 'https://testvenue2021.gitlab.io/venue/',
                 'program_chair_emails': [
                     'pc_venue_v2@mail.com',
-                    'tom@mail.com'],
+                    'tom_venue@mail.com'],
                 'contact_email': 'pc_venue_v2@mail.com',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
@@ -221,7 +221,7 @@ class TestVenueRequest():
             readers=[
                 support_group_id,
                 'pc_venue_v2@mail.com',
-                'tom@mail.com'
+                'tom_venue@mail.com'
             ],
             replyto=None,
             signatures=['~ProgramChair_User1'],
@@ -309,7 +309,7 @@ class TestVenueRequest():
 #         assert messages and len(messages) == 2
 #         recipients = [msg['content']['to'] for msg in messages]
 #         assert 'test@mail.com' in recipients
-#         assert 'tom@mail.com' in recipients
+#         assert 'tom_venue@mail.com' in recipients
 #         assert 'Venue home page: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference\">https://openreview.net/group?id=TEST.cc/2030/Conference</a>' in messages[0]['content']['text']
 #         assert 'Venue Program Chairs console: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs\">https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs</a>' in messages[0]['content']['text']
 
@@ -375,7 +375,7 @@ class TestVenueRequest():
 #         assert messages and len(messages) == 2
 #         recipients = [msg['content']['to'] for msg in messages]
 #         assert 'test@mail.com' in recipients
-#         assert 'tom@mail.com' in recipients
+#         assert 'tom_venue@mail.com' in recipients
 #         assert 'Venue home page: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference\">https://openreview.net/group?id=TEST.cc/2030/Conference</a>' in messages[0]['content']['text']
 #         assert 'Venue Program Chairs console: <a href=\"https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs\">https://openreview.net/group?id=TEST.cc/2030/Conference/Program_Chairs</a>' in messages[0]['content']['text']
 
@@ -528,12 +528,12 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer One,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -548,7 +548,7 @@ class TestVenueRequest():
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030] Reviewer Invitation accepted")
+        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Reviewer Invitation accepted")
         assert messages and len(messages) == 1
 
         #reinvite reviewer, no email should be sent
@@ -574,7 +574,7 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 1
-        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
@@ -623,12 +623,12 @@ class TestVenueRequest():
         messages = client.get_messages(to='reviewer_one_tilde_v2@mail.com')
         assert messages and len(messages) == 2
 
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear Reviewer OneTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         messages = client.get_messages(to='reviewer_two_tilde_v2@mail.com')
         assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear Reviewer TwoTildeV,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -670,12 +670,12 @@ class TestVenueRequest():
         messages = client.get_messages(to='ac_one@mail.com')
         assert messages and len(messages) == 1
 
-        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Area Chair"
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Area Chair"
         assert messages[0]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
 
         messages = client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert messages and len(messages) == 3
-        assert messages[2]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Area Chair"
+        assert messages[2]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Area Chair"
         assert messages[2]['content']['text'].startswith('Dear Reviewer Two,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Area Chair.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
@@ -688,7 +688,7 @@ class TestVenueRequest():
         print('invitation_url', invitation_url)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030] Area Chair Invitation accepted")
+        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="[TestVenue@OR'2030V2] Area Chair Invitation accepted")
         assert messages and len(messages) == 1
 
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
@@ -726,16 +726,16 @@ class TestVenueRequest():
 
         messages = client.get_messages(to='reviewer_candidate1_v2@mail.com')
         assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
 
-        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        messages = client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert not messages
 
-        messages = client.get_messages(to='reviewer_one_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        messages = client.get_messages(to='reviewer_one_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
 
-        messages = client.get_messages(to='reviewer_two_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030] Invitation to serve as Reviewer")
+        messages = client.get_messages(to='reviewer_two_tilde_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert messages and len(messages) == 1
 
         remind_recruitment_status_invitation = '{}/-/Request{}/Remind_Recruitment_Status'.format(venue['support_group_id'],
@@ -839,7 +839,7 @@ class TestVenueRequest():
         # assert messages and len(messages) == 3
         # recipients = [msg['content']['to'] for msg in messages]
         # assert 'test@mail.com' in recipients
-        # assert 'tom@mail.com' in recipients
+        # assert 'tom_venue@mail.com' in recipients
         # assert 'pc@test.com' in recipients
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
@@ -1226,7 +1226,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
 
-        ## All the reviews should be public now
+        ## reviews should be private
         reviews = reviewer_client.get_notes(invitation=f'V2.cc/2030/Conference/Submission1/-/Official_Review', sort= 'number:asc')
         assert len(reviews) == 1
         assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
@@ -1278,7 +1278,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-        meta_reviewer_client = helpers.create_user('venue_ac_v2@mail.com', 'VenueTwo', 'Ac')
+        helpers.create_user('venue_ac_v2@mail.com', 'VenueTwo', 'Ac')
+        meta_reviewer_client = openreview.api.OpenReviewClient(username='venue_ac_v2@mail.com', password='1234')
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
         assert submissions and len(submissions) == 2
@@ -1287,7 +1288,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         meta_reviewer_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         openreview_client.add_members_to_group(meta_reviewer_group, '~VenueTwo_Ac1')
 
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Area_Chairs', '~VenueTwo_Ac1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Area_Chairs', '~VenueTwo_Ac1')
 
         ac_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
@@ -1309,9 +1309,9 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
-        meta_review_stage_note = test_client.post_note(openreview.Note(
+        meta_review_stage_note = openreview.Note(
             content={
-                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'make_meta_reviews_public': 'Yes, meta reviews should be revealed publicly when they are posted',
                 'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
                 'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
                 'recommendation_options': 'Accept, Reject',
@@ -1339,7 +1339,14 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
             replyto=venue['request_form_note'].forum,
             signatures=['~SomeFirstName_User1'],
             writers=[]
-        ))
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Meta reviews cannot be released to the public since all papers are private'):
+            meta_review_stage_note=test_client.post_note(meta_review_stage_note)
+
+        meta_review_stage_note.content['make_meta_reviews_public'] = 'No, meta reviews should NOT be revealed publicly when they are posted'
+        meta_review_stage_note=test_client.post_note(meta_review_stage_note)
+
         assert meta_review_stage_note
         helpers.await_queue()
 
@@ -1373,493 +1380,623 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'Accept' in meta_review_invitation.edit['note']['content']['recommendation']['value']['param']['enum']
         assert len(meta_review_invitation.edit['note']['readers']) == 4
 
-#     def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue):
+        #post a meta review
+        ac_anon_groups=meta_reviewer_client.get_groups(prefix=f'V2.cc/2030/Conference/Submission1/Area_Chair_.*', signatory='~VenueTwo_Ac1')
+        assert len(ac_anon_groups) == 1
 
-#         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-#         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
-#         assert blind_submissions and len(blind_submissions) == 2
+        meta_review_note = meta_reviewer_client.post_note_edit(invitation=f'V2.cc/2030/Conference/Submission1/-/Meta_Review',
+            signatures=[ac_anon_groups[0].id],
+            note=Note(
+                content={
+                    'metareview': { 'value': 'This is a metarview' },
+                    'recommendation': { 'value': 'Accept' }
+                }
+            )
+        )
 
-#         # Assert that official comment invitation is not available already
-#         official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
-#         assert official_comment_invitation is None
+        meta_reviews = meta_reviewer_client.get_notes(invitation=f'V2.cc/2030/Conference/Submission1/-/Meta_Review', sort= 'number:asc')
+        assert len(meta_reviews) == 1
+        assert 'V2.cc/2030/Conference/Program_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers/Submitted' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Authors' not in meta_reviews[0].readers
 
-#         # Post an official comment stage note
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         end_date = now + datetime.timedelta(days=3)
-#         comment_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
-#                 'participants': ['Program Chairs', 'Paper Area Chairs', 'Paper Reviewers', 'Authors'],
-#                 'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+    def test_release_meta_reviews_to_authors_and_reviewers(self, test_client, helpers, venue, openreview_client):
 
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert comment_stage_note
-#         helpers.await_queue()
+        # Post a meta review stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        meta_review_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'recommendation_options': 'Accept, Reject',
+                'release_meta_reviews_to_authors': 'Yes, meta reviews should be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers',
+                'additional_meta_review_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'remove_meta_review_form_options': 'confidence'
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Meta_Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert meta_review_stage_note
+        helpers.await_queue()
 
-#         process_logs = client.get_process_logs(id=comment_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Meta_Review')
+        assert len(invitation.edit['note']['readers']) == 5
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in invitation.edit['note']['readers']
+        assert len(invitation.edit['note']['nonreaders']) == 0
 
-#         # Assert that official comment invitation is now available
-#         official_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Official_Comment', number=1))
-#         assert official_comment_invitation
+        meta_reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Meta_Review')
+        assert len(meta_reviews) == 1
+        assert 'V2.cc/2030/Conference/Program_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in meta_reviews[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in meta_reviews[0].readers
+        assert len(meta_reviews[0].nonreaders) == 0
 
-#         # Assert that an official comment can be posted by the paper author
-#         forum_note = blind_submissions[-1]
-#         official_comment_note = test_client.post_note(openreview.Note(
-#             invitation=conference.get_invitation_id('Official_Comment', number=1),
-#             readers=[
-#                 conference.get_program_chairs_id(),
-#                 conference.get_area_chairs_id(number=1),
-#                 conference.get_id() + '/Submission1/Authors',
-#                 conference.get_id() + '/Submission1/Reviewers',
-#                 conference.get_senior_area_chairs_id(number=1)
-#             ],
-#             writers=[
-#                 conference.get_id() + '/Submission1/Authors',
-#                 conference.get_id()],
-#             signatures=[conference.get_id() + '/Submission1/Authors'],
-#             forum=forum_note.forum,
-#             replyto=forum_note.forum,
-#             content={
-#                 'comment': 'test comment',
-#                 'title': 'test official comment title'
-#             }
-#         ))
-#         assert official_comment_note
-#         helpers.await_queue()
+    def test_venue_comment_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-#         process_logs = client.get_process_logs(id=official_comment_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number')
+        assert submissions and len(submissions) == 2
 
-#         # Assert that public comment invitation is not available
-#         public_comment_invitation = openreview.tools.get_invitation(client, conference.get_invitation_id('Public_Comment', number=1))
-#         assert public_comment_invitation is None
+        # Assert that official comment invitation is not available already
+        official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
+        assert official_comment_invitation is None
 
-#     def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers):
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Authors'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
 
-#         submissions = test_client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
-#         assert submissions and len(submissions) == 2
-#         submission = submissions[0]
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Comment_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert comment_stage_note
+        helpers.await_queue()
 
-#         # Assert that PC does not have access to the Decision invitation
-#         decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
-#         assert decision_invitation is None
+        process_logs = client.get_process_logs(id=comment_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'), 'w') as file_handle:
-#             writer = csv.writer(file_handle)
-#             writer.writerow([submissions[0].id, 'Reject', 'Not Good', "Test"])
-#             writer.writerow([submissions[1].id, 'Accept', 'Good Good', "Test"])
+        # Assert that official comment invitation is now available
+        official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Official_Comment'.format(venue['venue_id']))
+        assert official_comment_invitation
 
-#         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'), 'w') as file_handle:
-#             writer = csv.writer(file_handle)
-#             writer.writerow([submissions[0].id])
-#             writer.writerow([submissions[1].id])
+        paper_official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/Submission1/-/Official_Comment'.format(venue['venue_id']))
+        assert paper_official_comment_invitation
+        assert 'V2.cc/2030/Conference/Program_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Reviewer_.*' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in paper_official_comment_invitation.edit['note']['readers']['param']['enum']
 
-#         with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), 'w') as file_handle:
-#             writer = csv.writer(file_handle)
-#             writer.writerow([submissions[0].id, 'Accept', 'Good Paper'])
-#             writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
+        author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
+        # Assert that an official comment can be posted by the paper author
+        official_comment_note = author_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Official_Comment',
+        signatures=['V2.cc/2030/Conference/Submission1/Authors'],
+        note=Note(
+            readers=[
+                'V2.cc/2030/Conference/Program_Chairs',
+                'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                'V2.cc/2030/Conference/Submission1/Authors',
+                'V2.cc/2030/Conference/Submission1/Reviewers',
+                'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs'
+            ],
+            content={
+                'comment': {'value': 'test comment'},
+                'title': {'value': 'test official comment title'}
+            }
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=official_comment_note['id'])
 
-#         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'), 'w') as file_handle:
-#             writer = csv.writer(file_handle)
-#             writer.writerow(["qwerty", 'Accept', 'Good Paper'])
-#             writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
+        # Assert that public comment invitation is not available
+        public_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/-/Public_Comment'.format(venue['venue_id']))
+        assert public_comment_invitation is None
 
-#         with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_decision.csv'), 'w') as file_handle:
-#             writer = csv.writer(file_handle)
-#             writer.writerow([submissions[0].id, 'Test', 'Good Paper'])
-#             writer.writerow([submissions[1].id, 'Reject', 'Not Good'])
+    def test_venue_decision_stage(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
 
-#         # Post a decision stage note
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         due_date = now + datetime.timedelta(days=3)
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
+        assert submissions and len(submissions) == 2
+        submission = submissions[0]
 
-#         decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'decision_options': 'Accept, Revision Needed, Reject',
-#                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-#                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-#                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-#                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-#                 'notify_authors': 'No, I will send the emails to the authors',
-#                 'additional_decision_form_options': {
-#                     'suggestions': {
-#                         'value-regex': '[\\S\\s]{1,5000}',
-#                         'description': 'Please provide suggestions on how to improve the paper',
-#                         'required': False,
-#                     }
-#                 },
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert decision_stage_note
-#         helpers.await_queue()
+        helpers.create_user('tom_venue@mail.com', 'ProgramChair', 'Venue')
+        pc_client = openreview.api.OpenReviewClient(username='tom_venue@mail.com', password='1234')
 
-#         process_logs = client.get_process_logs(id = decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        # Assert that PC does not have access to the Decision invitation
+        decision_invitation = openreview.tools.get_invitation(pc_client, '{}/Submission{}/-/Decision'.format(venue['venue_id'], submission.number))
+        assert decision_invitation is None
 
-#         # Assert that PC now has access to the Decision invitation
-#         decision_invitation = openreview.tools.get_invitation(test_client, '{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number))
-#         assert decision_invitation
+        # Post a decision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
 
-#         # Post a decision note using pc test_client
-#         program_chairs = '{}/Program_Chairs'.format(venue['venue_id'])
-#         area_chairs = '{}/Paper{}/Area_Chairs'.format(venue['venue_id'], submission.number)
-#         senior_area_chairs = '{}/Paper{}/Senior_Area_Chairs'.format(venue['venue_id'], submission.number)
-#         decision_note = test_client.post_note(openreview.Note(
-#             invitation='{}/Paper{}/-/Decision'.format(venue['venue_id'], submission.number),
-#             writers=[program_chairs],
-#             readers=[program_chairs, senior_area_chairs, area_chairs],
-#             nonreaders=['{}/Paper{}/Authors'.format(venue['venue_id'], submission.number)],
-#             signatures=[program_chairs],
-#             content={
-#                 'title': 'Paper Decision',
-#                 'decision': 'Accept',
-#                 'comment': 'Good paper. I like!',
-#                 'suggestions': 'Add more results for camera ready.'
-#             },
-#             forum=submission.forum,
-#             replyto=submission.forum
-#         ))
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'Yes, send an email notification to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                }
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
 
-#         assert decision_note
-#         assert 'suggestions' in decision_note.content
-#         helpers.await_queue()
+        process_logs = client.get_process_logs(id = decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         process_logs = client.get_process_logs(id=decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        # Assert that PC now has access to the Decision invitation
+        decision_invitation = openreview.tools.get_invitation(pc_client, '{}/Submission{}/-/Decision'.format(venue['venue_id'], submission.number))
+        assert decision_invitation
 
-#         decision_stage_invitation = '{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
-#                                                                            venue['request_form_note'].number)
-#         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'),
-#                                          decision_stage_invitation, 'decisions_file')
+        decision_invitation = openreview_client.get_invitation(id='{}/Submission1/-/Decision'.format(venue['venue_id']))
+        assert decision_invitation
+        decision_invitation = openreview_client.get_invitation(id='{}/Submission2/-/Decision'.format(venue['venue_id']))
+        assert decision_invitation
+        assert 'comment' in decision_invitation.edit['note']['content']
+        assert 'suggestions' in decision_invitation.edit['note']['content']
+        assert 'decision' in decision_invitation.edit['note']['content']
+        assert 'Revision Needed' in decision_invitation.edit['note']['content']['decision']['value']['param']['enum']
+        assert len(decision_invitation.edit['note']['readers']) == 4
+        assert 'V2.cc/2030/Conference/Program_Chairs' in decision_invitation.edit['note']['readers']
+        assert 'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs' in decision_invitation.edit['note']['readers']
+        assert 'V2.cc/2030/Conference/Submission2/Area_Chairs' in decision_invitation.edit['note']['readers']
+        assert 'V2.cc/2030/Conference/Submission2/Authors' in decision_invitation.edit['note']['readers']
 
-#         decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'decision_options': 'Accept, Revision Needed, Reject',
-#                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-#                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-#                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-#                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-#                 'notify_authors': 'No, I will send the emails to the authors',
-#                 'additional_decision_form_options': {
-#                     'suggestions': {
-#                         'value-regex': '[\\S\\s]{1,5000}',
-#                         'description': 'Please provide suggestions on how to improve the paper',
-#                         'required': False,
-#                     }
-#                 },
-#                 'decisions_file': url
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
-#                                                               venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
+        #post decision
+        decision_note = pc_client.post_note_edit(invitation='V2.cc/2030/Conference/Submission1/-/Decision',
+        signatures=['V2.cc/2030/Conference/Program_Chairs'],
+        note=Note(
+            readers=[
+                'V2.cc/2030/Conference/Program_Chairs',
+                'V2.cc/2030/Conference/Submission1/Area_Chairs',
+                'V2.cc/2030/Conference/Submission1/Authors',
+                'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs'
+            ],
+            content={
+                'decision': {'value': 'Accept'},
+                'comment': {'value': 'This is a comment.'}
+            }
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
-#         assert decision_stage_note
-#         helpers.await_queue()
+        messages = client.get_messages(
+            to='venue_author_v2@mail.com',
+            subject="[TestVenue@OR'2030V2] Decision posted to your submission - Paper Number: 1, Paper Title: \"test submission\"")
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''To view the decision, click here: https://openreview.net/forum?id={submission.id}&noteId={decision_note['note']['id']}'''
 
-#         process_logs = client.get_process_logs(id=decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Reject', 'Not Good', "Test"])
+            writer.writerow([submissions[1].number, 'Accept', 'Good Good', "Test"])
 
-#         status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
-#                                                                               venue['request_form_note'].number)
-#         decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
-#                                            forum=venue['request_form_note'].forum, sort='tmdate')[0]
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number])
+            writer.writerow([submissions[1].number])
 
-#         assert decision_status
-#         assert decision_status.content['decision_posted'] == '0 Papers'
-#         assert '\"Too many values provided in the decision file. Expected values are: paper_id, decision, comment\"' in decision_status.content['error']
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Accept', 'Good Paper'])
+            writer.writerow([submissions[1].number, 'Revision Needed', 'Not Good'])
 
-#         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'),
-#                                          decision_stage_invitation, 'decisions_file')
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([500, 'Accept', 'Good Paper'])
+            writer.writerow([submissions[1].number, 'Reject', 'Not Good'])
 
-#         decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'decision_options': 'Accept, Revision Needed, Reject',
-#                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-#                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-#                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-#                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-#                 'notify_authors': 'No, I will send the emails to the authors',
-#                 'additional_decision_form_options': {
-#                     'suggestions': {
-#                         'value-regex': '[\\S\\s]{1,5000}',
-#                         'description': 'Please provide suggestions on how to improve the paper',
-#                         'required': False,
-#                     }
-#                 },
-#                 'decisions_file': url
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
-#                                                               venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_decision.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Test', 'Good Paper'])
+            writer.writerow([submissions[1].number, 'Reject', 'Not Good'])
 
-#         assert decision_stage_note
-#         helpers.await_queue()
+        # Post a decision stage note with decisions file
+        decision_stage_invitation = '{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                                           venue['request_form_note'].number)
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_more.csv'),
+                                         decision_stage_invitation, 'decisions_file')
 
-#         process_logs = client.get_process_logs(id=decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
 
-#         status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
-#                                                                               venue['request_form_note'].number)
-#         decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
-#                                            forum=venue['request_form_note'].forum, sort='tmdate')[0]
+        assert decision_stage_note
+        helpers.await_queue()
 
-#         assert decision_status
-#         assert decision_status.content['decision_posted'] == '0 Papers'
-#         assert '\"Not enough values provided in the decision file. Expected values are: paper_id, decision, comment\"' in decision_status.content['error']
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'),
-#                                          decision_stage_invitation, 'decisions_file')
+        status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
+                                                                              venue['request_form_note'].number)
+        decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
+                                           forum=venue['request_form_note'].forum, sort='tmdate')[0]
 
-#         decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'decision_options': 'Accept, Revision Needed, Reject',
-#                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-#                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-#                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-#                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-#                 'notify_authors': 'No, I will send the emails to the authors',
-#                 'additional_decision_form_options': {
-#                     'suggestions': {
-#                         'value-regex': '[\\S\\s]{1,5000}',
-#                         'description': 'Please provide suggestions on how to improve the paper',
-#                         'required': False,
-#                     }
-#                 },
-#                 'decisions_file': url
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
-#                                                               venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
+        assert decision_status
+        assert decision_status.content['decision_posted'] == '0 Papers'
+        assert '\"Too many values provided in the decision file. Expected values are: paper_number, decision, comment\"' in decision_status.content['error']
 
-#         assert decision_stage_note
-#         helpers.await_queue()
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_less.csv'),
+                                         decision_stage_invitation, 'decisions_file')
 
-#         process_logs = client.get_process_logs(id=decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
 
-#         status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
-#                                                                               venue['request_form_note'].number)
-#         decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
-#                                            forum=venue['request_form_note'].forum, sort='tmdate')[0]
+        assert decision_stage_note
+        helpers.await_queue()
 
-#         assert decision_status
-#         assert decision_status.content['decision_posted'] == '1 Papers'
-#         assert '\"Paper with ID: qwerty not found. Please check the submitted paperIDs.\"' in \
-#                decision_status.content['error']
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_decision.csv'),
-#                                          decision_stage_invitation, 'decisions_file')
+        status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
+                                                                              venue['request_form_note'].number)
+        decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
+                                           forum=venue['request_form_note'].forum, sort='tmdate')[0]
 
-#         decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'decision_options': 'Accept, Revision Needed, Reject',
-#                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-#                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-#                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-#                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-#                 'notify_authors': 'No, I will send the emails to the authors',
-#                 'additional_decision_form_options': {
-#                     'suggestions': {
-#                         'value-regex': '[\\S\\s]{1,5000}',
-#                         'description': 'Please provide suggestions on how to improve the paper',
-#                         'required': False,
-#                     }
-#                 },
-#                 'decisions_file': url
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
-#                                                               venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
+        assert decision_status
+        assert decision_status.content['decision_posted'] == '0 Papers'
+        assert '\"Not enough values provided in the decision file. Expected values are: paper_number, decision, comment\"' in decision_status.content['error']
 
-#         assert decision_stage_note
-#         helpers.await_queue()
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_paper.csv'),
+                                         decision_stage_invitation, 'decisions_file')
 
-#         process_logs = client.get_process_logs(id=decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
 
-#         status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
-#                                                                               venue['request_form_note'].number)
-#         decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
-#                                            forum=venue['request_form_note'].forum, sort='tmdate')[0]
+        assert decision_stage_note
+        helpers.await_queue()
 
-#         assert decision_status
-#         assert decision_status.content['decision_posted'] == '1 Papers'
-#         assert '\"The value Test in field decision does not match the invitation definition\"' in decision_status.content['error']
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'),
-#                                          decision_stage_invitation, 'decisions_file')
+        status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
+                                                                              venue['request_form_note'].number)
+        decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
+                                           forum=venue['request_form_note'].forum, sort='tmdate')[0]
 
-#         decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'decision_options': 'Accept, Revision Needed, Reject',
-#                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-#                 'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-#                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-#                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-#                 'notify_authors': 'No, I will send the emails to the authors',
-#                 'additional_decision_form_options': {
-#                     'suggestions': {
-#                         'value-regex': '[\\S\\s]{1,5000}',
-#                         'description': 'Please provide suggestions on how to improve the paper',
-#                         'required': False,
-#                     }
-#                 },
-#                 'decisions_file': url
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
-#                                                               venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
+        assert decision_status
+        assert decision_status.content['decision_posted'] == '1 Papers'
+        assert '\"Paper 500 not found. Please check the submitted paper numbers.\"' in \
+               decision_status.content['error']
 
-#         assert decision_stage_note
-#         helpers.await_queue()
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions_wrong_decision.csv'),
+                                         decision_stage_invitation, 'decisions_file')
 
-#         process_logs = client.get_process_logs(id=decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
 
-#         status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
-#                                                                               venue['request_form_note'].number)
-#         decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
-#                                            forum=venue['request_form_note'].forum, sort='tmdate')[0]
+        assert decision_stage_note
+        helpers.await_queue()
 
-#         assert decision_status
-#         assert decision_status.content['decision_posted'] == '2 Papers'
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv')) as f:
-#             sub_decisions = list(csv.reader(f))
+        status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
+                                                                              venue['request_form_note'].number)
+        decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
+                                           forum=venue['request_form_note'].forum, sort='tmdate')[0]
 
-#         for i in range(len(submissions)):
-#             sub_decision_notes = test_client.get_notes(
-#                 invitation='{venue_id}/Paper{number}/-/Decision'.format(
-#                     venue_id=venue['venue_id'], number=submissions[i].number
-#                 )
-#             )
-#             assert len(sub_decision_notes) == 1
-#             sub_decision_note = sub_decision_notes[0]
-#             assert sub_decision_note
-#             assert sub_decision_note.content['decision'] == sub_decisions[i][1]
-#             assert sub_decision_note.content['comment'] == sub_decisions[i][2]
+        assert decision_status
+        assert decision_status.content['decision_posted'] == '1 Papers'
+        assert '\"decision value must be equal to one of the allowed values: Accept, Revision Needed, Reject\"' in decision_status.content['error']
 
-#         # reveal decisions to authors
-#         decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'decision_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'decision_options': 'Accept, Revision Needed, Reject',
-#                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-#                 'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
-#                 'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
-#                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
-#                 'additional_decision_form_options': {
-#                     'suggestions': {
-#                         'value-regex': '[\\S\\s]{1,5000}',
-#                         'description': 'Please provide suggestions on how to improve the paper',
-#                         'required': False,
-#                     }
-#                 },
-#                 'decisions_file': url
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
-#                                                               venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
+        url = test_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/decisions.csv'),
+                                         decision_stage_invitation, 'decisions_file')
 
-#         assert decision_stage_note
-#         helpers.await_queue()
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'No, I will send the emails to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
 
-#         process_logs = client.get_process_logs(id=decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+        assert decision_stage_note
+        helpers.await_queue()
 
-#         decision_note = test_client.get_notes(
-#             invitation='{venue_id}/Paper.*/-/Decision'.format(venue_id=venue['venue_id'])
-#         )[0]
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         assert f'TEST.cc/2030/Conference/Submission1/Authors' in decision_note.readers
-#         assert f'TEST.cc/2030/Conference/Submission1/Reviewers' in decision_note.readers
-#         assert not decision_note.nonreaders
+        status_invitation_id = '{}/-/Request{}/Decision_Upload_Status'.format(venue['support_group_id'],
+                                                                              venue['request_form_note'].number)
+        decision_status = client.get_notes(invitation=status_invitation_id, replyto=venue['request_form_note'].forum,
+                                           forum=venue['request_form_note'].forum, sort='tmdate')[0]
 
-#         #get post_decision invitation
-#         with pytest.raises(openreview.OpenReviewException) as openReviewError:
-#             post_decision_invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
-#         assert openReviewError.value.args[0].get('name') == 'NotFoundError'
+        assert decision_status
+        assert decision_status.content['decision_posted'] == '2 Papers'
 
-#         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
-#         assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        with open(os.path.join(os.path.dirname(__file__), 'data/decisions.csv')) as f:
+            sub_decisions = list(csv.reader(f))
+
+        for i in range(len(submissions)):
+            sub_decision_notes = openreview_client.get_notes(
+                invitation='{venue_id}/Submission{number}/-/Decision'.format(
+                    venue_id=venue['venue_id'], number=submissions[i].number
+                )
+            )
+            assert len(sub_decision_notes) == 1
+            sub_decision_note = sub_decision_notes[0]
+            assert sub_decision_note
+            assert sub_decision_note.content['decision']['value'] == sub_decisions[i][1]
+            assert sub_decision_note.content['comment']['value'] == sub_decisions[i][2]
+
+        # reveal decisions to authors
+        decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'decisions_file': url
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Decision_Stage'.format(venue['support_group_id'],
+                                                              venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+
+        assert decision_stage_note
+        helpers.await_queue()
+
+        process_logs = client.get_process_logs(id=decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
+
+        decision_notes = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Decision')
+        assert len(decision_notes) == 1
+        assert 'V2.cc/2030/Conference/Program_Chairs' in decision_notes[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in decision_notes[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in decision_notes[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewers' in decision_notes[0].readers
+        assert 'V2.cc/2030/Conference/Submission1/Authors' in decision_notes[0].readers
+        assert not decision_notes[0].nonreaders
+
+        #get post_decision invitation
+        with pytest.raises(openreview.OpenReviewException) as openReviewError:
+            post_decision_invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        assert openReviewError.value.args[0].get('name') == 'NotFoundError'
+
+        invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
 #     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue):
 
@@ -2003,131 +2140,122 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 #         revision_invitation = test_client.get_invitation('{}/Paper{}/-/Revision'.format(venue['venue_id'], blind_submissions[0].number))
 #         assert revision_invitation.expdate < round(time.time() * 1000)
 
-#     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue):
-#         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='tmdate')
-#         assert blind_submissions and len(blind_submissions) == 3
+    def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-#         # Assert that submissions are still blind
-#         assert blind_submissions[0].content['authors'] == ['Anonymous']
-#         assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
-#         assert blind_submissions[1].content['authors'] == ['Anonymous']
-#         assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
-#         assert blind_submissions[2].content['authors'] == ['Anonymous']
-#         assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+        submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
+        assert submissions and len(submissions) == 2
 
-#         # Assert that submissions are private
-#         assert blind_submissions[0].readers == [venue['venue_id'],
-#             '{}/Senior_Area_Chairs'.format(venue['venue_id']),
-#             '{}/Area_Chairs'.format(venue['venue_id']),
-#             '{}/Reviewers'.format(venue['venue_id']),
-#             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
-#         assert blind_submissions[1].readers == [venue['venue_id'],
-#             '{}/Senior_Area_Chairs'.format(venue['venue_id']),
-#             '{}/Area_Chairs'.format(venue['venue_id']),
-#             '{}/Reviewers'.format(venue['venue_id']),
-#             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
-#         assert blind_submissions[2].readers == [venue['venue_id'],
-#             '{}/Senior_Area_Chairs'.format(venue['venue_id']),
-#             '{}/Area_Chairs'.format(venue['venue_id']),
-#             '{}/Reviewers'.format(venue['venue_id']),
-#             '{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+        # Assert that submissions are still blind
+        assert submissions[0].content['authors']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission1/Authors"]
+        assert submissions[0].content['authorids']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission1/Authors"]
+        assert submissions[1].content['authors']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission2/Authors"]
+        assert submissions[1].content['authorids']['readers'] == ["V2.cc/2030/Conference", "V2.cc/2030/Conference/Submission2/Authors"]
+        # Assert that submissions are private
+        assert submissions[0].readers == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Area_Chairs',
+            'V2.cc/2030/Conference/Reviewers',
+            'V2.cc/2030/Conference/Submission1/Authors']
+        assert submissions[1].readers == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Area_Chairs',
+            'V2.cc/2030/Conference/Reviewers',
+            'V2.cc/2030/Conference/Submission2/Authors']
 
-#         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
-#         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-#         client.post_invitation(invitation)
+        invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
 
-#         invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
+        invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
 
-#         assert 'Accept' in invitation.reply['content']['home_page_tab_names']['default']
-#         assert invitation.reply['content']['home_page_tab_names']['default']['Accept'] == 'Accept'
-#         assert 'Revision Needed' in invitation.reply['content']['home_page_tab_names']['default']
-#         assert invitation.reply['content']['home_page_tab_names']['default']['Revision Needed'] == 'Revision Needed'
-#         assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
-#         assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
+        assert 'Accept' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Accept'] == 'Accept'
+        assert 'Revision Needed' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Revision Needed'] == 'Revision Needed'
+        assert 'Reject' in invitation.reply['content']['home_page_tab_names']['default']
+        assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
 
-#         #Post a post decision note
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=2)
-#         due_date = now + datetime.timedelta(days=3)
-#         short_name = 'TestVenue@OR\'2030'
-#         post_decision_stage_note = test_client.post_note(openreview.Note(
-#             content={
-#                 'reveal_authors': 'No, I don\'t want to reveal any author identities.',
-#                 'submission_readers': 'Everyone (submissions are public)',
-#                 'home_page_tab_names': {
-#                     'Accept': 'Accept',
-#                     'Revision Needed': 'Revision Needed',
-#                     'Reject': 'Reject'
-#                 },
-#                 'send_decision_notifications': 'Yes, send an email notification to the authors',
-#                 'accept_email_content': f'''Dear {{{{fullname}}}},
+        #Post a post decision note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        short_name = 'TestVenue@OR\'2030V2'
+        post_decision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Revision Needed': 'Revision Needed',
+                    'Reject': 'Reject'
+                },
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
 
-# Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
-# You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
-# Best,
-# {short_name} Program Chairs
-# ''',
-#                 'reject_email_content': f'''Dear {{{{fullname}}}},
-                        
-# Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
-# You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
 
-# Best,
-# {short_name} Program Chairs
-# ''',
-#                 'revision_needed_email_content': f'''Dear {{{{fullname}}}},
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted. 
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
-# Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
-# You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+Best,
+{short_name} Program Chairs
+''',
+                'revision_needed_email_content': f'''Dear {{{{fullname}}}},
 
-# Best,
-# {short_name} Program Chairs
-# '''
-#             },
-#             forum=venue['request_form_note'].forum,
-#             invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
-#             readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
-#             referent=venue['request_form_note'].forum,
-#             replyto=venue['request_form_note'].forum,
-#             signatures=['~SomeFirstName_User1'],
-#             writers=[]
-#         ))
-#         assert post_decision_stage_note
-#         helpers.await_queue()
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
 
-#         process_logs = client.get_process_logs(id = post_decision_stage_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
 
-#         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
-#         assert blind_submissions and len(blind_submissions) == 3
+        process_logs = client.get_process_logs(id = post_decision_stage_note.id)
+        assert len(process_logs) == 1
+        assert process_logs[0]['status'] == 'ok'
 
-#         assert blind_submissions[0].content['authors'] == ['Anonymous']
-#         assert blind_submissions[0].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[0].number)]
-#         assert blind_submissions[1].content['authors'] == ['Anonymous']
-#         assert blind_submissions[1].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[1].number)]
-#         assert blind_submissions[2].content['authors'] == ['Anonymous']
-#         assert blind_submissions[2].content['authorids'] == ['{}/Paper{}/Authors'.format(venue['venue_id'], blind_submissions[2].number)]
+        submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
+        assert submissions and len(submissions) == 2
 
-#         last_message = client.get_messages(to='venue_author1@mail.com')[-1]
-#         assert "[TestVenue@OR'2030] Decision notification for your submission 1: test submission" in last_message['content']['subject']
-#         assert "Dear Venue Author,</p>\n<p>Thank you for submitting your paper, test submission, to TestVenue@OR'2030." in last_message['content']['text']
-#         assert f"https://openreview.net/forum?id={blind_submissions[0].id}" in last_message['content']['text']
+        # Assert accepted submission is public and rejected submission is private
+        assert submissions[0].readers == ['everyone']
+        assert submissions[1].readers == ['V2.cc/2030/Conference',
+            'V2.cc/2030/Conference/Submission2/Senior_Area_Chairs',
+            'V2.cc/2030/Conference/Submission2/Area_Chairs',
+            'V2.cc/2030/Conference/Submission2/Reviewers',
+            'V2.cc/2030/Conference/Submission2/Authors']
 
-#         # Assert that submissions are public
-#         assert blind_submissions[0].readers == ['everyone']
-#         assert blind_submissions[1].readers == ['everyone']
-#         assert blind_submissions[2].readers == ['everyone']
+        # assert authors of accepted paper were released
+        assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030V2'
+        assert submissions[0].content['venueid']['value'] == 'V2 2030 Conference'
+        assert 'readers' not in submissions[0].content['authors']
+        assert 'readers' not in submissions[0].content['authorids']
 
-#         #check venue and venueid for accepted, venue for rejected
-#         submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
-#         assert submissions and len(submissions) == 3
+        # assert author identities of rejected paper are still hidden
+        assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
+        assert submissions[1].content['venueid']['value'] == 'V2 2030 Conference'
+        assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
+        assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
-#         assert 'venue' in submissions[0].content and 'Submitted to TestVenue@OR\'2030' in submissions[0].content['venue']
-#         assert 'venueid' in submissions[0].content and 'TEST.cc/2030/Conference' in submissions[0].content['venueid']
-#         assert 'venueid' in submissions[1].content and 'TEST.cc/2030/Conference' in submissions[1].content['venueid']
-#         assert 'venue' in submissions[1].content and 'TestVenue@OR\'2030' in submissions[1].content['venue']
+        last_message = client.get_messages(to='venue_author_v2@mail.com', subject='[TestVenue@OR\'2030V2] Decision notification for your submission 1: test submission')[0]
+        assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2." in last_message['content']['text']
+        assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
 
 #         note_id = submissions[0].id
 #         assert '_bibtex' in submissions[0].content and submissions[0].content['_bibtex'] == '''@misc{

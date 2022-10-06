@@ -21,5 +21,6 @@ return {
     deskRejectedSubmissionId: DESK_REJECTED_SUBMISSION_ID,
     authorsGroupId: AUTHORS_ID,
     showSubmissions: SUBMISSIONS_PUBLIC,
+    showActivity: SUBMISSIONS_PUBLIC,
   }
 }

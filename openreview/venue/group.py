@@ -218,7 +218,7 @@ class GroupBuilder(object):
 
     def create_paper_committee_groups(self, submissions, overwrite=False):
 
-        group_by_id = { g.id: g for g in self.client.get_all_groups(prefix=f'{self.venue.id}/Paper.*') }
+        group_by_id = { g.id: g for g in self.client.get_all_groups(prefix=f'{self.venue.id}/{self.venue.submission_stage.name}.*') }
 
         def create_paper_commmitee_group(note):
             # Reviewers Paper group

@@ -95,7 +95,7 @@ class SubmissionStage(object):
         self.public = self.Readers.EVERYONE in self.readers
         self.author_reorder_after_first_deadline = author_reorder_after_first_deadline
 
-    def get_readers(self, conference, number, decision_note=None):
+    def get_readers(self, conference, number, decision=None):
 
         if self.Readers.EVERYONE in self.readers:
             return ['everyone']
@@ -103,7 +103,7 @@ class SubmissionStage(object):
         submission_readers=[conference.id]
 
         if self.Readers.EVERYONE_BUT_REJECTED in self.readers:
-            hide = not decision_note or decision_note and 'Reject' in decision_note.content['decision']
+            hide = not decision or 'Accept' not in decision
             if hide:
                 if conference.use_senior_area_chairs:
                     submission_readers.append(conference.get_senior_area_chairs_id(number=number))
