@@ -1,4 +1,6 @@
+import csv
 import datetime
+from io import StringIO
 import json
 import os
 from sys import api_version
@@ -6,8 +8,12 @@ from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
 from .. import tools
+from multiprocessing import cpu_count
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 SHORT_BUFFER_MIN = 30
+LONG_BUFFER_DAYS = 10
 
 class InvitationBuilder(object):
 
@@ -69,7 +75,7 @@ class InvitationBuilder(object):
                     note = Note(
                         id = note.id,
                         readers = invitation_readers,
-                        nonreaders = invitation.edit['note']['nonreaders']
+                        nonreaders = invitation.edit['note'].get('nonreaders')
                     )
                 )            
 
@@ -163,6 +169,8 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            duedate=tools.datetime_millis(submission_stage.due_date),
+            expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },
                 'readers': edit_readers,
@@ -233,6 +241,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=review_cdate,
             duedate=tools.datetime_millis(review_stage.due_date),
+            expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None,
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process              
@@ -336,6 +345,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=meta_review_cdate,
             duedate=tools.datetime_millis(meta_review_stage.due_date),
+            expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None,
             date_processes=[{ 
                     'dates': ["#{4/cdate}"],
                     'script': self.cdate_invitation_process                
@@ -559,6 +569,378 @@ class InvitationBuilder(object):
             )
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
+
+    def set_official_comment_invitation(self):
+        venue_id = self.venue_id
+        comment_stage = self.venue.comment_stage
+        official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+
+        content = default_content.comment_v2.copy()
+        invitees = comment_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
+
+        comment_readers = comment_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
+        if comment_stage.reader_selection:
+            comment_readers = {
+                'param': {
+                    'enum': comment_stage.get_readers(self.venue, '${7/content/noteNumber/value}')
+                }
+            }
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
+        with open(process_file) as f:
+            process_content = f.read()
+
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
+            process_content = process_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
+            process_content = process_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
+
+            if self.venue.use_area_chairs:
+                process_content = process_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
+
+            if self.venue.use_senior_area_chairs:
+                process_content = process_content.replace("PAPER_SENIOR_AREA_CHAIRS_ID = ''", f"PAPER_SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id('{number}')}'")
+
+            if comment_stage.email_pcs:
+                process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_pre_process.py')
+        with open(process_file) as f:
+            pre_process_content = f.read()
+            mandatory_readers = [self.venue.get_program_chairs_id()]
+            if self.venue.use_senior_area_chairs:
+                mandatory_readers.append(self.venue.get_senior_area_chairs_id(number='{number}'))
+
+            pre_process_content = pre_process_content.replace("MANDATORY_READERS = []", "MANDATORY_READERS = " + json.dumps(mandatory_readers))
+
+        invitation = Invitation(id=official_comment_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=comment_cdate,
+            expdate=tools.datetime_millis(comment_stage.end_date),
+            date_processes=[{
+                'dates': ["#{4/cdate}"],
+                'script': self.cdate_invitation_process
+            }],
+            content={
+                'comment_preprocess_script': {
+                    'value': pre_process_content
+                },
+                'comment_process_script': {
+                    'value': process_content
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(comment_stage.official_comment_name, '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': invitees,
+                    'expdate': tools.datetime_millis(comment_stage.end_date),
+                    'cdate': comment_cdate,
+                    'preprocess': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''' if comment_stage.check_mandatory_readers and comment_stage.reader_selection else None,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': { 'param': { 'regex': comment_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
+                        'readers': ['${2/note/readers}'],
+                        # 'nonreaders': [],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id(comment_stage.official_comment_name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': comment_readers,
+                            # 'nonreaders': [],
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_public_comment_invitation(self):
+        venue_id = self.venue_id
+        comment_stage = self.venue.comment_stage
+        public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+
+        content = default_content.comment_v2.copy()
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
+        with open(process_file) as f:
+            process_content = f.read()
+
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
+            process_content = process_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
+            process_content = process_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
+
+            if self.venue.use_area_chairs:
+                process_content = process_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
+
+            if self.venue.use_senior_area_chairs:
+                process_content = process_content.replace("PAPER_SENIOR_AREA_CHAIRS_ID = ''", f"PAPER_SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id('{number}')}'")
+
+            if comment_stage.email_pcs:
+                process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
+
+        invitation = Invitation(id=public_comment_invitation,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=comment_cdate,
+            expdate=tools.datetime_millis(comment_stage.end_date),
+            date_processes=[{
+                'dates': ["#{4/cdate}"],
+                'script': self.cdate_invitation_process
+            }],
+            content={
+                'comment_process_script': {
+                    'value': process_content
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(comment_stage.public_name, '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': ['everyone'],
+                    'noninvitees': self.venue.get_committee('${3/content/noteNumber/value}', with_authors = True),
+                    'expdate': tools.datetime_millis(comment_stage.end_date),
+                    'cdate': comment_cdate,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': { 'param': { 'regex': '~.*' }},
+                        'readers': ['${2/note/readers}'],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id(comment_stage.public_name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': ['everyone'],
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_decision_invitation(self):
+
+        venue_id = self.venue_id
+        decision_stage = self.venue.decision_stage
+        decision_invitation_id = self.venue.get_invitation_id(decision_stage.name)
+        decision_cdate = tools.datetime_millis(decision_stage.start_date if decision_stage.start_date else datetime.datetime.utcnow())
+
+        content = default_content.decision_v2.copy()
+
+        content['decision']['value']['param']['enum'] = decision_stage.options
+
+        for key in decision_stage.additional_fields:
+            content[key] = decision_stage.additional_fields[key]
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/decision_process.py')
+        with open(process_file) as f:
+            process_content = f.read()
+
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
+            process_content = process_content.replace("AUTHORS_ID_ACCEPTED = ''", f"AUTHORS_ID_ACCEPTED = '{self.venue.get_authors_id()}/Accepted'")
+
+            if decision_stage.email_authors:
+                process_content = process_content.replace("EMAIL_AUTHORS = False", "EMAIL_AUTHORS = True")
+
+        invitation = Invitation(id=decision_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=decision_cdate,
+            duedate=tools.datetime_millis(decision_stage.due_date),
+            expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None,
+            date_processes=[{
+                'dates': ["#{4/cdate}"],
+                'script': self.cdate_invitation_process
+            }],
+            content={
+                'decision_process_script': {
+                    'value': process_content
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(decision_stage.name, '${2/content/noteNumber/value}'),
+                    'signatures': [ venue_id ],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'invitees': [self.venue.get_program_chairs_id(), self.venue.support_user],
+                    'maxReplies': 1,
+                    'minReplies': 1,
+                    'duedate': tools.datetime_millis(decision_stage.due_date),
+                    'cdate': decision_cdate,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['decision_process_script']['value']
+    funcs = {}
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'signatures': [self.venue.get_program_chairs_id()],
+                        'readers': decision_stage.get_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'nonreaders': decision_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id(decision_stage.name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': decision_stage.get_readers(self.venue, '${5/content/noteNumber/value}'),
+                            'nonreaders': decision_stage.get_nonreaders(self.venue, '${5/content/noteNumber/value}'),
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': content
+                        }
+                    }
+                }
+
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
 
     def set_withdrawal_invitation(self):
         venue_id = self.venue_id
@@ -924,3 +1306,112 @@ class InvitationBuilder(object):
         #         invitation.preprocess=pre_content
         #         invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
         #         return self.save_invitation(invitation)
+
+    def post_decisions(self, decisions_file, api1_client):
+
+        venue = self.venue
+
+        decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
+
+        paper_notes = {n.number: n for n in venue.get_submissions(details='directReplies')}
+
+        def post_decision(paper_decision):
+            if len(paper_decision) < 2:
+                raise openreview.OpenReviewException(
+                    "Not enough values provided in the decision file. Expected values are: paper_number, decision, comment")
+            if len(paper_decision) > 3:
+                raise openreview.OpenReviewException(
+                    "Too many values provided in the decision file. Expected values are: paper_number, decision, comment"
+                )
+            if len(paper_decision) == 3:
+                paper_number, decision, comment = paper_decision
+            else:
+                paper_number, decision = paper_decision
+                comment = ''
+
+            paper_number = int(paper_number)
+
+            print(f"Posting Decision {decision} for Paper {paper_number}")
+            paper_note = paper_notes.get(paper_number, None)
+            if not paper_note:
+                raise openreview.OpenReviewException(
+                    f"Paper {paper_number} not found. Please check the submitted paper numbers."
+                )
+
+            paper_decision_note = None
+            if paper_note.details:
+                for reply in paper_note.details['directReplies']:
+                    if f'{self.venue_id}/{venue.submission_stage.name}{paper_note.number}/-/{venue.decision_stage.name}' in reply['invitations']:
+                        paper_decision_note = reply
+                        break
+
+            content = {
+                'title': {'value': 'Paper Decision'},
+                'decision': {'value': decision.strip()},
+                'comment': {'value': comment},
+            }
+            if paper_decision_note:
+                self.client.post_note_edit(invitation = venue.get_invitation_id(venue.decision_stage.name, paper_number),
+                    signatures = [venue.get_program_chairs_id()],
+                    note = Note(
+                        id = paper_decision_note['id'],
+                        content = content
+                    )
+                )
+            else:
+                self.client.post_note_edit(invitation = venue.get_invitation_id(venue.decision_stage.name, paper_number),
+                    signatures = [venue.get_program_chairs_id()],
+                    note = Note(
+                        content = content
+                    )
+                )
+
+            print(f"Decision posted for Paper {paper_number}")
+        
+        futures = []
+        futures_param_mapping = {}
+        gathering_responses = tqdm(total=len(decisions_data), desc='Gathering Responses')
+        results = []
+        errors = {}
+ 
+        with ThreadPoolExecutor(max_workers=min(6, cpu_count() - 1)) as executor:
+            for _decision in decisions_data:
+                print(_decision)
+                _future = executor.submit(post_decision, _decision)
+                futures.append(_future)
+                futures_param_mapping[_future] = str(_decision)
+
+            for future in futures:
+                gathering_responses.update(1)
+                try:
+                    results.append(future.result())
+                except Exception as e:
+                    errors[futures_param_mapping[future]] = e.args[0] if isinstance(e, openreview.OpenReviewException) else repr(e)
+
+            gathering_responses.close()
+
+        error_status = ''
+        if errors:
+            error_status = f'''
+Total Errors: {len(errors)}
+```python
+{json.dumps({key: errors[key] for key in list(errors.keys())[:10]}, indent=2)}
+```
+'''
+        if venue.request_form_id:
+            forum_note = api1_client.get_note(venue.request_form_id)
+            status_note = openreview.Note(
+                invitation=venue.support_user + '/-/Request' + str(forum_note.number) + '/Decision_Upload_Status',
+                forum=venue.request_form_id,
+                replyto=venue.request_form_id,
+                readers=[venue.get_program_chairs_id(), venue.support_user],
+                writers=[],
+                signatures=[venue.support_user],
+                content={
+                    'title': 'Decision Upload Status',
+                    'decision_posted': f'''{len(results)} Papers''',
+                    'error': error_status
+                }
+            )
+
+            api1_client.post_note(status_note)
