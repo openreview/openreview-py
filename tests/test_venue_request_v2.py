@@ -30,7 +30,7 @@ class TestVenueRequest():
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
 
         now = datetime.datetime.utcnow()
-        due_date = now + datetime.timedelta(days=3)
+        due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
         withdraw_exp_date = due_date + datetime.timedelta(days=1)
 
         # Post the request form note
@@ -102,8 +102,8 @@ class TestVenueRequest():
         helpers.await_queue()
 
         submission_inv = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
-        assert submission_inv.duedate
-        assert submission_inv.expdate
+        assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
+        assert submission_inv.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
 
         # Return venue details as a dict
         venue_details = {
