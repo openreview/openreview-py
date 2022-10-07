@@ -296,11 +296,10 @@ class TestVenueSubmission():
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')     
-        #assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        assert invitation.expdate is None
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
-        assert invitation.expdate is None
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
@@ -327,7 +326,6 @@ class TestVenueSubmission():
 
         now = datetime.datetime.utcnow()
         venue.comment_stage = openreview.CommentStage(
-            end_date=now + datetime.timedelta(minutes = 40),
             allow_public_comments=True,
             reader_selection=True,
             email_pcs=True,
@@ -336,8 +334,10 @@ class TestVenueSubmission():
             invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
         venue.create_comment_stage()
 
-        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Official_Comment')
-        assert openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
+        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
+        assert not invitation.expdate
+        invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Official_Comment')
+        assert not invitation.expdate
 
     def test_decision_stage(self, venue, openreview_client, helpers):
 

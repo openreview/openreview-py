@@ -169,7 +169,7 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
-            duedate=tools.datetime_millis(submission_stage.due_date),
+            duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },
@@ -200,14 +200,14 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
-    
     def set_review_invitation(self):
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
-
+        review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
+        review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
         content = default_content.review_v2.copy()
 
         for key in review_stage.additional_fields:
@@ -240,8 +240,8 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=review_cdate,
-            duedate=tools.datetime_millis(review_stage.due_date),
-            expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None,
+            duedate=review_duedate,
+            expdate = review_expdate,
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process              
@@ -278,7 +278,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
-                    'duedate': tools.datetime_millis(review_stage.due_date),
                     'cdate': review_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -319,6 +318,10 @@ class InvitationBuilder(object):
             }
         )
 
+        if review_duedate:
+            invitation.edit['invitation']['duedate'] = review_duedate
+            invitation.edit['invitation']['expdate'] = review_expdate
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
@@ -328,6 +331,8 @@ class InvitationBuilder(object):
         meta_review_stage = self.venue.meta_review_stage
         meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage.name)
         meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
+        meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
+        meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
         content = default_content.meta_review_v2.copy()
 
@@ -344,8 +349,8 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=meta_review_cdate,
-            duedate=tools.datetime_millis(meta_review_stage.due_date),
-            expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None,
+            duedate=meta_review_duedate,
+            expdate=meta_review_expdate,
             date_processes=[{ 
                     'dates': ["#{4/cdate}"],
                     'script': self.cdate_invitation_process                
@@ -377,7 +382,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_area_chairs_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
-                    'duedate': tools.datetime_millis(meta_review_stage.due_date),
                     'cdate': meta_review_cdate,
                     'edit': {
                         'signatures': { 'param': { 'regex': meta_review_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
@@ -409,6 +413,10 @@ class InvitationBuilder(object):
                 }
             }
         )
+
+        if meta_review_duedate:
+            invitation.edit['invitation']['duedate'] = meta_review_duedate
+            invitation.edit['invitation']['expdate'] = meta_review_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -524,7 +532,7 @@ class InvitationBuilder(object):
             bid_invitation = Invitation(
                 id=bid_invitation_id,
                 cdate = tools.datetime_millis(bid_stage.start_date),
-                duedate = tools.datetime_millis(bid_stage.due_date),
+                duedate = tools.datetime_millis(bid_stage.due_date) if bid_stage.due_date else None,
                 expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
                 invitees = [match_group_id],
                 signatures = [venue_id],
@@ -575,6 +583,7 @@ class InvitationBuilder(object):
         comment_stage = self.venue.comment_stage
         official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
         content = default_content.comment_v2.copy()
         invitees = comment_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
@@ -620,7 +629,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            expdate=tools.datetime_millis(comment_stage.end_date),
+            expdate=comment_expdate,
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process
@@ -659,7 +668,6 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': invitees,
-                    'expdate': tools.datetime_millis(comment_stage.end_date),
                     'cdate': comment_cdate,
                     'preprocess': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -711,6 +719,9 @@ class InvitationBuilder(object):
             }
         )
 
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = comment_expdate
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
@@ -719,6 +730,7 @@ class InvitationBuilder(object):
         comment_stage = self.venue.comment_stage
         public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
         content = default_content.comment_v2.copy()
 
@@ -746,7 +758,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            expdate=tools.datetime_millis(comment_stage.end_date),
+            expdate=comment_expdate,
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process
@@ -783,7 +795,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': ['everyone'],
                     'noninvitees': self.venue.get_committee('${3/content/noteNumber/value}', with_authors = True),
-                    'expdate': tools.datetime_millis(comment_stage.end_date),
                     'cdate': comment_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -825,6 +836,9 @@ class InvitationBuilder(object):
             }
         )
 
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = comment_expdate
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
@@ -834,6 +848,8 @@ class InvitationBuilder(object):
         decision_stage = self.venue.decision_stage
         decision_invitation_id = self.venue.get_invitation_id(decision_stage.name)
         decision_cdate = tools.datetime_millis(decision_stage.start_date if decision_stage.start_date else datetime.datetime.utcnow())
+        decision_due_date = tools.datetime_millis(decision_stage.due_date) if decision_stage.due_date else None
+        decision_expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None
 
         content = default_content.decision_v2.copy()
 
@@ -859,8 +875,8 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=decision_cdate,
-            duedate=tools.datetime_millis(decision_stage.due_date),
-            expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None,
+            duedate=decision_due_date,
+            expdate=decision_expdate,
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process
@@ -898,7 +914,6 @@ class InvitationBuilder(object):
                     'invitees': [self.venue.get_program_chairs_id(), self.venue.support_user],
                     'maxReplies': 1,
                     'minReplies': 1,
-                    'duedate': tools.datetime_millis(decision_stage.due_date),
                     'cdate': decision_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -938,6 +953,10 @@ class InvitationBuilder(object):
 
             }
         )
+
+        if decision_due_date:
+            invitation.edit['invitation']['duedate'] = decision_due_date
+            invitation.edit['invitation']['expdate'] = decision_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
