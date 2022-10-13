@@ -31,7 +31,7 @@ class TestVenueSubmission():
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
         now = datetime.datetime.utcnow()
-        venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.EVERYONE], withdrawn_submission_public=True, withdrawn_submission_reveal_authors=True)
+        venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.EVERYONE], withdrawn_submission_public=True, withdrawn_submission_reveal_authors=True, desk_rejected_submission_public=True)
         venue.bid_stages = [
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
@@ -41,14 +41,16 @@ class TestVenueSubmission():
 
         return venue
 
-    def test_setup(self, venue, openreview_client):
+    def test_setup(self, venue, openreview_client, helpers):
 
-        venue.setup()
+        venue.setup(program_chair_ids=['venue_pc@mail.com'])
         venue.create_submission_stage()
         venue.create_review_stage()
         venue.create_meta_review_stage()
         assert openreview_client.get_group('TestVenue.cc')
         assert openreview_client.get_group('TestVenue.cc/Authors')
+
+        helpers.create_user('venue_pc@mail.com', 'PC Venue', 'One')
 
     def test_recruitment_stage(self, venue, openreview_client, selenium, request_page, helpers):
 
@@ -125,8 +127,6 @@ class TestVenueSubmission():
 
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_2['id']) 
 
-
-
     def test_post_submission_stage(self, venue, openreview_client):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
@@ -146,6 +146,9 @@ class TestVenueSubmission():
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Withdrawal')
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal')
+
+        assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Desk_Rejection')
+        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection')
 
     def test_bid_stage(self, venue, openreview_client):
         
@@ -201,8 +204,7 @@ class TestVenueSubmission():
 
         custom_load_edges = openreview_client.get_edges(invitation='TestVenue.cc/Reviewers/-/Custom_Max_Papers')
         assert (len(custom_load_edges)) == 1
-    
-    
+
     def test_review_stage(self, venue, openreview_client, helpers):
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
@@ -273,17 +275,17 @@ class TestVenueSubmission():
         assert 'readers' not in note.content['authorids']
 
         helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Withdrawn_Submission')
-        
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')     
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n    \nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
-        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion') 
+        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion')
 
         withdrawal_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Withdrawal_Reversion',
                                     signatures=['TestVenue.cc/Program_Chairs'],
@@ -295,22 +297,95 @@ class TestVenueSubmission():
 
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
 
-        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')     
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
-        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')     
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
 
         note = author_client.get_note(withdraw_note['note']['forum'])
         assert note
         assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
         assert note.content['venue']['value'] == 'TestVenue Submission'
-        assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'        
+        assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n    \nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
+    def test_desk_reject_submission(self, venue, openreview_client, helpers):
+
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password='1234')
+
+        desk_reject_note = pc_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Desk_Rejection',
+                                    signatures=['TestVenue.cc/Program_Chairs'],
+                                    note=Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'No PDF' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+
+        note = pc_client.get_note(desk_reject_note['note']['forum'])
+        assert note
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit', 'TestVenue.cc/-/Desk_Rejected_Submission']
+        assert note.readers == ['everyone']
+        assert note.writers == ['TestVenue.cc', 'TestVenue.cc/Submission2/Authors']
+        assert note.signatures == ['TestVenue.cc/Submission2/Authors']
+        assert note.content['venue']['value'] == 'TestVenue Desk Rejected Submission'
+        assert note.content['venueid']['value'] == 'TestVenue.cc/Desk_Rejected_Submission'
+        assert 'readers' in note.content['authors']
+        assert 'readers' in note.content['authorids']
+        assert note.content['authors']['readers'] == ["TestVenue.cc", "TestVenue.cc/Submission2/Authors"]
+        assert note.content['authorids']['readers'] == ["TestVenue.cc", "TestVenue.cc/Submission2/Authors"]
+
+        helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Desk_Rejected_Submission')
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 desk-rejected by program chairs')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by the program chairs.\n    \nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+        messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 desk-rejected by program chairs')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been desk-rejected by the program chairs.\n    \nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+        assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Desk_Rejection_Reversion')
+
+        desk_rejection_reversion_note = openreview_client.post_note_edit(invitation='TestVenue.cc/Submission2/-/Desk_Rejection_Reversion',
+                                    signatures=['TestVenue.cc/Program_Chairs'],
+                                    note=Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+
+        invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+
+        note = pc_client.get_note(desk_reject_note['note']['forum'])
+        assert note
+        assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
+        assert note.content['venue']['value'] == 'TestVenue Submission'
+        assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
+
+        messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
+        assert len(messages) == 2
+        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n    \nFor more information, click here https://openreview.net/forum?id={note.id}\n'
+
+        messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 restored by venue organizers')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'The desk-rejected TV 22 paper \"Paper 2 Title\" has been restored by the venue organizers.\n    \nFor more information, click here https://openreview.net/forum?id={note.id}\n'
 
     def test_comment_stage(self, venue, openreview_client, helpers):
 

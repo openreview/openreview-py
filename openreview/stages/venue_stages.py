@@ -239,6 +239,19 @@ class SubmissionStage(object):
             readers.append(conference.get_authors_id(number))
             return readers
 
+    def get_desk_rejection_readers(self, conference, number):
+
+        if self.public and self.desk_rejected_submission_public:
+            return ['everyone']
+        else:
+            readers = [conference.get_program_chairs_id()]
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id(number))
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id(number))
+            readers.append(conference.get_reviewers_id(number))
+            readers.append(conference.get_authors_id(number))
+            return readers
 
 class BidStage(object):
 
