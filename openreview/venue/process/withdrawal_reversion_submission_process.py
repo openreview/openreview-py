@@ -28,7 +28,7 @@ def process(client, edit, invitation):
     formatted_committee = [committee.format(number=submission.number) for committee in COMMITTEE]
     email_subject = f'''[{SHORT_NAME}]: Paper #{submission.number} restored by venue organizers'''
     email_body = f'''The {SHORT_NAME} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been restored by the venue organizers.
-    
+
 For more information, click here https://openreview.net/forum?id={submission.id}
 '''
 
