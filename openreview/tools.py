@@ -823,8 +823,21 @@ def replace_members_with_ids(client, group):
         raise openreview.OpenReviewException(f"Profile Not Found for {without_profile_ids}")
     group.members = updated_members
 
-    return client.post_group(group)
+    if getattr(client, 'post_group', None):
+        return client.post_group(group)
 
+    if getattr(client, 'post_group_edit', None):
+        client.post_group_edit(
+            invitation = group.domain + '/-/Edit',
+            readers = [group.domain],
+            writers = [group.domain],
+            signatures = [group.domain],
+            group = openreview.api.Group(
+                id = group.id, 
+                members = group.members
+            )
+        )
+        return client.get_group(group.id)
 
 def concurrent_get(client, get_function, **params):
     """

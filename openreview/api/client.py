@@ -1441,7 +1441,7 @@ class OpenReviewClient(object):
                 group = Group(
                     id = group.id, 
                     members = {
-                        'append': members
+                        'append': list(set(members))
                     }
                 ), 
                 readers=group.signatures, 
@@ -1475,7 +1475,7 @@ class OpenReviewClient(object):
                 group = Group(
                     id = group.id, 
                     members = {
-                        'remove': members
+                        'remove': list(set(members))
                     }
                 ), 
                 readers=group.signatures, 
@@ -2357,7 +2357,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, details = None):
+    def __init__(self, id, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -2373,15 +2373,10 @@ class Group(object):
         self.signatures = signatures
         self.signatories = signatories
         self.anonids = anonids
-        self.web=None
+        self.web=web
         self.impersonators = impersonators
         self.host = host
-        if web is not None:
-            with open(web) as f:
-                self.web = f.read()
-
-        if web_string:
-            self.web = web_string
+        self.domain = domain
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
@@ -2475,6 +2470,7 @@ class Group(object):
             deanonymizers=g.get('deanonymizers'),
             impersonators=g.get('impersonators'),
             host=g.get('host'),
+            domain=g.get('domain'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']

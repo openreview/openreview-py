@@ -54,7 +54,10 @@ class InvitationBuilder(object):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            return process.replace('VENUE_ID = ''', f"VENUE_ID = '{self.venue_id}'")
+            process = process.replace('VENUE_ID = ''', f"VENUE_ID = '{self.venue_id}'")
+            process = process.replace('META_INVITATION_ID = ''', f"META_INVITATION_ID = '{self.venue.get_meta_invitation_id()}'")
+            process = process.replace('AUTHORS_GROUP_ID = ''', f"AUTHORS_GROUP_ID = '{self.venue.get_authors_id()}'")
+            return process
 
     def update_note_readers(self, submission, invitation):
         ## Update readers of current notes
@@ -114,11 +117,11 @@ class InvitationBuilder(object):
         self.client.post_invitation_edit(invitations=None,
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=['~Super_User1'],
             invitation=Invitation(id=self.venue.get_meta_invitation_id(),
                 invitees=[venue_id],
                 readers=[venue_id],
-                signatures=[venue_id],
+                signatures=['~Super_User1'],
                 content={
                     'cdate_invitation_script': {
                         'value': invitation_start_process

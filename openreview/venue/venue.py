@@ -241,96 +241,18 @@ class Venue(object):
 
     def setup(self, program_chair_ids=[]):
     
-        venue_id = self.venue_id
-
-        groups = self.group_builder.build_groups(venue_id)
-        for i, g in enumerate(groups[:-1]):
-            self.group_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
-
-        venue_group = openreview.api.Group(id = venue_id,
-            readers = ['everyone'],
-            writers = [venue_id],
-            signatures = ['~Super_User1'],
-            signatories = [venue_id],
-            members = [],
-            host = venue_id
-        )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
-            # add withdrawn and desk-rejected ids when invitations are created
-            # content = content.replace("const WITHDRAWN_SUBMISSION_ID = ''", "const WITHDRAWN_SUBMISSION_ID = '" + venue_id + "/-/Withdrawn_Submission'")
-            # content = content.replace("const DESK_REJECTED_SUBMISSION_ID = ''", "const DESK_REJECTED_SUBMISSION_ID = '" + venue_id + "/-/Desk_Rejected_Submission'")
-            content = content.replace("const AUTHORS_ID = ''", "const AUTHORS_ID = '" + self.get_authors_id() + "'")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.get_homepage_options()) + ";")
-            venue_group.web = content
-            self.client.post_group(venue_group)
-
-        ## pc group
-        #to-do add pc group webfield
-        pc_group_id = self.get_program_chairs_id()
-        pc_group = openreview.tools.get_group(self.client, pc_group_id)
-        if not pc_group:
-            pc_group=self.client.post_group(Group(id=pc_group_id,
-                            readers=['everyone'],
-                            writers=[venue_id, pc_group_id],
-                            signatures=[venue_id],
-                            signatories=[pc_group_id, venue_id],
-                            members=program_chair_ids
-                            ))
-        # with open(os.path.join(os.path.dirname(__file__), 'webfield/editorsInChiefWebfield.js')) as f:
-        #     content = f.read()
-        #     content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-        #     content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
-        #     content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
-        #     content = content.replace("var EDITORS_IN_CHIEF_NAME = '';", "var EDITORS_IN_CHIEF_NAME = '" + journal.editors_in_chief_name + "';")
-        #     content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
-        #     content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
-        #     if journal.get_request_form():
-        #         content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal.get_request_form().id + "';")
-
-        #     editor_in_chief_group.web = content
-        #     self.client.post_group(editor_in_chief_group)
-
-        ## Add pcs to have all the permissions
-        self.client.add_members_to_group(venue_group, pc_group_id)
-
-        ## authors group
-        authors_id = self.get_authors_id()
-        authors_group = openreview.tools.get_group(self.client, authors_id)
-        if not authors_group:
-            authors_group = Group(id=authors_id,
-                            readers=[venue_id, authors_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[])
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            ##content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.submission_stage.get_submission_id(self) + "';")
-            authors_group.web = content
-            self.client.post_group(authors_group)
-
-        authors_accepted_id = self.get_authors_accepted_id()
-        authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
-        if not authors_accepted_group:
-            authors_accepted_group = self.client.post_group(Group(id=authors_accepted_id,
-                            readers=[venue_id, authors_accepted_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[]))
-
         self.invitation_builder.set_meta_invitation()
 
+        self.group_builder.create_venue_group()
+
+        self.group_builder.create_program_chairs_group(program_chair_ids)
+
+        self.group_builder.create_authors_group()
+
         self.group_builder.create_reviewers_group()
+        
         if self.use_area_chairs:
             self.group_builder.create_area_chairs_group()
-        self.client.add_members_to_group('venues', venue_id)
-        self.client.add_members_to_group('host', venue_id)
 
     def recruit_reviewers(self,
         title,
