@@ -32,6 +32,7 @@ class TestVenueSubmission():
 
         now = datetime.datetime.utcnow()
         venue.submission_stage = SubmissionStage(double_blind=True, readers=[SubmissionStage.Readers.EVERYONE], withdrawn_submission_public=True, withdrawn_submission_reveal_authors=True, desk_rejected_submission_public=True)
+
         venue.bid_stages = [
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_reviewers_id()),
             BidStage(due_date=now + datetime.timedelta(minutes = 30), committee_id=venue.get_area_chairs_id())
@@ -308,6 +309,7 @@ class TestVenueSubmission():
         assert note.invitations == ['TestVenue.cc/-/Submission', 'TestVenue.cc/-/Edit']
         assert note.content['venue']['value'] == 'TestVenue Submission'
         assert note.content['venueid']['value'] == 'TestVenue.cc/Submission'
+
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 restored by venue organizers')
         assert len(messages) == 1

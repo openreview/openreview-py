@@ -424,8 +424,6 @@ class Venue(object):
         ## Create withdraw and desk reject invitations
         self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
         self.invitation_builder.create_paper_invitations(self.get_desk_rejection_id(), submissions)
-        
-        #    
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
