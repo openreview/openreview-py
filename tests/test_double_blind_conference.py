@@ -1975,10 +1975,11 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_year(2019)
         builder.set_decision_stage(openreview.stages.DecisionStage(public=True))
+        builder.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(only_accepted=True))
         conference = builder.get_result()
         conference.create_decision_stage()
+        conference.create_submission_revision_stage()
 
-        conference.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(only_accepted=True))
         notes = conference.get_submissions(sort='tmdate')
         assert notes
         assert len(notes) == 1
