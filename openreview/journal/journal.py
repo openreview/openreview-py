@@ -46,7 +46,7 @@ class Journal(object):
         self.assigned_AE_venue_id = f'{venue_id}/Assigned_AE'
         self.accepted_venue_id = venue_id
         self.invitation_builder = InvitationBuilder(self)
-        self.group_builder = group.GroupBuilder(client)
+        self.group_builder = group.GroupBuilder(self)
         self.header = {
             "title": self.full_name,
             "short": self.short_name,
@@ -304,7 +304,8 @@ class Journal(object):
         return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
     
     def setup(self, support_role, editors=[], assignment_delay=5):
-        self.group_builder.set_groups(self, support_role, editors)
+        self.invitation_builder.set_meta_invitation()
+        self.group_builder.set_groups(support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
         self.group_builder.set_group_variable(self.get_action_editors_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
@@ -339,7 +340,7 @@ class Journal(object):
         return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reinvite)
 
     def setup_author_submission(self, note):
-        self.group_builder.setup_submission_groups(self, note)
+        self.group_builder.setup_submission_groups(note)
         self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)

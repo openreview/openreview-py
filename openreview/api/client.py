@@ -61,6 +61,7 @@ class OpenReviewClient(object):
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
+        self.group_edits_url = self.baseurl + '/groups/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.limit = 1000
@@ -1255,71 +1256,6 @@ class OpenReviewClient(object):
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
 
 
-    def post_group(self, group, overwrite = True):
-        """
-        Posts the group. If the group is unsigned, signs it using the client's default signature.
-
-        :param group: Group to be posted
-        :type group: Group
-        :param overwrite: Determines whether to overwrite an existing group or not
-        :type overwrite: bool, optional
-
-        :return: The posted Group
-        :rtype: Group
-        """
-        if overwrite or not self.exists(group.id):
-            if not group.signatures: group.signatures = [self.profile.id]
-            if not group.writers: group.writers = [self.profile.id]
-            response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
-            response = self.__handle_response(response)
-
-        return Group.from_json(response.json())
-
-    def post_invitation(self, invitation):
-        """
-        Posts the invitation. If the invitation is unsigned, signs it using the client's default signature.
-
-        :param invitation: Invitation to be posted
-        :type invitation: Invitation
-
-        :return: The posted Invitation
-        :rtype: Invitation
-        """
-        response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
-        response = self.__handle_response(response)
-
-        return Invitation.from_json(response.json())
-
-    def post_note(self, note):
-        """
-        Posts the note. If the note is unsigned, signs it using the client's default signature.
-
-        :param note: Note to be posted
-        :type note: Note
-
-        :return: The posted Note
-        :rtype: Note
-        """
-        if not note.signatures: note.signatures = [self.profile.id]
-        response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
-        response = self.__handle_response(response)
-
-        return Note.from_json(response.json())
-
-    def post_tag(self, tag):
-        """
-        Posts the tag. If the tag is unsigned, signs it using the client's default signature.
-
-        :param tag: Tag to be posted
-        :type tag: Tag
-
-        :return Tag: The posted Tag
-        """
-        response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
-        response = self.__handle_response(response)
-
-        return Tag.from_json(response.json())
-
     def post_edge(self, edge):
         """
         Posts the edge. Upon success, returns the posted Edge object.
@@ -1499,12 +1435,19 @@ class OpenReviewClient(object):
         :rtype: Group
         """
         def add_member(group, members):
-            group_id = group if type(group) in string_types else group.id
-            if members:
-                response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
-                response = self.__handle_response(response)
-                return Group.from_json(response.json())
-            return group
+            group = self.get_group(group) if type(group) in string_types else group
+            self.post_group_edit(invitation = group.invitations[0], 
+                signatures = group.signatures, 
+                group = Group(
+                    id = group.id, 
+                    members = {
+                        'append': members
+                    }
+                ), 
+                readers=group.signatures, 
+                writers=group.signatures
+            )
+            return self.get_group(group.id)
 
         member_type = type(members)
         if member_type in string_types:
@@ -1526,10 +1469,19 @@ class OpenReviewClient(object):
         :type: Group
         """
         def remove_member(group, members):
-            group_id = group if type(group) in string_types else group.id
-            response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
-            response = self.__handle_response(response)
-            return Group.from_json(response.json())
+            group = self.get_group(group) if type(group) in string_types else group
+            self.post_group_edit(invitation = group.invitations[0], 
+                signatures = group.signatures, 
+                group = Group(
+                    id = group.id, 
+                    members = {
+                        'remove': members
+                    }
+                ), 
+                readers=group.signatures, 
+                writers=group.signatures
+            )
+            return self.get_group(group.id)            
 
         member_type = type(members)
         if member_type in string_types:
@@ -1699,6 +1651,28 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         return response.json()
+
+    def post_group_edit(self, invitation, signatures, group=None, readers=None, writers=None):
+        """
+        """
+        edit_json = {
+            'invitation': invitation,
+            'group': group.to_json() if group else {}
+        }
+
+        if signatures is not None:
+            edit_json['signatures'] = signatures
+
+        if readers is not None:
+            edit_json['readers'] = readers
+
+        if writers is not None:
+            edit_json['writers'] = writers
+
+        response = requests.post(self.group_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()        
 
     def post_edit(self, edit):
         """
@@ -2383,10 +2357,11 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, details = None):
+    def __init__(self, id, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
+        self.invitations = invitations
         self.cdate = cdate
         self.ddate = ddate
         self.tcdate = tcdate
@@ -2429,23 +2404,46 @@ class Group(object):
         :rtype: dict
         """
         body = {
-            'id': self.id,
-            'invitation': self.invitation,
-            'cdate': self.cdate,
-            'ddate': self.ddate,
-            'signatures': self.signatures,
-            'writers': self.writers,
-            'members': self.members,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'signatories': self.signatories,
-            'impersonators': self.impersonators,
-            'anonids': self.anonids,
-            'deanonymizers': self.deanonymizers,
-            'web': self.web,
-            'host': self.host,
-            'details': self.details
+            'id': self.id
         }
+        if self.signatures is not None:
+            body['signatures'] = self.signatures
+
+        if self.writers is not None:
+            body['writers'] = self.writers
+
+        if self.members is not None:
+            body['members'] = self.members
+
+        if self.readers is not None:
+            body['readers'] = self.readers                                    
+
+        if self.invitation is not None:
+            body['invitation'] = self.invitation
+
+        if self.cdate is not None:
+            body['cdate'] = self.cdate
+
+        if self.ddate is not None:
+            body['ddate'] = self.ddate
+
+        if self.impersonators is not None:
+            body['impersonators'] = self.impersonators 
+
+        if self.anonids is not None:
+            body['anonids'] = self.anonids 
+
+        if self.deanonymizers is not None:
+            body['deanonymizers'] = self.deanonymizers 
+
+        if self.web is not None:
+            body['web'] = self.web 
+
+        if self.nonreaders is not None:
+            body['nonreaders'] = self.nonreaders
+
+        if self.signatories is not None:
+            body['signatories'] = self.signatories
 
         return body
 
@@ -2462,6 +2460,7 @@ class Group(object):
         """
         group = Group(g['id'],
             invitation=g.get('invitation'),
+            invitations=g.get('invitations'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             tcdate = g.get('tcdate'),

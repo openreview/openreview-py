@@ -1,9 +1,19 @@
 def process(client, edit, invitation):
 
+    journal = openreview.journal.Journal()
+    
+    venue_id = journal.venue_id
     note=client.get_note(edit.note.id)
     paper_group_id=edit.invitation.split('/-/')[0]
     authors_group_id=f'{paper_group_id}/Authors'
-    authors_group=openreview.tools.get_group(client, authors_group_id)
-    if authors_group:
-        authors_group.members=note.content['authorids']['value']
-        client.post_group(authors_group)
+
+    client.post_group_edit(
+        invitation = journal.get_meta_invitation_id(),
+        readers = [venue_id],
+        writers = [venue_id],
+        signatures = [venue_id],
+        group = openreview.api.Group(
+            id = authors_group_id,
+            members = note.content['authorids']['value']
+        )
+    )

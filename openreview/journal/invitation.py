@@ -47,7 +47,7 @@ class InvitationBuilder(object):
         }
 
     def set_invitations(self, assignment_delay):
-        self.set_meta_invitation()
+        #self.set_meta_invitation()
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
         self.set_reviewer_responsibility_invitation()
@@ -213,11 +213,11 @@ class InvitationBuilder(object):
         self.client.post_invitation_edit(invitations=None,
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=['~Super_User1'],
             invitation=Invitation(id=self.journal.get_meta_invitation_id(),
                 invitees=[venue_id],
                 readers=[venue_id],
-                signatures=[venue_id],
+                signatures=['~Super_User1'],
                 content={
                     'ae_reminder_script': {
                         'value': self.get_process_content('process/action_editor_reminder_process.py')
