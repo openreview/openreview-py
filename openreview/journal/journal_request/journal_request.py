@@ -192,14 +192,18 @@ class JournalRequest():
     def setup_journal_group(self, note_id):
 
         note = self.client.get_note(note_id)
-        journal_request_group = self.client.post_group(openreview.Group(
-            id = f'{self.support_group_id}/Journal_Request' + str(note.number),
-            readers = ['everyone'],
+        self.client.post_group_edit(
+            invitation = self.meta_invitation_id,
+            readers = [self.support_group_id],
             writers = [self.support_group_id],
-            signatures = [self.support_group_id],
-            signatories = [self.support_group_id.split('/')[0]],
-            members = []
-        ))
+            signatures = [self.support_group_id.split('/')[0]],
+            group = openreview.api.Group(
+                id = f'{self.support_group_id}/Journal_Request{note.number}',
+                readers = [self.support_group_id],
+                writers = [self.support_group_id],
+                signatures = [self.support_group_id.split('/')[0]],                
+            )
+        )
 
     def setup_comment_invitation(self, note_id, action_editors_id=None):
 
