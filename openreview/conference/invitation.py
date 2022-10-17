@@ -43,6 +43,9 @@ class SubmissionInvitation(openreview.Invitation):
 
                 if conference.use_area_chairs:
                     file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+
+                if submission_stage.submission_email:
+                    file_content = file_content.replace("var SUBMISSION_EMAIL = '';", "var SUBMISSION_EMAIL = `" + submission_stage.submission_email  + "`;")
         else:
             post_submission_deadline_process_file = 'templates/post_submission_deadline_process.py'
 

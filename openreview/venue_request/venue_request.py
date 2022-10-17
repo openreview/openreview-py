@@ -30,8 +30,15 @@ class VenueStages():
             'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],
             'description': 'Fields to remove from the default form: abstract, keywords, pdf, TL;DR'
         }
-        revision_content['homepage_override'] = {
+        revision_content['submission_email'] = {
             'order': 20,
+            'description': 'Please review the email sent to authors when a submission is posted. Make sure not to remove the parenthesized tokens.',
+            'default': 'Your submission to ${SHORT_PHRASE} has been ${action}.\n\nSubmission Number: ${note.number} \n\nTitle: ${note.content.title} ${noteAbstract} \n\nTo view your submission, click here: ${baseUrl}/forum?id=${note.forum}',
+            'value-regex':'[\\S\\s]{1,10000}',
+            'hidden': True
+        }
+        revision_content['homepage_override'] = {
+            'order': 21,
             'value-dict': {},
             'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location. Valid JSON expected.'
         }

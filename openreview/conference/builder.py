@@ -2048,7 +2048,8 @@ class ConferenceBuilder(object):
             author_names_revealed=False,
             papers_released=False,
             readers=None,
-            author_reorder_after_first_deadline=False
+            author_reorder_after_first_deadline=False,
+            submission_email=None
         ):
 
         submissions_readers=[SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, SubmissionStage.Readers.REVIEWERS_ASSIGNED]
@@ -2081,7 +2082,8 @@ class ConferenceBuilder(object):
             email_pcs_on_desk_reject,
             author_names_revealed,
             papers_released,
-            author_reorder_after_first_deadline
+            author_reorder_after_first_deadline,
+            submission_email
         )
 
     def set_expertise_selection_stage(self, start_date = None, due_date = None, include_option=False):
