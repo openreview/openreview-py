@@ -94,6 +94,8 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
         self.author_reorder_after_first_deadline = author_reorder_after_first_deadline
+        self.withdrawal_name = 'Withdrawal'
+        self.desk_rejection_name = 'Desk_Rejection'
 
     def get_readers(self, conference, number, decision=None):
 
@@ -222,6 +224,21 @@ class SubmissionStage(object):
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.utcnow() < self.due_date
+
+    def get_withdrawal_readers(self, conference, number):
+
+        if self.public and self.withdrawn_submission_public:
+            return ['everyone']
+        else:
+            readers = [conference.get_program_chairs_id()]
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id(number))
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id(number))
+            readers.append(conference.get_reviewers_id(number))
+            readers.append(conference.get_authors_id(number))
+            return readers
+
 
 class BidStage(object):
 
