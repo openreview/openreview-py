@@ -912,7 +912,7 @@ class TestMatching():
 
     def test_setup_matching_with_mentors(self, venue, pc_client, helpers):
 
-        mentors=pc_client.post_group(Group(id=venue.id + '/Reviewers_Mentors',
+        mentors=venue.group_builder.post_group(Group(id=venue.id + '/Reviewers_Mentors',
             readers = [venue.id],
             writers = [venue.id],
             signatures = [venue.id],
@@ -920,7 +920,7 @@ class TestMatching():
             members = ['ac1_venue@cmu.edu', 'ac2_venue@umass.edu']
         ))
 
-        mentees=pc_client.post_group(Group(id=venue.id + '/Reviewers_Mentees',
+        mentees=venue.group_builder.post_group(Group(id=venue.id + '/Reviewers_Mentees',
             readers = [venue.id],
             writers = [venue.id],
             signatures = [venue.id],
