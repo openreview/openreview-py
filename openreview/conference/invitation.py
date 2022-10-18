@@ -26,23 +26,33 @@ class SubmissionInvitation(openreview.Invitation):
         file_content = ''
 
         if under_submission:
-            with open(os.path.join(os.path.dirname(__file__), 'templates/submissionProcess.js')) as f:
+            with open(os.path.join(os.path.dirname(__file__), 'templates/submission_process.py')) as f:
                 file_content = f.read()
-                file_content = file_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
-                file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")
+                file_content = file_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}"')
+                file_content = file_content.replace("CONFERENCE_ID = ''",f'CONFERENCE_ID = "{conference.get_id()}"')
                 if submission_stage.email_pcs:
-                    file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+                    file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", "PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "'")
                 if submission_stage.create_groups:
-                    file_content = file_content.replace("var CREATE_GROUPS = false;", "var CREATE_GROUPS = true;")
+                    file_content = file_content.replace("CREATE_GROUPS = False", "CREATE_GROUPS = True")
                     # Only supported for public reviews
                     if submission_stage.create_review_invitation:
-                        file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "';")
+                        file_content = file_content.replace("OFFICIAL_REVIEW_NAME = ''", "OFFICIAL_REVIEW_NAME = '" + conference.review_stage.name + "'")
                     if not conference.legacy_anonids:
-                        file_content = file_content.replace("var ANON_IDS = false;", "var ANON_IDS = true;")
-                        file_content = file_content.replace("var DEANONYMIZERS = [];", "var DEANONYMIZERS = " + json.dumps(conference.get_reviewer_identity_readers('{number}')) + ";")
+                        file_content = file_content.replace("ANON_IDS = False", "ANON_IDS = True")
+                        file_content = file_content.replace("DEANONYMIZERS = []", "DEANONYMIZERS = " + json.dumps(conference.get_reviewer_identity_readers('{number}')))
 
                 if conference.use_area_chairs:
-                    file_content = file_content.replace("var AREA_CHAIRS_ID = '';", "var AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "';")
+                    file_content = file_content.replace("AREA_CHAIRS_ID = ''", "AREA_CHAIRS_ID = '" + conference.get_area_chairs_id() + "'")
+
+                if submission_stage.submission_email:
+                    email_template = submission_stage.submission_email
+                    email_template = email_template.replace('{{action}}', '{action}')
+                    email_template = email_template.replace('{{note_title}}', '{note.content[\'title\']}')
+                    email_template = email_template.replace('{{note_abstract}}', '{note_abstract}')
+                    email_template = email_template.replace('{{note_number}}', '{note.number}')
+                    email_template = email_template.replace('{{note_forum}}', '{note.forum}')
+                    file_content = file_content.replace("SUBMISSION_EMAIL = ''", "SUBMISSION_EMAIL = f'''" + email_template + "'''")
+
         else:
             post_submission_deadline_process_file = 'templates/post_submission_deadline_process.py'
 

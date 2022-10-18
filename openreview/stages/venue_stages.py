@@ -68,7 +68,8 @@ class SubmissionStage(object):
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
             papers_released=False,
-            author_reorder_after_first_deadline=False
+            author_reorder_after_first_deadline=False,
+            submission_email=None
         ):
 
         self.start_date = start_date
@@ -94,6 +95,7 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
         self.author_reorder_after_first_deadline = author_reorder_after_first_deadline
+        self.submission_email = submission_email
         self.withdrawal_name = 'Withdrawal'
         self.desk_rejection_name = 'Desk_Rejection'
 
@@ -239,6 +241,19 @@ class SubmissionStage(object):
             readers.append(conference.get_authors_id(number))
             return readers
 
+    def get_desk_rejection_readers(self, conference, number):
+
+        if self.public and self.desk_rejected_submission_public:
+            return ['everyone']
+        else:
+            readers = [conference.get_program_chairs_id()]
+            if conference.use_senior_area_chairs:
+                readers.append(conference.get_senior_area_chairs_id(number))
+            if conference.use_area_chairs:
+                readers.append(conference.get_area_chairs_id(number))
+            readers.append(conference.get_reviewers_id(number))
+            readers.append(conference.get_authors_id(number))
+            return readers
 
 class BidStage(object):
 

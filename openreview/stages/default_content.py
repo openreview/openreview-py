@@ -83,6 +83,58 @@ desk_reject = {
     }
 }
 
+desk_reject_v2 = {
+    'title': {
+        'order': 1,
+        'description': 'Title',
+        'value': {
+            'param': {
+                'type': 'string',
+                'const': 'Submission Desk Rejected by Program Chairs'
+            }
+        }
+    },
+    'desk_reject_comments': {
+        'order': 2,
+        'description': 'Brief summary of reasons for marking this submission as desk rejected',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 10000,
+                'input': 'textarea'
+            }
+        }
+    }
+}
+
+desk_reject_reversion_v2 = {
+    'revert_desk_rejection_confirmation': {
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    'We approve the reversion of desk-rejected submission.'
+                ],
+                'input': 'checkbox'
+            }
+        },
+        'description': 'Please confirm to revert the desk-rejection.',
+        'order': 1
+    },
+    'comment': {
+        'order': 2,
+        'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 200000,
+                'input': 'textarea',
+                'optional': True,
+                'markdown': True
+            }
+        }
+    }
+}
 
 review_rating = {
     "review_quality": {
