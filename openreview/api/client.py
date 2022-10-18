@@ -2367,9 +2367,9 @@ class Group(object):
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.writers = writers
-        self.members = [] if members is None else members
+        self.members = members
         self.readers = readers
-        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.nonreaders = nonreaders
         self.signatures = signatures
         self.signatories = signatories
         self.anonids = anonids
@@ -2470,10 +2470,9 @@ class Group(object):
             deanonymizers=g.get('deanonymizers'),
             impersonators=g.get('impersonators'),
             host=g.get('host'),
+            web=g.get('web'),
             domain=g.get('domain'),
             details = g.get('details'))
-        if 'web' in g:
-            group.web = g['web']
         return group
 
     def add_member(self, member):
