@@ -105,6 +105,7 @@ class GroupBuilder(object):
             start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
             return self.update_web_field(group.id, group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
 
+    
     def get_reviewer_identity_readers(self, number):
         print("REVIEWER IDENTITY READUERS", self.venue.reviewer_identity_readers)
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
@@ -159,14 +160,11 @@ class GroupBuilder(object):
             host = venue_id
         )
 
+        parentGroup = groups[-2] if len(groups) > 1 else None
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
             content = f.read()
-            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
-            # add withdrawn and desk-rejected ids when invitations are created
-            # content = content.replace("const WITHDRAWN_SUBMISSION_ID = ''", "const WITHDRAWN_SUBMISSION_ID = '" + venue_id + "/-/Withdrawn_Submission'")
-            # content = content.replace("const DESK_REJECTED_SUBMISSION_ID = ''", "const DESK_REJECTED_SUBMISSION_ID = '" + venue_id + "/-/Desk_Rejected_Submission'")
-            content = content.replace("const AUTHORS_ID = ''", "const AUTHORS_ID = '" + self.venue.get_authors_id() + "'")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.venue.get_homepage_options()) + ";")
+            content = content.replace("const HEADER = {}", f"const HEADER = {json.dumps(self.venue.get_homepage_options())}")
+            content = content.replace("const PARENT_GROUP = ''", f"const PARENT_GROUP = '{parentGroup.id if parentGroup else ''}'")
             venue_group.web = content
             self.post_group(venue_group)
 
@@ -423,7 +421,12 @@ class GroupBuilder(object):
         submission_name = submission_stage.name
 
         self.set_group_variable(self.venue_id, 'SUBMISSION_ID', submission_id)
-        self.set_group_variable(self.venue_id, 'SUBMISSIONS_PUBLIC', submission_stage.public)
+        if submission_stage.public:
+            self.set_group_variable(self.venue_id, 'SUBMISSION_VENUE_ID', self.venue.get_submission_venue_id())
+        if submission_stage.withdrawn_submission_public:
+            self.set_group_variable(self.venue_id, 'WITHDRAWN_VENUE_ID', self.venue.get_withdrawn_submission_venue_id())
+        if submission_stage.desk_rejected_submission_public:
+            self.set_group_variable(self.venue_id, 'DESK_REJECTED_VENUE_ID', self.venue.get_desk_rejected_submission_venue_id())
         self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_ID', submission_id)
         self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_NAME', submission_name)
         self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_ID', submission_id)

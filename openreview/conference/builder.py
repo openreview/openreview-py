@@ -416,6 +416,11 @@ class Conference(object):
         self.meta_review_stage = stage
         return self.__create_meta_review_stage()
 
+    def create_submission_revision_stage(self):
+        if self.submission_revision_stage:
+            self.__create_submission_revision_stage()
+
+    @deprecated(version='1.11.0')
     def set_submission_revision_stage(self, stage):
         self.submission_revision_stage = stage
         return self.__create_submission_revision_stage()
@@ -2113,8 +2118,8 @@ class ConferenceBuilder(object):
     def set_decision_stage(self, stage):
         self.conference.decision_stage = stage
 
-    def set_submission_revision_stage(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, allow_author_reorder=False):
-        self.submission_revision_stage = SubmissionRevisionStage(name, start_date, due_date, additional_fields, remove_fields, only_accepted, allow_author_reorder)
+    def set_submission_revision_stage(self, stage):
+        self.conference.submission_revision_stage = stage
 
     def set_ethics_review_stage(self, stage):
         self.conference.ethics_review_stage = stage

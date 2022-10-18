@@ -78,7 +78,7 @@ class InvitationBuilder(object):
                     note = Note(
                         id = note.id,
                         readers = invitation_readers,
-                        nonreaders = invitation.edit['note']['nonreaders']
+                        nonreaders = invitation.edit['note'].get('nonreaders')
                     )
                 )            
 
@@ -140,8 +140,8 @@ class InvitationBuilder(object):
         content = default_content.submission_v2
         
         if submission_stage.double_blind:
-            content['authors']['readers'] = [venue_id, f'{venue_id}/{submission_name}${{4/number}}/Authors']
-            content['authorids']['readers'] = [venue_id, f'{venue_id}/{submission_name}${{4/number}}/Authors']
+            content['authors']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
+            content['authorids']['readers'] = [venue_id, self.venue.get_authors_id('${4/number}')]
 
         for field in submission_stage.remove_fields:
             del content[field]
@@ -155,14 +155,14 @@ class InvitationBuilder(object):
             content['pdf']['optional'] = True
 
         content['venue'] = {
-            'value': f'{self.venue.short_name} {submission_name}'
+            'value': tools.pretty_id(self.venue.get_submission_venue_id())
         }
         content['venueid'] = {
-            'value': f'{venue_id}/{submission_name}'
+            'value': self.venue.get_submission_venue_id()
         }
 
-        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/note/number}}/Authors']
-        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, f'{venue_id}/{submission_name}${{2/number}}/Authors']
+        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/note/number}')]
+        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/number}')]
 
         submission_id = submission_stage.get_submission_id(self.venue)
 
@@ -172,12 +172,12 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
-            duedate=tools.datetime_millis(submission_stage.due_date),
+            duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },
                 'readers': edit_readers,
-                'writers': [venue_id, f'{venue_id}/{submission_name}${{2/note/number}}/Authors'],
+                'writers': [venue_id, self.venue.get_authors_id('${2/note/number}')],
                 'note': {
                     'id': {
                         'param': {
@@ -192,9 +192,9 @@ class InvitationBuilder(object):
                             'deletable': True
                         }
                     },                    
-                    'signatures': [ f'{venue_id}/{submission_name}${{2/number}}/Authors' ],
+                    'signatures': [ self.venue.get_authors_id('${2/number}') ],
                     'readers': note_readers,
-                    'writers': [venue_id, f'{venue_id}/{submission_name}${{2/number}}/Authors'],
+                    'writers': [venue_id, self.venue.get_authors_id('${2/number}')],
                     'content': content
                 }
             },
@@ -203,14 +203,14 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=True)
 
-    
     def set_review_invitation(self):
 
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
         review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
-
+        review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
+        review_expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None
         content = default_content.review_v2.copy()
 
         for key in review_stage.additional_fields:
@@ -243,8 +243,8 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=review_cdate,
-            duedate=tools.datetime_millis(review_stage.due_date),
-            expdate = tools.datetime_millis(review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_stage.due_date else None,
+            duedate=review_duedate,
+            expdate = review_expdate,
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process              
@@ -281,7 +281,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_reviewers_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
-                    'duedate': tools.datetime_millis(review_stage.due_date),
                     'cdate': review_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -322,6 +321,10 @@ class InvitationBuilder(object):
             }
         )
 
+        if review_duedate:
+            invitation.edit['invitation']['duedate'] = review_duedate
+            invitation.edit['invitation']['expdate'] = review_expdate
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
@@ -331,6 +334,8 @@ class InvitationBuilder(object):
         meta_review_stage = self.venue.meta_review_stage
         meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage.name)
         meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
+        meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
+        meta_review_expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None
 
         content = default_content.meta_review_v2.copy()
 
@@ -347,8 +352,8 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=meta_review_cdate,
-            duedate=tools.datetime_millis(meta_review_stage.due_date),
-            expdate = tools.datetime_millis(meta_review_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if meta_review_stage.due_date else None,
+            duedate=meta_review_duedate,
+            expdate=meta_review_expdate,
             date_processes=[{ 
                     'dates': ["#{4/cdate}"],
                     'script': self.cdate_invitation_process                
@@ -380,7 +385,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_area_chairs_id(number='${3/content/noteNumber/value}')],
                     'maxReplies': 1,
-                    'duedate': tools.datetime_millis(meta_review_stage.due_date),
                     'cdate': meta_review_cdate,
                     'edit': {
                         'signatures': { 'param': { 'regex': meta_review_stage.get_signatures_regex(self.venue, '${5/content/noteNumber/value}') }},
@@ -412,6 +416,10 @@ class InvitationBuilder(object):
                 }
             }
         )
+
+        if meta_review_duedate:
+            invitation.edit['invitation']['duedate'] = meta_review_duedate
+            invitation.edit['invitation']['expdate'] = meta_review_expdate
 
         self.save_invitation(invitation, replacement=True)
         return invitation
@@ -527,7 +535,7 @@ class InvitationBuilder(object):
             bid_invitation = Invitation(
                 id=bid_invitation_id,
                 cdate = tools.datetime_millis(bid_stage.start_date),
-                duedate = tools.datetime_millis(bid_stage.due_date),
+                duedate = tools.datetime_millis(bid_stage.due_date) if bid_stage.due_date else None,
                 expdate = tools.datetime_millis(bid_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if bid_stage.due_date else None,
                 invitees = [match_group_id],
                 signatures = [venue_id],
@@ -578,6 +586,7 @@ class InvitationBuilder(object):
         comment_stage = self.venue.comment_stage
         official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
         content = default_content.comment_v2.copy()
         invitees = comment_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
@@ -623,7 +632,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            expdate=tools.datetime_millis(comment_stage.end_date),
+            expdate=comment_expdate,
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process
@@ -662,7 +671,6 @@ class InvitationBuilder(object):
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': invitees,
-                    'expdate': tools.datetime_millis(comment_stage.end_date),
                     'cdate': comment_cdate,
                     'preprocess': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -714,6 +722,9 @@ class InvitationBuilder(object):
             }
         )
 
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = comment_expdate
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
@@ -722,6 +733,7 @@ class InvitationBuilder(object):
         comment_stage = self.venue.comment_stage
         public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
         content = default_content.comment_v2.copy()
 
@@ -749,7 +761,7 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=comment_cdate,
-            expdate=tools.datetime_millis(comment_stage.end_date),
+            expdate=comment_expdate,
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process
@@ -786,7 +798,6 @@ class InvitationBuilder(object):
                     'writers': [venue_id],
                     'invitees': ['everyone'],
                     'noninvitees': self.venue.get_committee('${3/content/noteNumber/value}', with_authors = True),
-                    'expdate': tools.datetime_millis(comment_stage.end_date),
                     'cdate': comment_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -828,6 +839,9 @@ class InvitationBuilder(object):
             }
         )
 
+        if comment_expdate:
+            invitation.edit['invitation']['expdate'] = comment_expdate
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
@@ -837,6 +851,8 @@ class InvitationBuilder(object):
         decision_stage = self.venue.decision_stage
         decision_invitation_id = self.venue.get_invitation_id(decision_stage.name)
         decision_cdate = tools.datetime_millis(decision_stage.start_date if decision_stage.start_date else datetime.datetime.utcnow())
+        decision_due_date = tools.datetime_millis(decision_stage.due_date) if decision_stage.due_date else None
+        decision_expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None
 
         content = default_content.decision_v2.copy()
 
@@ -862,8 +878,8 @@ class InvitationBuilder(object):
             writers=[venue_id],
             signatures=[venue_id],
             cdate=decision_cdate,
-            duedate=tools.datetime_millis(decision_stage.due_date),
-            expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None,
+            duedate=decision_due_date,
+            expdate=decision_expdate,
             date_processes=[{
                 'dates': ["#{4/cdate}"],
                 'script': self.cdate_invitation_process
@@ -901,7 +917,6 @@ class InvitationBuilder(object):
                     'invitees': [self.venue.get_program_chairs_id(), self.venue.support_user],
                     'maxReplies': 1,
                     'minReplies': 1,
-                    'duedate': tools.datetime_millis(decision_stage.due_date),
                     'cdate': decision_cdate,
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -942,8 +957,323 @@ class InvitationBuilder(object):
             }
         )
 
+        if decision_due_date:
+            invitation.edit['invitation']['duedate'] = decision_due_date
+            invitation.edit['invitation']['expdate'] = decision_expdate
+
         self.save_invitation(invitation, replacement=True)
         return invitation
+
+    def set_withdrawal_invitation(self):
+        venue_id = self.venue_id
+        submission_stage = self.venue.submission_stage
+        exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
+
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/withdrawal_submission_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
+            file_content = file_content.replace("WITHDRAWN_INVITATION_ID = ''", f"WITHDRAWN_INVITATION_ID = '{self.venue.get_withdrawn_id()}'")
+
+        invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            expdate=exp_date,
+            content={
+                'process_script': {
+                    'value': file_content
+                }
+            },            
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': { 
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer' 
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(submission_stage.withdrawal_name, '${2/content/noteNumber/value}'),
+                    'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'maxReplies': 1,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                    'edit': {
+                        'signatures': { 'param': { 'regex': self.venue.get_authors_id(number='${5/content/noteNumber/value}')  }},
+                        'readers': submission_stage.get_withdrawal_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'writers': [ venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
+                        'note': {
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'signatures': [self.venue.get_authors_id(number='${5/content/noteNumber/value}')],
+                            'readers': ['${3/readers}'],
+                            'writers': [ venue_id ],
+                            'content': {
+                                'withdrawal_confirmation': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                                            ],
+                                            'input': 'checkbox'
+                                        }
+                                    },
+                                    'description': 'Please confirm to withdraw.',
+                                    'order': 1
+                                },
+                                'comment': {
+                                    'order': 2,
+                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'optional': True,
+                                            'markdown': True
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        )            
+
+
+        self.save_invitation(invitation, replacement=True)
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
+            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
+            file_content = file_content.replace("PAPER_INVITATION_PREFIX = ''", f"PAPER_INVITATION_PREFIX = '{self.venue.get_paper_group_prefix()}'")
+            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Withdraw_Expiration')}'")
+            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_authors=True))}')
+            
+
+        content = {
+            'venue': {
+                'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
+            },
+            'venueid': {
+                'value': self.venue.get_withdrawn_submission_venue_id()
+            }
+        }
+        if submission_stage.withdrawn_submission_reveal_authors:
+            content['authors'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }
+            content['authorids'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }
+
+        withdrawn_invitation = Invitation (
+            id=self.venue.get_withdrawn_id(),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                 
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.venue.submission_stage.get_submission_id(self.venue)
+                        }
+                    },                    
+                    'content': content
+                }
+            },
+            process=file_content
+        )
+
+        if SubmissionStage.Readers.EVERYONE not in submission_stage.readers and submission_stage.withdrawn_submission_public:
+            withdrawn_invitation.edit['note']['readers'] = ['everyone']
+
+        self.save_invitation(withdrawn_invitation, replacement=True)
+
+        expire_invitation = Invitation (
+            id=self.venue.get_invitation_id('Withdraw_Expiration'),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                 
+                'invitation': {
+                    'id': {
+                        'param': {
+                            'regex': self.venue.get_paper_group_prefix()
+                        }
+                    },
+                    'signatures': [venue_id],                  
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'deletable': True
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(expire_invitation, replacement=True)
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/withdrawal_reversion_submission_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Withdraw_Expiration')}'")
+            file_content = file_content.replace("WITHDRAWN_INVITATION_ID = ''", f"WITHDRAWN_INVITATION_ID = '{self.venue.get_withdrawn_id()}'")
+            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
+            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_authors=True))}')
+
+
+        invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name + '_Reversion'),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            content={
+                'process_script': {
+                    'value': file_content
+                }
+            },            
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    },
+                    'withdrawalId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string' 
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(submission_stage.withdrawal_name + '_Reversion', '${{2/content/noteId/value}/number}'),
+                    'invitees': [venue_id],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'maxReplies': 1,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                    'edit': {
+                        'signatures': [self.venue.get_program_chairs_id()],
+                        'readers': submission_stage.get_withdrawal_readers(self.venue, '${{4/content/noteId/value}/number}'),
+                        'writers': [ venue_id],
+                        'note': {
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/withdrawalId/value}',
+                            'signatures': [self.venue.get_program_chairs_id()],
+                            'readers': ['${3/readers}'],
+                            'writers': [ venue_id ],
+                            'content': {
+                                'revert_withdrawal_confirmation': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'We approve the reversion of withdrawn submission.'
+                                            ],
+                                            'input': 'checkbox'
+                                        }
+                                    },
+                                    'description': 'Please confirm to withdraw.',
+                                    'order': 1
+                                },
+                                'comment': {
+                                    'order': 2,
+                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'optional': True,
+                                            'markdown': True
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        )            
+
+
+        self.save_invitation(invitation, replacement=True)
+
+
 
     def set_assignment_invitation(self, committee_id):
         client = self.client
