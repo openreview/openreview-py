@@ -23,7 +23,7 @@ class GroupBuilder(object):
 
     def post_group(self, group):
         self.client.post_group_edit(
-            invitation = self.venue.get_meta_invitation_id(),
+            invitation = self.venue.get_meta_invitation_id() if group.id.startswith(self.venue_id) else 'openreview.net/-/Edit',
             readers = [self.venue_id],
             writers = [self.venue_id],
             signatures = ['~Super_User1' if group.id == self.venue_id else self.venue_id],
@@ -40,7 +40,7 @@ class GroupBuilder(object):
             group = tools.get_group(self.client, id = p)
             if group is None:
                 self.client.post_group_edit(
-                    invitation = 'OpenReview.net/-/Edit',
+                    invitation = self.venue.get_meta_invitation_id() if venue_id == p else 'openreview.net/-/Edit',
                     readers = ['everyone'],
                     writers = ['~Super_User1'],
                     signatures = ['~Super_User1'],
