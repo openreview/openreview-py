@@ -123,7 +123,6 @@ class InvitationBuilder(object):
             )
         )
        
-    
     def set_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage

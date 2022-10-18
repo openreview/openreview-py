@@ -1,5 +1,6 @@
 import csv
 import json
+from json import tool
 import os
 import time
 from io import StringIO
@@ -46,6 +47,7 @@ class Venue(object):
         self.meta_review_stage = None
         self.comment_stage = None
         self.decision_stage = None
+        self.submission_revision_stage = False
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
@@ -637,7 +639,7 @@ Total Errors: {len(errors)}
                 self.client.post_message(subject, recipients=note.content['authorids']['value'], message=final_message)
 
         tools.concurrent_requests(send_notification, paper_notes)
-
+        
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
