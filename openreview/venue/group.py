@@ -178,31 +178,29 @@ class GroupBuilder(object):
 
         venue_id = self.venue_id
 
-        ## pc group
-        #to-do add pc group webfield
         pc_group_id = self.venue.get_program_chairs_id()
         pc_group = openreview.tools.get_group(self.client, pc_group_id)
         if not pc_group:
-            pc_group=self.post_group(Group(id=pc_group_id,
+            pc_group=Group(id=pc_group_id,
                             readers=['everyone'],
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[pc_group_id, venue_id],
                             members=program_chair_ids
-                            ))
-        # with open(os.path.join(os.path.dirname(__file__), 'webfield/editorsInChiefWebfield.js')) as f:
-        #     content = f.read()
-        #     content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-        #     content = content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{journal.short_name}";')
-        #     content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + journal.get_author_submission_id() + "';")
-        #     content = content.replace("var EDITORS_IN_CHIEF_NAME = '';", "var EDITORS_IN_CHIEF_NAME = '" + journal.editors_in_chief_name + "';")
-        #     content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + journal.reviewers_name + "';")
-        #     content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + journal.action_editors_name + "';")
-        #     if journal.get_request_form():
-        #         content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + journal.get_request_form().id + "';")
-
-        #     editor_in_chief_group.web = content
-        #     self.client.post_group(editor_in_chief_group)
+                            )
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
+                content = f.read()
+                content = content.replace("const VENUE_ID = ''", f"const VENUE_ID = '{self.venue.venue_id}'")
+                content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
+                content = content.replace("const PROGRAM_CHAIRS_ID = ''", f"const PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
+                content = content.replace("const AUTHORS_ID = ''", f"const AUTHORS_ID = '{self.venue.get_authors_id()}'")
+                content = content.replace("const REVIEWERS_ID = ''", f"const REVIEWERS_ID = '{self.venue.get_reviewers_id()}'")
+                content = content.replace("const AREA_CHAIRS_ID = ''", f"const AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id()}'")
+                content = content.replace("const SENIOR_AREA_CHAIRS_ID = ''", f"const SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id()}'")
+                content = content.replace("const REQUEST_FORM_ID = ''", f"const REQUEST_FORM_ID = '{self.venue.request_form_id if self.venue.request_form_id else ''}'")
+            
+                pc_group.web = content
+                self.post_group(pc_group)
 
         ## Add pcs to have all the permissions
         self.client.add_members_to_group(venue_id, pc_group_id)        
