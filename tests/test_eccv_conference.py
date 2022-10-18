@@ -554,7 +554,7 @@ Please contact info@openreview.net with any questions or concerns about this int
         other_author_messages = [msg for msg in messages if msg['content']['to'] != note.tauthor]
         assert len(other_author_messages) == 2
         text = other_author_messages[0]['content']['text']
-        assert text == f'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: 5 \n\nTitle: I have been updated \n\nAbstract: This is an abstract 5 \n\nTo view your submission, click here: http://localhost:3030/forum?id={note.id}\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at test@mail.com'
+        assert text == f'Your submission to ECCV 2020 has been updated.\n\nSubmission Number: 5 \n\nTitle: I have been updated \n\nAbstract: This is an abstract 5 \n\nTo view your submission, click here: https://openreview.net/forum?id={note.id}\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at test@mail.com'
 
     def test_revise_additional_files(self, conference, client, test_client):
 

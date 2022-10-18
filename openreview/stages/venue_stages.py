@@ -68,7 +68,8 @@ class SubmissionStage(object):
             email_pcs_on_desk_reject=True,
             author_names_revealed=False,
             papers_released=False,
-            author_reorder_after_first_deadline=False
+            author_reorder_after_first_deadline=False,
+            submission_email=None
         ):
 
         self.start_date = start_date
@@ -94,6 +95,7 @@ class SubmissionStage(object):
         self.papers_released = papers_released
         self.public = self.Readers.EVERYONE in self.readers
         self.author_reorder_after_first_deadline = author_reorder_after_first_deadline
+        self.submission_email = submission_email
         self.withdrawal_name = 'Withdrawal'
         self.desk_rejection_name = 'Desk_Rejection'
 
