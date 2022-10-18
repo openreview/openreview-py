@@ -929,6 +929,7 @@ class TestVenueRequest():
         messages = client.get_messages(subject='{} has received your submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
         assert messages and len(messages) == 1
         assert 'This is some extra information to be added at the end of the email template.' in messages[0]['content']['text']
+        assert 'Title: test submission' in messages[0]['content']['text']
 
         messages = client.get_messages(subject='{} has received a new submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
         assert messages and len(messages) == 3

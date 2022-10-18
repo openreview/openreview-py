@@ -127,9 +127,9 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             subject=f'''{SHORT_PHRASE} has received a new submission titled {note.content['title']}''',
             message=f'''A submission to {SHORT_PHRASE} has been posted.
             
-            Submission Number: {note.number}
-            Title: {note.content['title']} {note_abstract}
+Submission Number: {note.number}
+Title: {note.content['title']} {note_abstract}
             
-            To view the submission, click here: https://openreview.net/forum?id={note.forum}''',
+To view the submission, click here: https://openreview.net/forum?id={note.forum}''',
             recipients=[PROGRAM_CHAIRS_ID]
         )

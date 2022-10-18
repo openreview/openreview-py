@@ -51,7 +51,7 @@ class SubmissionInvitation(openreview.Invitation):
                     email_template = email_template.replace('{{note_abstract}}', '{note_abstract}')
                     email_template = email_template.replace('{{note_number}}', '{note.number}')
                     email_template = email_template.replace('{{note_forum}}', '{note.forum}')
-                    file_content = file_content.replace("SUBMISSION_EMAIL = ''", "SUBMISSION_EMAIL = f'''" + submission_stage.submission_email  + "'''")
+                    file_content = file_content.replace("SUBMISSION_EMAIL = ''", "SUBMISSION_EMAIL = f'''" + email_template + "'''")
 
         else:
             post_submission_deadline_process_file = 'templates/post_submission_deadline_process.py'
