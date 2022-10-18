@@ -113,6 +113,16 @@ class GroupBuilder(object):
             start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
             return self.__update_group(group, group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
 
+    
+    def set_home_page(self, group, parentGroup):
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+            content = f.read()
+            content = content.replace("const HEADER = {}", f"const HEADER = {json.dumps(self.venue.get_homepage_options())}")
+            content = content.replace("const PARENT_GROUP = ''", f"const PARENT_GROUP = '{parentGroup.id if parentGroup else ''}'")
+            group.web = content
+            self.client.post_group(group)        
+
     def get_reviewer_identity_readers(self, number):
         print("REVIEWER IDENTITY READUERS", self.venue.reviewer_identity_readers)
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
@@ -294,7 +304,12 @@ class GroupBuilder(object):
         submission_name = submission_stage.name
 
         self.set_group_variable(self.venue_id, 'SUBMISSION_ID', submission_id)
-        self.set_group_variable(self.venue_id, 'SUBMISSIONS_PUBLIC', submission_stage.public)
+        if submission_stage.public:
+            self.set_group_variable(self.venue_id, 'SUBMISSION_VENUE_ID', self.venue.get_submission_venue_id())
+        if submission_stage.withdrawn_submission_public:
+            self.set_group_variable(self.venue_id, 'WITHDRAWN_VENUE_ID', self.venue.get_withdrawn_submission_venue_id())
+        if submission_stage.desk_rejected_submission_public:
+            self.set_group_variable(self.venue_id, 'DESK_REJECTED_VENUE_ID', self.venue.get_desk_rejected_submission_venue_id())
         self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_ID', submission_id)
         self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_NAME', submission_name)
         self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_ID', submission_id)

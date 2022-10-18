@@ -125,12 +125,18 @@ class Venue(object):
             committee_id = self.get_reviewers_id()
         return self.get_invitation_id('Recommendation', prefix=committee_id)
 
+    def get_paper_group_prefix(self, number=None):
+        prefix = f'{self.venue_id}/{self.submission_stage.name}'
+        if number:
+            prefix = f'{prefix}{number}'
+        return prefix
+    
     def get_invitation_id(self, name, number = None, prefix = None):
         invitation_id = self.id
         if prefix:
             invitation_id = prefix
         if number:
-            invitation_id = f'{invitation_id}/{self.submission_stage.name}{number}/-/'
+            invitation_id = f'{self.get_paper_group_prefix(number)}/-/'
         else:
             invitation_id = invitation_id + '/-/'
 
@@ -161,7 +167,7 @@ class Venue(object):
     def get_committee_id(self, name, number=None):
         committee_id = self.id + '/'
         if number:
-            committee_id = f'{committee_id}{self.submission_stage.name}{number}/{name}'
+            committee_id = f'{self.get_paper_group_prefix(number)}/{name}'
         else:
             committee_id = committee_id + name
         return committee_id
@@ -225,6 +231,12 @@ class Venue(object):
     def get_ethics_reviewers_id(self, number = None, anon=False):
         return self.get_committee_id('Ethics_Reviewer_.*' if anon else self.ethics_reviewers_name, number)
 
+    def get_withdrawal_id(self, number = None):
+        return self.get_invitation_id(self.submission_stage.withdrawal_name, number)        
+
+    def get_withdrawn_id(self):
+        return self.get_invitation_id(f'Withdrawn_{self.submission_stage.name}') 
+
     def get_homepage_options(self):
         options = {}
         options['title'] = self.name
@@ -233,12 +245,39 @@ class Venue(object):
         options['contact'] = self.contact
         return options
 
+    def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
+        committee = []
+        if with_program_chairs:
+            committee.append(self.get_program_chairs_id())
+        if self.use_senior_area_chairs:
+            committee.append(self.get_senior_area_chairs_id(number))
+        if self.use_area_chairs:
+            committee.append(self.get_area_chairs_id(number))
+        committee.append(self.get_reviewers_id(number))
+        if with_authors:
+            committee.append(self.get_authors_id(number))
+        return committee
+
     def get_submission_venue_id(self, submission_invitation_name=None):
         if submission_invitation_name:
             return f'{self.venue_id}/{submission_invitation_name}'
         if self.submission_stage:
             return f'{self.venue_id}/{self.submission_stage.name}'
         return f'{self.venue_id}/Submission'
+
+    def get_withdrawn_submission_venue_id(self, submission_invitation_name=None):
+        if submission_invitation_name:
+            return f'{self.venue_id}/Withdrawn_{submission_invitation_name}'
+        if self.submission_stage:
+            return f'{self.venue_id}/Withdrawn_{self.submission_stage.name}'
+        return f'{self.venue_id}/Withdrawn_Submission' 
+
+    def get_desk_rejected_submission_venue_id(self, submission_invitation_name=None):
+        if submission_invitation_name:
+            return f'{self.venue_id}/Desk_Rejected_{submission_invitation_name}'
+        if self.submission_stage:
+            return f'{self.venue_id}/Desk_Rejected_{self.submission_stage.name}'
+        return f'{self.venue_id}/Desk_Rejected_Submission'                
 
     def get_submissions(self, venueid=None, sort=None, details=None):
         return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
@@ -251,25 +290,9 @@ class Venue(object):
         for i, g in enumerate(groups[:-1]):
             self.group_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        venue_group = openreview.api.Group(id = venue_id,
-            readers = ['everyone'],
-            writers = [venue_id],
-            signatures = ['~Super_User1'],
-            signatories = [venue_id],
-            members = [],
-            host = venue_id
-        )
-
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
-            # add withdrawn and desk-rejected ids when invitations are created
-            # content = content.replace("const WITHDRAWN_SUBMISSION_ID = ''", "const WITHDRAWN_SUBMISSION_ID = '" + venue_id + "/-/Withdrawn_Submission'")
-            # content = content.replace("const DESK_REJECTED_SUBMISSION_ID = ''", "const DESK_REJECTED_SUBMISSION_ID = '" + venue_id + "/-/Desk_Rejected_Submission'")
-            content = content.replace("const AUTHORS_ID = ''", "const AUTHORS_ID = '" + self.get_authors_id() + "'")
-            content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.get_homepage_options()) + ";")
-            venue_group.web = content
-            self.client.post_group(venue_group)
+        venue_group = groups[-1]
+        print(venue_group)
+        self.group_builder.set_home_page(venue_group, groups[-2] if len(groups) > 1 else None)
 
         ## pc group
         #to-do add pc group webfield
@@ -363,6 +386,7 @@ class Venue(object):
 
     def create_submission_stage(self):
         self.invitation_builder.set_submission_invitation()
+        self.invitation_builder.set_withdrawal_invitation()
         self.group_builder.set_submission_variables()
 
     def create_review_stage(self):
@@ -395,6 +419,8 @@ class Venue(object):
              
         ## Create revision invitation if there is a second deadline?
         ## Create withdraw and desk reject invitations
+        self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
+        
         #    
 
     def create_bid_stages(self):

@@ -245,6 +245,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_meta_review_stage(get_meta_review_stage(note))
     builder.set_comment_stage(get_comment_stage(note))
     builder.set_decision_stage(get_decision_stage(note))
+    builder.set_submission_revision_stage(get_submission_revision_stage(note))
 
     decision_heading_map = note.content.get('home_page_tab_names')
     if decision_heading_map:
@@ -563,7 +564,7 @@ def get_decision_stage(request_forum):
         decisions_file=decisions_file
     )
 
-def get_submission_revision_stage(client, request_forum):
+def get_submission_revision_stage(request_forum):
     revision_name = request_forum.content.get('submission_revision_name', '').strip()
     if revision_name:
         revision_name = '_'.join(revision_name.title().split(' '))
