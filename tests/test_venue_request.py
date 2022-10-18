@@ -427,7 +427,7 @@ class TestVenueRequest():
                         'value-regex': '.*'
                     }
                 },
-                'submission_email': 'Your submission to ${SHORT_PHRASE} has been ${action}.\n\nSubmission Number: ${note.number}\n\nTitle: ${note.content.title} ${noteAbstract}\n\nTo view your submission, click here: ${baseUrl}/forum?id=${note.forum}\n\nThis is some extra information to be added at the end of the email template.',
+                'submission_email': 'Your submission to TestVenue@OR\'2030 has been {{action}}.\n\nSubmission Number: {{note_number}}\n\nTitle: {{note_title}} {{note_abstract}}\n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}}\n\nThis is some extra information to be added at the end of the email template.',
                 'reviewer_roles': ['Reviewers', 'Expert_Reviewers']
             },
             forum=venue['request_form_note'].forum,
