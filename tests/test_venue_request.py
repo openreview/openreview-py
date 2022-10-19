@@ -427,7 +427,7 @@ class TestVenueRequest():
                         'value-regex': '.*'
                     }
                 },
-                'submission_email': 'Your submission to TestVenue@OR\'2030 has been {{action}}.\n\nSubmission Number: {{note_number}}\n\nTitle: {{note_title}} {{note_abstract}}\n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}}\n\nThis is some extra information to be added at the end of the email template.',
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}}\n\nTitle: {{note_title}} {{note_abstract}}\n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}}\n\nThis is some extra information to be added at the end of the email template.',
                 'reviewer_roles': ['Reviewers', 'Expert_Reviewers']
             },
             forum=venue['request_form_note'].forum,
@@ -930,6 +930,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert 'This is some extra information to be added at the end of the email template.' in messages[0]['content']['text']
         assert 'Title: test submission' in messages[0]['content']['text']
+        assert 'Your submission to TestVenue@OR\'2030 has been posted.'
 
         messages = client.get_messages(subject='{} has received a new submission titled {}'.format(venue['request_form_note'].content['Abbreviated Venue Name'], submission.content['title']))
         assert messages and len(messages) == 3

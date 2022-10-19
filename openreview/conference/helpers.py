@@ -298,8 +298,49 @@ def get_submission_stage(request_forum):
         else:
             readers = [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED]
 
-    return openreview.stages.SubmissionStage(name = name, 
-        double_blind=double_blind, 
+    submission_start_date = request_forum.content.get('Submission Start Date', '').strip()
+    if submission_start_date:
+        try:
+            submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d')
+    else:
+        submission_start_date = None
+
+    submission_second_due_date = request_forum.content.get('Submission Deadline', '').strip()
+    if submission_second_due_date:
+        try:
+            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d')
+        submission_due_date = request_forum.content.get('abstract_registration_deadline', '').strip()
+        if submission_due_date:
+            try:
+                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
+        else:
+            submission_due_date = submission_second_due_date
+            submission_second_due_date = None
+    else:
+        submission_second_due_date = submission_due_date = None
+
+    submission_additional_options = request_forum.content.get('Additional Submission Options', {})
+    if isinstance(submission_additional_options, str):
+        submission_additional_options = json.loads(submission_additional_options.strip())
+
+    submission_remove_options = request_forum.content.get('remove_submission_options', [])
+    submission_release=(request_forum.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
+    create_groups=(not double_blind) and public and submission_release
+
+    return openreview.stages.SubmissionStage(name = name,
+        double_blind=double_blind,
+        start_date=submission_start_date,
+        due_date=submission_due_date,
+        second_due_date=submission_second_due_date,
+        additional_fields=submission_additional_options,
+        remove_fields=submission_remove_options,
+        create_groups=create_groups,
         readers=readers)
 
 def get_bid_stages(request_forum):

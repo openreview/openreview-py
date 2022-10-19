@@ -46,6 +46,7 @@ class SubmissionInvitation(openreview.Invitation):
 
                 if submission_stage.submission_email:
                     email_template = submission_stage.submission_email
+                    email_template = email_template.replace('{{Abbreviated_Venue_Name}}', conference.get_short_name())
                     email_template = email_template.replace('{{action}}', '{action}')
                     email_template = email_template.replace('{{note_title}}', '{note.content[\'title\']}')
                     email_template = email_template.replace('{{note_abstract}}', '{note_abstract}')
