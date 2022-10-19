@@ -33,7 +33,7 @@ class VenueStages():
         revision_content['submission_email'] = {
             'order': 20,
             'description': 'Please review the email sent to authors when a submission is posted. Make sure not to remove the parenthesized tokens.',
-            'default': f'''Your submission to ${self.venue_request.request_content['Abbreviated Venue Name']} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}}''',
+            'default': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}}''',
             'value-regex':'[\\S\\s]{1,10000}',
             'hidden': True
         }
