@@ -52,6 +52,7 @@ return {
   version: 1,
   properties: {
     header: HEADER,
+    submissionId: SUBMISSION_ID,
     parentGroupId: PARENT_GROUP,
     apiVersion: 2,
     tabs: tabs

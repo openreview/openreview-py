@@ -1,6 +1,6 @@
 // Webfield component
 var HEADER = {};
-var ROLE_NAME = 'reviewer';
+var ROLE_NAME = '';
 
 return {
   component: 'RecruitmentForm',

@@ -191,7 +191,7 @@ class GroupBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
                 content = f.read()
                 content = content.replace("const VENUE_ID = ''", f"const VENUE_ID = '{self.venue.venue_id}'")
-                content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
+                content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = \"{self.venue.short_name}\"")
                 content = content.replace("const PROGRAM_CHAIRS_ID = ''", f"const PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
                 content = content.replace("const AUTHORS_ID = ''", f"const AUTHORS_ID = '{self.venue.get_authors_id()}'")
                 content = content.replace("const REVIEWERS_ID = ''", f"const REVIEWERS_ID = '{self.venue.get_reviewers_id()}'")

@@ -1,7 +1,7 @@
 // Webfield component
-var HEADER = {};
-var USE_REDUCED_LOAD = false;
-var ROLE_NAME = 'reviewer';
+const HEADER = {}
+const USE_REDUCED_LOAD = false
+const ROLE_NAME = ''
 
 return {
   component: 'RecruitmentForm',
@@ -11,7 +11,7 @@ return {
     invitationMessage: `
 #### You have been invited by the organizers of ${HEADER.title} to serve as a *${ROLE_NAME}*.
 
-##### Would you like to accept or decline this invitation?
+##### Please respond to this invitation below:
 `,
     acceptMessage: `
 #### Thank you for accepting this invitation from ${HEADER.title}.

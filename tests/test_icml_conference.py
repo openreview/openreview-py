@@ -1,6 +1,8 @@
 import openreview
 import pytest
 import datetime
+import re
+from selenium.webdriver.common.by import By
 
 class TestICMLConference():
 
@@ -70,3 +72,53 @@ class TestICMLConference():
         assert openreview_client.get_group('ICML.cc/2023/Conference/Area_Chairs')
         assert openreview_client.get_group('ICML.cc/2023/Conference/Reviewers')
         assert openreview_client.get_group('ICML.cc/2023/Conference/Authors')
+
+        submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
+        assert submission_invitation
+        ##assert submission_invitation.duedate == openreview.tools.datetime_millis(due_date)
+
+
+    def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        reviewer_details = '''sac1@icml.cc, SAC ICMLOne\nsac2@icml.cc, SAC ICMLTwo'''
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'Recruitment',
+                'invitee_role': 'Senior_Area_Chairs',
+                'invitee_details': reviewer_details,
+                'invitation_email_subject': '[ICML 2023] Invitation to serve as {{invitee_role}}',
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs').members) == 0
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs/Invited').members) == 2
+
+        messages = openreview_client.get_messages(subject = '[ICML 2023] Invitation to serve as Senior Area Chair')
+        assert len(messages) == 2
+
+        for message in messages:
+            text = message['content']['text']
+            
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            print('invitation_url', invitation_url)
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue()
+
+        messages = client.get_messages(subject='[ICML 2023] Senior Area Chair Invitation accepted')
+        assert len(messages) == 2
+
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs').members) == 2
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Senior_Area_Chairs/Invited').members) == 2 
