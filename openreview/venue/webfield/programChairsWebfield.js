@@ -36,6 +36,8 @@ return {
         commentName: 'Official_Comment',
         officialMetaReviewName: 'Meta_Review',
         decisionName: 'Decision',
+        areaChairName:'Area_Chairs',
+        reviewerName:'Reviewers',
         anonReviewerName: 'Reviewer_',
         anonAreaChairName: 'Area_Chair_',
         scoresName: 'Affinity_Score',

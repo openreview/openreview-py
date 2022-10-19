@@ -16,6 +16,14 @@ class TestICMLConference():
         pc_client=helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
 
         helpers.create_user('sac1@icml.cc', 'SAC', 'ICMLOne')
+        helpers.create_user('ac1@icml.cc', 'AC', 'ICMLOne')
+        helpers.create_user('ac2@icml.cc', 'AC', 'ICMLTwo')
+        helpers.create_user('reviewer1@icml.cc', 'Reviewer', 'ICMLOne')
+        helpers.create_user('reviewer2@icml.cc', 'Reviewer', 'ICMLTwo')
+        helpers.create_user('reviewer3@icml.cc', 'Reviewer', 'ICMLThree')
+        helpers.create_user('reviewer4@icml.cc', 'Reviewer', 'ICMLFour')
+        helpers.create_user('reviewer5@icml.cc', 'Reviewer', 'ICMLFive')
+        helpers.create_user('reviewer6@icml.cc', 'Reviewer', 'ICMLSix')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -111,8 +119,29 @@ class TestICMLConference():
                         },
                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
                         "order": 7,
-                        #'readers': [ venue_id, action_editors_value, reviewers_value, authors_value]
-                    }                    
+                        'readers': [ 
+                            'ICML.cc/2023/Conference', 
+                            'ICML.cc/2023/Conference/Submission${4/number}/Senior_Area_Chairs', 
+                            'ICML.cc/2023/Conference/Submission${4/number}/Area_Chairs', 
+                            'ICML.cc/2023/Conference/Submission${4/number}/Authors'
+                        ]
+                    },
+                    "student_paper": {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['Yes', 'No'],
+                                'input': 'radio'
+                            }
+                        },
+                        "description": "Indicate if the submission is from a student.",
+                        "order": 7,
+                        'readers': [ 
+                            'ICML.cc/2023/Conference', 
+                            'ICML.cc/2023/Conference/Submission${4/number}/Authors'
+                        ]
+                    }
+
                 }
   
             }
@@ -122,6 +151,7 @@ class TestICMLConference():
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation
         assert 'supplementary_material' in submission_invitation.edit['note']['content']
+        assert 'student_paper' in submission_invitation.edit['note']['content']
 
 
 
@@ -289,6 +319,8 @@ reviewer6@icml.cc, Reviewer ICMLSix
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'student_paper': { 'value': 'Yes' }
                 }
             )
             if i == 1:
@@ -301,5 +333,96 @@ reviewer6@icml.cc, Reviewer ICMLSix
 
         helpers.await_queue()
 
-        assert len(openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission')) == 5      
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 5
+        assert ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers    
 
+
+    def test_ac_bidding(self, client, openreview_client, helpers, test_client):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        ## make submissions visible to the committee
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_ICMLChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 5
+        assert ['ICML.cc/2023/Conference', 
+        'ICML.cc/2023/Conference/Senior_Area_Chairs',
+        'ICML.cc/2023/Conference/Area_Chairs',
+        'ICML.cc/2023/Conference/Reviewers',
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers    
+
+        ## setup matching data before starting bidding
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'ICML.cc/2023/Conference/Area_Chairs',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'No'
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()        
+        
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Conflict')
+
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'ICML.cc/2023/Conference/Reviewers',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'No'
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()        
+        
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Conflict')               
+        
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        bid_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'bid_start_date': now.strftime('%Y/%m/%d'),
+                'bid_due_date': due_date.strftime('%Y/%m/%d')
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Bid_Stage',
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Bid')       
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')       
