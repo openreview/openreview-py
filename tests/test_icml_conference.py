@@ -112,7 +112,6 @@ class TestICMLConference():
             text = message['content']['text']
             
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            print('invitation_url', invitation_url)
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue()
@@ -157,7 +156,6 @@ class TestICMLConference():
             text = message['content']['text']
             
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            print('invitation_url', invitation_url)
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue()
@@ -178,6 +176,7 @@ reviewer2@icml.cc, Reviewer ICMLTwo
 reviewer3@icml.cc, Reviewer ICMLThree
 reviewer4@icml.cc, Reviewer ICMLFour
 reviewer5@icml.cc, Reviewer ICMLFive
+reviewer6@icml.cc, Reviewer ICMLSix
 '''
         pc_client.post_note(openreview.Note(
             content={
@@ -198,22 +197,33 @@ reviewer5@icml.cc, Reviewer ICMLFive
         helpers.await_queue()
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members) == 0
-        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 5
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Declined').members) == 0
 
         messages = openreview_client.get_messages(subject = '[ICML 2023] Invitation to serve as Reviewer')
-        assert len(messages) == 5
+        assert len(messages) == 6
 
         for message in messages:
             text = message['content']['text']
             
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-            print('invitation_url', invitation_url)
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         helpers.await_queue()
 
         messages = client.get_messages(subject='[ICML 2023] Reviewer Invitation accepted')
-        assert len(messages) == 5
+        assert len(messages) == 6
+
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members) == 6
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Declined').members) == 0
+
+        messages = openreview_client.get_messages(to = 'reviewer6@icml.cc', subject = '[ICML 2023] Invitation to serve as Reviewer')
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
+
+        helpers.await_queue()
 
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members) == 5
-        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 5      
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
+        assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Declined').members) == 1
