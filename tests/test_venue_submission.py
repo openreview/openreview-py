@@ -440,3 +440,16 @@ class TestVenueSubmission():
     def test_post_decision_stage(self, venue, openreview_client):
 
         venue.post_decision_stage()
+
+    def test_submission_revision_stage(self, venue, openreview_client):
+        now = datetime.datetime.utcnow()
+        venue.submission_revision_stage = openreview.SubmissionRevisionStage(
+            name='Camera_Ready_Revision',
+            due_date=now + datetime.timedelta(minutes = 40),
+            only_accepted=True,
+            allow_author_reorder=True
+        )
+        venue.create_submission_revision_stage()
+
+        assert openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Revision')
+        assert not openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission2/-/Camera_Ready_Revision')

@@ -47,7 +47,7 @@ class Venue(object):
         self.meta_review_stage = None
         self.comment_stage = None
         self.decision_stage = None
-        self.submission_revision_stage = False
+        self.submission_revision_stage = None
         self.use_area_chairs = False
         self.use_senior_area_chairs = False
         self.use_ethics_chairs = False
@@ -287,7 +287,17 @@ class Venue(object):
             return f'{self.venue_id}/Desk_Rejected_{self.submission_stage.name}'
         return f'{self.venue_id}/Desk_Rejected_Submission'                
 
-    def get_submissions(self, venueid=None, sort=None, details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
+        if accepted:
+            accepted_notes = []
+            notes = self.client.get_all_notes(content={ 'venueid': tools.pretty_id(self.venue_id)}, sort='number:asc', details='directReplies')
+            print('len notes2:', len(notes))
+            for note in notes:
+                for reply in note.details['directReplies']:
+                    if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
+                        if 'Accept' in reply['content']['decision']['value']:
+                            accepted_notes.append(note)
+            return accepted_notes
         return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
 
     def setup(self, program_chair_ids=[]):
@@ -645,7 +655,17 @@ Total Errors: {len(errors)}
                 self.client.post_message(subject, recipients=note.content['authorids']['value'], message=final_message)
 
         tools.concurrent_requests(send_notification, paper_notes)
-        
+
+    def create_submission_revision_stage(self):
+        invitation = tools.get_invitation(self.client, self.get_submission_id())
+        if invitation:
+            notes = self.get_submissions()
+            if self.submission_revision_stage.only_accepted:
+                notes = self.get_submissions(accepted=True)
+                print('len notes:', len(notes))
+            revision_invitation = self.invitation_builder.set_submission_revision_invitation(invitation.edit['note']['content'])
+            self.invitation_builder.create_paper_invitations(revision_invitation.id, notes)
+
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, alternate_matching_group=None):
         if committee_id is None:
             committee_id=self.get_reviewers_id()
