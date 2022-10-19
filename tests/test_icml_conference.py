@@ -2,6 +2,9 @@ import openreview
 import pytest
 import datetime
 import re
+import random
+import os
+import csv
 from selenium.webdriver.common.by import By
 
 class TestICMLConference():
@@ -366,7 +369,15 @@ reviewer6@icml.cc, Reviewer ICMLSix
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
         'ICML.cc/2023/Conference/Reviewers',
-        'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers    
+        'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in client.get_group('ICML.cc/2023/Conference/Area_Chairs').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
         ## setup matching data before starting bidding
         client.post_note(openreview.Note(
@@ -374,7 +385,9 @@ reviewer6@icml.cc, Reviewer ICMLSix
                 'title': 'Paper Matching Setup',
                 'matching_group': 'ICML.cc/2023/Conference/Area_Chairs',
                 'compute_conflicts': 'Yes',
-                'compute_affinity_scores': 'No'
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+
             },
             forum=request_form.id,
             replyto=request_form.id,
@@ -386,6 +399,10 @@ reviewer6@icml.cc, Reviewer ICMLSix
         helpers.await_queue()        
         
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Conflict')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Affinity_Score')
+
+        assert openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Affinity_Score')
+        assert openreview_client.get_edges(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Conflict')
 
         client.post_note(openreview.Note(
             content={
