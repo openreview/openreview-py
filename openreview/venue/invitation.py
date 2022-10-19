@@ -1,16 +1,11 @@
 import csv
 import datetime
-from io import StringIO
 import json
 import os
-from sys import api_version
 from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
 from .. import tools
-from multiprocessing import cpu_count
-from concurrent.futures import ThreadPoolExecutor
-from tqdm import tqdm
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -128,7 +123,6 @@ class InvitationBuilder(object):
             )
         )
        
-    
     def set_submission_invitation(self):
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
@@ -149,7 +143,7 @@ class InvitationBuilder(object):
             content[key] = value
 
         if submission_stage.second_due_date and 'pdf' in content:
-            content['pdf']['optional'] = True
+            content['pdf']['value']['param']['optional'] = True
 
         content['venue'] = {
             'value': tools.pretty_id(self.venue.get_submission_venue_id())
@@ -162,6 +156,7 @@ class InvitationBuilder(object):
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, self.venue.get_authors_id('${2/number}')]
 
         submission_id = submission_stage.get_submission_id(self.venue)
+        submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.utcnow())
 
         submission_invitation = Invitation(
             id=submission_id,
@@ -169,6 +164,7 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            cdate=submission_cdate,
             duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
             expdate = tools.datetime_millis(submission_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if submission_stage.due_date else None,
             edit = {
@@ -1578,112 +1574,3 @@ class InvitationBuilder(object):
         #         invitation.preprocess=pre_content
         #         invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
         #         return self.save_invitation(invitation)
-
-    def post_decisions(self, decisions_file, api1_client):
-
-        venue = self.venue
-
-        decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
-
-        paper_notes = {n.number: n for n in venue.get_submissions(details='directReplies')}
-
-        def post_decision(paper_decision):
-            if len(paper_decision) < 2:
-                raise openreview.OpenReviewException(
-                    "Not enough values provided in the decision file. Expected values are: paper_number, decision, comment")
-            if len(paper_decision) > 3:
-                raise openreview.OpenReviewException(
-                    "Too many values provided in the decision file. Expected values are: paper_number, decision, comment"
-                )
-            if len(paper_decision) == 3:
-                paper_number, decision, comment = paper_decision
-            else:
-                paper_number, decision = paper_decision
-                comment = ''
-
-            paper_number = int(paper_number)
-
-            print(f"Posting Decision {decision} for Paper {paper_number}")
-            paper_note = paper_notes.get(paper_number, None)
-            if not paper_note:
-                raise openreview.OpenReviewException(
-                    f"Paper {paper_number} not found. Please check the submitted paper numbers."
-                )
-
-            paper_decision_note = None
-            if paper_note.details:
-                for reply in paper_note.details['directReplies']:
-                    if f'{self.venue_id}/{venue.submission_stage.name}{paper_note.number}/-/{venue.decision_stage.name}' in reply['invitations']:
-                        paper_decision_note = reply
-                        break
-
-            content = {
-                'title': {'value': 'Paper Decision'},
-                'decision': {'value': decision.strip()},
-                'comment': {'value': comment},
-            }
-            if paper_decision_note:
-                self.client.post_note_edit(invitation = venue.get_invitation_id(venue.decision_stage.name, paper_number),
-                    signatures = [venue.get_program_chairs_id()],
-                    note = Note(
-                        id = paper_decision_note['id'],
-                        content = content
-                    )
-                )
-            else:
-                self.client.post_note_edit(invitation = venue.get_invitation_id(venue.decision_stage.name, paper_number),
-                    signatures = [venue.get_program_chairs_id()],
-                    note = Note(
-                        content = content
-                    )
-                )
-
-            print(f"Decision posted for Paper {paper_number}")
-        
-        futures = []
-        futures_param_mapping = {}
-        gathering_responses = tqdm(total=len(decisions_data), desc='Gathering Responses')
-        results = []
-        errors = {}
- 
-        with ThreadPoolExecutor(max_workers=min(6, cpu_count() - 1)) as executor:
-            for _decision in decisions_data:
-                print(_decision)
-                _future = executor.submit(post_decision, _decision)
-                futures.append(_future)
-                futures_param_mapping[_future] = str(_decision)
-
-            for future in futures:
-                gathering_responses.update(1)
-                try:
-                    results.append(future.result())
-                except Exception as e:
-                    errors[futures_param_mapping[future]] = e.args[0] if isinstance(e, openreview.OpenReviewException) else repr(e)
-
-            gathering_responses.close()
-
-        error_status = ''
-        if errors:
-            error_status = f'''
-Total Errors: {len(errors)}
-```python
-{json.dumps({key: errors[key] for key in list(errors.keys())[:10]}, indent=2)}
-```
-'''
-        if venue.request_form_id:
-            forum_note = api1_client.get_note(venue.request_form_id)
-            status_note = openreview.Note(
-                invitation=venue.support_user + '/-/Request' + str(forum_note.number) + '/Decision_Upload_Status',
-                forum=venue.request_form_id,
-                replyto=venue.request_form_id,
-                readers=[venue.get_program_chairs_id(), venue.support_user],
-                writers=[],
-                signatures=[venue.support_user],
-                content={
-                    'title': 'Decision Upload Status',
-                    'decision_posted': f'''{len(results)} Papers''',
-                    'error': error_status
-                }
-            )
-
-            api1_client.post_note(status_note)
