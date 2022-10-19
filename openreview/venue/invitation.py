@@ -141,7 +141,7 @@ class InvitationBuilder(object):
             del content[field]
 
         for order, key in enumerate(submission_stage.additional_fields, start=10):
-            value = self.additional_fields[key]
+            value = submission_stage.additional_fields[key]
             value['order'] = order
             content[key] = value
 

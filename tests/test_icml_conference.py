@@ -15,6 +15,7 @@ class TestICMLConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
 
+        helpers.create_user('sac1@icml.cc', 'SAC', 'ICMLOne')
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -75,7 +76,53 @@ class TestICMLConference():
 
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation
-        ##assert submission_invitation.duedate == openreview.tools.datetime_millis(due_date)
+        assert submission_invitation.duedate
+
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
+            forum=request_form_note.id,
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form_note.id,
+            replyto=request_form_note.id,
+            signatures=['~Program_ICMLChair1'],
+            writers=[],            
+            content={
+                'title': 'Thirty-ninth International Conference on Machine Learning',
+                'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
+                'Abbreviated Venue Name': 'ICML 2023',
+                'Official Website URL': 'https://icml.cc',
+                'program_chair_emails': ['pc@icml.cc'],
+                'contact_email': 'pc@icml.cc',
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': {
+                    "supplementary_material": {
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'extensions': ['zip', 'pdf'],
+                                'maxSize': 100,
+                                "optional": True
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                        "order": 7,
+                        #'readers': [ venue_id, action_editors_value, reviewers_value, authors_value]
+                    }                    
+                }
+  
+            }
+        ))
+        helpers.await_queue()
+
+        submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
+        assert submission_invitation
+        assert 'supplementary_material' in submission_invitation.edit['note']['content']
+
 
 
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
@@ -227,3 +274,32 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers').members) == 5
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Invited').members) == 6
         assert len(openreview_client.get_group('ICML.cc/2023/Conference/Reviewers/Declined').members) == 1
+
+    def test_submissions(self, client, openreview_client, helpers, test_client):
+
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
+        for i in range(1,6):
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title ' + str(i) },
+                    'abstract': { 'value': 'This is an abstract ' + str(i) },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]] },
+                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                }
+            )
+            if i == 1:
+                note.content['authors']['value'].append('SAC ICMLOne')
+                note.content['authorids']['value'].append('~SAC_ICMLOne1')
+            
+            test_client.post_note_edit(invitation='ICML.cc/2023/Conference/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=note)
+
+        helpers.await_queue()
+
+        assert len(openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission')) == 5      
+
