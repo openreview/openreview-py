@@ -1266,7 +1266,260 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
+    def set_desk_rejection_invitation(self):
+        venue_id = self.venue_id
+        submission_stage = self.venue.submission_stage
+        exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
 
+        content = default_content.desk_reject_v2.copy()
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/desk_rejection_submission_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
+            file_content = file_content.replace("DESK_REJECTED_INVITATION_ID = ''", f"DESK_REJECTED_INVITATION_ID = '{self.venue.get_desk_rejected_id()}'")
+
+        invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.desk_rejection_name),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            expdate=exp_date,
+            content={
+                'process_script': {
+                    'value': file_content
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(submission_stage.desk_rejection_name, '${2/content/noteNumber/value}'),
+                    'invitees': [venue_id],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'maxReplies': 1,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                    'edit': {
+                        'signatures': [self.venue.get_program_chairs_id()],
+                        'readers': submission_stage.get_desk_rejection_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'writers': [venue_id],
+                        'note': {
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/noteId/value}',
+                            'signatures': ['${3/signatures}'],
+                            'readers': ['${3/readers}'],
+                            'writers': [ venue_id ],
+                            'content': content
+                        }
+                    }
+                }
+            }
+        )
+
+
+        self.save_invitation(invitation, replacement=True)
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/desk_rejected_submission_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
+            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
+            file_content = file_content.replace("PAPER_INVITATION_PREFIX = ''", f"PAPER_INVITATION_PREFIX = '{self.venue.get_paper_group_prefix()}'")
+            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Desk_Reject_Expiration')}'")
+            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_program_chairs=True, with_authors=True))}')
+
+
+        content = {
+            'venue': {
+                'value': tools.pretty_id(self.venue.get_desk_rejected_submission_venue_id())
+            },
+            'venueid': {
+                'value': self.venue.get_desk_rejected_submission_venue_id()
+            }
+        }
+        if submission_stage.desk_rejected_submission_reveal_authors:
+            content['authors'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }
+            content['authorids'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }
+
+        desk_rejected_invitation = Invitation (
+            id=self.venue.get_desk_rejected_id(),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': self.venue.submission_stage.get_submission_id(self.venue)
+                        }
+                    },
+                    'content': content
+                }
+            },
+            process=file_content
+        )
+
+        if SubmissionStage.Readers.EVERYONE not in submission_stage.readers and submission_stage.desk_rejected_submission_public:
+            desk_rejected_invitation.edit['note']['readers'] = ['everyone']
+
+        self.save_invitation(desk_rejected_invitation, replacement=True)
+
+        expire_invitation = Invitation (
+            id=self.venue.get_invitation_id('Desk_Reject_Expiration'),
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'invitation': {
+                    'id': {
+                        'param': {
+                            'regex': self.venue.get_paper_group_prefix()
+                        }
+                    },
+                    'signatures': [venue_id],
+                    'expdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'deletable': True
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(expire_invitation, replacement=True)
+
+        process_file = os.path.join(os.path.dirname(__file__), 'process/desk_rejection_reversion_submission_process.py')
+        with open(process_file) as f:
+            file_content = f.read()
+
+            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Desk_Reject_Expiration')}'")
+            file_content = file_content.replace("DESK_REJECTED_INVITATION_ID = ''", f"DESK_REJECTED_INVITATION_ID = '{self.venue.get_desk_rejected_id()}'")
+            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
+            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_program_chairs=True, with_authors=True))}')
+
+        content = default_content.desk_reject_reversion_v2
+
+
+        invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.desk_rejection_name + '_Reversion'),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            content={
+                'process_script': {
+                    'value': file_content
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    },
+                    'deskRejectionId': {
+                        'value': {
+                            'param': {
+                                'regex': '.*', 'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(submission_stage.desk_rejection_name + '_Reversion', '${{2/content/noteId/value}/number}'),
+                    'invitees': [venue_id],
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'maxReplies': 1,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                    'edit': {
+                        'signatures': [self.venue.get_program_chairs_id()],
+                        'readers': submission_stage.get_desk_rejection_readers(self.venue, '${{4/content/noteId/value}/number}'),
+                        'writers': [ venue_id],
+                        'note': {
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': '${4/content/deskRejectionId/value}',
+                            'signatures': [self.venue.get_program_chairs_id()],
+                            'readers': ['${3/readers}'],
+                            'writers': [ venue_id ],
+                            'content': content
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
 
     def set_assignment_invitation(self, committee_id):
         client = self.client

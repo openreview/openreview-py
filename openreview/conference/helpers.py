@@ -186,6 +186,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     author_reorder_after_first_deadline = note.content.get('submission_deadline_author_reorder', 'No') == 'Yes'
 
+    submission_email = note.content.get('submission_email', None)
+
     builder.set_submission_stage(
         name=name,
         double_blind=double_blind,
@@ -207,7 +209,8 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
         readers=readers,
-        author_reorder_after_first_deadline=author_reorder_after_first_deadline)
+        author_reorder_after_first_deadline=author_reorder_after_first_deadline,
+        submission_email=submission_email)
 
     paper_matching_options = note.content.get('Paper Matching', [])
     include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'

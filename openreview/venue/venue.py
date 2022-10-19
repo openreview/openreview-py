@@ -234,10 +234,16 @@ class Venue(object):
         return self.get_committee_id('Ethics_Reviewer_.*' if anon else self.ethics_reviewers_name, number)
 
     def get_withdrawal_id(self, number = None):
-        return self.get_invitation_id(self.submission_stage.withdrawal_name, number)        
+        return self.get_invitation_id(self.submission_stage.withdrawal_name, number)
 
     def get_withdrawn_id(self):
-        return self.get_invitation_id(f'Withdrawn_{self.submission_stage.name}') 
+        return self.get_invitation_id(f'Withdrawn_{self.submission_stage.name}')
+
+    def get_desk_rejection_id(self, number = None):
+        return self.get_invitation_id(self.submission_stage.desk_rejection_name, number)
+
+    def get_desk_rejected_id(self):
+        return self.get_invitation_id(f'Desk_Rejected_{self.submission_stage.name}')
 
     def get_homepage_options(self):
         options = {}
@@ -389,6 +395,7 @@ class Venue(object):
     def create_submission_stage(self):
         self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
+        self.invitation_builder.set_desk_rejection_invitation()
         self.group_builder.set_submission_variables()
 
     def create_review_stage(self):
@@ -422,8 +429,7 @@ class Venue(object):
         ## Create revision invitation if there is a second deadline?
         ## Create withdraw and desk reject invitations
         self.invitation_builder.create_paper_invitations(self.get_withdrawal_id(), submissions)
-        
-        #    
+        self.invitation_builder.create_paper_invitations(self.get_desk_rejection_id(), submissions)
 
     def create_bid_stages(self):
         self.invitation_builder.set_bid_invitations()
