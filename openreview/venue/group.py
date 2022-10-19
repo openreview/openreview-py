@@ -191,7 +191,7 @@ class GroupBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
                 content = f.read()
                 content = content.replace("const VENUE_ID = ''", f"const VENUE_ID = '{self.venue.venue_id}'")
-                content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
+                content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = \"{self.venue.short_name}\"")
                 content = content.replace("const PROGRAM_CHAIRS_ID = ''", f"const PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
                 content = content.replace("const AUTHORS_ID = ''", f"const AUTHORS_ID = '{self.venue.get_authors_id()}'")
                 content = content.replace("const REVIEWERS_ID = ''", f"const REVIEWERS_ID = '{self.venue.get_reviewers_id()}'")
@@ -301,6 +301,37 @@ class GroupBuilder(object):
 
             reviewer_group.web = content
             self.post_group(reviewer_group) 
+
+    def create_senior_area_chairs_group(self):
+
+        venue_id = self.venue.id
+        senior_area_chairs_id = self.venue.get_senior_area_chairs_id()
+        senior_area_chairs_group = openreview.tools.get_group(self.client, senior_area_chairs_id)
+        if not senior_area_chairs_group:
+            senior_area_chairs_group = Group(id=senior_area_chairs_id,
+                            readers=[venue_id, senior_area_chairs_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[]
+                        )
+
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+                content = f.read()
+                content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
+                content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
+                content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
+                content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
+
+                if self.venue.submission_stage:
+                    content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
+                    content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
+
+                if self.venue.review_stage:
+                    content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
+
+                senior_area_chairs_group.web = content
+                self.post_group(senior_area_chairs_group)
 
     def create_paper_committee_groups(self, submissions, overwrite=False):
 

@@ -299,6 +299,9 @@ class Venue(object):
         if self.use_area_chairs:
             self.group_builder.create_area_chairs_group()
 
+        if self.use_senior_area_chairs:
+            self.group_builder.create_senior_area_chairs_group()            
+
     def recruit_reviewers(self,
         title,
         message,
