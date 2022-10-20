@@ -17,10 +17,15 @@ class Assignment(object):
         if edges:
             ## Remove current edges if they exists
             self.client.delete_edges(invitation=edges[0].invitation, head=edges[0].head, wait_to_finish=True)
-        return tools.post_bulk_edges(self.client, edges)
-
+            tools.post_bulk_edges(self.client, edges)
+            # Perform sanity check
+            edges_posted = self.client.get_edges_count(invitation=edges[0].invitation, head=edges[0].head)
+            if edges_posted != len(edges):
+                raise openreview.OpenReviewException(f'Failed during bulk post of {edges[0].invitation} edges! Edges found: {len(edges)}, Edges posted: {edges_posted}')
+               
 
     def setup_ae_assignment(self, note):
+        print('Start setup AE assignment...')
         venue_id=self.journal.venue_id
         action_editors_id=self.journal.get_action_editors_id()
         authors_id=self.journal.get_authors_id(number=note.number)
@@ -68,9 +73,12 @@ class Assignment(object):
                 conflict_edges.append(edge)
 
         self.post_submission_edges(conflict_edges)
-
+        print('Finished setup AE assignment.')
+        
 
     def setup_reviewer_assignment(self, note):
+        print('Start setup Reviewer assignment...')
+        
         venue_id=self.journal.venue_id
         action_editors_id=self.journal.get_action_editors_id(number=note.number)
         authors_id = self.journal.get_authors_id(number=note.number)
@@ -120,6 +128,8 @@ class Assignment(object):
                 conflict_edges.append(edge)
 
         self.post_submission_edges(conflict_edges)
+        print('Finished setup Reviewer assignment.')
+
 
     def assign_reviewer(self, note, reviewer, solicit=False):
 
