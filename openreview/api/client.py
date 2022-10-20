@@ -2386,11 +2386,12 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
+    def __init__(self, id, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
         self.invitations = invitations
+        self.content = content
         self.cdate = cdate
         self.ddate = ddate
         self.tcdate = tcdate
@@ -2430,6 +2431,10 @@ class Group(object):
         body = {
             'id': self.id
         }
+
+        if self.content is not None:
+            body['content'] = self.content
+
         if self.signatures is not None:
             body['signatures'] = self.signatures
 
@@ -2483,6 +2488,7 @@ class Group(object):
         :rtype: Group
         """
         group = Group(g['id'],
+            content=g.get('content'),
             invitation=g.get('invitation'),
             invitations=g.get('invitations'),
             cdate = g.get('cdate'),

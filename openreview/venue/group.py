@@ -467,6 +467,29 @@ class GroupBuilder(object):
         self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_ID', submission_id)
         self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_NAME', submission_name)
 
+        self.client.post_group_edit(
+            invitation = self.venue.get_meta_invitation_id(),
+            readers = [self.venue.venue_id],
+            writers = [self.venue.venue_id],
+            signatures = [self.venue.venue_id],
+            group = openreview.api.Group(
+                id = self.venue_id,
+                content = {
+                    'submission_id': { 'value': self.venue.get_submission_id() },
+                    'submission_venue_id': { 'value': self.venue.get_submission_venue_id() },
+                    'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
+                    'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
+                    'public_submissions': { 'value': 'Yes' if submission_stage.public else 'No' },
+                    'public_withdrawn_submissions': { 'value': 'Yes' if submission_stage.withdrawn_submission_public else 'No'},
+                    'public_desk_rejected_submissions': { 'value': 'Yes' if submission_stage.desk_rejected_submission_public else 'No' },
+                    'title': { 'value': self.venue.get_homepage_options()['title'] },
+                    'subtitle': { 'value': self.venue.get_homepage_options()['subtitle'] },
+                    'website': { 'value': self.venue.get_homepage_options()['website'] },
+                    'contact': { 'value': self.venue.get_homepage_options()['contact'] },
+                }
+            )
+        )
+
     def set_review_variables(self):
 
         review_stage = self.venue.review_stage
