@@ -290,9 +290,9 @@ class Venue(object):
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = []
-            notes = self.client.get_all_notes(content={ 'venue': tools.pretty_id(self.venue_id)}, sort='number:asc', details='directReplies')
+            notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort='number:asc', details='directReplies')
             if len(notes) == 0:
-                notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort='number:asc', details='directReplies')
+                notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort='number:asc', details='directReplies')
             for note in notes:
                 for reply in note.details['directReplies']:
                     if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
@@ -610,7 +610,7 @@ Total Errors: {len(errors)}
 
             content = {
                 'venueid': {
-                    'value': tools.pretty_id(venue_id)
+                    'value': venue_id
                 },
                 'venue': {
                     'value': venue
@@ -636,7 +636,7 @@ Total Errors: {len(errors)}
                 )
 
     def send_decision_notifications(self, decision_options, messages):
-        paper_notes = self.get_submissions(venueid=tools.pretty_id(self.venue_id), details='directReplies')
+        paper_notes = self.get_submissions(venueid=self.venue_id, details='directReplies')
 
         def send_notification(note):
             decision_note = None

@@ -2012,8 +2012,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert submissions and len(submissions) == 2
         submission = submissions[0]
 
-        helpers.create_user('venue_author3@mail.com', 'VenueFour', 'Author')
-        author_client = OpenReviewClient(username='venue_author3@mail.com', password='1234')
+        helpers.create_user('venue_author3_v2@mail.com', 'VenueFour', 'Author')
+        author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password='1234')
 
         submission = author_client.post_note_edit(
             invitation='V2.cc/2030/Conference/-/Submission',
@@ -2088,7 +2088,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert updated_note.content['authors']['value'] == ['VenueFour Author', 'VenueThree Author']
         assert updated_note.content['authorids']['value'] == ['~VenueFour_Author1', '~VenueThree_Author1']
 
-        messages = client.get_messages(to = 'venue_author3@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
+        messages = client.get_messages(to = 'venue_author3_v2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
         assert messages and len(messages) == 1
         messages = client.get_messages(to = 'venue_author_v2_2@mail.com', subject='TestVenue@OR\'2030V2 has received a new revision of your submission titled revised test submission 3')
         assert messages and len(messages) == 1
@@ -2243,19 +2243,19 @@ Best,
 
         # assert authors of accepted paper were released
         assert submissions[0].content['venue']['value'] == 'TestVenue@OR\'2030V2'
-        assert submissions[0].content['venueid']['value'] == 'V2 2030 Conference'
+        assert submissions[0].content['venueid']['value'] == 'V2.cc/2030/Conference'
         assert 'readers' not in submissions[0].content['authors']
         assert 'readers' not in submissions[0].content['authorids']
 
         # assert author identities of rejected paper are still hidden
         assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[1].content['venueid']['value'] == 'V2 2030 Conference'
+        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference'
         assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
         assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
         # assert author identities of paper with no decision are still hidden
         assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[2].content['venueid']['value'] == 'V2 2030 Conference'
+        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
