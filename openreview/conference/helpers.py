@@ -26,6 +26,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.meta_review_stage = get_meta_review_stage(note)
         venue.comment_stage = get_comment_stage(note)
         venue.decision_stage = get_decision_stage(note)
+        venue.submission_revision_stage = get_submission_revision_stage(note)
 
         venue.setup(note.content.get('program_chair_emails'))
         venue.create_submission_stage()

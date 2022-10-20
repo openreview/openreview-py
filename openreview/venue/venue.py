@@ -290,7 +290,9 @@ class Venue(object):
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = []
-            notes = self.client.get_all_notes(content={ 'venueid': tools.pretty_id(self.venue_id)}, sort='number:asc', details='directReplies')
+            notes = self.client.get_all_notes(content={ 'venue': tools.pretty_id(self.venue_id)}, sort='number:asc', details='directReplies')
+            if len(notes) == 0:
+                notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort='number:asc', details='directReplies')
             print('len notes2:', len(notes))
             for note in notes:
                 for reply in note.details['directReplies']:
@@ -659,10 +661,13 @@ Total Errors: {len(errors)}
     def create_submission_revision_stage(self):
         invitation = tools.get_invitation(self.client, self.get_submission_id())
         if invitation:
-            notes = self.get_submissions()
+            notes = self.get_submissions(accepted=self.submission_revision_stage.only_accepted)
             if self.submission_revision_stage.only_accepted:
-                notes = self.get_submissions(accepted=True)
-                print('len notes:', len(notes))
+                all_notes = self.get_submissions()
+                accepted_note_ids = [note.id for note in notes]
+                non_accepted_notes = [note for note in all_notes if note.id not in accepted_note_ids]
+                expire_invitation_ids = [self.get_invitation_id(self.submission_revision_stage.name, note.number) for note in non_accepted_notes]
+                tools.concurrent_requests(self.invitation_builder.expire_invitation, expire_invitation_ids)
             revision_invitation = self.invitation_builder.set_submission_revision_invitation(invitation.edit['note']['content'])
             self.invitation_builder.create_paper_invitations(revision_invitation.id, notes)
 

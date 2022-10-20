@@ -1567,6 +1567,10 @@ class InvitationBuilder(object):
         process_file = os.path.join(os.path.dirname(__file__), 'process/submission_revision_process.py')
         with open(process_file) as f:
             process_content = f.read()
+            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
+            process_content = process_content.replace("CONFERENCE_ID = ''", f"CONFERENCE_ID = '{self.venue_id}'")
+            process_content = process_content.replace("AUTHORS_NAME = ''", f"AUTHORS_NAME = '{self.venue.authors_name}'")
+            process_content = process_content.replace("SUBMISSION_NAME = ''", f"SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
@@ -1613,7 +1617,9 @@ class InvitationBuilder(object):
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['revision_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
