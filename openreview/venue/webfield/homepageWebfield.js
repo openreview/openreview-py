@@ -1,6 +1,4 @@
 // Webfield component
-const PARENT_GROUP = ''
-
 const tabs = [{
   name: 'Your Consoles',
   type: 'consoles'
@@ -52,7 +50,7 @@ return {
       contact: domain.content.contact.value,
     },
     submissionId: domain.content.submission_id.value,
-    parentGroupId: PARENT_GROUP,
+    parentGroupId: domain.parent,
     apiVersion: 2,
     tabs: tabs
   }

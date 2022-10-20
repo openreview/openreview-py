@@ -337,17 +337,14 @@ class Venue(object):
         self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
-        self.group_builder.set_submission_variables()
 
     def create_review_stage(self):
         invitation = self.invitation_builder.set_review_invitation()
         self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
-        self.group_builder.set_review_variables()
 
     def create_meta_review_stage(self):
         invitation = self.invitation_builder.set_meta_review_invitation()
         self.invitation_builder.create_paper_invitations(invitation.id, self.get_submissions())
-        self.group_builder.set_meta_review_variables()
 
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         venue_id = self.venue_id

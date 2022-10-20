@@ -60,17 +60,6 @@ class GroupBuilder(object):
 
         return groups
 
-    def set_group_variable(self, group_id, variable_name, value):
-
-        group = openreview.tools.get_group(self.client, group_id)
-        if group and group.web:
-            print(group.id, variable_name, value)
-            web = group.web.replace(f"var {variable_name} = '';", f"var {variable_name} = '{value}';")
-            web = web.replace(f"const {variable_name} = ''", f"const {variable_name} = '{value}'")
-            web = web.replace(f"const {variable_name} = false", f"const {variable_name} = {'true' if value else 'false'}")
-            web = web.replace(f"const {variable_name} = true", f"const {variable_name} = {'true' if value else 'false'}")
-            self.update_web_field(group.id, web)
-
     def set_landing_page(self, group, parentGroup):
         # sets webfield to show links to child groups
 
@@ -107,7 +96,6 @@ class GroupBuilder(object):
 
     
     def get_reviewer_identity_readers(self, number):
-        print("REVIEWER IDENTITY READUERS", self.venue.reviewer_identity_readers)
         return openreview.stages.IdentityReaders.get_readers(self.venue, number, self.venue.reviewer_identity_readers)
 
     def get_area_chair_identity_readers(self, number):
@@ -189,6 +177,8 @@ class GroupBuilder(object):
             'contact': { 'value': self.venue.get_homepage_options()['contact'] },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
+            'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
+            'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
         }
 
@@ -242,20 +232,11 @@ class GroupBuilder(object):
                             )
             with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
                 content = f.read()
-                content = content.replace("const VENUE_ID = ''", f"const VENUE_ID = '{self.venue.venue_id}'")
-                content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = \"{self.venue.short_name}\"")
-                content = content.replace("const PROGRAM_CHAIRS_ID = ''", f"const PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
-                content = content.replace("const AUTHORS_ID = ''", f"const AUTHORS_ID = '{self.venue.get_authors_id()}'")
-                content = content.replace("const REVIEWERS_ID = ''", f"const REVIEWERS_ID = '{self.venue.get_reviewers_id()}'")
-                content = content.replace("const AREA_CHAIRS_ID = ''", f"const AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id()}'")
-                content = content.replace("const SENIOR_AREA_CHAIRS_ID = ''", f"const SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id()}'")
-                content = content.replace("const REQUEST_FORM_ID = ''", f"const REQUEST_FORM_ID = '{self.venue.request_form_id if self.venue.request_form_id else ''}'")
-            
                 pc_group.web = content
                 self.post_group(pc_group)
 
-        ## Add pcs to have all the permissions
-        self.client.add_members_to_group(venue_id, pc_group_id)        
+            ## Add pcs to have all the permissions
+            self.client.add_members_to_group(venue_id, pc_group_id)        
     
     def create_authors_group(self):
 
@@ -271,12 +252,10 @@ class GroupBuilder(object):
                             signatories=[venue_id],
                             members=[])
 
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            ##content = content.replace("var SUBMISSION_ID = '';", "var SUBMISSION_ID = '" + self.submission_stage.get_submission_id(self) + "';")
-            authors_group.web = content
-            self.post_group(authors_group)
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
+                content = f.read()
+                authors_group.web = content
+                self.post_group(authors_group)
 
         authors_accepted_id = self.venue.get_authors_accepted_id()
         authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
@@ -304,32 +283,19 @@ class GroupBuilder(object):
                             members=[]
                         )
 
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
-            content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
-            content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
-            content = content.replace("const CUSTOM_MAX_PAPERS_ID = ''", f"const CUSTOM_MAX_PAPERS_ID = '{self.venue.get_custom_max_papers_id(reviewers_id)}'")
-            content = content.replace("const RECRUITMENT_ID = ''", f"const RECRUITMENT_ID = '{self.venue.get_recruitment_id(reviewers_id)}'")
-
-            if self.venue.submission_stage:
-                content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
-                content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
-
-            if self.venue.review_stage:
-                content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
-
-            reviewer_group.web = content
-            self.post_group(reviewer_group)        
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
+                content = f.read()
+                reviewer_group.web = content
+                self.post_group(reviewer_group)        
 
     def create_area_chairs_group(self):
 
         venue_id = self.venue.id
         area_chairs_id = self.venue.get_area_chairs_id()
         senior_area_chairs_id = self.venue.get_senior_area_chairs_id()
-        reviewer_group = openreview.tools.get_group(self.client, area_chairs_id)
-        if not reviewer_group:
-            reviewer_group = Group(id=area_chairs_id,
+        area_chairs_group = openreview.tools.get_group(self.client, area_chairs_id)
+        if not area_chairs_group:
+            area_chairs_group = Group(id=area_chairs_id,
                             readers=[venue_id, senior_area_chairs_id, area_chairs_id],
                             writers=[venue_id],
                             signatures=[venue_id],
@@ -337,22 +303,10 @@ class GroupBuilder(object):
                             members=[]
                         )
 
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
-            content = f.read()
-            content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
-            content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
-            content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
-            content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
-
-            if self.venue.submission_stage:
-                content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
-                content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
-
-            if self.venue.review_stage:
-                content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
-
-            reviewer_group.web = content
-            self.post_group(reviewer_group) 
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+                content = f.read()
+                area_chairs_group.web = content
+                self.post_group(area_chairs_group) 
 
     def create_senior_area_chairs_group(self):
 
@@ -370,18 +324,6 @@ class GroupBuilder(object):
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
                 content = f.read()
-                content = content.replace("const VENUE_ID = ''", "const VENUE_ID = '" + venue_id + "'")
-                content = content.replace("const SHORT_PHRASE = ''", f"const SHORT_PHRASE = '{self.venue.short_name}'")
-                content = content.replace("const REVIEWERS_NAME = ''", f'const REVIEWERS_NAME = "{self.venue.reviewers_name}"')
-                content = content.replace("const AREA_CHAIRS_NAME = ''", f'const AREA_CHAIRS_NAME = "{self.venue.area_chairs_name}"')
-
-                if self.venue.submission_stage:
-                    content = content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.submission_stage.get_submission_id(self.venue)}'")
-                    content = content.replace("const SUBMISSION_NAME = ''", f"const SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
-
-                if self.venue.review_stage:
-                    content = content.replace("const OFFICIAL_REVIEW_NAME = ''", f"const OFFICIAL_REVIEW_NAME = '{self.venue.review_stage.name}'")
-
                 senior_area_chairs_group.web = content
                 self.post_group(senior_area_chairs_group)
 
@@ -493,71 +435,3 @@ class GroupBuilder(object):
                             signatories=[venue_id, committee_invited_id],
                             members=[]
                             ))
-
-
-    def set_submission_variables(self):
-
-        submission_stage = self.venue.submission_stage
-        submission_id = submission_stage.get_submission_id(self.venue)
-        submission_name = submission_stage.name
-
-        self.set_group_variable(self.venue_id, 'SUBMISSION_ID', submission_id)
-        if submission_stage.public:
-            self.set_group_variable(self.venue_id, 'SUBMISSION_VENUE_ID', self.venue.get_submission_venue_id())
-        if submission_stage.withdrawn_submission_public:
-            self.set_group_variable(self.venue_id, 'WITHDRAWN_VENUE_ID', self.venue.get_withdrawn_submission_venue_id())
-        if submission_stage.desk_rejected_submission_public:
-            self.set_group_variable(self.venue_id, 'DESK_REJECTED_VENUE_ID', self.venue.get_desk_rejected_submission_venue_id())
-        self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_ID', submission_id)
-        self.set_group_variable(self.venue.get_authors_id(), 'SUBMISSION_NAME', submission_name)
-        self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_ID', submission_id)
-        self.set_group_variable(self.venue.get_reviewers_id(), 'SUBMISSION_NAME', submission_name)
-        self.set_group_variable(self.venue.get_area_chairs_id(), 'SUBMISSION_ID', submission_id)
-        self.set_group_variable(self.venue.get_area_chairs_id(), 'SUBMISSION_NAME', submission_name)
-        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'SUBMISSION_ID', submission_id)
-        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'SUBMISSION_NAME', submission_name)
-        self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_ID', submission_id)
-        self.set_group_variable(self.venue.get_program_chairs_id(), 'SUBMISSION_NAME', submission_name)
-
-        self.client.post_group_edit(
-            invitation = self.venue.get_meta_invitation_id(),
-            readers = [self.venue.venue_id],
-            writers = [self.venue.venue_id],
-            signatures = [self.venue.venue_id],
-            group = openreview.api.Group(
-                id = self.venue_id,
-                content = {
-                    'submission_id': { 'value': self.venue.get_submission_id() },
-                    'submission_venue_id': { 'value': self.venue.get_submission_venue_id() },
-                    'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
-                    'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
-                    'public_submissions': { 'value': 'Yes' if submission_stage.public else 'No' },
-                    'public_withdrawn_submissions': { 'value': 'Yes' if submission_stage.withdrawn_submission_public else 'No'},
-                    'public_desk_rejected_submissions': { 'value': 'Yes' if submission_stage.desk_rejected_submission_public else 'No' },
-                    'title': { 'value': self.venue.get_homepage_options()['title'] },
-                    'subtitle': { 'value': self.venue.get_homepage_options()['subtitle'] },
-                    'website': { 'value': self.venue.get_homepage_options()['website'] },
-                    'contact': { 'value': self.venue.get_homepage_options()['contact'] },
-                }
-            )
-        )
-
-    def set_review_variables(self):
-
-        review_stage = self.venue.review_stage
- 
-        self.set_group_variable(self.venue.get_authors_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)
-        self.set_group_variable(self.venue.get_reviewers_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)
-        self.set_group_variable(self.venue.get_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
-        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
-        self.set_group_variable(self.venue.get_program_chairs_id(), 'OFFICIAL_REVIEW_NAME', review_stage.name)        
-
-    def set_meta_review_variables(self):
-
-        meta_review_stage = self.venue.meta_review_stage
- 
-        self.set_group_variable(self.venue.get_authors_id(), 'META_REVIEW_NAME', meta_review_stage.name)
-        self.set_group_variable(self.venue.get_reviewers_id(), 'META_REVIEW_NAME', meta_review_stage.name)
-        self.set_group_variable(self.venue.get_area_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)
-        self.set_group_variable(self.venue.get_senior_area_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)        
-        self.set_group_variable(self.venue.get_program_chairs_id(), 'META_REVIEW_NAME', meta_review_stage.name)        
