@@ -293,7 +293,6 @@ class Venue(object):
             notes = self.client.get_all_notes(content={ 'venue': tools.pretty_id(self.venue_id)}, sort='number:asc', details='directReplies')
             if len(notes) == 0:
                 notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort='number:asc', details='directReplies')
-            print('len notes2:', len(notes))
             for note in notes:
                 for reply in note.details['directReplies']:
                     if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
