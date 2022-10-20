@@ -173,6 +173,58 @@ class GroupBuilder(object):
         if root_id == root_id.lower():
             root_id = groups[1].id        
         self.client_v1.add_members_to_group('host', root_id)
+
+        content = {
+            'submission_id': { 'value': self.venue.get_submission_id() },
+            'submission_name': { 'value': self.venue.submission_stage.name },
+            'submission_venue_id': { 'value': self.venue.get_submission_venue_id() },
+            'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
+            'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
+            'public_submissions': { 'value': 'Yes' if self.venue.submission_stage.public else 'No' },
+            'public_withdrawn_submissions': { 'value': 'Yes' if self.venue.submission_stage.withdrawn_submission_public else 'No'},
+            'public_desk_rejected_submissions': { 'value': 'Yes' if self.venue.submission_stage.desk_rejected_submission_public else 'No' },
+            'title': { 'value': self.venue.get_homepage_options()['title'] },
+            'subtitle': { 'value': self.venue.get_homepage_options()['subtitle'] },
+            'website': { 'value': self.venue.get_homepage_options()['website'] },
+            'contact': { 'value': self.venue.get_homepage_options()['contact'] },
+            'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
+            'reviewers_id': { 'value': self.venue.get_reviewers_id() },
+            'authors_id': { 'value': self.venue.get_authors_id() },
+        }
+
+        if self.venue.use_area_chairs:
+            content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
+
+        if self.venue.use_senior_area_chairs:
+            content['area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
+
+        if self.venue.bid_stages:
+            content['bid_name'] = { 'value': self.venue.bid_stages[0].name }
+
+        if self.venue.review_stage:
+            content['review_name'] = { 'value': self.venue.review_stage.name }
+            content['review_rating'] = { 'value': self.venue.review_stage.rating_field_name }
+            content['review_confidence'] = { 'value': self.venue.review_stage.confidence_field_name }
+
+        if self.venue.meta_review_stage:
+            content['meta_review_name'] = { 'value': self.venue.meta_review_stage.name }
+
+        if self.venue.decision_stage:
+            content['decision_name'] = { 'value': self.venue.decision_stage.name }
+
+        if self.venue.request_form_id:
+            content['request_form_id'] = { 'value': self.venue.request_form_id }
+
+        self.client.post_group_edit(
+            invitation = self.venue.get_meta_invitation_id(),
+            readers = [self.venue.venue_id],
+            writers = [self.venue.venue_id],
+            signatures = [self.venue.venue_id],
+            group = openreview.api.Group(
+                id = self.venue_id,
+                content = content
+            )
+        )        
        
     def create_program_chairs_group(self, program_chair_ids=[]):
 
