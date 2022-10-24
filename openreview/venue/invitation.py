@@ -424,6 +424,25 @@ class InvitationBuilder(object):
     def set_recruitment_invitation(self, committee_name, options):
         venue = self.venue
 
+        invitation_content = {
+            'hash_seed': { 'value': '1234', 'readers': [ venue.venue_id ]},
+            'committee_name': { 'value': committee_name.replace('_', ' ')[:-1] },
+            'committee_id': { 'value': venue.get_committee_id(committee_name) },
+            'committee_invited_id': { 'value': venue.get_committee_id_invited(committee_name) },
+            'committee_declined_id': { 'value': venue.get_committee_id_declined(committee_name) }       
+        }
+
+        if not options.get('allow_overlap_official_committee'):
+            if committee_name == venue.reviewers_name and venue.use_area_chairs:
+                invitation_content['overlap_committee_name'] = { 'value': venue.area_chairs_name }
+                invitation_content['overlap_committee_id'] = { 'value': venue.get_area_chairs_id() }
+            elif committee_name == venue.area_chairs_name:
+                invitation_content['overlap_committee_name'] = { 'value': venue.reviewers_name }
+                invitation_content['overlap_committee_id'] = { 'value': venue.get_reviewers_id() }
+        else:
+                invitation_content['overlap_committee_name'] = { 'delete': True }
+                invitation_content['overlap_committee_id'] = { 'delete': True  }
+
         content = default_content.recruitment_v2.copy()
 
         reduced_load = options.get('reduced_load_on_decline', None)
@@ -445,22 +464,10 @@ class InvitationBuilder(object):
         
         with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as process_reader:
             process_content = process_reader.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{venue.short_name}"')
-            process_content = process_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + committee_name.replace('_', ' ')[:-1] + "'")
-            process_content = process_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + venue.get_committee_id_invited(committee_name) + "'")
-            process_content = process_content.replace("REVIEWERS_ACCEPTED_ID = ''", "REVIEWERS_ACCEPTED_ID = '" + venue.get_committee_id(committee_name) + "'")
-            process_content = process_content.replace("REVIEWERS_DECLINED_ID = ''", "REVIEWERS_DECLINED_ID = '" + venue.get_committee_id_declined(committee_name) + "'")
-            if not options.get('allow_overlap_official_committee'):
-                if committee_name == venue.reviewers_name and venue.use_area_chairs:
-                    process_content = process_content.replace("AREA_CHAIR_NAME = ''", f"ACTION_EDITOR_NAME = '{venue.area_chairs_name}'")
-                    process_content = process_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + venue.get_area_chairs_id() + "'")
-                elif committee_name == venue.area_chairs_name:
-                    process_content = process_content.replace("AREA_CHAIR_NAME = ''", f"ACTION_EDITOR_NAME = '{venue.reviewers_name}'")
-                    process_content = process_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + venue.get_reviewers_id() + "'")
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
-                webfield_content = webfield_content.replace("const ROLE_NAME = ''", "const ROLE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "'")
+                webfield_content = webfield_content.replace("const COMMITTEE_NAME = ''", "const COMMITTEE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "'")
 
                 invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
                 current_invitation=tools.get_invitation(self.client, id = invitation_id)
@@ -473,11 +480,7 @@ class InvitationBuilder(object):
                         signatures = [venue.id],
                         readers = ['everyone'],
                         writers = [venue.id],
-                        content={
-                            'hash_seed': {
-                                'value': '1234'
-                            }
-                        },
+                        content = invitation_content,
                         edit = {
                             'signatures': ['(anonymous)'],
                             'readers': [venue.id],

@@ -1,13 +1,14 @@
 def process(client, edit, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
-    SHORT_PHRASE = ''
-    REVIEWER_NAME = ''
-    REVIEWERS_INVITED_ID = ''
-    REVIEWERS_ACCEPTED_ID = ''
-    REVIEWERS_DECLINED_ID = ''
-    AREA_CHAIR_NAME = ''
-    AREA_CHAIRS_ACCEPTED_ID = ''
+    domain = client.get_group(invitation.domain)
+    SHORT_PHRASE = domain.content['subtitle']['value']
+    REVIEWER_NAME = invitation.content['committee_name']['value']
+    REVIEWERS_INVITED_ID = invitation.content['committee_invited_id']['value']
+    REVIEWERS_ACCEPTED_ID = invitation.content['committee_id']['value']
+    REVIEWERS_DECLINED_ID = invitation.content['committee_declined_id']['value']
+    AREA_CHAIR_NAME = invitation.content['overlap_committee_name']['value'] if 'overlap_committee_name' in invitation.content else ''
+    AREA_CHAIRS_ACCEPTED_ID = invitation.content['overlap_committee_id']['value'] if 'overlap_committee_id' in invitation.content else ''
 
     note = edit.note
     user=note.content['user']['value']

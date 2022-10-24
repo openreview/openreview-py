@@ -1,5 +1,5 @@
 // Webfield component
-const ROLE_NAME = ''
+const COMMITTEE_NAME = ''
 const reducedLoad = entity.edit.note.content.reduced_load
 console.log('reducedLoad', reducedLoad)
 
@@ -14,7 +14,7 @@ return {
       contact: domain.content.contact.value,
     },
     invitationMessage: `
-#### You have been invited by the organizers of ${domain.content.title.value} to serve as a *${ROLE_NAME}*.
+#### You have been invited by the organizers of ${domain.content.title.value} to serve as a *${COMMITTEE_NAME}*.
 
 ##### Please respond to this invitation below:
 `,
