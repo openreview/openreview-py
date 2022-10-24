@@ -1461,18 +1461,24 @@ class OpenReviewClient(object):
         """
         def add_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
-            self.post_group_edit(invitation = group.invitations[0], 
-                signatures = group.signatures, 
-                group = Group(
-                    id = group.id, 
-                    members = {
-                        'append': list(set(members))
-                    }
-                ), 
-                readers=group.signatures, 
-                writers=group.signatures
-            )
-            return self.get_group(group.id)
+            if group.invitations:
+                self.post_group_edit(invitation = group.invitations[0], 
+                    signatures = group.signatures, 
+                    group = Group(
+                        id = group.id, 
+                        members = {
+                            'append': list(set(members))
+                        }
+                    ), 
+                    readers=group.signatures, 
+                    writers=group.signatures
+                )
+                return self.get_group(group.id)
+            else:
+                if members:
+                    response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                    response = self.__handle_response(response)
+                    return Group.from_json(response.json())                
 
         member_type = type(members)
         if member_type in string_types:
@@ -1495,18 +1501,23 @@ class OpenReviewClient(object):
         """
         def remove_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
-            self.post_group_edit(invitation = group.invitations[0], 
-                signatures = group.signatures, 
-                group = Group(
-                    id = group.id, 
-                    members = {
-                        'remove': list(set(members))
-                    }
-                ), 
-                readers=group.signatures, 
-                writers=group.signatures
-            )
-            return self.get_group(group.id)            
+            if group.invitations:
+                self.post_group_edit(invitation = group.invitations[0], 
+                    signatures = group.signatures, 
+                    group = Group(
+                        id = group.id, 
+                        members = {
+                            'remove': list(set(members))
+                        }
+                    ), 
+                    readers=group.signatures, 
+                    writers=group.signatures
+                )
+                return self.get_group(group.id)
+            else:
+                response = requests.delete(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = self.__handle_response(response)
+                return Group.from_json(response.json())                           
 
         member_type = type(members)
         if member_type in string_types:
