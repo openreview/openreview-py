@@ -1812,20 +1812,26 @@ class OpenReviewClient(object):
 
     def get_expertise_status(self, job_id, baseurl=None):
 
+        print('get expertise status', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
         if base_url.startswith('http://localhost'):
+            print('get expertise status localhost, return Completed')
             return { 'status': 'Completed' }
         response = requests.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
-        return response.json()
+        response_json = response.json()
+        print('get expertise status', response_json)
+        return response_json
 
     def get_expertise_results(self, job_id, baseurl=None, wait_for_complete=False):
 
+        print('get expertise results', baseurl, job_id)
         base_url = baseurl if baseurl else self.baseurl
         call_max = 500
 
         if base_url.startswith('http://localhost'):
+            print('return expertise results localhost, return []')
             return { 'results': [] }
 
         if wait_for_complete:
@@ -1848,7 +1854,7 @@ class OpenReviewClient(object):
         else:
             response = requests.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
-
+            print('return expertise results', baseurl, job_id)
             return response.json()
 
 
