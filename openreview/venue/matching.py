@@ -215,7 +215,7 @@ class Matching(object):
 
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
-        invitation_id = invitation['invitation']['id']
+        invitation_id = invitation.id
         # Get profile info from the match group
         user_profiles_info = [get_profile_info(p) for p in user_profiles]
         # Get profile info from all the authors
@@ -282,7 +282,7 @@ class Matching(object):
     def _build_profile_conflicts(self, head_profiles, user_profiles):
         
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
-        invitation_id = invitation['invitation']['id']
+        invitation_id = invitation.id
         # Get profile info from the match group
         user_profiles_info = [openreview.tools.get_profile_info(p) for p in user_profiles]
         head_profiles_info = [openreview.tools.get_profile_info(p) for p in head_profiles]
@@ -323,7 +323,7 @@ class Matching(object):
 
     def _build_custom_max_papers(self, user_profiles):
         invitation=self._create_edge_invitation(self.venue.get_custom_max_papers_id(self.match_group.id))
-        invitation_id = invitation['invitation']['id']
+        invitation_id = invitation.id
         current_custom_max_edges={ e['id']['tail']: Edge.from_json(e['values'][0]) for e in self.client.get_grouped_edges(invitation=invitation_id, groupby='tail', select=None)}
 
         reduced_loads = {}
@@ -380,7 +380,7 @@ class Matching(object):
     def _build_profile_scores(self, score_invitation_id, scores):
 
         invitation = self._create_edge_invitation(score_invitation_id)
-        invitation_id = invitation['invitation']['id']
+        invitation_id = invitation.id
         edges = []
 
         for row in tqdm(scores, desc='_build_scores'):
@@ -409,7 +409,7 @@ class Matching(object):
     def _build_note_scores(self, score_invitation_id, scores, submissions):
 
         invitation = self._create_edge_invitation(score_invitation_id)
-        invitation_id = invitation['invitation']['id']
+        invitation_id = invitation.id
 
         submissions_per_id = {note.id: note.number for note in submissions}
 
@@ -836,12 +836,11 @@ class Matching(object):
         
         ## is there better way to do this?
         if not self.is_senior_area_chair:
-            invitation = invitation['invitation']
             with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
                 content = f.read()
                 content = content.replace("CUSTOM_MAX_PAPERS_INVITATION_ID = ''", "CUSTOM_MAX_PAPERS_INVITATION_ID = '" + venue.get_custom_max_papers_id(self.match_group.id) + "'")
-                invitation['preprocess']=content
-                venue.invitation_builder.save_invitation(Invitation.from_json(invitation))
+                invitation.preprocess = content
+                venue.invitation_builder.save_invitation(invitation)
 
         self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id, deployed=True))
         # venue.invitation_builder.set_assignment_invitation(self.match_group.id)
@@ -869,7 +868,7 @@ class Matching(object):
                 submissions
             )
             if invitation:
-                invitation_id = invitation['invitation']['id']
+                invitation_id = invitation.id
                 score_spec[invitation_id] = {
                     'weight': 1,
                     'default': 0
@@ -881,7 +880,7 @@ class Matching(object):
                 submissions
             )
             if invitation:
-                invitation_id = invitation['invitation']['id']
+                invitation_id = invitation.id
                 score_spec[invitation_id] = {
                     'weight': 1,
                     'default': 0

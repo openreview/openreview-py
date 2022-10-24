@@ -2162,12 +2162,6 @@ class Invitation(object):
             'id': self.id
         }
 
-        if self.invitations:
-            body['invitations'] = self.invitations
-        
-        if self.domain:
-            body['domain'] = self.domain
-
         if self.cdate:
             body['cdate'] = self.cdate
 
