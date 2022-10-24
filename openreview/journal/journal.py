@@ -340,6 +340,7 @@ class Journal(object):
         return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reinvite)
 
     def setup_author_submission(self, note):
+        print('Setup author submission data...')
         self.group_builder.setup_submission_groups(note)
         self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
@@ -347,6 +348,8 @@ class Journal(object):
         self.setup_ae_assignment(note)
         self.invitation_builder.set_ae_recommendation_invitation(note, self.get_due_date(weeks = 1))
         self.setup_reviewer_assignment(note)
+        print('Finished setup author submission data.')
+        
 
     def setup_under_review_submission(self, note):
         self.invitation_builder.set_note_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
