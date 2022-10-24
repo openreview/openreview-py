@@ -1752,7 +1752,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1863,7 +1863,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1921,7 +1921,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -2000,7 +2000,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']

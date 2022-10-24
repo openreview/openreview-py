@@ -273,9 +273,6 @@ class Journal(object):
     def get_moderation_id(self, number=None):
         return self.__get_invitation_id(name='Moderation', number=number)
 
-    def get_submission_editable_id(self, number=None):
-        return self.__get_invitation_id(name='Submission_Editable', number=number)
-
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
         if forum_note:
@@ -694,9 +691,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 elif invitation.id == self.get_review_approval_id(number=note_number):
                     self.invitation_builder.set_note_review_approval_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                 
-                elif invitation.id == self.get_submission_editable_id(number=note_number):
-                    self.invitation_builder.set_note_submission_editable_invitation(submission)
-
                 elif invitation.id == self.get_desk_rejection_approval_id(number=note_number):
                     self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                 

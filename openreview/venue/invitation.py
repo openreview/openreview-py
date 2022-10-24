@@ -29,13 +29,14 @@ class InvitationBuilder(object):
 '''
 
     def save_invitation(self, invitation, replacement=None):
-        return self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
+        self.client.post_invitation_edit(invitations=self.venue.get_meta_invitation_id(),
             readers=[self.venue_id],
             writers=[self.venue_id],
             signatures=[self.venue_id],
             replacement=replacement,
             invitation=invitation
         )
+        return self.client.get_invitation(invitation.id)
 
     def expire_invitation(self, invitation_id):
         invitation = self.client.get_invitation(invitation_id)
@@ -493,7 +494,10 @@ class InvitationBuilder(object):
 
                     return self.save_invitation(recruitment_invitation, replacement=True)
                 else:
+                    print('current invitation', current_invitation.edit['note']['content'].get('reduced_load', {}))
+                    print('new invitation', reduced_load_dict)
                     if current_invitation.edit['note']['content'].get('reduced_load', {}) != reduced_load_dict:
+                        print('update reduce load')
                         return self.save_invitation(Invitation(
                             id = invitation_id,
                             edit = {
@@ -504,6 +508,9 @@ class InvitationBuilder(object):
                                 }
                             }
                         ))
+                    else:
+                        print('do not update reduce load')
+                        return current_invitation
 
     def set_bid_invitations(self):
 

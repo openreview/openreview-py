@@ -52,12 +52,8 @@ class Recruitment(object):
         role = committee_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
         
-        if 'invitation' in invitation:
-            invitation_id = invitation['invitation']['id']
-            hash_seed = invitation['invitation']['content']['hash_seed']['value']
-        else:
-            invitation_id = invitation['id']
-            hash_seed = invitation['content']['hash_seed']['value']
+        invitation_id = invitation.id
+        hash_seed = invitation.content['hash_seed']['value']
 
         if remind:
             committee_invited_group = self.client.get_group(committee_invited_id)
