@@ -1572,6 +1572,18 @@ class InvitationBuilder(object):
             process_content = process_content.replace("AUTHORS_NAME = ''", f"AUTHORS_NAME = '{self.venue.authors_name}'")
             process_content = process_content.replace("SUBMISSION_NAME = ''", f"SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
 
+        process_file = os.path.join(os.path.dirname(__file__), 'process/revision_start_process.py')
+        with open(process_file) as f:
+            revision_start_process = f.read()
+            revision_start_process = revision_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{self.venue.id}"')
+            revision_start_process = revision_start_process.replace("UNDER_SUBMISSION_ID = ''", f"UNDER_SUBMISSION_ID = '{self.venue.get_submission_venue_id()}'")
+            if only_accepted:
+                revision_start_process = revision_start_process.replace("SUBMISSION_NAME = ''", f"SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
+                revision_start_process = revision_start_process.replace("ACCEPTED = False", "ACCEPTED = True")
+                if self.venue.decision_stage:
+                    revision_start_process = revision_start_process.replace("DECISION_NAME = 'Decision'", f"DECISION_NAME = '{self.venue.decision_stage.name}'")
+
+
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -1580,7 +1592,7 @@ class InvitationBuilder(object):
             cdate=revision_cdate,
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
-                'script': self.cdate_invitation_process              
+                'script': revision_start_process
             }],
             content={
                 'revision_process_script': {

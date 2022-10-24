@@ -289,15 +289,15 @@ class Venue(object):
 
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
-            accepted_notes = []
-            notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort='number:asc', details='directReplies')
-            if len(notes) == 0:
+            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort='number:asc')
+            if len(accepted_notes) == 0:
+                accepted_notes = []
                 notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort='number:asc', details='directReplies')
-            for note in notes:
-                for reply in note.details['directReplies']:
-                    if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
-                        if 'Accept' in reply['content']['decision']['value']:
-                            accepted_notes.append(note)
+                for note in notes:
+                    for reply in note.details['directReplies']:
+                        if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
+                            if 'Accept' in reply['content']['decision']['value']:
+                                accepted_notes.append(note)
             return accepted_notes
         return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
 
@@ -591,6 +591,12 @@ Total Errors: {len(errors)}
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
 
+        def decision_to_venueid(decision):
+            if 'Accept' in decision:
+                return venue_id
+            else:
+                return f'{venue_id}/Rejected'
+
         if submission_readers:
             self.submission_stage.readers = submission_readers
 
@@ -607,10 +613,11 @@ Total Errors: {len(errors)}
             venue = self.short_name
             decision_option = decision_note['content']['decision']['value'] if decision_note else ''
             venue = tools.decision_to_venue(venue, decision_option)
+            venueid = decision_to_venueid(decision_option)
 
             content = {
                 'venueid': {
-                    'value': venue_id
+                    'value': venueid
                 },
                 'venue': {
                     'value': venue

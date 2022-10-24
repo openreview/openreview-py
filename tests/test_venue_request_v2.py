@@ -2249,13 +2249,13 @@ Best,
 
         # assert author identities of rejected paper are still hidden
         assert submissions[1].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference'
+        assert submissions[1].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
         assert submissions[1].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
         assert submissions[1].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission2/Authors']
 
         # assert author identities of paper with no decision are still hidden
         assert submissions[2].content['venue']['value'] == 'Submitted to TestVenue@OR\'2030V2'
-        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference'
+        assert submissions[2].content['venueid']['value'] == 'V2.cc/2030/Conference/Rejected'
         assert submissions[2].content['authors']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
         assert submissions[2].content['authorids']['readers'] == ['V2.cc/2030/Conference','V2.cc/2030/Conference/Submission3/Authors']
 
