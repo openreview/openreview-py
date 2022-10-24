@@ -301,6 +301,9 @@ class Venue(object):
             return accepted_notes
         return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
 
+    def expire_invitation(self, invitation_id):
+        self.invitation_builder.expire_invitation(invitation_id)
+
     def setup(self, program_chair_ids=[]):
     
         venue_id = self.venue_id
@@ -310,7 +313,7 @@ class Venue(object):
             self.group_builder.set_landing_page(g, groups[i-1] if i > 0 else None)
 
         venue_group = groups[-1]
-        print(venue_group)
+        # print(venue_group)
         self.group_builder.set_home_page(venue_group, groups[-2] if len(groups) > 1 else None)
 
         ## pc group
