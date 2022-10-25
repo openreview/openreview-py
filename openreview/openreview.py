@@ -1814,7 +1814,7 @@ class Client(object):
             'memberOf': group_id
         }
         if exclusion_inv:
-            expertise = {'exclusion': { 'invitation': exclusion_inv }}
+            expertise = { 'invitation': exclusion_inv }
             entityA['expertise'] = expertise
         
         # Build entityB from alternate_match_group or paper_invitation
@@ -1824,7 +1824,7 @@ class Client(object):
                 'memberOf': alternate_match_group
             }
             if exclusion_inv:
-                expertise = {'exclusion': { 'invitation': exclusion_inv }}
+                expertise = { 'invitation': exclusion_inv }
                 entityB['expertise'] = expertise
         else:
             entityB = {
