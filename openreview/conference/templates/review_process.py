@@ -57,4 +57,5 @@ def process(client, note, invitation):
         message = 'Your submission to ' + SHORT_PHRASE + ' has received a review. \n\n' + content
         client.post_message(subject=subject, recipients=recipients, message=message, ignoreRecipients=ignore_groups)
 
-    client.add_members_to_group(reviewers_submitted, note.signatures[0])
+    if ADD_SUBMITED:
+        client.add_members_to_group(reviewers_submitted, note.signatures[0])
