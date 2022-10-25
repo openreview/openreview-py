@@ -134,9 +134,9 @@ var main = function() {
     var sacByAc = {};
     var acsBySac = {};
 
-    sacEdges.forEach(function(edge) {
-      var ac = edge.head;
-      var sac = edge.tail;
+    (sacEdges.groupedEdges || []).forEach(function(edge) {
+      var ac = edge.values[0].head;
+      var sac = edge.values[0].tail;
       sacByAc[ac] = sac;
       if (!acsBySac[sac]) {
         acsBySac[sac] = [];
@@ -270,11 +270,13 @@ var main = function() {
 
 var getSACEdges = function() {
   if (SENIOR_AREA_CHAIRS_ID) {
-    return Webfield.getAll('/edges', {
-      invitation: SAC_ASSIGNMENT_INVITATION
+    return Webfield.get('/edges', {
+      invitation: SAC_ASSIGNMENT_INVITATION,
+      groupBy: 'head,tail',
+      select: 'head,tail'
     });
   }
-  return $.Deferred().resolve([]);
+  return $.Deferred().resolve({});
 }
 
 // Ajax functions
@@ -556,7 +558,7 @@ var getBidCounts = function(bidInvitationGroup) {
     return $.Deferred().resolve({});
   }
 
-  return Webfield.getAll('/edges', {
+  return Webfield.get('/edges', {
     invitation: bidInvitationGroup + '/-/' + BID_NAME,
     groupBy: 'tail',
     select: 'count'
@@ -576,15 +578,17 @@ var getAreaChairRecommendationCounts = function() {
     return $.Deferred().resolve({});
   }
 
-  // Can't perform a groupBy query on signatures, so we have to get the full list
-  return Webfield.getAll('/edges', {
+  return Webfield.get('/edges', {
     invitation: REVIEWERS_ID + '/-/' + RECOMMENDATION_NAME,
-  }).then(function(edges) {
-    if (!edges || !edges.length) {
+    groupBy: 'id',
+    select: 'signatures'
+  }).then(function(response) {
+    var groupedEdges = response.groupedEdges
+    if (!groupedEdges || !groupedEdges.length) {
       return {};
     }
-    return edges.reduce(function(profileMap, edge) {
-      var acId = edge.signatures[0];
+    return groupedEdges.reduce(function(profileMap, edge) {
+      var acId = edge.values[0].signatures[0];
       if (!profileMap[acId]) {
         profileMap[acId] = 0
       }
