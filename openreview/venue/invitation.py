@@ -462,38 +462,44 @@ class InvitationBuilder(object):
                     process_content = process_content.replace("AREA_CHAIR_NAME = ''", f"ACTION_EDITOR_NAME = '{venue.reviewers_name}'")
                     process_content = process_content.replace("AREA_CHAIRS_ACCEPTED_ID = ''", "AREA_CHAIRS_ACCEPTED_ID = '" + venue.get_reviewers_id() + "'")
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
-                webfield_content = webfield_reader.read()
-                webfield_content = webfield_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(venue.get_homepage_options()) + ";")
-                webfield_content = webfield_content.replace("var ROLE_NAME = '';", "var ROLE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "';")
-                if reduced_load:
-                    webfield_content = webfield_content.replace("var USE_REDUCED_LOAD = false;", "var USE_REDUCED_LOAD = true;")
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
+            webfield_content = webfield_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + venue_id + "';")
+            webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(venue.get_homepage_options()) + ";")
+            webfield_content = webfield_content.replace("var ROLE_NAME = '';", "var ROLE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "';")
+            if reduced_load:
+                webfield_content = webfield_content.replace("var USE_REDUCED_LOAD = false;", "var USE_REDUCED_LOAD = true;")
 
-                recruitment_invitation = Invitation(
-                    id = invitation_id,
-                    invitees = ['everyone'],
-                    signatures = [venue.id],
-                    readers = ['everyone'],
-                    writers = [venue.id],
-                    content={
-                        'hash_seed': {
-                            'value': '1234'
-                        }
-                    },
-                    edit = {
-                        'signatures': ['(anonymous)'],
-                        'readers': [venue.id],
-                        'note' : {
-                            'signatures':['${3/signatures}'],
-                            'readers': [venue.id],
-                            'writers': [venue.id],
-                            'content': content
-                        }
-                    },
-                    process = process_content,
-                    web = webfield_content
-                )
+        with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_pre_process.py')) as process_reader:
+            pre_process_content = process_reader.read()
+            # pre_process_content = pre_process_content.replace("REVIEWERS_PREFIX = ''", "REVIEWERS_PREFIX = '" + venue.get_reviewers_id 'Reviewers'), number='.*') + "'")
+            pre_process_content = pre_process_content.replace("CHECK_DECLINE = False", "CHECK_DECLINE = True")
+            pre_process_content = pre_process_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + venue.get_committee_id_invited(venue.reviewers_name) + "'")
+
+        recruitment_invitation = Invitation(
+            id = invitation_id,
+            invitees = ['everyone'],
+            signatures = [venue.id],
+            readers = ['everyone'],
+            writers = [venue.id],
+            content={
+                'hash_seed': {
+                    'value': '1234'
+                }
+            },
+            edit = {
+                'signatures': ['(anonymous)'],
+                'readers': [venue.id],
+                'note' : {
+                    'signatures':['${3/signatures}'],
+                    'readers': [venue.id],
+                    'writers': [venue.id],
+                    'content': content
+                }
+            },
+            process = process_content,
+            web = webfield_content
+        )
 
         return self.save_invitation(recruitment_invitation, replacement=True)
 
