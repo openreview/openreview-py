@@ -289,20 +289,34 @@ class Venue(object):
 
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
-            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort='number:asc')
+            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort)
             if len(accepted_notes) == 0:
                 accepted_notes = []
-                notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort='number:asc', details='directReplies')
+                notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort=sort, details='directReplies')
                 for note in notes:
                     for reply in note.details['directReplies']:
                         if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
                             if 'Accept' in reply['content']['decision']['value']:
                                 accepted_notes.append(note)
             return accepted_notes
-        return self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
+        else:
+            notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
+            if len(notes) == 0:
+                notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
+                rejected = self.client.get_all_notes(content={ 'venueid': f'{self.venue_id}/Rejected'}, sort=sort, details=details)
+                if rejected:
+                    notes.extend(rejected)
+            return notes
 
+    #use to expire revision invitations from request form
     def expire_invitation(self, invitation_id):
-        self.invitation_builder.expire_invitation(invitation_id)
+
+        invitation_name = invitation_id.split('/-/')[-1]
+
+        notes = self.get_submissions()
+        for note in notes:
+            invitation = f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{invitation_name}'
+            self.invitation_builder.expire_invitation(invitation)
 
     def setup(self, program_chair_ids=[]):
     
@@ -437,8 +451,9 @@ class Venue(object):
                         readers = self.submission_stage.get_readers(self, submission.number)
                     )
                 )            
-        ## Release the submissions to specified readers
-        openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
+        ## Release the submissions to specified readers if post decision has not been run
+        if not self.submission_stage.papers_released or not self.submission_stage.author_names_revealed:
+            openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
              
         ## Create revision invitation if there is a second deadline?
         ## Create withdraw and desk reject invitations
@@ -546,7 +561,6 @@ class Venue(object):
 
         with ThreadPoolExecutor(max_workers=min(6, cpu_count() - 1)) as executor:
             for _decision in decisions_data:
-                print(_decision)
                 _future = executor.submit(post_decision, _decision)
                 futures.append(_future)
                 futures_param_mapping[_future] = str(_decision)

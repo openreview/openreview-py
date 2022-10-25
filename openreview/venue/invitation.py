@@ -38,12 +38,14 @@ class InvitationBuilder(object):
         )
 
     def expire_invitation(self, invitation_id):
-        invitation = self.client.get_invitation(invitation_id)
-        self.save_invitation(invitation=Invitation(id=invitation.id,
-                expdate=tools.datetime_millis(datetime.datetime.utcnow()),
-                signatures=[self.venue_id]
+        invitation = tools.get_invitation(self.client, id = invitation_id)
+
+        if invitation:
+            self.save_invitation(invitation=Invitation(id=invitation.id,
+                    expdate=tools.datetime_millis(datetime.datetime.utcnow()),
+                    signatures=[self.venue_id]
+                )
             )
-        )     
 
     def get_process_content(self, file_path):
         process = None
@@ -1621,7 +1623,7 @@ class InvitationBuilder(object):
                 },
                 'invitation': {
                     'id': self.venue.get_invitation_id(revision_stage.name, '${2/content/noteNumber/value}'),
-                    'signatures': ['~Super_User1' if only_accepted else venue_id],
+                    'signatures': [venue_id],
                     'readers': ['everyone'],
                     'writers': [venue_id],
                     'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],

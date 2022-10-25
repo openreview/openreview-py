@@ -37,5 +37,10 @@ def process(client, invitation):
                             notes.append(note)
     else:
         notes = client.get_all_notes(content= { 'venueid': UNDER_SUBMISSION_ID }, sort='number:asc')
+        if len(notes) == 0:
+            notes = client.get_all_notes(content={ 'venueid': VENUE_ID}, sort='number:asc')
+            rejected = client.get_all_notes(content={ 'venueid': f'{VENUE_ID}/Rejected'}, sort='number:as')
+            if rejected:
+                notes.extend(rejected)
     
     invitations = openreview.tools.concurrent_requests(post_invitation, notes, desc='invitation_start_process')  
