@@ -245,7 +245,7 @@ class TestJournalMatching():
         ## Deploy assignments                
         journal.set_assignments(assignment_title='matching-1234')
 
-        assignments = openreview_client.get_grouped_edges(invitation='CARP/Action_Editors/-/Assignment', groupBy='id')
+        assignments = openreview_client.get_grouped_edges(invitation='CARP/Action_Editors/-/Assignment', groupby='head')
         assert len(assignments) == 3
 
         helpers.await_queue_edit(openreview_client, edit_id=assignments[0]['values'][0]['id'])
@@ -323,10 +323,13 @@ class TestJournalMatching():
         ## Deploy assignments                
         journal.set_assignments(assignment_title='matching-123456')
 
-        assignments = openreview_client.get_grouped_edges(invitation='CARP/Action_Editors/-/Assignment', groupBy='id')
+        assignments = openreview_client.get_grouped_edges(invitation='CARP/Action_Editors/-/Assignment', groupby='head')
         assert len(assignments) == 4
 
-        helpers.await_queue_edit(openreview_client, edit_id=assignments[-1]['values'][0]['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[0]['values'][0]['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[1]['values'][0]['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[2]['values'][0]['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=assignments[3]['values'][0]['id'])
 
         ### Setup matching again
         journal.setup_ae_matching(label='1234567')
