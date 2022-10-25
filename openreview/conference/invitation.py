@@ -886,24 +886,24 @@ class ReviewInvitation(openreview.Invitation):
             if field in content:
                 del content[field]
 
-        process_file = review_stage.process_path if review_stage.process_path else os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')
+        process_file = review_stage.process_path if review_stage.process_path else os.path.join(os.path.dirname(__file__), 'templates/review_process.py')
         with open(process_file) as f:
             file_content = f.read()
 
-            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
-            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
-            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.reviewers_name + "';")
-            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
-            file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + ('Review' if 'Official' in review_stage.name else review_stage.name) + "';")
-            file_content = file_content.replace("var ADD_SUBMITED = false;", "var ADD_SUBMITED = true;")
+            file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+            file_content = file_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}"')
+            file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
+            file_content = file_content.replace("REVIEWERS_NAME = ''", "REVIEWERS_NAME = '" + conference.reviewers_name + "'")
+            file_content = file_content.replace("AREA_CHAIRS_NAME = ''", "AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "'")
+            file_content = file_content.replace("OFFICIAL_REVIEW_NAME = ''", "OFFICIAL_REVIEW_NAME = '" + ('Review' if 'Official' in review_stage.name else review_stage.name) + "'")
+            file_content = file_content.replace("ADD_SUBMITED = False", "ADD_SUBMITED = True")
 
 
             if conference.use_area_chairs:
-                file_content = file_content.replace("var USE_AREA_CHAIRS = false;", "var USE_AREA_CHAIRS = true;")
+                file_content = file_content.replace("USE_AREA_CHAIRS = False", "USE_AREA_CHAIRS = True")
 
             if review_stage.email_pcs:
-                file_content = file_content.replace("var PROGRAM_CHAIRS_ID = '';", "var PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "';")
+                file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", "PROGRAM_CHAIRS_ID = '" + conference.get_program_chairs_id() + "'")
 
 
             super(ReviewInvitation, self).__init__(id = conference.get_invitation_id(review_stage.name),
@@ -977,16 +977,16 @@ class EthicsReviewInvitation(openreview.Invitation):
             if field in content:
                 del content[field]
 
-        process_file = os.path.join(os.path.dirname(__file__), 'templates/reviewProcess.js')
+        process_file = os.path.join(os.path.dirname(__file__), 'templates/review_process.py')
         with open(process_file) as f:
             file_content = f.read()
 
-            file_content = file_content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.id + "';")
-            file_content = file_content.replace("var SHORT_PHRASE = '';", f'var SHORT_PHRASE = "{conference.get_short_name()}";')
-            file_content = file_content.replace("var AUTHORS_NAME = '';", "var AUTHORS_NAME = '" + conference.authors_name + "';")
-            file_content = file_content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + conference.ethics_reviewers_name + "';")
-            file_content = file_content.replace("var AREA_CHAIRS_NAME = '';", "var AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "';")
-            file_content = file_content.replace("var OFFICIAL_REVIEW_NAME = '';", "var OFFICIAL_REVIEW_NAME = '" + ethics_review_stage.name + "';")
+            file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.id + "'")
+            file_content = file_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}"')
+            file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
+            file_content = file_content.replace("REVIEWERS_NAME = ''", "REVIEWERS_NAME = '" + conference.ethics_reviewers_name + "'")
+            file_content = file_content.replace("AREA_CHAIRS_NAME = ''", "AREA_CHAIRS_NAME = '" + conference.area_chairs_name + "'")
+            file_content = file_content.replace("OFFICIAL_REVIEW_NAME = ''", "OFFICIAL_REVIEW_NAME = '" + ethics_review_stage.name + "'")
 
             super(EthicsReviewInvitation, self).__init__(id = conference.get_invitation_id(ethics_review_stage.name),
                 cdate = tools.datetime_millis(ethics_review_stage.start_date),
