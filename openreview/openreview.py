@@ -1823,6 +1823,9 @@ class Client(object):
                 'type': 'Group',
                 'memberOf': alternate_match_group
             }
+            if exclusion_inv:
+                expertise = {'exclusion': { 'invitation': exclusion_inv }}
+                entityB['expertise'] = expertise
         else:
             entityB = {
                 'type': 'Note',
