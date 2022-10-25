@@ -18,8 +18,7 @@ def process(client, note, invitation):
     AUTHORS_ID = CONFERENCE_ID + '/Paper' + str(forum.number) + '/' + AUTHORS_NAME
     REVIEWERS_ID = CONFERENCE_ID + '/Paper' + str(forum.number)  + '/' + REVIEWERS_NAME
     AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + str(forum.number) + '/' + AREA_CHAIRS_NAME
-    #ignore_groups = note.nonreaders if note.nonreaders else []
-    ignore_groups = []
+    ignore_groups = note.nonreaders if note.nonreaders else []
 
     content = 'To view the ' + review_name + ', click here: https://openreview.net/forum?id=' + note.forum + '&noteId=' + note.id
 
@@ -29,7 +28,7 @@ def process(client, note, invitation):
         message = 'We have received a review on a submission to ' + SHORT_PHRASE + '.\n\n' + content
         client.post_message(subject=subject, recipients=recipients, message=message, ignoreRecipients=ignore_groups)
 
-    recipients = note.signatures,
+    recipients = note.signatures
     subject = '[' + SHORT_PHRASE + '] Your ' + review_name + ' has been received on your assigned Paper number: ' + str(forum.number)  + ', Paper title: "' + forum.content['title'] + '"'
     message = 'We have received your ' + review_name + ' on a submission to ' + SHORT_PHRASE + '.\n\nPaper number: ' + str(forum.number) + '\n\nPaper title: ' + forum.content['title'] + '\n\n' + content
     client.post_message(subject=subject, recipients=recipients, message=message)
@@ -46,9 +45,9 @@ def process(client, note, invitation):
         subject = '[' + SHORT_PHRASE + '] ' + capital_review_name + ' posted to your assigned Paper number: ' + str(forum.number) + ', Paper title: "' + forum.content['title'] + '"'
         message = 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + str(forum.number) + '\n\nPaper title: ' + forum.content['title'] + '\n\n' + content
         client.post_message(subject=subject, recipients=recipients, message=message, ignoreRecipients=ignore_groups)
-    elif reviewers_submitted in note.readers.includes(reviewers_submitted):
+    elif reviewers_submitted in reviewers_submitted in note.readers:
         recipients = [reviewers_submitted]
-        subject = '[' + SHORT_PHRASE + '] ' + capital_review_name + ' posted to your assigned Paper number: ' + str(forum.number) + ', Paper title: "' + forum.content['title'] + '"',
+        subject = '[' + SHORT_PHRASE + '] ' + capital_review_name + ' posted to your assigned Paper number: ' + str(forum.number) + ', Paper title: "' + forum.content['title'] + '"'
         message = 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + str(forum.number) + '\n\nPaper title: ' + forum.content['title'] + '\n\n' + content
         client.post_message(subject=subject, recipients=recipients, message=message, ignoreRecipients=ignore_groups)
 
