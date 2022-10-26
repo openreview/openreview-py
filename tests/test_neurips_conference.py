@@ -311,8 +311,8 @@ If you would like to change your decision, please follow the link in the previou
         now = datetime.datetime.utcnow()
         conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score']))
 
-        edges=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
-        assert len(edges) == 6
+        edges=pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
+        assert edges == 6
 
         invitation=pc_client.get_invitation('NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment_Configuration')
         assert invitation
@@ -322,8 +322,8 @@ If you would like to change your decision, please follow the link in the previou
         sac_client=openreview.Client(username='sac1@google.com', password='1234')
         assert sac_client.get_group(id='NeurIPS.cc/2021/Conference/Area_Chairs')
 
-        edges=sac_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score', tail='~SeniorArea_GoogleChair1')
-        assert len(edges) == 3
+        edges=sac_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score', tail='~SeniorArea_GoogleChair1')
+        assert edges == 3
 
         tasks_url = 'http://localhost:3030/group?id=NeurIPS.cc/2021/Conference/Senior_Area_Chairs#senior-areachair-tasks'
         request_page(selenium, tasks_url, sac_client.token, by=By.LINK_TEXT, wait_for_element='Senior Area Chair Bid')
@@ -1062,8 +1062,8 @@ If you would like to change your decision, please follow the link in the previou
 
         conference.setup_matching(committee_id=conference.get_area_chairs_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
         
-        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
-        assert len(conflicts) == 3
+        conflicts = client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
+        assert conflicts == 3
 
         ## Paper 4 conflicts
         conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
@@ -1072,8 +1072,8 @@ If you would like to change your decision, please follow the link in the previou
 
         conference.set_matching_alternate_conflicts(committee_id=conference.get_area_chairs_id(), source_committee_id=conference.get_senior_area_chairs_id(), source_assignment_title='sac-matching', conflict_label='SAC Conflict')
         
-        conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
-        assert len(conflicts) == 13
+        conflicts = client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict')
+        assert conflicts == 13
 
         conflicts = client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Conflict', head=submissions[1].id)
         assert len(conflicts) == 3
@@ -1098,8 +1098,8 @@ If you would like to change your decision, please follow the link in the previou
         conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True))
         conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True))
 
-        assert len(client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers')) == 1
-        ac_quotas=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Custom_Max_Papers')
+        assert client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers') == 1
+        ac_quotas=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Custom_Max_Papers', head='NeurIPS.cc/2021/Conference/Area_Chairs')
         assert len(ac_quotas) == 1
         assert ac_quotas[0].weight == 3
         assert ac_quotas[0].head == 'NeurIPS.cc/2021/Conference/Area_Chairs'
@@ -1220,7 +1220,7 @@ If you would like to change your decision, please follow the link in the previou
         assert ['~Area_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Area_Chairs').members
         assert ['~Area_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Area_Chairs').members
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment') == 5
 
         assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
         assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper4/Senior_Area_Chairs').members
@@ -1228,7 +1228,7 @@ If you would like to change your decision, please follow the link in the previou
         assert ['~SeniorArea_NeurIPSChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper2/Senior_Area_Chairs').members
         assert ['~SeniorArea_NeurIPSChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper1/Senior_Area_Chairs').members
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment') == 3
 
         ## Check if the SAC can edit the AC assignments
         post_submission_note=pc_client.post_note(openreview.Note(
@@ -1310,8 +1310,8 @@ If you would like to change your decision, please follow the link in the previou
         pc_client=openreview.Client(username='pc@neurips.cc', password='1234')
         submissions=conference.get_submissions(sort='tmdate')
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment') == 3
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment') == 5
 
         ac_assignment = pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment', head=submissions[0].id)[0]
 
@@ -1321,8 +1321,8 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 4
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment') == 3
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment') == 4
 
         assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
@@ -1333,8 +1333,8 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment') == 3
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment') == 5
 
         assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
@@ -1348,8 +1348,8 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 2
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment') == 2
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment') == 5
 
         assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert [] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
@@ -1363,8 +1363,8 @@ If you would like to change your decision, please follow the link in the previou
 
         helpers.await_queue()
 
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment')) == 3
-        assert len(pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment')) == 5
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Assignment') == 3
+        assert pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Assignment') == 5
 
         assert ['~Area_IBMChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Area_Chairs').members
         assert ['~SeniorArea_GoogleChair1'] == pc_client.get_group('NeurIPS.cc/2021/Conference/Paper5/Senior_Area_Chairs').members
@@ -1933,8 +1933,8 @@ OpenReview Team'''
         assert '~Reviewer_UMass1' in paper_reviewers
         assert '~Reviewer_MIT1' in paper_reviewers
 
-        assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment')
-        assert len(assignments) == 11
+        assignments=pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment')
+        assert assignments == 11
 
         assignments=pc_client.get_edges(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Assignment', tail='~Reviewer_UMass1')
         assert len(assignments) == 4

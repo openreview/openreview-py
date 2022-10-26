@@ -226,29 +226,29 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Aggregate_Score')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment')
 
-        bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
+        bids = pc_client.get_edges_count(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_reviewers_id()))
+        bids = pc_client.get_edges_count(invitation = conference.get_bid_id(conference.get_reviewers_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        reviewer_custom_loads = pc_client.get_edges(
+        reviewer_custom_loads = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
-        ac_custom_loads = pc_client.get_edges(
+        ac_custom_loads = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
-        reviewer_conflicts = pc_client.get_edges(
+        reviewer_conflicts = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
-        assert 1 == len(reviewer_conflicts)
+        assert 1 == reviewer_conflicts
 
-        ac_conflicts = pc_client.get_edges(
+        ac_conflicts = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
-        assert 2 == len(ac_conflicts)
+        assert 2 == ac_conflicts
 
         ac1_conflicts = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict',
@@ -310,29 +310,29 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Assignment')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
 
-        bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
+        bids = pc_client.get_edges_count(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_reviewers_id()))
+        bids = pc_client.get_edges_count(invitation = conference.get_bid_id(conference.get_reviewers_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        reviewer_custom_loads = pc_client.get_edges(
+        reviewer_custom_loads = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
-        ac_custom_loads = pc_client.get_edges(
+        ac_custom_loads = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
-        reviewer_conflicts = pc_client.get_edges(
+        reviewer_conflicts = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
-        assert 1 == len(reviewer_conflicts)
+        assert 1 == reviewer_conflicts
 
-        ac_conflicts = pc_client.get_edges(
+        ac_conflicts = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
-        assert 2 == len(ac_conflicts)
+        assert 2 == ac_conflicts
 
         ac1_conflicts = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_CMUOne1')
@@ -356,13 +356,13 @@ class TestMatchingWithAnonIds():
         assert submissions
         assert 3 == len(submissions)
 
-        reviewer_tpms_scores = pc_client.get_edges(
+        reviewer_tpms_scores = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score')
-        assert 9 == len(reviewer_tpms_scores)
+        assert 9 == reviewer_tpms_scores
 
-        ac_tpms_scores = pc_client.get_edges(
+        ac_tpms_scores = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
-        assert 6 == len(ac_tpms_scores)
+        assert 6 == ac_tpms_scores
 
         r3_s0_tpms_scores = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
@@ -455,33 +455,33 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
 
-        bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
+        bids = pc_client.get_edges_count(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_reviewers_id()))
+        bids = pc_client.get_edges_count(invitation = conference.get_bid_id(conference.get_reviewers_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        recommendations = pc_client.get_edges(invitation = conference.get_recommendation_id())
+        recommendations = pc_client.get_edges_count(invitation = conference.get_recommendation_id())
         assert recommendations
-        assert 3 == len(recommendations)
+        assert 3 == recommendations
 
-        reviewer_custom_loads = pc_client.get_edges(
+        reviewer_custom_loads = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
-        ac_custom_loads = pc_client.get_edges(
+        ac_custom_loads = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
-        reviewer_conflicts = pc_client.get_edges(
+        reviewer_conflicts = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
-        assert 1 == len(reviewer_conflicts)
+        assert 1 == reviewer_conflicts
 
-        ac_conflicts = pc_client.get_edges(
+        ac_conflicts = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
-        assert 2 == len(ac_conflicts)
+        assert 2 == ac_conflicts
 
         ac1_conflicts = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict', tail='~AreaChair_CMUOne1')
@@ -505,13 +505,13 @@ class TestMatchingWithAnonIds():
         assert submissions
         assert 3 == len(submissions)
 
-        reviewer_tpms_scores = pc_client.get_edges(
+        reviewer_tpms_scores = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score')
-        assert 9 == len(reviewer_tpms_scores)
+        assert 9 == reviewer_tpms_scores
 
-        ac_tpms_scores = pc_client.get_edges(
+        ac_tpms_scores = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
-        assert 6 == len(ac_tpms_scores)
+        assert 6 == ac_tpms_scores
 
         r3_s0_tpms_scores = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
@@ -582,33 +582,33 @@ class TestMatchingWithAnonIds():
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert pc_client.get_invitation(id='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
 
-        bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
+        bids = pc_client.get_edges_count(invitation = conference.get_bid_id(conference.get_area_chairs_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        bids = pc_client.get_edges(invitation = conference.get_bid_id(conference.get_reviewers_id()))
+        bids = pc_client.get_edges_count(invitation = conference.get_bid_id(conference.get_reviewers_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        recommendations = pc_client.get_edges(invitation = conference.get_recommendation_id())
+        recommendations = pc_client.get_edges_count(invitation = conference.get_recommendation_id())
         assert recommendations
-        assert 3 == len(recommendations)
+        assert 3 == recommendations
 
-        reviewer_custom_loads = pc_client.get_edges(
+        reviewer_custom_loads = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
-        ac_custom_loads = pc_client.get_edges(
+        ac_custom_loads = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
-        reviewer_conflicts = pc_client.get_edges(
+        reviewer_conflicts = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Conflict')
-        assert 1 == len(reviewer_conflicts)
+        assert 1 == reviewer_conflicts
 
-        ac_conflicts = pc_client.get_edges(
+        ac_conflicts = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict')
-        assert 2 == len(ac_conflicts)
+        assert 2 == ac_conflicts
 
         ac1_conflicts = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Conflict',
@@ -635,13 +635,13 @@ class TestMatchingWithAnonIds():
         assert submissions
         assert 3 == len(submissions)
 
-        reviewer_tpms_scores = pc_client.get_edges(
+        reviewer_tpms_scores = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score')
-        assert 9 == len(reviewer_tpms_scores)
+        assert 9 == reviewer_tpms_scores
 
-        ac_tpms_scores = pc_client.get_edges(
+        ac_tpms_scores = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/TPMS_Score')
-        assert 6 == len(ac_tpms_scores)
+        assert 6 == ac_tpms_scores
 
         r3_s0_tpms_scores = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/TPMS_Score',
@@ -667,13 +667,13 @@ class TestMatchingWithAnonIds():
         assert 1 == len(r3_s2_tpms_scores)
         assert r3_s2_tpms_scores[0].weight == 0.51
 
-        reviewer_subject_area_scores = pc_client.get_edges(
+        reviewer_subject_area_scores = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Subject_Areas_Score')
         assert not reviewer_subject_area_scores
 
-        ac_subject_areas_scores = pc_client.get_edges(
+        ac_subject_areas_scores = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score')
-        assert 3 == len(ac_subject_areas_scores)
+        assert 3 == ac_subject_areas_scores
 
         ac1_s0_subject_scores = pc_client.get_edges(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Subject_Areas_Score',
@@ -705,14 +705,14 @@ class TestMatchingWithAnonIds():
 
         blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching'
         )
-        assert 0 == len(edges)
+        assert 0 == edges
 
-        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
-        assert len(edges) == 0
+        edges = pc_client.get_edges_count(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert edges == 0
 
         #Reviewer assignments
         pc_client.post_edge(openreview.Edge(invitation = conference.get_paper_assignment_id(conference.get_reviewers_id()),
@@ -781,11 +781,11 @@ class TestMatchingWithAnonIds():
             weight = 0.98
         ))
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching'
         )
-        assert 6 == len(edges)
+        assert 6 == edges
 
         conference.set_assignments(assignment_title='rev-matching', committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
@@ -832,8 +832,8 @@ class TestMatchingWithAnonIds():
         assert 'r3@fb.com' in anon_members
         assert '~Reviewer_MITOne1' in anon_members
 
-        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
-        assert len(edges) == 6
+        edges = pc_client.get_edges_count(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert edges == 6
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='~Reviewer_MITOne1')
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@google.com')
@@ -883,11 +883,11 @@ class TestMatchingWithAnonIds():
             weight = 0.98
         ))
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Proposed_Assignment',
             label='rev-matching-new'
         )
-        assert 3 == len(edges)
+        assert 3 == edges
 
         conference.set_assignments(assignment_title='rev-matching-new', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
@@ -917,8 +917,8 @@ class TestMatchingWithAnonIds():
         assert '~Reviewer_MITOne1' in anon_members
         assert 'r3@google.com' in anon_members
 
-        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
-        assert len(edges) == 3
+        edges = pc_client.get_edges_count(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert edges == 3
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@fb.com')
 
@@ -978,8 +978,8 @@ class TestMatchingWithAnonIds():
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
         assert len(anon_groups) == 3
 
-        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
-        assert len(edges) == 6
+        edges = pc_client.get_edges_count(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert edges == 6
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@fb.com')
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='~Reviewer_MITOne1')
@@ -1018,8 +1018,8 @@ class TestMatchingWithAnonIds():
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number))
         assert len(anon_groups) == 3
 
-        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
-        assert len(edges) == 7
+        edges = pc_client.get_edges_count(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert edges == 7
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='r3@fb.com')
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[0].id, tail='~Reviewer_MITOne1')
@@ -1056,7 +1056,7 @@ class TestMatchingWithAnonIds():
         assert ['r3@google.com'] == revs_paper2.members
 
         edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
-        assert len(edges) == 1
+        assert edges == 1
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
@@ -1079,8 +1079,8 @@ class TestMatchingWithAnonIds():
         anon_groups = pc_client.get_groups(regex=conference.get_id()+'/Paper{x}/Program_Committee_'.format(x=blinded_notes[2].number), signatory='r3@google.com')
         assert len(anon_groups) == 1
 
-        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
-        assert len(edges) == 1
+        edges = pc_client.get_edges_count(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert edges == 1
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
@@ -1128,8 +1128,8 @@ class TestMatchingWithAnonIds():
         with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assignments when there are reviews posted.'):
             conference.set_assignments(assignment_title='rev-matching-emergency-4', overwrite=True, committee_id='auai.org/UAI/2021/Conference/Program_Committee')
 
-        edges = pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
-        assert len(edges) == 1
+        edges = pc_client.get_edges_count(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment')
+        assert edges == 1
 
         assert pc_client.get_edges(invitation='auai.org/UAI/2021/Conference/Program_Committee/-/Assignment', head=blinded_notes[2].id, tail='r3@google.com')
 
@@ -1182,11 +1182,11 @@ class TestMatchingWithAnonIds():
         conference.set_area_chairs(['ac2@cmu.edu', 'ac2@umass.edu'])
         blinded_notes = list(conference.get_submissions(sort='tmdate'))
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             label='ac-matching'
         )
-        assert 0 == len(edges)
+        assert 0 == edges
 
         #AC assignments
         pc_client.post_edge(openreview.Edge(invitation = 'auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
@@ -1222,11 +1222,11 @@ class TestMatchingWithAnonIds():
             weight = 0.87
         ))
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation='auai.org/UAI/2021/Conference/Senior_Program_Committee/-/Proposed_Assignment',
             label='ac-matching'
         )
-        assert 3 == len(edges)
+        assert 3 == edges
 
         conference.set_assignments(assignment_title='ac-matching', committee_id='auai.org/UAI/2021/Conference/Senior_Program_Committee')
 
