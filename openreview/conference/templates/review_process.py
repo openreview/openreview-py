@@ -45,7 +45,7 @@ def process(client, note, invitation):
         subject = '[' + SHORT_PHRASE + '] ' + capital_review_name + ' posted to your assigned Paper number: ' + str(forum.number) + ', Paper title: "' + forum.content['title'] + '"'
         message = 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + str(forum.number) + '\n\nPaper title: ' + forum.content['title'] + '\n\n' + content
         client.post_message(subject=subject, recipients=recipients, message=message, ignoreRecipients=ignore_groups)
-    elif reviewers_submitted in reviewers_submitted in note.readers:
+    elif reviewers_submitted in note.readers:
         recipients = [reviewers_submitted]
         subject = '[' + SHORT_PHRASE + '] ' + capital_review_name + ' posted to your assigned Paper number: ' + str(forum.number) + ', Paper title: "' + forum.content['title'] + '"'
         message = 'A submission to ' + SHORT_PHRASE + ', for which you are a reviewer, has received a review. \n\nPaper number: ' + str(forum.number) + '\n\nPaper title: ' + forum.content['title'] + '\n\n' + content
