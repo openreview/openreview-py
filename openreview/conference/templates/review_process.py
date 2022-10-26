@@ -19,7 +19,7 @@ def process(client, note, invitation):
     REVIEWERS_ID = CONFERENCE_ID + '/Paper' + str(forum.number)  + '/' + REVIEWERS_NAME
     AREA_CHAIRS_ID = CONFERENCE_ID + '/Paper' + str(forum.number) + '/' + AREA_CHAIRS_NAME
     ignore_groups = note.nonreaders if note.nonreaders else []
-    ignore_groups = ignore_groups.append(note.tauthor)
+    ignore_groups.append(note.tauthor)
 
     content = 'To view the ' + review_name + ', click here: https://openreview.net/forum?id=' + note.forum + '&noteId=' + note.id
 
