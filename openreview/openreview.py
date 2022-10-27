@@ -46,6 +46,7 @@ class Client(object):
         self.tags_url = self.baseurl + '/tags'
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
+        self.edges_count_url = self.baseurl + '/edges/count'
         self.edges_rename = self.baseurl + '/edges/rename'
         self.profiles_url = self.baseurl + '/profiles'
         self.profiles_search_url = self.baseurl + '/profiles/search'
@@ -1300,13 +1301,12 @@ class Client(object):
         params['head'] = head
         params['tail'] = tail
         params['label'] = label
-        params['limit'] = 1
-        params['offset'] = 0
 
-        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
+        response = requests.get(self.edges_count_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
+        count = response.json()['count']
 
-        return response.json()['count']
+        return count
 
     def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select='tail', limit=None, offset=None):
         '''
