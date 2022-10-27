@@ -1129,8 +1129,8 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
 
         scores_invitation = client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
-        affinity_scores = client.get_edges(invitation=scores_invitation.id)
-        assert len(affinity_scores) == 4
+        affinity_scores = client.get_edges_count(invitation=scores_invitation.id)
+        assert affinity_scores == 4
 
         ## Remove reviewer with no profile
         client.remove_members_from_group(reviewer_group, 'some_user@mail.com')
@@ -1162,8 +1162,8 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
 
         scores_invitation = client.get_invitation(conference.get_invitation_id('Affinity_Score', prefix=reviewer_group.id))
         assert scores_invitation
-        affinity_scores = client.get_edges(invitation=scores_invitation.id)
-        assert len(affinity_scores) == 4
+        affinity_scores = client.get_edges_count(invitation=scores_invitation.id)
+        assert affinity_scores == 4
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Paper Matching Setup Status' not in last_message['content']['text']

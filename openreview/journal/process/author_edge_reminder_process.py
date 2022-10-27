@@ -8,9 +8,9 @@ def process(client, invitation):
     now = datetime.datetime.utcnow()
     task = invitation.pretty_id()
 
-    edges = client.get_edges(invitation=journal.get_ae_recommendation_id(submission.number))
+    edges_count = client.get_edges_count(invitation=journal.get_ae_recommendation_id(submission.number))
 
-    if len(edges) >= 1:
+    if edges_count >= 1:
       return
 
     ## send email to authors
