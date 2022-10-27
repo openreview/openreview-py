@@ -493,7 +493,7 @@ class TestVenueRequest():
         assert error_string in last_comment.content['error']
         assert '0 users' in last_comment.content['invited']
 
-    def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_recruitment(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
 
         # Test Reviewer Recruitment
         # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(venue['request_form_note'].id), test_client.token, wait_for_element=f"note_{venue['request_form_note'].id}")
@@ -549,6 +549,20 @@ class TestVenueRequest():
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Recruitment Status' not in last_message['content']['text']
+
+        invalid_accept_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1].replace('user=reviewer_candidate2_v2%40mail.com', 'user=reviewer_candidate2_v1%40mail.com')
+        print(invalid_accept_url)
+        helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+
+        openreview_client.remove_members_from_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        error_message = selenium.find_element_by_class_name('important_message')
+        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
