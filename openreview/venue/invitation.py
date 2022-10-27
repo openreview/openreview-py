@@ -426,6 +426,7 @@ class InvitationBuilder(object):
 
         invitation_content = {
             'hash_seed': { 'value': '1234', 'readers': [ venue.venue_id ]},
+            'venue_id': { 'value': self.venue_id },
             'committee_name': { 'value': committee_name.replace('_', ' ')[:-1] },
             'committee_id': { 'value': venue.get_committee_id(committee_name) },
             'committee_invited_id': { 'value': venue.get_committee_id_invited(committee_name) },
@@ -434,10 +435,10 @@ class InvitationBuilder(object):
 
         if not options.get('allow_overlap_official_committee'):
             if committee_name == venue.reviewers_name and venue.use_area_chairs:
-                invitation_content['overlap_committee_name'] = { 'value': venue.area_chairs_name }
+                invitation_content['overlap_committee_name'] = { 'value': venue.area_chairs_name.replace('_', ' ')[:-1] }
                 invitation_content['overlap_committee_id'] = { 'value': venue.get_area_chairs_id() }
             elif committee_name == venue.area_chairs_name:
-                invitation_content['overlap_committee_name'] = { 'value': venue.reviewers_name }
+                invitation_content['overlap_committee_name'] = { 'value': venue.reviewers_name.replace('_', ' ')[:-1] }
                 invitation_content['overlap_committee_id'] = { 'value': venue.get_reviewers_id() }
         else:
                 invitation_content['overlap_committee_name'] = { 'delete': True }
