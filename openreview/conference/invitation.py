@@ -1890,6 +1890,7 @@ class InvitationBuilder(object):
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
         reduced_load = options.get('reduced_load_on_decline', None)
+        accept_template = options.get('accept_recruitment_template')
 
         if reduced_load and conference.use_recruitment_template:
             reply['content']['reduced_load'] = {
@@ -1924,6 +1925,10 @@ class InvitationBuilder(object):
                 post_content = post_content.replace("HASH_SEED = ''", "HASH_SEED = '" + options.get('hash_seed') + "'")
                 if reduced_load:
                     post_content = post_content.replace("REDUCED_LOAD_INVITATION_NAME = ''", "REDUCED_LOAD_INVITATION_NAME = 'Reduced_Load'")
+                if accept_template:
+                    email_template = accept_template
+                    email_template = email_template.replace('{{reviewer_name}}', '{REVIEWER_NAME}')
+                    post_content = post_content.replace("ACCEPT_EMAIL_TEMPLATE = ''", "ACCEPT_EMAIL_TEMPLATE = f'''" + email_template + "'''")
                 invitation = openreview.Invitation(id = invitation_id,
                     duedate = tools.datetime_millis(options.get('due_date', datetime.datetime.utcnow())),
                     readers = ['everyone'],
