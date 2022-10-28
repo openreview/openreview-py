@@ -1100,7 +1100,7 @@ class TestVenueRequest():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
-                'compute_conflicts': 'Yes',
+                'compute_conflicts': 'No',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': url
             },
@@ -1131,6 +1131,9 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         assert scores_invitation
         affinity_scores = client.get_edges_count(invitation=scores_invitation.id)
         assert affinity_scores == 4
+
+        assert not openreview.tools.get_invitation(client, f"{conference.get_id()}/Reviewers/-/Conflict")
+        assert client.get_edges_count(invitation=f"{conference.get_id()}/Reviewers/-/Conflict") == 0
 
         ## Remove reviewer with no profile
         client.remove_members_from_group(reviewer_group, 'some_user@mail.com')
@@ -1164,6 +1167,10 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert scores_invitation
         affinity_scores = client.get_edges_count(invitation=scores_invitation.id)
         assert affinity_scores == 4
+
+        assert openreview.tools.get_invitation(client, f"{conference.get_id()}/Reviewers/-/Conflict")
+        assert client.get_edges_count(invitation=f"{conference.get_id()}/Reviewers/-/Conflict") == 4
+
 
         last_message = client.get_messages(to='support@openreview.net')[-1]
         assert 'Paper Matching Setup Status' not in last_message['content']['text']
