@@ -40,9 +40,9 @@ def process(client, note, invitation):
                     message = ACCEPT_EMAIL_TEMPLATE.format(role=REVIEWER_NAME)
                 else:
                     message = '''Thank you for accepting the invitation to be a {role} for {venue}.
-    The {venue} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+The {venue} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
-    If you would like to change your decision, please click the Decline link in the previous invitation email.'''.format(role=REVIEWER_NAME, venue=SHORT_PHRASE)
+If you would like to change your decision, please click the Decline link in the previous invitation email.'''.format(role=REVIEWER_NAME, venue=SHORT_PHRASE)
 
                 client.post_message(subject, [user], message, parentGroup=REVIEWERS_ACCEPTED_ID)
 
