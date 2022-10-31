@@ -2152,12 +2152,26 @@ note: replies to this email will go to the AE, Joelle Pineau.
         ## Check pending review edges
         edges = joelle_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 2
-        print(edges)
     
-        assert edges[0]['id']['weight'] == 1
-        assert len(edges[0]['values']) == 3
-        assert edges[1]['id']['weight'] == 0
-        assert len(edges[1]['values']) == 1
+        if len(edges[0]['values']) == 3:
+            assert edges[0]['id']['weight'] == 1
+            assert edges[1]['id']['weight'] == 0
+            assert len(edges[1]['values']) == 1
+        else:
+            assert edges[0]['id']['weight'] == 0
+            assert len(edges[0]['values']) == 1
+            assert edges[1]['id']['weight'] == 1
+            assert len(edges[1]['values']) == 3
+
+        if len(edges[0]['values']) == 1:
+            assert edges[0]['id']['weight'] == 0
+            assert edges[1]['id']['weight'] == 1
+            assert len(edges[1]['values']) == 3            
+        else:
+            assert edges[0]['id']['weight'] == 1
+            assert len(edges[0]['values']) == 3
+            assert edges[1]['id']['weight'] == 0
+            assert len(edges[1]['values']) == 1
 
         ## Ask solicit review with a conflict
         Volunteer_to_Review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',

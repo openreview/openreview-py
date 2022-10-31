@@ -6,7 +6,7 @@ def process(client, note, invitation):
     request_form = client.get_note(note.forum)
     conference = openreview.helpers.get_conference(client, note.forum)
 
-    compute_conflicts=note.content.get('compute_conflicts')
+    compute_conflicts = note.content.get('compute_conflicts') == 'Yes'
 
     matching_group = note.content['matching_group']
     compute_affinity_scores = note.content.get('compute_affinity_scores') == 'Yes'
