@@ -319,7 +319,8 @@ class Venue(object):
         contact_info = '',
         reduced_load_on_decline = None,
         default_load= 0,
-        allow_overlap_official_committee = False):
+        allow_overlap_official_committee = False,
+        accept_recruitment_template=None):
 
         return self.recruitment.invite_committee(title,
             message,
