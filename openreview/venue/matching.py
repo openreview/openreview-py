@@ -41,6 +41,8 @@ class Matching(object):
         is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
         paper_number = '${{2/head}/number}' if is_assignment_invitation else None
 
+        assignment_or_proposed = edge_id.endswith('Assignment')
+
         paper_num_signatures = '${{1/head}/number}'
 
         edge_invitees = [venue_id, venue.support_user]
@@ -108,6 +110,13 @@ class Matching(object):
                 'withInvitation': venue.get_submission_id()
             }
         }
+        if assignment_or_proposed:
+            edge_head = {
+                'param': {
+                    'type': 'note',
+                    'withVenueid': venue.get_submission_venue_id()
+                }
+            }
         edge_weight = {
             'param': {
                 'minimum': -1

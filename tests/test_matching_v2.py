@@ -28,18 +28,20 @@ class TestMatching():
         venue_id = 'VenueV2.cc'
         venue = Venue(openreview_client, venue_id)
         venue.short_name = 'VV2 2022'
+        venue.website = 'www.venuev2.com'
+        venue.contact = 'pc_venue@mail.com'
         venue.use_area_chairs = True
         venue.area_chairs_name = 'Senior_Program_Committee'
         venue.area_chair_roles = ['Senior_Program_Committee']
         venue.reviewers_name = 'Program_Committee'
         venue.reviewer_roles = ['Program_Committee']
-        venue.setup(program_chair_ids=['pc1_venue@mail.com', 'pc3_venue@mail.com'])
 
         now = datetime.datetime.utcnow()
         venue.submission_stage = openreview.stages.SubmissionStage(
             due_date = now + datetime.timedelta(minutes = 40),
             double_blind=True, 
             readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS])
+        venue.setup(program_chair_ids=['pc1_venue@mail.com', 'pc3_venue@mail.com'])
         venue.create_submission_stage()
         assert openreview_client.get_invitation('VenueV2.cc/-/Submission')
 
