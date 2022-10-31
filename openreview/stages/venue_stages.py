@@ -389,8 +389,8 @@ class ReviewStage(object):
         email_pcs = False,
         additional_fields = {},
         remove_fields = [],
-        rating_field_name = None,
-        confidence_field_name = None,
+        rating_field_name = 'rating',
+        confidence_field_name = 'confidence',
         process_path = None
     ):
 
