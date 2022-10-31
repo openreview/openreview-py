@@ -47,13 +47,11 @@ class InvitationBuilder(object):
         }
 
     def set_invitations(self, assignment_delay):
-        self.set_meta_invitation()
         self.set_ae_recruitment_invitation()
         self.set_reviewer_recruitment_invitation()
         self.set_reviewer_responsibility_invitation()
         self.set_reviewer_report_invitation()
         self.set_submission_invitation()
-        self.set_submission_editable_invitation()
         self.set_review_approval_invitation()
         self.set_desk_rejection_approval_invitation()
         self.set_under_review_invitation()
@@ -213,11 +211,11 @@ class InvitationBuilder(object):
         self.client.post_invitation_edit(invitations=None,
             readers=[venue_id],
             writers=[venue_id],
-            signatures=[venue_id],
+            signatures=['~Super_User1'],
             invitation=Invitation(id=self.journal.get_meta_invitation_id(),
                 invitees=[venue_id],
                 readers=[venue_id],
-                signatures=[venue_id],
+                signatures=['~Super_User1'],
                 content={
                     'ae_reminder_script': {
                         'value': self.get_process_content('process/action_editor_reminder_process.py')
@@ -965,58 +963,6 @@ If you have questions please contact the Editors-In-Chief: tmlr-editors@jmlr.org
             invitation.edit['note']['content']['authors']['readers'] = author_submission_readers
 
         self.save_invitation(invitation)
-
-    def set_submission_editable_invitation(self):
-        venue_id = self.journal.venue_id
-        editors_in_chief_id = self.journal.get_editors_in_chief_id()
-
-        edit_content = {
-            'noteId': { 
-                'value': {
-                    'param': {
-                        'type': 'string' 
-                    }
-                }
-            },
-            'noteNumber': { 
-                'value': {
-                    'param': {
-                        'type': 'integer' 
-                    }
-                }
-            }
-        }        
-        
-        invitation = {
-            'id': self.journal.get_submission_editable_id(number='${2/content/noteNumber/value}'),
-            'invitees': [venue_id],
-            'noninvitees': [editors_in_chief_id],
-            'readers': [venue_id],
-            'writers': [venue_id],
-            'signatures': [venue_id],
-            'edit': {
-                'signatures': [venue_id ],
-                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${4/content/noteNumber/value}'), self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
-                'writers': [ venue_id ],
-                'note': {
-                    'id': '${4/content/noteId/value}',
-                    'writers': [ venue_id, self.journal.get_authors_id(number='${5/content/noteNumber/value}') ]
-                }
-            }
-        }
-
-        self.save_super_invitation(self.journal.get_submission_editable_id(), {}, edit_content, invitation)      
-
-    def set_note_submission_editable_invitation(self, note):
-        return self.client.post_invitation_edit(invitations=self.journal.get_submission_editable_id(),
-            content={ 
-                'noteId': { 'value': note.id }, 
-                'noteNumber': { 'value': note.number }
-            },
-            readers=[self.journal.venue_id],
-            writers=[self.journal.venue_id],
-            signatures=[self.journal.venue_id]
-        )    
 
     def set_ae_assignment(self, assignment_delay):
         venue_id = self.journal.venue_id

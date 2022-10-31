@@ -823,8 +823,21 @@ def replace_members_with_ids(client, group):
         raise openreview.OpenReviewException(f"Profile Not Found for {without_profile_ids}")
     group.members = updated_members
 
-    return client.post_group(group)
+    if getattr(client, 'post_group', None):
+        return client.post_group(group)
 
+    if getattr(client, 'post_group_edit', None):
+        client.post_group_edit(
+            invitation = group.domain + '/-/Edit',
+            readers = [group.domain],
+            writers = [group.domain],
+            signatures = [group.domain],
+            group = openreview.api.Group(
+                id = group.id, 
+                members = group.members
+            )
+        )
+        return client.get_group(group.id)
 
 def concurrent_get(client, get_function, **params):
     """
@@ -2076,3 +2089,17 @@ def export_committee(client, committee_id, file_name):
         csvwriter = csv.writer(outfile, delimiter=',')
         for profile in tqdm(profiles):
             s = csvwriter.writerow([profile.get_preferred_email(), profile.get_preferred_name(pretty=True)])
+
+def get_base_urls(client):
+
+    baseurl_v1 = 'http://localhost:3000'
+    baseurl_v2 = 'http://localhost:3001'
+
+    if 'https://devapi' in client.baseurl:
+        baseurl_v1 = 'https://devapi.openreview.net'
+        baseurl_v2 = 'https://devapi2.openreview.net'
+    if 'https://api' in client.baseurl:
+        baseurl_v1 = 'https://api.openreview.net'
+        baseurl_v2 = 'https://api2.openreview.net'
+
+    return [baseurl_v1, baseurl_v2] 

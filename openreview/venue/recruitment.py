@@ -26,44 +26,11 @@ class Recruitment(object):
 
         venue = self.venue
         venue_id = venue.venue_id
+        committee_id = self.venue.get_committee_id(committee_name)
+        committee_invited_id = self.venue.get_committee_id_invited(committee_name)
+        committee_declined_id = self.venue.get_committee_id_declined(committee_name)        
 
-        pc_group_id = venue.get_program_chairs_id()
-        committee_id = venue.get_committee_id(committee_name)
-        committee_invited_id = venue.get_committee_id_invited(committee_name)
-        committee_declined_id = venue.get_committee_id_declined(committee_name)
-
-        #set default load
-        # self.set_default_load(default_load, reviewers_name)
-
-        committee_group = tools.get_group(self.client, committee_id)
-        if not committee_group:
-            committee_group=self.client.post_group(Group(id=committee_id,
-                            readers=[venue_id, committee_id],
-                            writers=[venue_id, pc_group_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id, committee_id],
-                            members=[]
-                            ))
-
-        committee_declined_group = tools.get_group(self.client, committee_declined_id)
-        if not committee_declined_group:
-            committee_declined_group=self.client.post_group(Group(id=committee_declined_id,
-                            readers=[venue_id, committee_declined_id],
-                            writers=[venue_id, pc_group_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id, committee_declined_id],
-                            members=[]
-                            ))
-
-        committee_invited_group = tools.get_group(self.client, committee_invited_id)
-        if not committee_invited_group:
-            committee_invited_group=self.client.post_group(Group(id=committee_invited_id,
-                            readers=[venue_id, committee_invited_id],
-                            writers=[venue_id, pc_group_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id, committee_invited_id],
-                            members=[]
-                            ))
+        self.venue.group_builder.create_recruitment_committee_groups(committee_name)
 
         official_committee_roles=venue.get_committee_names()
         committee_roles = official_committee_roles if (committee_name in official_committee_roles and not allow_overlap_official_committee) else [committee_name]
@@ -85,14 +52,11 @@ class Recruitment(object):
         role = committee_name.replace('_', ' ')
         role = role[:-1] if role.endswith('s') else role
         
-        if 'invitation' in invitation:
-            invitation_id = invitation['invitation']['id']
-            hash_seed = invitation['invitation']['content']['hash_seed']['value']
-        else:
-            invitation_id = invitation['id']
-            hash_seed = invitation['content']['hash_seed']['value']
+        invitation_id = invitation.id
+        hash_seed = invitation.content['hash_seed']['value']
 
         if remind:
+            committee_invited_group = self.client.get_group(committee_invited_id)
             invited_committee = committee_invited_group.members
             print("Sending reminders for recruitment invitations")
             for invited_user in tqdm(invited_committee, desc='remind recruitment'):

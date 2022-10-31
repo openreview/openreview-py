@@ -72,7 +72,9 @@ class TestJournal():
         venue_id = 'TMLR'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
 
-        journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        recruitment_status = journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        assert len(recruitment_status['invited']) == 9
+        assert recruitment_status['errors'] == {}
         invited_group = openreview_client.get_group('TMLR/Action_Editors/Invited')
         assert invited_group.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
@@ -1040,14 +1042,14 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
             )
         )
 
-        note = guest_client.get_note(comment_note_id)
+        note = joelle_client.get_note(comment_note_id)
         assert note
         assert note.invitations == ['TMLR/Paper1/-/Public_Comment', 'TMLR/Paper1/-/Moderation']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors']
         assert note.signatures == ['~Peter_Snow1']
-        assert note.content.get('title') is None
-        assert note.content.get('comment') is None
+        assert note.content.get('title').get('value') == 'Moderated comment'
+        assert note.content.get('comment').get('value') == 'Moderated content'
 
         ## Assign two more reviewers
         javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Javier_Burroni1')
@@ -1750,7 +1752,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1861,7 +1863,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1919,7 +1921,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1998,7 +2000,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']

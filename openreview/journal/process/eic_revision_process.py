@@ -5,10 +5,17 @@ def process(client, edit, invitation):
     venue_id = journal.venue_id
     submission=client.get_note(edit.note.id)
     authors_group_id=journal.get_authors_id(submission.number)
-    authors_group=openreview.tools.get_group(client, authors_group_id)
-    if authors_group:
-        authors_group.members=submission.content['authorids']['value']
-        client.post_group(authors_group)
+
+    client.post_group_edit(
+        invitation = journal.get_meta_invitation_id(),
+        readers = [venue_id],
+        writers = [venue_id],
+        signatures = [venue_id],
+        group = openreview.api.Group(
+            id = authors_group_id,
+            members = submission.content['authorids']['value']
+        )
+    )
 
     client.post_note_edit(invitation=journal.get_meta_invitation_id(),
         signatures=[venue_id],
