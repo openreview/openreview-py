@@ -11,6 +11,7 @@ def process(client, note, invitation):
     AREA_CHAIRS_ACCEPTED_ID = ''
     HASH_SEED = ''
     REDUCED_LOAD_INVITATION_NAME = ''
+    ACCEPT_EMAIL_TEMPLATE = ''
 
     user = urllib.parse.unquote(note.content['user'])
 
@@ -35,7 +36,10 @@ def process(client, note, invitation):
                 client.add_members_to_group(REVIEWERS_ACCEPTED_ID, user)
 
                 subject = '[{}] {} Invitation accepted'.format(SHORT_PHRASE, REVIEWER_NAME)
-                message = '''Thank you for accepting the invitation to be a {role} for {venue}.
+                if ACCEPT_EMAIL_TEMPLATE:
+                    message = ACCEPT_EMAIL_TEMPLATE.format(role=REVIEWER_NAME)
+                else:
+                    message = '''Thank you for accepting the invitation to be a {role} for {venue}.
 The {venue} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.'''.format(role=REVIEWER_NAME, venue=SHORT_PHRASE)

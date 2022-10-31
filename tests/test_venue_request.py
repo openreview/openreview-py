@@ -1,4 +1,5 @@
 import json
+import re
 
 import openreview
 from openreview import venue_request
@@ -602,7 +603,8 @@ class TestVenueRequest():
                 'invitee_role': 'Reviewers',
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\nACCEPT LINK:\n\n{{accept_url}}\n\nDECLINE LINK:\n\n{{decline_url}}\n\nCheers!\n\nProgram Chairs',
+                'accepted_email_template': 'Thank you for accepting the invitation to be a {{reviewer_name}} for Theoretical Foundations of RL Workshop @ ICML 2020.\n\nThe program chairs will be contacting you with more information regarding next steps soon.\n\nPlease complete your registration and expertise selection tasks here: https://openreview.net/tasks'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -625,6 +627,15 @@ class TestVenueRequest():
         assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear Reviewer OneTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
 
+        messages = client.get_messages(to = 'reviewer_one_tilde@mail.com', subject = "[TestVenue@OR'2030] Invitation to serve as Reviewer")
+        text = messages[0]['content']['text']
+        accept_url = re.search('https://.*&response=Yes\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
+        request_page(selenium, accept_url, alert=True)
+
+        messages = client.get_messages(to = 'reviewer_one_tilde@mail.com', subject = '[TestVenue@OR\'2030] Reviewer Invitation accepted')
+        assert messages and len(messages) == 1
+        assert 'Please complete your registration and expertise selection tasks here: https://openreview.net/tasks' in messages[0]['content']['text']
+
         messages = client.get_messages(to='reviewer_two_tilde@mail.com')
         assert messages and len(messages) == 2
         assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
@@ -634,6 +645,8 @@ class TestVenueRequest():
                                                                                    venue['request_form_note'].number)
         last_comment = client.get_notes(invitation=recruitment_status_invitation, sort='tmdate')[0]
         assert '2 users' in last_comment.content['invited']
+
+        client.remove_members_from_group( 'TEST.cc/2030/Conference/Reviewers','~Reviewer_OneTilde1')
 
     def test_venue_remind_recruitment(self, client, test_client, selenium, request_page, venue, helpers):
 

@@ -1455,7 +1455,8 @@ class Conference(object):
         contact_info = 'info@openreview.net',
         reduced_load_on_decline=None,
         default_load=0,
-        allow_overlap_official_committee=False):
+        allow_overlap_official_committee=False,
+        accept_recruitment_template=None):
 
         pcs_id = self.get_program_chairs_id()
         reviewers_id = self.id + '/' + reviewers_name
@@ -1488,7 +1489,8 @@ class Conference(object):
             'hash_seed': hash_seed,
             'reduced_load_id': None,
             'allow_overlap_official_committee': allow_overlap_official_committee,
-            'reduced_load_on_decline': reduced_load_on_decline
+            'reduced_load_on_decline': reduced_load_on_decline,
+            'accept_recruitment_template': accept_recruitment_template
         }
         if reduced_load_on_decline and not self.use_recruitment_template:
             options['reduced_load_id'] = self.get_invitation_id('Reduced_Load', prefix = reviewers_id)

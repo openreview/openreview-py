@@ -8,6 +8,7 @@ def process(client, note, invitation):
 
     reduced_load=note.content.get('invitee_reduced_load', None)
     role_name=note.content['invitee_role'].strip()
+    accept_recruitment_template = note.content.get('accepted_email_template')
 
     ## Backward compatibility
     roles={
@@ -58,7 +59,8 @@ def process(client, note, invitation):
         message = note.content['invitation_email_content'].strip(),
         reduced_load_on_decline = reduced_load,
         contact_info = contact_info,
-        allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No')
+        allow_overlap_official_committee = 'Yes' in note.content.get('allow_role_overlap', 'No'),
+        accept_recruitment_template=accept_recruitment_template
     )
 
     already_invited_status='No recruitment invitation was sent to the users listed under \'Already Invited\' because they have already been invited.' if recruitment_status.get('already_invited') else ''
