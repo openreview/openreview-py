@@ -25,6 +25,15 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
     if 'authorids' in submission.content:
         author_group = openreview.tools.get_group(client, f'{CONFERENCE_ID}/{SUBMISSION_NAME}{submission.number}/{AUTHORS_NAME}')
-        if author_group:
-            author_group.members = submission.content['authorids']['value']
-            client.post_group(author_group)
+        submission_authors = submission.content['authorids']['value']
+        if author_group and set(author_group.members) != set(submission_authors):
+            client.post_group_edit(
+                invitation=f'{CONFERENCE_ID}/-/Edit',
+                readers = [CONFERENCE_ID],
+                writers = [CONFERENCE_ID],
+                signatures = [CONFERENCE_ID],
+                group = openreview.api.Group(
+                    id = author_group.id,
+                    members = submission_authors
+                )
+            )
