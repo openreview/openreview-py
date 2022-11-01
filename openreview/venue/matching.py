@@ -995,7 +995,13 @@ class Matching(object):
                         if overwrite:
                             sac_group.members=[]
                         sac_group.members.append(sac)
-                        client.post_group(sac_group)
+                        client.post_group_edit(
+                            invitation = venue.get_meta_invitation_id(),
+                            readers = [venue.venue_id],
+                            writers = [venue.venue_id],
+                            signatures = [venue.venue_id],
+                            group = sac_group
+                        )
 
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
