@@ -299,6 +299,57 @@ class BidStage(object):
             options.append('Conflict')
         return options
 
+    def get_score_ids(self):
+        if self.score_ids:
+            return self.score_ids
+
+        return [self.committee_id + '/-/Affinity_Score']
+
+    def get_instructions(self):
+        if self.instructions:
+            return self.instructions
+
+        sorted_tip = ''
+        if self.score_ids:
+            sorted_tip = '''
+            <li>
+                Papers are sorted based on keyword similarity with the papers
+                that you provided in the Expertise Selection Interface.
+            </li>'''
+
+        return f'''<p class="dark"><strong>Instructions:</strong></p>
+<ul>
+    <li>
+        Please indicate your <strong>level of interest</strong> in
+        reviewing the submitted papers below,
+        on a scale from "Very Low" interest to "Very High" interest.
+    </li>
+    <li>
+        Please bid on as many papers as possible
+        to ensure that your preferences are taken into account.
+    </li>
+    <li>
+        Use the search field to filter papers by keyword or subject area.
+    </li>
+    <li>
+        Ensure that you have at least <strong>{self.request_count} bids</strong>.
+    </li>
+</ul>
+<p class="dark"><strong>A few tips:</strong></p>
+<ul>
+    <li>
+        Papers for which you have a conflict of interest are not shown.
+    </li>
+    <li>
+        Positive bids ("High" and "Very High") will, in most cases, increase the likelihood that you will be assigned that paper.
+    </li>
+    <li>
+        Negative bids ("Low" and "Very Low") will, in most cases, decrease the likelihood that you will be assigned that paper.
+    </li>
+    {sorted_tip}
+</ul>
+<br>'''
+
 class ExpertiseSelectionStage(object):
 
     def __init__(self, start_date = None, due_date = None, include_option = False):
@@ -338,8 +389,8 @@ class ReviewStage(object):
         email_pcs = False,
         additional_fields = {},
         remove_fields = [],
-        rating_field_name = None,
-        confidence_field_name = None,
+        rating_field_name = 'rating',
+        confidence_field_name = 'confidence',
         process_path = None
     ):
 

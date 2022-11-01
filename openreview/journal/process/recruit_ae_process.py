@@ -22,7 +22,7 @@ def process(client, note, invitation):
 
     hashkey = HMAC.new(HASH_SEED.encode(), digestmod=SHA256).update(user.encode()).hexdigest()
 
-    if (hashkey == key and client.get_groups(prefix=ACTION_EDITOR_INVITED_ID, member=user)):
+    if hashkey == key and client.get_groups(prefix=ACTION_EDITOR_INVITED_ID, member=user):
         if (response == 'Yes'):
             client.remove_members_from_group(ACTION_EDITOR_DECLINED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_ACCEPTED_ID, user)

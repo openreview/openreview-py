@@ -72,7 +72,9 @@ class TestJournal():
         venue_id = 'TMLR'
         journal=Journal(openreview_client, venue_id, '1234', contact_info='tmlr@jmlr.org', full_name='Transactions on Machine Learning Research', short_name='TMLR', submission_name='Submission')
 
-        journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        recruitment_status = journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        assert len(recruitment_status['invited']) == 9
+        assert recruitment_status['errors'] == {}
         invited_group = openreview_client.get_group('TMLR/Action_Editors/Invited')
         assert invited_group.members == ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1']
 
@@ -1040,14 +1042,14 @@ To view the public comment, click here: https://openreview.net/forum?id={note_id
             )
         )
 
-        note = guest_client.get_note(comment_note_id)
+        note = joelle_client.get_note(comment_note_id)
         assert note
         assert note.invitations == ['TMLR/Paper1/-/Public_Comment', 'TMLR/Paper1/-/Moderation']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Action_Editors']
         assert note.signatures == ['~Peter_Snow1']
-        assert note.content.get('title') is None
-        assert note.content.get('comment') is None
+        assert note.content.get('title').get('value') == 'Moderated comment'
+        assert note.content.get('comment').get('value') == 'Moderated content'
 
         ## Assign two more reviewers
         javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Javier_Burroni1')
@@ -1750,7 +1752,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR', 'TMLR/Paper1/Authors']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1861,7 +1863,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1919,7 +1921,7 @@ note={Featured Certification, Reproducibility Certification}
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -1998,7 +2000,7 @@ The TMLR Editors-in-Chief
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Submission_Editable', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
+        assert note.invitations == ['TMLR/-/Submission', 'TMLR/Paper1/-/Revision', 'TMLR/-/Under_Review', 'TMLR/Paper1/-/Camera_Ready_Revision', 'TMLR/-/Accepted', 'TMLR/Paper1/-/EIC_Revision', 'TMLR/-/Edit', 'TMLR/-/Retracted']
         assert note.readers == ['everyone']
         assert note.writers == ['TMLR']
         assert note.signatures == ['TMLR/Paper1/Authors']
@@ -2148,12 +2150,28 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 4
-        assert edges[0].weight == 1
-        assert edges[1].weight == 1
-        assert edges[2].weight == 1
-        assert edges[3].weight == 0  ## Hugo
+        edges = joelle_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
+        assert len(edges) == 2
+    
+        if len(edges[0]['values']) == 3:
+            assert edges[0]['id']['weight'] == 1
+            assert edges[1]['id']['weight'] == 0
+            assert len(edges[1]['values']) == 1
+        else:
+            assert edges[0]['id']['weight'] == 0
+            assert len(edges[0]['values']) == 1
+            assert edges[1]['id']['weight'] == 1
+            assert len(edges[1]['values']) == 3
+
+        if len(edges[0]['values']) == 1:
+            assert edges[0]['id']['weight'] == 0
+            assert edges[1]['id']['weight'] == 1
+            assert len(edges[1]['values']) == 3            
+        else:
+            assert edges[0]['id']['weight'] == 1
+            assert len(edges[0]['values']) == 3
+            assert edges[1]['id']['weight'] == 0
+            assert len(edges[1]['values']) == 1
 
         ## Ask solicit review with a conflict
         Volunteer_to_Review_note = tom_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
@@ -2329,8 +2347,8 @@ note: replies to this email will go to the AE, Joelle Pineau.
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 5
+        edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
@@ -3372,8 +3390,8 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 5
+        edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
@@ -3384,8 +3402,8 @@ The TMLR Editors-in-Chief
         journal.invitation_builder.expire_paper_invitations(note)
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 5
+        edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
@@ -3396,8 +3414,8 @@ The TMLR Editors-in-Chief
         journal.invitation_builder.expire_paper_invitations(note)
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 5
+        edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0
@@ -3562,8 +3580,8 @@ The TMLR Editors-in-Chief
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 5
+        edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 1
@@ -3577,8 +3595,8 @@ The TMLR Editors-in-Chief
         journal.invitation_builder.expire_assignment_availability_invitations()
 
         ## Check pending review edges
-        edges = joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews')
-        assert len(edges) == 5
+        edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
+        assert edges == 5
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Carlos_Mondragon1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Javier_Burroni1')[0].weight == 0
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1')[0].weight == 0

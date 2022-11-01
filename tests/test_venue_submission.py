@@ -176,8 +176,8 @@ class TestVenueSubmission():
             label = 'High'
         ))
 
-        bid_edges = openreview_client.get_edges(invitation=venue.id + '/Reviewers/-/Bid')
-        assert len(bid_edges) == 1
+        bid_edges = openreview_client.get_edges_count(invitation=venue.id + '/Reviewers/-/Bid')
+        assert bid_edges == 1
 
         ## after bidding stage the submissions should be visible to the assigned committee
         venue.submission_stage.readers = [SubmissionStage.Readers.EVERYONE]
@@ -209,8 +209,8 @@ class TestVenueSubmission():
         assert proposed_assignment_edge
         assert proposed_assignment_edge.nonreaders == ['TestVenue.cc/Submission1/Authors']
 
-        custom_load_edges = openreview_client.get_edges(invitation='TestVenue.cc/Reviewers/-/Custom_Max_Papers')
-        assert (len(custom_load_edges)) == 1
+        custom_load_edges = openreview_client.get_edges_count(invitation='TestVenue.cc/Reviewers/-/Custom_Max_Papers')
+        assert custom_load_edges == 1
 
     def test_review_stage(self, venue, openreview_client, helpers):
 

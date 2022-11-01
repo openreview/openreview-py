@@ -10,6 +10,7 @@ else:
 
 from .. import tools
 import requests
+from requests.adapters import HTTPAdapter, Retry
 import pprint
 import os
 import re
@@ -61,6 +62,7 @@ class OpenReviewClient(object):
         self.venues_url = self.baseurl + '/venues'
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
+        self.group_edits_url = self.baseurl + '/groups/edits'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.limit = 1000
@@ -70,6 +72,11 @@ class OpenReviewClient(object):
             'User-Agent': self.user_agent,
             'Accept': 'application/json'
         }
+
+        self.session = requests.Session()
+        retries = Retry(total=8, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ])
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
+        self.session.mount('http://', HTTPAdapter(max_retries=retries))
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
@@ -120,7 +127,7 @@ class OpenReviewClient(object):
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
-        response = requests.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
+        response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
@@ -139,7 +146,7 @@ class OpenReviewClient(object):
         :rtype: dict
         """
         user = { 'id': username, 'password': password, 'expiresIn': expiresIn }
-        response = requests.post(self.login_url, headers=self.headers, json=user)
+        response = self.session.post(self.login_url, headers=self.headers, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
@@ -168,7 +175,7 @@ class OpenReviewClient(object):
             'name': {   'first': first, 'last': last, 'middle': middle},
             'password': password
         }
-        response = requests.post(self.register_url, json = register_payload, headers = self.headers)
+        response = self.session.post(self.register_url, json = register_payload, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -198,7 +205,7 @@ class OpenReviewClient(object):
             'preferredEmail': 'new@user.com'
             })
         """
-        response = requests.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
+        response = self.session.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
         self.__handle_token(json_response)
@@ -206,7 +213,7 @@ class OpenReviewClient(object):
         return json_response
 
     def get_activatable(self, token = None):
-        response = requests.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
+        response = self.session.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
         self.__handle_token(response.json()['activatable'])
         return self.token
@@ -225,7 +232,7 @@ class OpenReviewClient(object):
 
         >>> group = client.get_group('your-email@domain.com')
         """
-        response = requests.get(self.groups_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.groups_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
         g = response.json()['groups'][0]
         return Group.from_json(g)
@@ -240,7 +247,7 @@ class OpenReviewClient(object):
         :return: Invitation matching the passed id
         :rtype: Invitation
         """
-        response = requests.get(self.invitations_url, params = {'id': id}, headers = self.headers)
+        response = self.session.get(self.invitations_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
         i = response.json()['invitations'][0]
         return Invitation.from_json(i)
@@ -255,7 +262,7 @@ class OpenReviewClient(object):
         :return: Note matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.notes_url, params = {'id':id, 'details': details}, headers = self.headers)
+        response = self.session.get(self.notes_url, params = {'id':id, 'details': details}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['notes'][0]
         return Note.from_json(n)
@@ -270,7 +277,7 @@ class OpenReviewClient(object):
         :return: Tag with the Tag information
         :rtype: Tag
         """
-        response = requests.get(self.tags_url, params = {'id': id}, headers = self.headers)
+        response = self.session.get(self.tags_url, params = {'id': id}, headers = self.headers)
         response = self.__handle_response(response)
         t = response.json()['tags'][0]
         return Tag.from_json(t)
@@ -285,7 +292,7 @@ class OpenReviewClient(object):
         return: Edge object with its information
         :rtype: Edge
         """
-        response = requests.get(self.edges_url, params = {'id': id, 'trash': 'true' if trash == True else 'false'}, headers=self.headers)
+        response = self.session.get(self.edges_url, params = {'id': id, 'trash': 'true' if trash == True else 'false'}, headers=self.headers)
         response = self.__handle_response(response)
         edges = response.json()['edges']
         if edges:
@@ -311,7 +318,7 @@ class OpenReviewClient(object):
             else:
                 att = 'email'
             params[att] = email_or_id
-        response = requests.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
         if profiles:
@@ -355,14 +362,14 @@ class OpenReviewClient(object):
                 yield batch
 
         if term:
-            response = requests.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
+            response = self.session.get(self.profiles_search_url, params = { 'term': term }, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
         if emails:
             full_response = []
             for email_batch in batches(emails):
-                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.session.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
@@ -376,7 +383,7 @@ class OpenReviewClient(object):
         if confirmedEmails:
             full_response = []
             for email_batch in batches(confirmedEmails):
-                response = requests.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
+                response = self.session.post(self.profiles_search_url, json = {'emails': email_batch}, headers = self.headers)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
@@ -392,14 +399,14 @@ class OpenReviewClient(object):
         if ids:
             full_response = []
             for id_batch in batches(ids):
-                response = requests.post(self.profiles_search_url, json = {'ids': id_batch}, headers = self.headers)
+                response = self.session.post(self.profiles_search_url, json = {'ids': id_batch}, headers = self.headers)
                 response = self.__handle_response(response)
                 full_response.extend(response.json()['profiles'])
 
             return [Profile.from_json(p) for p in full_response]
 
         if first or middle or last:
-            response = requests.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
+            response = self.session.get(self.profiles_url, params = {'first': first, 'middle': middle, 'last': last}, headers = self.headers)
             response = self.__handle_response(response)
             return [Profile.from_json(p) for p in response.json()['profiles']]
 
@@ -436,7 +443,7 @@ class OpenReviewClient(object):
 
         url = self.pdf_revisions_url if is_reference else self.pdf_url
 
-        response = requests.get(url, params=tools.format_params(params), headers = headers)
+        response = self.session.get(url, params=tools.format_params(params), headers = headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -459,7 +466,7 @@ class OpenReviewClient(object):
         >>> with open('output.pdf','wb') as op: op.write(f)
 
         """
-        response = requests.get(self.baseurl + '/attachment', params = { 'id': id, 'name': field_name }, headers = self.headers)
+        response = self.session.get(self.baseurl + '/attachment', params = { 'id': id, 'name': field_name }, headers = self.headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -485,7 +492,7 @@ class OpenReviewClient(object):
         if invitations is not None:
             params['invitations'] = ','.join(invitations)
 
-        response = requests.get(self.venues_url, params=tools.format_params(params), headers=self.headers)
+        response = self.session.get(self.venues_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()['venues']
@@ -508,7 +515,7 @@ class OpenReviewClient(object):
         headers = self.headers.copy()
 
         with open(file_path, 'rb') as f:
-            response = requests.put(self.baseurl + '/attachment', files=(
+            response = self.session.put(self.baseurl + '/attachment', files=(
                 ('invitationId', (None, invitation)),
                 ('name', (None, name)),
                 ('file', (file_path, f))
@@ -527,7 +534,7 @@ class OpenReviewClient(object):
         :return: The new updated Profile
         :rtype: Profile
         """
-        response = requests.post(
+        response = self.session.post(
             self.profiles_url,
             json = profile.to_json(),
             headers = self.headers)
@@ -547,7 +554,7 @@ class OpenReviewClient(object):
         :return: The new updated Profile
         :rtype: Profile
         """
-        response = requests.post(
+        response = self.session.post(
             self.profiles_merge_url,
             json = {
                 'to': profileTo,
@@ -590,7 +597,7 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
 
-        response = requests.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         groups = [Group.from_json(g) for g in response.json()['groups']]
 
@@ -728,7 +735,7 @@ class OpenReviewClient(object):
         params['type'] = type
         params['invitation'] = invitation
 
-        response = requests.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
+        response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
 
         invitations = [Invitation.from_json(i) for i in response.json()['invitations']]
@@ -836,7 +843,7 @@ class OpenReviewClient(object):
         :return: edit matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.invitation_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.invitation_edits_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['edits'][0]
         return Edit.from_json(n)
@@ -856,7 +863,7 @@ class OpenReviewClient(object):
         if sort:
             params['sort'] = sort
 
-        response = requests.get(self.invitation_edits_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.invitation_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edits = [Edit.from_json(n) for n in response.json()['edits']]
@@ -965,7 +972,7 @@ class OpenReviewClient(object):
         params['sort'] = sort
         params['original'] = original
 
-        response = requests.get(self.notes_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.notes_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         notes = [Note.from_json(n) for n in response.json()['notes']]
@@ -1073,7 +1080,7 @@ class OpenReviewClient(object):
         :return: edit matching the passed id
         :rtype: Note
         """
-        response = requests.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
+        response = self.session.get(self.note_edits_url, params = {'id':id}, headers = self.headers)
         response = self.__handle_response(response)
         n = response.json()['edits'][0]
         return Edit.from_json(n)
@@ -1093,7 +1100,7 @@ class OpenReviewClient(object):
         if sort:
             params['sort'] = sort
 
-        response = requests.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edits = [Edit.from_json(n) for n in response.json()['edits']]
@@ -1134,7 +1141,7 @@ class OpenReviewClient(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         tags = [Tag.from_json(t) for t in response.json()['tags']]
@@ -1191,7 +1198,7 @@ class OpenReviewClient(object):
         params['offset'] = offset
         params['trash'] = trash
 
-        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         edges = [Edge.from_json(e) for e in response.json()['edges']]
@@ -1245,12 +1252,12 @@ class OpenReviewClient(object):
         params['limit'] = 1
         params['offset'] = 0
 
-        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()['count']
 
-    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select='tail', limit=None, offset=None):
+    def get_grouped_edges(self, invitation=None, head=None, tail=None, label=None, groupby='head', select=None, limit=None, offset=None):
         '''
         Returns a list of JSON objects where each one represents a group of edges.  For example calling this
         method with default arguments will give back a list of groups where each group is of the form:
@@ -1274,82 +1281,16 @@ class OpenReviewClient(object):
         params['select'] = select
         params['limit'] = limit
         params['offset'] = offset
-        response = requests.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         json = response.json()
         return json['groupedEdges'] # a list of JSON objects holding information about an edge
-
-
-    def post_group(self, group, overwrite = True):
-        """
-        Posts the group. If the group is unsigned, signs it using the client's default signature.
-
-        :param group: Group to be posted
-        :type group: Group
-        :param overwrite: Determines whether to overwrite an existing group or not
-        :type overwrite: bool, optional
-
-        :return: The posted Group
-        :rtype: Group
-        """
-        if overwrite or not self.exists(group.id):
-            if not group.signatures: group.signatures = [self.profile.id]
-            if not group.writers: group.writers = [self.profile.id]
-            response = requests.post(self.groups_url, json=group.to_json(), headers=self.headers)
-            response = self.__handle_response(response)
-
-        return Group.from_json(response.json())
-
-    def post_invitation(self, invitation):
-        """
-        Posts the invitation. If the invitation is unsigned, signs it using the client's default signature.
-
-        :param invitation: Invitation to be posted
-        :type invitation: Invitation
-
-        :return: The posted Invitation
-        :rtype: Invitation
-        """
-        response = requests.post(self.invitations_url, json = invitation.to_json(), headers = self.headers)
-        response = self.__handle_response(response)
-
-        return Invitation.from_json(response.json())
-
-    def post_note(self, note):
-        """
-        Posts the note. If the note is unsigned, signs it using the client's default signature.
-
-        :param note: Note to be posted
-        :type note: Note
-
-        :return: The posted Note
-        :rtype: Note
-        """
-        if not note.signatures: note.signatures = [self.profile.id]
-        response = requests.post(self.notes_url, json=note.to_json(), headers=self.headers)
-        response = self.__handle_response(response)
-
-        return Note.from_json(response.json())
-
-    def post_tag(self, tag):
-        """
-        Posts the tag. If the tag is unsigned, signs it using the client's default signature.
-
-        :param tag: Tag to be posted
-        :type tag: Tag
-
-        :return Tag: The posted Tag
-        """
-        response = requests.post(self.tags_url, json = tag.to_json(), headers = self.headers)
-        response = self.__handle_response(response)
-
-        return Tag.from_json(response.json())
 
     def post_edge(self, edge):
         """
         Posts the edge. Upon success, returns the posted Edge object.
         """
-        response = requests.post(self.edges_url, json = edge.to_json(), headers = self.headers)
+        response = self.session.post(self.edges_url, json = edge.to_json(), headers = self.headers)
         response = self.__handle_response(response)
 
         return Edge.from_json(response.json())
@@ -1359,7 +1300,7 @@ class OpenReviewClient(object):
         Posts the list of Edges.   Returns a list Edge objects updated with their ids.
         '''
         send_json = [edge.to_json() for edge in edges]
-        response = requests.post(self.bulk_edges_url, json = send_json, headers = self.headers)
+        response = self.session.post(self.bulk_edges_url, json = send_json, headers = self.headers)
         response = self.__handle_response(response)
         received_json_array = response.json()
         edge_objects = [Edge.from_json(edge) for edge in received_json_array]
@@ -1370,7 +1311,7 @@ class OpenReviewClient(object):
         Posts the venue. Upon success, returns the posted Venue object.
         """
 
-        response = requests.post(self.venues_url, json=venue, headers=self.headers)
+        response = self.session.post(self.venues_url, json=venue, headers=self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1404,7 +1345,7 @@ class OpenReviewClient(object):
         delete_query['waitToFinish'] = wait_to_finish
         delete_query['softDelete'] = soft_delete
 
-        response = requests.delete(self.edges_url, json = delete_query, headers = self.headers)
+        response = self.session.delete(self.edges_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1418,7 +1359,7 @@ class OpenReviewClient(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.notes_url, json = {'id': note_id}, headers = self.headers)
+        response = self.session.delete(self.notes_url, json = {'id': note_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1433,7 +1374,7 @@ class OpenReviewClient(object):
         :rtype: dict
         '''
 
-        response = requests.delete(self.profiles_url + '/reference', json = {'id': reference_id}, headers = self.headers)
+        response = self.session.delete(self.profiles_url + '/reference', json = {'id': reference_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1447,7 +1388,7 @@ class OpenReviewClient(object):
         :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
         :rtype: dict
         """
-        response = requests.delete(self.groups_url, json = {'id': group_id}, headers = self.headers)
+        response = self.session.delete(self.groups_url, json = {'id': group_id}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1474,7 +1415,7 @@ class OpenReviewClient(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.messages_url, json = {
+        response = self.session.post(self.messages_url, json = {
             'groups': recipients,
             'subject': subject ,
             'message': message,
@@ -1501,7 +1442,7 @@ class OpenReviewClient(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        response = requests.post(self.messages_direct_url, json = {
+        response = self.session.post(self.messages_direct_url, json = {
             'groups': recipients,
             'subject': subject ,
             'message': message,
@@ -1524,12 +1465,26 @@ class OpenReviewClient(object):
         :rtype: Group
         """
         def add_member(group, members):
-            group_id = group if type(group) in string_types else group.id
-            if members:
-                response = requests.put(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
-                response = self.__handle_response(response)
-                return Group.from_json(response.json())
-            return group
+            group = self.get_group(group) if type(group) in string_types else group
+            if group.invitations:
+                self.post_group_edit(invitation = group.invitations[0], 
+                    signatures = group.signatures, 
+                    group = Group(
+                        id = group.id, 
+                        members = {
+                            'append': list(set(members))
+                        }
+                    ), 
+                    readers=group.signatures, 
+                    writers=group.signatures
+                )
+                return self.get_group(group.id)
+            else:
+                if members:
+                    response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                    response = self.__handle_response(response)
+                    return Group.from_json(response.json())                
+
 
         member_type = type(members)
         if member_type in string_types:
@@ -1551,10 +1506,24 @@ class OpenReviewClient(object):
         :type: Group
         """
         def remove_member(group, members):
-            group_id = group if type(group) in string_types else group.id
-            response = requests.delete(self.groups_url + '/members', json = {'id': group_id, 'members': members}, headers = self.headers)
-            response = self.__handle_response(response)
-            return Group.from_json(response.json())
+            group = self.get_group(group) if type(group) in string_types else group
+            if group.invitations:
+                self.post_group_edit(invitation = group.invitations[0], 
+                    signatures = group.signatures, 
+                    group = Group(
+                        id = group.id, 
+                        members = {
+                            'remove': list(set(members))
+                        }
+                    ), 
+                    readers=group.signatures, 
+                    writers=group.signatures
+                )
+                return self.get_group(group.id)
+            else:
+                response = requests.delete(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
+                response = self.__handle_response(response)
+                return Group.from_json(response.json())                           
 
         member_type = type(members)
         if member_type in string_types:
@@ -1594,12 +1563,12 @@ class OpenReviewClient(object):
         if offset is not None:
             params['offset'] = offset
 
-        response = requests.get(self.notes_url + '/search', params=tools.format_params(params), headers = self.headers)
+        response = self.session.get(self.notes_url + '/search', params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
     def get_notes_by_ids(self, ids):
-        response = requests.post(self.notes_url + '/search', json = { 'ids': ids }, headers = self.headers)
+        response = self.session.post(self.notes_url + '/search', json = { 'ids': ids }, headers = self.headers)
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
@@ -1618,7 +1587,7 @@ class OpenReviewClient(object):
         :rtype: dict
         """
 
-        response = requests.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.session.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1637,7 +1606,7 @@ class OpenReviewClient(object):
         :rtype: dict
         """
 
-        response = requests.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
+        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 
@@ -1654,7 +1623,7 @@ class OpenReviewClient(object):
         :rtype: dict
         """
 
-        response = requests.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status }, headers = self.headers)
+        response = self.session.get(self.process_logs_url, params = { 'id': id, 'invitation': invitation, 'status': status }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['logs']
 
@@ -1687,7 +1656,7 @@ class OpenReviewClient(object):
         if invitation is not None:
             edit_json['invitation'] = invitation.to_json()
 
-        response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
+        response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1707,10 +1676,32 @@ class OpenReviewClient(object):
         if writers is not None:
             edit_json['writers'] = writers
 
-        response = requests.post(self.note_edits_url, json = edit_json, headers = self.headers)
+        response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
+
+    def post_group_edit(self, invitation, signatures, group=None, readers=None, writers=None):
+        """
+        """
+        edit_json = {
+            'invitation': invitation,
+            'group': group.to_json() if group else {}
+        }
+
+        if signatures is not None:
+            edit_json['signatures'] = signatures
+
+        if readers is not None:
+            edit_json['readers'] = readers
+
+        if writers is not None:
+            edit_json['writers'] = writers
+
+        response = requests.post(self.group_edits_url, json = edit_json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()        
 
     def post_edit(self, edit):
         """
@@ -1719,9 +1710,9 @@ class OpenReviewClient(object):
         edit_json = edit.to_json()
 
         if 'note' in edit_json:
-            response = requests.post(self.note_edits_url, json = edit_json, headers = self.headers)
+            response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
         elif 'invitation' in edit_json:
-            response = requests.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
+            response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
 
         response = self.__handle_response(response)
 
@@ -1735,7 +1726,7 @@ class OpenReviewClient(object):
         :rtype: dict
         """
 
-        response = requests.get(self.jobs_status, headers=self.headers)
+        response = self.session.get(self.jobs_status, headers=self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -1775,7 +1766,7 @@ class OpenReviewClient(object):
         }
 
         base_url = baseurl if baseurl else self.baseurl
-        response = requests.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1807,7 +1798,7 @@ class OpenReviewClient(object):
         if base_url.startswith('http://localhost'):
             return {}
         print('compute expertise', {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model})
-        response = requests.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
         print('response json', response.json())
         response = self.__handle_response(response)
 
@@ -1820,7 +1811,7 @@ class OpenReviewClient(object):
         if base_url.startswith('http://localhost'):
             print('get expertise status localhost, return Completed')
             return { 'status': 'Completed' }
-        response = requests.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
+        response = self.session.get(base_url + '/expertise/status', params = {'jobId': job_id}, headers = self.headers)
         response = self.__handle_response(response)
 
         response_json = response.json()
@@ -1855,7 +1846,7 @@ class OpenReviewClient(object):
                 raise OpenReviewException('Time out computing scores, description: ' + status_response.get('description'))
             raise OpenReviewException('Unknown error, description: ' + status_response.get('description'))
         else:
-            response = requests.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
+            response = self.session.get(base_url + '/expertise/results', params = {'jobId': job_id}, headers = self.headers)
             response = self.__handle_response(response)
             print('return expertise results', baseurl, job_id)
             return response.json()
@@ -2191,12 +2182,6 @@ class Invitation(object):
             'id': self.id
         }
 
-        if self.invitations:
-            body['invitations'] = self.invitations
-        
-        if self.domain:
-            body['domain'] = self.domain
-
         if self.cdate:
             body['cdate'] = self.cdate
 
@@ -2421,30 +2406,27 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, details = None):
+    def __init__(self, id, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
+        self.invitations = invitations
+        self.content = content
         self.cdate = cdate
         self.ddate = ddate
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.writers = writers
-        self.members = [] if members is None else members
+        self.members = members
         self.readers = readers
-        self.nonreaders = [] if nonreaders is None else nonreaders
+        self.nonreaders = nonreaders
         self.signatures = signatures
         self.signatories = signatories
         self.anonids = anonids
-        self.web=None
+        self.web=web
         self.impersonators = impersonators
         self.host = host
-        if web is not None:
-            with open(web) as f:
-                self.web = f.read()
-
-        if web_string:
-            self.web = web_string
+        self.domain = domain
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
@@ -2467,23 +2449,50 @@ class Group(object):
         :rtype: dict
         """
         body = {
-            'id': self.id,
-            'invitation': self.invitation,
-            'cdate': self.cdate,
-            'ddate': self.ddate,
-            'signatures': self.signatures,
-            'writers': self.writers,
-            'members': self.members,
-            'readers': self.readers,
-            'nonreaders': self.nonreaders,
-            'signatories': self.signatories,
-            'impersonators': self.impersonators,
-            'anonids': self.anonids,
-            'deanonymizers': self.deanonymizers,
-            'web': self.web,
-            'host': self.host,
-            'details': self.details
+            'id': self.id
         }
+
+        if self.content is not None:
+            body['content'] = self.content
+
+        if self.signatures is not None:
+            body['signatures'] = self.signatures
+
+        if self.writers is not None:
+            body['writers'] = self.writers
+
+        if self.members is not None:
+            body['members'] = self.members
+
+        if self.readers is not None:
+            body['readers'] = self.readers                                    
+
+        if self.invitation is not None:
+            body['invitation'] = self.invitation
+
+        if self.cdate is not None:
+            body['cdate'] = self.cdate
+
+        if self.ddate is not None:
+            body['ddate'] = self.ddate
+
+        if self.impersonators is not None:
+            body['impersonators'] = self.impersonators 
+
+        if self.anonids is not None:
+            body['anonids'] = self.anonids 
+
+        if self.deanonymizers is not None:
+            body['deanonymizers'] = self.deanonymizers 
+
+        if self.web is not None:
+            body['web'] = self.web 
+
+        if self.nonreaders is not None:
+            body['nonreaders'] = self.nonreaders
+
+        if self.signatories is not None:
+            body['signatories'] = self.signatories
 
         return body
 
@@ -2499,7 +2508,9 @@ class Group(object):
         :rtype: Group
         """
         group = Group(g['id'],
+            content=g.get('content'),
             invitation=g.get('invitation'),
+            invitations=g.get('invitations'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             tcdate = g.get('tcdate'),
@@ -2514,9 +2525,9 @@ class Group(object):
             deanonymizers=g.get('deanonymizers'),
             impersonators=g.get('impersonators'),
             host=g.get('host'),
+            web=g.get('web'),
+            domain=g.get('domain'),
             details = g.get('details'))
-        if 'web' in g:
-            group.web = g['web']
         return group
 
     def add_member(self, member):

@@ -722,7 +722,7 @@ var formatData = function(
         metaReview: metaReview,
         referrer: referrerUrl,
         reviewPending: reviewInvitation && reviewNotes.length < 3,
-        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3,
+        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3 && decisionNotes.length == 0,
         ratingPending: reviewerRatingInvitations.length && reviewerRatingReplies.length < reviewNotes.length,
         decisionPending: decisionInvitation && decisionNotes.length == 0,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,

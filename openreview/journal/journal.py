@@ -46,7 +46,7 @@ class Journal(object):
         self.assigned_AE_venue_id = f'{venue_id}/Assigned_AE'
         self.accepted_venue_id = venue_id
         self.invitation_builder = InvitationBuilder(self)
-        self.group_builder = group.GroupBuilder(client)
+        self.group_builder = group.GroupBuilder(self)
         self.header = {
             "title": self.full_name,
             "short": self.short_name,
@@ -273,9 +273,6 @@ class Journal(object):
     def get_moderation_id(self, number=None):
         return self.__get_invitation_id(name='Moderation', number=number)
 
-    def get_submission_editable_id(self, number=None):
-        return self.__get_invitation_id(name='Submission_Editable', number=number)
-
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
         if forum_note:
@@ -304,7 +301,8 @@ class Journal(object):
         return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
     
     def setup(self, support_role, editors=[], assignment_delay=5):
-        self.group_builder.set_groups(self, support_role, editors)
+        self.invitation_builder.set_meta_invitation()
+        self.group_builder.set_groups(support_role, editors)
         self.invitation_builder.set_invitations(assignment_delay)
         self.group_builder.set_group_variable(self.get_action_editors_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
@@ -340,7 +338,7 @@ class Journal(object):
 
     def setup_author_submission(self, note):
         print('Setup author submission data...')
-        self.group_builder.setup_submission_groups(self, note)
+        self.group_builder.setup_submission_groups(note)
         self.invitation_builder.set_note_revision_invitation(note)
         self.invitation_builder.set_note_withdrawal_invitation(note)
         self.invitation_builder.set_note_desk_rejection_invitation(note)
@@ -693,9 +691,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 elif invitation.id == self.get_review_approval_id(number=note_number):
                     self.invitation_builder.set_note_review_approval_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                 
-                elif invitation.id == self.get_submission_editable_id(number=note_number):
-                    self.invitation_builder.set_note_submission_editable_invitation(submission)
-
                 elif invitation.id == self.get_desk_rejection_approval_id(number=note_number):
                     self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                 

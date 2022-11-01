@@ -114,6 +114,12 @@ Cheers!
 
 Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name()).replace('{recruitment_links}', recruitment_links)
 
+    accepted_email = '''Thank you for accepting the invitation to be a {{reviewer_name}} for {SHORT_PHRASE}.
+
+The {SHORT_PHRASE} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''.replace('{SHORT_PHRASE}', conference.get_short_name())
+
     recruitment_invitation = openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Recruitment',
         super = SUPPORT_GROUP + '/-/Recruitment',
@@ -167,6 +173,13 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'order': 7,
                     'required': True,
                     'default': recruitment_email_body
+                },
+                'accepted_email_template': {
+                    'value-regex': '[\\S\\s]{1,10000}',
+                    'description': 'Please review the email sent to users when they accept a recruitment invitation. Make sure not to remove the parenthesized tokens.',
+                    'order': 8,
+                    'hidden': True,
+                    'default': accepted_email
                 }
             }
         },
@@ -217,6 +230,13 @@ Program Chairs'''.replace('{Abbreviated_Venue_Name}', conference.get_short_name(
                     'order': 5,
                     'required': True,
                     'default': recruitment_email_body
+                },
+                'accepted_email_template': {
+                    'value-regex': '[\\S\\s]{1,10000}',
+                    'description': 'Please review the email sent to users when they accept a recruitment invitation. Make sure not to remove the parenthesized tokens.',
+                    'order': 8,
+                    'hidden': True,
+                    'default': accepted_email
                 }
             }
         },

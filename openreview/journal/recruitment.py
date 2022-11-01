@@ -46,6 +46,7 @@ class Recruitment(object):
                         action_editors_invited_id,
                         verbose = False)
                     recruitment_status['invited'].append(invitee)
+                    assert self.client.get_groups(id=action_editors_invited_id, member=invitee)
                 except Exception as e:
                     self.client.remove_members_from_group(action_editors_invited_id, invitee)
                     if repr(e) not in recruitment_status['errors']:

@@ -1,22 +1,14 @@
 // Webfield component
-const SUBMISSION_ID = ''
-const PARENT_GROUP = ''
-const SUBMISSION_VENUE_ID = ''
-const WITHDRAWN_VENUE_ID = ''
-const DESK_REJECTED_VENUE_ID = ''
-
-const HEADER = {}
-
 const tabs = [{
   name: 'Your Consoles',
   type: 'consoles'
 }]
 
-if (SUBMISSION_VENUE_ID) {
+if (domain.content.public_submissions.value) {
   tabs.push({
     name: 'Active Submissions',
     query: {
-      'content.venueid': SUBMISSION_VENUE_ID
+      'content.venueid': domain.content.submission_venue_id.value
     },
     options: {
       enableSearch: true
@@ -24,20 +16,20 @@ if (SUBMISSION_VENUE_ID) {
   })
 }
 
-if (WITHDRAWN_VENUE_ID) {
+if (domain.content.public_withdrawn_submissions.value) {
   tabs.push({
     name: 'Withdrawn Submissions',
     query: {
-      'content.venueid': WITHDRAWN_VENUE_ID
+      'content.venueid': domain.content.withdrawn_venue_id.value
     }
   })
 }
 
-if (DESK_REJECTED_VENUE_ID) {
+if (domain.content.public_desk_rejected_submissions.value) {
   tabs.push({
     name: 'Desk Rejected Submissions',
     query: {
-      'content.venueid': DESK_REJECTED_VENUE_ID
+      'content.venueid': domain.content.desk_rejected_venue_id.value
     }
   })
 }
@@ -51,8 +43,14 @@ return {
   component: 'VenueHomepage',
   version: 1,
   properties: {
-    header: HEADER,
-    parentGroupId: PARENT_GROUP,
+    header: {
+      title: domain.content.title.value,
+      subtitle: domain.content.subtitle.value,
+      website: domain.content.website.value,
+      contact: domain.content.contact.value,
+    },
+    submissionId: domain.content.submission_id.value,
+    parentGroupId: domain.parent,
     apiVersion: 2,
     tabs: tabs
   }

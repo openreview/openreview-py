@@ -33,16 +33,6 @@ def process(client, edit, invitation):
         )
         return
 
-    ## Make submission editable by the authors
-    print('Make submission editable by the authors')
-    journal.invitation_builder.set_note_submission_editable_invitation(submission)
-
-    client.post_note_edit(invitation=journal.get_submission_editable_id(number=submission.number),
-        signatures=[venue_id],
-        note=openreview.api.Note(
-            id=submission.id
-        )
-    )
 
     ## Enable Camera Ready Revision
     print('Enable Camera Ready Revision')

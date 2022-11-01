@@ -15,6 +15,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
+from openreview.conference import invitation
+
 class TestECCVConference():
 
     @pytest.fixture(scope="class")
@@ -700,9 +702,9 @@ Please contact info@openreview.net with any questions or concerns about this int
         # Test adding reviewer after conflicts are built
         r5_client = helpers.create_user('reviewer5@fb.com', 'Reviewer', 'ECCV Five')
         conference.set_reviewers(['~Reviewer_ECCV_One1', '~Reviewer_ECCV_Two1', '~Reviewer_ECCV_Three1', '~Reviewer_ECCV_Four1', '~Reviewer_ECCV_Five1'])
-        assert r5_client.get_edges_count() == 0
+        assert r5_client.get_edges_count(invitation='thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict') == 0
         conference.set_matching_conflicts(r5_client.profile.id)
-        assert r5_client.get_edges_count() > 0
+        assert r5_client.get_edges_count(invitation='thecvf.com/ECCV/2020/Conference/Reviewers/-/Conflict') > 0
         with pytest.raises(openreview.OpenReviewException):
             conference.set_matching_conflicts('doesnotexist@mail.com')
 
