@@ -124,6 +124,12 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Deploy to pip
+          command: |
+            pip install twine
+            python setup.py bdist_wheel --universal
+            twine upload dist/* --skip-existing
+      - run:
           name: Deploy to dev instance
           command: |
             curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $OPENREVIEW_GITHUB" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
