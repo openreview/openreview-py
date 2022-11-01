@@ -133,8 +133,8 @@ workflows:
     jobs:
       # - build
       - deploy:
-          requires:
-            - build
+          # requires:
+          #   - build
           # filters:
           #   branches:
           #     only: master
