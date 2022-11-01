@@ -312,13 +312,13 @@ reviewer6@icml.cc, Reviewer ICMLSix
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
-        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
-        for i in range(1,6):
+        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        for i in range(1,101):
             note = openreview.api.Note(
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i]] },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -337,7 +337,7 @@ reviewer6@icml.cc, Reviewer ICMLSix
         helpers.await_queue()
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 5
+        assert len(submissions) == 100
         assert ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Submission1/Authors'] == submissions[0].readers    
 
 
@@ -364,7 +364,7 @@ reviewer6@icml.cc, Reviewer ICMLSix
         helpers.await_queue()
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 5
+        assert len(submissions) == 100
         assert ['ICML.cc/2023/Conference', 
         'ICML.cc/2023/Conference/Senior_Area_Chairs',
         'ICML.cc/2023/Conference/Area_Chairs',
