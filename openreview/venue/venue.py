@@ -245,14 +245,6 @@ class Venue(object):
     def get_desk_rejected_id(self):
         return self.get_invitation_id(f'Desk_Rejected_{self.submission_stage.name}')
 
-    def get_homepage_options(self):
-        options = {}
-        options['title'] = self.name
-        options['subtitle'] = self.short_name
-        options['website'] = self.website
-        options['contact'] = self.contact
-        return options
-
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         committee = []
         if with_program_chairs:
@@ -319,7 +311,8 @@ class Venue(object):
         contact_info = '',
         reduced_load_on_decline = None,
         default_load= 0,
-        allow_overlap_official_committee = False):
+        allow_overlap_official_committee = False,
+        accept_recruitment_template=None):
 
         return self.recruitment.invite_committee(title,
             message,

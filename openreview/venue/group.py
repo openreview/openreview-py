@@ -148,11 +148,8 @@ class GroupBuilder(object):
             host = venue_id
         )
 
-        parentGroup = groups[-2] if len(groups) > 1 else None
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
             content = f.read()
-            content = content.replace("const HEADER = {}", f"const HEADER = {json.dumps(self.venue.get_homepage_options())}")
-            content = content.replace("const PARENT_GROUP = ''", f"const PARENT_GROUP = '{parentGroup.id if parentGroup else ''}'")
             venue_group.web = content
             self.post_group(venue_group)
 
@@ -171,13 +168,15 @@ class GroupBuilder(object):
             'public_submissions': { 'value': 'Yes' if self.venue.submission_stage.public else 'No' },
             'public_withdrawn_submissions': { 'value': 'Yes' if self.venue.submission_stage.withdrawn_submission_public else 'No'},
             'public_desk_rejected_submissions': { 'value': 'Yes' if self.venue.submission_stage.desk_rejected_submission_public else 'No' },
-            'title': { 'value': self.venue.get_homepage_options()['title'] },
-            'subtitle': { 'value': self.venue.get_homepage_options()['subtitle'] },
-            'website': { 'value': self.venue.get_homepage_options()['website'] },
-            'contact': { 'value': self.venue.get_homepage_options()['contact'] },
+            'title': { 'value': self.venue.name if self.venue.name else '' },
+            'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
+            'website': { 'value': self.venue.website if self.venue.website else '' },
+            'contact': { 'value': self.venue.contact if self.venue.contact else '' },
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
+            'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
+            'reviewers_conflict_id': { 'value': self.venue.get_conflict_score_id(self.venue.get_reviewers_id()) },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
         }

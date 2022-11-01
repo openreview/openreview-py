@@ -382,8 +382,8 @@ TJ22 Editors-in-Chief
         assert recruitment_response[0].content['title']['value'] == 'New Recruitment Response'
         assert recruitment_response[0].readers == ['openreview.net/Support', 'TJ22', '~Second_AE1']
         assert 'The user new_reviewer@mail.com has accepted an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
-        references = openreview_client.get_note_edits(recruitment_response[0].id)
-        assert references and len(references) == 2
+        edits = openreview_client.get_note_edits(recruitment_response[0].id)
+        assert edits and len(edits) == 1
 
         #check AC was NOT notified
         ae_messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')
@@ -402,7 +402,7 @@ TJ22 Editors-in-Chief
         assert recruitment_response[0].readers == ['openreview.net/Support', 'TJ22', '~Second_AE1']
         assert 'The user new_reviewer@mail.com has declined an invitation to be a reviewer for TJ22.' in recruitment_response[0].content['comment']['value']
         references = openreview_client.get_note_edits(recruitment_response[0].id)
-        assert references and len(references) == 3
+        assert references and len(references) == 2
 
         #check AC was notified
         ae_messages = openreview_client.get_messages(subject = 'A new recruitment response has been posted to your journal request: Test Journal 2022')

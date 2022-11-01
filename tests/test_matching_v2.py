@@ -35,7 +35,6 @@ class TestMatching():
         venue.area_chair_roles = ['Senior_Program_Committee']
         venue.reviewers_name = 'Program_Committee'
         venue.reviewer_roles = ['Program_Committee']
-
         now = datetime.datetime.utcnow()
         venue.submission_stage = openreview.stages.SubmissionStage(
             due_date = now + datetime.timedelta(minutes = 40),
@@ -239,29 +238,29 @@ class TestMatching():
         assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Aggregate_Score')
         assert pc_client.get_invitation(id=f'{venue.id}/Senior_Program_Committee/-/Assignment')
 
-        bids = pc_client.get_edges(invitation = venue.get_bid_id(venue.get_area_chairs_id()))
+        bids = pc_client.get_edges_count(invitation = venue.get_bid_id(venue.get_area_chairs_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        bids = pc_client.get_edges(invitation = venue.get_bid_id(venue.get_reviewers_id()))
+        bids = pc_client.get_edges_count(invitation = venue.get_bid_id(venue.get_reviewers_id()))
         assert bids
-        assert 3 == len(bids)
+        assert 3 == bids
 
-        reviewer_custom_loads = pc_client.get_edges(
+        reviewer_custom_loads = pc_client.get_edges_count(
             invitation=f'{venue.id}/Program_Committee/-/Custom_Max_Papers')
         assert not reviewer_custom_loads
 
-        ac_custom_loads = pc_client.get_edges(
+        ac_custom_loads = pc_client.get_edges_count(
             invitation=f'{venue.id}/Senior_Program_Committee/-/Custom_Max_Papers')
         assert not ac_custom_loads
 
-        reviewer_conflicts = pc_client.get_edges(
+        reviewer_conflicts = pc_client.get_edges_count(
             invitation=f'{venue.id}/Program_Committee/-/Conflict')
-        assert 1 == len(reviewer_conflicts)
+        assert 1 == reviewer_conflicts
 
-        ac_conflicts = pc_client.get_edges(
+        ac_conflicts = pc_client.get_edges_count(
             invitation=f'{venue.id}/Senior_Program_Committee/-/Conflict')
-        assert 2 == len(ac_conflicts)
+        assert 2 == ac_conflicts
 
         ac1_conflicts = pc_client.get_edges(
             invitation=f'{venue.id}/Senior_Program_Committee/-/Conflict',
@@ -440,11 +439,11 @@ class TestMatching():
 
         notes = venue.get_submissions(sort='number:asc')
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation=f'{venue.id}/Program_Committee/-/Proposed_Assignment',
             label='rev-matching'
         )
-        assert 0 == len(edges)
+        assert 0 == edges
 
         #Reviewer assignments
         pc_client.post_edge(Edge(invitation = venue.get_paper_assignment_id(venue.get_reviewers_id()),
@@ -513,11 +512,11 @@ class TestMatching():
             weight = 0.98
         ))
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation=f'{venue.id}/Program_Committee/-/Proposed_Assignment',
             label='rev-matching'
         )
-        assert 6 == len(edges)
+        assert 6 == edges
 
         venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee')
 
@@ -588,11 +587,11 @@ class TestMatching():
             weight = 0.98
         ))
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation=f'{venue.id}/Program_Committee/-/Proposed_Assignment',
             label='rev-matching-new'
         )
-        assert 3 == len(edges)
+        assert 3 == edges
 
         venue.set_assignments(assignment_title='rev-matching-new', overwrite=True, committee_id=f'{venue.id}/Program_Committee')
 
@@ -828,11 +827,11 @@ class TestMatching():
         notes = venue.get_submissions(sort='number:asc')
         venue.client = openreview_client
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation=f'{venue.id}/Senior_Program_Committee/-/Proposed_Assignment',
             label='ac-matching'
         )
-        assert 0 == len(edges)
+        assert 0 == edges
 
         #AC assignments
         pc_client.post_edge(Edge(invitation = f'{venue.id}/Senior_Program_Committee/-/Proposed_Assignment',
@@ -868,11 +867,11 @@ class TestMatching():
             weight = 0.87
         ))
 
-        edges = pc_client.get_edges(
+        edges = pc_client.get_edges_count(
             invitation=f'{venue.id}/Senior_Program_Committee/-/Proposed_Assignment',
             label='ac-matching'
         )
-        assert 3 == len(edges)
+        assert 3 == edges
 
         venue.set_assignments(assignment_title='ac-matching', committee_id=f'{venue.id}/Senior_Program_Committee')
 
@@ -943,8 +942,8 @@ class TestMatching():
         compute_affinity_scores=byte_stream,
         alternate_matching_group=venue.id + '/Reviewers_Mentees')
 
-        affinity_scores = pc_client.get_edges(invitation=venue.id + '/Reviewers_Mentors/-/Affinity_Score')
-        assert len(affinity_scores) == 6
+        affinity_scores = pc_client.get_edges_count(invitation=venue.id + '/Reviewers_Mentors/-/Affinity_Score')
+        assert affinity_scores == 6
 
     # def test_desk_reject_expire_edges(self, conference, client, pc_client, helpers):
     #     note = venue.get_submissions()[0]

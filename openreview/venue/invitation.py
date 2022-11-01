@@ -435,10 +435,10 @@ class InvitationBuilder(object):
 
         if not options.get('allow_overlap_official_committee'):
             if committee_name == venue.reviewers_name and venue.use_area_chairs:
-                invitation_content['overlap_committee_name'] = { 'value': venue.area_chairs_name.replace('_', ' ')[:-1] }
+                invitation_content['overlap_committee_name'] = { 'value': venue.area_chairs_name }
                 invitation_content['overlap_committee_id'] = { 'value': venue.get_area_chairs_id() }
             elif committee_name == venue.area_chairs_name:
-                invitation_content['overlap_committee_name'] = { 'value': venue.reviewers_name.replace('_', ' ')[:-1] }
+                invitation_content['overlap_committee_name'] = { 'value': venue.reviewers_name }
                 invitation_content['overlap_committee_id'] = { 'value': venue.get_reviewers_id() }
         else:
                 invitation_content['overlap_committee_name'] = { 'delete': True }
@@ -550,13 +550,7 @@ class InvitationBuilder(object):
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/paperBidWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
-                webfield_content = webfield_content.replace("const VENUE_ID = ''", f"const VENUE_ID = '{venue_id}'")
-                webfield_content = webfield_content.replace("const SUBMISSION_ID = ''", f"const SUBMISSION_ID = '{self.venue.get_submission_id()}'")
-                webfield_content = webfield_content.replace("const BID_INVITATION_ID = ''", f"const BID_INVITATION_ID = '{bid_invitation_id}'")
-                webfield_content = webfield_content.replace("const CONFLICT_INVITATION_ID = ''", f"const CONFLICT_INVITATION_ID = '{self.venue.get_conflict_score_id(match_group_id)}'")
-                webfield_content = webfield_content.replace("const SCORE_IDS = []", f"const SCORE_IDS = {json.dumps(bid_stage.get_score_ids())}")
-                webfield_content = webfield_content.replace("const BID_OPTIONS = []", f"const BID_OPTIONS = {json.dumps(bid_stage.get_bid_options())}")
-                webfield_content = webfield_content.replace("const ROLE_NAME = ''", f"const ROLE_NAME = '{venue.get_committee_name(match_group_id, pretty=True)}'")
+                webfield_content = webfield_content.replace("const COMMITTEE_NAME = ''", f"const COMMITTEE_NAME = '{venue.get_committee_name(match_group_id)}'")
                 webfield_content = webfield_content.replace("const BID_INSTRUCTIONS = ''", f"const BID_INSTRUCTIONS = `{bid_stage.get_instructions()}`")
         
 

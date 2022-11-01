@@ -1,11 +1,5 @@
 // Webfield component
-const VENUE_ID = ''
-const SUBMISSION_ID = ''
-const BID_INVITATION_ID = ''
-const CONFLICT_INVITATION_ID = ''
-const SCORE_IDS = []
-const BID_OPTIONS = []
-const ROLE_NAME = ''
+const COMMITTEE_NAME = ''
 const BID_INSTRUCTIONS = ''
 
 return {
@@ -13,15 +7,13 @@ return {
   version: 1,
   properties: {
     header: {
-      "title": `${ROLE_NAME} Bidding Console`,
+      "title": `${COMMITTEE_NAME} Bidding Console`,
       "instructions": BID_INSTRUCTIONS
     },
     apiVersion: 2,
-    venueId: VENUE_ID,
-    bidOptions: BID_OPTIONS,
-    scoreIds: SCORE_IDS,
-    submissionInvitationId: SUBMISSION_ID,
-    bidInvitationId: BID_INVITATION_ID,
-    conflictInvitationId: CONFLICT_INVITATION_ID
+    venueId: domain.id,
+    submissionVenueId: domain.content.submission_venue_id.value,
+    scoreIds: [domain.content[`${COMMITTEE_NAME}_affinity_score_id`].value ],
+    conflictInvitationId: domain.content[`${COMMITTEE_NAME}_conflict_id`].value
   }
 }

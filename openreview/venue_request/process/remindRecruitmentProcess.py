@@ -8,6 +8,7 @@ def process(client, note, invitation):
 
     reduced_load=note.content.get('invitee_reduced_load', None)
     role_name=note.content['invitee_role'].strip()
+    accept_recruitment_template = note.content.get('accepted_email_template')
 
     ## Backward compatibility
     roles={
@@ -31,7 +32,8 @@ def process(client, note, invitation):
         title = note.content['invitation_email_subject'].strip(),
         message = note.content['invitation_email_content'].strip(),
         remind=True,
-        reduced_load_on_decline = reduced_load
+        reduced_load_on_decline = reduced_load,
+        accept_recruitment_template=accept_recruitment_template
     )
 
     comment_note = openreview.Note(

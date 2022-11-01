@@ -637,7 +637,7 @@ note={Featured Certification, Reproducibility Certification}
 }'''
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 6
+        assert len(edits) == 5
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Paper1/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
