@@ -2290,6 +2290,8 @@ class Note(object):
     :type number: int, optional
     :param cdate: Creation date
     :type cdate: int, optional
+    :param pdate: Publication date
+    :type pdate: int, optional
     :param tcdate: True creation date
     :type tcdate: int, optional
     :param tmdate: Modification date
@@ -2319,6 +2321,7 @@ class Note(object):
         original=None,
         number=None,
         cdate=None,
+        pdate=None,
         mdate=None,
         tcdate=None,
         tmdate=None,
@@ -2334,6 +2337,7 @@ class Note(object):
         self.original = original
         self.number = number
         self.cdate = cdate
+        self.pdate = pdate
         self.mdate = mdate
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -2370,6 +2374,7 @@ class Note(object):
             'id': self.id,
             'original': self.original,
             'cdate': self.cdate,
+            'pdate': self.pdate,
             'mdate': self.mdate,
             'tcdate': self.tcdate,
             'tmdate': self.tmdate,
