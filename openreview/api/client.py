@@ -1483,8 +1483,7 @@ class OpenReviewClient(object):
                 if members:
                     response = requests.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
                     response = self.__handle_response(response)
-                    return Group.from_json(response.json())                
-
+                    return Group.from_json(response.json())
 
         member_type = type(members)
         if member_type in string_types:

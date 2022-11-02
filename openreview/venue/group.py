@@ -285,7 +285,7 @@ class GroupBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
                 content = f.read()
                 reviewer_group.web = content
-                self.post_group(reviewer_group)        
+                self.post_group(reviewer_group)
 
     def create_area_chairs_group(self):
 
