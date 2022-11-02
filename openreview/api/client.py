@@ -1983,6 +1983,7 @@ class Note(object):
         id=None,
         number=None,
         cdate=None,
+        pdate=None,
         mdate=None,
         tcdate=None,
         tmdate=None,
@@ -1996,6 +1997,7 @@ class Note(object):
         self.id = id
         self.number = number
         self.cdate = cdate
+        self.pdate = pdate
         self.mdate = mdate
         self.tcdate = tcdate
         self.tmdate = tmdate
@@ -2041,6 +2043,8 @@ class Note(object):
             body['invitations'] = self.invitations
         if self.cdate:
             body['cdate'] = self.cdate
+        if self.pdate:
+            body['pdate'] = self.pdate
         if self.mdate:
             body['mdate'] = self.mdate
         if self.ddate:

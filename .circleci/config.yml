@@ -120,12 +120,19 @@ jobs:
   deploy:
     working_directory: ~/openreview-py-repo
     docker:
-      - image: circleci/python:2.7
+      - image: cimg/python:3.7.14-node
     steps:
       - checkout
-      - run: pip install twine
-      - run: python setup.py bdist_wheel --universal
-      - run: twine upload dist/* --skip-existing
+      - run:
+          name: Deploy to pip
+          command: |
+            pip install twine
+            python setup.py bdist_wheel --universal
+            twine upload dist/* --skip-existing
+      - run:
+          name: Deploy to dev instance
+          command: |
+            curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: Bearer $OPENREVIEW_GITHUB" https://api.github.com/repos/openreview/openreview-py/dispatches -d '{"event_type":"openreview-py-updated"}'
 workflows:
   version: 2
   build-deploy:
