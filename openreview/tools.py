@@ -85,7 +85,7 @@ def concurrent_requests(request_func, params, desc='Gathering Responses'):
     :return: A list of results given for each func value execution
     :rtype: list
     """
-    max_workers = min(6, cpu_count() - 1)
+    max_workers = cpu_count() - 1
     futures = []
     gathering_responses = tqdm(total=len(params), desc=desc)
     results = []

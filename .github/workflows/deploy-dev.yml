@@ -11,6 +11,8 @@ on:
         required: false
         default: master
         type: string
+  repository_dispatch:
+    types: [openreview-py-updated]
 
 jobs:
   deploy:
