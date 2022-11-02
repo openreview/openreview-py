@@ -382,8 +382,8 @@ class Venue(object):
                         readers = self.submission_stage.get_readers(self, submission.number)
                     )
                 )            
-        ## Release the submissions to specified readers if post decision has not been run
-        if not self.submission_stage.papers_released or not self.submission_stage.author_names_revealed:
+        ## Release the submissions to specified readers if venueid is still submission
+        if submissions and submissions[0].content['venueid']['value'] == self.get_submission_venue_id():
             openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
              
         ## Create revision invitation if there is a second deadline?
