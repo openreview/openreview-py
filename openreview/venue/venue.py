@@ -374,17 +374,17 @@ class Venue(object):
         self.group_builder.create_paper_committee_groups(submissions)
         
         def update_submission_readers(submission):
-            return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                note=openreview.api.Note(id=submission.id,
-                        readers = self.submission_stage.get_readers(self, submission.number)
+            if submission.content['venueid']['value'] == self.get_submission_venue_id():
+                return self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    note=openreview.api.Note(id=submission.id,
+                            readers = self.submission_stage.get_readers(self, submission.number)
+                        )
                     )
-                )            
         ## Release the submissions to specified readers if venueid is still submission
-        if submissions and submissions[0].content['venueid']['value'] == self.get_submission_venue_id():
-            openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
+        openreview.tools.concurrent_requests(update_submission_readers, submissions, desc='update_submission_readers')
              
         ## Create revision invitation if there is a second deadline?
         ## Create withdraw and desk reject invitations
