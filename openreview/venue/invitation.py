@@ -426,6 +426,7 @@ class InvitationBuilder(object):
 
         invitation_content = {
             'hash_seed': { 'value': '1234', 'readers': [ venue.venue_id ]},
+            'venue_id': { 'value': self.venue_id },
             'committee_name': { 'value': committee_name.replace('_', ' ')[:-1] },
             'committee_id': { 'value': venue.get_committee_id(committee_name) },
             'committee_invited_id': { 'value': venue.get_committee_id_invited(committee_name) },
@@ -465,55 +466,59 @@ class InvitationBuilder(object):
         with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as process_reader:
             process_content = process_reader.read()
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
-                webfield_content = webfield_reader.read()
-                webfield_content = webfield_content.replace("const COMMITTEE_NAME = ''", "const COMMITTEE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "'")
+            with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_pre_process.py')) as pre_process_reader:
+                pre_process_content = pre_process_reader.read()
 
-                invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
-                current_invitation=tools.get_invitation(self.client, id = invitation_id)
+                with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
+                    webfield_content = webfield_reader.read()
+                    webfield_content = webfield_content.replace("const COMMITTEE_NAME = ''", "const COMMITTEE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "'")
 
-                #if reduced_load hasn't change, no need to repost invitation
-                if not current_invitation:
-                    recruitment_invitation = Invitation(
-                        id = invitation_id,
-                        invitees = ['everyone'],
-                        signatures = [venue.id],
-                        readers = ['everyone'],
-                        writers = [venue.id],
-                        content = invitation_content,
-                        edit = {
-                            'signatures': ['(anonymous)'],
-                            'readers': [venue.id],
-                            'note' : {
-                                'signatures':['${3/signatures}'],
-                                'readers': [venue.id],
-                                'writers': [venue.id],
-                                'content': content
-                            }
-                        },
-                        process = process_content,
-                        web = webfield_content
-                    )
+                    invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
+                    current_invitation=tools.get_invitation(self.client, id = invitation_id)
 
-                    return self.save_invitation(recruitment_invitation, replacement=True)
-                else:
-                    print('current invitation', current_invitation.edit['note']['content'].get('reduced_load', {}))
-                    print('new invitation', reduced_load_dict)
-                    if current_invitation.edit['note']['content'].get('reduced_load', {}) != reduced_load_dict:
-                        print('update reduce load')
-                        return self.save_invitation(Invitation(
+                    #if reduced_load hasn't change, no need to repost invitation
+                    if not current_invitation:
+                        recruitment_invitation = Invitation(
                             id = invitation_id,
+                            invitees = ['everyone'],
+                            signatures = [venue.id],
+                            readers = ['everyone'],
+                            writers = [venue.id],
+                            content = invitation_content,
                             edit = {
+                                'signatures': ['(anonymous)'],
+                                'readers': [venue.id],
                                 'note' : {
-                                    'content': {
-                                        'reduced_load': reduced_load_dict if reduced_load_dict else { 'delete': True }
+                                    'signatures':['${3/signatures}'],
+                                    'readers': [venue.id],
+                                    'writers': [venue.id],
+                                    'content': content
+                                }
+                            },
+                            process = process_content,
+                            preprocess = pre_process_content,
+                            web = webfield_content
+                        )
+
+                        return self.save_invitation(recruitment_invitation, replacement=True)
+                    else:
+                        print('current invitation', current_invitation.edit['note']['content'].get('reduced_load', {}))
+                        print('new invitation', reduced_load_dict)
+                        if current_invitation.edit['note']['content'].get('reduced_load', {}) != reduced_load_dict:
+                            print('update reduce load')
+                            return self.save_invitation(Invitation(
+                                id = invitation_id,
+                                edit = {
+                                    'note' : {
+                                        'content': {
+                                            'reduced_load': reduced_load_dict if reduced_load_dict else { 'delete': True }
+                                        }
                                     }
                                 }
-                            }
-                        ))
-                    else:
-                        print('do not update reduce load')
-                        return current_invitation
+                            ))
+                        else:
+                            print('do not update reduce load')
+                            return current_invitation
 
     def set_bid_invitations(self):
 
