@@ -7,7 +7,7 @@
 // ------------------------------------
 
 // Constants
-var CONFERENCE_ID = 'openreview.net/Archive';
+var CONFERENCE_ID = 'OpenReview.net/Archive';
 var DIRECT_UPLOAD_ID = CONFERENCE_ID + '/-/Direct_Upload';
 var IMPORTED_RECORD_ID = CONFERENCE_ID + '/-/Imported_Record'
 
