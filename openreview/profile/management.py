@@ -14,6 +14,7 @@ class ProfileManagement():
     def setup(self):
         self.set_remove_name_invitations()
         self.set_archive_invitations()
+        self.set_merge_profiles_invitations()
 
     def set_remove_name_invitations(self):
 
@@ -219,4 +220,105 @@ class ProfileManagement():
                     }
                 }
             }
-        ))                       
+        ))
+
+    def set_merge_profiles_invitations(self):
+
+        content = {
+            'name': {
+                'order': 1,
+                'description': 'Name that want to be removed.',
+                'value-regex': '.*',
+                'required': True                
+            },
+            'left': {
+                'order': 2,
+                'description': 'Usernames or email that want to be merged.',
+                'value-regex': '.*',
+                'required': True
+            },
+            'right': {
+                'order': 3,
+                'description': 'Usernames or email that want to be merged.',
+                'value-regex': '.*',
+                'required': True
+            },
+            'comment': {
+                'order': 4,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'description': 'Reason why you want to delete your name.',
+                'required': False
+            },
+            'status': {
+                'order': 5,
+                'value-dropdown': ['Pending', 'Accepted', 'Rejected'],
+                'description': 'Request status.',
+                'required': True
+            }
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/request_merge_profiles_process.py'), 'r') as f:
+            file_content = f.read()
+            self.client.post_invitation(openreview.Invitation(
+                id=f'{self.support_group_id}/-/Profile_Merge',
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.support_group_id],
+                invitees=['~', '(guest)'],
+                process_string=file_content,
+                reply={
+                    'readers': {
+                        'values-copied': [self.support_group_id, '{content.right}', '{content.left}']
+                    },
+                    'writers': {
+                        'values':[self.support_group_id],
+                    },
+                    'signatures': {
+                        'values-regex': f'~.*|{self.support_group_id}|\(guest\)'
+                    },
+                    'content': content
+                }
+            ))        
+    
+
+        content = {
+            'status': {
+                'order': 1,
+                'value-dropdown': ['Accepted', 'Rejected'],
+                'description': 'Decision status.',
+                'required': True
+            },
+            'support_comment': {
+                'order': 2,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'description': 'Justify the decision.',
+                'required': False
+            }            
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/request_merge_profiles_decision_process.py'), 'r') as f:
+            file_content = f.read()
+            file_content = file_content.replace("SUPPORT_USER_ID = ''", "SUPPORT_USER_ID = '" + self.support_group_id + "'")
+            file_content = file_content.replace("AUTHOR_RENAME_INVITATION_ID = ''", "AUTHOR_RENAME_INVITATION_ID = '" + self.author_rename_invitation_id + "'")
+            self.client.post_invitation(openreview.Invitation(
+                id=f'{self.support_group_id}/-/Profile_Merge_Decision',
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=[self.support_group_id],
+                process_string=file_content,
+                reply={
+                    'referentInvitation': f'{self.support_group_id}/-/Profile_Merge',
+                    'readers': {
+                        'values': [self.support_group_id]
+                    },
+                    'writers': {
+                        'values':[self.support_group_id],
+                    },
+                    'signatures': {
+                        'values': [self.support_group_id]
+                    },
+                    'content': content
+                }
+            ))           
+

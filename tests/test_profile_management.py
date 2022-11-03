@@ -1007,3 +1007,101 @@ Thanks,
 
 The OpenReview Team.
 '''
+
+    def test_merge_profiles(self, client, profile_management, helpers):
+
+        rachel_client = helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
+        profile = rachel_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Rachel',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        rachel_client.post_profile(profile)
+        profile = rachel_client.get_profile(email_or_id='~Rachel_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Rachel_Alternate_Last1'
+
+        helpers.create_user('rachel@gmail.com', 'Rachel', 'First', alternates=[], institution='google.com')
+
+        request_note = rachel_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Merge',
+            readers=['openreview.net/Support', '~Rachel_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Rachel_Last1'],
+            content={
+                'name': 'Rachel Last',
+                'left': '~Rachel_Last1',
+                'right': '~Rachel_First1',
+                'comment': 'please merge my profiles',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='rachel@profile.org', subject='Profile merge request has been received')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Rachel Last,
+
+We have received your request to merge the following profiles: ~Rachel_Last1, ~Rachel_First1.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+        ## Accept the request
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Merge_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Accepted'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='rachel@profile.org', subject='Profile merge request has been accepted')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Rachel Last,
+
+We have received your request to merge the following profiles: ~Rachel_Last1, ~Rachel_First1.
+
+The profiles have been merged. Please check that the information listed in your profile is correct.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+    def test_merge_profiles_as_guest(self, client, profile_management, helpers):
+
+        helpers.create_user('marina@profile.org', 'Marina', 'Last', alternates=[], institution='google.com')
+        helpers.create_user('marina@gmail.com', 'Marina', 'Last', alternates=[], institution='google.com')
+
+        guest_client = openreview.Client()
+        request_note = guest_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Merge',
+            readers=['openreview.net/Support', 'marina@profile.org'],
+            writers=['openreview.net/Support'],
+            signatures=['(guest)'],
+            content={
+                'name': 'Marina Last',
+                'left': 'marina@profile.org',
+                'right': 'marina@gmail.com',
+                'comment': 'please merge my profiles',
+                'status': 'Pending'
+            }
+
+        ))
