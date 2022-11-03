@@ -27,6 +27,12 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.comment_stage = get_comment_stage(note)
         venue.decision_stage = get_decision_stage(note)
 
+
+        paper_matching_options = note.content.get('Paper Matching', [])
+        include_expertise_selection = note.content.get('include_expertise_selection', '') == 'Yes'
+        if 'OpenReview Affinity' in paper_matching_options:
+            venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date, include_option=include_expertise_selection)
+
         venue.setup(note.content.get('program_chair_emails'))
         venue.create_submission_stage()
         return venue
@@ -269,7 +275,7 @@ def get_identity_readers(request_forum, field_name):
         'Assigned Reviewers': openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED
     }
 
-    return [readers_map[r] for r in request_forum.content.get(field_name, [])]    
+    return [readers_map[r] for r in request_forum.content.get(field_name, [])]
 
 def get_submission_stage(request_forum):
 

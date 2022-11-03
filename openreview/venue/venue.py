@@ -39,7 +39,8 @@ class Venue(object):
         self.ethics_reviewers_name = 'Ethics_Reviewers'
         self.authors_name = 'Authors'
         self.use_ethics_chairs = False
-        self.use_ethics_reviewers = False        
+        self.use_ethics_reviewers = False 
+        self.expertise_selection_stage = None       
         self.submission_stage = None
         self.review_stage = None
         self.ethics_review_stage = None
@@ -330,6 +331,8 @@ class Venue(object):
         self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
+        if self.expertise_selection_stage:
+            self.invitation_builder.set_expertise_selection_invitations()
 
     def create_review_stage(self):
         invitation = self.invitation_builder.set_review_invitation()

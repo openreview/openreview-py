@@ -1604,3 +1604,76 @@ class InvitationBuilder(object):
         #         invitation.preprocess=pre_content
         #         invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
         #         return self.save_invitation(invitation)
+    
+    def set_expertise_selection_invitations(self):
+
+        venue_id = self.venue_id
+        expertise_selection_stage = self.venue.expertise_selection_stage
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/expertiseSelectionWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
+
+        def build_expertise_selection(committee_id):
+            expertise_selection_id = self.venue.get_invitation_id(expertise_selection_stage.name, prefix=committee_id)
+            invitation = Invitation(
+                id= expertise_selection_id,
+                cdate = tools.datetime_millis(expertise_selection_stage.start_date),
+                duedate = tools.datetime_millis(expertise_selection_stage.due_date),
+                expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if expertise_selection_stage.due_date else None,
+                invitees = [committee_id],
+                signatures = [venue_id],
+                readers = [venue_id, committee_id],
+                writers = [venue_id],
+                maxReplies=1,
+                web = webfield_content,
+                edge = {
+                    'id': {
+                        'param': {
+                            'withInvitation': expertise_selection_id,
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': [ venue_id, '${2/signatures}' ],
+                    'writers': [ venue_id, '${2/signatures}' ],
+                    'signatures': {
+                        'param': {
+                            'regex': '~.*' 
+                        }
+                    },
+                    'head': {
+                        'param': {
+                            'type': 'note'
+                        }
+                    },
+                    'tail': {
+                        'param': {
+                            'type': 'profile',
+                            'inGroup': committee_id
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'enum': ['Include' if expertise_selection_stage.include_option else 'Exclude'],
+                        }
+                    }
+                }
+            )
+
+            self.save_invitation(invitation, replacement=True)
+
+        build_expertise_selection(self.venue.get_reviewers_id())
+
+        if self.venue.use_area_chairs:
+            build_expertise_selection(self.venue.get_area_chairs_id())
+
+        if self.venue.use_senior_area_chairs:
+            build_expertise_selection(self.venue.get_senior_area_chairs_id())
+
