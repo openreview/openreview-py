@@ -233,7 +233,7 @@ class ProfileManagement():
             },
             'left': {
                 'order': 2,
-                'description': 'Usernames or email that want to be merged.',
+                'description': 'Username or email that want to be merged.',
                 'value-regex': '.*',
                 'required': True
             },
