@@ -1027,8 +1027,7 @@ class Matching(object):
             self.deploy_assignments(assignment_title, overwrite)
 
         # ## Add sync process function
-        # self.venue.invitation_builder.set_paper_group_invitation(self.venue, self.match_group.id)
-        # self.venue.invitation_builder.set_assignment_invitation(self.venue, self.match_group.id)
+        self.venue.invitation_builder.set_assignment_invitation(self.match_group.id)
 
         # if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
         #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))

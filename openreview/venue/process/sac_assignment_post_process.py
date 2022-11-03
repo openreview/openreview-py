@@ -1,6 +1,6 @@
 def process_update(client, edge, invitation, existing_edge):
 
-    CONFERENCE_ID = ''
+    VENUE_ID = ''
     PAPER_GROUP_ID = ''
     AC_ASSIGNMENT_INVITATION_ID = ''
 
