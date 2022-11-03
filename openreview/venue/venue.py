@@ -203,7 +203,8 @@ class Venue(object):
         return self.area_chairs_name
     
     def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        reviewers_id = self.get_committee_id('Reviewer_.*' if anon else self.reviewers_name, number)
+        rev_name = self.reviewers_name[:-1] if self.reviewers_name.endswith('s') else self.reviewers_name
+        reviewers_id = self.get_committee_id(f'{rev_name}_.*' if anon else self.reviewers_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
         return reviewers_id
