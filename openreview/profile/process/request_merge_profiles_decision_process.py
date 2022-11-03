@@ -10,7 +10,7 @@ def process(client, note, invitation):
 
 We have received your request to merge the following profiles: {request_note.content['left']}, {request_note.content['right']}.
 
-We can not remove the name from the profile for the following reason:
+We can not merge your profiles for the following reason:
 
 {request_note.content['support_comment']}
 
