@@ -1763,7 +1763,7 @@ class Client(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None):
+    def get_messages(self, to = None, subject = None, status = None, offset = None, limit = None, parentGroup = None):
         """
         **Only for Super User**. Retrieves all the messages sent to a list of usernames or emails and/or a particular e-mail subject
 
@@ -1778,7 +1778,7 @@ class Client(object):
         :rtype: dict
         """
 
-        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit }, headers = self.headers)
+        response = self.session.get(self.messages_url, params = { 'to': to, 'subject': subject, 'status': status, 'offset': offset, 'limit': limit, 'parentGroup': parentGroup}, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()['messages']
 

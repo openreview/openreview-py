@@ -966,7 +966,7 @@ class iterget:
     next = __next__
 
 
-def iterget_messages(client, to = None, subject = None, status = None):
+def iterget_messages(client, to = None, subject = None, status = None, parentGroup = None):
     """
     Returns an iterator over Messages ignoring API limit.
 
@@ -980,7 +980,8 @@ def iterget_messages(client, to = None, subject = None, status = None):
     params = {
         'to': to,
         'subject': subject,
-        'status': status
+        'status': status,
+        'parentGroup': parentGroup
     }
 
     return iterget(client.get_messages, **params)
