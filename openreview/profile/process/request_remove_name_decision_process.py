@@ -176,8 +176,12 @@ The OpenReview Team.
 
         for group in memberships:
             if username in group.members:
-                client.remove_members_from_group(group.id, username)
-                client.add_members_to_group(group.id, profile.id)
+                if group.domain is not None:
+                    client_v2.remove_members_from_group(group.id, username)
+                    client_v2.add_members_to_group(group.id, profile.id)
+                else:
+                    client.remove_members_from_group(group.id, username)
+                    client.add_members_to_group(group.id, profile.id)
 
 
         print('Post a profile reference to remove the name')
