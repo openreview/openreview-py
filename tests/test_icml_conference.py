@@ -6,11 +6,19 @@ import random
 import os
 import csv
 from selenium.webdriver.common.by import By
+from openreview import ProfileManagement
 
 class TestICMLConference():
 
 
-    def test_create_conference(self, client, openreview_client, helpers):
+    @pytest.fixture(scope="class")
+    def profile_management(self, client):
+        profile_management = ProfileManagement(client, 'openreview.net')
+        profile_management.setup()
+        return profile_management
+
+
+    def test_create_conference(self, client, openreview_client, helpers, profile_management):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -18,7 +26,7 @@ class TestICMLConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@icml.cc', 'Program', 'ICMLChair')
 
-        helpers.create_user('sac1@icml.cc', 'SAC', 'ICMLOne')
+        sac_client = helpers.create_user('sac1@icml.cc', 'SAC', 'ICMLOne')
         helpers.create_user('ac1@icml.cc', 'AC', 'ICMLOne')
         helpers.create_user('ac2@icml.cc', 'AC', 'ICMLTwo')
         helpers.create_user('reviewer1@icml.cc', 'Reviewer', 'ICMLOne')
@@ -92,7 +100,32 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Senior_Area_Chairs/-/Expertise_Selection')
+
+        sac_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~SAC_ICMLOne1'],
+            writers = ['~SAC_ICMLOne1'],
+            content = {
+                'title': 'Paper title 1',
+                'abstract': 'Paper abstract 1',
+                'authors': ['SAC ICML', 'Test Client'],
+                'authorids': ['~SAC_ICMLOne1', 'test@mail.com']
+            }
+        ))        
         
+        sac_client.post_note(openreview.Note(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            readers = ['everyone'],
+            signatures = ['~SAC_ICMLOne1'],
+            writers = ['~SAC_ICMLOne1'],
+            content = {
+                'title': 'Paper title 2',
+                'abstract': 'Paper abstract 2',
+                'authors': ['SAC ICML', 'Test Client'],
+                'authorids': ['~SAC_ICMLOne1', 'test@mail.com']
+            }
+        ))
 
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
