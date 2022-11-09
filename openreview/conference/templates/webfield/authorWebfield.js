@@ -25,6 +25,7 @@ return {
     reviewRatingName: `${REVIEW_RATING_NAME}`,
     reviewConfidenceName: `${REVIEW_CONFIDENCE_NAME}`,
     authorName: `${AUTHOR_NAME}`,
-    submissionName:'Paper'
+    submissionName:'Paper',
+    showAuthorProfileStatus: true,
   }
 }
