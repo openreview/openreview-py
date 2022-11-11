@@ -2409,7 +2409,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
+    def __init__(self, id, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -2430,6 +2430,7 @@ class Group(object):
         self.impersonators = impersonators
         self.host = host
         self.domain = domain
+        self.parent = parent
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
@@ -2530,6 +2531,7 @@ class Group(object):
             host=g.get('host'),
             web=g.get('web'),
             domain=g.get('domain'),
+            parent=g.get('parent'),
             details = g.get('details'))
         return group
 
