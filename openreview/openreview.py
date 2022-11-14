@@ -79,7 +79,7 @@ class Client(object):
         }
 
         self.session = requests.Session()
-        retries = Retry(total=8, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ])
+        retries = Retry(total=16, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
 
