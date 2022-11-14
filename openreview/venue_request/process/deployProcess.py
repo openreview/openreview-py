@@ -4,10 +4,7 @@ def process(client, note, invitation):
     GROUP_PREFIX = ''
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP)
-    conference_group = client.get_group(conference.get_id())
     FRONTEND_URL = 'https://openreview.net' ## point always to the live site
-
-    client.add_members_to_group(conference_group, SUPPORT_GROUP)
 
     forum = client.get_note(id=note.forum)
     forum.writers = []
