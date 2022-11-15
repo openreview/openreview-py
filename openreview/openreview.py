@@ -79,7 +79,7 @@ class Client(object):
         }
 
         self.session = requests.Session()
-        retries = Retry(total=8, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ])
+        retries = Retry(total=16, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
 
@@ -632,7 +632,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())        
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
+    def get_groups(self, id = None, regex = None, member = None, members = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -660,6 +660,7 @@ class Client(object):
         if id is not None: params['id'] = id
         if regex is not None: params['regex'] = regex
         if member is not None: params['member'] = member
+        if members is not None: params['members'] = members
         if signatory is not None: params['signatory'] = signatory
         if web: params['web'] = web
         if select:
