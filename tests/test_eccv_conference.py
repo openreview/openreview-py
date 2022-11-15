@@ -251,6 +251,7 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
             email_pcs_on_withdraw=True,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
+            email_pcs_on_desk_reject=True,
             readers=[openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS])
 
 
