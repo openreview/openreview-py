@@ -18,6 +18,7 @@ return {
         bidName: domain.content.bid_name?.value,
         recommendationName: domain.content.recommendation_id?.value || 'Recommendation',
         submissionId: domain.content.submission_id.value,
+        submissionVenueId: domain.content.submission_venue_id.value,
         withdrawnSubmissionId: domain.content.withdrawn_venue_id.value,
         deskRejectedSubmissionId: domain.content.desk_rejected_venue_id.value,
         officialReviewName: domain.content.review_name?.value,
