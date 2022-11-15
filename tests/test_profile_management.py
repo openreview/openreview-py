@@ -1033,7 +1033,6 @@ The OpenReview Team.
             writers=['openreview.net/Support'],
             signatures=['~Rachel_Last1'],
             content={
-                'name': 'Rachel Last',
                 'left': '~Rachel_Last1',
                 'right': '~Rachel_First1',
                 'comment': 'please merge my profiles',
@@ -1097,7 +1096,7 @@ The OpenReview Team.
             writers=['openreview.net/Support'],
             signatures=['(guest)'],
             content={
-                'name': 'Marina Last',
+                'email': 'marina@profile.org',
                 'left': 'marina@profile.org',
                 'right': 'marina@gmail.com',
                 'comment': 'please merge my profiles',

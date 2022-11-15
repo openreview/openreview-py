@@ -15,6 +15,79 @@ class ProfileManagement():
         self.set_remove_name_invitations()
         self.set_archive_invitations()
         self.set_merge_profiles_invitations()
+        self.set_dblp_invitations()
+
+    def set_dblp_invitations(self):
+
+        dblp_group = openreview.tools.get_group(self.client, 'dblp.org')
+        if dblp_group is None:
+            self.client.post_group(
+                openreview.Group(
+                    id = 'dblp.org',
+                    readers = ['everyone'],
+                    writers = ['dblp.org'],
+                    nonreaders = [],
+                    signatures = ['~Super_User1'],
+                    signatories = ['dblp.org'],
+                    members = []
+                )
+            )
+
+        content = {
+            "dblp": {
+                "value-regex": "(.*\\n)+.*"
+            }
+        }
+
+        self.client.post_invitation(openreview.Invitation(
+            id='dblp.org/-/record',
+            readers=['everyone'],
+            writers=['dblp.org'],
+            signatures=['dblp.org'],
+            invitees=['~'],
+            transform=os.path.join(os.path.dirname(__file__), 'process/dblp_transform.js'),
+            reply={
+                'readers': {
+                    'values': ['everyone']
+                },
+                'writers': {
+                    'values':['dblp.org'],
+                },
+                'signatures': {
+                    'values-regex': "dblp.org|~.*"
+                },
+                'content': content
+            }
+        ))
+
+        self.client.post_invitation(openreview.Invitation(
+            id='dblp.org/-/author_coreference',
+            readers=['everyone'],
+            writers=['dblp.org'],
+            signatures=['dblp.org'],
+            invitees=['~'],
+            reply={
+                'referentInvitation': 'dblp.org/-/record',
+                'readers': {
+                    'values': ['everyone']
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': "dblp.org|~.*"
+                },
+                "content": {
+                    "authorids": {
+                        "values-regex": ".*"
+                    },
+                    "authors": {
+                        "values-regex": ".*",
+                        "required": False
+                    }
+                }
+            }
+        ))                           
 
     def set_remove_name_invitations(self):
 
@@ -225,11 +298,11 @@ class ProfileManagement():
     def set_merge_profiles_invitations(self):
 
         content = {
-            'name': {
+            'email': {
                 'order': 1,
-                'description': 'Name that want to be removed.',
+                'description': 'email of the user making the request.',
                 'value-regex': '.*',
-                'required': True                
+                'required': False                
             },
             'left': {
                 'order': 2,
