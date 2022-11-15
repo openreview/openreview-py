@@ -1077,10 +1077,19 @@ class VenueRequest():
                 'default': 'No, author identities of desk rejected submissions should not be revealed.',
                 'order': 28
             },
+            'email_pcs_for_desk_rejected_submissions': {
+                'description': 'Do you want email notifications to PCs when a submission is desk-rejected?',
+                'value-radio': [
+                    'Yes, email PCs.',
+                    'No, do not email PCs.'
+                ],
+                'default': 'No, do not email PCs.',
+                'order': 29
+            },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 29,
+                'order': 30,
                 'required': True
             },
             'email_pcs_for_new_submissions': {
@@ -1090,51 +1099,51 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 30
+                'order': 31
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 31
+                'order': 32
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 32
+                'order': 33
             },
             'submission_name': {
                 'value-regex': '\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
-                'order': 33,
+                'order': 34,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'reviewer_roles': {
                 'values-regex': '.*',
                 'default': ['Reviewers'],
-                'order': 34,
+                'order': 35,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Area_Chairs'],
-                'order': 35,
+                'order': 36,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'senior_area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Senior_Area_Chairs'],
-                'order': 36,
+                'order': 37,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'use_recruitment_template': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 37,
+                'order': 38,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
@@ -1147,14 +1156,14 @@ class VenueRequest():
             'include_expertise_selection': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 38,
+                'order': 40,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'submission_deadline_author_reorder': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 39,
+                'order': 41,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             }
