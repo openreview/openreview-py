@@ -23,7 +23,7 @@ class GroupBuilder(object):
 
     def post_group(self, group):
         self.client.post_group_edit(
-            invitation = self.venue.get_meta_invitation_id() if group.id.startswith(self.venue_id) else 'openreview.net/-/Edit',
+            invitation = self.venue.get_meta_invitation_id(),
             readers = [self.venue_id],
             writers = [self.venue_id],
             signatures = ['~Super_User1' if group.id == self.venue_id else self.venue_id],
@@ -40,7 +40,7 @@ class GroupBuilder(object):
             group = tools.get_group(self.client, id = p)
             if group is None:
                 self.client.post_group_edit(
-                    invitation = self.venue.get_meta_invitation_id() if venue_id == p else 'openreview.net/-/Edit',
+                    invitation = 'openreview.net/-/Edit',
                     readers = ['everyone'],
                     writers = ['~Super_User1'],
                     signatures = ['~Super_User1'],
@@ -84,7 +84,13 @@ class GroupBuilder(object):
                     content = content.replace("var PARENT_GROUP_ID = '';", "var PARENT_GROUP_ID = '" + parentGroup.id + "';")
                 content = content.replace("var HEADER = {};", "var HEADER = " + json.dumps(header) + ";")
                 content = content.replace("var VENUE_LINKS = [];", "var VENUE_LINKS = " + json.dumps(links) + ";")
-                return self.update_web_field(group.id, content)
+                return self.client.post_group_edit(
+                    invitation = 'openreview.net/-/Edit',
+                    readers = [group.id],
+                    writers = [group.id],
+                    signatures = ['~Super_User1'],
+                    group = openreview.api.Group(id = group.id, web = content)
+                )
 
         elif links:
             # parse existing webfield and add new links
@@ -92,7 +98,13 @@ class GroupBuilder(object):
             link_str = json.dumps(links)
             link_str = link_str[1:-1]
             start_pos = group.web.find('VENUE_LINKS = [') + len('VENUE_LINKS = [')
-            return self.update_web_field(group.id, group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
+            return self.client.post_group_edit(
+                invitation = 'openreview.net/-/Edit',
+                readers = [group.id],
+                writers = [group.id],
+                signatures = ['~Super_User1'],
+                group = openreview.api.Group(id = group.id, web = group.web[:start_pos] +link_str + ','+ group.web[start_pos:])
+            )            
 
     
     def get_reviewer_identity_readers(self, number):
@@ -139,26 +151,24 @@ class GroupBuilder(object):
         for i, g in enumerate(groups[:-1]):
             self.set_landing_page(g, groups[i-1] if i > 0 else None)
 
-        venue_group = openreview.api.Group(id = venue_id,
-            readers = ['everyone'],
-            writers = [venue_id],
-            signatures = ['~Super_User1'],
-            signatories = [venue_id],
-            members = [],
-            host = venue_id
-        )
+        venue_group = groups[-1]
 
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
-            content = f.read()
-            venue_group.web = content
-            self.post_group(venue_group)
+        if venue_group.web is None:
 
-        self.client_v1.add_members_to_group('venues', venue_id)
-        root_id = groups[0].id
-        if root_id == root_id.lower():
-            root_id = groups[1].id        
-        self.client_v1.add_members_to_group('host', root_id)
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
+                content = f.read()
+                self.post_group(openreview.api.Group(
+                    id = venue_group.id,
+                    web = content
+                ))
 
+            self.client_v1.add_members_to_group('venues', venue_id)
+            root_id = groups[0].id
+            if root_id == root_id.lower():
+                root_id = groups[1].id        
+            self.client_v1.add_members_to_group('host', root_id)
+
+        ## Update settings
         content = {
             'submission_id': { 'value': self.venue.get_submission_id() },
             'submission_name': { 'value': self.venue.submission_stage.name },
