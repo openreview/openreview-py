@@ -415,8 +415,8 @@ class WithdrawSuperInvitation(openreview.Invitation):
                 str.format('SUBMISSION_READERS = {}', conference.submission_stage.get_readers(conference=conference, number='{number}'))
             )
             file_content = file_content.replace(
-                'CONFERENCE_NAME = \'\'',
-                'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
+                "CONFERENCE_NAME = ''",
+                'CONFERENCE_NAME = "' + conference.get_name() + '"')
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
@@ -558,7 +558,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
 class PaperDeskRejectInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission, hide_fields=None):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
 
         content = default_content.desk_reject.copy()
 
@@ -609,8 +609,8 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                 'DESK_REJECTED_SUBMISSION_ID = \'\'',
                 'DESK_REJECTED_SUBMISSION_ID = \'' + conference.submission_stage.get_desk_rejected_submission_id(conference) + '\'')
             file_content = file_content.replace(
-                'CONFERENCE_NAME = \'\'',
-                'CONFERENCE_NAME = \'' + conference.get_name() + '\'')
+                "CONFERENCE_NAME = ''",
+                'CONFERENCE_NAME = "' + conference.get_name() + '"')
             file_content = file_content.replace(
                 'CONFERENCE_YEAR = \'\'',
                 'CONFERENCE_YEAR = \'' + str(conference.get_year()) + '\'')
@@ -634,6 +634,10 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                     'HIDE_FIELDS = []',
                     str.format('HIDE_FIELDS = {}', hide_fields)
                 )
+            if email_pcs:
+                file_content = file_content.replace(
+                    'EMAIL_PROGRAM_CHAIRS = False',
+                    'EMAIL_PROGRAM_CHAIRS = True')
 
             super(PaperDeskRejectInvitation, self).__init__(
                 id=conference.get_invitation_id('Desk_Reject', note.number),
@@ -692,7 +696,7 @@ class SubmissionRevisionInvitation(openreview.Invitation):
             file_content = file_content.replace("CONFERENCE_ID = ''", "CONFERENCE_ID = '" + conference.get_id() + "'")
             file_content = file_content.replace("AUTHORS_NAME = ''", "AUTHORS_NAME = '" + conference.authors_name + "'")
             if accepted_only:
-                file_content = file_content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.name + "'")
+                file_content = file_content.replace("CONFERENCE_NAME = ''", f'CONFERENCE_NAME = "{conference.name}"')
                 file_content = file_content.replace("CONFERENCE_YEAR = ''", "CONFERENCE_YEAR = '" + str(conference.year) + "'")
                 file_content = file_content.replace("REVISION_INVITATION = ''", "REVISION_INVITATION = '" + conference.support_user + "/-/" + conference.venue_revision_name + "'")
 
@@ -1637,9 +1641,11 @@ class InvitationBuilder(object):
         invitation_id=conference.get_expertise_selection_id()
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
-        invitation = ExpertiseSelectionInvitation(conference, current_invitation)
+        if current_invitation is None:
+            invitation = ExpertiseSelectionInvitation(conference, current_invitation)
 
-        return self.client.post_invitation(invitation)
+            return self.client.post_invitation(invitation)
+        return current_invitation
 
     def set_bid_invitation(self, conference, stage):
 
@@ -1684,15 +1690,18 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission, hide_fields=None):
+    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
 
         invitations = []
 
         self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
-
         notes = list(conference.get_submissions())
-        for note in tqdm(notes, total=len(notes), desc='set_desk_reject_invitation'):
-            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission, hide_fields=hide_fields)))
+
+        def post_invitation(note):
+            desk_reject_invitation = PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)
+            return self.client.post_invitation(desk_reject_invitation)
+
+        invitations = tools.concurrent_requests(post_invitation, notes, desc='set_desk_reject_invitation')
 
         return invitations
 
@@ -1908,7 +1917,7 @@ class InvitationBuilder(object):
                 pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")
                 pre_content = pre_content.replace("CHECK_DECLINE = False", "CHECK_DECLINE = True")
                 post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}"')
-                post_content = post_content.replace("CONFERENCE_NAME = ''", "CONFERENCE_NAME = '" + conference.get_id() + "'")
+                post_content = post_content.replace("CONFERENCE_NAME = ''", f'CONFERENCE_NAME = "{conference.get_id()}"')
                 post_content = post_content.replace("REVIEWER_NAME = ''", "REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers').replace('_', ' ')[:-1] + "'")
                 post_content = post_content.replace("REVIEWERS_ACCEPTED_ID = ''", "REVIEWERS_ACCEPTED_ID = '" + options.get('reviewers_accepted_id') + "'")
                 pre_content = pre_content.replace("REVIEWERS_INVITED_ID = ''", "REVIEWERS_INVITED_ID = '" + options.get('reviewers_invited_id') + "'")

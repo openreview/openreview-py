@@ -65,7 +65,7 @@ class SubmissionStage(object):
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            email_pcs_on_desk_reject=True,
+            email_pcs_on_desk_reject=False,
             author_names_revealed=False,
             papers_released=False,
             author_reorder_after_first_deadline=False,
