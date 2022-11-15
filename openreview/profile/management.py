@@ -301,7 +301,7 @@ class ProfileManagement():
             'email': {
                 'order': 1,
                 'description': 'email of the user making the request.',
-                'value-regex': '.*',
+                'value-regex': '([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 'required': False                
             },
             'left': {
