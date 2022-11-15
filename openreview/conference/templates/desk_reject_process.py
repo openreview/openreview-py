@@ -15,6 +15,7 @@ def process_update(client, note, invitation, existing_note):
     DESK_REJECTED_SUBMISSION_ID = ''
     REVEAL_AUTHORS_ON_DESK_REJECT = False
     REVEAL_SUBMISSIONS_ON_DESK_REJECT = False
+    EMAIL_PROGRAM_CHAIRS = False
     HIDE_FIELDS = []
 
     committee = [PAPER_AUTHORS_ID, PAPER_REVIEWERS_ID]
@@ -150,4 +151,6 @@ To view more details, click here: https://openreview.net/forum?id={forum_id}&not
         note_id=note.id,
         action=action
     )
+    if not EMAIL_PROGRAM_CHAIRS:
+        committee.remove(PROGRAM_CHAIRS_ID)
     client.post_message(email_subject, committee, email_body)

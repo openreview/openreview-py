@@ -43,8 +43,8 @@ class TestVenueRequest():
             ],
             writers=[],
             content={
-                'title': 'Test 2030 Venue',
-                'Official Venue Name': 'Test 2030 Venue',
+                'title': "Test 2030' Venue",
+                'Official Venue Name': "Test 2030' Venue",
                 'Abbreviated Venue Name': "TestVenue@OR'2030",
                 'Official Website URL': 'https://testvenue2030.gitlab.io/venue/',
                 'program_chair_emails': [
