@@ -558,7 +558,7 @@ class DeskRejectedSubmissionInvitation(openreview.Invitation):
 
 class PaperDeskRejectInvitation(openreview.Invitation):
 
-    def __init__(self, conference, note, reveal_authors, reveal_submission, hide_fields=None):
+    def __init__(self, conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
 
         content = default_content.desk_reject.copy()
 
@@ -634,6 +634,10 @@ class PaperDeskRejectInvitation(openreview.Invitation):
                     'HIDE_FIELDS = []',
                     str.format('HIDE_FIELDS = {}', hide_fields)
                 )
+            if email_pcs:
+                file_content = file_content.replace(
+                    'EMAIL_PROGRAM_CHAIRS = False',
+                    'EMAIL_PROGRAM_CHAIRS = True')
 
             super(PaperDeskRejectInvitation, self).__init__(
                 id=conference.get_invitation_id('Desk_Reject', note.number),
@@ -1686,15 +1690,18 @@ class InvitationBuilder(object):
 
         return invitations
 
-    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission, hide_fields=None):
+    def set_desk_reject_invitation(self, conference, reveal_authors, reveal_submission, email_pcs, hide_fields=None):
 
         invitations = []
 
         self.client.post_invitation(DeskRejectedSubmissionInvitation(conference, reveal_authors, reveal_submission, hide_fields))
-
         notes = list(conference.get_submissions())
-        for note in tqdm(notes, total=len(notes), desc='set_desk_reject_invitation'):
-            invitations.append(self.client.post_invitation(PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission, hide_fields=hide_fields)))
+
+        def post_invitation(note):
+            desk_reject_invitation = PaperDeskRejectInvitation(conference, note, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)
+            return self.client.post_invitation(desk_reject_invitation)
+
+        invitations = tools.concurrent_requests(post_invitation, notes, desc='set_desk_reject_invitation')
 
         return invitations
 
