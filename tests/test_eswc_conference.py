@@ -37,6 +37,7 @@ class TestESWCConference():
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=True,
             desk_rejected_submission_reveal_authors=True,
+            email_pcs_on_desk_reject=True,
             readers = [openreview.stages.SubmissionStage.Readers.REVIEWERS],
             additional_fields={
                 "lead_author_is_phD_student": {
@@ -326,7 +327,7 @@ url={https://openreview.net/forum?id=''' + withdrawn_notes[0].id + '''}
         assert submission_note.readers == ['eswc-conferences.org/ESWC/2021/Conference', 'eswc-conferences.org/ESWC/2021/Conference/Reviewers', 'eswc-conferences.org/ESWC/2021/Conference/Paper3/Authors']
 
         messages = client.get_messages(subject = '^ESWC 2021: Paper .* unmarked desk rejected by program chairs$')
-        assert len(messages) == 4
+        assert len(messages) == 3
 
 
     def test_post_submission_stage(self, conference, helpers, test_client, client):
