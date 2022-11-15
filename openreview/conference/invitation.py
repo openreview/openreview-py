@@ -1637,9 +1637,11 @@ class InvitationBuilder(object):
         invitation_id=conference.get_expertise_selection_id()
         current_invitation=openreview.tools.get_invitation(self.client, id = invitation_id)
 
-        invitation = ExpertiseSelectionInvitation(conference, current_invitation)
+        if current_invitation is None:
+            invitation = ExpertiseSelectionInvitation(conference, current_invitation)
 
-        return self.client.post_invitation(invitation)
+            return self.client.post_invitation(invitation)
+        return current_invitation
 
     def set_bid_invitation(self, conference, stage):
 
