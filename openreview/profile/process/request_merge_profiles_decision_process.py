@@ -1,11 +1,11 @@
 def process(client, note, invitation):
 
     request_note = client.get_note(note.referent)
-    profile = client.get_profile(request_note.content['left'])
+    recipients = [request_note.content.get('email')] if '(guest)' in request_note.signatures else request_note.signatures
     
     if 'Rejected' == request_note.content['status']:
         client.post_message(subject='Profile merge request has been rejected', 
-        recipients=[profile.id], 
+        recipients=recipients, 
         message=f'''Hi {{{{fullname}}}},
 
 We have received your request to merge the following profiles: {request_note.content['left']}, {request_note.content['right']}.
@@ -20,9 +20,10 @@ The OpenReview Team.
 ''')
         return       
     
-    client.post_message(subject='Profile merge request has been accepted', 
-    recipients=[profile.id], 
-    message=f'''Hi {{{{fullname}}}},
+    if 'Accepted' == request_note.content['status']:
+        client.post_message(subject='Profile merge request has been accepted', 
+        recipients=recipients, 
+        message=f'''Hi {{{{fullname}}}},
 
 We have received your request to merge the following profiles: {request_note.content['left']}, {request_note.content['right']}.
 

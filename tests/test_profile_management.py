@@ -1096,7 +1096,7 @@ The OpenReview Team.
             writers=['openreview.net/Support'],
             signatures=['(guest)'],
             content={
-                'email': 'marina@profile.org',
+                'email': 'marina@hotmail.com',
                 'left': 'marina@profile.org',
                 'right': 'marina@gmail.com',
                 'comment': 'please merge my profiles',
@@ -1104,3 +1104,116 @@ The OpenReview Team.
             }
 
         ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='marina@hotmail.com', subject='Profile merge request has been received')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi marina@hotmail.com,
+
+We have received your request to merge the following profiles: marina@profile.org, marina@gmail.com.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+        ## Reject the request
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Merge_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Rejected',
+                'support_comment': 'not real profiles' 
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='marina@hotmail.com', subject='Profile merge request has been rejected')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi marina@hotmail.com,
+
+We have received your request to merge the following profiles: marina@profile.org, marina@gmail.com.
+
+We can not merge your profiles for the following reason:
+
+not real profiles
+
+Regards,
+
+The OpenReview Team.
+'''
+
+
+    def test_merge_profiles_ignore_request(self, client, profile_management, helpers):
+
+        melisa_client = helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
+        profile = melisa_client.get_profile()
+
+        profile.content['homepage'] = 'https://google.com'
+        profile.content['names'].append({
+            'first': 'Melisa',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        melisa_client.post_profile(profile)
+        profile = melisa_client.get_profile(email_or_id='~Melisa_Last1')
+        assert len(profile.content['names']) == 2
+        assert 'username' in profile.content['names'][1]
+        assert profile.content['names'][1]['username'] == '~Melisa_Alternate_Last1'
+
+        helpers.create_user('melisa@gmail.com', 'Melisa', 'First', alternates=[], institution='google.com')
+
+        request_note = melisa_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Profile_Merge',
+            readers=['openreview.net/Support', '~Melisa_Last1'],
+            writers=['openreview.net/Support'],
+            signatures=['~Melisa_Last1'],
+            content={
+                'left': '~Melisa_Last1',
+                'right': '~Melisa_First1',
+                'comment': 'please merge my profiles',
+                'status': 'Pending'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='melisa@profile.org', subject='Profile merge request has been received')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == '''Hi Melisa Last,
+
+We have received your request to merge the following profiles: ~Melisa_Last1, ~Melisa_First1.
+
+We will evaluate your request and you will receive another email with the request status.
+
+Thanks,
+
+The OpenReview Team.
+'''
+
+        ## Accept the request
+        decision_note = client.post_note(openreview.Note(
+            referent=request_note.id,
+            invitation='openreview.net/Support/-/Profile_Merge_Decision',
+            readers=['openreview.net/Support'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            content={
+                'status': 'Ignored'
+            }
+
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(to='melisa@profile.org', subject='Profile merge request has been accepted')
+        assert len(messages) == 0

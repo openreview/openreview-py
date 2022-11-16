@@ -324,7 +324,7 @@ class ProfileManagement():
             },
             'status': {
                 'order': 5,
-                'value-dropdown': ['Pending', 'Accepted', 'Rejected'],
+                'value-dropdown': ['Pending', 'Accepted', 'Rejected', 'Ignored'],
                 'description': 'Request status.',
                 'required': True
             }
@@ -357,7 +357,7 @@ class ProfileManagement():
         content = {
             'status': {
                 'order': 1,
-                'value-dropdown': ['Accepted', 'Rejected'],
+                'value-dropdown': ['Accepted', 'Rejected', 'Ignored'],
                 'description': 'Decision status.',
                 'required': True
             },
