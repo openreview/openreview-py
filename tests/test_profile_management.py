@@ -39,7 +39,7 @@ class TestProfileManagement():
         assert client.get_group('~John_Alternate_Last1').members == ['john@profile.org']
 
         ## Try to remove the unexisting name and get an error
-        with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~John_Last'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~John_Lasst1'):
             request_note = john_client.post_note(openreview.Note(
                 invitation='openreview.net/Support/-/Profile_Name_Removal',
                 readers=['openreview.net/Support', '~John_Last1'],
@@ -47,7 +47,7 @@ class TestProfileManagement():
                 signatures=['~John_Last1'],
                 content={
                     'name': 'John Last',
-                    'usernames': ['~John_Last'],
+                    'usernames': ['~John_Lasst1'],
                     'comment': 'typo in my name',
                     'status': 'Pending'
                 }
