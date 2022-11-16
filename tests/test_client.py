@@ -110,11 +110,11 @@ class TestClient():
         notes = client.get_notes(invitation = 'ICLR.cc/2018/Conference/-/Blind_Submission', details='all')
         assert len(notes) == 0, 'notes is empty'
 
-    def test_get_profile(self, client):
-        profile = client.get_profile('openreview.net')
+    def test_get_profile(self, client, test_client):
+        profile = client.get_profile('test@mail.com')
         assert profile, "Could not get the profile by email"
         assert isinstance(profile, openreview.Profile)
-        assert profile.id == '~Super_User1'
+        assert profile.id == '~SomeFirstName_User1'
 
         profile = client.get_profile('~Super_User1')
         assert profile, "Could not get the profile by id"

@@ -315,11 +315,11 @@ class TestTools():
         group_iterator = openreview.tools.iterget_grouped_edges(client)
         assert group_iterator
 
-    def test_get_preferred_name(self, client):
-        superuser_profile = client.get_profile('openreview.net')
+    def test_get_preferred_name(self, client, test_client):
+        superuser_profile = client.get_profile('test@mail.com')
         preferred_name = openreview.tools.get_preferred_name(superuser_profile)
         assert preferred_name, "preferred name not found"
-        assert preferred_name == 'Super User'
+        assert preferred_name == 'SomeFirstName User'
 
     def test_create_authorid_profiles(self, client):
         authors = [
