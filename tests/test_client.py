@@ -188,18 +188,18 @@ class TestClient():
         assert group
         assert group.members == ['~Melisa_Bok1']
 
-    def test_get_invitations_by_invitee(self, client):
-        invitations = client.get_invitations(invitee = '~', pastdue = False)
-        assert len(invitations) == 5
+    # def test_get_invitations_by_invitee(self, client):
+    #     invitations = client.get_invitations(invitee = '~', pastdue = False)
+    #     assert len(invitations) == 5
 
-        invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
-        assert invitations
+    #     invitations = client.get_invitations(invitee = True, duedate = True, details = 'replytoNote,repliedNotes')
+    #     assert invitations
 
-        invitations = client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')
-        assert invitations
+    #     invitations = client.get_invitations(invitee = True, duedate = True, replyto = True, details = 'replytoNote,repliedNotes')
+    #     assert invitations
 
-        invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
-        assert len(invitations) == 0
+    #     invitations = client.get_invitations(invitee = True, duedate = True, tags = True, details = 'repliedTags')
+    #     assert len(invitations) == 0
 
     def test_get_notes_by_content(self, client, test_client):
 
@@ -386,9 +386,9 @@ class TestClient():
         notes = client.get_notes_by_ids(ids = [notes[0].id])
         assert len(notes) == 1, 'notes is not empty'
 
-    def test_infer_notes(self, client):
-        notes = client.get_notes(signature='openreview.net/Support')
-        assert notes
-        note = client.infer_note(notes[0].id)
-        assert note
+    # def test_infer_notes(self, client):
+    #     notes = client.get_notes(signature='openreview.net/Support')
+    #     assert notes
+    #     note = client.infer_note(notes[0].id)
+    #     assert note
 
