@@ -45,14 +45,16 @@ for note in notes:
     print(note.content['title'])
 ```
 
-For more information and examples, see [the official docs](https://openreview-py.readthedocs.io/en/latest/).
+For more information, see [the official reference](https://openreview-py.readthedocs.io/en/latest/).
+You can also check the [OpenReview docs](https://docs.openreview.net/getting-started/using-the-api/installing-and-instantiating-the-python-client) for examples and How-To Guides
 
 Test Setup
 ----------
 
-Running the openreview-py test suite requires some initial setup. First, the OpenReview API backend and OpenReview web frontend must be installed locally and configured to run on ports 3000 and 3030. For more information on how to install and configure those services see the README for each project:
+Running the openreview-py test suite requires some initial setup. First, the OpenReview API V1, OpenReview API V2 and OpenReview Web frontend must be cloned and configured to run on ports 3000, 3001 and 3030 respectively. For more information on how to install and configure those services see the README for each project:
 
-- [OpenReview API](https://github.com/openreview/openreview)
+- [OpenReview API V1](https://github.com/openreview/openreview-api-v1)
+- [OpenReview API V2](https://github.com/openreview/openreview-api)
 - [OpenReview Web](https://github.com/openreview/openreview-web)
 
 Next, `pytest` along with `pytest-selenium` and `pytest-cov` have to be installed. These packages can be installed with `pip`:
@@ -74,20 +76,24 @@ Finally, you must download the proper Firefox Selenium driver for your OS [from 
 Run Tests
 ---------
 
-Once the test setup above is complete you should be ready to run the test suite. To do so, start the OpenReview API backend running on localhost:
+Once the test setup above is complete you should be ready to run the test suite. To do so, start both OpenReview API versions running:
 
+Inside the OpenReview API V1 directory
 ```bash
-NODE_ENV=circleci node scripts/clean_start_app.js
+npm run cleanStart
 ```
 
-and in a new shell start the OpenReview web frontend:
+Inside the OpenReview API V2 directory
+```bash
+npm run cleanStart
+```
 
+Inside the OpenReview Web directory
 ```bash
 SUPER_USER=openreview.net npm run dev
 ```
 
-Once both are running, start the tests:
-
+Once all three services are running, start the tests:
 ```bash
 pytest
 ```
