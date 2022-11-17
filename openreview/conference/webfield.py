@@ -272,10 +272,10 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, {})
 
-        start_param = conference.get_paper_assignment_id(conference.get_area_chairs_id()) + ',label:{assignment_title}'.format(assignment_title=assignment_title) + ',tail:{userId}'
+        start_param = conference.get_paper_assignment_id(conference.get_area_chairs_id(), deployed = assignment_title is None) + f',label:{assignment_title}' if assignment_title else '' + ',tail:{userId}'
         edit_param = invitation.id
         browse_param = ';'.join(score_ids)
-        params = 'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={hide}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'.format(start_param=start_param, edit_param=edit_param, browse_param=browse_param, hide=conflict_id)
+        params = f'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'
         with open(os.path.join(os.path.dirname(__file__), 'templates/recommendationWebfield.js')) as f:
             content = f.read()
             content = content.replace("var CONFERENCE_ID = '';", "var CONFERENCE_ID = '" + conference.get_id() + "';")

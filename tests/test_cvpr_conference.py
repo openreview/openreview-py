@@ -34,6 +34,16 @@ class TestCVPRSConference():
         # Post the request form note
         pc_client=helpers.create_user('pc@cvpr.cc', 'Program', 'CVPRChair')
 
+        helpers.create_user('sac1@cvpr.cc', 'SAC', 'CVPROne')
+        helpers.create_user('ac1@cvpr.cc', 'AC', 'CVPROne')
+        helpers.create_user('ac2@cvpr.cc', 'AC', 'CVPRTwo')
+        helpers.create_user('reviewer1@cvpr.cc', 'Reviewer', 'CVPROne')
+        helpers.create_user('reviewer2@cvpr.cc', 'Reviewer', 'CVPRTwo')
+        helpers.create_user('reviewer3@cvpr.cc', 'Reviewer', 'CVPRThree')
+        helpers.create_user('reviewer4@cvpr.cc', 'Reviewer', 'CVPRFour')
+        helpers.create_user('reviewer5@cvpr.cc', 'Reviewer', 'CVPRFive')
+        helpers.create_user('reviewer6@cvpr.cc', 'Reviewer', 'CVPRSix')        
+
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Program_CVPRChair1'],
@@ -309,6 +319,112 @@ class TestCVPRSConference():
         ))
 
         helpers.await_queue()
+
+    def test_reviewer_recommendation(self, conference, helpers, test_client, client):
+
+        now = datetime.datetime.utcnow()
+        pc_client=openreview.Client(username='pc@cvpr.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        pc_client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Area_Chairs', ['~AC_CVPROne1', '~AC_CVPRTwo1'])
+        pc_client.add_members_to_group('thecvf.com/CVPR/2023/Conference/Reviewers', ['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1', '~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'])
+
+        submissions = conference.get_submissions()
+        
+        ## Setup AC matching
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in client.get_group('thecvf.com/CVPR/2023/Conference/Area_Chairs').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'thecvf.com/CVPR/2023/Conference/Area_Chairs',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CVPRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        ## Deploy assignments
+        client.post_edge(openreview.Edge(
+            invitation='thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Assignment',
+            readers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[4].number}/Senior_Area_Chairs', '~AC_CVPROne1'],
+            writers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[4].number}/Senior_Area_Chairs'],
+            nonreaders = [f'thecvf.com/CVPR/2023/Conference/Paper{submissions[4].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[4].id,
+            tail = '~AC_CVPROne1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Assignment',
+            readers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[3].number}/Senior_Area_Chairs', '~AC_CVPROne1'],
+            writers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[3].number}/Senior_Area_Chairs'],
+            nonreaders = [f'thecvf.com/CVPR/2023/Conference/Paper{submissions[3].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[3].id,
+            tail = '~AC_CVPROne1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))
+
+        client.post_edge(openreview.Edge(
+            invitation='thecvf.com/CVPR/2023/Conference/Area_Chairs/-/Assignment',
+            readers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[2].number}/Senior_Area_Chairs', '~AC_CVPROne1'],
+            writers = [conference.id, f'thecvf.com/CVPR/2023/Conference/Paper{submissions[2].number}/Senior_Area_Chairs'],
+            nonreaders = [f'thecvf.com/CVPR/2023/Conference/Paper{submissions[2].number}/Authors'],
+            signatures = [conference.id],
+            head = submissions[2].id,
+            tail = '~AC_CVPROne1',
+            label = 'ac-matching',
+            weight = 0.94
+        ))                        
+
+        ## Setup Reviewer matching
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in client.get_group('thecvf.com/CVPR/2023/Conference/Reviewers').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
+
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'thecvf.com/CVPR/2023/Conference/Reviewers',
+                'compute_conflicts': 'Yes',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['thecvf.com/CVPR/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CVPRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        conference.open_recommendations(
+            due_date = now + datetime.timedelta(days=3),
+            total_recommendations = 3
+        )      
 
 
     def test_rebuttal_stage(self, conference, helpers, test_client, client):
