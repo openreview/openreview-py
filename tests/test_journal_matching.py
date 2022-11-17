@@ -205,6 +205,8 @@ class TestJournalMatching():
             weight=1
         )) 
 
+        time.sleep(5)
+
         ### Setup matching
         journal.setup_ae_matching(label='1234')
 
