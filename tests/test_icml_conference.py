@@ -498,9 +498,31 @@ reviewer6@icml.cc, Reviewer ICMLSix
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
-                'remove_review_form_options': 'title',
+                'remove_review_form_options': 'title,rating',
                 'email_program_chairs_about_reviews': 'Yes, email program chairs for each review received',
-                'review_rating_field_name': 'review_rating'
+                'review_rating_field_name': 'review_rating',
+                'additional_review_form_options': {
+                    'review_rating': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    '10: Top 5% of accepted papers, seminal paper',
+                                    '9: Top 15% of accepted papers, strong accept',
+                                    '8: Top 50% of accepted papers, clear accept',
+                                    '7: Good paper, accept',
+                                    '6: Marginally above acceptance threshold',
+                                    '5: Marginally below acceptance threshold',
+                                    '4: Ok but not good enough - rejection',
+                                    '3: Clear rejection',
+                                    '2: Strong rejection',
+                                    '1: Trivial or wrong'
+                                ]
+                            }
+                        }
+                    }                    
+                }
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Review_Stage',
