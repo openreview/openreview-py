@@ -3,6 +3,7 @@ orbs:
   codecov: codecov/codecov@1.0.5
 jobs:
   build:
+    parallelism: 10
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.7.14-node
@@ -109,8 +110,9 @@ jobs:
             pip install pytest-cov
             pip install codecov
             pip install -e .
+            TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
             mkdir test-reports
-            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report xml:~/openreview-py-repo/coverage/cov.xml --cov=./
+            pytest --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver --cov-report xml:~/openreview-py-repo/coverage/cov.xml --cov=./ $TEST_FILES
       - codecov/upload:
           file: "~/openreview-py-repo/coverage/cov.xml"
       - store_test_results:

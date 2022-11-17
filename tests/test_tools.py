@@ -141,9 +141,9 @@ class TestTools():
         assert 'test_subject_a@mail.com' in posted_group.members
         assert 'test_subject_b@mail.com' in posted_group.members
 
-    def test_get_all_venues(self, client):
-        venues = openreview.tools.get_all_venues(client)
-        assert venues, "Venues could not be retrieved"
+    # def test_get_all_venues(self, client):
+    #     venues = openreview.tools.get_all_venues(client)
+    #     assert venues, "Venues could not be retrieved"
 
     def test_iterget_notes(self, client):
         iter_group = client.post_group(
@@ -512,17 +512,17 @@ class TestTools():
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 
-    def test_add_assignments(self, client):
+    # def test_add_assignments(self, client):
 
-        groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
-        assert len(groups) == 2
+    #     groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
+    #     assert len(groups) == 2
 
-        for n in range(0, 10):
-            result = openreview.tools.add_assignment(client, 1, 'auai.org/UAI/2020/Conference', 'reviewer{}@mail.com'.format(n))
-            assert result
+    #     for n in range(0, 10):
+    #         result = openreview.tools.add_assignment(client, 1, 'auai.org/UAI/2020/Conference', 'reviewer{}@mail.com'.format(n))
+    #         assert result
 
-        groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
-        assert len(groups) == 12
+    #     groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
+    #     assert len(groups) == 12
 
     def test_group(self, client):
 
