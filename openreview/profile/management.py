@@ -307,13 +307,13 @@ class ProfileManagement():
             'left': {
                 'order': 2,
                 'description': 'Username or email that want to be merged.',
-                'value-regex': '^~[^\d\s]+_[^\d\s]+[0-9]+$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                'value-regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 'required': True
             },
             'right': {
                 'order': 3,
                 'description': 'Username or email that want to be merged.',
-                'value-regex': '^~[^\d\s]+_[^\d\s]+[0-9]+$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                'value-regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 'required': True
             },
             'comment': {
