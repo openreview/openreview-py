@@ -3,7 +3,7 @@ orbs:
   codecov: codecov/codecov@1.0.5
 jobs:
   build:
-    parallelism: 5
+    parallelism: 10
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.7.14-node
