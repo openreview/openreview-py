@@ -386,9 +386,9 @@ class TestClient():
         notes = client.get_notes_by_ids(ids = [notes[0].id])
         assert len(notes) == 1, 'notes is not empty'
 
-    def test_infer_notes(self, client):
-        notes = client.get_notes(signature='openreview.net/Support')
-        assert notes
-        note = client.infer_note(notes[0].id)
-        assert note
+    # def test_infer_notes(self, client):
+    #     notes = client.get_notes(signature='openreview.net/Support')
+    #     assert notes
+    #     note = client.infer_note(notes[0].id)
+    #     assert note
 
