@@ -110,9 +110,12 @@ class TestJournalMatching():
                     }
                 ))
 
-        helpers.await_queue_edit(openreview_client, invitation='CARP/-/Submission')
+        edits = openreview_client.get_note_edits(invitation = 'CARP/-/Submission')
+        for edit in edits:
+            helpers.await_queue_edit(openreview_client, edit_id = edit.id)
        
-        submissions = openreview_client.get_notes(invitation='CARP/-/Submission', sort='number:asc')
+        submissions = test_client.get_notes(invitation='CARP/-/Submission', sort='number:asc')
+        assert len(submissions) == 5
 
         ### Post AE affinity scores
         for submission in submissions:
@@ -204,8 +207,6 @@ class TestJournalMatching():
             tail='~John_Lennon1',
             weight=1
         )) 
-
-        time.sleep(20)
 
         ### Setup matching
         journal.setup_ae_matching(label='1234')
