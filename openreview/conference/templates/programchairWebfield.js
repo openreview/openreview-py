@@ -1990,6 +1990,9 @@ var displayAreaChairsStatusTable = function() {
       },
       'msg-submitted-none-metareviews': function(row) {
         return row.reviewProgressData.numCompletedMetaReviews === 0 && row.reviewProgressData.numPapers;
+      },
+      'msg-no-assignments': function(row) {
+        return !row.reviewProgressData.numPapers;
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -2088,6 +2091,7 @@ var displayAreaChairsStatusTable = function() {
         '<li><a class="msg-unsubmitted-reviews">Area Chairs with unsubmitted reviews</a></li>' +
         '<li><a class="msg-submitted-none-metareviews">Area Chairs with 0 submitted meta reviews</a></li>' +
         '<li><a class="msg-unsubmitted-metareviews">Area Chairs with unsubmitted meta reviews</a></li>' +
+        '<li><a class="msg-no-assignments">Area Chairs with 0 assignments</a></li>' +
       '</ul>' +
     '</div>' +
     '<div class="btn-group"><button class="btn btn-export-areachairs" type="button">Export</button></div>'
@@ -2290,6 +2294,9 @@ var displayReviewerStatusTable = function() {
       },
       'msg-unsubmitted-reviews': function(row) {
         return row.reviewerProgressData.numCompletedReviews < row.reviewerProgressData.numPapers;
+      },
+      'msg-no-assignments': function(row) {
+        return !row.reviewerProgressData.numPapers
       }
     }
     var usersToMessage = rowData.filter(filterFuncs[filter]).map(function(row) {
@@ -2382,6 +2389,7 @@ var displayReviewerStatusTable = function() {
       '<ul class="dropdown-menu">' +
         (conferenceStatusData.bidEnabled ? '<li><a class="msg-no-bids">Reviewers with 0 bids</a></li>' : '') +
         '<li><a class="msg-unsubmitted-reviews">Reviewers unsubmitted reviews</a></li>' +
+        '<li><a class="msg-no-assignments">Reviewers with 0 assignments</a></li>' +
       '</ul>' +
     '</div>'+
     '<div class="btn-group"><button class="btn btn-export-reviewers" type="button">Export</button></div>'
