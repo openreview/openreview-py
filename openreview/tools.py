@@ -6,7 +6,6 @@ import json
 import os
 import string
 
-from deprecated.sphinx import deprecated
 import sys
 import openreview
 import re

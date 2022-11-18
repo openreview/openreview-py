@@ -361,16 +361,6 @@ class Conference(object):
     def set_registration_stage(self, stage):
         return self.__create_registration_stage(stage)
 
-    @deprecated(version='1.6.0')
-    def set_bid_stage(self, stage):
-        self.bid_stages[stage.committee_id] = stage
-        return self.__create_bid_stage(stage)
-
-    @deprecated(version='1.6.0')
-    def set_review_stage(self, stage):
-        self.review_stage = stage
-        self.create_review_stage()
-
     def create_bid_stages(self):
         if self.bid_stages:
             for stage in self.bid_stages.values():
@@ -404,24 +394,9 @@ class Conference(object):
         self.review_rating_stage = stage
         return self.__create_review_rating_stage()
 
-    @deprecated(version='1.9.0')
-    def set_comment_stage(self, stage):
-        self.comment_stage = stage
-        return self.__create_comment_stage()
-
-    @deprecated(version='1.8.0')
-    def set_meta_review_stage(self, stage):
-        self.meta_review_stage = stage
-        return self.__create_meta_review_stage()
-
     def create_submission_revision_stage(self):
         if self.submission_revision_stage:
             self.__create_submission_revision_stage()
-
-    @deprecated(version='1.11.0')
-    def set_submission_revision_stage(self, stage):
-        self.submission_revision_stage = stage
-        return self.__create_submission_revision_stage()
 
     def create_decision_stage(self):
         if self.decision_stage:
@@ -430,15 +405,6 @@ class Conference(object):
             if self.decision_stage.decisions_file:
                 decisions = self.client.get_attachment(id=self.request_form_id, field_name='decisions_file')
                 self.post_decisions(decisions)
-
-    @deprecated(version='1.10.0')
-    def set_decision_stage(self, stage):
-        self.decision_stage = stage
-        self.__create_decision_stage()
-
-        if self.decision_stage.decisions_file:
-            decisions = self.client.get_attachment(id=self.request_form_id, field_name='decisions_file')
-            self.post_decisions(decisions)
 
     def set_area_chairs_name(self, name):
         if self.use_area_chairs:
@@ -1092,15 +1058,6 @@ class Conference(object):
             if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):
                 self.setup_final_deadline_stage(force, hide_fields)
 
-    ## Deprecated
-    def open_bids(self):
-        return self.__create_bid_stage()
-
-    def close_bids(self):
-        self.expire_invitation(self.get_bid_id(self.get_reviewers_id()))
-        if self.use_area_chairs:
-            self.expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
-
     def open_recommendations(self, assignment_title, start_date = None, due_date = None, total_recommendations = 7):
 
         score_ids = []
@@ -1119,39 +1076,6 @@ class Conference(object):
 
     def open_paper_ranking(self, committee_id, start_date=None, due_date=None):
         return self.invitation_builder.set_paper_ranking_invitation(self, committee_id, start_date, due_date)
-
-    def open_comments(self):
-        self.__create_comment_stage()
-
-    def close_comments(self, name):
-        return self.__expire_invitations(name)
-
-    ## Deprecated
-    def open_reviews(self):
-        return self.__create_review_stage()
-
-    def close_reviews(self):
-        return self.__expire_invitations(self.review_stage.name)
-
-    ## Deprecated
-    def open_meta_reviews(self):
-        return self.__create_meta_review_stage()
-
-    ## Deprecated
-    def open_decisions(self):
-        return self.__create_decision_stage()
-
-    def open_revise_submissions(self, name = 'Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = [], only_accepted = False):
-        self.submission_revision_stage = SubmissionRevisionStage(name=name, start_date=start_date, due_date=due_date, additional_fields=additional_fields, remove_fields=remove_fields, only_accepted=only_accepted)
-        return self.__create_submission_revision_stage()
-
-    ## Deprecated
-    def open_revise_reviews(self, name = 'Review_Revision', start_date = None, due_date = None, additional_fields = {}, remove_fields = []):
-        self.review_revision_stage = ReviewRevisionStage(name=name, start_date=start_date, due_date=due_date, additional_fields=additional_fields, remove_fields=remove_fields)
-        return self.__create_review_revision_stage()
-
-    def close_revise_submissions(self, name):
-        return self.__expire_invitations(name)
 
     def set_program_chairs(self, emails = []):
         pcs = self.__create_group(self.get_program_chairs_id(), self.id, emails)
@@ -2044,10 +1968,6 @@ class ConferenceBuilder(object):
         default_instructions = 'Help us get to know our committee better and the ways to make the reviewing process smoother by answering these questions. If you don\'t see the form below, click on the blue "Registration" button.\n\nLink to Profile: https://openreview.net/profile/edit \nLink to Expertise Selection interface: https://openreview.net/invitation?id={conference_id}/-/Expertise_Selection'.format(conference_id = self.conference.get_id())
         reviewer_instructions = instructions if instructions else default_instructions
         self.registration_stages.append(RegistrationStage(committee_id, name, start_date, due_date, additional_fields, reviewer_instructions))
-
-    @deprecated(version='1.6.0')
-    def set_bid_stage(self, stage):
-        self.conference.bid_stages[stage.committee_id] = stage
 
     def set_bid_stages(self, stages):
         for stage in stages:

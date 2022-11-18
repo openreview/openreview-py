@@ -16,7 +16,6 @@ import re
 from tqdm import tqdm
 from .. import tools
 import time
-from deprecated.sphinx import deprecated
 
 def _jaccard_similarity(list1, list2):
     '''
@@ -27,50 +26,6 @@ def _jaccard_similarity(list1, list2):
     intersection = set1.intersection(set2)
     union = set1.union(set2)
     return len(intersection) / len(union)
-
-@deprecated(version='1.1.1', reason="Use tools.get_profiles instead")
-def _get_profiles(client, ids_or_emails, with_publications=False):
-    '''
-    Helper function that repeatedly queries for profiles, given IDs and emails.
-    Useful for getting more Profiles than the server will return by default (1000)
-    '''
-    ids = []
-    emails = []
-    for member in ids_or_emails:
-        if '~' in member:
-            ids.append(member)
-        else:
-            emails.append(member)
-
-    profiles = []
-    profile_by_email = {}
-
-    batch_size = 100
-    for i in range(0, len(ids), batch_size):
-        batch_ids = ids[i:i+batch_size]
-        batch_profiles = client.search_profiles(ids=batch_ids)
-        profiles.extend(batch_profiles)
-
-    for j in range(0, len(emails), batch_size):
-        batch_emails = emails[j:j+batch_size]
-        batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
-        profile_by_email.update(batch_profile_by_email)
-
-    for email in emails:
-        profiles.append(profile_by_email.get(email, openreview.Profile(
-            id=email,
-            content={
-                'emails': [email],
-                'preferredEmail': email,
-                'emailsConfirmed': [email],
-                'names': []
-            })))
-
-    if with_publications:
-        for profile in profiles:
-            profile.content['publications'] = client.get_all_notes(content={'authorids': profile.id})
-
-    return profiles
 
 def _conflict_label(conflicts):
     if len(conflicts) == 0:
