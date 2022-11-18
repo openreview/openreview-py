@@ -5,6 +5,7 @@ def process(client, note, invitation):
     request_note = client.get_note(note.referent)
     usernames = request_note.content['usernames']
     profile = client.get_profile(usernames[0])
+    preferred_id = profile.get_preferred_name()
     preferred_name = profile.get_preferred_name(pretty=True)
     
     if 'Rejected' == request_note.content['status']:
@@ -38,7 +39,7 @@ The OpenReview Team.
             for index, author in enumerate(publication.content.get('authorids')):
                 if username == author:
                     authors.append(preferred_name)
-                    authorids.append(profile.id)
+                    authorids.append(preferred_id)
                     needs_change = True
                 else:
                     if publication.content.get('authors'):
@@ -76,7 +77,7 @@ The OpenReview Team.
             for index, author in enumerate(publication.content.get('authorids', {}).get('value')):
                 if username == author:
                     authors.append(preferred_name)
-                    authorids.append(profile.id)
+                    authorids.append(preferred_id)
                     needs_change = True
                 else:
                     if publication.content.get('authors'):

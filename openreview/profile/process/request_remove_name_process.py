@@ -13,9 +13,3 @@ Thanks,
 
 The OpenReview Team.
 ''')
-
-    client.post_message(subject=f"Profile name removal request: {note.content['name']}",
-    recipients=['profile@openreview.net'],
-    message=f'''
-Check out the request: https://openreview.net/forum?id={note.id}
-''')
