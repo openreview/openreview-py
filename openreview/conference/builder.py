@@ -827,7 +827,7 @@ class Conference(object):
 
         return self.invitation_builder.set_withdraw_invitation(self, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)
 
-    def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False,
+    def create_desk_reject_invitations(self, reveal_authors=False, reveal_submission=False, email_pcs=False,
                                        hide_fields=None, force=False):
 
         if not force and reveal_submission and not self.submission_stage.public:
@@ -836,7 +836,7 @@ class Conference(object):
         if not force and not reveal_authors and not self.submission_stage.double_blind:
             raise openreview.OpenReviewException('Can not hide authors of submissions in single blind or open venue')
 
-        return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission, hide_fields=hide_fields)
+        return self.invitation_builder.set_desk_reject_invitation(self, reveal_authors, reveal_submission, email_pcs, hide_fields=hide_fields)
 
     def create_paper_groups(self, authors=False, reviewers=False, area_chairs=False, senior_area_chairs=False, overwrite=False):
 
@@ -1057,6 +1057,7 @@ class Conference(object):
             reveal_authors=not self.submission_stage.double_blind,
             reveal_submission=False,
             hide_fields=hide_fields,
+            email_pcs=False,
             force=True
         )
 
@@ -1084,6 +1085,7 @@ class Conference(object):
         self.create_desk_reject_invitations(
             reveal_authors=self.submission_stage.desk_rejected_submission_reveal_authors,
             reveal_submission=self.submission_stage.desk_rejected_submission_public,
+            email_pcs=self.submission_stage.email_pcs_on_desk_reject,
             hide_fields=hide_fields
         )
 
@@ -2046,7 +2048,7 @@ class ConferenceBuilder(object):
             email_pcs_on_withdraw=False,
             desk_rejected_submission_public=False,
             desk_rejected_submission_reveal_authors=False,
-            email_pcs_on_desk_reject=True,
+            email_pcs_on_desk_reject=False,
             author_names_revealed=False,
             papers_released=False,
             readers=None,

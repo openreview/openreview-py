@@ -166,6 +166,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     submission_remove_options = note.content.get('remove_submission_options', [])
     withdrawn_submission_public = 'Yes' in note.content.get('withdrawn_submissions_visibility', '')
     email_pcs_on_withdraw = 'Yes' in note.content.get('email_pcs_for_withdrawn_submissions', '')
+    email_pcs_on_desk_reject = 'Yes' in note.content.get('email_pcs_for_desk_rejected_submissions', '')
     desk_rejected_submission_public = 'Yes' in note.content.get('desk_rejected_submissions_visibility', '')
     withdraw_submission_exp_date = note.content.get('withdraw_submission_expiration')
     if withdraw_submission_exp_date:
@@ -212,6 +213,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
         email_pcs_on_withdraw=email_pcs_on_withdraw,
         desk_rejected_submission_public=desk_rejected_submission_public,
         desk_rejected_submission_reveal_authors=desk_rejected_submission_reveal_authors,
+        email_pcs_on_desk_reject=email_pcs_on_desk_reject,
         author_names_revealed=author_names_revealed,
         papers_released=papers_released,
         readers=readers,
