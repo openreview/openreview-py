@@ -303,7 +303,8 @@ class InvitationBuilder(object):
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True                                   
+                                    'optional': True,
+                                    'deletable': True                                 
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -400,7 +401,8 @@ class InvitationBuilder(object):
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True                                   
+                                    'optional': True,
+                                    'deletable': True                                   
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -730,7 +732,8 @@ class InvitationBuilder(object):
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -965,7 +968,8 @@ class InvitationBuilder(object):
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'signatures': ['${3/signatures}'],
