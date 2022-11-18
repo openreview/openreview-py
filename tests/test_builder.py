@@ -82,7 +82,6 @@ class TestBuilder():
         now = datetime.datetime.utcnow()
         builder.set_submission_stage(double_blind = True, public = False, due_date = now + datetime.timedelta(minutes = 10))
         builder.has_area_chairs(False)
-        builder.use_legacy_anonids(True)
         conference = builder.get_result()
 
         conference.set_program_chairs()
@@ -151,6 +150,8 @@ class TestBuilder():
         assert 'confidence' not in official_review_invitations[0].reply['content'].keys()
         assert 'additional description' not in official_review_invitations[0].reply['content'].keys()
 
+        anon_group_id = reviewer_client.get_groups(regex='test.org/2019/Conference/Paper1/Reviewer_', signatory='reviewer_test1@mail.com')[0].id
+        
         note = openreview.Note(invitation = conference.get_invitation_id('Official_Review', blind_submissions[0].number),
             forum = blind_submissions[0].id,
             replyto = blind_submissions[0].id,
@@ -158,8 +159,8 @@ class TestBuilder():
                 conference.get_program_chairs_id(),
                 conference.get_reviewers_id(blind_submissions[0].number) + '/Submitted'],
             nonreaders = [conference.get_authors_id(blind_submissions[0].number)],
-            writers = [conference.get_id() + '/Paper1/AnonReviewer1'],
-            signatures = [conference.get_id() + '/Paper1/AnonReviewer1'],
+            writers = [anon_group_id],
+            signatures = [anon_group_id],
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',

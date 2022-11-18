@@ -1272,8 +1272,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Reviewer2')
-
         reviewer_client = openreview.Client(username='venue_reviewer2@mail.com', password='1234')
         reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
         assert reviewer_group and len(reviewer_group.members) == 2
@@ -1331,9 +1329,6 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         # Assert that ACs do not see the Submit button for meta reviews at this point
         meta_reviewer_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         client.add_members_to_group(meta_reviewer_group, '~Venue_Ac1')
-
-        openreview.tools.add_assignment(client, paper_number=1, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
-        openreview.tools.add_assignment(client, paper_number=2, conference=venue['venue_id'], reviewer='~Venue_Ac1', parent_label='Area_Chairs', individual_label='Area_Chair')
 
         ac_group = client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         assert ac_group and len(ac_group.members) == 1

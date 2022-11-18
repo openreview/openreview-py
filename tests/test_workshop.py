@@ -33,7 +33,6 @@ class TestWorkshop():
         'location': 'Berkeley, CA, USA'
         })
         builder.has_area_chairs(False)
-        builder.use_legacy_anonids(True)
         builder.set_submission_stage(double_blind = True, public = True, due_date = now + datetime.timedelta(minutes = 10))
 
         conference = builder.get_result()
@@ -276,14 +275,16 @@ class TestWorkshop():
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
+        anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
+
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
-            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
-            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
+            writers = [anon_reviewers_group_id],
+            signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
@@ -324,6 +325,11 @@ class TestWorkshop():
         assert reviews
         review = reviews[0]
 
+        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
+        anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
+        anon_reviewer_id = anon_reviewers_group_id.split('/')[-1]
+        pretty_anon_reviewer_id = anon_reviewer_id.replace('_', ' ')
+
         note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/-/Official_Comment',
             forum = submission.id,
             replyto = review.id,
@@ -331,14 +337,13 @@ class TestWorkshop():
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
                 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs'],
-            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
-            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
+            writers = [anon_reviewers_group_id],
+            signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Comment title',
                 'comment': 'Paper is very good!'
             }
         )
-        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
         review_note = reviewer_client.post_note(note)
         assert review_note
 
@@ -348,20 +353,20 @@ class TestWorkshop():
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on your submission. Paper Number: 1, Paper Title')
+        messages = client.get_messages(subject = f'.*ICAPS HSDIP 2019.*{pretty_anon_reviewer_id} commented on your submission. Paper Number: 1, Paper Title')
         assert len(messages) == 3
         recipients = [m['content']['to'] for m in messages]
         assert 'test@mail.com' in recipients
         assert 'peter@mail.com' in recipients
         assert 'andrew@mail.com' in recipients
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on a paper you are reviewing. Paper Number: 1, Paper Number')
+        messages = client.get_messages(subject = f'.*ICAPS HSDIP 2019.*{pretty_anon_reviewer_id} commented on a paper you are reviewing. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on a paper in your area. Paper Number: 1, Paper Number')
+        messages = client.get_messages(subject = f'.*ICAPS HSDIP 2019.*{pretty_anon_reviewer_id} commented on a paper in your area. Paper Number: 1, Paper Number')
         assert len(messages) == 0
 
-        messages = client.get_messages(subject = '.*ICAPS HSDIP 2019.*AnonReviewer1 commented on a paper. Paper Number')
+        messages = client.get_messages(subject = f'.*ICAPS HSDIP 2019.*{pretty_anon_reviewer_id} commented on a paper. Paper Number')
         assert len(messages) == 1
         recipients = [m['content']['to'] for m in messages]
         assert 'program_chairs@hsdip.org' in recipients
@@ -399,15 +404,18 @@ class TestWorkshop():
         now = datetime.datetime.utcnow()
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
 
-        note = openreview.Note(invitation = 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1/-/Review_Revision',
+        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
+        anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id
+
+        note = openreview.Note(invitation = f'{anon_reviewers_group_id}/-/Review_Revision',
             forum = submission.id,
             referent = review.id,
             replyto=review.replyto,
             readers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Reviewers',
             'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/Authors'],
-            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP', 'icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
-            signatures = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Paper1/AnonReviewer1'],
+            writers = ['icaps-conference.org/ICAPS/2019/Workshop/HSDIP', anon_reviewers_group_id],
+            signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'UPDATED Review title',
                 'review': 'Paper is very good!',
@@ -415,7 +423,6 @@ class TestWorkshop():
                 'confidence': '4: The reviewer is confident but not absolutely certain that the evaluation is correct'
             }
         )
-        reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
         review_note = reviewer_client.post_note(note)
         assert review_note
 

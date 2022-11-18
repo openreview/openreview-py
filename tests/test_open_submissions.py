@@ -51,8 +51,6 @@ class TestOpenSubmissions():
 
     def test_post_submission(self, client, conference, test_client, helpers):
 
-        assert not conference.legacy_anonids
-
         note = openreview.Note(invitation = conference.get_submission_id(),
             readers = ['everyone'],
             writers = [conference.id, '~SomeFirstName_User1', 'peter@mail.com', 'andrew@mail.com'],

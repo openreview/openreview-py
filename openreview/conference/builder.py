@@ -38,8 +38,6 @@ class Conference(object):
         self.use_ethics_chairs = False
         self.use_ethics_reviewers = False
         self.use_recruitment_template = False
-        self.legacy_anonids = False
-        self.legacy_invitation_id = False
         self.groups = []
         self.name = ''
         self.short_name = ''
@@ -466,14 +464,10 @@ class Conference(object):
     def get_anon_reviewer_id(self, number=None, anon_id=None, name=None):
         reviewers_name = name if name else self.reviewers_name
         single_reviewer_name=reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name
-        if self.legacy_anonids:
-            return f'{self.id}/Paper{number}/AnonReviewer{anon_id}'
         return f'{self.id}/Paper{number}/{single_reviewer_name}_{anon_id}'
 
     def get_anon_area_chair_id(self, number=None, anon_id=None):
         single_area_chair_name=self.area_chairs_name[:-1] if self.area_chairs_name.endswith('s') else self.area_chairs_name
-        if self.legacy_anonids:
-            return f'{self.id}/Paper{number}/Area_Chair{anon_id}'
         return f'{self.id}/Paper{number}/{single_area_chair_name}_{anon_id}'
 
     def get_reviewers_name(self, pretty=True):
@@ -632,10 +626,7 @@ class Conference(object):
         if prefix:
             invitation_id = prefix
         if number:
-            if self.legacy_invitation_id:
-                invitation_id = invitation_id + '/-/Paper' + str(number) + '/'
-            else:
-                invitation_id = invitation_id + '/Paper' + str(number) + '/-/'
+            invitation_id = invitation_id + '/Paper' + str(number) + '/-/'
         else:
             invitation_id = invitation_id + '/-/'
 
@@ -871,26 +862,20 @@ class Conference(object):
 
             # Reviewers Paper group
             if reviewers:
-                if self.legacy_anonids:
-                    self.__create_group(
-                        self.get_reviewers_id(number=n.number),
-                        self.get_area_chairs_id(number=n.number) if self.use_area_chairs else self.id,
-                        is_signatory = False)
-                else:
-                    reviewers_id=self.get_reviewers_id(number=n.number)
-                    group = group_by_id.get(reviewers_id)
-                    if not group or overwrite:
-                        self.client.post_group(openreview.Group(id=reviewers_id,
-                            invitation=paper_reviewer_group_invitation.id,
-                            readers=self.get_reviewer_paper_group_readers(n.number),
-                            nonreaders=[self.get_authors_id(n.number)],
-                            deanonymizers=self.get_reviewer_identity_readers(n.number),
-                            writers=self.get_reviewer_paper_group_writers(n.number),
-                            signatures=[self.id],
-                            signatories=[self.id],
-                            anonids=True,
-                            members=group.members if group else []
-                        ))
+                reviewers_id=self.get_reviewers_id(number=n.number)
+                group = group_by_id.get(reviewers_id)
+                if not group or overwrite:
+                    self.client.post_group(openreview.Group(id=reviewers_id,
+                        invitation=paper_reviewer_group_invitation.id,
+                        readers=self.get_reviewer_paper_group_readers(n.number),
+                        nonreaders=[self.get_authors_id(n.number)],
+                        deanonymizers=self.get_reviewer_identity_readers(n.number),
+                        writers=self.get_reviewer_paper_group_writers(n.number),
+                        signatures=[self.id],
+                        signatories=[self.id],
+                        anonids=True,
+                        members=group.members if group else []
+                    ))
 
                 # Reviewers Submitted Paper group
                 reviewers_submitted_id = self.get_reviewers_id(number=n.number) + '/Submitted'
@@ -912,23 +897,20 @@ class Conference(object):
 
             # Area Chairs Paper group
             if self.use_area_chairs and area_chairs:
-                if self.legacy_anonids:
-                    self.__create_group(self.get_area_chairs_id(number=n.number), self.id)
-                else:
-                    area_chairs_id=self.get_area_chairs_id(number=n.number)
-                    group = group_by_id.get(area_chairs_id)
-                    if not group or overwrite:
-                        self.client.post_group(openreview.Group(id=area_chairs_id,
-                            invitation=paper_area_chair_group_invitation.id,
-                            readers=self.get_area_chair_paper_group_readers(n.number),
-                            nonreaders=[self.get_authors_id(n.number)],
-                            deanonymizers=self.get_area_chair_identity_readers(n.number),
-                            writers=[self.id],
-                            signatures=[self.id],
-                            signatories=[self.id],
-                            anonids=True,
-                            members=group.members if group else []
-                        ))
+                area_chairs_id=self.get_area_chairs_id(number=n.number)
+                group = group_by_id.get(area_chairs_id)
+                if not group or overwrite:
+                    self.client.post_group(openreview.Group(id=area_chairs_id,
+                        invitation=paper_area_chair_group_invitation.id,
+                        readers=self.get_area_chair_paper_group_readers(n.number),
+                        nonreaders=[self.get_authors_id(n.number)],
+                        deanonymizers=self.get_area_chair_identity_readers(n.number),
+                        writers=[self.id],
+                        signatures=[self.id],
+                        signatories=[self.id],
+                        anonids=True,
+                        members=group.members if group else []
+                    ))
 
             # Senior Area Chairs Paper group
             if self.use_senior_area_chairs and senior_area_chairs:
@@ -1390,41 +1372,6 @@ class Conference(object):
         return conference_matching.setup_invite_assignment(hash_seed, assignment_title, due_date, invitation_labels=invitation_labels, email_template=email_template)
 
     def set_assignment(self, user, number, is_area_chair = False):
-
-        if self.legacy_anonids:
-            if is_area_chair:
-                return tools.add_assignment(self.client,
-                number,
-                self.get_id(),
-                user,
-                parent_label = 'Area_Chairs',
-                individual_label = 'Area_Chair')
-            else:
-                common_readers_writers = [
-                    self.get_id(),
-                    self.get_program_chairs_id()
-                ]
-                if self.use_area_chairs:
-                    common_readers_writers.append(self.get_area_chairs_id(number = number))
-
-                result = tools.add_assignment(
-                    self.client,
-                    number,
-                    self.get_id(),
-                    user,
-                    parent_label = self.reviewers_name,
-                    individual_label = 'AnonReviewer',
-                    individual_group_params = {
-                        'readers': common_readers_writers,
-                        'writers': common_readers_writers
-                    },
-                    parent_group_params = {
-                        'readers': common_readers_writers,
-                        'writers': common_readers_writers
-                    },
-                    use_profile = True
-                )
-                return result
 
         if is_area_chair:
             self.client.add_members_to_group(self.get_area_chairs_id(number=number), user)
@@ -2129,12 +2076,6 @@ class ConferenceBuilder(object):
 
     def set_ethics_review_stage(self, stage):
         self.conference.ethics_review_stage = stage
-
-    def use_legacy_invitation_id(self, legacy_invitation_id):
-        self.conference.legacy_invitation_id = legacy_invitation_id
-
-    def use_legacy_anonids(self, legacy_anonids):
-        self.conference.legacy_anonids = legacy_anonids
 
     def set_request_form_id(self, id):
         self.conference.request_form_id = id

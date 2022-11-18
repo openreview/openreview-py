@@ -1447,13 +1447,6 @@ class Matching(object):
 
         '''
 
-        if self.conference.legacy_anonids:
-            if self.is_area_chair:
-                return self.deploy_acs(assignment_title, overwrite)
-
-            return self.deploy_reviewers(assignment_title, overwrite)
-
-
         ## Deploy assingments creating groups and assignment edges
         if self.match_group.id == self.conference.get_senior_area_chairs_id():
             self.deploy_sac_assignments(assignment_title, overwrite)

@@ -1067,7 +1067,6 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_review_stage(openreview.stages.ReviewStage(due_date = now + datetime.timedelta(minutes = 10), release_to_authors = True, release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_ASSIGNED, email_pcs = True))
-        builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
@@ -1093,6 +1092,8 @@ class TestDoubleBlindConference():
         assert len(reply_row.find_elements_by_class_name('btn')) == 1
         assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
+        anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer2@mail.com')[0].id
+
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Official_Review',
             forum = submission.id,
             replyto = submission.id,
@@ -1100,8 +1101,8 @@ class TestDoubleBlindConference():
             'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
             'AKBC.ws/2019/Conference/Paper1/Reviewers',
             'AKBC.ws/2019/Conference/Paper1/Authors'],
-            writers = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
-            signatures = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
+            writers = [anon_reviewers_group_id],
+            signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'Review title',
                 'review': 'Paper is very good!',
@@ -1161,7 +1162,6 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
-        builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com'])
@@ -1176,7 +1176,9 @@ class TestDoubleBlindConference():
         now = datetime.datetime.utcnow()
         conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 100))
 
-        note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/AnonReviewer1/-/Review_Revision',
+        anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer2@mail.com')[0].id
+
+        note = openreview.Note(invitation = f'{anon_reviewers_group_id}/-/Review_Revision',
             forum = submission.id,
             referent = review.id,
             replyto=review.replyto,
@@ -1184,8 +1186,8 @@ class TestDoubleBlindConference():
             'AKBC.ws/2019/Conference/Paper1/Area_Chairs',
             'AKBC.ws/2019/Conference/Paper1/Reviewers',
             'AKBC.ws/2019/Conference/Paper1/Authors'],
-            writers = ['AKBC.ws/2019/Conference', 'AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
-            signatures = ['AKBC.ws/2019/Conference/Paper1/AnonReviewer1'],
+            writers = ['AKBC.ws/2019/Conference', anon_reviewers_group_id],
+            signatures = [anon_reviewers_group_id],
             content = {
                 'title': 'UPDATED Review title',
                 'review': 'Paper is very good!',
@@ -1233,12 +1235,13 @@ class TestDoubleBlindConference():
         builder.has_area_chairs(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_ASSIGNED))
-        builder.use_legacy_anonids(True)
         conference = builder.get_result()
         conference.create_meta_review_stage()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
+
+        anon_ac_group_id = ac_client.get_groups(regex=f'{conference.id}/Paper1/Area_Chair_', signatory='ac@mail.com')[0].id
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
             forum = submission.id,
@@ -1246,7 +1249,7 @@ class TestDoubleBlindConference():
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Reviewers', 'AKBC.ws/2019/Conference/Program_Chairs'],
             nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
-            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair1'],
+            signatures = [anon_ac_group_id],
             content = {
                 'metareview': 'Paper is very good!',
                 'recommendation': 'Accept (Oral)',
@@ -1273,7 +1276,6 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
-        builder.use_legacy_anonids(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
             'best paper' : {
@@ -1290,12 +1292,14 @@ class TestDoubleBlindConference():
 
         conference.set_assignment('meta_additional@mail.com', submission.number, is_area_chair = True)
 
+        anon_ac_group_id = ac_client.get_groups(regex=f'{conference.id}/Paper1/Area_Chair_', signatory='meta_additional@mail.com')[0].id
+
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Reviewers', 'AKBC.ws/2019/Conference/Program_Chairs'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
-            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            signatures = [anon_ac_group_id],
             content = {
                 'metareview': 'Excellent Paper!',
                 'recommendation': 'Accept (Oral)',
@@ -1317,7 +1321,6 @@ class TestDoubleBlindConference():
         builder.set_conference_id('AKBC.ws/2019/Conference')
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
-        builder.use_legacy_anonids(True)
         builder.set_conference_short_name('AKBC 2019')
         builder.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date = now + datetime.timedelta(minutes = 100), release_to_authors = False, release_to_reviewers = openreview.stages.MetaReviewStage.Readers.REVIEWERS_ASSIGNED, additional_fields = {
             'best paper' : {
@@ -1332,13 +1335,15 @@ class TestDoubleBlindConference():
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
+        anon_ac_group_id = ac_client.get_groups(regex=f'{conference.id}/Paper1/Area_Chair_', signatory='meta_additional@mail.com')[0].id
+
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper1/-/Meta_Review',
             forum = submission.id,
             replyto = submission.id,
             readers = ['AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Reviewers', 'AKBC.ws/2019/Conference/Program_Chairs'],
             nonreaders = ['AKBC.ws/2019/Conference/Paper1/Authors'],
             writers = ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs'],
-            signatures = ['AKBC.ws/2019/Conference/Paper1/Area_Chair2'],
+            signatures = [anon_ac_group_id],
             content = {
                 'metareview': 'Excellent Paper!',
                 'recommendation': 'Accept (Oral)',
@@ -1524,7 +1529,6 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.set_conference_short_name('AKBC 2019')
         builder.has_area_chairs(True)
-        builder.use_legacy_anonids(True)
         builder.enable_reviewer_reassignment(True)#enable review reassignment so that the assign_Reviewer_Textbox is rendered on page
         builder.get_result()
 
@@ -1862,7 +1866,6 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
-        builder.use_legacy_anonids(True)
         builder.set_conference_year(2019)
         builder.get_result()
 
@@ -1885,7 +1888,6 @@ class TestDoubleBlindConference():
         builder.set_conference_short_name('AKBC 2019')
         builder.set_conference_year(2019)
         builder.has_area_chairs(True)
-        builder.use_legacy_anonids(True)
         builder.set_conference_year(2019)
         builder.set_meta_review_stage(openreview.stages.MetaReviewStage(public=True, additional_fields = {
             'best paper' : {

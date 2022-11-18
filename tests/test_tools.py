@@ -512,18 +512,6 @@ class TestTools():
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 
-    # def test_add_assignments(self, client):
-
-    #     groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
-    #     assert len(groups) == 2
-
-    #     for n in range(0, 10):
-    #         result = openreview.tools.add_assignment(client, 1, 'auai.org/UAI/2020/Conference', 'reviewer{}@mail.com'.format(n))
-    #         assert result
-
-    #     groups = client.get_groups(regex = 'auai.org/UAI/2020/Conference/Paper1/AnonReviewer.*')
-    #     assert len(groups) == 12
-
     def test_group(self, client):
 
         assert openreview.tools.get_group(client, '~Super_User1')
