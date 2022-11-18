@@ -272,7 +272,7 @@ class WebfieldBuilder(object):
 
         header = self.__build_options(default_header, {})
 
-        start_param = conference.get_paper_assignment_id(conference.get_area_chairs_id(), deployed = assignment_title is None) + f',label:{assignment_title}' if assignment_title else '' + ',tail:{userId}'
+        start_param = conference.get_paper_assignment_id(conference.get_area_chairs_id(), deployed = assignment_title is None) + (f',label:{assignment_title}' if assignment_title else '') + ',tail:{userId}'
         edit_param = invitation.id
         browse_param = ';'.join(score_ids)
         params = f'start={start_param}&traverse={edit_param}&edit={edit_param}&browse={browse_param}&hide={conflict_id}&referrer=[Return Instructions](/invitation?id={edit_param})&maxColumns=2'
