@@ -193,9 +193,14 @@ class GroupBuilder(object):
 
         if self.venue.use_area_chairs:
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
+            content['area_chairs_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(self.venue.get_area_chairs_id()) }
+            content['area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_area_chairs_id()) }
+            content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
+            content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
+
 
         if self.venue.use_senior_area_chairs:
-            content['area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
+            content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
 
         if self.venue.bid_stages:
             content['bid_name'] = { 'value': self.venue.bid_stages[0].name }

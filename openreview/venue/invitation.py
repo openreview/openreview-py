@@ -565,7 +565,7 @@ class InvitationBuilder(object):
                 signatures = [venue_id],
                 readers = invitation_readers,
                 writers = [venue_id],
-                maxReplies=1,
+                minReplies = bid_stage.request_count,
                 web = webfield_content,
                 edge = {
                     'id': {

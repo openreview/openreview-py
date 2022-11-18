@@ -466,7 +466,8 @@ reviewer6@icml.cc, Reviewer ICMLSix
         bid_stage_note = pc_client.post_note(openreview.Note(
             content={
                 'bid_start_date': now.strftime('%Y/%m/%d'),
-                'bid_due_date': due_date.strftime('%Y/%m/%d')
+                'bid_due_date': due_date.strftime('%Y/%m/%d'),
+                'bid_count': 5
             },
             forum=request_form.forum,
             replyto=request_form.forum,
