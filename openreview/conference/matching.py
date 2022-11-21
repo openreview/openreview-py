@@ -167,6 +167,7 @@ class Matching(object):
 
 
             if is_assignment_invitation:
+                invitation_readers.append(self.conference.get_area_chairs_id())
                 if self.conference.use_senior_area_chairs:
                     edge_invitees.append(self.conference.get_senior_area_chairs_id())
                     edge_writers.append(self.conference.get_senior_area_chairs_id(number=paper_number))
