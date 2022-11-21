@@ -79,7 +79,7 @@ class Client(object):
         }
 
         self.session = requests.Session()
-        retries = Retry(total=8, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ])
+        retries = Retry(total=16, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
 
@@ -632,7 +632,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())        
 
-    def get_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
+    def get_groups(self, id = None, regex = None, member = None, members = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -660,6 +660,7 @@ class Client(object):
         if id is not None: params['id'] = id
         if regex is not None: params['regex'] = regex
         if member is not None: params['member'] = member
+        if members is not None: params['members'] = members
         if signatory is not None: params['signatory'] = signatory
         if web: params['web'] = web
         if select:
@@ -1902,7 +1903,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -1926,6 +1927,7 @@ class Group(object):
         if web_string:
             self.web = web_string
 
+        self.domain = domain
         self.anonids = anonids
         self.deanonymizers = deanonymizers
         self.host = host
@@ -1995,6 +1997,7 @@ class Group(object):
             deanonymizers=g.get('deanonymizers'),
             impersonators=g.get('impersonators'),
             host=g.get('host'),
+            domain=g.get('domain'),
             details = g.get('details'))
         if 'web' in g:
             group.web = g['web']

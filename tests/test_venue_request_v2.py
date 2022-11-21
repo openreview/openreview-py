@@ -802,8 +802,8 @@ class TestVenueRequest():
         reviewer_client = helpers.create_user('venue_reviewer_v2@mail.com', 'VenueTwo', 'Reviewer')
 
         reviewer_group_id = '{}/Reviewers'.format(venue['venue_id'])
-        reviewer_group = client.get_group(reviewer_group_id)
-        client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1')
+        reviewer_group = openreview_client.get_group(reviewer_group_id)
+        openreview_client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1')
 
         # reviewer_url = 'http://localhost:3030/group?id={}#reviewer-tasks'.format(reviewer_group_id)
         # request_page(selenium, reviewer_url, reviewer_client.token)
@@ -846,8 +846,8 @@ class TestVenueRequest():
 
     def test_venue_matching_setup(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
         # add a member to PC group
-        pc_group = client.get_group('{}/Program_Chairs'.format(venue['venue_id']))
-        client.add_members_to_group(group=pc_group, members=['pc@test.com'])
+        pc_group = openreview_client.get_group('{}/Program_Chairs'.format(venue['venue_id']))
+        openreview_client.add_members_to_group(group=pc_group, members=['pc@test.com'])
 
         helpers.create_user('venue_author_v2@mail.com', 'VenueTwo', 'Author')
         author_client = OpenReviewClient(username='venue_author_v2@mail.com', password='1234')
@@ -936,9 +936,9 @@ class TestVenueRequest():
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='tmdate')
         assert submissions and len(submissions) == 2
 
-        reviewer_group = client.get_group('{}/Reviewers'.format(venue['venue_id']))
-        client.remove_members_from_group(reviewer_group, '~VenueTwo_Reviewer1')
-        client.remove_members_from_group(reviewer_group, 'reviewer_candidate2_v2@mail.com')
+        reviewer_group = openreview_client.get_group('{}/Reviewers'.format(venue['venue_id']))
+        openreview_client.remove_members_from_group(reviewer_group, '~VenueTwo_Reviewer1')
+        openreview_client.remove_members_from_group(reviewer_group, 'reviewer_candidate2_v2@mail.com')
 
         ## Remove ~VenueTwo_Reviewer1 to keep the group empty and run the setup matching
         matching_setup_note = test_client.post_note(openreview.Note(
@@ -963,9 +963,9 @@ class TestVenueRequest():
         assert matching_status
         assert 'Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers.' in matching_status.content['error']
 
-        client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1')
-        client.add_members_to_group(reviewer_group, '~VenueThree_Reviewer1')
-        client.add_members_to_group(reviewer_group, 'some_user@mail.com')
+        openreview_client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1')
+        openreview_client.add_members_to_group(reviewer_group, '~VenueThree_Reviewer1')
+        openreview_client.add_members_to_group(reviewer_group, 'some_user@mail.com')
 
         ## Setup matching with the API request
         matching_setup_note = test_client.post_note(openreview.Note(
@@ -1072,7 +1072,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         assert affinity_scores == 4
 
         ## Remove reviewer with no profile
-        client.remove_members_from_group(reviewer_group, 'some_user@mail.com')
+        openreview_client.remove_members_from_group(reviewer_group, 'some_user@mail.com')
 
         matching_setup_note = test_client.post_note(openreview.Note(
             content={
@@ -1189,7 +1189,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password='1234')
-        reviewer_group = client.get_group('V2.cc/2030/Conference/Reviewers')
+        reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Reviewers')
         assert reviewer_group and len(reviewer_group.members) == 2
 
         reviewer_page_url = 'http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers#assigned-papers'
