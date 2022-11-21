@@ -940,7 +940,8 @@ class TestDoubleBlindConference():
 
         comment_invitees = [openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
                             openreview.stages.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission')
         submission = notes[0]
@@ -950,26 +951,6 @@ class TestDoubleBlindConference():
         assert len(reply_row.find_elements_by_class_name('btn')) == 2
         assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
         assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[1].text
-
-    def test_close_comments(self, client, test_client, selenium, request_page):
-
-        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
-        assert builder, 'builder is None'
-
-        builder.set_conference_id('AKBC.ws/2019/Conference')
-        builder.set_submission_stage(double_blind = True, public = True)
-        builder.has_area_chairs(True)
-        conference = builder.get_result()
-
-        conference.close_comments('Official_Comment')
-
-        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
-        submission = notes[0]
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
-
-        reply_row = selenium.find_element_by_class_name('reply_row')
-        assert len(reply_row.find_elements_by_class_name('btn')) == 1
-        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text
 
     def test_open_bids(self, client, test_client, selenium, request_page, helpers):
 
@@ -984,8 +965,8 @@ class TestDoubleBlindConference():
         builder.set_submission_stage(double_blind = True, public = True)
         builder.has_area_chairs(True)
         now = datetime.datetime.utcnow()
-        builder.set_bid_stage(openreview.stages.BidStage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50))
-        builder.set_bid_stage(openreview.stages.BidStage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50))
+        builder.set_bid_stages[openreview.stages.BidStage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50),
+            openreview.stages.BidStage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50)]
         conference = builder.get_result()
         conference.set_area_chairs(emails = ['ac@mail.com'])
         conference.set_reviewers(emails = ['reviewer2@mail.com', 'reviewer@domain.com'])
@@ -1003,8 +984,8 @@ class TestDoubleBlindConference():
         notes = selenium.find_elements_by_class_name('note')
         assert len(notes) == 3
 
-        builder.set_bid_stage(openreview.stages.BidStage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Reviewers/-/Affinity_Score']))
-        builder.set_bid_stage(openreview.stages.BidStage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Area_Chairs/-/Affinity_Score']))
+        builder.set_bid_stages([openreview.stages.BidStage('AKBC.ws/2019/Conference/Reviewers', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Reviewers/-/Affinity_Score']), 
+            openreview.stages.BidStage('AKBC.ws/2019/Conference/Area_Chairs', due_date =  now + datetime.timedelta(minutes = 10), request_count = 50, score_ids=['AKBC.ws/2019/Conference/Area_Chairs/-/Affinity_Score'])])
         conference = builder.get_result()
         conference.create_bid_stages()
 

@@ -309,7 +309,8 @@ If you would like to change your decision, please follow the link in the previou
 
         conference.setup_matching(committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', build_conflicts=False, affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
         now = datetime.datetime.utcnow()
-        conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score']))
+        conference.set_bid_stages([openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score'])])
+        conference.create_bid_stages()
 
         edges=pc_client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Senior_Area_Chairs/-/Affinity_Score')
         assert edges == 6
@@ -1095,8 +1096,9 @@ If you would like to change your decision, please follow the link in the previou
 
         conference.setup_matching(committee_id=conference.get_reviewers_id(), build_conflicts='neurips', affinity_score_file=os.path.join(os.path.dirname(__file__), 'data/reviewer_affinity_scores.csv'))
 
-        conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True))
-        conference.set_bid_stage(openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True))
+        conference.set_bid_stages([openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Area_Chairs', score_ids=['NeurIPS.cc/2021/Conference/Area_Chairs/-/Affinity_Score'], allow_conflicts_bids=True), 
+            openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2021/Conference/Reviewers', score_ids=['NeurIPS.cc/2021/Conference/Reviewers/-/Affinity_Score'], allow_conflicts_bids=True)])
+        conference.create_bid_stage()
 
         assert client.get_edges_count(invitation='NeurIPS.cc/2021/Conference/Reviewers/-/Custom_Max_Papers') == 1
         ac_quotas=client.get_edges(invitation='NeurIPS.cc/2021/Conference/Area_Chairs/-/Custom_Max_Papers', head='NeurIPS.cc/2021/Conference/Area_Chairs')
