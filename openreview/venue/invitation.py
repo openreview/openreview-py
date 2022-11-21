@@ -1702,7 +1702,7 @@ class InvitationBuilder(object):
         client = self.client
         venue = self.venue
         
-        invitation = client.get_invitation(venue.get_paper_assignment_id(committee_id, deployed=True))
+        invitation = client.get_invitation(venue.get_assignment_id(committee_id, deployed=True))
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
         is_ethics_reviewer = committee_id == venue.get_ethics_reviewers_id()

@@ -107,7 +107,7 @@ class Venue(object):
     def get_bid_id(self, committee_id):
         return self.get_invitation_id('Bid', prefix=committee_id)
 
-    def get_paper_assignment_id(self, committee_id, deployed=False, invite=False):
+    def get_assignment_id(self, committee_id, deployed=False, invite=False):
         if deployed:
             return self.get_invitation_id('Assignment', prefix=committee_id)
         if invite:

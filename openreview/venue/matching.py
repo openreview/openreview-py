@@ -646,7 +646,7 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'const': venue.get_paper_assignment_id(self.match_group.id),
+                                    'const': venue.get_assignment_id(self.match_group.id),
                                     'hidden': True
                                 }
                             }
@@ -657,7 +657,7 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'const': venue.get_paper_assignment_id(self.match_group.id, deployed=True),
+                                    'const': venue.get_assignment_id(self.match_group.id, deployed=True),
                                     'hidden': True
                                 }
                             }
@@ -668,7 +668,7 @@ class Matching(object):
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'const': venue.get_paper_assignment_id(self.match_group.id, invite=True),
+                                    'const': venue.get_assignment_id(self.match_group.id, invite=True),
                                     'hidden': True
                                 }
                             }
@@ -841,7 +841,7 @@ class Matching(object):
 
         user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts)
 
-        invitation = self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id))
+        invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))
         
         ## is there better way to do this?
         if not self.is_senior_area_chair:
@@ -851,7 +851,7 @@ class Matching(object):
                 invitation.preprocess = content
                 venue.invitation_builder.save_invitation(invitation)
 
-        self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id, deployed=True))
+        self._create_edge_invitation(venue.get_assignment_id(self.match_group.id, deployed=True))
         # venue.invitation_builder.set_assignment_invitation(self.match_group.id)
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._build_custom_max_papers(user_profiles)
@@ -916,10 +916,10 @@ class Matching(object):
 
         papers = venue.get_submissions()
         reviews = client.get_notes(invitation=venue.get_invitation_id(review_name, number='.*'), limit=1)
-        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_paper_assignment_id(self.match_group.id),
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_edges = []
-        assignment_invitation_id = venue.get_paper_assignment_id(self.match_group.id, deployed=True)
+        assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
         if overwrite:
@@ -967,10 +967,10 @@ class Matching(object):
 
         papers = venue.get_submissions()
 
-        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_paper_assignment_id(self.match_group.id),
+        proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_assignment_id(self.match_group.id),
             label=assignment_title, groupby='head', select=None)}
         assignment_edges = []
-        assignment_invitation_id = venue.get_paper_assignment_id(self.match_group.id, deployed=True)
+        assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
 
         ac_groups = {g.id:g for g in client.get_all_groups(regex=venue.get_area_chairs_id('.*'))}
 
@@ -1036,4 +1036,4 @@ class Matching(object):
         #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
         #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
 
-        # self.venue.invitation_builder.expire_invitation(self.venue.get_paper_assignment_id(self.match_group.id))
+        # self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))

@@ -201,6 +201,7 @@ class GroupBuilder(object):
 
         if self.venue.use_senior_area_chairs:
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
+            content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id()) }
 
         if self.venue.bid_stages:
             content['bid_name'] = { 'value': self.venue.bid_stages[0].name }
@@ -336,7 +337,7 @@ class GroupBuilder(object):
                             members=[]
                         )
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
                 content = f.read()
                 senior_area_chairs_group.web = content
                 self.post_group(senior_area_chairs_group)
