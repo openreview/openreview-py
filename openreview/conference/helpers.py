@@ -26,6 +26,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.meta_review_stage = get_meta_review_stage(note)
         venue.comment_stage = get_comment_stage(note)
         venue.decision_stage = get_decision_stage(note)
+        venue.submission_revision_stage = get_submission_revision_stage(note)
 
         venue.setup(note.content.get('program_chair_emails'))
         venue.create_submission_stage()
@@ -335,6 +336,9 @@ def get_submission_stage(request_forum):
     submission_release=(request_forum.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
     create_groups=(not double_blind) and public and submission_release
 
+    author_names_revealed = 'Reveal author identities of all submissions to the public' in request_forum.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in request_forum.content.get('reveal_authors', '')
+    papers_released = 'Release all submissions to the public'in request_forum.content.get('release_submissions', '') or 'Release only accepted submission to the public' in request_forum.content.get('release_submissions', '') or 'Make accepted submissions public and hide rejected submissions' in request_forum.content.get('submission_readers', '')
+
     return openreview.stages.SubmissionStage(name = name,
         double_blind=double_blind,
         start_date=submission_start_date,
@@ -343,6 +347,8 @@ def get_submission_stage(request_forum):
         additional_fields=submission_additional_options,
         remove_fields=submission_remove_options,
         create_groups=create_groups,
+        author_names_revealed=author_names_revealed,
+        papers_released=papers_released,
         readers=readers)
 
 def get_bid_stages(request_forum):
