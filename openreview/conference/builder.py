@@ -697,7 +697,7 @@ class Conference(object):
     def get_submissions(self, accepted = False, number=None, details = None, sort = None):
         invitation = self.get_blind_submission_id()
 
-        if accepted and 'directReplies' not in details:
+        if accepted and (not details or 'directReplies' not in details):
             details = (details + ',') if details else ''
             details = details + 'directReplies'
 
