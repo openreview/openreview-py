@@ -449,7 +449,8 @@ class TestWorkshop():
 
     def test_open_meta_reviews(self, client, conference, test_client, helpers):
 
-        conference.open_meta_reviews()
+        conference.meta_review_stage = openreview.MetaReviewStage()
+        conference.create_meta_review_stage()
 
         notes = test_client.get_notes(invitation='icaps-conference.org/ICAPS/2019/Workshop/HSDIP/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
