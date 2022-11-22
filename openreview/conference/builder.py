@@ -1060,7 +1060,8 @@ class Conference(object):
             if force or (self.submission_stage.due_date and self.submission_stage.due_date < datetime.datetime.now()):
                 self.setup_final_deadline_stage(force, hide_fields)
 
-    def open_recommendations(self, assignment_title, start_date = None, due_date = None, total_recommendations = 7):
+
+    def open_recommendations(self, assignment_title = None, start_date = None, due_date = None, total_recommendations = 7):
 
         score_ids = []
         invitation_ids = [
