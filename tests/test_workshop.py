@@ -474,7 +474,8 @@ class TestWorkshop():
 
     def test_open_decisions(self, client, conference, helpers):
 
-        conference.open_decisions()
+        conference.decision_stage = openreview.DecisionStage()
+        conference.create_decision_stage()
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = '1234')
 
