@@ -544,4 +544,40 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Review')
 
-        openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLOne1')                              
+        openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission1/Reviewers', '~Reviewer_ICMLOne1') 
+
+
+    def test_comment_stage(self, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0] 
+
+        # Post an official comment stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        end_date = now + datetime.timedelta(days=3)
+        comment_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Assigned Submitted Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue'
+
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Official_Comment')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Comment')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')                                             

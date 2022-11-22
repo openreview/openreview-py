@@ -731,7 +731,11 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}',
+                            'replyto': { 
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}', 
+                                }
+                            },
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
@@ -849,7 +853,11 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}',
+                            'replyto': { 
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}', 
+                                }
+                            },
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
