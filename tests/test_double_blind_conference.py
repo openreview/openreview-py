@@ -952,6 +952,27 @@ class TestDoubleBlindConference():
         assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
         assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[1].text
 
+    def test_close_comments(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('AKBC.ws/2019/Conference')
+        builder.set_submission_stage(double_blind = True, public = True)
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        conference.comment_stage = openreview.CommentStage(end_date=datetime.datetime.utcnow())
+        conference.create_comment_stage()
+
+        notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Submission')
+        submission = notes[0]
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text        
+
     def test_open_bids(self, client, test_client, selenium, request_page, helpers):
 
         reviewer_client = helpers.create_user('reviewer2@mail.com', 'Reviewer', 'DoubleBlind')
@@ -1569,7 +1590,8 @@ class TestDoubleBlindConference():
         assert notes
         assert len(notes) == 3
 
-        assert conference.open_revise_submissions()
+        conference.submission_revision_stage = openreview.SubmissionRevisionStage()
+        conference.create_submission_revision_stage()
 
         note = openreview.Note(invitation = 'AKBC.ws/2019/Conference/Paper3/-/Revision',
             forum = notes[0].original,
