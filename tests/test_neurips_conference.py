@@ -2429,7 +2429,8 @@ NeurIPS 2021 Conference Program Chairs'''
         due_date = now + datetime.timedelta(days=3)
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
                             openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED]
-        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, check_mandatory_readers=True, invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(reader_selection=True, check_mandatory_readers=True, invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password='1234')
 
@@ -2563,7 +2564,8 @@ NeurIPS 2021 Conference Program Chairs'''
         due_date = now + datetime.timedelta(days=3)
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_SUBMITTED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,
                             openreview.stages.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.stages.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(reader_selection=True, invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         submissions=conference.get_submissions(number=5)
         assert len(submissions) == 1

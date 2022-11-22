@@ -323,7 +323,8 @@ class TestSingleBlindConference():
         conference = builder.get_result()
 
         comment_invitees = [openreview.stages.CommentStage.Readers.AUTHORS]
-        conference.set_comment_stage(openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
         submission = notes[0]
@@ -772,7 +773,8 @@ url={https://openreview.net/forum?id='''
         builder.set_conference_name('NIPS Workshop MLITS')
         conference = builder.get_result()
 
-        conference.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
+        conference.submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True)
+        conference.create_submission_revision_stage()
 
         notes = conference.get_submissions(sort='tmdate')
         assert notes

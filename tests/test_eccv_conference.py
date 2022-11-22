@@ -1098,7 +1098,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_stage(openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+        conference.review_stage = openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
             additional_fields = {
                 'summary_of_contributions': {
                     'order': 1,
@@ -1154,7 +1154,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 }
             },
             remove_fields = ['title', 'rating', 'review'],
-            rating_field_name = 'preliminary_rating'))
+            rating_field_name = 'preliminary_rating')
+
+        conference.create_review_stage()
 
         r1_client = openreview.Client(username='reviewer1@fb.com', password='1234')
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
@@ -1280,7 +1282,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
     def test_comment_stage(self, conference, client, test_client, selenium, request_page, helpers):
         comment_invitees = [openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED]
-        conference.set_comment_stage(openreview.stages.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, invitees=comment_invitees, readers=comment_invitees))
+        conference.comment_stage = openreview.stages.CommentStage(official_comment_name='Confidential_Comment', reader_selection=True, invitees=comment_invitees, readers=comment_invitees)
+        conference.create_comment_stage()
 
         r2_client = openreview.Client(username='reviewer2@google.com', password='1234')
 
@@ -1326,7 +1329,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         now = datetime.datetime.utcnow()
 
         ## Release reviews to authors and reviewers
-        conference.set_review_stage(openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
+        conference.review_stage = openreview.stages.ReviewStage(due_date=now + datetime.timedelta(minutes = 40),
             additional_fields = {
                 'summary_of_contributions': {
                     'order': 1,
@@ -1381,7 +1384,9 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                     'required': True
                 }
             },
-            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True ))
+            remove_fields = ['title', 'rating', 'review'], release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED, release_to_authors = True )
+
+        conference.create_review_stage()
 
 
         request_page(selenium, 'http://localhost:3030/forum?id=' + blinded_notes[2].id , test_client.token, by=By.CLASS_NAME, wait_for_element='note_with_children')

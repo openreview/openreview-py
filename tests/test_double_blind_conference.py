@@ -2173,7 +2173,8 @@ url={'''
         conference = builder.get_result()
         conference.create_decision_stage()
 
-        conference.set_submission_revision_stage(openreview.stages.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True))
+        conference.submission_revision_stage = openreview.stages.SubmissionRevisionStage(name='Camera_Ready_Revision', only_accepted=True)
+        conference.create_submission_revision_stage()
 
         notes = conference.get_submissions(sort='tmdate')
         assert notes

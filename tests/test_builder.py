@@ -112,7 +112,7 @@ class TestBuilder():
         assert blind_submissions
         assert len(blind_submissions) == 1
 
-        conference.set_review_stage(conference.review_stage)
+        conference.create_review_stage()
 
         reviewer_client = helpers.create_user('reviewer_test1@mail.com', 'SomeFirstName', 'ReviewerOne')
 
@@ -136,14 +136,14 @@ class TestBuilder():
             }
         }
         conference.review_stage.release_to_reviewers = openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED
-        conference.set_review_stage(conference.review_stage)
+        conference.create_review_stage()
         official_review_invitations = reviewer_client.get_invitations(regex = conference.get_invitation_id('Official_Review', blind_submissions[0].number))
         assert len(official_review_invitations) == 1
         assert official_review_invitations[0].id == conference.get_id() + '/Paper' + str(blind_submissions[0].number) + '/-/Official_Review'
         assert 'additional description' in official_review_invitations[0].reply['content'].keys()
 
         conference.review_stage.remove_fields = ['confidence', 'additional description']
-        conference.set_review_stage(conference.review_stage)
+        conference.create_review_stage()
         official_review_invitations = reviewer_client.get_invitations(regex = conference.get_invitation_id('Official_Review', blind_submissions[0].number))
         assert len(official_review_invitations) == 1
         assert official_review_invitations[0].id == conference.get_id() + '/Paper' + str(blind_submissions[0].number) + '/-/Official_Review'
