@@ -147,19 +147,6 @@ class Conference(object):
 
             return invitation
 
-    ## TODO: use a super invitation here
-    def __expire_invitations(self, name):
-        invitations = self.client.get_all_invitations(regex = self.get_invitation_id(name, '.*'))
-
-        now = round(time.time() * 1000)
-
-        for invitation in invitations:
-            if not invitation.expdate or invitation.expdate > now:
-                invitation.expdate = now
-                invitation = self.client.post_invitation(invitation)
-
-        return len(invitations)
-
     def __create_submission_stage(self):
         under_submission = self.submission_stage.is_under_submission()
         return self.invitation_builder.set_submission_invitation(self, under_submission=under_submission)
@@ -204,10 +191,10 @@ class Conference(object):
         notes = list(self.get_submissions(number=numbers))
 
         ## Unflag existing papers with no assigned reviewers
-        groups = self.client.get_groups(regex=self.get_ethics_reviewers_id(number='.*'))
+        groups = self.client.get_groups(regex=self.id + '/Paper.*')
         for group in groups:
             print('process group', group.id)
-            if len(group.members) == 0:
+            if group.id.endswith(self.ethics_reviewers_name) and len(group.members) == 0:
                 number = self.get_number_from_committee(group.id)
                 if number and number not in self.ethics_review_stage.submission_numbers:
                     ## Delete group
@@ -259,14 +246,22 @@ class Conference(object):
         return self.invitation_builder.set_review_rebuttal_invitation(self)
 
     def __create_review_revision_stage(self):
-        invitation = self.get_invitation_id(self.review_stage.name, '.*')
-        review_iterator = self.client.get_all_notes(invitation = invitation)
-        return self.invitation_builder.set_review_revision_invitation(self, review_iterator)
+        submissions = self.get_submissions(details='directReplies')
+        reviews = []
+        for submission in submissions:
+            for reply in submission.details['directReplies']:
+                if reply['invitation'] == self.get_invitation_id(self.review_stage.name, submission.number):
+                    reviews.append(openreview.Note.from_json(reply))
+        return self.invitation_builder.set_review_revision_invitation(self, reviews)
 
     def __create_review_rating_stage(self):
-        invitation = self.get_invitation_id(self.review_stage.name, '.*')
-        review_iterator = self.client.get_all_notes(invitation = invitation)
-        return self.invitation_builder.set_review_rating_invitation(self, review_iterator)
+        submissions = self.get_submissions(details='directReplies')
+        reviews = []
+        for submission in submissions:
+            for reply in submission.details['directReplies']:
+                if reply['invitation'] == self.get_invitation_id(self.review_stage.name, submission.number):
+                    reviews.append(openreview.Note.from_json(reply))        
+        return self.invitation_builder.set_review_rating_invitation(self, reviews)
 
     def __create_comment_stage(self):
 
@@ -701,11 +696,18 @@ class Conference(object):
 
     def get_submissions(self, accepted = False, number=None, details = None, sort = None):
         invitation = self.get_blind_submission_id()
+
+        if accepted and 'directReplies' not in details:
+            details = (details + ',') if details else ''
+            details = details + 'directReplies'
+
         notes = self.client.get_all_notes(invitation = invitation, number=number, details = details, sort = sort)
         if accepted:
-            decisions = self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))
-            accepted_forums = [d.forum for d in decisions if 'Accept' in d.content['decision']]
-            accepted_notes = [n for n in notes if n.id in accepted_forums]
+            accepted_notes = []
+            for note in notes:
+                decisions = [reply for reply in note.details['directReplies'] if self.get_invitation_id(self.decision_stage.name, note.number) == reply['invitation']]
+                if decisions and 'Accept' in decisions[0]['content']['decision']:
+                    accepted_notes.append(note)
             return accepted_notes
         return notes
 
@@ -1577,8 +1579,7 @@ Program Chairs
             result = future.result()
 
     def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None):
-        submissions = self.get_submissions(details='original')
-        decisions_by_forum = {n.forum: n for n in self.client.get_all_notes(invitation = self.get_invitation_id(self.decision_stage.name, '.*'))}
+        submissions = self.get_submissions(details='original,directReplies')
 
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
@@ -1587,7 +1588,8 @@ Program Chairs
             self.submission_stage.readers = submission_readers
 
         for submission in tqdm(submissions):
-            decision_note = decisions_by_forum.get(submission.forum, None)
+            decisions = [reply for reply in submission.details['directReplies'] if self.get_invitation_id(self.decision_stage.name, submission.number) == reply['invitation']]
+            decision_note = openreview.Note.from_json(decisions[0]) if decisions else None
             note_accepted = decision_note and 'Accept' in decision_note.content['decision']
             submission.readers = self.submission_stage.get_readers(self, submission.number, decision_note.content['decision'] if decision_note else None)
             #double-blind
@@ -1676,11 +1678,7 @@ Program Chairs
 
     def post_decisions(self, decisions_file):
         decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
-        decision_notes = {
-            n.forum: n for n in self.client.get_all_notes(
-                invitation=self.get_invitation_id(self.decision_stage.name, '.*')
-            )}
-        paper_notes = {n.number: n for n in self.get_submissions()}
+        paper_notes = {n.number: n for n in self.get_submissions(details='directReplies')}
         forum_note = self.client.get_note(self.request_form_id)
 
         def post_decision(paper_decision):
@@ -1706,7 +1704,8 @@ Program Chairs
                     f"Paper {paper_number} not found. Please check the submitted paper numbers."
                 )
 
-            paper_decision_note = decision_notes.get(paper_note.id, None)
+            decisions = [reply for reply in paper_note.details['directReplies'] if self.get_invitation_id(self.decision_stage.name, paper_note.number) == reply['invitation']]
+            paper_decision_note = openreview.Note.from_json(decisions[0]) if decisions else None
             if paper_decision_note:
                 paper_decision_note.readers = self.decision_stage.get_readers(conference=self, number=paper_note.number)
                 paper_decision_note.nonreaders = self.decision_stage.get_nonreaders(conference=self, number=paper_note.number)
