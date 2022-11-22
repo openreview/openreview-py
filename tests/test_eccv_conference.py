@@ -1680,7 +1680,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440)))
+        conference.meta_review_stage = openreview.stages.MetaReviewStage(due_date =  now + datetime.timedelta(minutes = 1440))
+        conference.create_meta_review_stage()
 
         ac_client = openreview.Client(username='ac1@eccv.org', password='1234')
         ac_url = 'http://localhost:3030/group?id=thecvf.com/ECCV/2020/Conference/Area_Chairs'

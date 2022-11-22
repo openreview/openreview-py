@@ -2597,7 +2597,8 @@ NeurIPS 2021 Conference Program Chairs'''
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
-        conference.set_meta_review_stage(openreview.stages.MetaReviewStage(due_date=due_date))
+        conference.meta_review_stage = openreview.stages.MetaReviewStage(due_date=due_date)
+        conference.create_meta_review_stage()
 
         ac_client=openreview.Client(username='ac1@mit.edu', password='1234')
 
