@@ -335,6 +335,26 @@ class TestSingleBlindConference():
         assert 'Official Comment' == reply_row.find_elements_by_class_name('btn')[0].text
         assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[1].text
 
+    def test_close_comments(self, client, test_client, selenium, request_page):
+
+        builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
+        assert builder, 'builder is None'
+
+        builder.set_conference_id('NIPS.cc/2018/Workshop/MLITS')
+        builder.has_area_chairs(True)
+        conference = builder.get_result()
+
+        conference.comment_stage = openreview.CommentStage(end_date=datetime.datetime.utcnow())
+        conference.create_comment_stage()
+
+        notes = test_client.get_notes(invitation='NIPS.cc/2018/Workshop/MLITS/-/Submission')
+        submission = notes[0]
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+
+        reply_row = selenium.find_element_by_class_name('reply_row')
+        assert len(reply_row.find_elements_by_class_name('btn')) == 1
+        assert 'Withdraw' == reply_row.find_elements_by_class_name('btn')[0].text        
+
     def test_open_reviews(self, client, test_client, selenium, request_page, helpers):
 
         now = datetime.datetime.utcnow()
