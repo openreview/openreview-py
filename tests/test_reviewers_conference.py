@@ -114,6 +114,8 @@ class TestReviewersConference():
         conference.set_assignment(number = 1, user = 'reviewer_kgb@mail.com')
         conference.set_assignment(number = 1, user = 'reviewer_kgb2@mail.com')
 
+        conference.create_review_stage()
+
         request_page(selenium, "http://localhost:3030/group?id=eswc-conferences.org/ESWC/2019/Workshop/KGB/Program_Chairs#paper-status", client.token, by=By.CLASS_NAME, wait_for_element='reviewer-progress')
         reviews = selenium.find_elements_by_class_name('reviewer-progress')
         assert reviews

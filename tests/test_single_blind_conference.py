@@ -726,7 +726,8 @@ class TestSingleBlindConference():
                 'value-regex': '.*'
             }
         }
-        conference.set_decision_stage(openreview.stages.DecisionStage(public=True, additional_fields=decision_additional_fields))
+        conference.decision_stage = openreview.stages.DecisionStage(public=True, additional_fields=decision_additional_fields)
+        conference.create_decision_stage()
 
         submissions = conference.get_submissions(sort='tmdate')
         assert len(submissions) == 1

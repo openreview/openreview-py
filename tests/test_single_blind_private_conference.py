@@ -106,7 +106,8 @@ class TestSingleBlindPrivateConference():
 
     def test_decisions(self, conference, helpers, test_client, client):
 
-        conference.set_decision_stage(openreview.stages.DecisionStage(release_to_area_chairs=True))
+        conference.decision_stage = openreview.stages.DecisionStage(release_to_area_chairs=True)
+        conference.create_decision_stage()
 
         submissions=conference.get_submissions(sort='tmdate')
         assert len(submissions) == 5

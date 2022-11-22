@@ -1548,7 +1548,7 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
 
         now = datetime.datetime.utcnow()
 
-        conference.set_review_revision_stage(openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 40), additional_fields = {
+        conference.review_revision_stage = openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 40), additional_fields = {
             'final_rating': {
                 'order': 1,
                 'value-dropdown': [
@@ -1567,7 +1567,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
                 'description': 'Indicate that you have read the author rebuttal and argue in which sense the rebuttal or the discussion with the other reviewers has changed your initial rating or why you want to keep your rating. Max length: 1000',
                 'required': True
             }
-        }, remove_fields = ['title', 'rating', 'review', 'confidence']))
+        }, remove_fields = ['title', 'rating', 'review', 'confidence'])
+        conference.create_review_revision_stage()
 
         reviewer_client = openreview.Client(username='reviewer2@google.com', password='1234')
 

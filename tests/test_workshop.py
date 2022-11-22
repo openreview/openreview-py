@@ -404,7 +404,8 @@ class TestWorkshop():
         review = reviews[0]
 
         now = datetime.datetime.utcnow()
-        conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 10))
+        conference.review_revision_stage = openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 10))
+        conference.create_review_revision_stage()
 
         reviewer_client = openreview.Client(username='reviewer4@mail.com', password='1234')
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer4@mail.com')[0].id

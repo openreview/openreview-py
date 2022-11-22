@@ -1155,7 +1155,8 @@ class TestDoubleBlindConference():
         review = reviews[0]
 
         now = datetime.datetime.utcnow()
-        conference.open_revise_reviews(due_date = now + datetime.timedelta(minutes = 100))
+        conference.review_revision_stage = openreview.ReviewRevisionStage(due_date = now + datetime.timedelta(minutes = 100))
+        conference.create_review_revision_stage()
 
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer2@mail.com')[0].id
 

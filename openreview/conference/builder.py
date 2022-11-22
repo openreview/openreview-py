@@ -386,9 +386,9 @@ class Conference(object):
         self.review_rebuttal_stage = stage
         return self.__create_review_rebuttal_stage()
 
-    def set_review_revision_stage(self, stage):
-        self.review_revision_stage = stage
-        return self.__create_review_revision_stage()
+    def create_review_revision_stage(self):
+        if self.review_revision_stage:
+            return self.__create_review_revision_stage()
 
     def set_review_rating_stage(self, stage):
         self.review_rating_stage = stage

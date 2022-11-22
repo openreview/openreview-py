@@ -144,7 +144,7 @@ class TestOpenSubmissions():
         submissions = conference.get_submissions(sort='tmdate')
         assert submissions
 
-        conference.open_comments()
+        conference.create_comment_stage()
 
         assert openreview.tools.get_invitation(client, conference.get_invitation_id(name = 'Public_Comment', number = 1))
         assert openreview.tools.get_invitation(client, conference.get_invitation_id(name = 'Official_Comment', number = 1))
@@ -175,7 +175,7 @@ class TestOpenSubmissions():
         submissions = conference.get_submissions(sort='tmdate')
         assert submissions
 
-        conference.open_decisions()
+        conference.create_decision_stage()
 
         assert openreview.tools.get_invitation(client, conference.get_invitation_id(name = 'Decision', number = 1))
 

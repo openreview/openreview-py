@@ -387,6 +387,7 @@ class TestCommentNotification():
         conference.set_assignment('reviewer@auai.org', 1)
         conference.set_assignment('reviewer2@auai.org', 1)
         conference.set_assignment('areachair@auai.org', 1, True)
+        conference.create_review_stage()
 
         reviewer_client = helpers.create_user('reviewer@auai.org', 'Reviewer', 'UAI')
         anon_reviewers_group_id = reviewer_client.get_groups(regex=f'{conference.id}/Paper1/Reviewer_', signatory='reviewer@auai.org')[0].id
