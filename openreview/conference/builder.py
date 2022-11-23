@@ -1119,7 +1119,7 @@ class Conference(object):
         if self.use_area_chairs:
             self.expire_invitation(self.get_bid_id(self.get_area_chairs_id()))
 
-    def open_recommendations(self, assignment_title, start_date = None, due_date = None, total_recommendations = 7):
+    def open_recommendations(self, assignment_title = None, start_date = None, due_date = None, total_recommendations = 7):
 
         score_ids = []
         invitation_ids = [

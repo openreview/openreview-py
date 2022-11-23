@@ -994,13 +994,15 @@ class Matching(object):
                         sac_group=client.get_group(sac_group_id)
                         if overwrite:
                             sac_group.members=[]
-                        sac_group.members.append(sac)
                         client.post_group_edit(
                             invitation = venue.get_meta_invitation_id(),
                             readers = [venue.venue_id],
                             writers = [venue.venue_id],
                             signatures = [venue.venue_id],
-                            group = sac_group
+                            group = openreview.api.Group(
+                                id = sac_group_id,
+                                members = [sac]
+                            )
                         )
 
         for head, sac_assignments in proposed_assignment_edges.items():
