@@ -920,6 +920,8 @@ class Matching(object):
         assignment_invitation_id = venue.get_paper_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
+        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_paper_assignment_id(venue.get_senior_area_chairs_id()), groupby='head', select='tail')}
+
         if overwrite:
             if reviews:
                 raise openreview.OpenReviewException('Can not overwrite assignments when there are reviews posted.')
@@ -940,11 +942,16 @@ class Matching(object):
                 paper_committee_id = venue.get_committee_id(name=reviewer_name, number=paper.number)
                 proposed_edges=proposed_assignment_edges[paper.id]
                 for proposed_edge in proposed_edges:
-                    client.add_members_to_group(paper_committee_id, proposed_edge['tail'])
+                    assigned_user = proposed_edge['tail']
+                    client.add_members_to_group(paper_committee_id, assigned_user)
+                    if self.is_area_chair and sac_assignment_edges:
+                        assigned_sac = sac_assignment_edges[assigned_user]['tail']
+                        sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
+                        client.add_members_to_group(sac_group_id, assigned_sac)
                     assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
-                        tail=proposed_edge['tail'],
+                        tail=assigned_user,
                         readers=proposed_edge['readers'],
                         writers=proposed_edge['writers'],
                         signatures=proposed_edge['signatures'],
@@ -970,36 +977,8 @@ class Matching(object):
         assignment_edges = []
         assignment_invitation_id = venue.get_paper_assignment_id(self.match_group.id, deployed=True)
 
-        ac_groups = {g.id:g for g in client.get_all_groups(regex=venue.get_area_chairs_id('.*'))}
-
         if not papers:
             raise openreview.OpenReviewException('No submissions to deploy SAC assignment')
-
-        for paper in tqdm(papers):
-
-            ac_group_id=venue.get_area_chairs_id(paper.number)
-            ac_group=ac_groups.get(ac_group_id)
-            if ac_group:
-                if len(ac_group.members) == 0:
-                    raise openreview.OpenReviewException('AC assignments must be deployed first')
-
-                for ac in ac_group.members:
-                    sac_assignments = proposed_assignment_edges.get(ac, [])
-
-                    for sac_assignment in sac_assignments:
-                        sac=sac_assignment['tail']
-                        sac_group_id=ac_group.id.replace(venue.area_chairs_name, venue.senior_area_chairs_name)
-                        sac_group=client.get_group(sac_group_id)
-                        if overwrite:
-                            sac_group.members=[]
-                        sac_group.members.append(sac)
-                        client.post_group_edit(
-                            invitation = venue.get_meta_invitation_id(),
-                            readers = [venue.venue_id],
-                            writers = [venue.venue_id],
-                            signatures = [venue.venue_id],
-                            group = sac_group
-                        )
 
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
