@@ -840,8 +840,7 @@ class Matching(object):
         user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts)
 
         invitation = self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id))
-        
-        ## is there better way to do this?
+
         if not self.is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
                 content = f.read()
@@ -920,7 +919,7 @@ class Matching(object):
         assignment_invitation_id = venue.get_paper_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
 
-        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_paper_assignment_id(venue.get_senior_area_chairs_id()), groupby='head', select='tail')}
+        sac_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=venue.get_paper_assignment_id(venue.get_senior_area_chairs_id()), groupby='head', select=None)}
 
         if overwrite:
             if reviews:
@@ -945,9 +944,20 @@ class Matching(object):
                     assigned_user = proposed_edge['tail']
                     client.add_members_to_group(paper_committee_id, assigned_user)
                     if self.is_area_chair and sac_assignment_edges:
-                        assigned_sac = sac_assignment_edges[assigned_user]['tail']
-                        sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
-                        client.add_members_to_group(sac_group_id, assigned_sac)
+                        sac_assignments = sac_assignment_edges.get(assigned_user, [])
+                        for sac_assignment in sac_assignments:
+                            assigned_sac = sac_assignment['tail']
+                            sac_group_id = venue.get_committee_id(name=venue.senior_area_chairs_name, number=paper.number)
+                            client.post_group_edit(
+                                invitation = venue.get_meta_invitation_id(),
+                                readers = [venue.venue_id],
+                                writers = [venue.venue_id],
+                                signatures = [venue.venue_id],
+                                group = openreview.api.Group(
+                                    id = sac_group_id,
+                                    members = [assigned_sac]
+                                )
+                            )
                     assignment_edges.append(Edge(
                         invitation=assignment_invitation_id,
                         head=paper.id,
