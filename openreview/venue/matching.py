@@ -1,6 +1,4 @@
 import os
-import random
-import string
 import openreview
 from openreview.api import Edge
 from openreview.api import Invitation
@@ -823,7 +821,7 @@ class Matching(object):
             print('Bid invitation not found')
 
         try:
-            invitation = self.client.get_invitation(self.conference.get_recommendation_id())
+            invitation = self.client.get_invitation(venue.get_recommendation_id())
             score_spec[invitation.id] = {
                 'weight': 1,
                 'default': 0
@@ -852,7 +850,7 @@ class Matching(object):
                 venue.invitation_builder.save_invitation(invitation)
 
         self._create_edge_invitation(venue.get_paper_assignment_id(self.match_group.id, deployed=True))
-        # venue.invitation_builder.set_assignment_invitation(self.match_group.id)
+        venue.invitation_builder.set_assignment_invitation(self.match_group.id)
         self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
         self._build_custom_max_papers(user_profiles)
         self._create_edge_invitation(self._get_edge_invitation_id('Custom_User_Demands'))
@@ -1031,6 +1029,6 @@ class Matching(object):
 
         # if self.match_group.id == self.venue.get_reviewers_id() and enable_reviewer_reassignment:
         #     hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
-        #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
+        #     self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.venue.reviewers_name}''')
 
         # self.venue.invitation_builder.expire_invitation(self.venue.get_paper_assignment_id(self.match_group.id))

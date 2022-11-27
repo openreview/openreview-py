@@ -45,15 +45,15 @@ class TestMatching():
         assert openreview_client.get_invitation('VenueV2.cc/-/Submission')
 
         message = 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of VV2 2022 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
-        venue.recruit_reviewers(title='[VV2 2022] Invitation to serve as Reviewer',
-            message=message,
+        venue.recruit_reviewers(title='[VV2 2022] Invitation to serve as Program Committee',
+            message=message.replace('{{invitee_role}}', 'Program Committee'),
             invitees = ['r1_venue@mit.edu'],
             reviewers_name = 'Program_Committee',
             contact_info='testvenue@contact.com',
             reduced_load_on_decline = ['1','2','3'])
 
-        venue.recruit_reviewers(title='[VV2 2022] Invitation to serve as Action Editor',
-            message=message,
+        venue.recruit_reviewers(title='[VV2 2022] Invitation to serve as Senior Program Committee',
+            message=message.replace('{{invitee_role}}', 'Senior Program Committee'),
             invitees = ['r1_venue@mit.edu'],
             reviewers_name = 'Senior_Program_Committee',
             contact_info='testvenue@contact.com',
@@ -161,8 +161,8 @@ class TestMatching():
         #check assignment process is set when invitation is created
         assignment_inv = openreview_client.get_invitation(venue.get_paper_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
         assert assignment_inv
-    #     assert assignment_inv.process
-    #     assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
+        assert assignment_inv.process
+        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
         notes = venue.get_submissions(sort='number:asc')
 
@@ -369,7 +369,7 @@ class TestMatching():
         )
         assert 6 == edges
 
-        venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee')
+        venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee', enable_reviewer_reassignment=True)
 
         revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
         assert 2 == len(revs_paper0.members)
