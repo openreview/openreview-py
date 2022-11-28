@@ -45,7 +45,7 @@ class WebfieldBuilder(object):
     def set_landing_page(self, group, parentGroup, options = {}):
         # sets webfield to show links to child groups
 
-        children_groups = self.client.get_groups(regex = group.id + '/[^/]+/?$')
+        children_groups = self.client.get_groups(parent = group.id)
 
         links = []
         for children in children_groups:

@@ -1913,7 +1913,8 @@ class InvitationBuilder(object):
             with open(os.path.join(os.path.dirname(__file__), 'templates/' + post_proces_template)) as post:
                 pre_content = pre.read()
                 post_content = post.read()
-                pre_content = pre_content.replace("REVIEWERS_REGEX = ''", "REVIEWERS_REGEX = '" + conference.get_committee_id(name=options.get('reviewers_name', 'Reviewers'), number='.*') + "'")
+                pre_content = pre_content.replace("PAPER_REGEX = ''", f"PAPER_REGEX = '{conference.id}/Paper'")
+                pre_content = pre_content.replace("REVIEWERS_NAME = ''", "REVIEWER_NAME = '" + options.get('reviewers_name', 'Reviewers') + "'")
                 pre_content = pre_content.replace("CHECK_DECLINE = False", "CHECK_DECLINE = True")
                 post_content = post_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{conference.get_short_name()}"')
                 post_content = post_content.replace("CONFERENCE_NAME = ''", f'CONFERENCE_NAME = "{conference.get_id()}"')

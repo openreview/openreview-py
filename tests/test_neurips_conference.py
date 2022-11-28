@@ -2550,7 +2550,7 @@ NeurIPS 2021 Conference Program Chairs'''
 
         helpers.await_queue()
 
-        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review', sort='tmdate')
+        reviews=client.get_notes(invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Review', sort='tmdate')
         assert len(reviews) == 1
         reviews[0].readers = [
             'NeurIPS.cc/2021/Conference/Program_Chairs',
@@ -2733,7 +2733,7 @@ NeurIPS 2021 Conference Program Chairs'''
 
         submissions = conference.get_submissions(number=5)
 
-        reviews = ac_client.get_notes(forum=submissions[0].id, invitation='NeurIPS.cc/2021/Conference/Paper.*/-/Official_Review')
+        reviews = ac_client.get_notes(forum=submissions[0].id, invitation='NeurIPS.cc/2021/Conference/Paper5/-/Official_Review')
         assert len(reviews) == 1
 
         review_rating_note = ac_client.post_note(openreview.Note(

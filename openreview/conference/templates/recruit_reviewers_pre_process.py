@@ -3,7 +3,8 @@ def process(client, note, invitation):
     import urllib.parse
     HASH_SEED = ''
     REVIEWERS_INVITED_ID = ''
-    REVIEWERS_REGEX = ''
+    PAPER_REGEX = ''
+    REVIEWERS_NAME = ''
     CHECK_DECLINE = False
 
     user = urllib.parse.unquote(note.content['user'])
@@ -16,6 +17,6 @@ def process(client, note, invitation):
         raise openreview.OpenReviewException('User not in invited group, please accept the invitation using the email address you were invited with')
 
     if note.content['response'] == 'No' and CHECK_DECLINE:
-        memberships = client.get_groups(regex=REVIEWERS_REGEX, member=user)
+        memberships = [g for g in client.get_groups(regex=PAPER_REGEX, member=user) if REVIEWERS_NAME in g.id]
         if memberships:
             raise openreview.OpenReviewException('You have already been assigned to a paper. Please contact the paper area chair or program chairs to be unassigned.')

@@ -164,7 +164,7 @@ class TestWorkshop():
         assert group
         assert len(group.members) == 0
 
-        groups = client.get_groups(id = conference.get_authors_id(number = '.*'))
+        groups = [ g for g in client.get_groups(id = conference.id + '/Paper.*') if '/Authors' in g.id]
         assert len(groups) == 0
 
         conference.setup_post_submission_stage(force=True)
@@ -240,7 +240,7 @@ class TestWorkshop():
         assert group
         assert len(group.members) == 3
 
-        groups = client.get_groups(id = conference.get_authors_id(number = '.*'))
+        groups = [ g for g in client.get_groups(id = conference.id + '/Paper.*') if '/Authors' in g.id]
         assert len(groups) == 3
 
         for group in groups:

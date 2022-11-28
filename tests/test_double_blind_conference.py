@@ -1170,7 +1170,7 @@ class TestDoubleBlindConference():
         notes = test_client.get_notes(invitation='AKBC.ws/2019/Conference/-/Blind_Submission', sort='tmdate')
         submission = notes[2]
 
-        reviews = test_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')
+        reviews = test_client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Official_Review')
         assert reviews
         review = reviews[0]
 
@@ -1425,7 +1425,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.create_decision_stage()
 
-        decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
+        decisions = client.get_notes(invitation = f'AKBC.ws/2019/Conference/Paper{submission.number}/-/Decision')
         assert decisions
         assert decisions[0].readers == ['everyone']
         messages = client.get_messages(subject = '[AKBC 2019] Decision posted to your submission - Paper number: 1, Paper title: "New paper title"')
@@ -1435,7 +1435,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.create_decision_stage()
 
-        decisions = client.get_notes(invitation = 'AKBC.ws/2019/Conference/Paper.*/-/Decision')
+        decisions = client.get_notes(invitation = f'AKBC.ws/2019/Conference/Paper{submission.number}/-/Decision')
         assert decisions
         assert decisions[0].readers == ['AKBC.ws/2019/Conference/Program_Chairs', 'AKBC.ws/2019/Conference/Paper1/Area_Chairs', 'AKBC.ws/2019/Conference/Paper1/Authors']
 
@@ -1876,7 +1876,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.create_review_stage()
 
-        reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Official_Review')
+        reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Official_Review')
         assert(reviews)
         assert len(reviews) == 1
         assert reviews[0].readers == ['everyone']
@@ -1912,7 +1912,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.create_meta_review_stage()
 
-        reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Meta_Review')
+        reviews = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Meta_Review')
         assert(reviews)
         assert len(reviews) == 2
         assert reviews[0].readers == ['everyone']
@@ -1933,7 +1933,7 @@ class TestDoubleBlindConference():
         conference = builder.get_result()
         conference.create_decision_stage()
 
-        decisions = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper.*/-/Decision')
+        decisions = client.get_notes(invitation='AKBC.ws/2019/Conference/Paper1/-/Decision')
         assert(decisions)
         assert len(decisions) == 1
         assert decisions[0].readers == ['everyone']

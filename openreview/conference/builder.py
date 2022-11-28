@@ -1779,9 +1779,18 @@ Total Errors: {len(errors)}
         self.client.post_note(status_note)
 
     def expire_recruitment_invitations(self):
-        recruitment_invitations = self.client.get_invitations(regex=self.get_invitation_id('Recruit_*'))
-        recruitment_invitation_ids = [inv.id for inv in recruitment_invitations]
-        tools.concurrent_requests(self.expire_invitation, recruitment_invitation_ids)
+        recruitment_invitation = openreview.tools.get_invitation(self.client, self.get_invitation_id(f'Recruit_{self.reviewers_name}'))
+        if recruitment_invitation:
+            self.expire_invitation(recruitment_invitation.id)
+        recruitment_invitation = openreview.tools.get_invitation(self.client, self.get_invitation_id(f'Recruit_{self.area_chairs_name}'))
+        if recruitment_invitation:
+            self.expire_invitation(recruitment_invitation.id)
+        recruitment_invitation = openreview.tools.get_invitation(self.client, self.get_invitation_id(f'Recruit_{self.senior_area_chairs_name}'))
+        if recruitment_invitation:
+            self.expire_invitation(recruitment_invitation.id)
+        recruitment_invitation = openreview.tools.get_invitation(self.client, self.get_invitation_id(f'Recruit_{self.ethics_reviewers_name}'))
+        if recruitment_invitation:
+            self.expire_invitation(recruitment_invitation.id)
 
 class ConferenceBuilder(object):
 

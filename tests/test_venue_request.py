@@ -1292,7 +1292,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
         assert conference.review_stage.rating_field_name == 'review_rating'
 
-        reviewer_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Reviewers$')
+        reviewer_groups = [ g for g in client.get_groups('TEST.cc/2030/Conference/Paper.*') if g.id.endswith('/Reviewers')]
         assert len(reviewer_groups) == 2
         assert 'TEST.cc/2030/Conference' in reviewer_groups[0].readers
         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].readers
@@ -1302,7 +1302,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in reviewer_groups[0].deanonymizers
         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in reviewer_groups[0].deanonymizers
 
-        ac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Area_Chairs$')
+        ac_groups = [ g for g in client.get_groups('TEST.cc/2030/Conference/Paper.*') if '/Area_Chairs' in g.id ]
         assert len(ac_groups) == 2
         assert 'TEST.cc/2030/Conference' in ac_groups[0].readers
         assert 'TEST.cc/2030/Conference/Paper1/Area_Chairs' in ac_groups[0].readers
@@ -1313,7 +1313,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert 'TEST.cc/2030/Conference/Paper1/Reviewers' not in ac_groups[0].deanonymizers
         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in ac_groups[0].deanonymizers
 
-        sac_groups = client.get_groups('TEST.cc/2030/Conference/Paper.*/Senior_Area_Chairs$')
+        sac_groups = [ g for g in client.get_groups('TEST.cc/2030/Conference/Paper.*') if 'Senior_Area_Chairs' in g.id ]
         assert len(sac_groups) == 2
         assert 'TEST.cc/2030/Conference/Paper1/Senior_Area_Chairs' in sac_groups[0].readers
         assert 'TEST.cc/2030/Conference/Program_Chairs' in sac_groups[0].readers
@@ -1888,7 +1888,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert process_logs[0]['status'] == 'ok'
 
         decision_note = test_client.get_notes(
-            invitation='{venue_id}/Paper.*/-/Decision'.format(venue_id=venue['venue_id'])
+            invitation='{venue_id}/Paper1/-/Decision'.format(venue_id=venue['venue_id'])
         )[0]
 
         assert f'TEST.cc/2030/Conference/Paper1/Authors' in decision_note.readers
@@ -2323,7 +2323,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        revision_invitations = client.get_all_invitations(regex='{}/Paper.*/-/Revision'.format(venue['venue_id']))
+        revision_invitations = client.get_all_invitations(super='{}/-/Revision'.format(venue['venue_id']))
         for invitation in revision_invitations:
             assert invitation.expdate < round(time.time() * 1000)
 

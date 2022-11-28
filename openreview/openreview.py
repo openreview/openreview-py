@@ -631,7 +631,7 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())        
 
-    def get_groups(self, id = None, regex = None, member = None, members = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
+    def get_groups(self, id = None, parent = None, regex = None, member = None, members = None, signatory = None, web = None, limit = None, offset = None, with_count=False, select=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -657,6 +657,7 @@ class Client(object):
         """
         params = {}
         if id is not None: params['id'] = id
+        if parent is not None: params['parent'] = parent
         if regex is not None: params['regex'] = regex
         if member is not None: params['member'] = member
         if members is not None: params['members'] = members
@@ -677,7 +678,7 @@ class Client(object):
 
         return groups
 
-    def get_all_groups(self, id = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
+    def get_all_groups(self, id = None, parent = None, regex = None, member = None, signatory = None, web = None, limit = None, offset = None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -702,6 +703,7 @@ class Client(object):
 
         params = {
             'id': id,
+            'parent': parent,
             'regex': regex,
             'member': member,
             'signatory': signatory,
@@ -1882,9 +1884,10 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
+    def __init__(self, id, readers, writers, signatories, signatures, invitation=None, parent=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, web_string=None, anonids= None, deanonymizers=None, host=None, domain=None, details = None):
         # post attributes
         self.id=id
+        self.parent = parent
         self.invitation=invitation
         self.cdate = cdate
         self.ddate = ddate
@@ -1961,6 +1964,7 @@ class Group(object):
         :rtype: Group
         """
         group = Group(g['id'],
+            parent = g.get('parent'),
             invitation=g.get('invitation'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
