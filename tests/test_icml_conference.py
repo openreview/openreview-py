@@ -665,4 +665,54 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Official_Comment')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Official_Comment')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')                                             
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Official_Comment')
+
+
+    def test_meta_review_stage(self, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        pc_client.post_note(openreview.Note(
+            content={
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'recommendation_options': 'Accept, Reject',
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta reviews should be immediately revealed to the paper\'s reviewers who have already submitted their review',
+                'additional_meta_review_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'remove_meta_review_form_options': 'confidence'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+
+
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Meta_Review')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Meta_Review')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Meta_Review')                                                             
