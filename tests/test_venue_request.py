@@ -1285,7 +1285,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         assert note_div
         assert 'test submission' == note_div.find_element_by_link_text('test submission').text
 
-        review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Official_Review$'.format(venue['venue_id']))
+        review_invitations = client.get_invitations(super='{}/-/Official_Review'.format(venue['venue_id']))
         assert review_invitations and len(review_invitations) == 2
         assert 'title' not in review_invitations[0].reply['content']
 
@@ -1401,7 +1401,7 @@ Please refer to the FAQ for pointers on how to run the matcher: https://openrevi
         submit_div_2 = selenium.find_element_by_id('2-metareview-status')
         assert submit_div_2.find_element_by_link_text('Submit')
 
-        meta_review_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Meta_Review$'.format(venue['venue_id']))
+        meta_review_invitations = client.get_invitations(super='{}/-/Meta_Review'.format(venue['venue_id']))
         assert meta_review_invitations and len(meta_review_invitations) == 2
         assert 'confidence' not in meta_review_invitations[0].reply['content']
         assert 'suggestions' in meta_review_invitations[0].reply['content']
@@ -2240,7 +2240,7 @@ Best,
         assert process_logs[0]['status'] == 'ok'
 
         conference = openreview.get_conference(client, request_form_id=venue['request_form_note'].forum)
-        recruitment_invitations = client.get_invitations(regex=conference.get_invitation_id('Recruit_*'), expired=True)
+        recruitment_invitations = client.get_invitations(regex=conference.get_invitation_id('Recruit_.*'), expired=True)
         assert recruitment_invitations
         for inv in recruitment_invitations:
             assert inv.duedate < round(time.time() * 1000)
@@ -2501,7 +2501,7 @@ url={https://openreview.net/forum?id='''+ note_id + '''}
         blind_submissions = client.get_notes(invitation='{}/-/Blind_Submission'.format(venue['venue_id']), sort='number:asc')
         assert blind_submissions and len(blind_submissions) == 3
 
-        revision_invitations = client.get_invitations(regex='{}/Paper[0-9]*/-/Supplementary_Material$'.format(venue['venue_id']))
+        revision_invitations = client.get_invitations(super='{}/-/Supplementary_Material'.format(venue['venue_id']))
         assert revision_invitations and len(revision_invitations) == 3
         assert len(revision_invitations[0].reply['content'].keys()) == 2
         assert 'supplementary_material' in revision_invitations[0].reply['content']
