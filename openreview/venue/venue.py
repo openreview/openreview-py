@@ -280,6 +280,13 @@ class Venue(object):
             return f'{self.venue_id}/Desk_Rejected_{self.submission_stage.name}'
         return f'{self.venue_id}/Desk_Rejected_Submission'                
 
+    def get_rejected_submission_venue_id(self, submission_invitation_name=None):
+        if submission_invitation_name:
+            return f'{self.venue_id}/Rejected_{submission_invitation_name}'
+        if self.submission_stage:
+            return f'{self.venue_id}/Rejected_{self.submission_stage.name}'
+        return f'{self.venue_id}/Rejected_Submission' 
+
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort)

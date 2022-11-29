@@ -171,10 +171,12 @@ class GroupBuilder(object):
         ## Update settings
         content = {
             'submission_id': { 'value': self.venue.get_submission_id() },
+            'meta_invitation_id': { 'value': self.venue.get_meta_invitation_id() },
             'submission_name': { 'value': self.venue.submission_stage.name },
             'submission_venue_id': { 'value': self.venue.get_submission_venue_id() },
             'withdrawn_venue_id': { 'value': self.venue.get_withdrawn_submission_venue_id() },
             'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
+            'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
             'public_submissions': { 'value': self.venue.submission_stage.public },
             'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
             'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
@@ -189,6 +191,7 @@ class GroupBuilder(object):
             'reviewers_conflict_id': { 'value': self.venue.get_conflict_score_id(self.venue.get_reviewers_id()) },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
+            'authors_name': { 'value': self.venue.authors_name },
         }
 
         if self.venue.use_area_chairs:
@@ -216,6 +219,9 @@ class GroupBuilder(object):
 
         if self.venue.decision_stage:
             content['decision_name'] = { 'value': self.venue.decision_stage.name }
+
+        if self.venue.submission_revision_stage:
+            content['submission_revision_accepted'] = { 'value': self.venue.submission_revision_stage.only_accepted }            
 
         if self.venue.request_form_id:
             content['request_form_id'] = { 'value': self.venue.request_form_id }

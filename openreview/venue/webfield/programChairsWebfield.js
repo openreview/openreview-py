@@ -37,6 +37,6 @@ return {
         submissionName: domain.content.submission_name?.value,
         paperStatusExportColumns: null,
         areaChairStatusExportColumns: null,
-        requestFormId: domain.content.request_form_id.value
+        requestFormId: domain.content.request_form_id?.value
     }
 }

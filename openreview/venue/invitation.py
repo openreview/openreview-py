@@ -52,9 +52,6 @@ class InvitationBuilder(object):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            process = process.replace('VENUE_ID = ''', f"VENUE_ID = '{self.venue_id}'")
-            process = process.replace('META_INVITATION_ID = ''', f"META_INVITATION_ID = '{self.venue.get_meta_invitation_id()}'")
-            process = process.replace('AUTHORS_GROUP_ID = ''', f"AUTHORS_GROUP_ID = '{self.venue.get_authors_id()}'")
             return process
 
     def update_note_readers(self, submission, invitation):
@@ -1611,22 +1608,10 @@ class InvitationBuilder(object):
         process_file = os.path.join(os.path.dirname(__file__), 'process/submission_revision_process.py')
         with open(process_file) as f:
             process_content = f.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
-            process_content = process_content.replace("CONFERENCE_ID = ''", f"CONFERENCE_ID = '{self.venue_id}'")
-            process_content = process_content.replace("AUTHORS_NAME = ''", f"AUTHORS_NAME = '{self.venue.authors_name}'")
-            process_content = process_content.replace("SUBMISSION_NAME = ''", f"SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
 
         process_file = os.path.join(os.path.dirname(__file__), 'process/revision_start_process.py')
         with open(process_file) as f:
             revision_start_process = f.read()
-            revision_start_process = revision_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{self.venue.id}"')
-            revision_start_process = revision_start_process.replace("UNDER_SUBMISSION_ID = ''", f"UNDER_SUBMISSION_ID = '{self.venue.get_submission_venue_id()}'")
-            if only_accepted:
-                revision_start_process = revision_start_process.replace("SUBMISSION_NAME = ''", f"SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
-                revision_start_process = revision_start_process.replace("ACCEPTED = False", "ACCEPTED = True")
-                if self.venue.decision_stage:
-                    revision_start_process = revision_start_process.replace("DECISION_NAME = 'Decision'", f"DECISION_NAME = '{self.venue.decision_stage.name}'")
-
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],

@@ -1878,6 +1878,7 @@ class Edit(object):
     """
     def __init__(self,
         id = None,
+        domain = None,
         invitations = None,
         readers = None,
         writers = None,
@@ -1890,6 +1891,7 @@ class Edit(object):
         tauthor = None):
 
         self.id = id
+        self.domain = domain
         self.invitations = invitations
         self.cdate = cdate
         self.ddate = ddate
@@ -1953,6 +1955,7 @@ class Edit(object):
         :rtype: Edit
         """
         edit = Edit(e.get('id'),
+            domain = e.get('domain'),
             invitations = e.get('invitations'),
             cdate = e.get('cdate'),
             ddate = e.get('ddate'),
