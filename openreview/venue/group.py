@@ -201,7 +201,7 @@ class GroupBuilder(object):
 
         if self.venue.use_senior_area_chairs:
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
-            content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id()) }
+            content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id(), deployed=True) }
 
         if self.venue.bid_stages:
             content['bid_name'] = { 'value': self.venue.bid_stages[0].name }
