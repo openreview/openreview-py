@@ -133,6 +133,11 @@ var main = function() {
     referrer: args && args.referrer,
     fullWidth: true
   });
+  
+  if (!user || user.isGuest) {
+    Webfield2.ui.errorMessage('You must be logged in to access this page.');
+    return;
+  }  
 
   loadData()
     .then(formatData)
