@@ -715,4 +715,56 @@ reviewer6@icml.cc, Reviewer ICMLSix
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Meta_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Meta_Review')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Meta_Review')
-        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Meta_Review')                                                             
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Meta_Review')
+
+
+    def test_decision_stage(self, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password='1234')
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # Post a decision stage note
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Revision Needed, Reject',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'Yes, send an email notification to the authors',
+                'additional_decision_form_options': {
+                    'suggestions': {
+                        'description': 'Please provide suggestions on how to improve the paper',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
+                    }
+                }
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage',
+            readers=['ICML.cc/2023/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICMLChair1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Decision')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission2/-/Decision')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/-/Decision')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission4/-/Decision')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission5/-/Decision')                                                                            
