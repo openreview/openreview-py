@@ -1,6 +1,4 @@
 // Webfield component
-const COMMITTEE_NAME = ''
-
 return {
   component: 'RecruitmentForm',
   version: 2,
@@ -12,7 +10,7 @@ return {
       contact: domain.content.contact.value,
     },
     invitationMessage: `
-#### You have been invited by the organizers of ${domain.content.subtitle.value} to serve as a *${COMMITTEE_NAME}*.
+#### You have been invited by the organizers of ${domain.content.subtitle.value} to serve as a *${entity.content.committee_name.value}*.
 
 ##### Please respond to this invitation by choosing one of the options below:
 `,

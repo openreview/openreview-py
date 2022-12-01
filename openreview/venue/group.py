@@ -199,8 +199,13 @@ class GroupBuilder(object):
             'withdrawn_submission_id': { 'value': self.venue.get_withdrawn_id() },
             'withdraw_expiration_id': { 'value': self.venue.get_invitation_id('Withdraw_Expiration') },
             'withdraw_reversion_id': { 'value': self.venue.get_invitation_id('Withdrawal_Reversion') },
-            'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True)},
-            'withdrawal_name': { 'value': 'Withdrawal'}
+            'withdraw_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
+            'withdrawal_name': { 'value': 'Withdrawal'},
+            'desk_rejected_submission_id': { 'value': self.venue.get_desk_rejected_id() },
+            'desk_reject_expiration_id': { 'value': self.venue.get_invitation_id('Desk_Reject_Expiration') },
+            'desk_rejection_reversion_id': { 'value': self.venue.get_invitation_id('Desk_Rejection_Reversion') },
+            'desk_reject_committee': { 'value': self.venue.get_participants(number="{number}", with_authors=True, with_program_chairs=True)},
+            'desk_rejection_name': { 'value': 'Desk_Rejection'}
         }
 
         if self.venue.use_area_chairs:

@@ -6,7 +6,6 @@ def process(client, edit, invitation):
     withdraw_reversion_id = domain.content['withdraw_reversion_id']['value']
     withdraw_expiration_id = domain.content['withdraw_expiration_id']['value']
     withdraw_committee = domain.content['withdraw_committee']['value']
-    withdraw_committee = domain.content['withdraw_committee']['value']
     withdrawal_name = domain.content['withdrawal_name']['value']
     submission_name = domain.content['submission_name']['value']
 

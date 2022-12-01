@@ -1,8 +1,8 @@
 def process(client, edge, invitation):
 
-    COMMITTEE_NAME = ''
+    committee_name  = invitation.content['committee_name']['value']
     domain = client.get_group(edge.domain)
-    custom_max_papers_id = domain.get_content_value(f'{COMMITTEE_NAME.lower()}_custom_max_papers_id')
+    custom_max_papers_id = domain.get_content_value(f'{committee_name.lower()}_custom_max_papers_id')
     custom_max_papers_default_value = None
 
     print(edge.id)

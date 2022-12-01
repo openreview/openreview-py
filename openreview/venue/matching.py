@@ -858,7 +858,7 @@ class Matching(object):
         if not self.is_senior_area_chair:
             with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.py')) as f:
                 content = f.read()
-                content = content.replace("COMMITTEE_NAME = ''", "COMMITTEE_NAME = '" + self.get_committee_name() + "'")
+                invitation.content = { 'committee_name': { 'value': self.get_committee_name() }}
                 invitation.preprocess = content
                 venue.invitation_builder.save_invitation(invitation)
 
