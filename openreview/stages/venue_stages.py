@@ -509,7 +509,7 @@ class EthicsReviewStage(object):
             if conference.use_area_chairs:
                 readers.append(conference.get_area_chairs_id())
 
-            readers.append(self.get_reviewers_id())
+            readers.append(conference.get_reviewers_id())
 
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
@@ -528,14 +528,14 @@ class EthicsReviewStage(object):
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
 
-            readers.append(self.get_ethics_reviewers_id(number=number))
+            readers.append(conference.get_ethics_reviewers_id(number=number))
 
         if self.release_to_reviewers == self.Readers.ASSIGNED_ETHICS_REVIEWERS:
 
             if conference.use_ethics_chairs:
                 readers.append(conference.get_ethics_chairs_id())
 
-            readers.append(self.get_ethics_reviewers_id(number=number))
+            readers.append(conference.get_ethics_reviewers_id(number=number))
 
         if self.release_to_reviewers == self.Readers.ETHICS_REVIEWER_SIGNATURE:
 
