@@ -774,6 +774,12 @@ class CommentStage(object):
 
         return invitees
 
+    def get_mandatory_readers(self, conference, number):
+        readers = [conference.get_program_chairs_id()]
+        if conference.use_senior_area_chairs:
+            readers.append(conference.get_senior_area_chairs_id(number))
+        return readers
+
 
 class MetaReviewStage(object):
 

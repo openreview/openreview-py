@@ -187,12 +187,14 @@ class GroupBuilder(object):
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
+            'reviewers_anon_name': { 'value': 'Reviewer_' },
             'reviewers_submitted_name': { 'value': f'{self.venue.reviewers_name}/Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
             'reviewers_affinity_score_id': { 'value': self.venue.get_affinity_score_id(self.venue.get_reviewers_id()) },
             'reviewers_conflict_id': { 'value': self.venue.get_conflict_score_id(self.venue.get_reviewers_id()) },
             'reviewers_recruitment_id': { 'value': self.venue.get_recruitment_id(self.venue.get_reviewers_id()) },
             'authors_id': { 'value': self.venue.get_authors_id() },
+            'authors_accepted_id': { 'value': f'{self.venue.get_authors_id()}/Accepted' },
             'authors_name': { 'value': self.venue.authors_name },
             'withdrawn_submission_id': { 'value': self.venue.get_withdrawn_id() },
             'withdraw_expiration_id': { 'value': self.venue.get_invitation_id('Withdraw_Expiration') },
@@ -229,12 +231,17 @@ class GroupBuilder(object):
 
         if self.venue.decision_stage:
             content['decision_name'] = { 'value': self.venue.decision_stage.name }
+            content['decision_email_authors'] = { 'value': self.venue.decision_stage.email_authors }
 
         if self.venue.submission_revision_stage:
             content['submission_revision_accepted'] = { 'value': self.venue.submission_revision_stage.only_accepted }            
 
         if self.venue.request_form_id:
             content['request_form_id'] = { 'value': self.venue.request_form_id }
+
+        if self.venue.comment_stage:
+            content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
+            content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
 
         self.client.post_group_edit(
             invitation = self.venue.get_meta_invitation_id(),

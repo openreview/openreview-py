@@ -2441,10 +2441,10 @@ class Group(object):
         self.deanonymizers = deanonymizers
         self.details = details
 
-    def get_content_value(self, field_name):
+    def get_content_value(self, field_name, default_value=None):
         if self.content:
             return self.content.get(field_name, {}).get('value')
-        return None
+        return default_value
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])

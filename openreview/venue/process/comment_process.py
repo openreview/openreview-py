@@ -1,21 +1,18 @@
 def process(client, edit, invitation):
-    SHORT_PHRASE = ''
-    PROGRAM_CHAIRS_ID = ''
-    PAPER_AUTHORS_ID = ''
-    PAPER_REVIEWERS_ID = ''
-    PAPER_REVIEWERS_SUBMITTED_ID = ''
-    PAPER_AREA_CHAIRS_ID = ''
-    PAPER_SENIOR_AREA_CHAIRS_ID = ''
+
+    domain = client.get_group(edit.domain)
+    venue_id = domain.id
+    short_name = domain.get_content_value('subtitle')
+    authors_name = domain.get_content_value('authors_name')
+    submission_name = domain.get_content_value('submission_name')
+    reviewers_name = domain.get_content_value('reviewers_name')
+    reviewers_anon_name = domain.get_content_value('reviewers_anon_name')
+    reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
 
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
+    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
-    PAPER_AUTHORS_ID = PAPER_AUTHORS_ID.replace('{number}', str(submission.number))
-    PAPER_REVIEWERS_ID = PAPER_REVIEWERS_ID.replace('{number}', str(submission.number))
-    PAPER_REVIEWERS_SUBMITTED_ID = PAPER_REVIEWERS_SUBMITTED_ID.replace('{number}', str(submission.number))
-    PAPER_AREA_CHAIRS_ID = PAPER_AREA_CHAIRS_ID.replace('{number}', str(submission.number))
-    PAPER_SENIOR_AREA_CHAIRS_ID = PAPER_SENIOR_AREA_CHAIRS_ID.replace('{number}', str(submission.number))
-    
     ignore_groups = comment.nonreaders if comment.nonreaders else []
     ignore_groups.append(edit.tauthor)
 
@@ -35,67 +32,75 @@ Comment: {comment.content['comment']['value']}
 
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 
-    if PROGRAM_CHAIRS_ID and (PROGRAM_CHAIRS_ID in comment.readers or 'everyone' in comment.readers):
+    program_chairs_id = domain.get_content_value('program_chairs_id')
+    if domain.get_content_value('comment_email_pcs') and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
-            recipients=[PROGRAM_CHAIRS_ID],
+            recipients=[program_chairs_id],
             ignoreRecipients = ignore_groups,
-            subject=f'''{SHORT_PHRASE} {pretty_signature} commented on a paper. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''{short_name} {pretty_signature} commented on a paper. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Program Chair.{content}'''
         )
 
-    email_SAC = len(comment.readers)==3 and PAPER_SENIOR_AREA_CHAIRS_ID in comment.readers and PROGRAM_CHAIRS_ID in comment.readers
-    if PAPER_SENIOR_AREA_CHAIRS_ID and email_SAC:
+    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
+    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
+    email_SAC = len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers
+    if senior_area_chairs_name and email_SAC:
         client.post_message(
-            recipients=[PAPER_SENIOR_AREA_CHAIRS_ID],
+            recipients=[paper_senior_area_chairs_id],
             ignoreRecipients = ignore_groups,
-            subject=f'''{SHORT_PHRASE} {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''{short_name} {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Senior Area Chair.{content}'''
         )
 
-    if PAPER_AREA_CHAIRS_ID and (PAPER_AREA_CHAIRS_ID in comment.readers or 'everyone' in comment.readers):
+    area_chairs_name = domain.get_content_value('area_chairs_name')
+    paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
+    if area_chairs_name and (paper_area_chairs_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
-            recipients=[PAPER_AREA_CHAIRS_ID],
+            recipients=[paper_area_chairs_id],
             ignoreRecipients=ignore_groups,
-            subject=f'''{SHORT_PHRASE} {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''{short_name} {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Area Chair.{content}'''
         )
 
-    if 'everyone' in comment.readers or PAPER_REVIEWERS_ID in comment.readers:
+    paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
+    paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
+    if 'everyone' in comment.readers or paper_reviewers_id in comment.readers:
         client.post_message(
-            recipients=[PAPER_REVIEWERS_ID],
+            recipients=[paper_reviewers_id],
             ignoreRecipients=ignore_groups,
-            subject=f'''{SHORT_PHRASE} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''{short_name} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
         )
-    elif PAPER_REVIEWERS_SUBMITTED_ID in comment.readers:
+    elif paper_reviewers_submitted_id in comment.readers:
         client.post_message(
-            recipients=[PAPER_REVIEWERS_SUBMITTED_ID],
+            recipients=[paper_reviewers_submitted_id],
             ignoreRecipients=ignore_groups,
-            subject=f'''{SHORT_PHRASE} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''{short_name} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
         )
     else:
-        anon_reviewers = [reader for reader in comment.readers if reader.find('Reviewer_') >=0]
+        anon_reviewers = [reader for reader in comment.readers if reader.find(reviewers_anon_name) >=0]
         if anon_reviewers:
             client.post_message(
                 recipients=anon_reviewers,
                 ignoreRecipients=ignore_groups,
-                subject=f'''{SHORT_PHRASE} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+                subject=f'''{short_name} {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
                 message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}'''
             )
 
     #send email to author of comment
     client.post_message(
         recipients=[edit.tauthor],
-        subject=f'''{SHORT_PHRASE} Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-        message=f'''Your comment was received on a submission to {SHORT_PHRASE}.{content}'''
+        subject=f'''{short_name} Your comment was received on Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+        message=f'''Your comment was received on a submission to {short_name}.{content}'''
     )
 
     #send email to paper authors
-    if PAPER_AUTHORS_ID in comment.readers or 'everyone' in comment.readers:
+    paper_authors_id = f'{paper_group_id}/{authors_name}'
+    if paper_authors_id in comment.readers or 'everyone' in comment.readers:
         client.post_message(
             recipients=submission.content['authorids']['value'],
             ignoreRecipients=ignore_groups,
-            subject=f'''{SHORT_PHRASE} {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+            subject=f'''{short_name} {pretty_signature} commented on your submission. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
             message=f'''{pretty_signature} commented on your submission.{content}'''
         )
