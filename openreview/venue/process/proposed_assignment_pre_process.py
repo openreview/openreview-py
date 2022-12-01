@@ -16,7 +16,7 @@ def process(client, edge, invitation):
 
     custom_max_papers_invitation = openreview.tools.get_invitation(client, custom_max_papers_id)
     if custom_max_papers_invitation:
-        custom_max_papers_default_value = custom_max_papers_invitation.edge['weight']['param'].get('default')
+        custom_max_papers_default_value = custom_max_papers_invitation.edit['weight']['param'].get('default')
 
     ## Get quota
     edges=client.get_edges(invitation=custom_max_papers_id, tail=edge.tail)
