@@ -14,7 +14,7 @@ def process(client, edge, invitation):
     if edge.tcdate != edge.tmdate:
         return
 
-    custom_max_papers_invitation = openreview.tools.get_invitation(client, custom_max_papers_id)
+    custom_max_papers_invitation = openreview.tools.get_invitation(client, custom_max_papers_id) if custom_max_papers_id else None
     if custom_max_papers_invitation:
         custom_max_papers_default_value = custom_max_papers_invitation.edit['weight']['param'].get('default')
 
