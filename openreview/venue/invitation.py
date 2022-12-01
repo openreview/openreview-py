@@ -1111,13 +1111,6 @@ class InvitationBuilder(object):
         with open(process_file) as f:
             file_content = f.read()
 
-            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
-            file_content = file_content.replace("PAPER_INVITATION_PREFIX = ''", f"PAPER_INVITATION_PREFIX = '{self.venue.get_paper_group_prefix()}'")
-            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Withdraw_Expiration')}'")
-            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_authors=True))}')
-            
-
         content = {
             'venue': {
                 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())

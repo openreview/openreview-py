@@ -1,7 +1,10 @@
 def process(client, edge, invitation):
 
-    CUSTOM_MAX_PAPERS_INVITATION_ID = ''
-    CUSTOM_MAX_DEFAULT_VALUE = None
+    COMMITTEE_NAME = ''
+    domain = client.get_group(edge.domain)
+    custom_max_papers_id = domain.get_content_value(f'{COMMITTEE_NAME.lower()}_custom_max_papers_id')
+    custom_max_papers_default_value = None
+
     print(edge.id)
 
     if edge.ddate:
@@ -11,10 +14,14 @@ def process(client, edge, invitation):
     if edge.tcdate != edge.tmdate:
         return
 
-    ## Get quota
-    edges=client.get_edges(invitation=CUSTOM_MAX_PAPERS_INVITATION_ID, tail=edge.tail)
+    custom_max_papers_invitation = openreview.tools.get_invitation(client, custom_max_papers_id)
+    if custom_max_papers_invitation:
+        custom_max_papers_default_value = custom_max_papers_invitation.edge['weight']['param'].get('default')
 
-    custom_max_papers=edges[0].weight if edges else CUSTOM_MAX_DEFAULT_VALUE
+    ## Get quota
+    edges=client.get_edges(invitation=custom_max_papers_id, tail=edge.tail)
+
+    custom_max_papers=edges[0].weight if edges else custom_max_papers_default_value
 
     if not custom_max_papers:
         return edge
