@@ -20,6 +20,21 @@ class GroupBuilder(object):
             web = web
         ))
 
+    def get_update_content(self, group, content):
+        update_content = {}
+        if group.content is None:
+            group.content = {}
+        for key, value in group.content.items():
+            if key in content and value != content[key]:
+                update_content[key] = content[key]
+            
+            if key not in content:
+                update_content[key] = { 'delete': True }
+
+        for key, value in content.items():
+            if key not in group.content:
+                update_content[key] = content[key]
+        return update_content
 
     def post_group(self, group):
         self.client.post_group_edit(
@@ -248,16 +263,18 @@ class GroupBuilder(object):
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
 
-        self.client.post_group_edit(
-            invitation = self.venue.get_meta_invitation_id(),
-            readers = [self.venue.venue_id],
-            writers = [self.venue.venue_id],
-            signatures = [self.venue.venue_id],
-            group = openreview.api.Group(
-                id = self.venue_id,
-                content = content
-            )
-        )        
+        update_content = self.get_update_content(venue_group, content)
+        if update_content:
+            self.client.post_group_edit(
+                invitation = self.venue.get_meta_invitation_id(),
+                readers = [self.venue.venue_id],
+                writers = [self.venue.venue_id],
+                signatures = [self.venue.venue_id],
+                group = openreview.api.Group(
+                    id = self.venue_id,
+                    content = update_content
+                )
+            )        
        
     def create_program_chairs_group(self, program_chair_ids=[]):
 
