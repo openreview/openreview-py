@@ -52,9 +52,6 @@ class InvitationBuilder(object):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
-            process = process.replace('VENUE_ID = ''', f"VENUE_ID = '{self.venue_id}'")
-            process = process.replace('META_INVITATION_ID = ''', f"META_INVITATION_ID = '{self.venue.get_meta_invitation_id()}'")
-            process = process.replace('AUTHORS_GROUP_ID = ''', f"AUTHORS_GROUP_ID = '{self.venue.get_authors_id()}'")
             return process
 
     def update_note_readers(self, submission, invitation):
@@ -106,12 +103,7 @@ class InvitationBuilder(object):
     def set_meta_invitation(self):
         venue_id=self.venue_id
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/invitation_start_process.py')
-        with open(process_file) as f:
-            invitation_start_process = f.read()
-
-            invitation_start_process = invitation_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{self.venue.id}"')
-            invitation_start_process = invitation_start_process.replace("UNDER_SUBMISSION_ID = ''", f"UNDER_SUBMISSION_ID = '{self.venue.get_submission_venue_id()}'")
+        invitation_start_process = self.get_process_content('process/invitation_start_process.py')
 
         self.client.post_invitation_edit(invitations=None,
             readers=[venue_id],
@@ -220,23 +212,6 @@ class InvitationBuilder(object):
             if field in content:
                 del content[field]
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/review_process.py')
-        with open(process_file) as f:
-            file_content = f.read()
-
-            file_content = file_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
-            file_content = file_content.replace("OFFICIAL_REVIEW_NAME = ''", f"OFFICIAL_REVIEW_NAME = '{review_stage.name}'")
-            file_content = file_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
-            file_content = file_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
-            file_content = file_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
-            file_content = file_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
-
-            if self.venue.use_area_chairs:
-                file_content = file_content.replace("USE_AREA_CHAIRS = False", "USE_AREA_CHAIRS = True")
-
-            if review_stage.email_pcs:
-                file_content = file_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
-
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -251,7 +226,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'review_process_script': {
-                    'value': file_content
+                    'value': self.get_process_content('process/review_process.py')
                 }
             },
             edit={
@@ -306,7 +281,8 @@ class InvitationBuilder(object):
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True                                   
+                                    'optional': True,
+                                    'deletable': True                                 
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -403,7 +379,8 @@ class InvitationBuilder(object):
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True                                   
+                                    'optional': True,
+                                    'deletable': True                                   
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -466,62 +443,58 @@ class InvitationBuilder(object):
             }
             content['reduced_load'] = reduced_load_dict
         
-        with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_process.py')) as process_reader:
-            process_content = process_reader.read()
+        process_content = self.get_process_content('process/recruitment_process.py')
+        pre_process_content = self.get_process_content('process/recruitment_pre_process.py')
 
-            with open(os.path.join(os.path.dirname(__file__), 'process/recruitment_pre_process.py')) as pre_process_reader:
-                pre_process_content = pre_process_reader.read()
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
 
-                with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
-                    webfield_content = webfield_reader.read()
-                    webfield_content = webfield_content.replace("const COMMITTEE_NAME = ''", "const COMMITTEE_NAME = '" + committee_name.replace('_', ' ')[:-1] + "'")
+        invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
+        current_invitation=tools.get_invitation(self.client, id = invitation_id)
 
-                    invitation_id=venue.get_recruitment_id(venue.get_committee_id(name=committee_name))
-                    current_invitation=tools.get_invitation(self.client, id = invitation_id)
+        #if reduced_load hasn't change, no need to repost invitation
+        if not current_invitation:
+            recruitment_invitation = Invitation(
+                id = invitation_id,
+                invitees = ['everyone'],
+                signatures = [venue.id],
+                readers = ['everyone'],
+                writers = [venue.id],
+                content = invitation_content,
+                edit = {
+                    'signatures': ['(anonymous)'],
+                    'readers': [venue.id],
+                    'note' : {
+                        'signatures':['${3/signatures}'],
+                        'readers': [venue.id],
+                        'writers': [venue.id],
+                        'content': content
+                    }
+                },
+                process = process_content,
+                preprocess = pre_process_content,
+                web = webfield_content
+            )
 
-                    #if reduced_load hasn't change, no need to repost invitation
-                    if not current_invitation:
-                        recruitment_invitation = Invitation(
-                            id = invitation_id,
-                            invitees = ['everyone'],
-                            signatures = [venue.id],
-                            readers = ['everyone'],
-                            writers = [venue.id],
-                            content = invitation_content,
-                            edit = {
-                                'signatures': ['(anonymous)'],
-                                'readers': [venue.id],
-                                'note' : {
-                                    'signatures':['${3/signatures}'],
-                                    'readers': [venue.id],
-                                    'writers': [venue.id],
-                                    'content': content
-                                }
-                            },
-                            process = process_content,
-                            preprocess = pre_process_content,
-                            web = webfield_content
-                        )
-
-                        return self.save_invitation(recruitment_invitation, replacement=True)
-                    else:
-                        print('current invitation', current_invitation.edit['note']['content'].get('reduced_load', {}))
-                        print('new invitation', reduced_load_dict)
-                        if current_invitation.edit['note']['content'].get('reduced_load', {}) != reduced_load_dict:
-                            print('update reduce load')
-                            return self.save_invitation(Invitation(
-                                id = invitation_id,
-                                edit = {
-                                    'note' : {
-                                        'content': {
-                                            'reduced_load': reduced_load_dict if reduced_load_dict else { 'delete': True }
-                                        }
-                                    }
-                                }
-                            ))
-                        else:
-                            print('do not update reduce load')
-                            return current_invitation
+            return self.save_invitation(recruitment_invitation, replacement=True)
+        else:
+            print('current invitation', current_invitation.edit['note']['content'].get('reduced_load', {}))
+            print('new invitation', reduced_load_dict)
+            if current_invitation.edit['note']['content'].get('reduced_load', {}) != reduced_load_dict:
+                print('update reduce load')
+                return self.save_invitation(Invitation(
+                    id = invitation_id,
+                    edit = {
+                        'note' : {
+                            'content': {
+                                'reduced_load': reduced_load_dict if reduced_load_dict else { 'delete': True }
+                            }
+                        }
+                    }
+                ))
+            else:
+                print('do not update reduce load')
+                return current_invitation
 
     def set_bid_invitations(self):
 
@@ -553,7 +526,6 @@ class InvitationBuilder(object):
 
             with open(os.path.join(os.path.dirname(__file__), 'webfield/paperBidWebfield.js')) as webfield_reader:
                 webfield_content = webfield_reader.read()
-                webfield_content = webfield_content.replace("const COMMITTEE_NAME = ''", f"const COMMITTEE_NAME = '{venue.get_committee_name(match_group_id)}'")
                 webfield_content = webfield_content.replace("const BID_INSTRUCTIONS = ''", f"const BID_INSTRUCTIONS = `{bid_stage.get_instructions()}`")
         
 
@@ -566,8 +538,11 @@ class InvitationBuilder(object):
                 signatures = [venue_id],
                 readers = invitation_readers,
                 writers = [venue_id],
-                maxReplies=1,
+                minReplies = bid_stage.request_count,
                 web = webfield_content,
+                content = {
+                    'committee_name': { 'value': venue.get_committee_name(match_group_id) }
+                },
                 edge = {
                     'id': {
                         'param': {
@@ -625,33 +600,6 @@ class InvitationBuilder(object):
                 }
             }
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
-        with open(process_file) as f:
-            process_content = f.read()
-
-            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
-            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
-            process_content = process_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
-            process_content = process_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
-
-            if self.venue.use_area_chairs:
-                process_content = process_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
-
-            if self.venue.use_senior_area_chairs:
-                process_content = process_content.replace("PAPER_SENIOR_AREA_CHAIRS_ID = ''", f"PAPER_SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id('{number}')}'")
-
-            if comment_stage.email_pcs:
-                process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
-
-        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_pre_process.py')
-        with open(process_file) as f:
-            pre_process_content = f.read()
-            mandatory_readers = [self.venue.get_program_chairs_id()]
-            if self.venue.use_senior_area_chairs:
-                mandatory_readers.append(self.venue.get_senior_area_chairs_id(number='{number}'))
-
-            pre_process_content = pre_process_content.replace("MANDATORY_READERS = []", "MANDATORY_READERS = " + json.dumps(mandatory_readers))
-
         invitation = Invitation(id=official_comment_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -665,10 +613,10 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': pre_process_content
+                    'value': self.get_process_content('process/comment_pre_process.py')
                 },
                 'comment_process_script': {
-                    'value': process_content
+                    'value': self.get_process_content('process/comment_process.py')
                 }
             },
             edit={
@@ -729,11 +677,16 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}',
+                            'replyto': { 
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}', 
+                                }
+                            },
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -763,24 +716,6 @@ class InvitationBuilder(object):
 
         content = default_content.comment_v2.copy()
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/comment_process.py')
-        with open(process_file) as f:
-            process_content = f.read()
-
-            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
-            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
-            process_content = process_content.replace("PAPER_REVIEWERS_ID = ''", f"PAPER_REVIEWERS_ID = '{self.venue.get_reviewers_id('{number}')}'")
-            process_content = process_content.replace("PAPER_REVIEWERS_SUBMITTED_ID = ''", f"PAPER_REVIEWERS_SUBMITTED_ID = '{self.venue.get_reviewers_id(number='{number}', submitted=True)}'")
-
-            if self.venue.use_area_chairs:
-                process_content = process_content.replace("PAPER_AREA_CHAIRS_ID = ''", f"PAPER_AREA_CHAIRS_ID = '{self.venue.get_area_chairs_id('{number}')}'")
-
-            if self.venue.use_senior_area_chairs:
-                process_content = process_content.replace("PAPER_SENIOR_AREA_CHAIRS_ID = ''", f"PAPER_SENIOR_AREA_CHAIRS_ID = '{self.venue.get_senior_area_chairs_id('{number}')}'")
-
-            if comment_stage.email_pcs:
-                process_content = process_content.replace("PROGRAM_CHAIRS_ID = ''", f"PROGRAM_CHAIRS_ID = '{self.venue.get_program_chairs_id()}'")
-
         invitation = Invitation(id=public_comment_invitation,
             invitees=[venue_id],
             readers=[venue_id],
@@ -794,7 +729,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_process_script': {
-                    'value': process_content
+                    'value': self.get_process_content('process/comment_process.py')
                 }
             },
             edit={
@@ -846,7 +781,11 @@ class InvitationBuilder(object):
                                 }
                             },
                             'forum': '${4/content/noteId/value}',
-                            'replyto': '${4/content/noteId/value}',
+                            'replyto': { 
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}', 
+                                }
+                            },
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
@@ -887,17 +826,6 @@ class InvitationBuilder(object):
         for key in decision_stage.additional_fields:
             content[key] = decision_stage.additional_fields[key]
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/decision_process.py')
-        with open(process_file) as f:
-            process_content = f.read()
-
-            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
-            process_content = process_content.replace("PAPER_AUTHORS_ID = ''", f"PAPER_AUTHORS_ID = '{self.venue.get_authors_id('{number}')}'")
-            process_content = process_content.replace("AUTHORS_ID_ACCEPTED = ''", f"AUTHORS_ID_ACCEPTED = '{self.venue.get_authors_id()}/Accepted'")
-
-            if decision_stage.email_authors:
-                process_content = process_content.replace("EMAIL_AUTHORS = False", "EMAIL_AUTHORS = True")
-
         invitation = Invitation(id=decision_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -912,7 +840,7 @@ class InvitationBuilder(object):
             }],
             content={
                 'decision_process_script': {
-                    'value': process_content
+                    'value': self.get_process_content('process/decision_process.py')
                 }
             },
             edit={
@@ -968,7 +896,8 @@ class InvitationBuilder(object):
                             'ddate': {
                                 'param': {
                                     'range': [ 0, 9999999999999 ],
-                                    'optional': True
+                                    'optional': True,
+                                    'deletable': True
                                 }
                             },
                             'signatures': ['${3/signatures}'],
@@ -995,14 +924,6 @@ class InvitationBuilder(object):
         submission_stage = self.venue.submission_stage
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
 
-
-        process_file = os.path.join(os.path.dirname(__file__), 'process/withdrawal_submission_process.py')
-        with open(process_file) as f:
-            file_content = f.read()
-
-            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            file_content = file_content.replace("WITHDRAWN_INVITATION_ID = ''", f"WITHDRAWN_INVITATION_ID = '{self.venue.get_withdrawn_id()}'")
-
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
             invitees=[venue_id],
             readers=[venue_id],
@@ -1011,7 +932,7 @@ class InvitationBuilder(object):
             expdate=exp_date,
             content={
                 'process_script': {
-                    'value': file_content
+                    'value': self.get_process_content('process/withdrawal_submission_process.py')
                 }
             },            
             edit={
@@ -1098,17 +1019,6 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/withdrawn_submission_process.py')
-        with open(process_file) as f:
-            file_content = f.read()
-
-            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
-            file_content = file_content.replace("PAPER_INVITATION_PREFIX = ''", f"PAPER_INVITATION_PREFIX = '{self.venue.get_paper_group_prefix()}'")
-            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Withdraw_Expiration')}'")
-            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_authors=True))}')
-            
-
         content = {
             'venue': {
                 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
@@ -1151,7 +1061,7 @@ class InvitationBuilder(object):
                     'content': content
                 }
             },
-            process=file_content
+            process=self.get_process_content('process/withdrawn_submission_process.py')
         )
 
         if SubmissionStage.Readers.EVERYONE not in submission_stage.readers and submission_stage.withdrawn_submission_public:
@@ -1195,16 +1105,6 @@ class InvitationBuilder(object):
 
         self.save_invitation(expire_invitation, replacement=True)
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/withdrawal_reversion_submission_process.py')
-        with open(process_file) as f:
-            file_content = f.read()
-
-            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Withdraw_Expiration')}'")
-            file_content = file_content.replace("WITHDRAWN_INVITATION_ID = ''", f"WITHDRAWN_INVITATION_ID = '{self.venue.get_withdrawn_id()}'")
-            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
-            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_authors=True))}')
-
-
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name + '_Reversion'),
             invitees=[venue_id],
             readers=[venue_id],
@@ -1212,7 +1112,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             content={
                 'process_script': {
-                    'value': file_content
+                    'value': self.get_process_content('process/withdrawal_reversion_submission_process.py')
                 }
             },            
             edit={
@@ -1306,13 +1206,6 @@ class InvitationBuilder(object):
 
         content = default_content.desk_reject_v2.copy()
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/desk_rejection_submission_process.py')
-        with open(process_file) as f:
-            file_content = f.read()
-
-            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            file_content = file_content.replace("DESK_REJECTED_INVITATION_ID = ''", f"DESK_REJECTED_INVITATION_ID = '{self.venue.get_desk_rejected_id()}'")
-
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.desk_rejection_name),
             invitees=[venue_id],
             readers=[venue_id],
@@ -1321,7 +1214,7 @@ class InvitationBuilder(object):
             expdate=exp_date,
             content={
                 'process_script': {
-                    'value': file_content
+                    'value': self.get_process_content('process/desk_rejection_submission_process.py')
                 }
             },
             edit={
@@ -1380,17 +1273,6 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/desk_rejected_submission_process.py')
-        with open(process_file) as f:
-            file_content = f.read()
-
-            file_content = file_content.replace("VENUE_ID = ''", f'VENUE_ID = "{venue_id}"')
-            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
-            file_content = file_content.replace("PAPER_INVITATION_PREFIX = ''", f"PAPER_INVITATION_PREFIX = '{self.venue.get_paper_group_prefix()}'")
-            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Desk_Reject_Expiration')}'")
-            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_program_chairs=True, with_authors=True))}')
-
-
         content = {
             'venue': {
                 'value': tools.pretty_id(self.venue.get_desk_rejected_submission_venue_id())
@@ -1433,7 +1315,7 @@ class InvitationBuilder(object):
                     'content': content
                 }
             },
-            process=file_content
+            process=self.get_process_content('process/desk_rejected_submission_process.py')
         )
 
         if SubmissionStage.Readers.EVERYONE not in submission_stage.readers and submission_stage.desk_rejected_submission_public:
@@ -1477,17 +1359,7 @@ class InvitationBuilder(object):
 
         self.save_invitation(expire_invitation, replacement=True)
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/desk_rejection_reversion_submission_process.py')
-        with open(process_file) as f:
-            file_content = f.read()
-
-            file_content = file_content.replace("EXPIRE_INVITATION_ID = ''", f"EXPIRE_INVITATION_ID = '{self.venue.get_invitation_id('Desk_Reject_Expiration')}'")
-            file_content = file_content.replace("DESK_REJECTED_INVITATION_ID = ''", f"DESK_REJECTED_INVITATION_ID = '{self.venue.get_desk_rejected_id()}'")
-            file_content = file_content.replace("SHORT_NAME = ''", f'SHORT_NAME = "{self.venue.short_name}"')
-            file_content = file_content.replace("COMMITTEE = []", f'COMMITTEE = {json.dumps(self.venue.get_participants(number="{number}", with_program_chairs=True, with_authors=True))}')
-
         content = default_content.desk_reject_reversion_v2
-
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.desk_rejection_name + '_Reversion'),
             invitees=[venue_id],
@@ -1496,7 +1368,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             content={
                 'process_script': {
-                    'value': file_content
+                    'value': self.get_process_content('process/desk_rejection_reversion_submission_process.py')
                 }
             },
             edit={
@@ -1596,26 +1468,6 @@ class InvitationBuilder(object):
                 'order':4
             }
 
-        process_file = os.path.join(os.path.dirname(__file__), 'process/submission_revision_process.py')
-        with open(process_file) as f:
-            process_content = f.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.venue.get_short_name()}"')
-            process_content = process_content.replace("CONFERENCE_ID = ''", f"CONFERENCE_ID = '{self.venue_id}'")
-            process_content = process_content.replace("AUTHORS_NAME = ''", f"AUTHORS_NAME = '{self.venue.authors_name}'")
-            process_content = process_content.replace("SUBMISSION_NAME = ''", f"SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
-
-        process_file = os.path.join(os.path.dirname(__file__), 'process/revision_start_process.py')
-        with open(process_file) as f:
-            revision_start_process = f.read()
-            revision_start_process = revision_start_process.replace("VENUE_ID = ''", f'VENUE_ID = "{self.venue.id}"')
-            revision_start_process = revision_start_process.replace("UNDER_SUBMISSION_ID = ''", f"UNDER_SUBMISSION_ID = '{self.venue.get_submission_venue_id()}'")
-            if only_accepted:
-                revision_start_process = revision_start_process.replace("SUBMISSION_NAME = ''", f"SUBMISSION_NAME = '{self.venue.submission_stage.name}'")
-                revision_start_process = revision_start_process.replace("ACCEPTED = False", "ACCEPTED = True")
-                if self.venue.decision_stage:
-                    revision_start_process = revision_start_process.replace("DECISION_NAME = 'Decision'", f"DECISION_NAME = '{self.venue.decision_stage.name}'")
-
-
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
             readers=[venue_id],
@@ -1624,11 +1476,11 @@ class InvitationBuilder(object):
             cdate=revision_cdate,
             date_processes=[{ 
                 'dates': ["#{4/cdate}"],
-                'script': revision_start_process
+                'script': self.get_process_content('process/revision_start_process.py')
             }],
             content={
                 'revision_process_script': {
-                    'value': process_content
+                    'value': self.get_process_content('process/submission_revision_process.py')
                 }
             },
             edit={
@@ -1698,7 +1550,7 @@ class InvitationBuilder(object):
         client = self.client
         venue = self.venue
         
-        invitation = client.get_invitation(venue.get_paper_assignment_id(committee_id, deployed=True))
+        invitation = client.get_invitation(venue.get_assignment_id(committee_id, deployed=True))
         is_area_chair = committee_id == venue.get_area_chairs_id()
         is_senior_area_chair = committee_id == venue.get_senior_area_chairs_id()
         is_ethics_reviewer = committee_id == venue.get_ethics_reviewers_id()
@@ -1747,3 +1599,76 @@ class InvitationBuilder(object):
         #         invitation.preprocess=pre_content
         #         invitation.signatures=[venue.get_program_chairs_id()] ## Program Chairs can see the reviews
         #         return self.save_invitation(invitation)
+    
+    def set_expertise_selection_invitations(self):
+
+        venue_id = self.venue_id
+        expertise_selection_stage = self.venue.expertise_selection_stage
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/expertiseSelectionWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
+
+        def build_expertise_selection(committee_id):
+            expertise_selection_id = self.venue.get_invitation_id(expertise_selection_stage.name, prefix=committee_id)
+            invitation = Invitation(
+                id= expertise_selection_id,
+                cdate = tools.datetime_millis(expertise_selection_stage.start_date),
+                duedate = tools.datetime_millis(expertise_selection_stage.due_date),
+                expdate = tools.datetime_millis(expertise_selection_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if expertise_selection_stage.due_date else None,
+                invitees = [committee_id],
+                signatures = [venue_id],
+                readers = [venue_id, committee_id],
+                writers = [venue_id],
+                maxReplies=1,
+                web = webfield_content,
+                edge = {
+                    'id': {
+                        'param': {
+                            'withInvitation': expertise_selection_id,
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            # 'type': 'date',
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': [ venue_id, '${2/signatures}' ],
+                    'writers': [ venue_id, '${2/signatures}' ],
+                    'signatures': {
+                        'param': {
+                            'regex': '~.*' 
+                        }
+                    },
+                    'head': {
+                        'param': {
+                            'type': 'note'
+                        }
+                    },
+                    'tail': {
+                        'param': {
+                            'type': 'profile',
+                            'inGroup': committee_id
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'enum': ['Include' if expertise_selection_stage.include_option else 'Exclude'],
+                        }
+                    }
+                }
+            )
+
+            self.save_invitation(invitation, replacement=True)
+
+        build_expertise_selection(self.venue.get_reviewers_id())
+
+        if self.venue.use_area_chairs:
+            build_expertise_selection(self.venue.get_area_chairs_id())
+
+        if self.venue.use_senior_area_chairs:
+            build_expertise_selection(self.venue.get_senior_area_chairs_id())
+

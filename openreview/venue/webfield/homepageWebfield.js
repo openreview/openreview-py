@@ -21,6 +21,9 @@ if (domain.content.public_withdrawn_submissions.value) {
     name: 'Withdrawn Submissions',
     query: {
       'content.venueid': domain.content.withdrawn_venue_id.value
+    },
+    options: {
+      hideWhenEmpty: true
     }
   })
 }
@@ -30,7 +33,10 @@ if (domain.content.public_desk_rejected_submissions.value) {
     name: 'Desk Rejected Submissions',
     query: {
       'content.venueid': domain.content.desk_rejected_venue_id.value
-    }
+    },
+    options: {
+      hideWhenEmpty: true
+    }    
   })
 }
 
