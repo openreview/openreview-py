@@ -20,20 +20,19 @@ class GroupBuilder(object):
             web = web
         ))
 
-    def get_update_content(self, group, content):
+    def get_update_content(self, current_content, new_content):
         update_content = {}
-        if group.content is None:
-            group.content = {}
-        for key, value in group.content.items():
-            if key in content and value != content[key]:
-                update_content[key] = content[key]
+
+        for key, value in current_content.items():
+            if key in new_content and value != new_content[key]:
+                update_content[key] = new_content[key]
             
-            if key not in content:
+            if key not in new_content:
                 update_content[key] = { 'delete': True }
 
-        for key, value in content.items():
-            if key not in group.content:
-                update_content[key] = content[key]
+        for key, value in new_content.items():
+            if key not in current_content:
+                update_content[key] = new_content[key]
         return update_content
 
     def post_group(self, group):
@@ -263,7 +262,7 @@ class GroupBuilder(object):
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
 
-        update_content = self.get_update_content(venue_group, content)
+        update_content = self.get_update_content(venue_group.content if venue_group.content else {}, content)
         if update_content:
             self.client.post_group_edit(
                 invitation = self.venue.get_meta_invitation_id(),
