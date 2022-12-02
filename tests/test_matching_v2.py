@@ -26,7 +26,7 @@ class TestMatching():
     def venue(self, openreview_client, helpers):
         pc_client = helpers.create_user('pc1_venue@mail.com', 'PCFirstName', 'UAI')
         venue_id = 'VenueV2.cc'
-        venue = Venue(openreview_client, venue_id)
+        venue = Venue(openreview_client, venue_id, 'openreview.net/Support')
         venue.short_name = 'VV2 2022'
         venue.website = 'www.venuev2.com'
         venue.contact = 'pc_venue@mail.com'
